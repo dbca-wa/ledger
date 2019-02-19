@@ -15,6 +15,17 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='organisationrequest',
             name='status',
-            field=models.CharField(choices=[('with_assessor', 'With Assessor'), ('amendment_requested', 'Amendment Requested'), ('approved', 'Approved'), ('declined', 'Declined')], default='with_assessor', max_length=100),
+            field=models.CharField(
+                choices=[
+                    ('with_assessor',
+                     'With Assessor'),
+                    ('amendment_requested',
+                     'Amendment Requested'),
+                    ('approved',
+                     'Approved'),
+                    ('declined',
+                     'Declined')],
+                default='with_assessor',
+                max_length=100),
         ),
     ]

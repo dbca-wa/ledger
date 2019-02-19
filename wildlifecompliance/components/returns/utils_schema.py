@@ -6,7 +6,8 @@ import re
 
 from dateutil.parser import parse as date_parse
 
-# TODO: fix the deprecation of SchemaModel. Use jsontableschema.model.Schema, but there is a problem (see below)
+# TODO: fix the deprecation of SchemaModel. Use
+# jsontableschema.model.Schema, but there is a problem (see below)
 from jsontableschema.model import SchemaModel
 from jsontableschema import types
 from jsontableschema.exceptions import InvalidDateType
@@ -131,7 +132,8 @@ class SchemaField:
     for validation.
     """
     # For most of the type we use the jsontableschema ones
-    # TODO: SchemaModel is deprecated in favor of of jsontableschema.schema.Schema but there's no _type_map!
+    # TODO: SchemaModel is deprecated in favor of of
+    # jsontableschema.schema.Schema but there's no _type_map!
     BASE_TYPE_MAP = SchemaModel._type_map()
     # except for anything date.
     BASE_TYPE_MAP['date'] = DayFirstDateType
@@ -147,11 +149,15 @@ class SchemaField:
         self.name = self.data.get('name')
         # We want to throw an exception if there is no name
         if not self.name:
-            raise FieldSchemaError("A field without a name: {}".format(json.dumps(data)))
+            raise FieldSchemaError(
+                "A field without a name: {}".format(
+                    json.dumps(data)))
         # wl specific
         self.wl = WLSchema(self.data.get('wl'))
         # set the type: wl type as precedence
-        type_class = self.WL_TYPE_MAP.get(self.wl.type) or self.BASE_TYPE_MAP.get(self.data.get('type'))
+        type_class = self.WL_TYPE_MAP.get(
+            self.wl.type) or self.BASE_TYPE_MAP.get(
+            self.data.get('type'))
         self.type = type_class(self.data)
         self.constraints = SchemaConstraints(self.data.get('constraints', {}))
 
@@ -194,10 +200,14 @@ class SchemaField:
         :param value:
         :return:
         """
-        if isinstance(value, six.string_types) and not isinstance(value, six.text_type):
+        if isinstance(
+                value,
+                six.string_types) and not isinstance(
+                value,
+                six.text_type):
             # the StringType accepts only unicode
             value = six.u(value)
-        elif isinstance(value,six.integer_types):
+        elif isinstance(value, six.integer_types):
             value = '{}'.format(value)
         return self.type.cast(value)
 
@@ -226,15 +236,18 @@ class SchemaField:
                 except Exception:
                     not_integer = True
                 if not_integer:
-                    return 'The field "{}" must be a whole number.'.format(self.name)
+                    return 'The field "{}" must be a whole number.'.format(
+                        self.name)
         try:
             self.cast(value)
         except Exception as e:
             error = "{}".format(e)
-            # Override the default enum exception message to include all possible values
+            # Override the default enum exception message to include all
+            # possible values
             if error.find('enum array') and self.constraints.enum:
                 values = [str(v) for v in self.constraints.enum]
-                error = "The value must be one the following: {}".format(values)
+                error = "The value must be one the following: {}".format(
+                    values)
         return error
 
     def __str__(self):
@@ -326,8 +339,9 @@ class Schema:
         if field is not None:
             return field.validation_error(value)
         else:
-            raise Exception("The field '{}' doesn't exists in the schema. Should be one of {}"
-                            .format(field_name, self.field_names))
+            raise Exception(
+                "The field '{}' doesn't exists in the schema. Should be one of {}" .format(
+                    field_name, self.field_names))
 
     def is_field_valid(self, field_name, value):
         return self.field_validation_error(field_name, value) is None
@@ -363,11 +377,20 @@ class Schema:
         """
         if not self.is_lat_long_easting_northing_schema():
             return field_validation
-        lat_validation = field_validation.get(self.get_field_by_mame('latitude', icase=True).name, {})
-        north_validation = field_validation.get(self.get_field_by_mame('northing', icase=True).name, {})
-        long_validation = field_validation.get(self.get_field_by_mame('longitude', icase=True).name, {})
-        east_validation = field_validation.get(self.get_field_by_mame('easting', icase=True).name, {})
-        zone_validation = field_validation.get(self.get_field_by_mame('zone', icase=True).name, {})
+        lat_validation = field_validation.get(
+            self.get_field_by_mame(
+                'latitude', icase=True).name, {})
+        north_validation = field_validation.get(
+            self.get_field_by_mame(
+                'northing', icase=True).name, {})
+        long_validation = field_validation.get(
+            self.get_field_by_mame(
+                'longitude', icase=True).name, {})
+        east_validation = field_validation.get(
+            self.get_field_by_mame(
+                'easting', icase=True).name, {})
+        zone_validation = field_validation.get(
+            self.get_field_by_mame('zone', icase=True).name, {})
         if lat_validation.get('value') and long_validation.get('value'):
             if not north_validation.get('value'):
                 north_validation['error'] = None
@@ -408,7 +431,7 @@ class Schema:
         return result
 
     def rows_validator(self, rows):
-        rows_list=[]
+        rows_list = []
         for row in rows:
             yield self.validate_row(row)
 

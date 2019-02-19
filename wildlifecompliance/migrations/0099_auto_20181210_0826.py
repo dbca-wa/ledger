@@ -15,21 +15,53 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='return',
             name='comments',
-            field=models.TextField(blank=True, null=True),
+            field=models.TextField(
+                blank=True,
+                null=True),
         ),
         migrations.AddField(
             model_name='return',
             name='nil_return',
-            field=models.BooleanField(default=False),
+            field=models.BooleanField(
+                default=False),
         ),
         migrations.AlterField(
             model_name='return',
             name='customer_status',
-            field=models.CharField(choices=[('due', 'Due'), ('overdue', 'Overdue'), ('draft', 'Draft'), ('future', 'Future'), ('under_review', 'Under Review'), ('accepted', 'Accepted')], default='overdue', max_length=20),
+            field=models.CharField(
+                choices=[
+                    ('due',
+                     'Due'),
+                    ('overdue',
+                     'Overdue'),
+                    ('draft',
+                     'Draft'),
+                    ('future',
+                     'Future'),
+                    ('under_review',
+                     'Under Review'),
+                    ('accepted',
+                     'Accepted')],
+                default='overdue',
+                max_length=20),
         ),
         migrations.AlterField(
             model_name='return',
             name='processing_status',
-            field=models.CharField(choices=[('due', 'Due'), ('overdue', 'Overdue'), ('draft', 'Draft'), ('future', 'Future'), ('with_curator', 'With Curator'), ('accepted', 'Accepted')], max_length=20),
+            field=models.CharField(
+                choices=[
+                    ('due',
+                     'Due'),
+                    ('overdue',
+                     'Overdue'),
+                    ('draft',
+                     'Draft'),
+                    ('future',
+                     'Future'),
+                    ('with_curator',
+                     'With Curator'),
+                    ('accepted',
+                     'Accepted')],
+                max_length=20),
         ),
     ]

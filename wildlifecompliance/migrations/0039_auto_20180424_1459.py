@@ -15,6 +15,22 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='organisationcontact',
             name='user_status',
-            field=models.CharField(choices=[('draft', 'Draft'), ('pending', 'Pending'), ('active', 'Active'), ('declined', 'Declined'), ('unlinked', 'Unlinked'), ('suspended', 'Suspended')], default='draft', max_length=40, verbose_name='Status'),
+            field=models.CharField(
+                choices=[
+                    ('draft',
+                     'Draft'),
+                    ('pending',
+                     'Pending'),
+                    ('active',
+                     'Active'),
+                    ('declined',
+                     'Declined'),
+                    ('unlinked',
+                     'Unlinked'),
+                    ('suspended',
+                     'Suspended')],
+                default='draft',
+                max_length=40,
+                verbose_name='Status'),
         ),
     ]

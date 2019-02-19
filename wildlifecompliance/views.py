@@ -16,17 +16,21 @@ from wildlifecompliance.components.main import utils
 from wildlifecompliance.exceptions import BindApplicationException
 from django.core.management import call_command
 
+
 class ApplicationView(DetailView):
-    model=Application
-    template_name='wildlifecompliance/dash/index.html'
+    model = Application
+    template_name = 'wildlifecompliance/dash/index.html'
+
 
 class ExternalApplicationView(DetailView):
     model = Application
     template_name = 'wildlifecompliance/dash/index.html'
 
+
 class ExternalReturnView(DetailView):
     model = Return
     template_name = 'wildlifecompliance/dash/index.html'
+
 
 class InternalView(UserPassesTestMixin, TemplateView):
     template_name = 'wildlifecompliance/dash/index.html'
@@ -38,8 +42,10 @@ class InternalView(UserPassesTestMixin, TemplateView):
         context = super(InternalView, self).get_context_data(**kwargs)
         context['dev'] = settings.DEV_STATIC
         context['dev_url'] = settings.DEV_STATIC_URL
+        context['app_build_url'] = settings.DEV_APP_BUILD_URL
         context['wc_version'] = settings.WC_VERSION
         return context
+
 
 class ExternalView(LoginRequiredMixin, TemplateView):
     template_name = 'wildlifecompliance/dash/index.html'
@@ -48,8 +54,10 @@ class ExternalView(LoginRequiredMixin, TemplateView):
         context = super(ExternalView, self).get_context_data(**kwargs)
         context['dev'] = settings.DEV_STATIC
         context['dev_url'] = settings.DEV_STATIC_URL
+        context['app_build_url'] = settings.DEV_APP_BUILD_URL
         context['wc_version'] = settings.WC_VERSION
         return context
+
 
 class WildlifeComplianceRoutingView(TemplateView):
     template_name = 'wildlifecompliance/index.html'
@@ -61,6 +69,7 @@ class WildlifeComplianceRoutingView(TemplateView):
             return redirect('external')
         kwargs['form'] = LoginForm
         return super(WildlifeComplianceRoutingView, self).get(*args, **kwargs)
+
 
 @login_required(login_url='wc_home')
 def first_time(request):
@@ -114,4 +123,3 @@ class ManagementCommandsView(LoginRequiredMixin, TemplateView):
             data.update({command_script: 'true'})
 
         return render(request, self.template_name, data)
-

@@ -16,16 +16,25 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='wildlifelicence',
             name='licence_class',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.WildlifeLicenceClass'),
+            field=models.ForeignKey(
+                default=1,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='wildlifecompliance.WildlifeLicenceClass'),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name='wildlifelicenceactivity',
             name='code',
-            field=models.CharField(default='', max_length=4),
+            field=models.CharField(
+                default='',
+                max_length=4),
         ),
         migrations.AlterUniqueTogether(
             name='wildlifelicence',
-            unique_together=set([('licence_number', 'licence_sequence', 'licence_class')]),
+            unique_together=set(
+                [
+                    ('licence_number',
+                     'licence_sequence',
+                     'licence_class')]),
         ),
     ]

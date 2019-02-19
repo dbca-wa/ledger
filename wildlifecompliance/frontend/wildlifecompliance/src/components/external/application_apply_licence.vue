@@ -61,7 +61,6 @@
                                     <strong>Estimated licence fee: {{licence_fee | toCurrency}}</strong><br>
                                 </div>
                             </div>
-                            </div>
                         </form>
                     </div>
                 </div>
@@ -331,17 +330,18 @@ export default {
     
   },
   beforeRouteEnter:function(to,from,next){
-        let initialisers = [
-
-            utils.fetchLicenceClasses()
-        ]
-        Promise.all(initialisers).then(data => {
-            next(vm => {
-
-                vm.licence_classes = data[0]
-            });
+    let data = new FormData()
+    data.org_applicant = window.v_org_applicant;
+    let initialisers = [
+        utils.fetchLicenceAvailablePurposes(data)
+    ]
+    Promise.all(initialisers).then(data => {
+        next(vm => {
+            console.log(window.v_org_applicant);
+            vm.licence_classes = data[0]
         });
-    },
+    });
+  },
 }
 </script>
 

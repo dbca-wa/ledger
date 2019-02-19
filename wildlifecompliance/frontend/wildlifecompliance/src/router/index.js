@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Hello from '@/components/Hello'
 import Profile from '@/components/user/profile.vue'
 import ProfileDashTable from '@/components/user/profile_dashboard.vue'
 import CreateProfile from '@/components/user/profile_create.vue'

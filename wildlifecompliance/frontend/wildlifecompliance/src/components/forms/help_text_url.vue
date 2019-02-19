@@ -4,7 +4,6 @@
             <a :href="help_text_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a>
         </template>
 
-        <template v-else>
         <template v-if="assessorMode">
             <a :href="help_text_url" target="_blank"><i class="fa fa-question-circle" style="color:green">&nbsp;</i></a>
         </template>
