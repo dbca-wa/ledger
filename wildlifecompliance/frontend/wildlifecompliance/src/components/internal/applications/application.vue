@@ -56,13 +56,13 @@
                                 <div class="form-group">
                                     <template v-if="application.processing_status == 'With Approver'">
                                         <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="application.assigned_approver">
-                                            <option v-for="member in application.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
+                                            <option v-for="member in application.allowed_assessors" :value="member.id" v-bind:key="member.id">{{member.first_name}} {{member.last_name}}</option>
                                         </select>
                                         <a @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
                                     </template>
                                     <template v-else>
                                         <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="application.assigned_officer">
-                                            <option v-for="member in application.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
+                                            <option v-for="member in application.allowed_assessors" :value="member.id" v-bind:key="member.id">{{member.first_name}} {{member.last_name}}</option>
                                         </select>
                                         <a @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
                                     </template>
@@ -599,7 +599,7 @@
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                                     <input type='hidden' name="application_id" :value="1" />
-                                    <input type='hidden' id="selected_activity_type_tab_id" v-model="selected_activity_type_tab_id" :value=0 />
+                                    <input type='hidden' id="selected_activity_type_tab_id" v-model="selected_activity_type_tab_id" />
                                     <div v-if="hasAssessorMode" class="row" style="margin-bottom:50px;">
                                         <div v-if="wc_version != 1.0" class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                                             <div class="navbar-inner">
@@ -618,6 +618,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
         </div>
     </template>
         </div>
@@ -629,6 +630,7 @@
         <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></ProposedLicence>
 
     </div>
+</div>
 </template>
 <script>
 import Application from '../../form.vue'
