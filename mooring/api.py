@@ -2907,6 +2907,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['regos'] = [{r.type: r.rego} for r in booking.regos.all()]
                 bk['firstname'] = booking.details.get('first_name','')
                 bk['lastname'] = booking.details.get('last_name','')
+                bk['admissions'] = { 'id' :booking.admission_payment.id, 'amount': booking.admission_payment.totalCost } if booking.admission_payment else None
+
                 msb = MooringsiteBooking.objects.filter(booking=booking.id)
                 msb_list = []
                 for book in msb:

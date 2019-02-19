@@ -828,7 +828,7 @@ export default {
                 //var fields = [...vm.dtHeaders];
                 var fields = [...fields,...vm.dtHeaders];
                 fields.splice(vm.dtHeaders.length-1,1);
-                fields = ['Created', 'Confirmation No', 'Person', 'Email', 'Phone', 'Vessel Rego', 'Amount Due', 'Amount Paid',"Status", "Mooring", "Region", "Arrival", "Departure", "Adults","Concession","Children","Infants",'Booking Type','Invoices']
+                fields = ['Created', 'Confirmation No', 'Person', 'Email', 'Phone', 'Vessel Rego', 'Amount Due', 'Amount Paid',"Status", "Mooring", "Region", "Arrival", "Departure", "Adults","Concession","Children","Infants",'Booking Type','Invoices','Admission Ref#', 'Admission Amount']
                 //fields = ['Created', 'Confirmation No', 'Person', 'Email', 'Phone', 'Vessel Rego', 'Amount Due', 'Amount Paid',"Status", "Mooring", "Region", "Arrival", "Departure", "Adults","Concession","Children","Infants","Cancelled","Cancellation Reason","Cancelation Date","Cancelled By", 'Booking Type','Invoices']
                 // fields = [...fields,"Adults","Concession","Children","Infants","Regos","Cancelled","Cancellation Reason","Cancelation Date","Cancelled By"]
                 // fields.splice(4,0,"Email");
@@ -952,6 +952,21 @@ export default {
                             case 18:
                                 bk[field] = booking.invoices;
                             break;
+                            case 19:
+                                if (booking.admissions) { 
+                                	bk[field] = 'AD'+booking.admissions.id;
+                                } else {
+					bk[field] = '';
+				}
+                            break;
+                            case 20:
+                                if (booking.admissions) {
+                                    	bk[field] = booking.admissions.amount;
+                                } else {
+					bk[field] = '';
+				}
+                            break;
+
 
                         }
                     });
