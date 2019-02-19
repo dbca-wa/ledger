@@ -86,6 +86,7 @@ export default {
   methods: {
     submit: function() {
         let vm = this;
+        window.v_org_applicant = vm.org_applicant;
          vm.$router.push({
                       name:"apply_application_licence",
                       params:{
@@ -96,6 +97,7 @@ export default {
         console.log('from organisation submit - licence_select: ',vm.licence_select);
         console.log('from organisation submit - org id: ',vm.org_applicant);
         console.log('From organisation submit - submitter id: ',vm.profile.id);
+        console.log('org applicant - ', window.v_org_applicant);
     },
     
     fetchOrgContact:function (){

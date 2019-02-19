@@ -93,3 +93,18 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
     # a new application
     queryset = WildlifeLicenceClass.objects.all()
     serializer_class = UserWildlifeLicenceClassSerializer
+
+    def list(self, request, *args, **kwargs):
+        print(self.request)
+        print(self.request.GET)
+        print(self.request.GET.get('org_applicant', None))
+        queryset = self.get_queryset()
+        serializer = UserWildlifeLicenceClassSerializer(queryset, many=True, context={'request':request})
+        return Response(serializer.data)
+
+    def get_serializer_context(self):
+        context = super(UserAvailableWildlifeLicencePurposesViewSet, self).get_serializer_context()
+        context.update({
+            "test": 'test context'
+        })
+        return context
