@@ -1,7 +1,7 @@
+from __future__ import unicode_literals
 from django.db import models
 from datetime import datetime
 import json
-from __future__ import unicode_literals
 
 from django.conf import settings
 from collections import OrderedDict
