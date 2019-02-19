@@ -26,10 +26,10 @@
             </template>
             <span v-if="min!='' || max!=''">
                 <input :readonly="readonly" :type="type" :min="min" :max="max" class="form-control" :name="name" :value="value" :required="isRequired" />
-            <span>
+            </span>
             <span v-else>
                 <input :readonly="readonly" :type="type" class="form-control" :name="name" :value="value" :required="isRequired" />
-            <span>
+            </span>
         </div>
         <Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> 
     </div>

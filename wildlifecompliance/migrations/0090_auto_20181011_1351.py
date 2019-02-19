@@ -19,11 +19,31 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='applicationdecisionpropose',
             name='decision_action',
-            field=models.CharField(choices=[('default', 'Default'), ('declined', 'Declined'), ('issued', 'Issued')], default='default', max_length=20, verbose_name='Action'),
+            field=models.CharField(
+                choices=[
+                    ('default',
+                     'Default'),
+                    ('declined',
+                     'Declined'),
+                    ('issued',
+                     'Issued')],
+                default='default',
+                max_length=20,
+                verbose_name='Action'),
         ),
         migrations.AddField(
             model_name='applicationdecisionpropose',
             name='proposed_action',
-            field=models.CharField(choices=[('default', 'Default'), ('propose_decline', 'Propose Decline'), ('propose_issue', 'Propose Issue')], default='default', max_length=20, verbose_name='Action'),
+            field=models.CharField(
+                choices=[
+                    ('default',
+                     'Default'),
+                    ('propose_decline',
+                     'Propose Decline'),
+                    ('propose_issue',
+                     'Propose Issue')],
+                default='default',
+                max_length=20,
+                verbose_name='Action'),
         ),
     ]

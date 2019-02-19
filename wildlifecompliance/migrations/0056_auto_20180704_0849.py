@@ -3,7 +3,7 @@
 from __future__ import unicode_literals
 
 import django.contrib.postgres.fields.jsonb
-from django.db import migrations,models
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -16,6 +16,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='assessment',
             name='licence_activity_type',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.WildlifeLicenceActivityType'),
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='wildlifecompliance.WildlifeLicenceActivityType'),
         ),
     ]

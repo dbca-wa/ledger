@@ -9,13 +9,18 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('wildlifecompliance', '0048_applicationdeclineddetails_activity_type'),
+        ('wildlifecompliance',
+         '0048_applicationdeclineddetails_activity_type'),
     ]
 
     operations = [
         migrations.AlterField(
             model_name='applicationdeclineddetails',
             name='activity_type',
-            field=models.ForeignKey(default=False, null=True, on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.WildlifeLicenceActivityType'),
+            field=models.ForeignKey(
+                default=False,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='wildlifecompliance.WildlifeLicenceActivityType'),
         ),
     ]

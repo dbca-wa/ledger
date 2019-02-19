@@ -16,26 +16,48 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='applicationdeclineddetails',
             name='is_activity_renewable',
-            field=models.BooleanField(default=False),
+            field=models.BooleanField(
+                default=False),
         ),
         migrations.AddField(
             model_name='applicationdeclineddetails',
             name='licence_activity_type',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.WildlifeLicenceActivityType'),
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='wildlifecompliance.WildlifeLicenceActivityType'),
         ),
         migrations.AddField(
             model_name='applicationdeclineddetails',
             name='proposed_end_date',
-            field=models.DateField(blank=True, null=True),
+            field=models.DateField(
+                blank=True,
+                null=True),
         ),
         migrations.AddField(
             model_name='applicationdeclineddetails',
             name='proposed_start_date',
-            field=models.DateField(blank=True, null=True),
+            field=models.DateField(
+                blank=True,
+                null=True),
         ),
         migrations.AddField(
             model_name='applicationdeclineddetails',
             name='status',
-            field=models.CharField(choices=[('default', 'Default'), ('propose_decline', 'Propose Decline'), ('declined', 'Declined'), ('propose_issue', 'Propose Issue'), ('issued', 'Issued')], default='default', max_length=20, verbose_name='Status'),
+            field=models.CharField(
+                choices=[
+                    ('default',
+                     'Default'),
+                    ('propose_decline',
+                     'Propose Decline'),
+                    ('declined',
+                     'Declined'),
+                    ('propose_issue',
+                     'Propose Issue'),
+                    ('issued',
+                     'Issued')],
+                default='default',
+                max_length=20,
+                verbose_name='Status'),
         ),
     ]
