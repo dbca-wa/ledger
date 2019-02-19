@@ -7,6 +7,7 @@ import itertools
 import logging
 logger = logging.getLogger(__name__)
 
+
 class Command(BaseCommand):
     """
     Excecuted from cron, eg:
@@ -25,4 +26,3 @@ class Command(BaseCommand):
         logger.info('Running command {}'.format(__name__))
         writer = ExcelWriter()
         writer.update_workbooks()
-

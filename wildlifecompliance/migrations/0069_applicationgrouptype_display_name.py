@@ -15,7 +15,10 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='applicationgrouptype',
             name='display_name',
-            field=models.CharField(default='Assessor test', max_length=40, verbose_name='Display Group Name'),
+            field=models.CharField(
+                default='Assessor test',
+                max_length=40,
+                verbose_name='Display Group Name'),
             preserve_default=False,
         ),
     ]

@@ -18,18 +18,40 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='OrganisationContactDeclinedDetails',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('officer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
+                ('officer',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.AlterField(
             model_name='organisationcontact',
             name='user_status',
-            field=models.CharField(choices=[('pending', 'Pending'), ('active', 'Active'), ('decline', 'Decline'), ('suspended', 'Suspended')], default='pending', max_length=40, verbose_name='Status'),
+            field=models.CharField(
+                choices=[
+                    ('pending',
+                     'Pending'),
+                    ('active',
+                     'Active'),
+                    ('decline',
+                     'Decline'),
+                    ('suspended',
+                     'Suspended')],
+                default='pending',
+                max_length=40,
+                verbose_name='Status'),
         ),
         migrations.AddField(
             model_name='organisationcontactdeclineddetails',
             name='request',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.OrganisationContact'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='wildlifecompliance.OrganisationContact'),
         ),
     ]

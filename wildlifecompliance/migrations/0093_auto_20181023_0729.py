@@ -18,31 +18,56 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='return',
             name='customer_status',
-            field=models.CharField(choices=[('due', 'Due'), ('future', 'Future'), ('with_assessor', 'Under Review'), ('approved', 'Approved'), ('discarded', 'Discarded')], default='future', max_length=20),
+            field=models.CharField(
+                choices=[
+                    ('due',
+                     'Due'),
+                    ('future',
+                     'Future'),
+                    ('with_assessor',
+                     'Under Review'),
+                    ('approved',
+                     'Approved'),
+                    ('discarded',
+                     'Discarded')],
+                default='future',
+                max_length=20),
         ),
         migrations.AddField(
             model_name='return',
             name='lodgement_date',
-            field=models.DateTimeField(blank=True, null=True),
+            field=models.DateTimeField(
+                blank=True,
+                null=True),
         ),
         migrations.AddField(
             model_name='return',
             name='lodgement_number',
-            field=models.CharField(blank=True, default='', max_length=9),
+            field=models.CharField(
+                blank=True,
+                default='',
+                max_length=9),
         ),
         migrations.AddField(
             model_name='return',
             name='post_reminder_sent',
-            field=models.BooleanField(default=False),
+            field=models.BooleanField(
+                default=False),
         ),
         migrations.AddField(
             model_name='return',
             name='reminder_sent',
-            field=models.BooleanField(default=False),
+            field=models.BooleanField(
+                default=False),
         ),
         migrations.AddField(
             model_name='return',
             name='submitter',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='disturbance_compliances', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='disturbance_compliances',
+                to=settings.AUTH_USER_MODEL),
         ),
     ]

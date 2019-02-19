@@ -17,9 +17,32 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='WildlifeLicenceCategory',
             fields=[
-                ('licencetype_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='licence.LicenceType')),
-                ('licence_category_status', models.CharField(choices=[('current', 'Current'), ('expired', 'Expired'), ('cancelled', 'Cancelled'), ('surrendered', 'Surrendered'), ('suspended', 'Suspended')], default='current', max_length=40)),
+                ('licencetype_ptr',
+                 models.OneToOneField(
+                     auto_created=True,
+                     on_delete=django.db.models.deletion.CASCADE,
+                     parent_link=True,
+                     primary_key=True,
+                     serialize=False,
+                     to='licence.LicenceType')),
+                ('licence_category_status',
+                 models.CharField(
+                     choices=[
+                         ('current',
+                          'Current'),
+                         ('expired',
+                          'Expired'),
+                         ('cancelled',
+                          'Cancelled'),
+                         ('surrendered',
+                          'Surrendered'),
+                         ('suspended',
+                          'Suspended')],
+                     default='current',
+                     max_length=40)),
             ],
-            bases=('licence.licencetype',),
+            bases=(
+                'licence.licencetype',
+            ),
         ),
     ]

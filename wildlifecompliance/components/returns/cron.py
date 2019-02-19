@@ -17,6 +17,10 @@ class CheckDueReturnsCronJob(CronJobBase):
 
     def do(self):
         due_date = date.today() + timedelta(days=self.DUE_DAYS)
-        for ret in Return.objects.filter(due_date=due_date, processing_status__in=['draft', 'future']):
+        for ret in Return.objects.filter(
+            due_date=due_date,
+            processing_status__in=[
+                'draft',
+                'future']):
             ret.customer_status = 'due'
             ret.save

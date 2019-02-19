@@ -15,6 +15,14 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='organisationcontact',
             name='user_role',
-            field=models.CharField(choices=[('organisation_admin', 'Organisation Admin'), ('organisation_user', 'Organisation User')], default='organisation_user', max_length=40, verbose_name='Role'),
+            field=models.CharField(
+                choices=[
+                    ('organisation_admin',
+                     'Organisation Admin'),
+                    ('organisation_user',
+                     'Organisation User')],
+                default='organisation_user',
+                max_length=40,
+                verbose_name='Role'),
         ),
     ]

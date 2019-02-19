@@ -15,6 +15,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='organisationrequest',
             name='identification',
-            field=models.FileField(blank=True, null=True, upload_to='wildlifecompliance/organisation/requests/%Y/%m/%d'),
+            field=models.FileField(
+                blank=True,
+                null=True,
+                upload_to='wildlifecompliance/organisation/requests/%Y/%m/%d'),
         ),
     ]

@@ -7,6 +7,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 
+
 @python_2_unicode_compatible
 class Region(models.Model):
     name = models.CharField(max_length=200, blank=False, unique=True)
@@ -17,6 +18,7 @@ class Region(models.Model):
     class Meta:
         ordering = ['name']
         app_label = 'wildlifecompliance'
+
 
 @python_2_unicode_compatible
 class UserAction(models.Model):
@@ -35,17 +37,25 @@ class UserAction(models.Model):
         abstract = True
         app_label = 'wildlifecompliance'
 
+
 class CommunicationsLogEntry(models.Model):
-    TYPE_CHOICES = [('email', 'Email'), ('phone', 'Phone Call'), ('main', 'Mail'), ('person', 'In Person')]
+    TYPE_CHOICES = [('email', 'Email'), ('phone', 'Phone Call'),
+                    ('main', 'Mail'), ('person', 'In Person')]
     DEFAULT_TYPE = TYPE_CHOICES[0][0]
 
     to = models.CharField(max_length=200, blank=True, verbose_name="To")
     fromm = models.CharField(max_length=200, blank=True, verbose_name="From")
     cc = models.CharField(max_length=200, blank=True, verbose_name="cc")
 
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
+    type = models.CharField(
+        max_length=20,
+        choices=TYPE_CHOICES,
+        default=DEFAULT_TYPE)
     reference = models.CharField(max_length=100, blank=True)
-    subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
+    subject = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="Subject / Description")
     text = models.TextField(blank=True)
 
     customer = models.ForeignKey(EmailUser, null=True, related_name='+')
@@ -55,6 +65,7 @@ class CommunicationsLogEntry(models.Model):
 
     class Meta:
         app_label = 'wildlifecompliance'
+
 
 @python_2_unicode_compatible
 class Document(models.Model):

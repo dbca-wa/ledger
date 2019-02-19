@@ -15,16 +15,35 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='organisationcontact',
             name='user_status',
-            field=models.CharField(choices=[('pending', 'Pending'), ('active', 'Active'), ('suspended', 'Suspended')], default='pending', max_length=40, verbose_name='Status'),
+            field=models.CharField(
+                choices=[
+                    ('pending',
+                     'Pending'),
+                    ('active',
+                     'Active'),
+                    ('suspended',
+                     'Suspended')],
+                default='pending',
+                max_length=40,
+                verbose_name='Status'),
         ),
         migrations.AlterField(
             model_name='organisationcontact',
             name='is_admin',
-            field=models.BooleanField(default=False),
+            field=models.BooleanField(
+                default=False),
         ),
         migrations.AlterField(
             model_name='organisationcontact',
             name='user_role',
-            field=models.CharField(choices=[('company_admin', 'Company Admin'), ('company_user', 'Company User')], default='company_user', max_length=40, verbose_name='Role'),
+            field=models.CharField(
+                choices=[
+                    ('company_admin',
+                     'Company Admin'),
+                    ('company_user',
+                     'Company User')],
+                default='company_user',
+                max_length=40,
+                verbose_name='Role'),
         ),
     ]
