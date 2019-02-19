@@ -297,7 +297,7 @@ class LicenceLogEntry(CommunicationsLogEntry):
         # save the application reference if the reference not provided
         if not self.reference:
             self.reference = self.licence.id
-        super(ApplicationLogEntry, self).save(**kwargs)
+        super(LicenceLogEntry, self).save(**kwargs)
 
 
 class LicenceUserAction(UserAction):

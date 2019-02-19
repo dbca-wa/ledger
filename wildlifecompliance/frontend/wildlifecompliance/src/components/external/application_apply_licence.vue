@@ -61,7 +61,6 @@
                                     <strong>Estimated licence fee: {{licence_fee | toCurrency}}</strong><br>
                                 </div>
                             </div>
-                            </div>
                         </form>
                     </div>
                 </div>
