@@ -10,9 +10,10 @@ CHECKOUT_PATH = re.compile('^/ledger/checkout/checkout')
 
 class BookingTimerMiddleware(object):
     def process_request(self, request):
-        print "REQUEST SESSION" 
+        print ("REQUEST SESSION")
         #print request.session['ps_booking']
         if 'ad_booking' in request.session:
+            print ("ADMISSION MIDDLE WARE")
             try:
                 booking = AdmissionsBooking.objects.get(pk=request.session['ad_booking'])
             except:
@@ -28,7 +29,7 @@ class BookingTimerMiddleware(object):
                 booking.save()
 
         if 'ps_booking' in request.session:
-            print request.session['ps_booking']
+            print ("BOOKING SESSION : "+str(request.session['ps_booking']))
             try:
                 booking = Booking.objects.get(pk=request.session['ps_booking'])
             except:

@@ -400,24 +400,12 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
             else:
                 if MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end=None).count() > 0:
                      mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end=None).order_by('-date_start')[0]
-#           mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk)[0]
-#            print "DATE ROTATE START"
-#            print site
-#            print date_rotate_forward
-#            print mooring_rate
-#            print "DATE ROTATE END"         
             booking_period = {}
             selection_period = {}
             bp_result = []
-#            print 'OPEN MOORING'
-#            print i
-#            print mooring_rate
-#            print date_rotate_forward
 
             if mooring_rate:
                 bp_result =  mooring_rate.booking_period.booking_period.all()
-                print "BP"
-                print bp_result
                 for bp in bp_result:
                     booking_period[bp.pk] = 'open'
                     selection_period[bp.pk] = 0
@@ -573,8 +561,6 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
         stop_mark = min(max(stop, start_date), end_date)
         for i in range((end_date-stop_mark).days):
             results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
-    print "RESULTS"
-    print results
     return results
 
 
@@ -621,9 +607,6 @@ def get_visit_rates(campsites_qs, start_date, end_date):
             results[rate.campsite.pk][start+timedelta(days=i)]['concession'] = str(rate.rate.concession)
             results[rate.campsite.pk][start+timedelta(days=i)]['child'] = str(rate.rate.child)
             results[rate.campsite.pk][start+timedelta(days=i)]['infant'] = str(rate.rate.infant)
-            print "RATE 2 - "+str(rate.campsite.pk)
-            print start+timedelta(days=i)
-            print booking_period
             for b in booking_period:
                 booking_period_row = {'id':b.id, 'period_name' : b.period_name, 'small_price': format(b.small_price,'.2f'), 'medium_price': format(b.medium_price,'.2f'), 'large_price' : format(b.large_price,'.2f'), 'start_time' : b.start_time, 'finish_time' : b.finish_time,'all_day' : b.all_day, 'created' : b.created }
 #                booking_period_row = {} 
@@ -836,7 +819,6 @@ def calculate_price_booking_change(old_booking, new_booking):
 
     old_booking_mooring = MooringsiteBooking.objects.filter(booking=old_booking)
     booking_changes = MooringsiteBooking.objects.filter(booking=new_booking)
-    print old_booking_mooring
     change_fees = []
     adjustment_fee = Decimal('0.00')
     #{'additional_fees': 'true', 'description': 'Booking Change Fee','amount': Decimal('0.00')}
@@ -848,37 +830,18 @@ def calculate_price_booking_change(old_booking, new_booking):
                 changed = False
          from_dt = datetime.strptime(ob.from_dt.strftime('%Y-%m-%d'),'%Y-%m-%d')
          daystillbooking =  (from_dt-nowtimec).days
-#         print "DAYS"
-#         print daystillbooking
-
-#         print "CHANGED STATUS"
-#         print changed
-         print "BOOKING PERIOD"
-         print (ob.booking_period_option)
-         print (ob.booking_period_option.change_group)
          refund_policy = None
          if changed is True:
-             print " --START--- "
-             print ob.campsite.mooringarea.name
              change_fee_amount = '0.00' 
  #            change_price_period = ChangePricePeriod.objects.filter(id=ob.booking_period_option.change_group_id).order_by('-days')
              change_group =  ChangeGroup.objects.get(id=ob.booking_period_option.change_group_id)
              change_price_period = change_group.change_period.all().order_by('days')
-             print change_price_period
              for cpp in change_price_period:
-                  print cpp.id
-                  print cpp.percentage
-                  print cpp.days
-                  print "DA:"
                   if daystillbooking < 0:
                        daystillbooking = 0
-                  print daystillbooking
 #                  if cpp.days >= daystillbooking:
                   if daystillbooking >= cpp.days:
                       refund_policy =cpp
-             print "REFUND POLICY"
-             print refund_policy
-             print daystillbooking
              if refund_policy:
                 if refund_policy.calulation_type == 0:
                     # Percentage
@@ -892,7 +855,6 @@ def calculate_price_booking_change(old_booking, new_booking):
                 change_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount), 'oracle_code': str(ob.campsite.mooringarea.oracle_code)})
              else:
                  print "NO REFUND POLICY" 
-             print "--END --"
                
          else:
              #description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
@@ -1052,7 +1014,6 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
             else:
                 raise Exception('Please alert {} of the following error message:\nAdmissions Oracle Code missing.').format(adLine['group'])
 
-    print daily_rates
 
     if not daily_rates or daily_rates == []:
         raise Exception('There was an error while trying to get the daily rates.')
@@ -1499,8 +1460,6 @@ def admissionsCheckout(request, admissionsBooking, lines, invoice_text=None, vou
     }
     
     basket, basket_hash = create_basket_session(request, basket_params)
-    print(basket)
-    print(basket_hash)
     checkout_params = {
         'system': settings.PS_PAYMENT_SYSTEM_ID,
         'fallback_url': request.build_absolute_uri('/'),
@@ -1649,6 +1608,7 @@ def old_internal_create_booking_invoice(booking, checkout_response):
     return book_inv
 
 def internal_create_booking_invoice(booking, reference):
+    print "-== internal_create_booking_invoice == -"
     try:
         Invoice.objects.get(reference=reference)
     except Invoice.DoesNotExist:
@@ -1686,6 +1646,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
                     if 'invoice=' in h.url:
                         invoice = h.url.split('invoice=', 1)[1]
                         break
+            print "-== internal_booking ==-"
             internal_create_booking_invoice(booking, invoice)
             delete_session_booking(request.session)
             send_booking_invoice(booking)
@@ -1860,8 +1821,6 @@ def mooring_group_access_level_cancel_options(cg,pk,request):
  
 def mooring_group_access_level_booking_period(pk,request):
      mooring_groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
-     print "MOORING GROUPS - mooring_group_access_level_booking_period"
-     print mooring_groups
      if request.user.is_superuser is True:
           return True
      else:

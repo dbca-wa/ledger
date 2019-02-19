@@ -700,8 +700,6 @@ def add_booking(request, *args, **kwargs):
     #validate_temp_booking = MooringsiteBooking.objects.filter(campsite=mooringsite,from_dt__gte=from_dt_utc,to_dt__lte=to_dt_utc,booking__expiry_time__gte=datetime.today(), booking_type__in=[3]).count()
     #validate_existing_booking = MooringsiteBooking.objects.filter(campsite=mooringsite,from_dt__gte=from_dt_utc,to_dt__lte=to_dt_utc).exclude(booking_type__in=[3,4]).count()
     existing_booking_check = utils.check_mooring_available_by_time(mooringsite.id,from_dt_utc,to_dt_utc)
-    print "existing_booking_check"
-    print existing_booking_check
     if existing_booking_check is True:
         response_data['result'] = 'error'
         response_data['message'] = 'Sorry booking has already been taken by another booking.' 
@@ -756,7 +754,6 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             queryset = self.get_queryset()
             cache.set('moorings_dt',queryset,3600)
         qs = [c for c in queryset.all() if can_view_campground(request.user,c)]
-        print "DEBUG: ", qs
         serializer = MooringAreaDatatableSerializer(qs,many=True)
         data = serializer.data
         return Response(data)
@@ -776,7 +773,6 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        #print request.GET.get("formatted", False)
         formatted = bool(request.GET.get("formatted", False))
         groups =  MooringAreaGroup.objects.filter(members__in=[request.user.id,],moorings__in=[instance.id,])
         if groups.count() > 0:
@@ -1296,9 +1292,7 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                 serializer = MooringAreaBookingRangeSerializer(self.get_object().booking_ranges.filter(~Q(status=0)).order_by('-range_start'),many=True)
             else:
                 serializer = MooringAreaBookingRangeSerializer(self.get_object().booking_ranges,many=True)
-            print "GETTING RESULTS"
             res = serializer.data
-            print "GOT THE RESULTS"
 
             return Response(res,status=http_status)
         except serializers.ValidationError:
@@ -2250,7 +2244,6 @@ def create_admissions_booking(request, *args, **kwargs):
     #     result = utils.admissionsCheckout(request, admissionsBooking, lines, invoice_text=invoice, internal=True)
     # else:
     result = utils.admissionsCheckout(request, admissionsBooking, lines, invoice_text=invoice)
-    print(result)
     if(result):
         return result
     else:
@@ -2865,7 +2858,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sqlParams['start'] = start
 
             sql += ';'
-            print "SQL"
+            print ("SQL")
             print(sql)
 
             cursor = connection.cursor()
@@ -3666,7 +3659,6 @@ class BulkPricingView(generics.CreateAPIView):
             http_status = status.HTTP_200_OK
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            print(serializer.validated_data)
 
             rate_id = serializer.data.get('rate',None)
             if rate_id:
@@ -3712,7 +3704,6 @@ class AdmissionsRatesViewSet(viewsets.ModelViewSet):
     def get_price(self, request, format='json', pk=None):
         http_status = status.HTTP_200_OK
         try:
-            print request.data
             date = request.GET.get('date')
             if date:
                 if request.user.is_staff:
@@ -3781,24 +3772,20 @@ class AdmissionsRatesViewSet(viewsets.ModelViewSet):
     @list_route(methods=['post'],)
     def add_price(self, request, format='json', pk=None):
         try:
-            print (request.data['period_start'])
             http_status = status.HTTP_200_OK
             start = datetime.strptime(request.data['period_start'], '%Y-%m-%d').date() + timedelta(days=-1)
             group = MooringAreaGroup.objects.filter(members__in=[request.user,])
             request.POST._mutable = True
-            print group.count()
             if group.count() == 1:
                 request.data['mooring_group'] = group[0].id
             else:
                 raise ValueError('Must belong to exactly 1 mooring group when adding admissions fees.');
             request.data['period_start'] = start
             request.POST._mutable = False
-            print (start)
             serializer = AdmissionsRateSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             res = serializer.data
-            print (res)
             return Response(res,status=http_status)
         except serializers.ValidationError:
             raise

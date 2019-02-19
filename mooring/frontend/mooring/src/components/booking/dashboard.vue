@@ -828,7 +828,8 @@ export default {
                 //var fields = [...vm.dtHeaders];
                 var fields = [...fields,...vm.dtHeaders];
                 fields.splice(vm.dtHeaders.length-1,1);
-                fields = ['Created', 'Confirmation No', 'Person', 'Email', 'Phone', 'Vessel Rego', 'Amount Due', 'Amount Paid',"Status", "Mooring", "Region", "Arrival", "Departure", "Adults","Concession","Children","Infants","Cancelled","Cancellation Reason","Cancelation Date","Cancelled By", 'Booking Type']
+                fields = ['Created', 'Confirmation No', 'Person', 'Email', 'Phone', 'Vessel Rego', 'Amount Due', 'Amount Paid',"Status", "Mooring", "Region", "Arrival", "Departure", "Adults","Concession","Children","Infants",'Booking Type','Invoices']
+                //fields = ['Created', 'Confirmation No', 'Person', 'Email', 'Phone', 'Vessel Rego', 'Amount Due', 'Amount Paid',"Status", "Mooring", "Region", "Arrival", "Departure", "Adults","Concession","Children","Infants","Cancelled","Cancellation Reason","Cancelation Date","Cancelled By", 'Booking Type','Invoices']
                 // fields = [...fields,"Adults","Concession","Children","Infants","Regos","Cancelled","Cancellation Reason","Cancelation Date","Cancelled By"]
                 // fields.splice(4,0,"Email");
                 // fields.splice(5,0,"Phone");
@@ -881,7 +882,7 @@ export default {
                                 bk[field] = booking.amount_paid;
                             break;
                             case 8:
-                                bk[field] = booking.status;
+                                bk[field] = booking.invoice_status;
                             break;
                             case 9:
                                 var name_list = []
@@ -929,25 +930,29 @@ export default {
                             case 16:
                                 bk[field] =  booking.guests.infants;
                             break;
+//                            case 17:
+//                                bk[field] = booking.is_canceled;
+//                            break;
+//                            case 18:
+//                                bk[field] = booking.cancelation_reason;
+//                            break;
+//                            case 19:
+//                                bk[field] = booking.cancelation_time ? Moment(booking.cancelation_time).format("DD/MM/YYYY HH:mm:ss") : '';
+//                            break;
+//                            case 20:
+//                                bk[field] = booking.canceled_by;
+//                            break;
                             case 17:
-                                bk[field] = booking.is_canceled;
-                            break;
-                            case 18:
-                                bk[field] = booking.cancelation_reason;
-                            break;
-                            case 19:
-                                bk[field] = booking.cancelation_time ? Moment(booking.cancelation_time).format("DD/MM/YYYY HH:mm:ss") : '';
-                            break;
-                            case 20:
-                                bk[field] = booking.canceled_by;
-                            break;
-                            case 21:
                                 if (typeof booking_types[booking.booking_type] !== 'undefined') {
                                     bk[field] = booking_types[booking.booking_type];
                                 } else {
                                     bk[field] = booking.booking_type;
                                 }
                             break;                   
+                            case 18:
+                                bk[field] = booking.invoices;
+                            break;
+
                         }
                     });
                     bookings.push(bk);

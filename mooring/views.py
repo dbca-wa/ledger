@@ -210,14 +210,9 @@ class CancelBookingView(TemplateView):
         booking_invoice = BookingInvoice.objects.filter(booking=booking)
         for bi in booking_invoice:
             inv = Invoice.objects.filter(reference=bi.invoice_reference)
-            print inv
             for i in inv:
                 for b in i.bpoint_transactions:
                    if b.action == 'payment':
-                      print b.refundable_amount
-                      print b.last_digits
-                      print b.type
-                      print b.action
                       bpoint_id = b.id
 
         return bpoint_id
@@ -306,14 +301,9 @@ class CancelAdmissionsBookingView(TemplateView):
         booking_invoice = AdmissionsBookingInvoice.objects.filter(admissions_booking=booking)
         for bi in booking_invoice:
             inv = Invoice.objects.filter(reference=bi.invoice_reference)
-            print inv
             for i in inv:
                 for b in i.bpoint_transactions:
                    if b.action == 'payment':
-                      print b.refundable_amount
-                      print b.last_digits
-                      print b.type
-                      print b.action
                       bpoint_id = b.id
 
         return bpoint_id
@@ -364,11 +354,6 @@ class CancelAdmissionsBookingView(TemplateView):
             booking_invoice = AdmissionsBookingInvoice.objects.filter(admissions_booking=booking).order_by('id')
             for bi in booking_invoice:
                 invoice = Invoice.objects.get(reference=bi.invoice_reference)
-                print invoice
-        print "INVOICE POST"
-        print invoice
-
-
             
         invoice.voided = True
         invoice.save()
@@ -391,17 +376,11 @@ class RefundPaymentView(TemplateView):
         form = MakeBookingsForm(form_context)
 
         booking_invoice = BookingInvoice.objects.filter(booking=booking.old_booking)
-        print "BOOKING INVOICE"
         for bi in booking_invoice:
             inv = Invoice.objects.filter(reference=bi.invoice_reference)
-            print inv
             for i in inv:
                 for b in i.bpoint_transactions:
                    if b.action == 'payment':
-                      print b.refundable_amount
-                      print b.last_digits
-                      print b.type
-                      print b.action
                       bpoint_id = b.id
 
         return booking,bpoint_id
@@ -512,9 +491,6 @@ class ZeroBookingView(TemplateView):
              booking_invoice = BookingInvoice.objects.filter(booking=booking.old_booking).order_by('id')
              for bi in booking_invoice:
                  invoice = Invoice.objects.get(reference=bi.invoice_reference)
-                 print invoice
-             print "INVOICE POST"
-             print invoice
 
              order_response = place_order_submission(request)
              new_order = Order.objects.get(basket=basket)
@@ -861,7 +837,6 @@ class MakeBookingsView(TemplateView):
         admissions = []
 
         admissionsTotal = 0
-        print admissionsJson
 
         for line in admissionsJson:
             group = line['group']
@@ -917,24 +892,18 @@ class MakeBookingsView(TemplateView):
            if booking.old_booking.admission_payment:
                booking_change_fees = utils.calculate_price_admissions_changecancel(booking.old_booking.admission_payment, booking_change_fees)
            lines = utils.price_or_lineitems_extras(request,booking,booking_change_fees,lines) 
-        print "=========================================="
-        print booking.details
         
         if 'non_online_booking' in booking.details:
             if booking.details['non_online_booking'] is True:
-                print "Inside non_online booking"
                 groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
-                print groups
                 if groups.count() == 1:
                     if GlobalSettings.objects.filter(key=17, mooring_group=groups[0]).count() == 0:
                         form.add_error(None, 'Non-Online Booking fee oracle code missing for {}.'.format(str(groups[0])))
                         return self.render_page(request, booking, form, vehicles, show_errors=True)
                    
                     oracle_code_non_online = GlobalSettings.objects.filter(key=17, mooring_group=groups[0])[0].value
-                    print oracle_code_non_online
                     if oracle_code_non_online:
                         booking_line = utils.nononline_booking_lineitems(oracle_code_non_online, request)
-                        print booking_line
                         for line in booking_line:
                             lines.append(line)
         from_earliest = None
@@ -1000,24 +969,24 @@ class MakeBookingsView(TemplateView):
         # FIXME: get feedback on whether to overwrite personal info if the EmailUser
         # already exists
 
-
-        adBooking = AdmissionsBooking.objects.create(customer=customer, booking_type=3, vesselRegNo=rego, noOfAdults=booking.details['num_adult'],
-            noOfConcessions=0, noOfChildren=booking.details['num_child'], noOfInfants=booking.details['num_infants'], totalCost=admissionsTotal, created=datetime.now())
-        
-        for line in admissionsJson:
-            loc = AdmissionsLocation.objects.filter(mooring_group=line['group'])[0]
-            if line['from'] == line['to']:
-                overnight = False
-            else:
-                overnight = True
-            from_date = datetime.strptime(line['from'], '%d %b %Y').strftime('%Y-%m-%d')
-            AdmissionsLine.objects.create(arrivalDate=from_date, admissionsBooking=adBooking, overnightStay=overnight, cost=line['admissionFee'], location=loc)
+        if booking.details['num_adult'] > 0:
+            adBooking = AdmissionsBooking.objects.create(customer=customer, booking_type=3, vesselRegNo=rego, noOfAdults=booking.details['num_adult'],
+                noOfConcessions=0, noOfChildren=booking.details['num_child'], noOfInfants=booking.details['num_infants'], totalCost=admissionsTotal, created=datetime.now())
+            
+            for line in admissionsJson:
+                loc = AdmissionsLocation.objects.filter(mooring_group=line['group'])[0]
+                if line['from'] == line['to']:
+                    overnight = False
+                else:
+                    overnight = True
+                from_date = datetime.strptime(line['from'], '%d %b %Y').strftime('%Y-%m-%d')
+                AdmissionsLine.objects.create(arrivalDate=from_date, admissionsBooking=adBooking, overnightStay=overnight, cost=line['admissionFee'], location=loc)
+            booking.admission_payment = adBooking
  
         # finalise the booking object
         if booking.customer is None:
             booking.customer = customer
         booking.cost_total = total
-        booking.admission_payment = adBooking
         booking.save()
 
 
@@ -1530,8 +1499,6 @@ class RefundFailedView(ListView):
             else:
                 query = Q(status=context['status'])
             if context['keyword'].isdigit():
-                print "YES DIGIT"
-                print context['keyword'] 
                 query &= Q(Q(invoice_reference__icontains=context['keyword']) | Q(booking_id=int(context['keyword'])))
             else:
                 query &= Q(Q(invoice_reference__icontains=context['keyword']))
@@ -1792,7 +1759,6 @@ class BookingPeriodAddOption(CreateView):
     def get_context_data(self, **kwargs):
         context = super(BookingPeriodAddOption, self).get_context_data(**kwargs)
         #context['query_string'] = ''
-        print self.kwargs
         context['bp_group_id'] = self.kwargs['bp_group_id']
         return context
 
@@ -1858,7 +1824,6 @@ class BookingPeriodEditOption(UpdateView):
     def get_context_data(self, **kwargs):
         context = super(BookingPeriodEditOption, self).get_context_data(**kwargs)
         #context['query_string'] = ''
-        print self.kwargs
         context['bp_group_id'] = self.kwargs['bp_group_id']
         return context
 
@@ -2019,10 +1984,10 @@ class AdmissionsBookingSuccessView(TemplateView):
 
                 try:
                     b = AdmissionsBookingInvoice.objects.get(invoice_reference=invoice_ref)
-                    logger.error('{} tried making a booking with an already used invoice with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
+                    logger.error('{} tried making an admission booking with an already used invoice with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
                     return redirect('admissions')
                 except AdmissionsBookingInvoice.DoesNotExist:
-                    logger.info('{} finished temporary booking {}, creating new BookingInvoice with reference {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id, invoice_ref))
+                    logger.info('{} finished temporary booking {}, creating new AdmissionBookingInvoice with reference {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id, invoice_ref))
                     # FIXME: replace with server side notify_url callback
                     admissionsInvoice = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=booking, invoice_reference=invoice_ref)
 
@@ -2061,7 +2026,7 @@ class BookingSuccessView(TemplateView):
     template_name = 'mooring/booking/success.html'
 
     def get(self, request, *args, **kwargs):
-        print " BOOKING SUCCESS " 
+        print (" BOOKING SUCCESS ")
         try:
             context_processor = template_context(self.request)
             booking = utils.get_session_booking(request.session)
@@ -2091,21 +2056,16 @@ class BookingSuccessView(TemplateView):
 
                     if booking.old_booking:
                         old_booking = Booking.objects.get(id=booking.old_booking.id)
-                        logger.info("old booking")
                         old_booking.booking_type = 4
                         old_booking.save()
-                        logger.info("old logger 2")
                         booking_items = MooringsiteBooking.objects.filter(booking=old_booking)
-                        logger.info("old logger 3")
                         # Find admissions booking for old booking
                         old_booking.admission_payment.booking_type = 4
                         old_booking.admission_payment.save()
                         for bi in booking_items:
-                            logger.info("old logger 4")
                             bi.booking_type = 4
                             bi.save()
 
-                          
                     msb = MooringsiteBooking.objects.filter(booking=booking).order_by('from_dt')
                     from_date = msb[0].from_dt
                     to_date = msb[msb.count()-1].to_dt
@@ -2218,25 +2178,24 @@ class BookingSuccessView(TemplateView):
 
                         # ad_booking.totalCost = total
                         # ad_booking.save()
-                    ad_booking = AdmissionsBooking.objects.get(pk=booking.admission_payment.pk)
-                    ad_booking.booking_type=1
-                    ad_booking.save()
-                    ad_invoice = AdmissionsBookingInvoice.objects.create(admissions_booking=ad_booking, invoice_reference=invoice_ref)
+                    if booking.admission_payment:
+                         ad_booking = AdmissionsBooking.objects.get(pk=booking.admission_payment.pk)
+                         ad_booking.booking_type=1
+                         ad_booking.save()
+                         ad_invoice = AdmissionsBookingInvoice.objects.create(admissions_booking=ad_booking, invoice_reference=invoice_ref)
                         # booking.admission_payment = ad_booking
                     booking.save()
-
                     #if not request.user.is_staff:
                     #    print "USER IS NOT STAFF."
                     request.session['ps_last_booking'] = booking.id
                     utils.delete_session_booking(request.session)
-                    
                     # send out the invoice before the confirmation is sent if total is greater than zero
                     if booking.cost_total > 0: 
                         emails.send_booking_invoice(booking,request,context_processor)
                     # for fully paid bookings, fire off confirmation email
                     if booking.invoice_status == 'paid':
                         emails.send_booking_confirmation(booking,request, context_processor)
-
+                       
         except Exception as e:
 #            if 'ps_booking_internal' in request.COOKIES:
 #                print "INTERNAL REDIRECT"
@@ -2377,7 +2336,7 @@ class ChangeBookingView(LoginRequiredMixin, TemplateView):
 #             booking = Booking.objects.get(customer=request.user, booking_type__in=(0, 1), is_canceled=False, pk=booking_id)
              booking = Booking.objects.get(pk=booking_id)
              if booking.booking_type == 4:
-                  print "BOOKING HAS BEEN CANCELLED"
+                  print ("BOOKING HAS BEEN CANCELLED")
                   return HttpResponseRedirect(reverse('home'))
                  
              booking_temp = Booking.objects.create(mooringarea=booking.mooringarea,
