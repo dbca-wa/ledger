@@ -2,14 +2,14 @@ from wildlifecompliance.components.licences.models import (
     WildlifeLicence,
     WildlifeLicenceClass,
     WildlifeLicenceActivityType,
-    WildlifeLicenceActivity
-)
+    WildlifeLicenceActivity)
 from wildlifecompliance.components.applications.serializers import BaseApplicationSerializer
 from rest_framework import serializers
 
 
 class WildlifeLicenceSerializer(serializers.ModelSerializer):
-    licence_document = serializers.CharField(source='licence_document._file.url')
+    licence_document = serializers.CharField(
+        source='licence_document._file.url')
     status = serializers.CharField(source='get_status_display')
     current_application = BaseApplicationSerializer(read_only=True)
 
@@ -62,7 +62,8 @@ class DefaultActivityTypeSerializer(serializers.ModelSerializer):
             'activity',
             'short_name',
             'not_for_organisation'
-        ) 
+        )
+
 
 
 class WildlifeLicenceClassSerializer(serializers.ModelSerializer):
@@ -77,7 +78,7 @@ class WildlifeLicenceClassSerializer(serializers.ModelSerializer):
             'short_name',
             'class_status',
             'activity_type'
-            
+
         )
 
     def get_class_status(self, obj):

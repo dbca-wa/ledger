@@ -14,12 +14,14 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RemoveField(
             model_name='wildlifelicencecategory',
-            name='activity',            
+            name='activity',
         ),
-         migrations.AddField(
+        migrations.AddField(
             model_name='wildlifelicencecategory',
             name='activity',
-            field=models.ManyToManyField(blank=True, through='wildlifecompliance.DefaultActivity', to='wildlifecompliance.WildlifeLicenceActivityType'),
+            field=models.ManyToManyField(
+                blank=True,
+                through='wildlifecompliance.DefaultActivity',
+                to='wildlifecompliance.WildlifeLicenceActivityType'),
         ),
-        
     ]

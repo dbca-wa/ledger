@@ -15,6 +15,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='organisationrequest',
             name='role',
-            field=models.CharField(choices=[('employee', 'Employee'), ('auth_agent', 'Authorised Agent')], default='employee', max_length=100),
+            field=models.CharField(
+                choices=[
+                    ('employee',
+                     'Employee'),
+                    ('auth_agent',
+                     'Authorised Agent')],
+                default='employee',
+                max_length=100),
         ),
     ]

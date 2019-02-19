@@ -1,4 +1,4 @@
-from django.http import HttpResponse,JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import View, TemplateView
@@ -6,12 +6,14 @@ from wildlifecompliance.components.applications.utils import create_data_from_fo
 from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.applications.email import send_application_invoice_email_notification
 from wildlifecompliance.components.main.utils import get_session_application, delete_session_application, bind_application_to_invoice
-import json,traceback
+import json
+import traceback
 from wildlifecompliance.exceptions import BindApplicationException
 import xlwt
 from wildlifecompliance.utils import serialize_export, unique_column_names
 from datetime import datetime
 from wildlifecompliance.utils.excel_utils import ExcelWriter
+
 
 class ApplicationView(TemplateView):
     template_name = 'wildlifecompliance/application.html'
@@ -23,16 +25,18 @@ class ApplicationView(TemplateView):
             application_id = request.POST.pop('application_id')
             application = Application.objects.get(application_id)
             schema = json.loads(request.POST.pop('schema')[0])
-            extracted_fields = create_data_from_form(schema,request.POST, request.FILES)
-            application.schema = schema;
+            extracted_fields = create_data_from_form(
+                schema, request.POST, request.FILES)
+            application.schema = schema
             application.data = extracted_fields
             print(application_id)
             print(application)
             application.save()
             return redirect(reverse('external'))
-        except:
+        except BaseException:
             traceback.print_exc
-            return JsonResponse({error:"something went wrong"},safe=False,status=400)
+            return JsonResponse(
+                {error: "something went wrong"}, safe=False, status=400)
 
 
 class ApplicationSuccessView(TemplateView):
@@ -46,11 +50,13 @@ class ApplicationSuccessView(TemplateView):
             invoice_ref = request.GET.get('invoice')
             try:
                 bind_application_to_invoice(request, application, invoice_ref)
-                invoice_url = request.build_absolute_uri(reverse('payments:invoice-pdf', kwargs={'reference': invoice_ref}))
+                invoice_url = request.build_absolute_uri(
+                    reverse('payments:invoice-pdf', kwargs={'reference': invoice_ref}))
                 if (application.payment_status == 'paid'):
-                    send_application_invoice_email_notification(application, invoice_ref, request)
+                    send_application_invoice_email_notification(
+                        application, invoice_ref, request)
                 else:
-                    #TODO: check if this ever occurs from the above code and provide error screen for user
+                    # TODO: check if this ever occurs from the above code and provide error screen for user
                     # console.log('Invoice remains unpaid')
                     delete_session_application(request.session)
                     return redirect(reverse('external'))
@@ -73,11 +79,11 @@ class ApplicationSuccessView(TemplateView):
         delete_session_application(request.session)
         return render(request, self.template_name, context)
 
-#def update_workbooks(request):
+# def update_workbooks(request):
 #    writer = ExcelWriter()
 #    writer.update_workbooks()
 #
-#def export_applications(request):
+# def export_applications(request):
 #    filename = 'wildlife_compliance_applications_{}.xls'.format(datetime.now().strftime('%Y%m%dT%H%M%S'))
 #    response = HttpResponse(content_type='application/ms-excel')
 #    response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
@@ -125,7 +131,7 @@ class ApplicationSuccessView(TemplateView):
 #            ws.write(row_num, col_num, labels[col_num], font_style)
 #        row_num += 1
 #
-## Sheet body, remaining rows
+# Sheet body, remaining rows
 #        font_style = xlwt.XFStyle()
 #
 #        rows = [row['key'] for row in s]
@@ -137,4 +143,3 @@ class ApplicationSuccessView(TemplateView):
 #
 #    wb.save(response)
 #    return response
-

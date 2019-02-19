@@ -7,11 +7,13 @@ from django.utils import six
 from django.utils.text import Truncator
 from django.http import HttpResponse
 
-import xlrd, xlwt
+import xlrd
+import xlwt
 import os
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 def read_workbook(input_filename):
     """
@@ -36,10 +38,11 @@ def read_workbook(input_filename):
                     wb_response_sets[name].append(label_object)
         return wb_response_sets
     else:
-        logger.error('{0} does not appear to be a valid file'.format(input_filename))
+        logger.error(
+            '{0} does not appear to be a valid file'.format(input_filename))
 
 
-#def write_workbook():
+# def write_workbook():
 #    filename = 'wildlife_compliance_applications_{}.xls'.format(datetime.now().strftime('%Y%m%dT%H%M%S'))
 
 #    wb = xlwt.Workbook(encoding='utf-8')
@@ -143,7 +146,10 @@ def get_cell_neighbour(cell, direction='down'):
     elif direction == 'left':
         return cell.offset(column=-1)
     else:
-        raise Exception("Invalid Direction: " + direction + ". Should be [down|up|right|left]")
+        raise Exception(
+            "Invalid Direction: " +
+            direction +
+            ". Should be [down|up|right|left]")
 
 
 def is_blank_value(value):
@@ -174,7 +180,13 @@ def get_value_for_key(ws, key, direction='down'):
     return result
 
 
-def write_values(ws, top_left_row, top_left_column, values, direction='right', font=None):
+def write_values(
+        ws,
+        top_left_row,
+        top_left_column,
+        values,
+        direction='right',
+        font=None):
     top_cell = ws.cell(row=top_left_row, column=top_left_column)
     write_values_from_cell(top_cell, values, direction, font)
     return ws
@@ -210,7 +222,7 @@ def append_column(ws, values):
 
 
 def create_list_validation(value, strict=True, allow_blank=True):
-    if type(value) == list:
+    if isinstance(value, list):
         formula = _build_list_formula(value)
     else:
         formula = value
@@ -247,12 +259,20 @@ class TableData:
     :param transpose: if true the the table is a transposed one. Columns are rows and rows are columns
     """
 
-    def __init__(self, worksheet, top_left_row=1, top_left_column=1, nb_cols=None, nb_rows=None, transpose=False):
+    def __init__(
+            self,
+            worksheet,
+            top_left_row=1,
+            top_left_column=1,
+            nb_cols=None,
+            nb_rows=None,
+            transpose=False):
         self.worksheet = worksheet
         self.top_left_row = top_left_row
         self.top_left_column = top_left_column
         self.transpose = transpose
-        self.top_left_cell = worksheet.cell(row=top_left_row, column=top_left_column)
+        self.top_left_cell = worksheet.cell(
+            row=top_left_row, column=top_left_column)
         self.column_headers = self._parse_column_headers()
         self.rows = self._parse_rows()
 
@@ -289,7 +309,8 @@ class TableData:
                 if col_header not in data:
                     data[col_header] = row[i]
                 else:
-                    # if they are two columns with the same header we store it with with a appended _i
+                    # if they are two columns with the same header we store it
+                    # with with a appended _i
                     count = 1
                     key = col_header + '_' + str(count)
                     while key in data:
@@ -367,7 +388,11 @@ class ExcelFileResponse(HttpResponse):
                 file_name += '.xlsx'
             content_disposition += ' filename=' + file_name
 
-        super(ExcelFileResponse, self).__init__(content, content_type=content_type)
+        super(
+            ExcelFileResponse,
+            self).__init__(
+            content,
+            content_type=content_type)
         self['Content-Disposition'] = content_disposition
 
 

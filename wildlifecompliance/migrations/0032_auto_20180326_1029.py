@@ -16,13 +16,27 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='DefaultActivity',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('activity', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.WildlifeLicenceActivity')),
-                ('activity_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.WildlifeLicenceActivityType')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
+                ('activity',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='wildlifecompliance.WildlifeLicenceActivity')),
+                ('activity_type',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='wildlifecompliance.WildlifeLicenceActivityType')),
             ],
         ),
         migrations.AlterUniqueTogether(
             name='defaultactivity',
-            unique_together=set([('activity_type', 'activity')]),
+            unique_together=set(
+                [
+                    ('activity_type',
+                     'activity')]),
         ),
     ]
