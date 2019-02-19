@@ -69,7 +69,7 @@ export default {
         console.log('asdfasdfajksdfkjhgasdfkjhgasdf');
         console.log(data);
         return new Promise ((resolve,reject) => {
-            Vue.http.get(helpers.add_endpoint_join(api.licence_available_purposes,'list'), JSON.stringify(data), {emulateJSON:true}).then((response) => {
+            Vue.http.get(helpers.add_endpoint_join(api.licence_available_purposes,''), JSON.stringify(data), {emulateJSON:true}).then((response) => {
                 resolve(response.body);
             },
             (error) => {

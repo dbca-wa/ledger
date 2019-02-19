@@ -27,7 +27,7 @@ router.register(r'assessor_group', application_api.AssessorGroupViewSet)
 router.register(r'licences', licence_api.LicenceViewSet)
 router.register(r'licences_class', licence_api.WildlifeLicenceClassViewSet)
 router.register(r'licence_available_purposes',
-                licence_api.UserWildlifeLicenceCurrentPurposesViewSet)
+                licence_api.UserAvailableWildlifeLicencePurposesViewSet)
 router.register(r'returns', return_api.ReturnViewSet)
 router.register(r'application_conditions',
                 application_api.ApplicationConditionViewSet)
