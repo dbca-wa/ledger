@@ -32,6 +32,7 @@ router.register(r'organisation_requests',org_api.OrganisationRequestsViewSet)
 router.register(r'organisation_contacts',org_api.OrganisationContactViewSet)
 router.register(r'my_organisations',org_api.MyOrganisationsViewSet)
 router.register(r'users',users_api.UserViewSet)
+#router.register(r'profiles', users_api.ProfileViewSet)
 router.register(r'amendment_request',proposal_api.AmendmentRequestViewSet)
 router.register(r'compliance_amendment_request',compliances_api.ComplianceAmendmentRequestViewSet)
 router.register(r'regions', main_api.RegionViewSet)
@@ -71,6 +72,7 @@ urlpatterns = [
     url(r'^external/', views.ExternalView.as_view(), name='external'),
     url(r'^firsttime/$', views.first_time, name='first_time'),
     url(r'^account/$', views.ExternalView.as_view(), name='manage-account'),
+    url(r'^profiles/', views.ExternalView.as_view(), name='manage-profiles'),
     url(r'^help/(?P<application_type>[^/]+)/(?P<help_type>[^/]+)/$', views.HelpView.as_view(), name='help'),
     url(r'^mgt-commands/$', views.ManagementCommandsView.as_view(), name='mgt-commands'),
     #url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),

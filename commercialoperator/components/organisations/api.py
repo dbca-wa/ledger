@@ -78,12 +78,12 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     queryset = Organisation.objects.all()
     serializer_class = OrganisationSerializer
 
-    def get_queryset(self):
+    def _get_queryset(self):
         user = self.request.user
         if is_internal(self.request):
             return Organisation.objects.all()
         elif is_customer(self.request):
-            return user.wildlifecompliance_organisations.all()
+            return user.commercialoperator_organisations.all()
         return Organisation.objects.none()
 
     @detail_route(methods=['GET',])
@@ -140,9 +140,17 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def validate_pins(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            #import ipdb; ipdb.set_trace()
             serializer = OrganisationPinCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'],request)}
+            ret = instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'],request)
+
+            if ret == None:
+				# user has already been to this organisation - don't add again
+                data = {'valid': ret}
+            	return Response({'valid' : 'User already exists'})
+
+            data = {'valid': ret}
             if data['valid']:
                 # Notify each Admin member of request.
                 instance.send_organisation_request_link_notification(request)
@@ -441,6 +449,8 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     @list_route(methods=['POST',])
     def existance(self, request, *args, **kwargs):
         try:
+            #import ipdb; ipdb.set_trace()
+
             serializer = OrganisationCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             data = Organisation.existance(serializer.validated_data['abn'])
@@ -802,6 +812,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
+            #import ipdb; ipdb.set_trace()
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.validated_data['requester'] = request.user
@@ -852,7 +863,7 @@ class OrganisationContactViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return OrganisationContact.objects.all()
         elif is_customer(self.request):
-            user_orgs = [org.id for org in user.wildlifecompliance_organisations.all()]
+            user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
             return OrganisationContact.objects.filter( Q(organisation_id__in = user_orgs) )
         return OrganisationContact.objects.none()
 
@@ -865,5 +876,5 @@ class MyOrganisationsViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return Organisation.objects.all()
         elif is_customer(self.request):
-            return user.wildlifecompliance_organisations.all()
+            return user.commercialoperator_organisations.all()
         return Organisation.objects.none()
