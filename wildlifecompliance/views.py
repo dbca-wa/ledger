@@ -43,7 +43,6 @@ class InternalView(UserPassesTestMixin, TemplateView):
         context['dev'] = settings.DEV_STATIC
         context['dev_url'] = settings.DEV_STATIC_URL
         context['app_build_url'] = settings.DEV_APP_BUILD_URL
-        context['wc_version'] = settings.WC_VERSION
         return context
 
 
@@ -55,7 +54,6 @@ class ExternalView(LoginRequiredMixin, TemplateView):
         context['dev'] = settings.DEV_STATIC
         context['dev_url'] = settings.DEV_STATIC_URL
         context['app_build_url'] = settings.DEV_APP_BUILD_URL
-        context['wc_version'] = settings.WC_VERSION
         return context
 
 

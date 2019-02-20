@@ -1,24 +1,16 @@
 from __future__ import unicode_literals
 
-import json
-from django.db import models, transaction
+from django.db import models
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
-from django.utils.encoding import python_2_unicode_compatible
-from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
-from django.utils import timezone
-from django.contrib.sites.models import Site
-from django.db.models import Avg, Case, Count, F, Max, Min, Prefetch, Q, Sum, When
-from taggit.managers import TaggableManager
-from taggit.models import TaggedItemBase
-from ledger.accounts.models import Organisation as ledger_organisation
-from ledger.accounts.models import EmailUser, RevisionedMixin
-from ledger.licence.models import Licence, LicenceType
-from wildlifecompliance import exceptions
+from django.db.models import Max
+from ledger.accounts.models import EmailUser
+from ledger.licence.models import LicenceType
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.applications.models import Application
-from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
+from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
+    UserAction, Document
 
 
 def update_licence_doc_filename(instance, filename):
@@ -228,7 +220,7 @@ class WildlifeLicence(models.Model):
     licence_number = models.CharField(max_length=64, blank=True, null=True)
     licence_sequence = models.IntegerField(blank=True, default=1)
     licence_class = models.ForeignKey(WildlifeLicenceClass)
-    #licence_sequence = models.IntegerField(blank=True, unique=True, default=seq_idx)
+    # licence_sequence = models.IntegerField(blank=True, unique=True, default=seq_idx)
 
     # licence_activity_type = models.ForeignKey(WildlifeLicenceActivityType)
     # licence_descriptor = models.ForeignKey(WildlifeLicenceDescriptor)
@@ -249,7 +241,7 @@ class WildlifeLicence(models.Model):
         if not self.licence_number:
             self.licence_number = 'L{0:06d}'.format(
                 self.next_licence_number_id)
-            #self.licence_number = 'L{0:06d}'.format(self.pk)
+            # self.licence_number = 'L{0:06d}'.format(self.pk)
             self.save()
 
     @property
