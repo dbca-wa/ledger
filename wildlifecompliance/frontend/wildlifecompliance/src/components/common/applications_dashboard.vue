@@ -16,7 +16,7 @@
                                 <label for="">Licence Type</label>
                                 <select class="form-control" v-model="filterApplicationLicenceType">
                                     <option value="All">All</option>
-                                    <option v-for="lt in application_licence_types" :value="lt">{{lt}}</option>
+                                    <option v-for="lt in application_licence_types" :value="lt" v-bind:key="`licence_type_${lt}`">{{lt}}</option>
                                 </select>
                             </div>
                         </div>
@@ -25,7 +25,7 @@
                                 <label for="">Status</label>
                                 <select class="form-control" v-model="filterApplicationStatus">
                                     <option value="All">All</option>
-                                    <option v-for="s in application_status" :value="s">{{s}}</option>
+                                    <option v-for="s in application_status" :value="s" v-bind:key="`status_${s}`">{{s}}</option>
                                 </select>
                             </div>
                         </div>
@@ -57,7 +57,7 @@
                                 <label for="">Submitter</label>
                                 <select class="form-control" v-model="filterApplicationSubmitter">
                                     <option value="All">All</option>
-                                    <option v-for="s in application_submitters" :value="s.email">{{s.search_term}}</option>
+                                    <option v-for="s in application_submitters" :value="s.email" v-bind:key="`submitter_${s.email}`">{{s.search_term}}</option>
                                 </select>
                             </div>
                         </div>
