@@ -42,7 +42,8 @@ class ReturnSerializer(serializers.ModelSerializer):
             'resources',
             'table',
             'condition',
-            'text'
+            'text',
+            'type'
         )
 
 

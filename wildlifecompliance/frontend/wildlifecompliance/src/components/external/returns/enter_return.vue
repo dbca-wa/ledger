@@ -82,6 +82,7 @@
                         <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
                       </div>
                       <div class="margin-left-20"></div>
+                      <!-- End of Spreadsheet Return -->
                     </div>
                   </div>
                 </div>
@@ -277,7 +278,7 @@ export default {
      Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
         next(vm => {
            vm.returns = res.body;
-        //   console.log(vm.returns.table[0])
+           console.log(vm.returns)
         //   vm.buildRow()
         // TODO: set return button if requires payment.
         // if (vm.returns.requires_pay)
