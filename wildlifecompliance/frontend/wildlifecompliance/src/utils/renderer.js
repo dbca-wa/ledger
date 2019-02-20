@@ -189,7 +189,7 @@ module.exports = {
                 }
                 this.sections.push({name:c.name,label:c.label});
                 _elements.push(
-                    <Section label={c.label} Key={c.name} id={c.name}>
+                    <Section label={c.label} Index={c.name} id={c.name}>
                         {c.children.map(d=>{
                             return (
                                 <div>
