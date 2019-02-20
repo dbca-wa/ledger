@@ -1,15 +1,9 @@
-from django.conf import settings
-from ledger.accounts.models import EmailUser, Address
-from ledger.licence.models import LicenceType
 from wildlifecompliance.components.licences.models import (
     WildlifeLicence,
     WildlifeLicenceClass,
     WildlifeLicenceActivityType,
     WildlifeLicenceActivity)
 from wildlifecompliance.components.applications.serializers import BaseApplicationSerializer
-from wildlifecompliance.components.organisations.models import (
-    Organisation
-)
 from rest_framework import serializers
 
 

@@ -56,7 +56,7 @@
             </div>
         </div>
     </div>
-    <div v-if="wc_version != 1.0" class="row">
+    <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
@@ -80,7 +80,7 @@
             </div>
         </div>
     </div>
-    <div v-if="wc_version != 1.0" class="row">
+    <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
@@ -146,9 +146,6 @@ export default {
     computed: {
         isLoading: function () {
             return this.loading.length == 0;
-        },
-        wc_version: function (){
-            return this.$root.wc_version;
         }
     },
     methods: {

@@ -1,5 +1,4 @@
-from django.conf import settings
-from ledger.accounts.models import EmailUser, Address, Document
+from ledger.accounts.models import EmailUser
 # from wildlifecompliance.components.applications.utils import amendment_requests
 from wildlifecompliance.components.applications.models import (
     Application,
@@ -20,7 +19,7 @@ from wildlifecompliance.components.licences.models import WildlifeLicenceActivit
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from wildlifecompliance.components.organisations.serializers import OrganisationSerializer
 from wildlifecompliance.components.users.serializers import UserAddressSerializer, DocumentSerializer
-from wildlifecompliance import helpers, settings
+from wildlifecompliance import helpers
 
 from rest_framework import serializers
 
@@ -136,12 +135,10 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     activity_purpose_string = serializers.SerializerMethodField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
-
-    if settings.WC_VERSION != "1.0":
-        payment_status = serializers.SerializerMethodField(read_only=True)
-        assigned_officer = serializers.CharField(
-            source='assigned_officer.get_full_name')
-        can_be_processed = serializers.SerializerMethodField(read_only=True)
+    payment_status = serializers.SerializerMethodField(read_only=True)
+    assigned_officer = serializers.CharField(
+        source='assigned_officer.get_full_name')
+    can_be_processed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Application
@@ -182,14 +179,11 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'class_name',
             'activity_type_names',
             'activity_purpose_string',
-            'can_current_user_edit'
+            'can_current_user_edit',
+            'payment_status',
+            'assigned_officer',
+            'can_be_processed'
         )
-        if settings.WC_VERSION != "1.0":
-            fields += (
-                'payment_status',
-                'assigned_officer',
-                'can_be_processed'
-            )
         read_only_fields = ('documents',)
 
     def get_documents_url(self, obj):
@@ -276,12 +270,10 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
     processing_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
-
-    if settings.WC_VERSION != "1.0":
-        payment_status = serializers.SerializerMethodField(read_only=True)
-        assigned_officer = serializers.CharField(
-            source='assigned_officer.get_full_name')
-        can_be_processed = serializers.SerializerMethodField(read_only=True)
+    payment_status = serializers.SerializerMethodField(read_only=True)
+    assigned_officer = serializers.CharField(
+        source='assigned_officer.get_full_name')
+    can_be_processed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Application
@@ -298,14 +290,11 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
             'activity_type_names',
             'activity_purpose_string',
             'can_user_view',
-            'can_current_user_edit'
+            'can_current_user_edit',
+            'payment_status',
+            'assigned_officer',
+            'can_be_processed'
         )
-        if settings.WC_VERSION != "1.0":
-            fields += (
-                'payment_status',
-                'assigned_officer',
-                'can_be_processed'
-            )
 
 
 class DTExternalApplicationSerializer(BaseApplicationSerializer):
@@ -315,9 +304,7 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
     processing_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
-
-    if settings.WC_VERSION != "1.0":
-        payment_status = serializers.SerializerMethodField(read_only=True)
+    payment_status = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Application
@@ -334,12 +321,9 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
             'activity_type_names',
             'activity_purpose_string',
             'can_user_view',
-            'can_current_user_edit'
+            'can_current_user_edit',
+            'payment_status',
         )
-        if settings.WC_VERSION != "1.0":
-            fields += (
-                'payment_status',
-            )
 
 
 class ApplicationSerializer(BaseApplicationSerializer):
@@ -349,12 +333,10 @@ class ApplicationSerializer(BaseApplicationSerializer):
     customer_status = serializers.SerializerMethodField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
-
-    if settings.WC_VERSION != "1.0":
-        payment_status = serializers.SerializerMethodField(read_only=True)
-        assigned_officer = serializers.CharField(
-            source='assigned_officer.get_full_name')
-        can_be_processed = serializers.SerializerMethodField(read_only=True)
+    payment_status = serializers.SerializerMethodField(read_only=True)
+    assigned_officer = serializers.CharField(
+        source='assigned_officer.get_full_name')
+    can_be_processed = serializers.SerializerMethodField(read_only=True)
 
     def get_readonly(self, obj):
         return obj.can_user_view
@@ -378,9 +360,8 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
     assessor_data = serializers.JSONField(required=False)
     # licence_activity_type=ActivityTypeserializer(many=True,read_only =True)
 
-    if settings.WC_VERSION != "1.0":
-        assigned_officer = serializers.CharField(
-            source='assigned_officer.get_full_name')
+    assigned_officer = serializers.CharField(
+        source='assigned_officer.get_full_name')
 
     class Meta:
         model = Application
@@ -412,12 +393,9 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
             'licence_type_name',
             'licence_category',
             'application_fee',
-            'licence_fee'
+            'licence_fee',
+            'assigned_officer',
         )
-        if settings.WC_VERSION != "1.0":
-            fields += (
-                'assigned_officer',
-            )
         read_only_fields = ('documents', 'conditions')
 
 
@@ -459,12 +437,10 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     assessor_data = serializers.SerializerMethodField()
     allowed_assessors = EmailUserSerializer(many=True)
     licences = serializers.SerializerMethodField(read_only=True)
-
-    if settings.WC_VERSION != "1.0":
-        payment_status = serializers.SerializerMethodField(read_only=True)
-        assigned_officer = serializers.CharField(
-            source='assigned_officer.get_full_name')
-        can_be_processed = serializers.SerializerMethodField(read_only=True)
+    payment_status = serializers.SerializerMethodField(read_only=True)
+    assigned_officer = serializers.CharField(
+        source='assigned_officer.get_full_name')
+    can_be_processed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Application
@@ -505,14 +481,11 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'proposed_issuance_licence',
             'proposed_decline_status',
             'applicationdeclineddetails',
-            'permit'
+            'permit',
+            'payment_status',
+            'assigned_officer',
+            'can_be_processed'
         )
-        if settings.WC_VERSION != "1.0":
-            fields += (
-                'payment_status',
-                'assigned_officer',
-                'can_be_processed'
-            )
         read_only_fields = ('documents', 'conditions')
 
     def get_assessor_mode(self, obj):
