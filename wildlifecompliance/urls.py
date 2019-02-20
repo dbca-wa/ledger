@@ -90,11 +90,12 @@ urlpatterns = [
     url(r'^firsttime/$', views.first_time, name='first_time'),
     url(r'^account/$', views.ExternalView.as_view(), name='manage-account'),
     url(r'^profiles/', views.ExternalView.as_view(), name='manage-profiles'),
-    #url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),
+    # url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),
     url(r'^application/$',
         application_views.ApplicationView.as_view(),
         name='application'),
-    #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
+    # url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$',
+    #     views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
     url('^healthcheck/', views.HealthCheckView.as_view(), name='health_check'),
 
     # following url is defined so that to include url path when sending
@@ -105,7 +106,7 @@ urlpatterns = [
         ApplicationSuccessView.as_view(),
         name='external-application-success-invoice'),
 
-    #url(r'^export/xls/$', application_views.export_applications, name='export_applications'),
+    # url(r'^export/xls/$', application_views.export_applications, name='export_applications'),
     url(r'^mgt-commands/$',
         views.ManagementCommandsView.as_view(),
         name='mgt-commands'),

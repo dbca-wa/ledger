@@ -16,7 +16,7 @@
 <script>
 export default {
     name:"section",
-    props:["label","Key"],
+    props:["label","Index"],
     data:function () {
         return {
             title:"Section title",
@@ -25,7 +25,7 @@ export default {
     },
     computed:{
         section_id:function () {
-            return "section_"+this.Key
+            return "section_"+this.Index
         }
     },
     updated:function () {

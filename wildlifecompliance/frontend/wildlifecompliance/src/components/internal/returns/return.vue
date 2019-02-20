@@ -143,7 +143,7 @@
             </div>
         </div>
         <div v-if="hasAssessorMode" class="row" style="margin-bottom:50px;">
-            <div v-if="wc_version != 1.0" class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+            <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                 <div class="navbar-inner">
                     <div class="container">
                         <p class="pull-right" style="margin-top:5px;">
