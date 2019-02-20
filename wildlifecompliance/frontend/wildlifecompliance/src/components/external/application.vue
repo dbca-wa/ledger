@@ -44,14 +44,14 @@
                         <div class="navbar-inner">
                             <div class="container">
                                 <p class="pull-right" style="margin-top:5px;">
-                                    <span v-if="requiresCheckout && wc_version != 1.0"style="margin-right: 5px; font-size: 18px;">
+                                    <span v-if="requiresCheckout" style="margin-right: 5px; font-size: 18px;">
                                         <strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong>
                                         <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
                                     </span>
                                     <input type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                    <input v-if="!requiresCheckout || wc_version == 1.0" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
-                                    <input v-if="requiresCheckout && wc_version != 1.0" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
+                                    <input v-if="!requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                                    <input v-if="requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
                                 </p>
                             </div>
                         </div>
@@ -146,9 +146,6 @@ export default {
     },
     requiresCheckout: function() {
         return this.application.application_fee > 0 && this.application_customer_status_onload == 'Draft'
-    },
-    wc_version: function (){
-        return this.$root.wc_version;
     },
     tab_changed: function() {
       return this.current_tab;
@@ -363,7 +360,7 @@ export default {
 
         let swal_title = 'Submit Application'
         let swal_html = 'Are you sure you want to submit this application?'
-        if (vm.requiresCheckout && vm.wc_version != "1.0") {
+        if (vm.requiresCheckout) {
             swal_title = 'Submit Application and Checkout'
             swal_html = 'Are you sure you want to submit this application and proceed to checkout?<br><br>' +
                 'Upon proceeding, you agree that the system will charge the same credit card used to ' +
@@ -381,7 +378,7 @@ export default {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     vm.application = res.body;
                     
-                    if (vm.requiresCheckout && vm.wc_version != "1.0") {
+                    if (vm.requiresCheckout) {
                         vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
                             window.location.href = "/ledger/checkout/checkout/payment-details/";
                         },err=>{

@@ -1,8 +1,8 @@
 <template>
 <div class="container" id="internalDash">
     <ApplicationDashTable level="internal" :url="applications_url"/>
-    <AssessmentDashTable v-if="wc_version != 1.0" />
-    <ReturnDashTable v-if="wc_version != 1.0" level="internal" :url="returns_url" />
+    <AssessmentDashTable />
+    <ReturnDashTable level="internal" :url="returns_url" />
 </div>
 </template>
 <script>
@@ -31,9 +31,6 @@ export default {
         ReturnDashTable
     },
     computed: {
-        wc_version: function (){
-            return this.$root.wc_version;
-        }
     },
     methods: {},
     mounted: function () {

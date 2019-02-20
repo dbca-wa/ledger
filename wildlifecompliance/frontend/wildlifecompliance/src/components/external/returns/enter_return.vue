@@ -82,6 +82,7 @@
                         <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
                       </div>
                       <div class="margin-left-20"></div>
+                      <!-- End of Spreadsheet Return -->
                     </div>
                   </div>
                 </div>
@@ -91,7 +92,7 @@
           </template>
           <!-- End template for Return Tab -->
           <div class="row" style="margin-bottom:50px;">
-            <div v-if="wc_version != 1.0" class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+            <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
               <div class="navbar-inner">
                 <div class="container">
                   <p class="pull-right" style="margin-top:5px;">
@@ -277,7 +278,7 @@ export default {
      Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
         next(vm => {
            vm.returns = res.body;
-        //   console.log(vm.returns.table[0])
+           console.log(vm.returns)
         //   vm.buildRow()
         // TODO: set return button if requires payment.
         // if (vm.returns.requires_pay)

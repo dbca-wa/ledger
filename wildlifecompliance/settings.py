@@ -55,8 +55,8 @@ TEMPLATES[0]['DIRS'].append(
         'emails',
         'templates'))
 BOOTSTRAP3 = {
-    'jquery_url': '//static.dpaw.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',
-    'base_url': '//static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
+    'jquery_url': '//static.dbca.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',
+    'base_url': '//static.dbca.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
     'css_url': None,
     'theme_url': None,
     'javascript_url': None,
@@ -121,5 +121,4 @@ SITE_PREFIX = env('SITE_PREFIX')
 SITE_DOMAIN = env('SITE_DOMAIN')
 SITE_URL = env('SITE_URL', 'https://' + SITE_PREFIX + '.' + SITE_DOMAIN)
 EXT_USER_API_ROOT_URL = env('EXT_USER_API_ROOT_URL', None)
-WC_VERSION = str(env('WC_VERSION', 'RELEASE'))
 EXCEL_OUTPUT_PATH = env('EXCEL_OUTPUT_PATH')

@@ -76,6 +76,9 @@ target/
 /.pydevproject
 /.project
 
+# VS Code settings
+.vscode/
+
 **/local/
 *.map
 
