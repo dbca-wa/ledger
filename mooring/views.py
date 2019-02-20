@@ -2239,18 +2239,32 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
         ad_pasts = admissions.distinct().filter(admissionsline__arrivalDate__lt=today)
         ad_past = []
         for ad in ad_pasts:
-            to_add = [ad, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
+            bk_invoices = []
+            for i in AdmissionsBookingInvoice.objects.get(admissions_booking=ad):
+                 bk_invoices.append(i.invoice_reference)
+            to_add = [bk, bk_invoices]
+ #           to_add = [ad, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
             ad_past.append(to_add)
 
         bk_currents = bookings.filter(departure__gte=today).order_by('arrival')
         bk_current = []
+        
         for bk in bk_currents:
-            to_add = [bk, BookingInvoice.objects.get(booking=bk).invoice_reference]
+            bk_invoices = []
+            for i in BookingInvoice.objects.filter(booking=bk):
+                bk_invoices.append(i.invoice_reference)    
+#            to_add = [bk, BookingInvoice.objects.get(booking=bk).invoice_reference]
+            to_add = [bk, bk_invoices]
             bk_current.append(to_add)
         bk_pasts = bookings.filter(departure__lt=today).order_by('-arrival')
         bk_past = []
         for bk in bk_pasts:
-            to_add = [bk, BookingInvoice.objects.get(booking=bk).invoice_reference]
+            bk_invoices = []
+            for i in BookingInvoice.objects.filter(booking=bk):
+                print "INV REF"
+                bk_invoices.append(i.invoice_reference)
+            to_add = [bk, bk_invoices]  
+#            to_add = [bk, BookingInvoice.objects.get(booking=bk).invoice_reference]
             bk_past.append(to_add)
         context = {
             'current_bookings': bk_current,

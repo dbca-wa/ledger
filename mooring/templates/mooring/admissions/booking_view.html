@@ -81,7 +81,9 @@
                 {% if request.user == admissionsBooking.customer or request.user.is_staff or request.session.ad_last_booking == admissionsBooking.id%}
                     <a href="{% url 'get_admissions_confirmation' admissionsBooking.id %}" class="btn btn-info btn-lg" >Confirmation</a>
                     {% if request.user.is_authenticated %}
-                        <a href="{% url 'mooring-invoice-pdf' admissionsInvoice %}" class="btn btn-info btn-lg" >Invoice</a>
+                        {% for bi in admissionsInvoice %}
+                        <a href="{% url 'mooring-invoice-pdf' bi %}" class="btn btn-info btn-lg" >Invoice</a>
+                        {% endfor %}
                         {% if admissionsBooking.in_future and not admissionsBooking.part_booking %}
                             <a href="{% url 'public_cancel_admissions_booking' admissionsBooking.id %}" class="btn btn-info btn-lg">Cancel Payment</a>
                         {% endif %}
