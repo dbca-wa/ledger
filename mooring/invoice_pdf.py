@@ -212,6 +212,7 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.owner.get_full_name())
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2,invoice.owner.username)
     current_x += 452
+
     #write Invoice details
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),'Date')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.created.strftime(DATE_FORMAT))
@@ -232,8 +233,11 @@ def _create_header(canvas, doc, draw_page_number=True):
 def _create_invoice(invoice_buffer, invoice, request,mooring_var):
 
     global DPAW_HEADER_LOGO 
+    print (mooring_var)
     if  mooring_var["TEMPLATE_GROUP"] == 'rottnest':
         DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring', 'img','logo-rottnest-island-sm.png')
+    else:
+        DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img','dbca_logo.jpg')
 
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN + 250, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT -450 , id='EveryPagesFrame',showBoundary=0)

@@ -17,6 +17,17 @@
                             </span>
                         </div>
                     </div>
+                    <div class="col-md-2">
+                        <label for="open_cg_range_start_time"> Start time: </label>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group date" :id='close_cg_range_start_time'>
+                            <input name="closure_start_time" v-model="statusHistory.range_start_time" type='text' class="form-control" />
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-time"> </span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="row">
@@ -29,6 +40,17 @@
                             <input name="closure_end" v-model="statusHistory.range_end" type='text' class="form-control" />
                             <span class="input-group-addon">
                                 <span class="glyphicon glyphicon-calendar"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="open_cg_range_end_time"> End time: </label>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group date" :id='close_cg_range_end_time'>
+                            <input name="closure_end_time" v-model="statusHistory.range_end_time" type='text' class="form-control" />
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-time"> </span>
                             </span>
                         </div>
                     </div>
@@ -53,7 +75,7 @@
 
 <script>
 import bootstrapModal from '../bootstrap-modal.vue'
-import { $, datetimepicker,api_endpoints, validate, helpers } from '../../../hooks'
+import { $, datetimepicker,api_endpoints, validate, helpers, bus } from '../../../hooks'
 import alert from '../alert.vue'
 import reason from '../reasons.vue'
 module.exports = {
@@ -74,14 +96,19 @@ module.exports = {
             id:'',
             current_closure: '',
             closeStartPicker: '',
+            closeStartTimePicker: '',
             showDetails:false,
             closeEndPicker: '',
+            closeEndTimePicker: '',
             errors: false,
             errorString: '',
             form: '',
             isOpen: false,
+            reasons: [],
             close_cg_range_start: 'close_cg_range_start'+vm._uid,
+            close_cg_range_start_time: 'close_cg_range_start_time'+vm.id,
             close_cg_range_end: 'close_cg_range_end'+vm._uid,
+            close_cg_range_end_time: 'close_cg_range_end_time'+vm.id,
         }
     },
     computed: {
@@ -96,7 +123,13 @@ module.exports = {
             return this.statusHistory.id ? this.statusHistory.id : '';
         },
         requireDetails: function() {
-            return this.statusHistory.closure_reason == '1';
+            let vm = this;
+            var check = this.statusHistory.closure_reason
+            for (var i = 0; i < vm.reasons.length; i++){
+                if (vm.reasons[i].id == check){
+                    return vm.reasons[i].detailRequired;
+                }
+            }
         },
     },
     components: {
@@ -111,7 +144,9 @@ module.exports = {
             this.isOpen = false;
             this.statusHistory.id = '';
             this.statusHistory.range_start= '';
+            this.statusHistory.range_start_time= '';
             this.statusHistory.range_end= '';
+            this.statusHistory.range_end_time= '';
             this.statusHistory.status= '1';
             this.statusHistory.details= '';
             this.statusHistory.reason = '';
@@ -138,7 +173,12 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.statusHistory.reason=== '1';
+                                var check = this.statusHistory.closure_reason
+                                for (var i = 0; i < vm.reasons.length; i++){
+                                    if (vm.reasons[i].id == check){
+                                        return vm.reasons[i].detailRequired;
+                                    }
+                                }
                             }
                         }
                     }
@@ -181,19 +221,34 @@ module.exports = {
             format: 'DD/MM/YYYY',
             minDate: new Date()
         });
+        vm.closeStartTimePicker = $('#'+vm.close_cg_range_start_time).datetimepicker({
+            format: 'HH:mm',
+        });
         vm.closeEndPicker.datetimepicker({
             format: 'DD/MM/YYYY',
             useCurrent: false
         });
+        vm.closeEndTimePicker = $('#'+vm.close_cg_range_end_time).datetimepicker({
+            format: 'HH:mm',
+        })
         vm.closeStartPicker.on('dp.change', function(e){
             vm.statusHistory.range_start = vm.closeStartPicker.data('DateTimePicker').date() != null ? vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY') : '';
             e.date != null ? vm.closeEndPicker.data("DateTimePicker").minDate(e.date): '';
         });
+        vm.closeStartTimePicker.on('dp.change', function(e){
+            vm.statusHistory.range_start_time = vm.closeStartTimePicker.data('DateTimePicker').date().format('HH:mm');
+        });
         vm.closeEndPicker.on('dp.change', function(e){
             vm.statusHistory.range_end = vm.closeEndPicker.data('DateTimePicker').date() != null  ? vm.closeEndPicker.data('DateTimePicker').date().format('DD/MM/YYYY') : '';
         });
+        vm.closeEndTimePicker.on('dp.change', function(e){
+            vm.statusHistory.range_end_time = vm.closeEndTimePicker.data('DateTimePicker').date().format('HH:mm');
+        });
         vm.form = $(document.forms.closeForm);
         vm.addFormValidations();
+        bus.$once('closeReasons',setReasons => {
+            vm.reasons = setReasons;
+        });
     },
 };
 </script>

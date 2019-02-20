@@ -26,11 +26,20 @@ from mooring.models import (MooringAreaPriceHistory,
                                 ClosureReason,
                                 OpenReason,
                                 PriceReason,
+                                AdmissionsReason,
                                 MaximumStayReason,
+                                DiscountReason,
                                 MooringAreaStayHistory,
                                 MarinaEntryRate,
                                 BookingVehicleRego,
                                 BookingHistory,
+                                AdmissionsBooking,
+                                AdmissionsLine,
+                                AdmissionsRate,
+                                BookingPeriodOption,
+                                BookingPeriod,
+                                RegisteredVessels,
+                                GlobalSettings
                            )
 from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
@@ -54,8 +63,14 @@ class MooringAreaMooringsiteFilterSerializer(serializers.Serializer):
     num_child = serializers.IntegerField(default=0)
     num_infant = serializers.IntegerField(default=0)
     num_mooring = serializers.IntegerField(default=0)
-    gear_type = serializers.ChoiceField(choices=('all', 'tent', 'caravan', 'campervan'), default='all')
+    avail = serializers.ChoiceField(choices=('all', 'rental-available', 'rental-notavailable', 'public-notbookable'), default='all')
+    pen_type = serializers.ChoiceField(choices=('all', 0, 1, 2), default='all')
     vessel_size = serializers.IntegerField(default=0)
+    vessel_draft = serializers.IntegerField(default=0)
+    vessel_beam = serializers.IntegerField(default=0)
+    vessel_weight = serializers.IntegerField(default=0)
+    vessel_rego = serializers.CharField(default=None, allow_null=True, allow_blank=True)
+    #distance_radius = serializers.IntegerField(default=0)
 
 class MooringsiteBookingSerializer(serializers.Serializer):
     """Serializer used by the booking creation process."""
@@ -71,11 +86,23 @@ class MooringsiteBookingSerializer(serializers.Serializer):
     campsite = serializers.IntegerField(default=0)
     vessel_size = serializers.IntegerField(default=0)
 
+
+class AdmissionsBookingSerializer(serializers.ModelSerializer):
+    """Serializer used by the admissions booking process."""
+    class Meta:
+        model = AdmissionsBooking
+        excludes = ('totalCost')
+
+class AdmissionsLineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdmissionsLine
+        excludes = ('cost')
+
 class BookingRangeSerializer(serializers.ModelSerializer):
 
     details = serializers.CharField(required=False)
-    range_start = serializers.DateField(input_formats=['%d/%m/%Y'])
-    range_end = serializers.DateField(input_formats=['%d/%m/%Y'],required=False)
+    range_start = serializers.DateTimeField(input_formats=['%d/%m/%Y %H:%M'])
+    range_end = serializers.DateTimeField(input_formats=['%d/%m/%Y %H:%M'],required=False)
 
     def get_status(self, obj):
         return dict(BookingRange.BOOKING_RANGE_CHOICES).get(obj.status)
@@ -96,8 +123,8 @@ class BookingRangeSerializer(serializers.ModelSerializer):
             if not original:
                 self.fields['status'] = serializers.SerializerMethodField()
             else:
-                self.fields['range_start'] = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
-                self.fields['range_end'] = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'],required=False)
+                self.fields['range_start'] = serializers.DateTimeField(format='%d/%m/%Y %H:%M',input_formats=['%d/%m/%Y %H:%M'])
+                self.fields['range_end'] = serializers.DateTimeField(format='%d/%m/%Y %H:%M',input_formats=['%d/%m/%Y %H:%M'],required=False)
 
 class MooringAreaBookingRangeSerializer(BookingRangeSerializer):
 
@@ -172,12 +199,13 @@ class MooringAreaMapMarinaSerializer(serializers.HyperlinkedModelSerializer):
     district = MooringAreaMapDistrictSerializer(read_only=True)
     class Meta:
         model = MarinePark 
-        fields = ('id','name', 'entry_fee_required', 'district')
+        fields = ('id','name', 'entry_fee_required', 'district','distance_radius')
 
 class MooringAreaMapFilterSerializer(serializers.HyperlinkedModelSerializer):
+
     class Meta:
         model = MooringArea
-        fields = ('id',)
+        fields = ('id')
 
 class MooringAreaMapImageSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -205,6 +233,9 @@ class MooringAreaMapSerializer(gis_serializers.GeoFeatureModelSerializer):
             'images',
             'vessel_size_limit',
             'vessel_draft_limit',
+            'vessel_beam_limit',
+            'vessel_weight_limit',
+            'mooring_physical_type',
             'max_advance_booking'
 #            'price_hint'
         )
@@ -282,6 +313,7 @@ class MooringAreaDatatableSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
+            'mooring_physical_type',
             'park',
             'district',
             'region',
@@ -307,7 +339,8 @@ class MooringAreaSerializer(serializers.ModelSerializer):
     address = serializers.JSONField()
     images = MooringAreaImageSerializer(read_only=True, many=True,required=False)
     mooring_map = serializers.FileField(read_only=True,required=False,allow_empty_file=True)
-    mooring_group = serializers.PrimaryKeyRelatedField(many=True, required=False, read_only=True,  allow_null=True) 
+    mooring_group = serializers.PrimaryKeyRelatedField(required=False, read_only=True,  allow_null=True)
+    features = serializers.ListField(allow_null=True, required=False, write_only=True)
 
     class Meta:
         model = MooringArea
@@ -343,7 +376,11 @@ class MooringAreaSerializer(serializers.ModelSerializer):
             'additional_info',
             'mooring_group',
             'vessel_size_limit',
-            'vessel_draft_limit'
+            'vessel_draft_limit',
+            'vessel_beam_limit',
+            'vessel_weight_limit',
+            'mooring_physical_type',
+            'mooring_class',
         )
         read_only_fields = ('mooring_group',)
 
@@ -558,9 +595,12 @@ class RateDetailSerializer(serializers.Serializer):
     child = serializers.DecimalField(max_digits=5, decimal_places=2,  required=False, default='0.00')
     infant = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, default='0.00')
     period_start = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
+    period_end = serializers.DateField(format='%d/%m/%Y',input_formats=['%d/%m/%Y'])
     reason = serializers.IntegerField()
     details = serializers.CharField(required=False,allow_blank=True)
     campsite = serializers.IntegerField(required=False)
+    booking_period_id = serializers.IntegerField(required=False)
+    price_id = serializers.IntegerField(required=False)
 
     def validate_rate(self, value):
         if value:
@@ -575,13 +615,26 @@ class RateDetailSerializer(serializers.Serializer):
             raise serializers.ValidationError('Details required if reason is other.')
         return obj
 
+class BookingPeriodOptionsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BookingPeriodOption
+        fields = ('id', 'period_name', 'option_description', 'small_price', 'medium_price', 'large_price', 'start_time', 'finish_time')
+
+class BookingPeriodSerializer(serializers.ModelSerializer):
+    booking_period = BookingPeriodOptionsSerializer(many=True, required=False)
+    class Meta:
+        model = BookingPeriod
+        fields = ('id', 'name', 'booking_period')
+        depth = 1
+
 class MooringAreaPriceHistorySerializer(serializers.ModelSerializer):
     date_end = serializers.DateField(required=False)
     details = serializers.CharField(required=False,allow_blank=True)
+    #price_id = serializers.IntegerField(required=False)
     class Meta:
         model = MooringAreaPriceHistory
-        fields = ('id','date_start','date_end','rate_id','mooring','adult','concession','child','infant','editable','deletable','reason','details')
-        read_only_fields = ('id','editable','deletable','mooring','adult','concession','child','infant')
+        fields = ('id','date_start','date_end','rate_id','mooring','adult','concession','child','infant','editable','deletable','reason','details', 'booking_period_id','price_id')
+        read_only_fields = ('id','editable','deletable','mooring','adult','concession','child','infant','price_id')
 
     def validate(self,obj):
         if obj.get('reason') == 1 and not obj.get('details'):
@@ -634,27 +687,45 @@ class MarinaEntryRateSerializer(serializers.ModelSerializer):
         super(MarinaEntryRateSerializer, self).__init__(*args, **kwargs)
         if method == 'get':
             self.fields['reason'] = PriceReasonSerializer(read_only=True)
+
+class RegisteredVesselsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegisteredVessels
+        fields = ("id", "rego_no", "vessel_size", "vessel_draft", "vessel_beam", "vessel_weight", "admissionsPaid")
+        
+
+
 # Reasons
 # ============================
 class ClosureReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClosureReason
-        fields = ('id','text')
+        fields = ('id','text', 'detailRequired')
 
 class OpenReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = OpenReason
-        fields = ('id','text')
+        fields = ('id','text', 'detailRequired')
 
 class PriceReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = PriceReason
-        fields = ('id','text')
+        fields = ('id','text', 'detailRequired')
+
+class AdmissionsReasonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdmissionsReason
+        fields = ('id','text', 'detailRequired')
 
 class MaximumStayReasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = MaximumStayReason
-        fields = ('id','text')
+        fields = ('id','text', 'detailRequired')
+
+class DiscountReasonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DiscountReason
+        fields = ('id', 'text', 'detailRequired')
 
 class AccountsAddressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -716,6 +787,27 @@ class BulkPricingSerializer(serializers.Serializer):
         if obj.get('reason') == 1  and not obj.get('details'):
             raise serializers.ValidationError('Details required if reason is other.')
         return obj
+
+class AdmissionsRateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdmissionsRate
+        fields = (
+            'id',
+            'period_start',
+            'period_end',
+            'adult_cost',
+            'adult_overnight_cost',
+            'children_cost',
+            'children_overnight_cost',
+            'infant_cost',
+            'infant_overnight_cost',
+            'family_cost',
+            'family_overnight_cost',
+            'reason',
+            'comment',
+            'editable',
+            'mooring_group'
+            )
 
 class ReportSerializer(serializers.Serializer):
     start = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
@@ -784,6 +876,7 @@ class UserSerializer(serializers.ModelSerializer):
             'residential_address',
             'phone_number',
             'mobile_number',
+            'is_staff',
         )
 
 class PersonalSerializer(serializers.ModelSerializer):
@@ -830,3 +923,12 @@ class OracleSerializer(serializers.Serializer):
     date = serializers.DateField(input_formats=['%d/%m/%Y','%Y-%m-%d'])
     override = serializers.BooleanField(default=False)
 
+class GlobalSettingsSerializer(serializers.ModelSerializer):
+    key = serializers.CharField(source='get_key_display')
+
+    class Meta:
+        model = GlobalSettings
+        fields = (
+            'key',
+            'value'
+        )

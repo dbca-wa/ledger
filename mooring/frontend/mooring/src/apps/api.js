@@ -26,6 +26,7 @@ module.exports = {
     campgrounds:process.env.PARKSTAY_URL + "/api/mooring-areas.json",
     campgrounds_datatable:process.env.PARKSTAY_URL + "/api/mooring-areas/datatable_list.json",
     bulk_close:process.env.PARKSTAY_URL + "/api/mooring-areas/bulk_close.json",
+    bulk_period:process.env.PARKSTAY_URL + "/api/mooring-areas/bulk_period.json",
     campground:function (id) {
         return process.env.PARKSTAY_URL + "/api/mooring-areas/"+id+".json";
     },
@@ -147,6 +148,7 @@ module.exports = {
     },
     //bookings
     bookings:process.env.PARKSTAY_URL + "/api/booking.json",
+    admissionsbookings:process.env.PARKSTAY_URL + "/api/admissionsbooking.json",
     booking: function(id){
         return process.env.PARKSTAY_URL + "/api/booking/"+id+".json";
     },
@@ -156,7 +158,20 @@ module.exports = {
     users: process.env.PARKSTAY_URL + "/api/users.json",
     usersLookup: function (q) {
        return  encodeURI(process.env.PARKSTAY_URL + "/api/users.json?q="+q);
-   },
-   profile: process.env.PARKSTAY_URL + "/api/profile",
-   contacts:process.env.PARKSTAY_URL + "/api/contacts.json"
+    },
+    profile: process.env.PARKSTAY_URL + "/api/profile",
+    contacts:process.env.PARKSTAY_URL + "/api/contacts.json",
+    //Must end .json otherwise will effect other urls generated based on removing the .json.
+    booking_period_options: process.env.PARKSTAY_URL + "/api/bookingPeriodOptions.json",
+    booking_period : process.env.PARKSTAY_URL + "/api/bookingPeriod.json",
+    booking_period_edit : function(id){
+        return process.env.PARKSTAY_URL + "/api/bookingPeriod/" + id + "/";
+    },
+    booking_period_options_edit : function(id){
+        return process.env.PARKSTAY_URL + "/api/bookingPeriodOptions/" + id + "/";
+    },
+    global_settings: process.env.PARKSTAY_URL + "/api/global_settings",
+    rate_log: function (id){
+        return process.env.PARKSTAY_URL + "/mooringsiteratelog/" + id + "/";
+    }
 };
