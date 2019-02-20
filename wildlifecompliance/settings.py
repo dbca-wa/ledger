@@ -55,8 +55,8 @@ TEMPLATES[0]['DIRS'].append(
         'emails',
         'templates'))
 BOOTSTRAP3 = {
-    'jquery_url': '//static.dpaw.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',
-    'base_url': '//static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
+    'jquery_url': '//static.dbca.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',
+    'base_url': '//static.dbca.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
     'css_url': None,
     'theme_url': None,
     'javascript_url': None,
