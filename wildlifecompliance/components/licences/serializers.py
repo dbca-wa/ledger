@@ -65,6 +65,7 @@ class DefaultActivityTypeSerializer(serializers.ModelSerializer):
         )
 
 
+
 class WildlifeLicenceClassSerializer(serializers.ModelSerializer):
     class_status = serializers.SerializerMethodField()
     activity_type = DefaultActivityTypeSerializer(many=True, read_only=True)
@@ -86,16 +87,29 @@ class WildlifeLicenceClassSerializer(serializers.ModelSerializer):
 
 class UserActivitySerializer(serializers.ModelSerializer):
     name = serializers.CharField()
+    purpose_in_current_licence = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
+        # list_serializer_class = UserActivityExcludeSerializer
         model = WildlifeLicenceActivity
         fields = (
             'id',
             'name',
             'base_application_fee',
             'base_licence_fee',
-            'short_name'
+            'short_name',
+            'purpose_in_current_licence'
         )
+
+    def get_purpose_in_current_licence(self, obj):
+        # TODO: 1. need to get a list of all licences for org (if org) or proxy (if proxy) or user
+        # TODO: 2. get list of purposes of currently issued licences
+        # user_id = self.context['request'].user.id
+        # licence_ids = WildlifeLicence.objects.filter()
+        # current_purpose_ids =
+        # if obj.id in current_purpose_ids:
+        #     return True
+        return False
 
 
 class UserActivityTypeSerializer(serializers.ModelSerializer):
@@ -125,7 +139,6 @@ class UserWildlifeLicenceClassSerializer(serializers.ModelSerializer):
             'short_name',
             'class_status',
             'activity_type'
-
         )
 
     def get_class_status(self, obj):

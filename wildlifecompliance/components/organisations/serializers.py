@@ -307,6 +307,7 @@ class OrgUserAcceptSerializer(serializers.Serializer):
         if not (data['mobile_number'] or data['phone_number']):
             raise serializers.ValidationError(
                 "User must have an associated phone number or mobile number.")
+        return data
 
 
 class OrgUserCheckSerializer(OrgUserAcceptSerializer):

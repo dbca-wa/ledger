@@ -36,7 +36,8 @@ from wildlifecompliance.components.licences.models import (
 )
 from wildlifecompliance.components.licences.serializers import (
     WildlifeLicenceSerializer,
-    WildlifeLicenceClassSerializer
+    WildlifeLicenceClassSerializer,
+    UserWildlifeLicenceClassSerializer
 )
 
 
@@ -97,6 +98,24 @@ class WildlifeLicenceClassViewSet(viewsets.ModelViewSet):
     serializer_class = WildlifeLicenceClassSerializer
 
 
-class UserWildlifeLicenceCurrentPurposesViewSet(viewsets.ModelViewSet):
+class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
+    # Filters to only return purposes that are
+    # available for selection when applying for
+    # a new application
     queryset = WildlifeLicenceClass.objects.all()
-    serializer_class = WildlifeLicenceClassSerializer
+    serializer_class = UserWildlifeLicenceClassSerializer
+
+    def list(self, request, *args, **kwargs):
+        print(self.request)
+        print(self.request.GET)
+        print(self.request.GET.get('org_applicant', None))
+        queryset = self.get_queryset()
+        serializer = UserWildlifeLicenceClassSerializer(queryset, many=True, context={'request':request})
+        return Response(serializer.data)
+
+    def get_serializer_context(self):
+        context = super(UserAvailableWildlifeLicencePurposesViewSet, self).get_serializer_context()
+        context.update({
+            "test": 'test context'
+        })
+        return context

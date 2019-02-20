@@ -1,12 +1,11 @@
 <template>
   <form method="POST" name="enter_return" enctype="multipart/form-data">
-  <div class="container" id="externalCompliance">
+  <div class="container" id="externalReturn">
     <div class="row">
       <div class="col-md-3">
         <h3>Return: {{ returns.id }}</h3>
       </div>
-      <div class="col-md-1">
-      </div>
+      <!-- div class="col-md-1" div -->
       <div class="col-md-8">
         <div class="row">
           <template>
@@ -28,32 +27,33 @@
                   <div class="panel-body panel-collapse in" :id="pdBody">
                     <div class="col-sm-12">
                       <div class="row">
-                        <label class="col-sm-4">Do you want to Lodge a nil Return?</label>
+                        <label style="width:70%;" class="col-sm-4">Do you want to Lodge a nil Return?</label>
                         <input type="radio" id="nilYes" name="nilYes" value="yes" v-model='returns.nil'>
                         <label style="width:10%;" for="nilYes">Yes</label>
                         <input type="radio" id="nilNo" name="nilNo" value="no" v-model='returns.nil'>
                         <label style="width:10%;" for="nilNo">No</label>
                       </div>
-                      <div v-if="returns.nil =='no'" class="row">
-                        <label class="col-sm-4">Do you want to add to existing data or replace existing data?</label>
-                        <input type="radio" name="ReplaceYes" value="replace" v-model='returns.replace'>
-                        <label style="width:10%;" for="ReplaceYes">Replace</label>
-                        <input type="radio" name="ReplaceNo" value="add" v-model='returns.replace'>
-                        <label style="width:10%;" for="ReplaceNo">Add to</label>
+                      <div v-if="returns.nil == 'yes'" class="row">
+                        <label style="width:70%;" class="col-sm-4">Reason for providing a Nil return.</label>
+                        <input type="textarea" name="nilReason" v-model="returns.nilReason">
                       </div>
                       <div v-if="returns.nil == 'no'" class="row">
-                        <label class="col-sm-4">Do you want to upload spreadsheet with Return data?</label>
+                        <label style="width:70%;" class="col-sm-4">Do you want to upload spreadsheet with Return data?<br>(Download <a v-bind:href="url">spreadsheet template</a>)</label>
                         <input type="radio" name="SpreadsheetYes" value="yes" v-model='returns.spreadsheet'>
                         <label style="width:10%;" for="SpreadsheetYes">Yes</label>
                         <input type="radio" name="SpreadsheetNo" value="no" v-model='returns.spreadsheet'>
                         <label style="width:10%;" for="SpreadsheetNo">No</label>
                       </div>
-                      <div v-if="returns.nil == 'yes'" class="row">
-                        <label class="col-sm-4">Reason for providing a Nil return.</label>
-                        <input type="textarea" name="nilReason" v-model="returns.nilReason">
+                      <div v-if="returns.nil =='no' && returns.spreadsheet != null" class="row">
+                        <label style="width:70%;" class="col-sm-4">Do you want to add to existing data or replace existing data?</label>
+                        <input type="radio" name="ReplaceYes" value="replace" v-model='returns.replace'>
+                        <label style="width:10%;" for="ReplaceYes">Replace</label>
+                        <input type="radio" name="ReplaceNo" value="add" v-model='returns.replace'>
+                        <label style="width:10%;" for="ReplaceNo">Add to</label>
                       </div>
-                      <div v-if="returns.spreadsheet =='no'" class="row">
-                        <table class="return-table table table-striped table-bordered dataTable">
+                      <div class="row"></div>
+                      <div v-if="returns.nil =='no' && returns.spreadsheet =='no'" class="row">
+                        <table class="return-table table table-striped table-bordered dataTable" style="width:100%">
                         <thead>
                         <tr>
                           <div v-for="(item,index) in returns.table">
@@ -73,24 +73,22 @@
                         </tr>
                         </tbody>
                         </table>
+                        <input type="button" class="btn btn-primary" @click.prevent="addRow()" >Add Row</button>
                       </div>
                       <div v-if="returns.nil === 'no' && returns.spreadsheet === 'yes'" class="row">
-                        <a v-bind:href="url" class="pull-right">Download (XLSX)</a>
                         <span class="btn btn-primary btn-file pull-left">Upload File
                           <input type="file" ref="spreadsheet" @change="uploadFile()"/>
                         </span>
                         <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
                       </div>
                       <div class="margin-left-20"></div>
+                      <!-- End of Spreadsheet Return -->
                     </div>
                   </div>
                 </div>
               </div>
             </div>
             <input type='hidden' name="table_name" :value="returns.table[0].name" />
-            <!-- button type="submit" class="btn btn-primary pull-right" name="lodge">Save and Exit</button -->
-            <!-- input type="button" @click.prevent="save" class="btn btn-primary" name="save_continue" Save and Continue -->
-            <!-- button type="submit" class="btn btn-info pull-right" style="margin-right: 20px;" name="draft">Submit button -->
           </template>
           <!-- End template for Return Tab -->
           <div class="row" style="margin-bottom:50px;">
@@ -100,7 +98,7 @@
                   <p class="pull-right" style="margin-top:5px;">
                     <button class="btn btn-primary" name="save_exit">Save and Exit</button>
                     <button class="btn btn-primary" @click.prevent="save()" name="save_continue">Save and Continue</button>
-                    <button class="btn btn-primary" name="draft">Submit</button>
+                    <button class="btn btn-primary" name="draft">{{returnBtn}}</button>
                   </p>
                 </div>
               </div>
@@ -135,6 +133,7 @@ export default {
         returnTab: 'returnTab'+vm._uid,
         form: null,
         spreadsheet: null,
+        returnBtn: 'Submit',
     }
     returns: null
   },
@@ -197,21 +196,42 @@ export default {
       }
     },
     uploadFile: function(e) {
-      console.log('uploadFile')
       let vm = this;
       let _file = null;
       var input = $(vm.$refs.spreadsheet)[0];
-      console.log(input)
       if (input.files && input.files[0]) {
         var reader = new FileReader();
         reader.readAsDataURL(input.files[0]);
-          reader.onload = function(e) {
-            _file = e.target.result;
-          };
-          _file = input.files[0];
-        }
-        vm.spreadsheet = _file;
-        console.log(vm.spreadsheet)
+        reader.onload = function(e) {
+          _file = e.target.result;
+        };
+        _file = input.files[0];
+      }
+      vm.spreadsheet = _file;
+      console.log(vm.spreadsheet)
+    },
+    addRow: function(e) {
+      console.log('ADD ROW')
+      let vm = this;
+      let dataObj = Object.assign({}, vm.returns.table[0].data[0]);
+      for(let key in dataObj) { dataObj[key] = '' };
+      vm.returns.table[0].data.push(dataObj);
+    },
+    buildRow: function(e) {
+      console.log('BUILD ROW')
+      let vm = this;
+      let dataObj = vm.returns.table[0].data[0];
+      let dataHdr = vm.returns.table[0].headers[0];
+      for(let key in dataObj) { delete dataObj[key] };
+      for(let key in dataHdr) { delete dataHdr[key] };
+      let data = {
+        LOCATION: '',
+        SITE: '',
+        DATUM: '',
+        LATITUDE: ''
+      };
+      Object.assign(vm.returns.table[0].data[0], data);
+      console.log(vm.returns.table[0].data[0]);
     },
     submit: function(e) {
       console.log('SUBMIT func()')
@@ -256,22 +276,22 @@ export default {
     console.log('BEFORE-ROUTE func()')
     console.log(to.params)
      Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
-          next(vm => {
-            console.log('fetching returns')
-            vm.returns = res.body;
-            console.log(vm.returns)
-            // vm.loading.splice('fetching application', 1);
-            // vm.setdata(vm.application.readonly);
-          });
-        },
-        err => {
-          console.log(err);
+        next(vm => {
+           vm.returns = res.body;
+           console.log(vm.returns)
+        //   vm.buildRow()
+        // TODO: set return button if requires payment.
+        // if (vm.returns.requires_pay)
+        //   returnBtn = 'Pay and Submit'
+        // }
         });
+     }, err => {
+        console.log(err);
+     });
    },
    mounted: function(){
        console.log('MOUNTED func()')
         let vm = this;
-
         vm.form = document.forms.enter_return;
         console.log("from mounted")
         console.log(vm.form)
