@@ -77,6 +77,9 @@ export default {
     isLoading: function() {
       return this.loading.length > 0
     },
+    hasOrgs: function() {
+        return this.profile.wildlifecompliance_organisations && this.profile.wildlifecompliance_organisations.length > 0 ? true: false;
+    },
     org: function() {
         let vm = this;
         if (vm.behalf_of != '' || vm.behalf_of != 'other'){

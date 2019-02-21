@@ -507,6 +507,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             except EmailUser.DoesNotExist:
                 raise serializers.ValidationError(
                     'A user with the id passed in does not exist')
+
+            if not request.user.has_perm('can_assign_officers'):
+                raise serializers.ValidationError(
+                    'You are not authorized to assign assessors.')
+
             instance.assign_officer(request, user)
             serializer = InternalApplicationSerializer(
                 instance, context={'request': request})
@@ -735,6 +740,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 'application_fee': application_fee,
                 'licence_fee': licence_fee
             }
+
             serializer = SaveApplicationSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
