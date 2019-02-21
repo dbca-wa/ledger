@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import json
 import datetime
+import logging
 from django.db import models, transaction
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
@@ -36,6 +37,8 @@ from wildlifecompliance.components.applications.email import (
 from wildlifecompliance.ordered_model import OrderedModel
 from collections import OrderedDict
 # from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType,WildlifeLicenceClass
+
+logger = logging.getLogger(__name__)
 
 
 def update_application_doc_filename(instance, filename):
