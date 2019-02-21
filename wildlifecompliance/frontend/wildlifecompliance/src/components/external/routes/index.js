@@ -7,6 +7,7 @@ import ApplicationSubmit from '../application_submit.vue'
 import Organisation from '../organisations/manage.vue'
 import Returns from '../returns/enter_return.vue'
 import ReturnsQuestion from '../returns/enter_return_question.vue'
+import ReturnsSheet from '../returns/enter_return_sheet.vue'
 export default
 {
     path: '/external',
@@ -46,6 +47,11 @@ export default
                     path: 'question/:return_id',
                     component: ReturnsQuestion,
                     name: 'enter_return_question'
+                },
+                {
+                    path: 'sheet/:return_id',
+                    component: ReturnsSheet,
+                    name: 'enter_return_sheet'
                 },
             ]
         },
