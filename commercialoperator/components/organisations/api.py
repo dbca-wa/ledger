@@ -449,8 +449,6 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     @list_route(methods=['POST',])
     def existance(self, request, *args, **kwargs):
         try:
-            #import ipdb; ipdb.set_trace()
-
             serializer = OrganisationCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             data = Organisation.existance(serializer.validated_data['abn'])
@@ -812,7 +810,6 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
-            #import ipdb; ipdb.set_trace()
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.validated_data['requester'] = request.user
