@@ -83,6 +83,7 @@ export default {
         licence_select : this.$route.params.licence_select,
         behalf_of_org : this.$route.params.org_select,
         behalf_of_proxy : this.$route.params.proxy_select,
+        behalf_of: '',
         yourself : this.$route.params.yourself,
         "application": null,
         agent: {},
@@ -109,7 +110,6 @@ export default {
             id:null,
             activity_type:[]
         },
-        licence_type_name: '',
         "loading": [],
         form: null,
         pBody: 'pBody' + vm._uid,
@@ -189,12 +189,12 @@ export default {
             name: null,
             activity_type: []
         }
+        let licence_activities = [];
         let count_total_licence_classes = 0
         let count_total_activity_types = 0
         let count_total_activities = 0
         let count_selected_activities_this_loop = 0
         let data = new FormData()
-        vm.licence_type_name = ''
 
         // loop through level 1 and find selected licence class (radio option, only one)
         for(var i=0,_len1=vm.licence_classes.length;i<_len1;i++){
@@ -206,9 +206,6 @@ export default {
                 vm.licence_class.id         = vm.licence_classes[i].id
                 vm.licence_class.name       = vm.licence_classes[i].name
                 vm.licence_class.short_name = vm.licence_classes[i].short_name
-
-                // initialise licence_type_name
-                vm.licence_type_name        += vm.licence_classes[i].short_name + ' - '
 
                 // loop through level 2 and find selected activity type (checkboxes, one or more)
                 for(var j=0,_len2=vm.licence_classes[i].activity_type.length;j<_len2;j++){
@@ -226,7 +223,7 @@ export default {
                             if(vm.licence_classes[i].activity_type[j].activity[k].selected){
 
                                 // if this is the first level 3 item
-                                // start of list in licence_type_name for the selected activity type
+                                // start of list for the selected activity type
                                 if(count_selected_activities_this_loop == 0){
 
                                     // add activity type to the licence_class.activity_type list
@@ -237,22 +234,8 @@ export default {
                                         short_name: vm.licence_classes[i].activity_type[j].short_name
                                     })
 
-                                    // if this is not the first level 2 item, prepend licence_type_name with a comma
-                                    if(count_total_activity_types > 0){
-                                        vm.licence_type_name += ', '
-                                    }
-
-                                    // prepend licence_type_name with an open parentheses
-                                    vm.licence_type_name += vm.licence_classes[i].activity_type[j].short_name + ' ('
-
                                     // initialise activity list for selected activity type
                                     vm.licence_class.activity_type[count_total_activity_types].activity = []
-
-                                }
-
-                                // if this is not the first level 3 item, prepend licence_type_name with a comma
-                                if(count_selected_activities_this_loop > 0){
-                                    vm.licence_type_name += ', '
                                 }
 
                                 // add activity to the licence_class.activity_type.activity list
@@ -260,23 +243,18 @@ export default {
                                     id:     vm.licence_classes[i].activity_type[j].activity[k].id,
                                     name:   vm.licence_classes[i].activity_type[j].activity[k].name,
                                     short_name:   vm.licence_classes[i].activity_type[j].activity[k].short_name
-                                })
-
-                                // add activity short name to licence_type_name
-                                vm.licence_type_name += vm.licence_classes[i].activity_type[j].activity[k].short_name
+                                });
 
                                 count_selected_activities_this_loop++;
                                 count_total_activities++;
 
+                                licence_activities.push(vm.licence_classes[i].activity_type[j].activity[k].id);
                                 // end of selected activity loop
                         	}
                         }
 
                         // only if there is at least one activity selected for this activity type
                         if(count_selected_activities_this_loop > 0){
-
-                            // list activities for each activity type inside parentheses for licence_type_name
-                            vm.licence_type_name += ')'
                             count_total_activity_types++;
                         }
 
@@ -299,16 +277,16 @@ export default {
                 type: "error",
             })
         } else {
-            data.org_applicant=vm.behalf_of_org
-            data.proxy_applicant=vm.behalf_of_proxy
-            data.licence_class_data=vm.licence_class
-            data.licence_type_name=vm.licence_type_name
-            data.application_fee=vm.application_fee
-            data.licence_fee=vm.licence_fee
+            data.org_applicant=vm.behalf_of_org;
+            data.proxy_applicant=vm.behalf_of_proxy;
+            data.licence_class_data=vm.licence_class;
+            data.application_fee=vm.application_fee;
+            data.licence_fee=vm.licence_fee;
+            data.licence_activities=licence_activities
             console.log(' ---- application apply licence createApplication() ---- ');
+            console.log(`Licence class ID: ${data.licence_class_id}`);
             console.log(vm.application_fee)
             console.log(vm.licence_fee)
-            console.log(data.licence_type_name);
             console.log(data.licence_class)
             console.log(' ==== licence class data ==== ')
             console.log(JSON.stringify(data));

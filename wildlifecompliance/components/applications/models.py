@@ -1,29 +1,23 @@
 from __future__ import unicode_literals
 
-import json
 import datetime
 import logging
 from django.db import models, transaction
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
-from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
 
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
-from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin
-from ledger.licence.models import Licence
 from ledger.payments.invoice.models import Invoice
 from wildlifecompliance import exceptions
 
-from ledger.accounts.models import OrganisationAddress
 from wildlifecompliance.components.organisations.models import Organisation
-from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
-from wildlifecompliance.components.main.utils import get_department_user
+from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
 from wildlifecompliance.components.applications.email import (
     send_application_submitter_email_notification,
     send_application_submit_email_notification,
@@ -34,9 +28,9 @@ from wildlifecompliance.components.applications.email import (
     send_application_issue_notification,
     send_application_decline_notification
 )
+from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
 from collections import OrderedDict
-# from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType,WildlifeLicenceClass
 
 logger = logging.getLogger(__name__)
 
@@ -246,8 +240,10 @@ class ApplicationDocument(Document):
         if self.can_delete:
             return super(ApplicationDocument, self).delete()
         logger.info(
-            'Cannot delete existing document object after application has been submitted (including document submitted before application pushback to status Draft): {}'.format(
-                self.name))
+            'Cannot delete existing document object after application has been submitted (including document submitted before\
+            application pushback to status Draft): {}'.format(
+                self.name)
+        )
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -354,12 +350,14 @@ class Application(RevisionedMixin):
     data = JSONField(blank=True, null=True)
     assessor_data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
-    licence_type_data = JSONField(blank=True, null=True)
-    licence_type_name = models.CharField(max_length=255, null=True, blank=True)
-    licence_category = models.CharField(max_length=64, null=True, blank=True)
     schema = JSONField(blank=False, null=False)
     proposed_issuance_licence = JSONField(blank=True, null=True)
-    #hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
+    # hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
+
+    licence_activities = models.ManyToManyField(
+        'wildlifecompliance.WildlifeLicenceActivity',
+        blank=True
+    )
 
     customer_status = models.CharField(
         'Customer Status',
@@ -459,9 +457,6 @@ class Application(RevisionedMixin):
         if self.lodgement_number == '':
             new_lodgment_id = 'A{0:06d}'.format(self.pk)
             self.lodgement_number = new_lodgment_id
-            #self.licence_category = self.licence_type_data['short_name'] if 'short_name' in self.licence_type_data else None
-            self.licence_category = self.licence_type_name.split(
-                ' - ')[0] if self.licence_type_name else None
             self.save()
 
     @property
@@ -554,7 +549,7 @@ class Application(RevisionedMixin):
         1 - It is a draft
         2- or if the application has been pushed back to the user
         """
-        return self.customer_status == PROCESSING_STATUS_DRAFT[
+        return self.customer_status == Application.PROCESSING_STATUS_DRAFT[
             0] or self.processing_status == 'awaiting_applicant_response'
 
     @property
@@ -563,7 +558,7 @@ class Application(RevisionedMixin):
         An application can be deleted only if it is a draft and it hasn't been lodged yet
         :return:
         """
-        return self.customer_status == PROCESSING_STATUS_DRAFT[0] and not self.lodgement_number
+        return self.customer_status == Application.PROCESSING_STATUS_DRAFT[0] and not self.lodgement_number
 
     @property
     def payment_status(self):
@@ -595,9 +590,64 @@ class Application(RevisionedMixin):
 
     @property
     def licence_type_short_name(self):
-        # return self.licence_type_name.split(' - ')[0] if
-        # self.licence_type_name else None
         return self.licence_category
+
+    @property
+    def licence_type_data(self):
+        from wildlifecompliance.components.licences.serializers import UserWildlifeLicenceClassSerializer
+
+        serializer = UserWildlifeLicenceClassSerializer(
+            self.licence_activities.first().licence_class,
+            context={
+                'activity_records': self.licence_activities
+            }
+        )
+        licence_data = serializer.data
+        licence_data.update({
+            'proposed_decline': self.proposed_decline_status,
+            'processing_status': get_choice_value(
+                self.processing_status,
+                self.PROCESSING_STATUS_CHOICES
+            ),
+        })
+        return licence_data
+
+    @property
+    def licence_class_name(self):
+        first_activity = self.licence_activities.first()
+        try:
+            activity_class = first_activity.licence_class.short_name
+        except AttributeError:
+            activity_class = ''
+        return activity_class
+
+    @property
+    def licence_activity_type_names(self):
+        return list(self.licence_activities.all().values_list(
+            'licence_activity_type__short_name', flat=True
+        ).distinct())
+
+    @property
+    def licence_type_name(self):
+        first_activity = self.licence_activities.first()
+        activity_class = self.licence_class_name
+        try:
+            activity_type = first_activity.licence_activity_type.short_name
+        except AttributeError:
+            activity_type = ''
+        purpose_list = ', '.join(self.licence_activities.all().values_list('short_name', flat=True))
+        return ' {activity_class}{activity_type}{purpose_list}'.format(
+            activity_class="{} - ".format(activity_class) if activity_class else "",
+            activity_type=activity_type,
+            purpose_list=" ({})".format(purpose_list) if purpose_list else ''
+        )
+
+    @property
+    def licence_category(self):
+        try:
+            return self.licence_activities.first().licence_class.display_name
+        except AttributeError:
+            return ''
 
     def __assessor_group(self):
         # TODO get list of assessor groups based on region and activity
@@ -688,7 +738,7 @@ class Application(RevisionedMixin):
                 self.processing_status = 'under_review'
                 self.customer_status = 'under_review'
                 self.submitter = request.user
-                #self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
+                # self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.lodgement_date = timezone.now()
                 # if amendment is submitted change the status of only particular activity type
                 # else if the new application is submitted change the status of
@@ -973,7 +1023,7 @@ class Application(RevisionedMixin):
                             self.submitter.log_user_action(
                                 ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q), request)
                 # check if this is the last assessment for current
-                # applicatio,Change the processing status only if it is the
+                # application, Change the processing status only if it is the
                 # last assessment
                 if not Assessment.objects.filter(
                         application=self,
@@ -987,12 +1037,14 @@ class Application(RevisionedMixin):
                 # assessment = Assessment.objects.get(id=request.data.get('selected_assessment_id'))
                 # assessment.status ='completed'
                 # assessment.save()
-                # # is_last_assessment=Assessment.objects.filter(application=assessment.application, licence_activity_type=assessment.licence_activity_type).count()
-                # if not Assessment.objects.filter(application=assessment.application, licence_activity_type=assessment.licence_activity_type,status='awaiting_assessment').exists():
-                       #  for activity_type in  self.licence_type_data['activity_type']:
-                       #      if int(request.data.get('selected_assessment_tab'))==activity_type["id"]:
-                       #          activity_type["processing_status"]="With Officer-Conditions"
-                       #          self.save()
+                # # is_last_assessment=Assessment.objects.filter(application=assessment.application,
+                # licence_activity_type=assessment.licence_activity_type).count()
+                # if not Assessment.objects.filter(application=assessment.application,
+                # licence_activity_type=assessment.licence_activity_type,status='awaiting_assessment').exists():
+                        #  for activity_type in  self.licence_type_data['activity_type']:
+                        #      if int(request.data.get('selected_assessment_tab'))==activity_type["id"]:
+                        #          activity_type["processing_status"]="With Officer-Conditions"
+                        #          self.save()
 
             except BaseException:
                 raise
@@ -1054,8 +1106,8 @@ class Application(RevisionedMixin):
                     application=self,
                     officer=request.user,
                     reason=request.data.get('reason'),
-                    cc_email=details.get('cc_email', None),
-                    activity_type=details.get('activity_type')
+                    # cc_email=details.get('cc_email', None),  # TODO: fix undefined details (missing source)
+                    # activity_type=details.get('activity_type')  # TODO: fix undefined details (missing source)
                 )
                 # for item in activity_type :
                 #     print(item)
@@ -1202,12 +1254,13 @@ class Application(RevisionedMixin):
                 # if self.processing_status != 'with_approver':
                 #     raise ValidationError('You cannot issue the licence if it is not with an approver')
                 # if not self.applicant.organisation.postal_address:
-                #     raise ValidationError('The applicant needs to have set their postal address before approving this application.')
+                #     raise ValidationError('The applicant needs to have set their postal address before approving\
+                #     this application.')
 
                 for item in request.data.get('activity_type'):
                     if item['final_status'] == "Issue":
                         try:
-                                    # check if parent licence is available
+                            # check if parent licence is available
                             parent_licence = WildlifeLicence.objects.get(
                                 current_application=self, parent_licence__isnull=True)
                         except WildlifeLicence.DoesNotExist:
@@ -1336,7 +1389,7 @@ class Application(RevisionedMixin):
                                     returns = Return.objects.get(
                                         condition=req, due_date=current_date)
                                 except Return.DoesNotExist:
-                                    returns = Return.objects.create(
+                                    Return.objects.create(
                                         application=self,
                                         due_date=current_date,
                                         processing_status='future',
@@ -1498,7 +1551,6 @@ class Assessment(ApplicationRequest):
         app_label = 'wildlifecompliance'
 
     def generate_assessment(self, request):
-        email_group = []
         with transaction.atomic():
             try:
                 # This is to change the status of licence activity type
@@ -1690,7 +1742,7 @@ class ApplicationCondition(OrderedModel):
     licence_activity_type = models.ForeignKey(
         'wildlifecompliance.WildlifeLicenceActivityType', null=True)
     return_type = models.ForeignKey('wildlifecompliance.ReturnType', null=True)
-    #order = models.IntegerField(default=1)
+    # order = models.IntegerField(default=1)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -1779,8 +1831,8 @@ class ExcelApplication(models.Model):
             ('applicant', self.applicant_details),
             ('applicant_type', self.applicant_type),
             ('applicant_id', self.applicant_id),
-            #('applicant', None),
-            #('applicant_id', None),
+            # ('applicant', None),
+            # ('applicant_id', None),
         ])
 
     @property

@@ -65,7 +65,6 @@ class DefaultActivityTypeSerializer(serializers.ModelSerializer):
         )
 
 
-
 class WildlifeLicenceClassSerializer(serializers.ModelSerializer):
     class_status = serializers.SerializerMethodField()
     activity_type = DefaultActivityTypeSerializer(many=True, read_only=True)
@@ -114,7 +113,7 @@ class UserActivitySerializer(serializers.ModelSerializer):
 
 class UserActivityTypeSerializer(serializers.ModelSerializer):
     name = serializers.CharField()
-    activity = UserActivitySerializer(many=True, read_only=True)
+    activity = serializers.SerializerMethodField()
 
     class Meta:
         model = WildlifeLicenceActivityType
@@ -126,10 +125,19 @@ class UserActivityTypeSerializer(serializers.ModelSerializer):
             'not_for_organisation'
         )
 
+    def get_activity(self, obj):
+        activities = self.context.get('activity_records')
+        activity_records = activities if activities else obj.activity.all()
+        serializer = UserActivitySerializer(
+            activity_records,
+            many=True,
+        )
+        return serializer.data
+
 
 class UserWildlifeLicenceClassSerializer(serializers.ModelSerializer):
     class_status = serializers.SerializerMethodField()
-    activity_type = UserActivityTypeSerializer(many=True, read_only=True)
+    activity_type = serializers.SerializerMethodField()
 
     class Meta:
         model = WildlifeLicenceClass
@@ -143,3 +151,22 @@ class UserWildlifeLicenceClassSerializer(serializers.ModelSerializer):
 
     def get_class_status(self, obj):
         return obj.get_licence_class_status_display()
+
+    def get_activity_type(self, obj):
+        activities = self.context.get('activity_records')
+        activity_type_ids = list(activities.values_list(
+            'licence_activity_type_id', flat=True
+        )) if activities else []
+
+        activity_types = obj.activity_type.filter(
+            id__in=activity_type_ids
+        ) if activity_type_ids else obj.activity_type.all()
+
+        serializer = UserActivityTypeSerializer(
+            activity_types,
+            many=True,
+            context={
+                'activity_records': activities
+            }
+        )
+        return serializer.data

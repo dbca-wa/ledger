@@ -52,6 +52,7 @@ from wildlifecompliance.components.applications.serializers import (
     InternalApplicationSerializer,
     SaveApplicationSerializer,
     BaseApplicationSerializer,
+    CreateExternalApplicationSerializer,
     DTInternalApplicationSerializer,
     DTExternalApplicationSerializer,
     ApplicationUserActionSerializer,
@@ -720,28 +721,29 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
         try:
-            http_status = status.HTTP_200_OK
             app_data = self.request.data
-            licence_class_data = app_data.pop('licence_class_data')
-            licence_type_name = app_data.pop('licence_type_name')
+            licence_class_data = app_data.get('licence_class_data')
             schema_data = get_activity_type_schema(licence_class_data)
             org_applicant = request.data.get('org_applicant')
             proxy_applicant = request.data.get('proxy_applicant')
             application_fee = request.data.get('application_fee')
             licence_fee = request.data.get('licence_fee')
+            licence_fee = request.data.get('licence_fee')
+            licence_activities = request.data.get('licence_activities')
             #import ipdb; ipdb.set_trace()
             data = {
                 'schema': schema_data,
                 'submitter': request.user.id,
                 'licence_type_data': licence_class_data,
-                'licence_type_name': licence_type_name,
                 'org_applicant': org_applicant,
                 'proxy_applicant': proxy_applicant,
                 'application_fee': application_fee,
-                'licence_fee': licence_fee
+                'licence_fee': licence_fee,
+                'licence_activities': licence_activities,
             }
 
-            serializer = SaveApplicationSerializer(data=data)
+            # Use serializer for external application creation - do not expose unneeded fields
+            serializer = CreateExternalApplicationSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
