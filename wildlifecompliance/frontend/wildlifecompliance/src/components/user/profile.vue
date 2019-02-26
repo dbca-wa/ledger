@@ -294,7 +294,7 @@
                                         </span>
                                         <span  style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
                                     </label>
-                                    </br>
+                                    <br/>
 
                                     <label for="" class="col-sm-10 control-label" style="text-align:left;">You will be notified by email once the Department has checked the organisation details.
                                     </label>
@@ -329,8 +329,8 @@
                               </div>
                               <div class="form-group" v-if="newOrg.exists && newOrg.detailsChecked">
                                   <label class="col-sm-12" style="text-align:left;margin-bottom:20px;">
-                                    This organisation has already been registered with the system. Please enter the two pin codes below.</br>
-                                    These pin codes can be retrieved from one of the following people:</br> {{newOrg.first_five}}
+                                    This organisation has already been registered with the system. Please enter the two pin codes below.<br/>
+                                    These pin codes can be retrieved from one of the following people:<br/> {{newOrg.first_five}}
                                   </label>
                                   <label for="" class="col-sm-2 control-label" >Pin 1</label>
                                   <div class="col-sm-2">
@@ -347,7 +347,7 @@
                               </div>
                               <div class="form-group" v-else-if="!newOrg.exists && newOrg.detailsChecked">
                                   <label class="col-sm-12" style="text-align:left;">
-                                    This organisation has not yet been registered with this system. Please upload a letter on organisation head stating that you are an employee of this organisation.</br>
+                                    This organisation has not yet been registered with this system. Please upload a letter on organisation head stating that you are an employee of this organisation.<br/>
                                   </label>
                                   <div class="col-sm-12">
                                     <span class="btn btn-info btn-file pull-left">
@@ -363,7 +363,7 @@
                               </div>
                               <div class="form-group" v-else-if="newOrg.exists && !newOrg.detailsChecked">
                                   <label class="col-sm-12" style="text-align:left;">
-                                    Please upload a letter on organisation head stating that you are an employee of this organisation.</br>
+                                    Please upload a letter on organisation head stating that you are an employee of this organisation.<br/>
                                   </label>
                                   <div class="col-sm-12">
                                     <span class="btn btn-info btn-file pull-left">

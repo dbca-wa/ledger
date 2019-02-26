@@ -36,6 +36,16 @@ class WildlifeLicenceActivity(models.Model):
     base_licence_fee = models.DecimalField(
         max_digits=8, decimal_places=2, default='0')
     fields = JSONField(default=list)
+    licence_class = models.ForeignKey(
+        'WildlifeLicenceClass',
+        blank=True,
+        null=True
+    )
+    licence_activity_type = models.ForeignKey(
+        'WildlifeLicenceActivityType',
+        blank=True,
+        null=True
+    )
 
     # application_schema = JSONField(blank=True, null=True)
 

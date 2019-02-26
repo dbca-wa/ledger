@@ -102,6 +102,10 @@ export default {
             licence_activityTitles : [],
             licence_regions: [],
             licence_submitters: [],
+            licence_licenceTypes: [],
+            licence_status: [],
+            licence_categories: [],
+            licence_categoryStatus: [],
             licence_headers:["Number","Licence Type","Licence Holder","Status","Issue Date","Licence","Action"],
             licence_options:{
                 language: {
