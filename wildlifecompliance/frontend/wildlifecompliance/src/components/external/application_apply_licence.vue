@@ -291,7 +291,7 @@ export default {
             console.log(' ==== licence class data ==== ')
             console.log(JSON.stringify(data));
             vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
-                console.log(res.body);
+                console.log('New application response: ', res.body);
                 vm.application = res.body;
                 vm.$router.push({
                     name:"draft_application",

@@ -347,11 +347,13 @@ class ApplicationSerializer(BaseApplicationSerializer):
 
 
 class CreateExternalApplicationSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False, read_only=True)
     licence_activities = serializers.ListField(required=False, write_only=True)
 
     class Meta:
         model = Application
         fields = (
+            'id',
             'activity',
             'title',
             'region',

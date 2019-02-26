@@ -723,13 +723,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         try:
             app_data = self.request.data
             licence_class_data = app_data.get('licence_class_data')
-            schema_data = get_activity_type_schema(licence_class_data)
             org_applicant = request.data.get('org_applicant')
             proxy_applicant = request.data.get('proxy_applicant')
             application_fee = request.data.get('application_fee')
             licence_fee = request.data.get('licence_fee')
             licence_fee = request.data.get('licence_fee')
             licence_activities = request.data.get('licence_activities')
+            schema_data = get_activity_type_schema(licence_activities)
             #import ipdb; ipdb.set_trace()
             data = {
                 'schema': schema_data,
