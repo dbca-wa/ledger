@@ -12,27 +12,6 @@ import Referral from '../referrals/referral.vue'
 import LicenceDashTable from '../licences/dashboard.vue'
 import ReturnDashTable from '../returns/dashboard.vue'
 export default {
-/*
-computed: {
-    is_v1: function (){
-        return wc_version == 1.0? true: false;
-    }
-},
-*/
-
-//is_v1: true,
-
-//    data: function() {
-//        return {
-
-			computed: {
-				is_v1: function (){
-					//return wc_version == 1.0? true: false;
-					return true;
-				}
-			},
-   
-            is_v1: true,
 			path: '/internal',
 			component:
 			{
@@ -129,17 +108,8 @@ computed: {
 							children: [
 								{
 									path: '/',
-									//component: Application,
+									component: Application,
 									//component: Application_v1,
-                                    /*
-									if (this.is_v1) {
-										component: Application_v1,
-									} else {
-										component: Application,
-									}
-                                    */
-									//component: is_v1? Application_v1: Application,
-									component: true? Application_v1: Application,
 									name:"internal-application"
 								},
 								{
@@ -153,6 +123,4 @@ computed: {
 					]
 				}
 			]
-//        }
-//    }
 }
