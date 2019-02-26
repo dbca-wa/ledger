@@ -727,7 +727,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             proxy_applicant = request.data.get('proxy_applicant')
             application_fee = request.data.get('application_fee')
             licence_fee = request.data.get('licence_fee')
-            licence_fee = request.data.get('licence_fee')
             licence_activities = request.data.get('licence_activities')
             schema_data = get_activity_type_schema(licence_activities)
             #import ipdb; ipdb.set_trace()
