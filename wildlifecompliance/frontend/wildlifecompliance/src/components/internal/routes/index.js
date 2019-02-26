@@ -230,17 +230,8 @@ export default
 							children: [
 								{
 									path: '/',
-									//component: Application,
+									component: Application,
 									//component: Application_v1,
-                                    /*
-									if (this.is_v1) {
-										component: Application_v1,
-									} else {
-										component: Application,
-									}
-                                    */
-									//component: is_v1? Application_v1: Application,
-									component: true? Application_v1: Application,
 									name:"internal-application"
 								},
 								{
@@ -254,6 +245,4 @@ export default
 					]
 				}
 			]
-//        }
-//    }
 }
