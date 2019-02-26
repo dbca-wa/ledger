@@ -18,7 +18,7 @@
               <div :id="returnTab" class="tab-pane fade active in">
                 <div class="panel panel-default">
                   <div class="panel-heading">
-                    <h3 class="panel-title">Return
+                    <h3 class="panel-title">Species Type 1
                       <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
                          <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                       </a>
@@ -26,26 +26,21 @@
                   </div>
                   <div class="panel-body panel-collapse in" :id="pdBody">
                     <div class="col-sm-12">
-                      <div class="row">
-                        <label style="width:70%;" class="col-sm-4">Do you want to Lodge a nil Return?</label>
-                        <input type="radio" id="nilYes" name="nilYes" value="yes" v-model='returns.nil'>
-                        <label style="width:10%;" for="nilYes">Yes</label>
-                        <input type="radio" id="nilNo" name="nilNo" value="no" v-model='returns.nil'>
-                        <label style="width:10%;" for="nilNo">No</label>
-                      </div>
-                      <div v-if="returns.nil == 'yes'" class="row">
-                        <label style="width:70%;" class="col-sm-4">Reason for providing a Nil return.</label>
-                        <input type="textarea" name="nilReason" v-model="returns.nilReason">
-                      </div>
-                      <div v-if="returns.nil == 'no'">
                         <div class="row">
-                          <div class="col-md-3">
+                          <div class="col-md-6">
                             <div class="form-group">
-                                <label for="">Type:</label>
-                                <select class="form-control" v-model="filterReturnSpeciesType">
-                                    <option value="All">All</option>
-                                    <option v-for="lt in return_licence_types" :value="lt">{{lt}}</option>
+                                <label for="">Activity Type:</label>
+                                <select class="form-control" v-model="filterSheetActivityType">
+                                    <option value="ALL">All</option>
+                                    <option value="001">Stock</option>
+                                    <option value="002">In through Import</option>
+                                    <option v-for="lt in sheet_activity_types" :value="at">{{at}}</option>
                                 </select>
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="form-group">
+                                <button class="btn btn-primary pull-right" name="sheet_entry" @click="sheetEntry" >New Entry</button>
                             </div>
                           </div>
                         </div>
@@ -54,8 +49,7 @@
                             <datatable ref="return_datatable" :id="datatable_id" :dtOptions="sheet_options" :dtHeaders="sheet_headers"/>
                           </div>
                         </div>
-                      </div>
-                      <!-- End of Sheet Return -->
+                    <!-- End of Sheet Return -->
                     </div>
                   </div>
                 </div>
@@ -63,17 +57,16 @@
             </div>
           </template>
           <!-- End template for Return Tab -->
-          <div class="row" style="margin-bottom:50px;">
-            <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
-              <div class="navbar-inner">
-                <div class="container">
-                  <p class="pull-right" style="margin-top:5px;">
-                    <button class="btn btn-primary" name="save_exit">Save and Exit</button>
-                    <button class="btn btn-primary" @click.prevent="save()" name="save_continue">Save and Continue</button>
-                    <button class="btn btn-primary" name="draft">{{returnBtn}}</button>
-                  </p>
-                </div>
-              </div>
+        </div>
+      </div>
+      <div class="row" style="margin-bottom:50px;">
+        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+          <div class="navbar-inner">
+            <div class="container">
+              <p class="pull-right" style="margin-top:5px;">
+                <button class="btn btn-primary" name="add_sheet">Add Species Type</button>
+                <button class="btn btn-primary" name="save_sheet" >Save</button>
+               </p>
             </div>
           </div>
         </div>
@@ -82,12 +75,13 @@
   </div>
   </form>
 </template>
-
+<SheetEntry ref="add_sheet_entry" :return_id="return.id" @refreshFromResponse="refreshFromResponse"></SheetEntry>
 <script>
 import datatable from '@/utils/vue/datatable.vue'
 import $ from 'jquery'
 import Vue from 'vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
+import SheetEntry from './enter_return_sheet_entry.vue'
 import {
   api_endpoints,
   helpers
@@ -105,8 +99,9 @@ export default {
     let vm = this;
     return {
         pdBody: 'pdBody' + vm._uid,
-        datatable_id: 'return-datatable-'+vm._uid,
+        datatable_id: 'return-datatable',
         returns: {
+            id: 0,
             table: [{
                 data: null
             }],
@@ -114,56 +109,68 @@ export default {
         returnTab: 'returnTab'+vm._uid,
         form: null,
         returnBtn: 'Submit',
-        sheet_headers:["Date","Type","Number","Total Number","Comments","Action"],
+        sheet_headers:["Date","Activity","Number","Total Number","Comments","Action"],
         sheet_options:{
             language: {
                 processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
             },
             responsive: true,
             ajax: {
-                "url": helpers.add_endpoint_json(api_endpoints.returns,'sheet_details'),
-                "dataSrc": ''
+                url: helpers.add_endpoint_json(api_endpoints.returns,'sheet_details'),
+                dataSrc: '',
+                type: 'GET',
+                data: function(_data) {
+                  _data.return_id = vm.$refs.return_datatable._uid
+                  return _data;
+                }
             },
             columns: [
               {
                 data: "date",
                 mRender:function (data,type,full) {
 
-                    return full.table[0]['data'][0]['DATE']['value'];
+                   //return vm.returns.table[0]['data'][0]['DATE']['value']
+                   return '23/01/2019'
+
                 }
               },
               {
                 data: "type",
                 mRender:function (data,type,full) {
 
-                    return full.table[0]['data'][0]['TYPE']['value'];
+                    //return full.table[0]['data'][0]['TYPE']['value'];
+                    return 'Stock'
                 }
               },
               {
                 data: "number",
                 mRender:function (data,type,full) {
 
-                    return full.table[0]['data'][0]['NUMBER']['value'];
+                    //return full.table[0]['data'][0]['NUMBER']['value'];
+                    return '5'
                 }
               },
               {
                 data: "total",
                 mRender:function (data,type,full) {
 
-                    return full.table[0]['data'][0]['TOTAL NUMBER']['value'];
+                   //return full.table[0]['data'][0]['TOTAL NUMBER']['value'];
+                   return '5'
                 }
               },
               {
                 data: "comment",
                 mRender:function (data,type,full) {
 
-                    return full.table[0]['data'][0]['COMMENTS']['value'];
+                    //return full.table[0]['data'][0]['COMMENTS']['value'];
+                    return 'Initial stock taking'
                 }
               },
               {
                 mRender:function (data,type,full) {
 
-                    return `<a href='/internal/application/${full.id}'>Edit</a><br/>`;
+                    return `<a v-on:click="sheetEntry()">Edit</a><br/>`;
+                    //return `<div v-on:click="sheetEntry()"> Edit</div>`;
                 }
               },
             ],
@@ -176,15 +183,13 @@ export default {
   },
   methods: {
     save: function(e) {
-      console.log('SAVE func()')
+      console.log('save func')
       let vm = this;
       vm.form=document.forms.enter_return
       let data = new FormData(vm.form);
-      console.log(data)
-      console.log(JSON.stringify(data))
     },
     submit: function(e) {
-      console.log('SUBMIT func()')
+      console.log('submit func')
       let vm = this;
       vm.form=document.forms.enter_return_sheet
     },
@@ -193,46 +198,50 @@ export default {
     },
     initialiseSearch:function() {
     },
-    filterSpeciesType: function(){
+    filterSheetActivityType: function(){
+       console.log('filterSheetActivityType')
+    },
+    refreshFromResponse:function(response){
+       console.log('RefreshFromResponse function')
+       let vm = this;
+       console.log(response.body)
+       //vm.return = helpers.copyObject(response.body);
+    },
+    sheetEntry: function(e){
+       console.log('sheetEntry function')
+       console.log(this.$refs)
+       let vm=this;
+       // toggle isModalOpen=true
     },
   },
   components:{
-    datatable
+    datatable,
+    SheetEntry,
   },
   computed: {
+    sheetURL: function(){
+      return helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
+    }
   },
   beforeRouteEnter: function(to, from, next) {
     console.log('BEFORE-ROUTE func()')
     Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
         next(vm => {
            vm.returns = res.body;
-           console.log(vm.returns);
-
-        // TODO: set return button if requires payment.
-        // if (vm.returns.requires_pay)
-        //   returnBtn = 'Pay and Submit'
-        // }
+           //vm.returns = vm.returns.table[0]['data']
+           //vm.$refs.return_datatable.vmDataTable.ajax.reload();
+           console.log(vm)
+           console.log(vm.returns.id);
+           console.log(to.params.return_id);
         });
     }, err => {
       console.log(err);
     });
   },
   mounted: function(){
-     console.log('MOUNTED func()')
+     console.log('MOUNTED func')
      let vm = this;
-     //vm.form = document.forms.enter_return_question;
-
-     $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
-         var chev = $( this ).children()[ 0 ];
-         window.setTimeout( function () {
-            $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
-         }, 100 );
-     });
-     this.$nextTick(() => {
-       vm.addEventListeners();
-       vm.initialiseSearch();
-     });
+     vm.form = document.forms.enter_return;
   },
-
 }
 </script>
