@@ -15,7 +15,7 @@ from wildlifecompliance.components.applications.models import (
 from wildlifecompliance.components.organisations.models import (
     Organisation
 )
-from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType
+from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType, WildlifeLicenceClass
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from wildlifecompliance.components.organisations.serializers import OrganisationSerializer
 from wildlifecompliance.components.users.serializers import UserAddressSerializer, DocumentSerializer
@@ -211,23 +211,13 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         return obj.payment_status
 
     def get_class_name(self, obj):
-        for item in obj.licence_type_data:
-            if item == "name":
-                return obj.licence_type_data["name"]
-        return obj.licence_type_data["id"]
+        return obj.licence_class_name
 
     def get_activity_purpose_string(self, obj):
         return obj.licence_type_name.split(' - ')[1].replace('), ', ')\n')
 
     def get_activity_type_names(self, obj):
-        activity_type = []
-        for item in obj.licence_type_data["activity_type"]:
-            if "short_name" in item:
-                activity_type.append(item["short_name"])
-            else:
-                activity_type.append(item["name"])
-
-        return activity_type
+        return obj.licence_activity_type_names
 
     def get_amendment_requests(self, obj):
         amendment_request_data = []
@@ -356,12 +346,39 @@ class ApplicationSerializer(BaseApplicationSerializer):
         return amendment_request_data
 
 
+class CreateExternalApplicationSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False, read_only=True)
+    licence_activities = serializers.ListField(required=False, write_only=True)
+
+    class Meta:
+        model = Application
+        fields = (
+            'id',
+            'activity',
+            'title',
+            'region',
+            'data',
+            'schema',
+            'licence_type_data',
+            'licence_type_name',
+            'licence_category',
+            'applicant',
+            'org_applicant',
+            'proxy_applicant',
+            'submitter',
+            'licence_activities',
+        )
+
+
 class SaveApplicationSerializer(BaseApplicationSerializer):
     assessor_data = serializers.JSONField(required=False)
     # licence_activity_type=ActivityTypeserializer(many=True,read_only =True)
 
     assigned_officer = serializers.CharField(
-        source='assigned_officer.get_full_name')
+        source='assigned_officer.get_full_name',
+        required=False,
+        read_only=True
+    )
 
     class Meta:
         model = Application

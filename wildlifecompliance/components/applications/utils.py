@@ -483,37 +483,40 @@ def save_assessor_data(instance, request, viewset):
             raise
 
 
-def get_activity_type_schema(licence_class_data):
+def get_activity_type_schema(activity_ids):
     schema_activity = []
     schema_tab = []
-    for index, item in enumerate(licence_class_data['activity_type']):
-        schema_activity = []
-        wl_activity_type_id = item['id']
-        activity_type_obj = WildlifeLicenceActivityType.objects.get(
-            id=wl_activity_type_id)
-        item["name"] = activity_type_obj.name
-        item["processing_status"] = "Draft"
-        item["proposed_decline"] = False
 
-        for index1, item1 in enumerate(item['activity']):
-            wl_activity_id = item1['id']
-            activity_obj = WildlifeLicenceActivity.objects.get(
-                id=wl_activity_id)
-            schema_activity = schema_activity + activity_obj.schema
+    try:
+        activities = WildlifeLicenceActivity.objects.filter(
+            id__in=activity_ids
+        )
+    except ValueError:
+        return schema_tab
+    unique_type_activities = activities.distinct('licence_activity_type')
+
+    for index, activity in enumerate(unique_type_activities):
+        activity_type = activity.licence_activity_type
+        schema_activity = []
+        activity_type_item = {}
+        activity_type_item.update(
+            {key: value for key, value in activity_type.__dict__.items()}
+        )
+        activity_type_item["name"] = activity_type.name
+        activity_type_item["processing_status"] = "Draft"
+        activity_type_item["proposed_decline"] = False
+
+        for type_activity in activities.filter(licence_activity_type__id=activity_type.id):
+            schema_activity += type_activity.schema
 
         update_schema_name(schema_activity, index)
-        # for item in schema_activity:
-        #     print(item['name'])
-
         schema_tab.append({"type": "tab",
-                           "id": activity_type_obj.id,
-                           "label": activity_type_obj.name,
-                           "name": activity_type_obj.name,
+                           "id": activity_type.id,
+                           "label": activity_type.name,
+                           "name": activity_type.name,
                            "status": "Draft",
                            "children": schema_activity
                            })
-        # print(schema_tab)
-
     return schema_tab
 
 
