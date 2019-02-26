@@ -336,7 +336,7 @@ class MooringAreaGroupSerializer(serializers.ModelSerializer):
         )
 
 class MooringAreaSerializer(serializers.ModelSerializer):
-    address = serializers.JSONField()
+    address = serializers.JSONField(allow_null=True)
     images = MooringAreaImageSerializer(read_only=True, many=True,required=False)
     mooring_map = serializers.FileField(read_only=True,required=False,allow_empty_file=True)
     mooring_group = serializers.PrimaryKeyRelatedField(required=False, read_only=True,  allow_null=True)

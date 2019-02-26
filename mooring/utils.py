@@ -104,7 +104,7 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
     campsite_qs = Mooringsite.objects.filter(pk__in=sites_qs)
     with transaction.atomic():
         # get availability for campsite, error out if booked/closed
-        availability = get_campsite_availability(campsite_qs, start_date, end_date)
+        availability = get_campsite_availability(campsite_qs, start_date, end_date, False)
         for site_id, dates in availability.items():
             if not override_checks:
                 if updating_booking:
@@ -413,6 +413,10 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                 for bp in bp_result:
                     booking_period[bp.pk] = 'open'
                     selection_period[bp.pk] = 0
+
+                    if bp.start_time is None or bp.finish_time is None: 
+                        booking_period[bp.pk] = 'closed'
+                        continue
                     nowtimewa = nowtime+timedelta(hours=8)
                     start_dt = datetime.strptime(str(date_rotate_forward)+' '+str(bp.start_time), '%Y-%m-%d %H:%M:%S')
                     finish_dt = datetime.strptime(str(date_rotate_forward)+' '+str(bp.finish_time), '%Y-%m-%d %H:%M:%S')
@@ -1612,7 +1616,6 @@ def old_internal_create_booking_invoice(booking, checkout_response):
     return book_inv
 
 def internal_create_booking_invoice(booking, reference):
-    print "-== internal_create_booking_invoice == -"
     try:
         Invoice.objects.get(reference=reference)
     except Invoice.DoesNotExist:

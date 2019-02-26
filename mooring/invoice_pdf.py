@@ -233,7 +233,6 @@ def _create_header(canvas, doc, draw_page_number=True):
 def _create_invoice(invoice_buffer, invoice, request,mooring_var):
 
     global DPAW_HEADER_LOGO 
-    print (mooring_var)
     if  mooring_var["TEMPLATE_GROUP"] == 'rottnest':
         DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring', 'img','logo-rottnest-island-sm.png')
     else:

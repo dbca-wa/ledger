@@ -473,7 +473,7 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         scrubbed = serializer.validated_data
         context = {}
         ground_ids = []
-
+        open_marinas = [] 
         #Removed from parkstay
         # filter to the campsites by gear allowed (if specified), else show the lot
         # if scrubbed['gear_type'] != 'all':
@@ -532,17 +532,20 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
             if (end_date - start_date).days <= max_days:         
                 row = {}
                 row['id'] = q.mooringarea.id
-                row['avail2'] = open_marinas[q.id]
+                if q.id in open_marinas:
+                    row['avail2'] = open_marinas[q.id]
                 #row['avail'] = 'full'
                 if q.mooringarea.mooring_type == 1:
                         row['avail'] = 'full'
                 else:
-                     if int(open_marinas[q.id]['closed_periods']) == 0 and int(open_marinas[q.id]['open_periods']) > 0:
-                         row['avail'] = 'free'
-                     elif int(open_marinas[q.id]['open_periods']) == 0:
-                         row['avail'] = 'full'
-                     elif int(open_marinas[q.id]['closed_periods']) > 0 and int(open_marinas[q.id]['open_periods']) > 0:
-                         row['avail'] = 'partial'
+                     if q.id in open_marinas:
+
+                         if int(open_marinas[q.id]['closed_periods']) == 0 and int(open_marinas[q.id]['open_periods']) > 0:
+                            row['avail'] = 'free'
+                         elif int(open_marinas[q.id]['open_periods']) == 0:
+                            row['avail'] = 'full'
+                         elif int(open_marinas[q.id]['closed_periods']) > 0 and int(open_marinas[q.id]['open_periods']) > 0:
+                            row['avail'] = 'partial'
 
                 queryset.append(row)
         
@@ -678,7 +681,7 @@ def add_booking(request, *args, **kwargs):
     if booking_period.start_time > booking_period.finish_time:
             finish_bd = datetime.strptime(finish_booking_date, "%Y-%m-%d").date()
             finish_booking_date = str(finish_bd+timedelta(days=1))
-            print finish_bd
+            #print finish_bd
 
     mooring_class = mooringsite.mooringarea.mooring_class
     amount = '0.00'
@@ -838,7 +841,6 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                     # i.campgrounds.clear()
                     if i.id == int(mooring_group[0]):
                         m_all = i.moorings.all()
-                        print m_all
                         if instance.id in m_all:
                             pass
                         else:
@@ -1549,10 +1551,8 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             'max_advance_booking': ground.max_advance_booking 
         }
 
-        print "GGG"
         # group results by campsite class
         if ground.site_type in (1, 2):
-            print "GROUND SITE TYPE"
             # from our campsite queryset, generate a distinct list of campsite classes
 #            classes = [x for x in sites_qs.distinct('campsite_class__name').order_by('campsite_class__name').values_list('pk', 'campsite_class', 'campsite_class__name', 'tent', 'campervan', 'caravan')]
             classes = [x for x in sites_qs.distinct('mooringsite_class__name').order_by('mooringsite_class__name').values_list('pk', 'mooringsite_class', 'mooringsite_class__name', 'tent', 'campervan', 'caravan')]
@@ -1725,7 +1725,6 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         ground = self.get_object()
         # check if the user has an ongoing booking
         ongoing_booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-        print "---expiry_time----"
         timer = None
         expiry = None
         if ongoing_booking:
@@ -1815,9 +1814,6 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         radius = int(100)
         if int(distance_radius) > 0:
             radius = int(distance_radius)
-        #print "RADIUS"
-        #print distance_radius
-        #print radius
 #       sites_qs = Mooringsite.objects.all().filter(**context)
         sites_qs = []
   #      if request.session['ps_booking_old']:
@@ -1835,8 +1831,6 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         #             sites_qs = sites_qs.exclude(pk=s.id)
 
 
-#        print "sites_qs"
-#        print sites_qs
         # fetch rate map
         rates = {
             siteid: {
@@ -1848,14 +1842,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             } for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items()
         }
 
-#        print "RATES TOP"
-#        print rates
-#        print utils.get_visit_rates(sites_qs, start_date, end_date).items()
-#        print "RATE BOTTOM"
   
         #for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items():
-        #     print "DATESSS"
-        #     print dates 
         # fetch availability map
         cb = get_current_booking(ongoing_booking)
         current_booking = cb['current_booking']
@@ -2016,8 +2004,6 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             #for s in sites_map:
             #     print s
             bookings_map = {}
-            print "AVAIL"
-            print availability
             # make an entry under sites for each site
             for k, v in sites_map.items():
                 #for c, d in availability[v[0]].items():
@@ -2026,7 +2012,6 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                 #    if d[0] == 'open':
                 #       pass
                 distance_from_selection = round(self.distance(ground.wkb_geometry,k.mooringarea.wkb_geometry),2)
-                print "DATE ROTATE"
                 availability_map = []
                 date_rotate = start_date
                 for i in range(length):
@@ -2036,8 +2021,6 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                      if date_rotate in availability[v[0]]:
                          avbp_map = availability[v[0]][date_rotate][1]
                          avbp_map2 = availability[v[0]][date_rotate][2]
-                     print date_rotate
-                     print v[2][date_rotate]    
                      #[start_date+timedelta(days=i)]
                      for bp in v[2][date_rotate]['booking_period']:
                          bp['status'] = 'open'
@@ -2860,8 +2843,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sqlParams['start'] = start
 
             sql += ';'
-            print ("SQL")
-            print(sql)
+            #print ("SQL")
+            #print(sql)
 
             cursor = connection.cursor()
             cursor.execute("Select count(*) from mooring_booking ")
@@ -3284,7 +3267,7 @@ class MooringsiteRateViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         try:
             http_status = status.HTTP_200_OK
-            print(request.data)
+            #print(request.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -3469,10 +3452,16 @@ class RegisteredVesselsViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         rego = request.GET.get('rego') if request.GET.get('rego') else None
         queryset = self.get_queryset()
-        if rego:
-            queryset = queryset.filter(rego_no=rego.upper())
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        if rego is not None:
+            if len(rego) > 2:
+               queryset = queryset.filter(rego_no=rego.upper())
+               serializer = self.get_serializer(queryset, many=True)
+               return Response(serializer.data)
+            else:
+                raise serializers.ValidationError("Please enter more characters")
+ 
+        else:
+           raise serializers.ValidationError("Please provide Rego")
 
     def retrieve(self, request, pk=None):
         instance = self.get_object()

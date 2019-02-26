@@ -637,7 +637,6 @@ class BookingRange(models.Model):
         return False
 
     def clean(self, *args, **kwargs):
-        print(self.__dict__)
         if self.range_end and self.range_end < self.range_start:
             raise ValidationError('The end date cannot be before the start date.')
 

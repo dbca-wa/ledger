@@ -8,8 +8,8 @@ from .utils import *
 from ledger.accounts.models import EmailUser
 from ledger.payments.models import OracleInterfaceSystem
 
-adminUN = "admin@website.domain"
-nonAdminUN = "nonadmin@website.domain"
+#adminUN = "admin@website.domain"
+#nonAdminUN = "nonadmin@website.domain"
 
 area = MooringArea.objects.all().last()
 
@@ -29,7 +29,7 @@ class AdmissionsCheckoutTestCase(TestSetup):
         """
         # self.factory = RequestFactory()
         # request = self.factory.get('/map')
-        # request.user = EmailUser.objects.get(email=adminUN)
+        # request.user = EmailUser.objects.get(email=self.adminUN)
 
         # adBooking = AdmissionsBooking.objects.all().first()
         # lines = admissions_price_or_lineitems(request, adBooking)
@@ -41,7 +41,7 @@ class AdmissionsPriceOrLineitemsTestCase(TestSetup):
     def test_logged_in_admin(self):
         self.factory = RequestFactory()
         request = self.factory.get('/map')
-        request.user = EmailUser.objects.get(email=adminUN)
+        request.user = EmailUser.objects.get(email=self.adminUN)
 
         adBooking = AdmissionsBooking.objects.all().first()
         lines = admissions_price_or_lineitems(request, adBooking)
@@ -82,7 +82,7 @@ class CheckoutTestCase(TestSetup):
 
         # self.factory = RequestFactory()
         # request = self.factory.get('/map')
-        # request.user = EmailUser.objects.get(email=adminUN)
+        # request.user = EmailUser.objects.get(email=self.adminUN)
         # lines = price_or_lineitems(request, nowplus1, None)
 
         # check = checkout(request, nowplus1, lines, invoice_text="DEF")
@@ -99,11 +99,16 @@ class CreateBookingByClassTestCase(TestSetup):
 
 class CreateBookingBySiteTestCase(TestSetup):
     def test(self):
-        tomorrow = datetime.now() + timedelta(days=1)
-
+        nowtime = datetime.utcnow()
+        tomorrow_dt = datetime.utcnow()+timedelta(days=1) 
+        tomorrow = tomorrow_dt.strftime('%Y-%m-%d')
+        
         # print("Site ID: ", self.site.id)
-        booking = create_booking_by_site([self.site.id], datetime.now().date(), tomorrow.date())
-        self.assertTrue(booking)
+#        booking = create_booking_by_site([self.site.id], datetime.now().date(), tomorrow.date())
+        with self.assertRaises(ValidationError):
+            booking = create_booking_by_site([self.site.id], nowtime.date(), tomorrow_dt.date())
+            booking.full_clean()
+#        self.assertTrue(booking)
 
 class CreateOrUpdateBookingTestCase(TestSetup):
     """
@@ -112,7 +117,7 @@ class CreateOrUpdateBookingTestCase(TestSetup):
     def test(self):
         self.factory = RequestFactory()
         request = self.factory.get('/map')
-        request.user = EmailUser.objects.get(email=adminUN)
+        request.user = EmailUser.objects.get(email=self.adminUN)
 
         tomorrow = datetime.now() + timedelta(days=1)
         booking_details = {
@@ -138,16 +143,16 @@ class CreateOrUpdateBookingTestCase(TestSetup):
             "postcode": "6000"
 
         }
-
-        booking = create_or_update_booking(request,booking_details,updating=False,override_checks=False)
-        self.assertTrue(booking)
+        with self.assertRaises(ValidationError):
+            booking = create_or_update_booking(request,booking_details,updating=False,override_checks=False)
+            booking.full_clean()
 
 class CreateTempBookingUpdateTestCase(TestSetup):
     def test(self):
         pass
         # self.factory = RequestFactory()
         # request = self.factory.get('/map')
-        # request.user = EmailUser.objects.get(email=adminUN)
+        # request.user = EmailUser.objects.get(email=self.adminUN)
 
         # # arrival = datetime.strptime(str(datetime.now() + timedelta(days=4)), '%Y-%m-%d')
         # # departure = datetime.strptime(str(datetime.now() + timedelta(days=8)), '%Y-%m-%d')
@@ -179,7 +184,7 @@ class DeleteSessionAdmissionsBookingTestCase(TestSetup):
     def test(self):
         self.factory = RequestFactory()
         request = self.factory.get('/map')
-        request.user = EmailUser.objects.get(email=adminUN)
+        request.user = EmailUser.objects.get(email=self.adminUN)
 
         session = self.session
         session['ad_booking'] = "This is an object ready to delete."
@@ -193,7 +198,7 @@ class DeleteSessionBookingTestCase(TestSetup):
     def test(self):
         self.factory = RequestFactory()
         request = self.factory.get('/map')
-        request.user = EmailUser.objects.get(email=adminUN)
+        request.user = EmailUser.objects.get(email=self.adminUN)
 
         session = self.session
         session['ps_booking'] = "This is an object ready to delete."
@@ -207,10 +212,10 @@ class GetAdmissionsEntryRateTestCase(TestSetup):
     def test(self):
         self.factory = RequestFactory()
         request = self.factory.get('/map')
-        request.user = EmailUser.objects.get(email=adminUN)
+        request.user = EmailUser.objects.get(email=self.adminUN)
 
         yesterday = datetime.now() - timedelta(days=2)
-        res = get_admissions_entry_rate(request, datetime.now().strftime('%Y-%m-%d'))
+        res = get_admissions_entry_rate(request, datetime.now().strftime('%Y-%m-%d'), self.adLoc)
         self.assertTrue(res)
 
 class GetAvailableCampsiteListTestCase(TestSetup):
@@ -218,7 +223,7 @@ class GetAvailableCampsiteListTestCase(TestSetup):
         pass
         # self.factory = RequestFactory()
         # request = self.factory.get('/map')
-        # request.user = EmailUser.objects.get(email=adminUN)
+        # request.user = EmailUser.objects.get(email=self.adminUN)
         
         # start_date = datetime.now().date()
         # end_date = (datetime.now() + timedelta(days=1)).date()
@@ -232,7 +237,7 @@ class GetAvailableCampsiteListBookingTestCase(TestSetup):
         pass
         # self.factory = RequestFactory()
         # request = self.factory.get('/map')
-        # request.user = EmailUser.objects.get(email=adminUN)
+        # request.user = EmailUser.objects.get(email=self.adminUN)
 
         # start_date = datetime.now().date()
         # end_date = (datetime.now() + timedelta(days=1)).date()
@@ -265,7 +270,7 @@ class GetCampsiteCurrentRateTestCase(TestSetup):
         pass
         self.factory = RequestFactory()
         request = self.factory.get('/map')
-        request.user = EmailUser.objects.get(email=adminUN)
+        request.user = EmailUser.objects.get(email=self.adminUN)
         
         start_date = datetime.now().date().strftime('%Y-%m-%d')
         end_date = (datetime.now() + timedelta(days=2)).date().strftime('%Y-%m-%d')
@@ -298,21 +303,23 @@ class GetParkEntryRateTestCase(TestSetup):
     def test(self):
         self.factory = RequestFactory()
         request = self.factory.get('/map')
-        request.user = EmailUser.objects.get(email=adminUN)
+        request.user = EmailUser.objects.get(email=self.adminUN)
 
-        pr = PriceReason.objects.create(text="aswe", detailRequired=False)
-        mr = MarinaEntryRate.objects.create(reason=pr, period_start=(datetime.now()-timedelta(days=3)).date())
+        with self.assertRaises(ValidationError):
+            pr = PriceReason.objects.create(text="aswe", detailRequired=False)
+            pr.full_clean()
+            mr = MarinaEntryRate.objects.create(reason=pr, period_start=(datetime.now()-timedelta(days=3)).date())
 
-        start_date = datetime.now().date()
+            start_date = datetime.now().date()
         
-        res = get_park_entry_rate(request,str(start_date))
-        self.assertTrue(res)
+            res = get_park_entry_rate(request,str(start_date))
+        #self.assertTrue(res)
 
 class GetSessionAdmissionsBookingTestCase(TestSetup):
     def test(self):
         self.factory = RequestFactory()
         request = self.factory.get('/map')
-        request.user = EmailUser.objects.get(email=adminUN)
+        request.user = EmailUser.objects.get(email=self.adminUN)
 
         session = self.session
         ad = AdmissionsBooking.objects.all()[0]
@@ -349,7 +356,7 @@ class InternalBookingTestCase(TestSetup):
         pass
         # self.factory = RequestFactory()
         # request = self.factory.get('/map')
-        # request.user = EmailUser.objects.get(email=adminUN)
+        # request.user = EmailUser.objects.get(email=self.adminUN)
         # request.session = self.session
 
         # tomorrow = datetime.now() + timedelta(days=1)
@@ -418,7 +425,7 @@ class UpdateBookingTestCase(TestSetup):
         pass        
         # self.factory = RequestFactory()
         # request = self.factory.get('/map')
-        # request.user = EmailUser.objects.get(email=adminUN)
+        # request.user = EmailUser.objects.get(email=self.adminUN)
         # request.session = self.session
         # request.data = {}
         # request.data["entryFees"] = {

@@ -212,7 +212,6 @@ class UpdateCancelOptionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         # User must be passed in as a kwarg.
         super(UpdateCancelOptionForm, self).__init__(*args, **kwargs)
-        print self.initial
 
         self.helper = BaseFormHelper()
 #        self.fields['name'].class = 'form-control'

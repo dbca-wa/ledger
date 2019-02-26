@@ -2234,7 +2234,10 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
             else :
                 arrival = adl[0].arrivalDate
                 overnight = adl[0].overnightStay
-            to_add = [ad, arrival, overnight, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
+            invoice_reference = ''
+            if AdmissionsBookingInvoice.objects.filter(admissions_booking=ad).count() > 0:
+                 invoice_reference =  AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference
+            to_add = [ad, arrival, overnight, invoice_reference]
             ad_current.append(to_add)
         ad_pasts = admissions.distinct().filter(admissionsline__arrivalDate__lt=today)
         ad_past = []
