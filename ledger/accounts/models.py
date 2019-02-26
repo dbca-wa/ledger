@@ -303,6 +303,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
                 self.mobile_number = user_details.get('mobile_phone')
                 self.title = user_details.get('title')
                 self.fax_number = user_details.get('org_unit__location__fax')
+                self.is_staff = True
                 
         super(EmailUser, self).save(*args, **kwargs)
 

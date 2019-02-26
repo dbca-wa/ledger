@@ -247,6 +247,7 @@
                     <Requirements :proposal="proposal"/>
                 </template>
                 <template v-if="canSeeSubmission || (!canSeeSubmission && showingProposal)">
+                    <!--
                     <div class="col-md-12">
                         <div class="row">
                             <div class="panel panel-default">
@@ -338,10 +339,21 @@
                             </div>
                         </div>
                     </div>
+                    -->
                     <div class="col-md-12">
                         <div class="row">
                             <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
-                                <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
+                                <!-- <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal"> -->
+
+                                <div class="panel panel-default">
+                                    <div v-if="proposal" id="scrollspy-heading" class="col-lg-12" >
+                                        <h4>Commercial Operator - {{proposal.application_type}} application: {{proposal.lodgement_number}}</h4>
+                                    </div>
+
+                                    <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart"></ProposalTClass>
+                                    <ProposalFilming v-else-if="proposal && proposal.application_type=='Filming'" :proposal="proposal" id="proposalStart"></ProposalFilming>
+                                    <ProposalEvent v-else-if="proposal && proposal.application_type=='Event'" :proposal="proposal" id="proposalStart"></ProposalEvent>
+
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                     <input type='hidden' name="proposal_id" :value="1" />
@@ -356,8 +368,9 @@
                                         </div>
                                     </div>      
                                     </div>
+                                </div>
 
-                                </Proposal>
+                                <!-- </Proposal> -->
                             </form>
                         </div>
                     </div>
@@ -382,6 +395,9 @@ import ApprovalScreen from './proposal_approval.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
 import MoreReferrals from '@common-utils/more_referrals.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
+import ProposalTClass from '@/components/form_tclass.vue'
+import ProposalFilming from '@/components/form_filming.vue'
+import ProposalEvent from '@/components/form_event.vue'
 import {
     api_endpoints,
     helpers
@@ -464,6 +480,9 @@ export default {
         ApprovalScreen,
         CommsLogs,
         MoreReferrals,
+        ProposalTClass,
+        ProposalFilming,
+        ProposalEvent,
     },
     filters: {
         formatDate: function(data){
