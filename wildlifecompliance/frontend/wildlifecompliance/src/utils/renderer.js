@@ -174,11 +174,11 @@ module.exports = {
                 }
                 var postfix = 0;
                 _elements.push(
-                    <Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true} isRepeatable={c.isRepeatable} repeatable_children={c.children} renderer={this}>
-                        {c.children.map(d=>{
+                    <Group label={c.label} name={c.name} id={id} help_text={help_text} help_text_url={help_text_url} isRemovable={true}>
+                        {c.children.map(c=>{
                             return (
                                 <div>
-                                    {this.renderChildren(h,d,value)}
+                                    {this.renderChildren(h,c,value)}
                                 </div>
                             )
                         })}
