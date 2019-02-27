@@ -1,0 +1,107 @@
+{% load latex_tags %}
+{% block preamble %}
+\documentclass[version=last,paper=a4,DIV=18,usenames,dvipsnames]{scrartcl}
+\usepackage[xcdraw]{xcolor}
+\usepackage{txfonts}
+\usepackage{pdflscape}
+\usepackage{booktabs}
+\usepackage{pdfpages}
+\usepackage[english]{babel} % English language/hyphenation
+%%% Bootstrap colors
+\definecolor{RedFire}{RGB}{146,25,28}
+\definecolor{ParksWildlife}{RGB}{0,85,144}
+\definecolor{successbg}{RGB}{223,240,216}
+\definecolor{errorbg}{RGB}{242,222,222}
+\definecolor{warningbg}{RGB}{252,248,227}
+\definecolor{infobg}{RGB}{217,237,247}
+\definecolor{muted}{RGB}{153,153,153}
+\definecolor{success}{RGB}{70,136,71}
+\definecolor{error}{RGB}{185,74,72}
+\definecolor{warning}{RGB}{192,152,83}
+\definecolor{info}{RGB}{58,135,173}
+\definecolor{verylow}{RGB}{153,208,80}
+\definecolor{low}{RGB}{255,255,0}
+\definecolor{medium}{RGB}{255,208,0}
+\definecolor{high}{RGB}{255,0,0}
+\definecolor{veryhigh}{RGB}{208,0,0}
+\definecolor{white}{RGB}{0,0,0}
+\usepackage[colorlinks=true,pdftitle={{ downloadname }},linktoc=all,pdfborder=white,linkcolor=black,urlcolor=white]{hyperref}
+\usepackage{colortbl}
+\usepackage{longtable}
+\usepackage{tabu}
+\setlength{\tabulinesep}{1.5mm}
+\usepackage{enumerate}
+\usepackage{enumitem}
+\usepackage[includeheadfoot,left=1.5cm,right=1.5cm,top=1cm,bottom=3cm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{graphicx}
+\usepackage{hyphenat}
+\usepackage{tikz}
+\usepackage{makecell}
+
+{% endblock %}
+
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+
+{% block fancyhdr %}
+%%% Custom headers/footers (fancyhdr package)
+\newsavebox{\footbox}
+\sbox{\footbox}{%
+  \begin{minipage}{\textwidth}
+  \begin{tabbing}
+  \end{tabbing}
+  \end{minipage}%
+}
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \setlength\headheight{80pt}
+  \renewcommand{\headrulewidth}{0.1pt}
+  \renewcommand{\footrulewidth}{0.1pt}
+  {% block header %}
+  \fancyhead[L]{\href{http://www.dbca.wa.gov.au}{\includegraphics[scale=0.275]{% templatetag openbrace %}{% base_dir %}/staticfiles/wildlifecompliance/img/dbca-logo.jpg}}}
+  %\fancyhead[L]{\href{http://www.dbca.wa.gov.au}{\includegraphics[scale=0.975]{% templatetag openbrace %}{% base_dir %}/staticfiles/img/ministerial_rpt_hdr.png}}}
+  \fancyhead[R] {
+    {\bfseries Fire Management Services Branch} \\
+    \textsc{\Small
+    17 Dick Perry Ave \\
+    Kensington WA 6151 \\
+    Phone: (08) 9219 9108 Fax: (08) 9367 9913 \\
+    }
+  }
+  {% endblock %}
+  {% block footer %}
+  {% if headers == True %}
+  \fancyfoot[L]{ \leftmark\newline\textbf Custodian: Principal Fire Operations Officer}
+  \fancyfoot[R]{Page \thepage\ of \pageref{LastPage}}
+  {% endif %}
+  {% endblock %}
+}
+\pagestyle{plain}
+{% endblock %}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.1pt}}
+
+\newcommand{\placetextbox}[3]{% \placetextbox{<horizontal pos>}{<vertical pos>}{<stuff>}
+  \setbox0=\hbox{#3}% Put <stuff> in a box
+  \AddToShipoutPictureFG*{% Add <stuff> to current page foreground
+    \put(\LenToUnit{#1\paperwidth},\LenToUnit{#2\paperheight}){\vtop{% templatetag openbrace %}{\null}\makebox[0pt][c]{#3}}}%
+  }%
+}%
+
+\begin{document}
+
+\setcounter{secnumdepth}{-1}
+
+{% with docs=prescription.document_set %}
+{% block content %}
+{% endblock %}
+{% endwith %}
+
+\end{document}
+

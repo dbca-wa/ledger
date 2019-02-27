@@ -2,6 +2,8 @@ from ledger.accounts.models import EmailUser
 # from wildlifecompliance.components.applications.utils import amendment_requests
 from wildlifecompliance.components.applications.models import (
     Application,
+    ApplicationType,
+    ApplicationActivityType,
     ApplicationUserAction,
     ApplicationLogEntry,
     ApplicationCondition,
@@ -23,6 +25,63 @@ from wildlifecompliance import helpers
 
 from rest_framework import serializers
 
+
+class ApplicationActivityTypeSerializer(serializers.ModelSerializer):
+    activity_name_str = serializers.SerializerMethodField(read_only=True)
+    code = serializers.SerializerMethodField(read_only=True)
+    issue_date = serializers.SerializerMethodField(read_only=True)
+    start_date = serializers.SerializerMethodField(read_only=True)
+    expiry_date = serializers.SerializerMethodField(read_only=True)
+    advanced = serializers.SerializerMethodField(read_only=True)
+    to_be_issued = serializers.SerializerMethodField(read_only=True)
+    processed = serializers.SerializerMethodField(read_only=True)
+    approve_options = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = ApplicationActivityType
+        fields = '__all__'
+
+    def get_activity_name_str(self,obj):
+        return obj.activity_name_str if obj.activity_name_str else ''
+
+    def get_code(self,obj):
+        return obj.code.lower() if obj.code else ''
+
+    def get_issue_date(self,obj):
+        #return obj.issue_date.strftime('%Y-%m-%d %H:%M')
+        return obj.issue_date.strftime('%Y/%m/%d %H:%M') if obj.issue_date else ''
+
+    def get_start_date(self,obj):
+        return obj.start_date.strftime('%Y/%m/%d') if obj.start_date else ''
+
+    def get_expiry_date(self,obj):
+        return obj.expiry_date.strftime('%Y/%m/%d') if obj.expiry_date else ''
+
+    def get_advanced(self,obj):
+        return 'on' if obj.advanced else ''
+
+    def get_to_be_issued(self,obj):
+        return 'on' if obj.to_be_issued else ''
+
+    def get_processed(self,obj):
+        return 'on' if obj.processed else ''
+
+    def get_approve_options(self,obj):
+        return [{'label': 'Approved', 'value': 'approved'}, {'label': 'Declined', 'value': 'declined'}]
+
+
+class ApplicationTypeSerializer(serializers.ModelSerializer):
+    activities = serializers.SerializerMethodField()
+    class Meta:
+        model = ApplicationType
+        fields = (
+            'id',
+            'schema',
+            'activities'
+        )
+
+    def get_activities(self,obj):
+        return obj.activities.names()
 
 class EmailUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -139,6 +198,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     assigned_officer = serializers.CharField(
         source='assigned_officer.get_full_name')
     can_be_processed = serializers.SerializerMethodField(read_only=True)
+    activity_types = serializers.SerializerMethodField()
+    processed = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -182,7 +243,11 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'can_current_user_edit',
             'payment_status',
             'assigned_officer',
-            'can_be_processed'
+            'can_be_processed',
+            'licence_category',
+            'pdf_licence',
+            'activity_types',
+            'processed'
         )
         read_only_fields = ('documents',)
 
@@ -219,6 +284,10 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     def get_activity_type_names(self, obj):
         return obj.licence_activity_type_names
 
+    def get_activity_types(self, obj):
+        application_activity_types = ApplicationActivityType.objects.filter(application_id=obj.id)
+        return ApplicationActivityTypeSerializer(application_activity_types, many=True).data
+
     def get_amendment_requests(self, obj):
         amendment_request_data = []
         # qs = obj.amendment_requests
@@ -234,6 +303,10 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 
     def get_can_be_processed(self, obj):
         return obj.processing_status == 'under_review'
+
+    def get_processed(self,obj):
+        """ check if any purposes have been processed (i.e. licence issued)"""
+        return True in obj.activity_types.values_list('processed', flat=True)
 
     def get_can_current_user_edit(self, obj):
         result = False
@@ -409,6 +482,7 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
             'licence_type_data',
             'licence_type_name',
             'licence_category',
+            'pdf_licence',
             'application_fee',
             'licence_fee',
             'assigned_officer',
@@ -458,6 +532,8 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     assigned_officer = serializers.CharField(
         source='assigned_officer.get_full_name')
     can_be_processed = serializers.SerializerMethodField(read_only=True)
+    activity_types = serializers.SerializerMethodField()
+    processed = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -501,9 +577,17 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'permit',
             'payment_status',
             'assigned_officer',
-            'can_be_processed'
+            'can_be_processed',
+            'licence_category',
+            'pdf_licence',
+            'activity_types',
+            'processed'
         )
         read_only_fields = ('documents', 'conditions')
+
+    def get_activity_types(self, obj):
+        application_activity_types = ApplicationActivityType.objects.filter(application_id=obj.id)
+        return ApplicationActivityTypeSerializer(application_activity_types, many=True).data
 
     def get_assessor_mode(self, obj):
         # TODO check if the application has been accepted or declined
@@ -558,6 +642,12 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
                         "start_date": item.start_date,
                         "expiry_date": item.expiry_date})
         return licence_data
+
+    def get_processed(self, obj):
+        """ check if any purposes have been processed """
+        return True in obj.activity_types.values_list('processed', flat=True)
+
+        return obj.assessor_data
 
 
 class ApplicationUserActionSerializer(serializers.ModelSerializer):
