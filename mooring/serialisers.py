@@ -48,12 +48,12 @@ from drf_extra_fields.geo_fields import PointField
 class DistrictSerializer(serializers.ModelSerializer):
     class Meta:
         model = District
-        fields = '__all__'
+        fields = ('name','abbreviation','region','ratis_id','mooring_group')
 
 class PromoAreaSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
             model = PromoArea
-            field = '__all__'
+            fields = ('name','wkb_geometry','zoom_level','mooring_group')
 
 class MooringAreaMooringsiteFilterSerializer(serializers.Serializer):
     """Serializer used by the campground availability map."""
@@ -494,6 +494,8 @@ class MooringsiteSerialiser(serializers.ModelSerializer):
 class RegionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Region
+        fields = ('name','abbreviation','ratis_id','wkb_geometry','zoom_level','mooring_group')
+
 
 class MooringsiteClassSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
