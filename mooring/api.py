@@ -2637,6 +2637,10 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         http_status = status.HTTP_200_OK
+        recordsTotal = None
+        recordsFiltered = None
+        res = None
+
         try:
             data = AdmissionsBooking.objects.filter(booking_type__in=(0, 1)).order_by('-pk')
             groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
