@@ -8,6 +8,7 @@ from django.db import models, transaction
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
