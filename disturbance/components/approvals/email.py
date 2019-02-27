@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_NAME = settings.SYSTEM_NAME_SHORT + ' Automated Message'
 class ApprovalExpireNotificationEmail(TemplateEmailBase):
-    subject = 'Your Approval has been expired.'
+    subject = 'Your Approval has expired.'
     html_template = 'disturbance/emails/approval_expire_notification.html'
     txt_template = 'disturbance/emails/approval_expire_notification.txt'
 
