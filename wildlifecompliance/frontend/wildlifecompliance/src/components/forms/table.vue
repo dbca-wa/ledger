@@ -250,14 +250,11 @@ export default {
       width: 100%;
     }
 
-    .editable-table {
-
-      [type="text"] {
+    .editable-table[type="text"] {
         background: none;
         border: none;
         display: block;
         width: 100%;
-      }
     }
 
     .output {

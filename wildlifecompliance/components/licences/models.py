@@ -57,6 +57,11 @@ class WildlifeLicenceActivity(models.Model):
     def __str__(self):
         return self.name
 
+    @staticmethod
+    def get_first_record(activity_name):
+        # Use filter -> first() in case of records with duplicate names (e.g. "Bioprospecting licence")
+        return WildlifeLicenceActivity.objects.filter(name=activity_name).first()
+
 # class WildlifeLicenceDescriptor(models.Model):
 #     name = models.CharField(max_length = 100)
 
