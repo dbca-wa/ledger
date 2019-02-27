@@ -1540,6 +1540,53 @@ class ProposalUserAction(UserAction):
     proposal = models.ForeignKey(Proposal, related_name='action_logs')
 
 
+class ReferralRecipientGroup(models.Model):
+    #site = models.OneToOneField(Site, default='1') 
+    name = models.CharField(max_length=30, unique=True)
+    members = models.ManyToManyField(EmailUser)
+
+    def __str__(self):
+        return 'Referral Recipient Group'
+
+    @property
+    def all_members(self):
+        all_members = []
+        all_members.extend(self.members.all())
+        member_ids = [m.id for m in self.members.all()]
+        #all_members.extend(EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True).exclude(id__in=member_ids))
+        return all_members
+
+    @property
+    def filtered_members(self):
+        return self.members.all()
+
+    class Meta:
+        app_label = 'commercialoperator'
+        verbose_name_plural = "Referral recipient group"
+        
+#class ReferralRequestUserAction(UserAction):
+#    ACTION_LODGE_REQUEST = "Lodge request {}"
+#    ACTION_ASSIGN_TO = "Assign to {}"
+#    ACTION_UNASSIGN = "Unassign"
+#    ACTION_DECLINE_REQUEST = "Decline request"
+#    # Assessors
+#
+#    ACTION_CONCLUDE_REQUEST = "Conclude request {}"
+#
+#    @classmethod
+#    def log_action(cls, request, action, user):
+#        return cls.objects.create(
+#            request=request,
+#            who=user,
+#            what=str(action)
+#        )
+#
+#    request = models.ForeignKey(ReferralRequest,related_name='action_logs')
+#
+#    class Meta:
+#        app_label = 'commercialoperator'
+
+
 class Referral(models.Model):
     SENT_CHOICES = (
         (1,'Sent From Assessor'),
