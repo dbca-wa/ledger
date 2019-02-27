@@ -224,7 +224,7 @@ class CancelBookingView(TemplateView):
         if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
              booking = Booking.objects.get(pk=booking_id)
              if booking.booking_type == 4:
-                  print "BOOKING HAS BEEN CANCELLED"
+                  print ("BOOKING HAS BEEN CANCELLED")
                   return HttpResponseRedirect(reverse('home'))
 
         booking_cancellation_fees = utils.calculate_price_booking_cancellation(booking)
@@ -253,7 +253,7 @@ class CancelBookingView(TemplateView):
         if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
              booking = Booking.objects.get(pk=booking_id)
              if booking.booking_type == 4:
-                  print "BOOKING HAS BEEN CANCELLED"
+                  print ("BOOKING HAS BEEN CANCELLED")
                   return HttpResponseRedirect(reverse('home'))
         
         bpoint_id = self.get_booking_info(self, request, *args, **kwargs)
@@ -315,7 +315,7 @@ class CancelAdmissionsBookingView(TemplateView):
         if request.user.is_staff or request.user.is_superuser or AdmissionsBooking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
              booking = AdmissionsBooking.objects.get(pk=booking_id)
              if booking.booking_type == 4:
-                  print "ADMISSIONS BOOKING HAS BEEN CANCELLED"
+                  print ("ADMISSIONS BOOKING HAS BEEN CANCELLED")
                   return HttpResponseRedirect(reverse('home'))
 
         booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking, [])
@@ -333,7 +333,7 @@ class CancelAdmissionsBookingView(TemplateView):
         if request.user.is_staff or request.user.is_superuser or AdmissionsBooking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
              booking = AdmissionsBooking.objects.get(pk=booking_id)
              if booking.booking_type == 4:
-                  print "ADMISSIONS BOOKING HAS BEEN CANCELLED"
+                  print ("ADMISSIONS BOOKING HAS BEEN CANCELLED")
                   return HttpResponseRedirect(reverse('home'))
         
         bpoint_id = self.get_booking_info(self, request, *args, **kwargs)
@@ -2264,7 +2264,6 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
         for bk in bk_pasts:
             bk_invoices = []
             for i in BookingInvoice.objects.filter(booking=bk):
-                print "INV REF"
                 bk_invoices.append(i.invoice_reference)
             to_add = [bk, bk_invoices]  
 #            to_add = [bk, BookingInvoice.objects.get(booking=bk).invoice_reference]
@@ -2329,7 +2328,6 @@ class ViewBookingHistory(LoginRequiredMixin, TemplateView):
         booking = Booking.objects.get(pk=booking_id)
         booking.invoices =()
         #booking.invoices = BookingInvoice.objects.filter(booking=booking)
-        print "BOOKING INVOICES"
         booking_invoices= BookingInvoice.objects.filter(booking=booking) 
 #        for bi in booking_invoices:
 #            print bi

@@ -700,25 +700,12 @@ def add_booking(request, *args, **kwargs):
     from_dt_utc = from_dt_utc.replace(tzinfo=timezone.utc).isoformat()
     to_dt_utc =  to_dt_utc.replace(tzinfo=timezone.utc).isoformat()
     #to_dt__lte=to_dt_utc
-    #validate_temp_booking = MooringsiteBooking.objects.filter(campsite=mooringsite,from_dt__gte=from_dt_utc,to_dt__lte=to_dt_utc,booking__expiry_time__gte=datetime.today(), booking_type__in=[3]).count()
-    #validate_existing_booking = MooringsiteBooking.objects.filter(campsite=mooringsite,from_dt__gte=from_dt_utc,to_dt__lte=to_dt_utc).exclude(booking_type__in=[3,4]).count()
     existing_booking_check = utils.check_mooring_available_by_time(mooringsite.id,from_dt_utc,to_dt_utc)
     if existing_booking_check is True:
         response_data['result'] = 'error'
         response_data['message'] = 'Sorry booking has already been taken by another booking.' 
 
     
-#    if validate_temp_booking > 0 or validate_existing_booking > 0:
-#        response_data['result'] = 'error'
-#        response_data['message'] = 'Error '+str(validate_temp_booking)+' '+str(validate_existing_booking)
-          
-    #validate_booking = MooringsiteBooking.objects.filter(campsite=mooringsite)
-    #for v in validate_booking:
-    #    print (v.campsite.id)
-    #    print (v.from_dt)
-    #    print (v.to_dt)
- 
-    #print "END VAL"
     else:
         cb =    MooringsiteBooking.objects.create(
                   campsite=mooringsite,
@@ -1909,8 +1896,6 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                     rates_map[s.campsite_class.pk] = rates[s.pk]
 
                 class_sites_map[s.campsite_class.pk].add(s.pk)
-#            print "RATES_MAP"
-#            print rates_map
             # make an entry under sites for each campsite class
             for c in classes:
                 rate = rates_map[c[1]]
@@ -2006,11 +1991,6 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             bookings_map = {}
             # make an entry under sites for each site
             for k, v in sites_map.items():
-                #for c, d in availability[v[0]].items():
-                #    print "BOOKING AAV"
-                #    print d
-                #    if d[0] == 'open':
-                #       pass
                 distance_from_selection = round(self.distance(ground.wkb_geometry,k.mooringarea.wkb_geometry),2)
                 availability_map = []
                 date_rotate = start_date
@@ -2060,9 +2040,6 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                     'class': v[1].pk,
                     'price' : '0.00',
                     'distance_from_selection': distance_from_selection,
-#                    'price': '${}'.format(sum(v[2].values())) if not show_all else False,
-#                    'price': '${}'.format(v[2][start_date+timedelta(days=i)]['mooring'] for i in range(length)) if not show_all else False,
-#                    'availability3': [[True, v[2][start_date+timedelta(days=i)], v[2][start_date+timedelta(days=i)]] for i in range(length)],
                     'availability': availability_map,
                     'gearType': {
                         'tent': v[3],
@@ -2081,31 +2058,6 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                 if v[1].pk not in result['classes']:
                     result['classes'][v[1].pk] = v[1].name
             # update results based on availability map
-#            for s in sites_qs:
-                #for b in bookings_map[s.id]['availability']:
-                ##    print "BOOKING"
-                ##    print b
-#                for k, v in availability[s.pk].items():
-#                    print "BOOKING V"
-#                    print v
-#                    if v[0] == 'open':
-#                       pass
-                    # update the days that are non-open
-                    #for offset, stat in [((k-start_date).days, v[0]) for k, v in availability[s.pk].items() ]:
-#                    for offset, stat in (k-start_date).days, v[0]:
-#                         for k, v in availability[s.pk].items():
-#                             pass
-                    #    bookings_map[s.id]['availability'][offset][0] = False
-                    #    if stat == 'closed':
-                    #        bookings_map[s.id]['availability'][offset][1] = 'Unavailable'
-                    #    elif stat == 'booked':
-                    #        bookings_map[s.id]['availability'][offset][1] = 'Unavailable'
-                    #    else:
-                    #        bookings_map[s.id]['availability'][offset][1] = 'Unavailable'
-
-                    #         bookings_map[s.id]['price'] = False
-                #if '1' in v:
-                    #         bookings_map[s.id]['availability'][offset]['booking_period']['avail'] = v[1]
             result['sites'] =  sorted(result['sites'], key = lambda i: i['distance_from_selection']) 
             return Response(result)
 

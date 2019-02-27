@@ -460,7 +460,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
              continue
 
         if b.booking.booking_type == 4: 
-             print "CANCELLED BOOKING"
+             print ("CANCELLED BOOKING")
              continue
         # Release booking availablity on Expired Bookings
         if b.booking.booking_type == 3 or b.booking.booking_type == 5:
@@ -811,7 +811,7 @@ def calculate_price_booking_cancellation(booking):
              cancellation_fees.append({'additional_fees': 'true', 'description': 'Cancel Fee - '+description,'amount': cancel_fee_amount})
              cancellation_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount)})
          else:
-             print "NO CANCELATION POLICY"
+             print ("NO CANCELATION POLICY")
 
          #else:
          #    adjustment_fee = ob.amount + adjustment_fee
@@ -862,7 +862,7 @@ def calculate_price_booking_change(old_booking, new_booking):
                 change_fees.append({'additional_fees': 'true', 'description': 'Change Fee - '+description,'amount': change_fee_amount, 'oracle_code': str(ob.campsite.mooringarea.oracle_code)})
                 change_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount), 'oracle_code': str(ob.campsite.mooringarea.oracle_code)})
              else:
-                 print "NO REFUND POLICY" 
+                 print ("NO REFUND POLICY")
                
          else:
              #description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
@@ -1653,7 +1653,7 @@ def internal_booking(request,booking_details,internal=True,updating=False):
                     if 'invoice=' in h.url:
                         invoice = h.url.split('invoice=', 1)[1]
                         break
-            print "-== internal_booking ==-"
+            print ("-== internal_booking ==-")
             internal_create_booking_invoice(booking, invoice)
             delete_session_booking(request.session)
             send_booking_invoice(booking)
