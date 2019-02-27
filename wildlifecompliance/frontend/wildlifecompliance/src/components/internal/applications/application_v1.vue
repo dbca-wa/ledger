@@ -57,7 +57,7 @@
                         <input type='hidden' name="application_id" :value="1" />
                         <input type='hidden' id="selected_activity_type_tab_id" v-model="selected_activity_type_tab_id" :value=0 />
                         <div v-if="hasAssessorMode" class="row" style="margin-bottom:50px;">
-                            <div v-if="wc_version != 1.0" class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                            <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                                 <div class="navbar-inner">
                                     <div class="container">
                                         <p class="pull-right" style="margin-top:5px;">
@@ -219,9 +219,6 @@ export default {
         },
         application_form_url: function() {
           return (this.application) ? `/api/application/${this.application.id}/assess_save.json` : '';
-        },
-        wc_version: function (){
-            return this.$root.wc_version;
         },
         pdf_exists: function() {
             return this.application.pdf_licence != null;

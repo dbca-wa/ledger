@@ -19,7 +19,7 @@
                                 <strong>Lodged on</strong><br/>
                                 {{ application.lodgement_date | formatDate}}
                             </div>
-                            <div v-if="wc_version != 1.0" class="col-sm-12 top-buffer-s">
+                            <div class="col-sm-12 top-buffer-s">
                                 <table class="table small-table">
                                     <tr>
                                         <th>Lodgement</th>
