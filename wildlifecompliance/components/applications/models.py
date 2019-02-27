@@ -113,20 +113,25 @@ class ApplicationDocument(Document):
 
 class Application(RevisionedMixin):
 
-    PROCESSING_STATUS_DRAFT = ('draft', 'Draft')
-    CUSTOMER_STATUS_CHOICES = (PROCESSING_STATUS_DRAFT,
-                               ('under_review', 'Under Review'),
-                               ('amendment_required', 'Amendment Required'),
-                               ('accepted', 'Accepted'),
-                               ('partially_accepted', 'Partially Accepted'),
-                               ('declined', 'Declined'),
-                               )
+    PROCESSING_STATUS_DRAFT = (
+        'draft', 'Draft'
+    )
+
+    CUSTOMER_STATUS_CHOICES = (
+        PROCESSING_STATUS_DRAFT,
+        ('under_review', 'Under Review'),
+        ('amendment_required', 'Amendment Required'),
+        ('accepted', 'Accepted'),
+        ('partially_accepted', 'Partially Accepted'),
+        ('declined', 'Declined'),
+    )
 
     # List of statuses from above that allow a customer to edit an application.
-    CUSTOMER_EDITABLE_STATE = ['temp',
-                               PROCESSING_STATUS_DRAFT[0],
-                               'amendment_required',
-                               ]
+    CUSTOMER_EDITABLE_STATE = [
+        'temp',
+        PROCESSING_STATUS_DRAFT[0],
+        'amendment_required',
+    ]
 
     # List of statuses from above that allow a customer to view an application
     # (read-only)
@@ -136,25 +141,27 @@ class Application(RevisionedMixin):
         'id_required',
         'returns_required',
         'approved',
-        'declined']
+        'declined'
+    ]
 
-    PROCESSING_STATUS_CHOICES = (PROCESSING_STATUS_DRAFT,
-                                 ('with_officer', 'With Officer'),
-                                 ('with_assessor', 'With Assessor'),
-                                 ('with_assessor_conditions', 'With Assessor (Conditions)'),
-                                 ('with_approver', 'With Approver'),
-                                 ('renewal', 'Renewal'),
-                                 ('licence_amendment', 'Licence Amendment'),
-                                 ('awaiting_applicant_response', 'Awaiting Applicant Response'),
-                                 ('awaiting_assessor_response', 'Awaiting Assessor Response'),
-                                 ('awaiting_responses', 'Awaiting Responses'),
-                                 ('ready_for_conditions', 'Ready for Conditions'),
-                                 ('ready_to_issue', 'Ready to Issue'),
-                                 ('approved', 'Approved'),
-                                 ('declined', 'Declined'),
-                                 ('discarded', 'Discarded'),
-                                 ('under_review', 'Under Review'),
-                                 )
+    PROCESSING_STATUS_CHOICES = (
+        PROCESSING_STATUS_DRAFT,
+        ('with_officer', 'With Officer'),
+        ('with_assessor', 'With Assessor'),
+        ('with_assessor_conditions', 'With Assessor (Conditions)'),
+        ('with_approver', 'With Approver'),
+        ('renewal', 'Renewal'),
+        ('licence_amendment', 'Licence Amendment'),
+        ('awaiting_applicant_response', 'Awaiting Applicant Response'),
+        ('awaiting_assessor_response', 'Awaiting Assessor Response'),
+        ('awaiting_responses', 'Awaiting Responses'),
+        ('ready_for_conditions', 'Ready for Conditions'),
+        ('ready_to_issue', 'Ready to Issue'),
+        ('approved', 'Approved'),
+        ('declined', 'Declined'),
+        ('discarded', 'Discarded'),
+        ('under_review', 'Under Review'),
+    )
 
     ACTIVITY_PROCESSING_STATUS_CHOICES = [
         PROCESSING_STATUS_DRAFT[1],
@@ -163,40 +170,34 @@ class Application(RevisionedMixin):
         'With Officer-Conditions',
         'With Officer-Finalisation',
         'Accepted',
-        'Declined']
+        'Declined'
+    ]
 
     ID_CHECK_STATUS_CHOICES = (
-        ('not_checked',
-         'Not Checked'),
-        ('awaiting_update',
-         'Awaiting Update'),
-        ('updated',
-         'Updated'),
-        ('accepted',
-         'Accepted'))
+        ('not_checked', 'Not Checked'),
+        ('awaiting_update', 'Awaiting Update'),
+        ('updated', 'Updated'),
+        ('accepted', 'Accepted')
+    )
 
     RETURN_CHECK_STATUS_CHOICES = (
-        ('not_checked',
-         'Not Checked'),
-        ('awaiting_returns',
-         'Awaiting Returns'),
-        ('completed',
-         'Completed'),
-        ('accepted',
-         'Accepted'))
+        ('not_checked', 'Not Checked'),
+        ('awaiting_returns', 'Awaiting Returns'),
+        ('completed', 'Completed'),
+        ('accepted', 'Accepted')
+    )
 
     CHARACTER_CHECK_STATUS_CHOICES = (
-        ('not_checked', 'Not Checked'), ('accepted', 'Accepted'))
+        ('not_checked', 'Not Checked'),
+        ('accepted', 'Accepted')
+    )
 
     REVIEW_STATUS_CHOICES = (
-        ('not_reviewed',
-         'Not Reviewed'),
-        ('awaiting_amendments',
-         'Awaiting Amendments'),
-        ('amended',
-         'Amended'),
-        ('accepted',
-         'Accepted'))
+        ('not_reviewed', 'Not Reviewed'),
+        ('awaiting_amendments', 'Awaiting Amendments'),
+        ('amended', 'Amended'),
+        ('accepted', 'Accepted')
+    )
 
     APPLICATION_TYPE_CHOICES = (
         ('new_licence', 'New Licence'),
@@ -411,8 +412,8 @@ class Application(RevisionedMixin):
         1 - It is a draft
         2- or if the application has been pushed back to the user
         """
-        return self.customer_status == Application.PROCESSING_STATUS_DRAFT[
-            0] or self.processing_status == 'awaiting_applicant_response'
+        return self.customer_status == Application.PROCESSING_STATUS_DRAFT[0]\
+            or self.processing_status == 'awaiting_applicant_response'
 
     @property
     def is_deletable(self):
@@ -1291,10 +1292,9 @@ class ApplicationRequest(models.Model):
 
 class ReturnRequest(ApplicationRequest):
     REASON_CHOICES = (
-        ('outstanding',
-         'There are currently outstanding returns for the previous licence'),
-        ('other',
-         'Other'))
+        ('outstanding', 'There are currently outstanding returns for the previous licence'),
+        ('other', 'Other')
+    )
     reason = models.CharField(
         'Reason',
         max_length=30,
@@ -1306,14 +1306,15 @@ class ReturnRequest(ApplicationRequest):
 
 
 class AmendmentRequest(ApplicationRequest):
-    STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
+    STATUS_CHOICES = (
+        ('requested', 'Requested'),
+        ('amended', 'Amended')
+    )
     REASON_CHOICES = (
-        ('insufficient_detail',
-         'The information provided was insufficient'),
-        ('missing_information',
-         'There was missing information'),
-        ('other',
-         'Other'))
+        ('insufficient_detail', 'The information provided was insufficient'),
+        ('missing_information', 'There was missing information'),
+        ('other', 'Other')
+    )
     status = models.CharField(
         'Status',
         max_length=30,
@@ -1354,14 +1355,11 @@ class AmendmentRequest(ApplicationRequest):
 
 class Assessment(ApplicationRequest):
     STATUS_CHOICES = (
-        ('awaiting_assessment',
-         'Awaiting Assessment'),
-        ('assessed',
-         'Assessed'),
-        ('completed',
-         'Completed'),
-        ('recalled',
-         'Recalled'))
+        ('awaiting_assessment', 'Awaiting Assessment'),
+        ('assessed', 'Assessed'),
+        ('completed', 'Completed'),
+        ('recalled', 'Recalled')
+    )
     assigned_assessor = models.ForeignKey(EmailUser, blank=True, null=True)
     status = models.CharField(
         'Status',
@@ -1465,16 +1463,12 @@ class Assessment(ApplicationRequest):
 
 class ApplicationDeclinedDetails(models.Model):
     STATUS_CHOICES = (
-        ('default',
-         'Default'),
-        ('propose_decline',
-         'Propose Decline'),
-        ('declined',
-         'Declined'),
-        ('propose_issue',
-         'Propose Issue'),
-        ('issued',
-         'Issued'))
+        ('default', 'Default'),
+        ('propose_decline', 'Propose Decline'),
+        ('declined', 'Declined'),
+        ('propose_issue', 'Propose Issue'),
+        ('issued', 'Issued')
+    )
     status = models.CharField(
         'Status',
         max_length=20,
@@ -1497,12 +1491,10 @@ class ApplicationDeclinedDetails(models.Model):
 
 class ApplicationDecisionPropose(models.Model):
     PROPOSED_ACTION_CHOICES = (
-        ('default',
-         'Default'),
-        ('propose_decline',
-         'Propose Decline'),
-        ('propose_issue',
-         'Propose Issue'))
+        ('default', 'Default'),
+        ('propose_decline', 'Propose Decline'),
+        ('propose_issue', 'Propose Issue')
+    )
     DECISION_ACTION_CHOICES = (
         ('default', 'Default'), ('declined', 'Declined'), ('issued', 'Issued'))
     proposed_action = models.CharField(
