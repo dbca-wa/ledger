@@ -115,6 +115,17 @@ class TestSetup(TestCase):
         self.opReason = mixer.blend(OpenReason, detailRequired=False, mooring_group=ria)
         self.maxStayReason = mixer.blend(MaximumStayReason, detailRequired=False, mooring_group=ria)
         
+
+
+        self. bb = mixer.blend(Booking, mooringarea=self.area, arrival=datetime.now(), departure=datetime.now()+timedelta(days=1), details={'details': 'Some details'}, )
+        self.nowplus1 = Booking.objects.create(arrival=datetime.now(), departure=datetime.now()+timedelta(days=1), mooringarea=self.area)
+        self.nowplus2 = Booking.objects.create(arrival=datetime.now(), departure=datetime.now()+timedelta(days=2), mooringarea=self.area)
+        self.nowplus3 = Booking.objects.create(arrival=datetime.now(), departure=datetime.now()+timedelta(days=3), mooringarea=self.area)
+        self.oneplus4 = Booking.objects.create(arrival=datetime.now()+timedelta(days=1), departure=datetime.now()+timedelta(days=4), mooringarea=self.area)
+        self.twotonow = Booking.objects.create(departure=datetime.now(), arrival=datetime.now()-timedelta(days=2), mooringarea=self.area)
+        self.threetonow = Booking.objects.create(departure=datetime.now(), arrival=datetime.now()-timedelta(days=3), mooringarea=self.area)
+
+
         settings.SESSION_ENGINE = 'django.contrib.sessions.backends.file'
         engine = import_module(settings.SESSION_ENGINE)
         store = engine.SessionStore()

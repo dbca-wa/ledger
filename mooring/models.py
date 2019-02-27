@@ -372,9 +372,9 @@ class MooringArea(models.Model):
             else:
                 b.save()
         except MooringAreaBookingRange.DoesNotExist:
-            print "DEBUG-count pre b save: ", MooringAreaBookingRange.objects.filter(campground=self.id).count()
+            print ("DEBUG-count pre b save: ", MooringAreaBookingRange.objects.filter(campground=self.id).count())
             b.save()
-            print "DEBUG-count post b save: ", MooringAreaBookingRange.objects.filter(campground=self.id).count()
+            print ("DEBUG-count post b save: ", MooringAreaBookingRange.objects.filter(campground=self.id).count())
         except:
             raise
 

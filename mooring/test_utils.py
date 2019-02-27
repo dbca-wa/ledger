@@ -11,15 +11,15 @@ from ledger.payments.models import OracleInterfaceSystem
 #adminUN = "admin@website.domain"
 #nonAdminUN = "nonadmin@website.domain"
 
-area = MooringArea.objects.all().last()
+##area = MooringArea.objects.all().last()
 
-bb = mixer.blend(Booking, mooringarea=area, arrival=datetime.now(), departure=datetime.now()+timedelta(days=1), details={'details': 'Some details'})
-nowplus1 = Booking.objects.create(arrival=datetime.now(), departure=datetime.now()+timedelta(days=1), mooringarea=area)
-nowplus2 = Booking.objects.create(arrival=datetime.now(), departure=datetime.now()+timedelta(days=2), mooringarea=area)
-nowplus3 = Booking.objects.create(arrival=datetime.now(), departure=datetime.now()+timedelta(days=3), mooringarea=area)
-oneplus4 = Booking.objects.create(arrival=datetime.now()+timedelta(days=1), departure=datetime.now()+timedelta(days=4), mooringarea=area)
-twotonow = Booking.objects.create(departure=datetime.now(), arrival=datetime.now()-timedelta(days=2), mooringarea=area)
-threetonow = Booking.objects.create(departure=datetime.now(), arrival=datetime.now()-timedelta(days=3), mooringarea=area)
+##bb = mixer.blend(Booking, mooringarea=area, arrival=datetime.now(), departure=datetime.now()+timedelta(days=1), details={'details': 'Some details'}, )
+##nowplus1 = Booking.objects.create(arrival=datetime.now(), departure=datetime.now()+timedelta(days=1), mooringarea=area)
+##nowplus2 = Booking.objects.create(arrival=datetime.now(), departure=datetime.now()+timedelta(days=2), mooringarea=area)
+##nowplus3 = Booking.objects.create(arrival=datetime.now(), departure=datetime.now()+timedelta(days=3), mooringarea=area)
+##oneplus4 = Booking.objects.create(arrival=datetime.now()+timedelta(days=1), departure=datetime.now()+timedelta(days=4), mooringarea=area)
+##twotonow = Booking.objects.create(departure=datetime.now(), arrival=datetime.now()-timedelta(days=2), mooringarea=area)
+##threetonow = Booking.objects.create(departure=datetime.now(), arrival=datetime.now()-timedelta(days=3), mooringarea=area)
 
 class AdmissionsCheckoutTestCase(TestSetup):
     def test_logged_in_admin(self):
@@ -50,27 +50,27 @@ class AdmissionsPriceOrLineitemsTestCase(TestSetup):
 
 class CheckDateDiffTestCase(TestSetup):
     def test_dates_start_same_end_longer(self):
-        res = check_date_diff(nowplus2, nowplus3)
+        res = check_date_diff(self.nowplus2, self.nowplus3)
         self.assertEqual(res, 1)
     
     def test_dates_start_same_end_shorter(self):
-        res = check_date_diff(nowplus3, nowplus2)
+        res = check_date_diff(self.nowplus3, self.nowplus2)
         self.assertEqual(res, 2)
 
     def test_dates_start_longer_end_same(self):
-        res = check_date_diff(twotonow, threetonow)
+        res = check_date_diff(self.twotonow, self.threetonow)
         self.assertEqual(res, 1)
 
     def test_dates_start_shorter_end_same(self):
-        res = check_date_diff(threetonow, twotonow)
+        res = check_date_diff(self.threetonow, self.twotonow)
         self.assertEqual(res, 2)
 
     def test_dates_no_match(self):
-        res = check_date_diff(twotonow, oneplus4)
+        res = check_date_diff(self.twotonow, self.oneplus4)
         self.assertEqual(res, 3)
 
     def test_dates_all_days_match(self):
-        res = check_date_diff(nowplus1, nowplus1)
+        res = check_date_diff(self.nowplus1, self.nowplus1)
         self.assertEqual(res, 4)
 
 class CheckoutTestCase(TestSetup):
@@ -279,11 +279,11 @@ class GetCampsiteCurrentRateTestCase(TestSetup):
 
 class GetDiffDaysTestCase(TestSetup):
     def test_not_additional(self):
-        res = get_diff_days(nowplus3, nowplus1, additional=False)
+        res = get_diff_days(self.nowplus3, self.nowplus1, additional=False)
         self.assertTrue(res==2)
 
     def test_additional(self):
-        res = get_diff_days(nowplus1, nowplus2)
+        res = get_diff_days(self.nowplus1,self.nowplus2)
         self.assertTrue(res==1)
 
 class GetOpenMarinasTestCase(TestSetup):
@@ -417,7 +417,7 @@ class SetSessionBookingTestCase(TestSetup):
         # pass
         
         session = self.session
-        set_session_booking(session, nowplus1)
+        set_session_booking(session, self.nowplus1)
         self.assertTrue(session['ps_booking'])
 
 class UpdateBookingTestCase(TestSetup):
