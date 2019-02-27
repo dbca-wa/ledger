@@ -1370,7 +1370,7 @@ class MooringAreaViewSetTestCase(TestSetup):
         """Test the Mooring Area View API endpoint POST response when logged in as admin user.
         """
         self.data['park'] = self.park
-        self.data['address'] = None 
+        self.data['address'] = {} 
         self.data['name'] = "Mooring 2"
         self.client.login(email=self.adminUN, password='pass')
         response = self.client.post(self.url, {'park': self.park.id, 'address' : None , 'name': 'Mooring 2'})
