@@ -10,8 +10,6 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
 
-from taggit.managers import TaggableManager
-from taggit.models import TaggedItemBase
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.payments.invoice.models import Invoice
 from wildlifecompliance import exceptions
@@ -43,20 +41,6 @@ def update_application_doc_filename(instance, filename):
 def update_application_comms_log_filename(instance, filename):
     return 'wildlifecompliance/applications/{}/communications/{}/{}'.format(
         instance.log_entry.application.id, instance.id, filename)
-
-
-class TaggedApplicationAssessorGroupRegions(TaggedItemBase):
-    content_object = models.ForeignKey("ApplicationAssessorGroup")
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
-
-class TaggedApplicationAssessorGroupActivities(TaggedItemBase):
-    content_object = models.ForeignKey("ApplicationAssessorGroup")
-
-    class Meta:
-        app_label = 'wildlifecompliance'
 
 
 class ApplicationGroupType(models.Model):
@@ -105,128 +89,6 @@ class ApplicationGroupType(models.Model):
         #         return True
         # return False
         return False
-
-# class applicatio_dummy_group(models.Model):
-#     name= models.CharField(max_length=255)
-#     licence_class=models.ForeignKey('wildlifecompliance.components.WildlifeLicenceClass')
-
-
-class ApplicationAssessorGroup(models.Model):
-    name = models.CharField(max_length=255)
-    members = models.ManyToManyField(EmailUser, blank=True)
-    regions = TaggableManager(
-        verbose_name="Regions",
-        help_text="A comma-separated list of regions.",
-        through=TaggedApplicationAssessorGroupRegions,
-        related_name="+",
-        blank=True)
-    activities = TaggableManager(
-        verbose_name="Activities",
-        help_text="A comma-separated list of activities.",
-        through=TaggedApplicationAssessorGroupActivities,
-        related_name="+",
-        blank=True)
-    default = models.BooleanField(default=False)
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
-    def __str__(self):
-        return self.name
-
-    def clean(self):
-        try:
-            default = ApplicationAssessorGroup.objects.get(default=True)
-        except ApplicationAssessorGroup.DoesNotExist:
-            default = None
-
-        if default and self.pk:
-            if int(self.pk) != int(default.id):
-                if default and self.default:
-                    raise ValidationError(
-                        'There can only be one default application assessor group')
-        else:
-            if default and self.default:
-                raise ValidationError(
-                    'There can only be one default application assessor group')
-
-    def member_is_assigned(self, member):
-        for p in self.current_applications:
-            if p.assigned_officer == member:
-                return True
-        return False
-
-    @property
-    def current_applications(self):
-        assessable_states = ['with_assessor', 'with_assessor_conditions']
-        return Application.objects.filter(
-            processing_status__in=assessable_states)
-
-
-class TaggedApplicationApproverGroupRegions(TaggedItemBase):
-    content_object = models.ForeignKey("ApplicationApproverGroup")
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
-
-class TaggedApplicationApproverGroupActivities(TaggedItemBase):
-    content_object = models.ForeignKey("ApplicationApproverGroup")
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
-
-class ApplicationApproverGroup(models.Model):
-    name = models.CharField(max_length=255)
-    members = models.ManyToManyField(EmailUser, blank=True)
-    regions = TaggableManager(
-        verbose_name="Regions",
-        help_text="A comma-separated list of regions.",
-        through=TaggedApplicationApproverGroupRegions,
-        related_name="+",
-        blank=True)
-    activities = TaggableManager(
-        verbose_name="Activities",
-        help_text="A comma-separated list of activities.",
-        through=TaggedApplicationApproverGroupActivities,
-        related_name="+",
-        blank=True)
-    default = models.BooleanField(default=False)
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
-    def __str__(self):
-        return self.name
-
-    def clean(self):
-        try:
-            default = ApplicationApproverGroup.objects.get(default=True)
-        except ApplicationApproverGroup.DoesNotExist:
-            default = None
-
-        if default and self.pk:
-            if int(self.pk) != int(default.id):
-                if default and self.default:
-                    raise ValidationError(
-                        'There can only be one default application approver group')
-        else:
-            if default and self.default:
-                raise ValidationError(
-                    'There can only be one default application approver group')
-
-    def member_is_assigned(self, member):
-        for p in self.current_applications:
-            if p.assigned_approver == member:
-                return True
-        return False
-
-    @property
-    def current_applications(self):
-        assessable_states = ['with_approver']
-        return Application.objects.filter(
-            processing_status__in=assessable_states)
 
 
 class ApplicationDocument(Document):
@@ -648,38 +510,6 @@ class Application(RevisionedMixin):
             return self.licence_activities.first().licence_class.display_name
         except AttributeError:
             return ''
-
-    def __assessor_group(self):
-        # TODO get list of assessor groups based on region and activity
-        if self.region and self.activity:
-            try:
-                check_group = ApplicationAssessorGroup.objects.filter(
-                    activities__name__in=[self.activity],
-                    regions__name__in=self.regions_list
-                ).distinct()
-                if check_group:
-                    return check_group[0]
-            except ApplicationAssessorGroup.DoesNotExist:
-                pass
-        default_group = ApplicationAssessorGroup.objects.get(default=True)
-
-        return default_group
-
-    def __approver_group(self):
-        # TODO get list of approver groups based on region and activity
-        if self.region and self.activity:
-            try:
-                check_group = ApplicationApproverGroup.objects.filter(
-                    activities__name__in=[self.activity],
-                    regions__name__in=self.regions_list
-                ).distinct()
-                if check_group:
-                    return check_group[0]
-            except ApplicationApproverGroup.DoesNotExist:
-                pass
-        default_group = ApplicationApproverGroup.objects.get(default=True)
-
-        return default_group
 
     def __check_application_filled_out(self):
         if not self.data:
