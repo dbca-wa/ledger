@@ -395,11 +395,11 @@ class InternalCreateBookingInvoiceTestCase(TestSetup):
         self.assertTrue(res)
         # print("DEBUG**: ", res)
 
-class OracleIntegrationTestCase(TestSetup):
-    def test(self):
-        sys = OracleInterfaceSystem.objects.create(system_id='0516', system_name="Test", enabled=True)
-        res = oracle_integration(datetime.now().strftime('%Y-%m-%d'), True)
-        self.assertRaises(None)
+#class OracleIntegrationTestCase(TestSetup):
+#    def test(self):
+#        sys = OracleInterfaceSystem.objects.create(system_id='0516', system_name="Test", enabled=True)
+#        res = oracle_integration(datetime.now().strftime('%Y-%m-%d'), True)
+#        self.assertRaises(None)
 
 class PriceOrLineitemsTestCase(TestSetup):
     def test(self):
