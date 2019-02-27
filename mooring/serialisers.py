@@ -53,6 +53,7 @@ class DistrictSerializer(serializers.ModelSerializer):
 class PromoAreaSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
             model = PromoArea
+            field = '__all__'
 
 class MooringAreaMooringsiteFilterSerializer(serializers.Serializer):
     """Serializer used by the campground availability map."""
@@ -92,11 +93,13 @@ class AdmissionsBookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdmissionsBooking
         excludes = ('totalCost')
+        field = '__all__'
 
 class AdmissionsLineSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdmissionsLine
         excludes = ('cost')
+        field = '__all__'
 
 class BookingRangeSerializer(serializers.ModelSerializer):
 
