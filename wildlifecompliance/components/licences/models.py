@@ -239,12 +239,12 @@ class WildlifeLicence(models.Model):
         unique_together = (
             ('licence_number',
              'licence_sequence',
-             'licence_class'))
+             'licence_class',
+             'licence_type'))
         app_label = 'wildlifecompliance'
 
     def __str__(self):
-        return '{} {}-{}'.format(self.licence_type,
-                                 self.licence_number, self.licence_sequence)
+        return '{} {}-{} {}'.format(self.licence_type, self.licence_number, self.licence_sequence, self.licence_type.code)
 
     def save(self, *args, **kwargs):
         super(WildlifeLicence, self).save(*args, **kwargs)

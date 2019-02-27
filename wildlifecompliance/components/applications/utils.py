@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
@@ -6,7 +7,7 @@ from wildlifecompliance.components.applications.models import ApplicationDocumen
 from wildlifecompliance.components.applications.serializers import SaveApplicationSerializer
 import json
 from wildlifecompliance.components.licences.models import WildlifeLicenceActivity, DefaultActivity, WildlifeLicenceActivityType, DefaultActivityType
-
+from wildlifecompliance.utils.assess_utils import create_app_activity_type_model, create_licence, pdflatex, get_activity_type_sys_answers
 import traceback
 
 
@@ -425,11 +426,18 @@ def save_proponent_data(instance, request, viewset):
                 'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
                 'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
             }
-            #import ipdb; ipdb.set_trace()
             serializer = SaveApplicationSerializer(
                 instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
+
+            # set the isEditable fields
+            #import ipdb; ipdb.set_trace()
+            for activity_type in instance.activity_types:
+                if not activity_type.data or (activity_type.data and 'editable' not in activity_type.data[0]):
+                    activity_type.data = [{'editable': get_activity_type_sys_answers(activity_type)}]
+                    activity_type.save()
+
             # Save Documents
 #            for f in request.FILES:
 #                try:
@@ -481,6 +489,104 @@ def save_assessor_data(instance, request, viewset):
             # End Save Documents
         except BaseException:
             raise
+
+def save_assess_data(instance,request,viewset):
+
+    if instance.processing_status == instance.PROCESSING_STATUS_DRAFT:
+        return
+
+    can_process = True if request.data.has_key('action') and request.data['action'] == 'process' else False
+
+    def get_kv_pair(key_substring):
+        # check if substring is part of dict key, and return key,value if so
+        return [{key:value} for key, value in request.data.items() if key_substring in key]
+
+    with transaction.atomic():
+        try:
+            #import ipdb; ipdb.set_trace()
+            #instance.licences.all().last().licence_sequence
+            new_app = True
+            for activity_type in instance.activity_types:
+                code = WildlifeLicenceActivity.objects.get(name=activity_type.activity_name).code.lower()
+                activity_type.purpose = request.data[code + '_purpose']
+                activity_type.additional_info = request.data[code + '_additional_info']
+                if request.data.has_key(code + '_standard_advanced'):
+                    activity_type.advanced = True if request.data[code + '_standard_advanced'] == 'on' else False
+                else:
+                    activity_type.advanced = False
+
+                activity_type.conditions = request.data[code + '_conditions']
+                activity_type.issue_date = datetime.strptime(request.data[code + '_issue_date'], "%d/%m/%Y") if request.data[code + '_issue_date'] else None
+                activity_type.start_date = datetime.strptime(request.data[code + '_start_date'], "%d/%m/%Y") if request.data[code + '_start_date'] else None
+                activity_type.expiry_date = datetime.strptime(request.data[code + '_expiry_date'], "%d/%m/%Y") if request.data[code + '_expiry_date'] else None
+                if request.data.has_key(code + '_to_be_issued'):
+                    activity_type.to_be_issued = True if request.data[code + '_to_be_issued'] == 'on' else False
+                else:
+                    activity_type.to_be_issued = False
+                if request.data.has_key(code + '_processed'):
+                    activity_type.processed = True if request.data[code + '_processed'] == 'on' else False
+                else:
+                    activity_type.processed = False
+
+                # check if table exists and save possibly updated/overriden data
+                element_types = ['_table_', '_text_area_', '_text_']
+                for element_type in element_types:
+                    for kv_pair in get_kv_pair(code + element_type):
+                        for k,v in kv_pair.iteritems():
+                            if not (element_type == '_text_' and 'text_area' in k): # hack to allow strip() to work below
+                                name = k.strip(code + element_type)
+                                if 'comment-field' not in name:
+                                    #import ipdb; ipdb.set_trace()
+                                    activity_type.data[0]['editable'][name]['answer'] = request.data[k]
+
+#                for kv_pair in get_kv_pair(code+'_text_area_'):
+#                    for k,v in kv_pair.iteritems():
+#                        name = k.strip(code+'_text_area_')
+#                        if 'comment-field' not in name:
+#                            activity_type.data[0]['editable'][name]['answer'] = request.data[k]
+#
+#                for kv_pair in get_kv_pair(code+'_text_'):
+#                    for k,v in kv_pair.iteritems():
+#                        name = k.strip(code+'_text_')
+#                        if 'comment-field' not in name:
+#                            activity_type.data[0]['editable'][name]['answer'] = request.data[k]
+
+                #import ipdb; ipdb.set_trace()
+                if can_process and activity_type.to_be_issued and not activity_type.processed:
+                    # create licences
+                    activity_type.processed = True
+                    if not activity_type.data:
+                        activity_type.data = [add_editable_items(activity_type)]
+
+                    create_licence(instance, activity_type, new_app)
+                    new_app = False
+
+                #activity_type.data = [add_editable_items(activity_type)]
+                activity_type.save()
+                #import ipdb; ipdb.set_trace()
+
+            if instance.licences.count() == instance.activity_types.count():
+                instance.customer_status = 'accepted'
+                instance.processing_status = 'approved'
+            elif instance.licences.count() == 0:
+                instance.customer_status = 'declined'
+                instance.processing_status = 'declined'
+            else:
+                instance.customer_status = 'partially_accepted'
+                instance.processing_status = 'partially_approved'
+
+        except:
+            raise
+
+    #import ipdb; ipdb.set_trace()
+    if can_process and instance.processing_status != 'declined':
+        pdflatex(request, instance)
+
+    return
+
+
+def add_editable_items(activity_type):
+    return {'editable': get_activity_type_sys_answers(activity_type)}
 
 
 def get_activity_type_schema(activity_ids):

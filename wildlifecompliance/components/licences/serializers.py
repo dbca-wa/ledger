@@ -50,10 +50,27 @@ class DefaultActivitySerializer(serializers.ModelSerializer):
         )
 
 
+#    def __init__(self, *args, **kwargs):
+#        # Don't pass the 'fields' arg up to the superclass
+#        import ipdb; ipdb.set_trace()
+#        fields = kwargs.pop('fields', None)
+#
+#        # Instantiate the superclass normally
+#        super(DefaultActivitySerializer, self).__init__(*args, **kwargs)
+
+#    def get_queryset(self):
+#        #import ipdb; ipdb.set_trace()
+#        user = self.request.user
+#		app_ids = Application.objects.filter(Q(org_applicant_id=u.id) | Q(proxy_applicant=u.id) | Q(submitter=u.id)).values_list('id', flat=True).distinct('id')
+#		activity_names = ApplicationActivityType.objects.filter(application_id__in=app_ids).values_list('activity_name').distinct()
+#		return WildlifeLicenceActivity.objects.filter(name__in=activity_names)
+
+
 class DefaultActivityTypeSerializer(serializers.ModelSerializer):
+
     name = serializers.CharField()
     activity = DefaultActivitySerializer(many=True, read_only=True)
-
+    #activity = DefaultActivitySerializer(many=True,read_only=True, queryset=self.qs_purpose())
     class Meta:
         model = WildlifeLicenceActivityType
         fields = (
@@ -63,6 +80,15 @@ class DefaultActivityTypeSerializer(serializers.ModelSerializer):
             'short_name',
             'not_for_organisation'
         )
+
+
+#    def qs_purpose(self):
+#        #import ipdb; ipdb.set_trace()
+#        user = self.request.user
+#        app_ids = Application.objects.filter(Q(org_applicant_id=u.id) | Q(proxy_applicant=u.id) | Q(submitter=u.id)).values_list('id', flat=True).distinct('id')
+#        activity_names = ApplicationActivityType.objects.filter(application_id__in=app_ids).values_list('activity_name').distinct()
+#        return WildlifeLicenceActivity.objects.filter(name__in=activity_names)
+
 
 
 class WildlifeLicenceClassSerializer(serializers.ModelSerializer):

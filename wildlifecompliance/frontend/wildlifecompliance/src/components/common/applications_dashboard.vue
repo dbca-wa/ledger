@@ -150,15 +150,16 @@ export default {
                 mRender:function (data,type,full) {
                     let links = '';
                     if (!vm.is_external){
-                        links +=  full.can_be_processed ? `<a href='/internal/application/${full.id}'>Process</a><br/>`: `<a href='/internal/application/${full.id}'>View</a><br/>`;
+                        links +=  full.can_be_processed ? `<a href='/internal/application/${full.id}'>Process</a><br/>`: `<a href='/external/application/${full.id}'>View</a><br/>`;
+
+                        if (full.processing_status!='Draft') {
+                            links +=  `<a href='/internal/application/${full.id}'>Assess</a><br/>`;
+                        }
                     }
-                    else{
+                    if (vm.is_external){
                         if (full.can_current_user_edit) {
                             links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
                             links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
-                        }
-                        else if (full.can_user_view) {
-                            links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
                         }
                     }
                     return links;
