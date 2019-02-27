@@ -1,0 +1,118 @@
+{% load latex_tags %}
+{% load humanize %}
+
+
+% override the base header and footer
+\fancyhead[L]{\includegraphics[scale=0.975]{% templatetag openbrace %}{% base_dir %}/staticfiles/img/ministerial_rpt_hdr.png}}
+\fancyhead[R] {}
+
+%\fancyfoot[L]{ \leftmark\newline {{report_date}} {{time}} \\ \footnotesize Web link to the Parks and Wildlife Service Daily Burn Program: \url{% templatetag openbrace %}http://www.dbca.wa.gov.au/todaysburns}}
+\fancyfoot[L]{}
+\fancyfoot[R]{}
+\renewcommand{\footrulewidth}{0.0pt}
+
+\small
+\begin{minipage}[t]{0.2\textwidth}
+    Author: \\
+    Office of Origin: \\
+    Your Reference: \\
+    Our Reference: \\
+ \end{minipage}
+ \begin{minipage}[t]{0.75\textwidth}
+     %{{ form.author }} \hfill Date: {{report_date}} \\
+     {{ form.author }}{% if form.position %}, {{form.position}}{% endif %}{% if form.phone_no %}, {{form.phone_no}}{% endif %} \\
+     {{ form.branch }}{% if form.division %}, {{form.division}}{% endif %} \\
+     {{form.your_ref}} \\
+     {{form.our_ref}} \\
+ \end{minipage}
+
+
+\normalsize
+\subsection{MINISTER FOR ENVIRONMENT}
+\subsubsection{% templatetag openbrace %}{{form.title}} }
+
+Records at {{report_date}} show Department of Biodiversity, Conservation and Attractions (DBCA) staff have attended {{ item_map.forest_total_all_tenure|floatformat:0|intcomma }} bushfires covering an area of {{ item_map.forest_total_area|floatformat:0|intcomma }} hectares in its three south-west forest regions for the period since 1 July {{ current_finyear }}. Of these, {{ item_map.forest_pw_tenure|floatformat:0|intcomma }} fires covering {{ item_map.forest_area_pw_tenure|floatformat:0|intcomma }} hectares occurred on lands where DBCA has a management interest.
+\\~\\
+Outside the south-west forest regions, records show {{ item_map.nonforest_total_all_tenure|floatformat:0|intcomma }} bushfires attended by DBCA staff have burnt through an area of {{ item_map.nonforest_total_area|floatformat:0|intcomma }} hectares.
+\\~\\
+A breakdown of the records to date by DBCA regions for bushfires since 1 July {{ current_finyear}} is shown below.
+
+{% if form.supplementary_text %}
+\\~\\
+\normalsize {{form.supplementary_text}}
+{% endif %}
+
+
+%\footnotesize
+\scriptsize
+\renewcommand{\arraystretch}{0.5}% Tighter
+\tabulinesep=1.0mm
+\begin{longtabu} to \linewidth { | X[1.0] | X[1.0] | X[1.0] | X[1.0] | X[1.0] | }
+\hline
+\textbf{Region} & \bfseries\makecell[c]{Total no. \\ DBCA Interest} & \bfseries\makecell[c]{Total area (ha) \\ DBCA Interest} & \bfseries\makecell[c]{Total no. \\ All tenure} & \bfseries\makecell[c]{Total area (ha) \\ All area}
+\hline
+\endhead
+{% for row in rpt_map %}
+  {% for region, data in row.iteritems %}
+    {% if 'Total' in region or 'TOTAL' in region %}
+      \textbf{ {{ region }} } & \textbf{ {{ data.pw_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.area_pw_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.total_all_tenure|floatformat:0|intcomma }} } & \textbf{ {{ data.total_area|floatformat:0|intcomma }} } \\
+    {% else %}
+      {{ region }} & {{ data.pw_tenure|floatformat:0|intcomma }} & {{ data.area_pw_tenure|floatformat:0|intcomma }} & {{ data.total_all_tenure|floatformat:0|intcomma }} & {{ data.total_area|floatformat:0|intcomma }} \\
+    {% endif %}
+    \hline
+  {% empty %}
+    \multicolumn{5}{|X|}{No Data Returned} \\
+    \hline
+  {% endfor %}
+{% endfor %}
+\caption*{Any discrepancies between the total and the sum of the individual values is due to rounding.}
+\end{longtabu}
+
+{% if form.cost_implications %}
+\subsubsection{Cost Implications}
+\normalsize {{form.cost_implications}}
+{% endif %}
+
+{% if form.urgency %}
+\subsubsection{Urgency}
+\normalsize {{form.urgency}}
+{% endif %}
+
+{% if form.contentious_issues %}
+\subsubsection{Contentious Issues}
+\normalsize {{form.contentious_issues}}
+{% endif %}
+
+\subsubsection{RECOMMENDATION}
+{% if form.recommendation == '1' %}
+\normalsize That you note this information. \hfill \textbf{NOTED} \Huge\square
+{% elif form.recommendation == '2' %}
+\normalsize That you:
+\begin{enumerate} \itemsep -0pt
+\item Note the Department’s current Policy Statement No 19: Fire Management Policy for the management of prescribed fire and wildfires by the Department (copy attached). \\ \hspace*{65mm} \textbf{NOTED} \Huge$\square$\normalsize
+
+\item Endorse Parks and Wildlife Service undertaking the prescribed burns listed in the Warren Region’s approved autumn 2009 annual burn plan, subject to due diligence and appropriate consultation with vignerons, as soon as they become available for ignition, noting that prescribed burning in the karri forest is imminent. \\ \hspace*{65mm} \textbf{ENDORSED} \Huge$\square$\normalsize \textbf{NOT ENDORSED} \Huge$\square$\normalsize
+
+\item Note that a Cabinet Submission on prescribed burning is at an advanced stage of drafting by Parks and Wildlife Service. \\ \hspace*{65mm} \textbf{NOTED} \Huge$\square$\normalsize
+
+\end{enumerate}
+{% elif form.recommendation == '3' %}
+\normalsize That you endorse the foreword for inclusion into the Draft State Cane Toad Strategy.
+\\ \hspace*{65mm} \textbf{ENDORSED} \Huge$\square$\normalsize
+\\ \hspace*{65mm} \textbf{ENDORSED, WITH AMENDMENT} \Huge$\square$\normalsize
+\\ \hspace*{65mm} \textbf{NOT ENDORSED} \Huge$\square$\normalsize
+
+{% elif form.recommendation == '4' %}
+\normalsize That you advise:
+\begin{enumerate}
+\item your availability to attend the Conference Dinner; and \\ \hspace*{65mm} \textbf{ACCEPT} \Huge$\square$\normalsize \textbf{DECLINE} \Huge$\square$\normalsize
+\item confirm if your Chief of Staff will also be attending. \\ \hspace*{65mm} \textbf{ATTENDING} \Huge$\square$\normalsize \textbf{NOT ATTENDING} \Huge$\square$\normalsize
+\end{enumerate}
+{% endif %}
+
+\\~\\
+\begin{minipage}{\linewidth}
+\subsubsection{Mark Webb \\DIRECTOR GENERAL   \\~\\ {{form.sig_date}} \hfill $\rule{5.5cm}{0.05mm}$ \\ \hfill MINISTER FOR ENVIRONMENT   \\ Att  \\~\\ \hfill Date:$\rule{4.5cm}{0.05mm}$}
+\end{minipage}
+
+\clearpage

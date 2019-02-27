@@ -7,6 +7,7 @@ SITE_ID = 1
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_wc')
 
 INSTALLED_APPS += [
+    'django.contrib.humanize',
     'bootstrap3',
     'wildlifecompliance',
     'wildlifecompliance.components.main',
@@ -34,6 +35,8 @@ WSGI_APPLICATION = 'wildlifecompliance.wsgi.application'
 MIDDLEWARE_CLASSES += [
     'wildlifecompliance.middleware.FirstTimeNagScreenMiddleware'
 ]
+
+LATEX_GRAPHIC_FOLDER = os.path.join(BASE_DIR,"templates","latex","images")
 
 TEMPLATES[0]['DIRS'].append(
     os.path.join(

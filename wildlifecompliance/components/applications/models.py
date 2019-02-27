@@ -2,10 +2,13 @@ from __future__ import unicode_literals
 
 import datetime
 import logging
+import re
+import os
 from django.db import models, transaction
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
@@ -37,6 +40,16 @@ def update_application_doc_filename(instance, filename):
     return 'wildlifecompliance/applications/{}/documents/{}'.format(
         instance.application.id, filename)
 
+def update_pdf_licence_filename(instance, filename):
+    return 'applications/{}/wildlife_compliance_licence/{}'.format(instance.id,filename)
+
+def replace_special_chars(input_str, new_char='_'):
+    return re.sub('[^A-Za-z0-9]+', new_char, input_str).strip('_').lower()
+
+class ApplicationType(models.Model):
+    schema = JSONField()
+    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
+    site = models.OneToOneField(Site, default='1')
 
 def update_application_comms_log_filename(instance, filename):
     return 'wildlifecompliance/applications/{}/communications/{}/{}'.format(
@@ -110,8 +123,18 @@ class ApplicationDocument(Document):
     class Meta:
         app_label = 'wildlifecompliance'
 
+#class PdfLicenceDocument(Document):
+#    application = models.ForeignKey('Application',related_name='pdf_licence_documents')
+#    _file = models.FileField(upload_to=update_licence_doc_filename)
+#
+#    class Meta:
+#        app_label = 'wildlifecompliance'
 
 class Application(RevisionedMixin):
+
+    APPLICANT_TYPE_ORGANISATION = 'ORG'
+    APPLICANT_TYPE_PROXY = 'PRX'
+    APPLICANT_TYPE_SUBMITTER = 'SUB'
 
     PROCESSING_STATUS_DRAFT = (
         'draft', 'Draft'
@@ -122,7 +145,7 @@ class Application(RevisionedMixin):
         ('under_review', 'Under Review'),
         ('amendment_required', 'Amendment Required'),
         ('accepted', 'Accepted'),
-        ('partially_accepted', 'Partially Accepted'),
+        ('partially_approved', 'Partially Approved'),
         ('declined', 'Declined'),
     )
 
@@ -141,7 +164,8 @@ class Application(RevisionedMixin):
         'id_required',
         'returns_required',
         'approved',
-        'declined'
+        'declined',
+        'partially_approved'
     ]
 
     PROCESSING_STATUS_CHOICES = (
@@ -158,6 +182,7 @@ class Application(RevisionedMixin):
         ('ready_for_conditions', 'Ready for Conditions'),
         ('ready_to_issue', 'Ready to Issue'),
         ('approved', 'Approved'),
+        ('partially_approved', 'Partially Approved'),
         ('declined', 'Declined'),
         ('discarded', 'Discarded'),
         ('under_review', 'Under Review'),
@@ -288,6 +313,8 @@ class Application(RevisionedMixin):
         'wildlifecompliance.WildlifeLicence',
         null=True,
         blank=True)
+    #licence_pdf = models.ForeignKey(LicenceDocument, blank=True, null=True, related_name='licence_pdf')
+    pdf_licence = models.FileField(upload_to=update_pdf_licence_filename, blank=True, null=True)
 
     previous_application = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
@@ -368,11 +395,11 @@ class Application(RevisionedMixin):
     @property
     def applicant_type(self):
         if self.org_applicant:
-            return "ORG"
+            return self.APPLICANT_TYPE_ORGANISATION
         elif self.proxy_applicant:
-            return "PRX"
+            return self.APPLICANT_TYPE_PROXY
         else:
-            return "SUB"
+            return self.APPLICANT_TYPE_SUBMITTER
 
     @property
     def has_amendment(self):
@@ -602,13 +629,13 @@ class Application(RevisionedMixin):
                                         id=activity_type["id"]),
                                     return_type=q.return_type)
                         print(qs)
+
                 self.save()
 
                 officer_groups = ApplicationGroupType.objects.filter(
                     licence_class=self.licence_type_data["id"], name__icontains='officer')
 
                 if self.amendment_requests:
-                    print("insid if")
                     self.log_user_action(
                         ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS_SUBMIT.format(
                             self.id), request)
@@ -981,6 +1008,12 @@ class Application(RevisionedMixin):
             return qs
         except WildlifeLicence.DoesNotExist:
             return None
+
+    @property
+    def activity_types(self):
+        """ returns a queryset of activity_type/purposes attached to application """
+        return ApplicationActivityType.objects.filter(application=self)
+
 
     def get_proposed_decisions(self, request):
         with transaction.atomic():
@@ -1737,6 +1770,62 @@ class ExcelActivityType(models.Model):
 #            ('{}-processed'.format(self.code), self.processed),
 #        ])
 
+class ApplicationActivityType(models.Model):
+    application = models.ForeignKey(Application, related_name='app_activity_types')
+    activity_name = models.CharField(max_length=68)
+    name = models.CharField(max_length=68)
+    short_name = models.CharField(max_length=68)
+    code = models.CharField(max_length=4)
+    data = JSONField(blank=True, null=True)
+    purpose = models.TextField(blank=True, null=True)
+    additional_info = models.TextField(blank=True, null=True)
+    advanced = models.NullBooleanField('Standard/Advanced', default=None)
+    conditions = models.TextField(blank=True, null=True)
+    issue_date = models.DateTimeField(blank=True, null=True)
+    start_date = models.DateField(blank=True, null=True)
+    expiry_date = models.DateField(blank=True, null=True)
+    to_be_issued = models.NullBooleanField(default=None)
+    processed = models.NullBooleanField(default=None)
+
+    class Meta:
+        unique_together = (('application','short_name'))
+        app_label = 'wildlifecompliance'
+
+    def __str__(self):
+        return 'Application {} - Activity Name {} - Short Name {} - Name {}'.format(self.application.id, self.activity_name, self.short_name, self.name)
+
+    @property
+    def licence_class(self):
+        #return self.application.licence_class
+        return self.application.licence_type_short_name
+
+    @property
+    def lodgement_number(self):
+        return self.application.lodgement_number
+
+    @property
+    def licence_number(self):
+        return self.application.licence.licence_number if self.application.licence else None
+
+    @property
+    def applicant(self):
+        return self.application.applicant
+
+    @property
+    def applicant_id(self):
+        return self.application.applicant_id
+
+    @property
+    def applicant_details(self):
+        return self.application.applicant_details
+
+    @property
+    def applicant_type(self):
+        return self.application.applicant_type
+
+    @property
+    def activity_name_str(self):
+        return replace_special_chars(self.activity_name)
 
 @receiver(pre_delete, sender=Application)
 def delete_documents(sender, instance, *args, **kwargs):

@@ -33,12 +33,14 @@ from ledger.checkout.utils import calculate_excl_gst
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from wildlifecompliance.components.applications.utils import save_proponent_data, save_assessor_data, get_activity_type_schema
+from wildlifecompliance.components.applications.utils import save_proponent_data, save_assessor_data, get_activity_type_schema, save_assess_data
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
+from wildlifecompliance.utils.assess_utils import create_app_activity_type_model
 from wildlifecompliance.components.applications.models import (
     Application,
+    ApplicationActivityType,
     ApplicationDocument,
     ApplicationCondition,
     ApplicationStandardCondition,
@@ -48,6 +50,8 @@ from wildlifecompliance.components.applications.models import (
     ApplicationUserAction
 )
 from wildlifecompliance.components.applications.serializers import (
+    ApplicationTypeSerializer,
+    ApplicationActivityTypeSerializer,
     ApplicationSerializer,
     InternalApplicationSerializer,
     SaveApplicationSerializer,
@@ -98,6 +102,19 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         serializer = BaseApplicationSerializer(
             queryset, many=True, context={'request': request})
         return Response(serializer.data)
+
+#    @detail_route(methods=['GET',])
+#    def is_editable_fields(self, request, *args, **kwargs):
+#        try:
+#            instance = self.get_object()    
+#            editable_items = {}
+#            for i in instance.activity_types:
+#                editable_items.update({i.activity_name:get_activity_type_sys_answers(i)})
+#            return Response([editable_items])
+#            #return Response(['a','b'])
+#        except Exception as e:
+#            print(traceback.print_exc())
+#            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
@@ -330,6 +347,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = InternalApplicationSerializer(
             instance, context={'request': request})
+
+#        editable_items = {}
+#        for i in instance.activity_types:
+#            editable_items.update({i.activity_name:get_activity_type_sys_answers(i)})
+#
+#        serializer.data.append({'editable':editable_items})
+
         return Response(serializer.data)
 
     @detail_route(methods=['post'])
@@ -718,6 +742,23 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def assess_save(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            save_assess_data(instance,request,self)
+            return redirect(reverse('external'))
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
         try:
@@ -729,7 +770,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             licence_fee = request.data.get('licence_fee')
             licence_activities = request.data.get('licence_activities')
             schema_data = get_activity_type_schema(licence_activities)
-            #import ipdb; ipdb.set_trace()
             data = {
                 'schema': schema_data,
                 'submitter': request.user.id,
@@ -745,6 +785,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             serializer = CreateExternalApplicationSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+
+            #import ipdb; ipdb.set_trace()
+            create_app_activity_type_model(serializer.data['licence_category'], app_ids=[serializer.data['id']]) 
             return Response(serializer.data)
         except Exception as e:
             print(traceback.print_exc())
@@ -817,6 +860,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+class ApplicationActivityTypeViewSet(viewsets.ModelViewSet):
+    queryset = ApplicationActivityType.objects.all()
+    serializer_class = ApplicationActivityTypeSerializer
 
 
 class ApplicationConditionViewSet(viewsets.ModelViewSet):
