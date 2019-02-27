@@ -394,7 +394,6 @@ class RefundPaymentView(TemplateView):
             #basket_total = [sum(Decimal(b.line_price_incl_tax)) for b in basket.all_lines()] 
             basket_total = Decimal('0.00')
             for b in basket.all_lines():
-               print b.line_price_incl_tax 
                basket_total = basket_total + b.line_price_incl_tax
             booking,bpoint_id = self.get_booking_info(request, *args, **kwargs)
 
@@ -414,7 +413,6 @@ class RefundPaymentView(TemplateView):
              booking,bpoint_id = self.get_booking_info(request, *args, **kwargs)
              basket_total = Decimal('0.00')
              for b in basket.all_lines():
-                 print b.line_price_incl_tax
                  basket_total = basket_total + b.line_price_incl_tax
 
              b_total =  Decimal('{:.2f}'.format(float(basket_total - basket_total - basket_total)))
@@ -464,7 +462,6 @@ class ZeroBookingView(TemplateView):
             #basket_total = [sum(Decimal(b.line_price_incl_tax)) for b in basket.all_lines()]
             basket_total = Decimal('0.00')
             for b in basket.all_lines():
-               print b.line_price_incl_tax
                basket_total = basket_total + b.line_price_incl_tax
             booking = self.get_booking_info(request, *args, **kwargs)
             #    return self.render_page(request, booking, form)
@@ -483,7 +480,6 @@ class ZeroBookingView(TemplateView):
              booking = self.get_booking_info(request, *args, **kwargs)
              basket_total = Decimal('0.00')
              for b in basket.all_lines():
-                 print b.line_price_incl_tax
                  basket_total = basket_total + b.line_price_incl_tax
 
              b_total =  Decimal('{:.2f}'.format(float(basket_total - basket_total - basket_total)))
