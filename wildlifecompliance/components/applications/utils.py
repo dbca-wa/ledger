@@ -37,25 +37,12 @@ class SchemaParser(object):
     def save_proponent_data(self, instance, request, viewset):
         with transaction.atomic():
             try:
-                lookable_fields = [
-                    'isTitleColumnForDashboard',
-                    'isActivityColumnForDashboard',
-                    'isRegionColumnForDashboard']
-                extracted_fields, special_fields = self.create_data_from_form(
-                    instance.schema, request.POST, request.FILES, special_fields=lookable_fields)
+                extracted_fields = self.create_data_from_form(
+                    instance.schema, request.POST, request.FILES)
 
                 self.raise_missing_fields_exception()
                 instance.data = extracted_fields
                 data = {
-                    'region': special_fields.get(
-                        'isRegionColumnForDashboard',
-                        None),
-                    'title': special_fields.get(
-                        'isTitleColumnForDashboard',
-                        None),
-                    'activity': special_fields.get(
-                        'isActivityColumnForDashboard',
-                        None),
                     'data': extracted_fields,
                     'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
                     'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
@@ -91,12 +78,8 @@ class SchemaParser(object):
     def save_assessor_data(self, instance, request, viewset):
         with transaction.atomic():
             try:
-                lookable_fields = [
-                    'isTitleColumnForDashboard',
-                    'isActivityColumnForDashboard',
-                    'isRegionColumnForDashboard']
-                extracted_fields, special_fields, assessor_data, comment_data = self.create_data_from_form(
-                    instance.schema, request.POST, request.FILES, special_fields=lookable_fields, assessor_data=True)
+                extracted_fields, assessor_data, comment_data = self.create_data_from_form(
+                    instance.schema, request.POST, request.FILES, assessor_data=True)
                 data = {
                     'data': extracted_fields,
                     'assessor_data': assessor_data,
@@ -129,13 +112,10 @@ class SchemaParser(object):
             post_data,
             file_data,
             post_data_index=None,
-            special_fields=[],
             assessor_data=False):
         data = {}
-        special_fields_list = []
         assessor_data_list = []
         comment_data_list = {}
-        special_fields_search = SpecialFieldsSearch(special_fields)
         if assessor_data:
             assessor_fields_search = AssessorDataSearch()
             comment_fields_search = CommentDataSearch()
@@ -149,23 +129,20 @@ class SchemaParser(object):
                         0,
                         '',
                         activity_type_name=item['name']))
-                special_fields_search.extract_special_fields(
-                    item, post_data, file_data, 0, '')
                 if assessor_data:
                     assessor_fields_search.extract_special_fields(
                         item, post_data, file_data, 0, '')
                     comment_fields_search.extract_special_fields(
                         item, post_data, file_data, 0, '')
-            special_fields_list = special_fields_search.special_fields
             if assessor_data:
                 assessor_data_list = assessor_fields_search.assessor_data
                 comment_data_list = comment_fields_search.comment_data
         except BaseException:
             traceback.print_exc()
         if assessor_data:
-            return [data], special_fields_list, assessor_data_list, comment_data_list
+            return [data], assessor_data_list, comment_data_list
 
-        return [data], special_fields_list
+        return [data]
 
     def _create_data_from_item(self, item, post_data, file_data, repetition, suffix, **kwargs):
         item_data = {}
@@ -177,7 +154,6 @@ class SchemaParser(object):
 
         if 'children' not in item:
             if item['type'] in ['checkbox' 'declaration']:
-                #item_data[item['name']] = post_data[item['name']]
                 item_data[item['name']] = extended_item_name in post_data
             elif item['type'] == 'file':
                 if extended_item_name in file_data:
