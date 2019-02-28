@@ -1,5 +1,6 @@
 <template>
   <form method="POST" name="enter_return_sheet" enctype="multipart/form-data">
+  <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
   <div class="container" id="externalReturnSheet">
     <div class="row">
       <div class="col-md-3">
@@ -40,7 +41,7 @@
                           </div>
                           <div class="col-md-6">
                             <div class="form-group">
-                                <button class="btn btn-primary pull-right" name="sheet_entry" @click="sheetEntry" >New Entry</button>
+                                <button class="btn btn-primary pull-right" name="sheet_entry">New Entry</button>
                             </div>
                           </div>
                         </div>
@@ -73,9 +74,10 @@
       </div>
     </div>
   </div>
+  <SheetEntry ref="sheet_entry" :return_id=5 @refreshFromResponse="refreshFromResponse"></SheetEntry>
   </form>
 </template>
-<SheetEntry ref="add_sheet_entry" :return_id="return.id" @refreshFromResponse="refreshFromResponse"></SheetEntry>
+
 <script>
 import datatable from '@/utils/vue/datatable.vue'
 import $ from 'jquery'
@@ -108,6 +110,7 @@ export default {
         },
         returnTab: 'returnTab'+vm._uid,
         form: null,
+        isModalOpen: false,
         returnBtn: 'Submit',
         sheet_headers:["Date","Activity","Number","Total Number","Comments","Action"],
         sheet_options:{
@@ -168,15 +171,11 @@ export default {
               },
               {
                 mRender:function (data,type,full) {
-
-                    return `<a v-on:click="sheetEntry()">Edit</a><br/>`;
-                    //return `<div v-on:click="sheetEntry()"> Edit</div>`;
+                    return `<a data-date='21/03/2019' class="edit-row">Edit</a><br/>`;
                 }
               },
             ],
             processing: true,
-            initComplete: function () {
-            }
         }
     }
     returns: null
@@ -207,32 +206,24 @@ export default {
        console.log(response.body)
        //vm.return = helpers.copyObject(response.body);
     },
-    sheetEntry: function(e){
-       console.log('sheetEntry function')
-       console.log(this.$refs)
-       let vm=this;
-       // toggle isModalOpen=true
-    },
   },
   components:{
-    datatable,
     SheetEntry,
+    datatable,
   },
   computed: {
     sheetURL: function(){
       return helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
-    }
+    },
+    csrf_token: function() {
+      return helpers.getCookie('csrftoken')
+    },
   },
   beforeRouteEnter: function(to, from, next) {
     console.log('BEFORE-ROUTE func()')
     Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
         next(vm => {
            vm.returns = res.body;
-           //vm.returns = vm.returns.table[0]['data']
-           //vm.$refs.return_datatable.vmDataTable.ajax.reload();
-           console.log(vm)
-           console.log(vm.returns.id);
-           console.log(to.params.return_id);
         });
     }, err => {
       console.log(err);
@@ -241,7 +232,13 @@ export default {
   mounted: function(){
      console.log('MOUNTED func')
      let vm = this;
-     vm.form = document.forms.enter_return;
+     vm.form = document.forms.enter_return_sheet;
+     console.log(vm.form)
+     vm.$refs.return_datatable.vmDataTable.on('click','.edit-row', function(e) {
+        e.preventDefault();
+        console.log('event caught');
+        vm.$refs.sheet_entry.isModalOpen=true;
+     });
   },
-}
+};
 </script>

@@ -1,33 +1,60 @@
 <template lang="html">
     <div id="externalReturnSheetEntry">
-        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Return Sheet Entry" large>
+        <modal transition="modal fade" title="[Species Type 1]  Current stock: 75" large>
             <div class="container-fluid">
                 <div class="row">
-                    <form class="form-horizontal" name="assessorForm">
+                    <form class="form-horizontal" name="returnSheetForm">
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
                             <div class="row">
-                                <div class="col-sm-offset-2 col-sm-8">
-                                    <div class="form-group">
-                                        <label class="control-label pull-left"  for="Name">To</label>
-                                        <textarea readonly class="form-control"> </textarea>
-                                    </div>
+                                <div class="col-md-3">
+                                    <label class="control-label pull-left"  for="Name">Activity:</label>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type='text' v-model='entryActivity'>
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-sm-offset-2 col-sm-8">
-                                    <div class="form-group">
-                                        <label class="control-label pull-left"  for="Name">Details</label>
-                                        <textarea class="form-control" name="name" ></textarea>
-                                    </div>
+                                <div class="col-md-3">
+                                    <label class="control-label pull-left"  for="Name">Number:</label>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type='text' v-model='entryNumber' >
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="control-label pull-left"  for="Name">Total Number:</label>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type='text' v-model='entryTotalNumber' >
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="control-label pull-left"  for="Name">Receiving licence:</label>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type='text' v-model='entryLicence' >
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="control-label pull-left"  for="Name">Comments:</label>
+                                </div>
+                                <div class="col-md-6">
+                                    <textarea style="width: 95%;"class="form-control" name="entry_comments" v-model="entryComments"></textarea>
                                 </div>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
+            <div slot="footer">
+                <button class="btn btn-primary" @click.prevent="close()">Pay</button>
+                <button class="btn btn-primary" @click.prevent="close()">Cancel</button>
+            </div>
         </modal>
-        <SheetEntry ref="condition_detail" :application_id="application.id" :conditions="conditions" :licence_activity_type_tab="licence_activity_type_tab"/>
     </div>
 </template>
 
@@ -59,6 +86,11 @@ export default {
             errorString: '',
             successString: '',
             success:false,
+            entryActivity: 'Out through transfer other',
+            entryNumber: '45',
+            entryTotalNumber: '30',
+            entryLicence: 'L245375',
+            entryComments: '',
         }
     },
     computed: {
@@ -72,59 +104,20 @@ export default {
             let vm =this;
         },
         cancel:function () {
+            console.log('cancel function')
+            this.isModalOpen = false;
         },
         close:function () {
+            console.log('close function')
             this.isModalOpen = false;
-            this.contact = {};
         },
-        addFormValidations: function() {
+        eventListeners:function () {
             let vm = this;
-            $(vm.form).validate({
-                rules: {
-                    arrival:"required",
-                    departure:"required",
-                    campground:"required",
-                    campsite:{
-                        required: {
-                            depends: function(el){
-                                return vm.campsites.length > 0;
-                            }
-                        }
-                    }
-                },
-                messages: {
-                    arrival:"field is required",
-                    departure:"field is required",
-                    campground:"field is required",
-                    campsite:"field is required"
-                },
-                showErrors: function(errorMap, errorList) {
-                    $.each(this.validElements(), function(index, element) {
-                        var $element = $(element);
-                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
-                    });
-                    // destroy tooltips on valid elements
-                    $("." + this.settings.validClass).tooltip("destroy");
-                    // add or update tooltips
-                    for (var i = 0; i < errorList.length; i++) {
-                        var error = errorList[i];
-                        $(error.element)
-                            .tooltip({
-                                trigger: "focus"
-                            })
-                            .attr("data-original-title", error.message)
-                            .parents('.form-group').addClass('has-error');
-                    }
-                }
-            });
-       },
-       eventListerners:function () {
-           let vm = this;
-       }
-   },
-   mounted:function () {
-       let vm =this;
-   }
+        }
+    },
+    mounted:function () {
+        let vm =this;
+    }
 }
 </script>
 
