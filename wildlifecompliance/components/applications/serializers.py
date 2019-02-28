@@ -423,9 +423,6 @@ class CreateExternalApplicationSerializer(serializers.ModelSerializer):
         model = Application
         fields = (
             'id',
-            'activity',
-            'title',
-            'region',
             'data',
             'schema',
             'licence_type_data',
@@ -453,9 +450,6 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
         model = Application
         fields = (
             'id',
-            'activity',
-            'title',
-            'region',
             'data',
             'assessor_data',
             'comment_data',
@@ -463,7 +457,6 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
             'customer_status',
             'processing_status',
             'review_status',
-            # 'hard_copy',
             'org_applicant',
             'proxy_applicant',
             'submitter',
@@ -535,9 +528,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
         model = Application
         fields = (
             'id',
-            'activity',
-            'title',
-            'region',
             'data',
             'schema',
             'customer_status',
@@ -546,7 +536,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'id_check_status',
             'character_check_status',
             'licence_type_data',
-            # 'hard_copy',
             'applicant',
             'org_applicant',
             'proxy_applicant',
