@@ -515,7 +515,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     assessor_mode = serializers.SerializerMethodField()
     current_assessor = serializers.SerializerMethodField()
     assessor_data = serializers.SerializerMethodField()
-    allowed_assessors = EmailUserSerializer(many=True)
     licences = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
     assigned_officer = serializers.CharField(
@@ -555,7 +554,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'assessor_data',
             'comment_data',
             'licences',
-            'allowed_assessors',
             'applicationdeclineddetails',
             'permit',
             'payment_status',
