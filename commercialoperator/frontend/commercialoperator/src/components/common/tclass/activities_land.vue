@@ -88,10 +88,10 @@
             </form>
             <form>
               <div class="form-horizontal col-sm-6">
-                <label class="control-label">Access</label>
+                <label class="control-label">Activities</label>
                 <div class="" v-for="a in accessTypes">
                   <div class="form-check">
-                    <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_access" :value="a.name" data-parsley-required/>
+                    <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="trail_activities" :value="a.id" data-parsley-required/>
                       {{ a.name }}
                   </div>
                 </div>
@@ -114,6 +114,7 @@
         </div>
       </div>
       <div>{{selected_trails}}</div>
+      <div>{{selected_trails_activities}}</div>
       <div>
               <editParkActivities ref="edit_activities" :proposal="proposal"></editParkActivities>
       </div>
@@ -153,11 +154,14 @@ export default {
                 selected_activities:[],
                 selected_activities_before:[],
                 selected_trails:[],
+                trail_activities:[],
+                trail_activities_before:[],
                 activities:[],
                 access:[],
                 //vehicles_url: api_endpoints.vehicles,
                 vehicles_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/vehicles'),
-                selected_parks_activities:[]
+                selected_parks_activities:[],
+                selected_trails_activities:[],
             }
         },
         components: {
@@ -318,7 +322,91 @@ export default {
             if (vm.proposal){
               vm.proposal.trails=vm.selected_trails;
             }
+
+            var removed_trail=$(vm.selected_trails_before).not(vm.selected_trails).get();
+            var added_trail=$(vm.selected_trails).not(vm.selected_trails_before).get();
+            vm.selected_trails_before=vm.selected_trails;
+
+            var current_activities=vm.trail_activities
+
+            if(vm.selected_trails_activities.length==0){
+              for (var i = 0; i < vm.selected_trails.length; i++) {
+                 var data=null;
+                 data={
+                  'trail': vm.selected_trails[i],
+                  'activities': current_activities
+                 }
+                 vm.selected_trails_activities.push(data);
+               }
+            }
+            else{
+              if(added_trail.length!=0){
+                for(var i=0; i<added_trail.length; i++)
+                { 
+                  var found=false
+                  for (var j=0; j<vm.selected_trails_activities.length; j++){
+                    if(vm.selected_trails_activities[j].trail==added_trail[i]){ 
+                      found = true;}
+                  }
+                  if(found==false)
+                  {
+                    data={
+                    'trail': added_trail[i],
+                    'activities': current_activities,                   }
+                   vm.selected_trails_activities.push(data);
+                  }
+                }
+              }
+              if(removed_trail.length!=0){
+                for(var i=0; i<removed_trail.length; i++)
+                { 
+                  for (var j=0; j<vm.selected_trails_activities.length; j++){
+                    if(vm.selected_trails_activities[j].trail==removed_trail[i]){
+                      vm.selected_trails_activities.splice(j,1)}
+                  }
+                }
+              }
+            }
+          },
+          trail_activities: function(){
+          let vm=this;
+          var removed=$(vm.trail_activities_before).not(vm.trail_activities).get();
+          var added=$(vm.trail_activities).not(vm.trail_activities_before).get();
+          vm.trail_activities_before=vm.trail_activities;
+          if(vm.selected_trails_activities.length==0){
+            for (var i = 0; i < vm.selected_trails.length; i++) {
+                 var data=null;
+                 data={
+                  'trail': vm.selected_trails[i],
+                  'activities': vm.trail_activities
+                 }
+                 vm.selected_trails_activities.push(data);
+               }
           }
+          else{
+            for (var i=0; i<vm.selected_trails_activities.length; i++)
+            { 
+              if(added.length!=0){
+               
+                for(var j=0; j<added.length; j++)
+                {
+                  if(vm.selected_trails_activities[i].activities.indexOf(added[j])<0){
+                    vm.selected_trails_activities[i].activities.push(added[j]);
+                  }
+                }
+              }
+              if(removed.length!=0){
+                for(var j=0; j<removed.length; j++)
+                {
+                  var index=vm.selected_trails_activities[i].activities.indexOf(removed[j]);
+                  if(index!=-1){
+                    vm.selected_trails_activities[i].activities.splice(index,1)
+                  }
+                }
+              }
+            }
+          }
+        },
         },
         methods:{
           fetchRegions: function(){

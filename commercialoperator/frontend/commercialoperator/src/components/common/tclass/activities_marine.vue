@@ -21,7 +21,7 @@
                                 </div>
                                 <div class="col-sm-12" v-for="activity in category.activities">
                                     <div class="form-check ">
-                                        <input :onclick="isClickable"  :value="activity.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                                        <input :onclick="isClickable"  :value="activity.id" class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_activities" data-parsley-required />
                                         {{ activity.name }}
                                     </div>
                                 </div>
@@ -66,6 +66,11 @@ from '@/utils/hooks'
                 values:null,
                 vessels_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/vessels'),
                 marine_activities: [],
+                selected_activities:[],
+                selected_activities_before:[],
+                selected_parks:[],
+                selected_parks_before:[],
+                marine_parks_activities:[],
             }
         },
         components: {
