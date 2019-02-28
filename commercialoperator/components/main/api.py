@@ -102,6 +102,12 @@ class ParkViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Park.objects.all().order_by('id')
     serializer_class = ParkSerializer
 
+    @list_route(methods=['GET',])
+    def marine_parks(self, request, *args, **kwargs):
+        qs = self.get_queryset().filter(park_type='marine')
+        serializer = ParkSerializer(qs,context={'request':request}, many=True)
+        return Response(serializer.data)
+
 class TrailViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Trail.objects.all().order_by('id')
     serializer_class = TrailSerializer

@@ -46,6 +46,14 @@ class District(models.Model):
     def parks(self):
         return Parks.objects.filter(district=self)
 
+    @property
+    def land_parks(self):
+        return Park.objects.filter(district=self, park_type='land')
+
+    @property
+    def marine_parks(self):
+        return Park.objects.filter(district=self, park_type='marine')
+    
 
 
 @python_2_unicode_compatible
@@ -76,9 +84,16 @@ class AccessType(models.Model):
 
 @python_2_unicode_compatible
 class Park(models.Model):
+    PARK_TYPE_CHOICES = (
+        ('land', 'Land'),
+        ('marine', 'Marine'),
+        ('Film', 'Film'),
+    )
     district = models.ForeignKey(District, related_name='parks')
     name = models.CharField(max_length=200, unique=True)
     code = models.CharField(max_length=10, blank=True)
+    park_type = models.CharField('Park Type', max_length=40, choices=PARK_TYPE_CHOICES,
+                                        default=PARK_TYPE_CHOICES[0][0])
     #proposal = models.ForeignKey(Proposal, related_name='parks')
     
 

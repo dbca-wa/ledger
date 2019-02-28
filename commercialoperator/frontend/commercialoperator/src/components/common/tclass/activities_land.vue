@@ -49,7 +49,7 @@
                     <input :onclick="isClickable"  :value="d.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
                     {{ d.name }}
                   </div>
-                  <div class="" v-for="p in d.parks">
+                  <div class="" v-for="p in d.land_parks">
                     <div class="form-check col-sm-12">
                       <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
                     {{ p.name }}

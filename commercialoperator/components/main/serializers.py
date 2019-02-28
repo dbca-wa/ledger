@@ -39,10 +39,11 @@ class TrailSerializer(serializers.ModelSerializer):
         
 
 class DistrictSerializer(serializers.ModelSerializer):
-    parks = ParkSerializer(many=True)
+    land_parks = ParkSerializer(many=True)
+    marine_parks = ParkSerializer(many=True)
     class Meta:
         model = District
-        fields = ('id', 'name', 'code', 'parks')
+        fields = ('id', 'name', 'code', 'land_parks', 'marine_parks')
 
 
 
