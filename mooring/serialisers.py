@@ -93,7 +93,7 @@ class AdmissionsBookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdmissionsBooking
 #        excludes = ('totalCost')
-        fields = ('customer','booking_type','vesselRegNo','noOfAdults','noOfConcessions','noOfChildren','noOfInfants','warningReferenceNo','created')
+        fields = ('id','customer','booking_type','vesselRegNo','noOfAdults','noOfConcessions','noOfChildren','noOfInfants','warningReferenceNo','created', 'location')
 
 class AdmissionsLineSerializer(serializers.ModelSerializer):
     class Meta:

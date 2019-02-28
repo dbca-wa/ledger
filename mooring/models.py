@@ -1784,6 +1784,14 @@ class MooringsiteClassPriceHistory(ViewPriceHistory):
         db_table = 'mooring_mooringsiteclass_pricehistory_v'
         ordering = ['-date_start',]
 
+class AdmissionsLocation(models.Model):
+    key = models.CharField(max_length=5, blank=False, null=False, unique=True)
+    text = models.CharField(max_length=255, blank=False, null=False)
+    mooring_group = models.ForeignKey(MooringAreaGroup, blank=False, null=False)
+
+    def __str__(self):
+        return self.text
+
 class AdmissionsBooking(models.Model):
     BOOKING_TYPE_CHOICES = (
         (0, 'Reception booking'),
@@ -1802,6 +1810,7 @@ class AdmissionsBooking(models.Model):
     warningReferenceNo = models.CharField(max_length=200, blank=True)
     totalCost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     created = models.DateTimeField(default=timezone.now)
+    location = models.ForeignKey(AdmissionsLocation, blank=True, null=True)    
 
     def __str__(self):
         email = ''
@@ -1834,15 +1843,6 @@ class AdmissionsBooking(models.Model):
             return False
         else:
             return True
-
-
-class AdmissionsLocation(models.Model):
-    key = models.CharField(max_length=5, blank=False, null=False, unique=True)
-    text = models.CharField(max_length=255, blank=False, null=False)
-    mooring_group = models.ForeignKey(MooringAreaGroup, blank=False, null=False)
-
-    def __str__(self):
-        return self.text
 
 class AdmissionsLine(models.Model):
     arrivalDate = models.DateField()

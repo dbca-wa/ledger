@@ -200,6 +200,7 @@ import 'foundation-sites';
 import 'foundation-datepicker/js/foundation-datepicker';
 import moment from 'moment';
 import JQuery from 'jquery';
+import swal from 'sweetalert2';
 import { api_endpoints } from './hooks';
 
 let $ = JQuery
@@ -377,7 +378,20 @@ export default {
                                 var msg = data.error[1].split('.')[0];
                                 vm.message = msg;
                                 vm.$modal.show('messageModal');
-                            }
+                            } else {
+			            swal({
+				            title: 'Error',
+				            text: data.error[1],
+				            type: 'error',
+				            showCancelButton: false,
+				            confirmButtonText: 'CLOSE',
+				            showLoaderOnConfirm: true,
+				            allowOutsideClick: false
+			            })
+	
+
+
+			    }
                         }
                     },
                     error: function(xhr, stat, err) {

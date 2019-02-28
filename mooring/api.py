@@ -2082,6 +2082,10 @@ class AvailabilityAdminViewSet(BaseAvailabilityViewSet):
 @csrf_exempt
 @require_http_methods(['POST'])
 def create_admissions_booking(request, *args, **kwargs):
+
+    location_text = request.POST.get('location')
+    location = AdmissionsLocation.objects.filter(key=location_text)[0]
+
     data = {
         'vesselRegNo': request.POST.get('vesselReg'),
         'noOfAdults': request.POST.get('noOfAdults', 0),
@@ -2089,6 +2093,7 @@ def create_admissions_booking(request, *args, **kwargs):
         'noOfChildren': request.POST.get('noOfChildren', 0),
         'noOfInfants': request.POST.get('noOfInfants', 0),
         'warningReferenceNo': request.POST.get('warningRefNo'),
+        'location' : location.pk
     }
 
     
@@ -2096,7 +2101,7 @@ def create_admissions_booking(request, *args, **kwargs):
     serializer = AdmissionsBookingSerializer(data=data)
     serializer.is_valid(raise_exception=True)
 
-    
+ 
 
     admissionsBooking = AdmissionsBooking.objects.create(
         vesselRegNo = serializer.validated_data['vesselRegNo'],
@@ -2105,10 +2110,10 @@ def create_admissions_booking(request, *args, **kwargs):
         noOfChildren = serializer.validated_data['noOfChildren'],
         noOfInfants = serializer.validated_data['noOfInfants'],
         warningReferenceNo = serializer.validated_data['warningReferenceNo'],
-        booking_type = 3
+        booking_type = 3,
+        location = serializer.validated_data['location']
     )
-    location_text = request.POST.get('location')
-    location = AdmissionsLocation.objects.filter(key=location_text)[0]
+
     data2 = {
         'arrivalDate' : request.POST.get('arrival'),
         'admissionsBooking' : admissionsBooking.pk,
@@ -2283,6 +2288,8 @@ def create_booking(request, *args, **kwargs):
 
 @require_http_methods(['GET'])
 def get_admissions_confirmation(request, *args, **kwargs):
+
+    context_processor = template_context(request)
     # fetch booking for ID
     booking_id = kwargs.get('booking_id', None)
     if (booking_id is None):
@@ -2301,7 +2308,7 @@ def get_admissions_confirmation(request, *args, **kwargs):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'filename="confirmation-AD{}.pdf"'.format(booking_id)
 
-    pdf.create_admissions_confirmation(response, booking)
+    pdf.create_admissions_confirmation(response, booking,context_processor)
     return response
 
 @require_http_methods(['GET'])

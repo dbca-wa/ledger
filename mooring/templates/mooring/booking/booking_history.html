@@ -35,6 +35,7 @@
         <thead>
 		<tr>
 		  <th>Confirmation#</th>
+                  <th>Booking Type</th>
                   <th>Linked Admission</th>
 		  <th>Total</th>
                   <th>Booking Date</th>
@@ -48,6 +49,7 @@
                   {% if bh.booking.booking_type != 3 %}
                   <tr>
                       <td><A title='New Booking' HREF='/api/get_confirmation/{{ bh.booking.id }}'>PS{{ bh.booking.id }}</A> {% if bh.booking.old_booking %}<i style="color:red;" class="fa fa-arrow-right"></i> <A title='OLD Booking' HREF='/api/get_confirmation/{{ bh.booking.old_booking.id }}'>PS{{ bh.booking.old_booking.id }}{% endif %}</A></td>
+                      <th>{{ bh.booking.get_booking_type_display }}</th>
                       <td>{% if bh.booking.admission_payment %}<A HREF='/api/get_admissions_confirmation/{{ bh.booking.admission_payment.id }}'>AD{{ bh.booking.admission_payment.id }}{% endif %}</A></td>
                       <td style='color: {% if bh.booking.cost_total > 0 %}red{% elif  bh.booking.cost_total < 0 %}green{% endif %}'  >${{ bh.booking.cost_total }}</td>
                       <td>{{ bh.booking.created }}</td>

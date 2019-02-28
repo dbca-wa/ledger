@@ -568,7 +568,9 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
         stop = start_date + timedelta(days=max_days)
         stop_mark = min(max(stop, start_date), end_date)
         for i in range((end_date-stop_mark).days):
-            results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
+            date_key = stop_mark+timedelta(days=i)
+            if date_key in results[site.pk]:
+                results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
     return results
 
 
@@ -1020,12 +1022,9 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
             if request.user.is_staff:
                 raise Exception('Admissions Oracle Code missing, please set up in administration tool.')
             else:
-                raise Exception('Please alert {} of the following error message:\nAdmissions Oracle Code missing.').format(adLine['group'])
-
-
+                raise Exception('Please alert {} of the following error message:\nAdmissions Oracle Code missing.'.format(adLine['group']))
     if not daily_rates or daily_rates == []:
         raise Exception('There was an error while trying to get the daily rates.')
-
     family = 0
     adults = admissionsBooking.noOfAdults
     children = admissionsBooking.noOfChildren
@@ -1061,13 +1060,12 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
                 family = adults/2
                 children -= adults
                 adults = 1
-
     people = {'Adults': adults,'Concessions': admissionsBooking.noOfConcessions,'Children': children,'Infants': admissionsBooking.noOfInfants, 'Family': family}
 
     for adLine in admissionsLines:
         for group, amount in people.items():
             if line:
-                if(amount > 0):
+                if (amount > 0):
                     if group == 'Adults':
                         gr = 'adult'
                     elif group == 'Children':
@@ -1093,7 +1091,6 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
                 daily_rate = daily_rates[adLine.arrivalDate.strftime('%d/%m/%Y')]
                 price = Decimal(daily_rate)
                 total_cost += price
-
     if line:
         return invoice_lines
     else:
@@ -1520,23 +1517,28 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         'proxy': True if internal else False,
         'invoice_text': invoice_text,
     }
-    if not internal:
-        checkout_params['check_url'] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
+#    if not internal:
+#        checkout_params['check_url'] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
     if internal or request.user.is_anonymous():
         checkout_params['basket_owner'] = booking.customer.id
+
+
     create_checkout_session(request, checkout_params)
 
-    if internal:
-        response = place_order_submission(request)
-    else:
-        response = HttpResponseRedirect(reverse('checkout:index'))
-        # inject the current basket into the redirect response cookies
-        # or else, anonymous users will be directionless
-        response.set_cookie(
+
+
+#    if internal:
+#        response = place_order_submission(request)
+#    else:
+    response = HttpResponseRedirect(reverse('checkout:index'))
+    # inject the current basket into the redirect response cookies
+    # or else, anonymous users will be directionless
+    response.set_cookie(
             settings.OSCAR_BASKET_COOKIE_OPEN, basket_hash,
             max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
             secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
-        )
+    )
+
     if booking.cost_total < 0:
         response = HttpResponseRedirect('/refund-payment')
         response.set_cookie(

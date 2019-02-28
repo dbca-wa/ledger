@@ -85,7 +85,7 @@
                         <a href="{% url 'mooring-invoice-pdf' bi %}" class="btn btn-info btn-lg" >Invoice</a>
                         {% endfor %}
                         {% if admissionsBooking.in_future and not admissionsBooking.part_booking %}
-                            <a href="{% url 'public_cancel_admissions_booking' admissionsBooking.id %}" class="btn btn-info btn-lg">Cancel Payment</a>
+                            <a href="{% url 'public_cancel_admissions_booking' admissionsBooking.id %}" class="btn btn-info btn-lg">Cancel Admission Booking</a>
                         {% endif %}
                     {% else %}
                         <a href="{% url 'home' %}" class="btn btn-info btn-lg">Log in</a><p>You must be logged in to see your invoice online.</p>

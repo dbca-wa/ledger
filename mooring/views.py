@@ -1959,6 +1959,7 @@ class AdmissionsBookingSuccessView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         try:
+            context_processor = template_context(self.request)
             booking = utils.get_session_admissions_booking(request.session)
             arrival = AdmissionsLine.objects.filter(admissionsBooking=booking)[0].arrivalDate
             overnight = AdmissionsLine.objects.filter(admissionsBooking=booking)[0].overnightStay
@@ -1972,16 +1973,16 @@ class AdmissionsBookingSuccessView(TemplateView):
                     order.save()
                 except Invoice.DoesNotExist:
                     logger.error('{} tried making a booking with an incorrect invoice'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user'))
-                    return redirect('admissions')
+                    return redirect('admissions', args=(booking.location.key,))
 
                 if inv.system not in ['0516']:
                     logger.error('{} tried making a booking with an invoice from another system with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
-                    return redirect('admissions')
+                    return redirect('admissions', args=(booking.location.key,))
 
                 try:
                     b = AdmissionsBookingInvoice.objects.get(invoice_reference=invoice_ref)
                     logger.error('{} tried making an admission booking with an already used invoice with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
-                    return redirect('admissions')
+                    return redirect('admissions',  args=(booking.location.key,))
                 except AdmissionsBookingInvoice.DoesNotExist:
                     logger.info('{} finished temporary booking {}, creating new AdmissionBookingInvoice with reference {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id, invoice_ref))
                     # FIXME: replace with server side notify_url callback
@@ -1994,12 +1995,20 @@ class AdmissionsBookingSuccessView(TemplateView):
                     utils.delete_session_admissions_booking(request.session)
 
                     # send out the invoice before the confirmation is sent
-                    emails.send_admissions_booking_invoice(booking)
+                    emails.send_admissions_booking_invoice(booking, request, context_processor)
                     # for fully paid bookings, fire off confirmation email
-                    emails.send_admissions_booking_confirmation(booking,request)
+                    emails.send_admissions_booking_confirmation(booking,request, context_processor)
+
+
+                    context = {
+                       'admissionsBooking': booking,
+                       'arrival' : arrival,
+                       'overnight': overnight,
+                       'admissionsInvoice': [invoice_ref]
+                    }
+                    return render(request, self.template_name, context)
 
         except Exception as e:
-            print(e)
             if ('ad_last_booking' in request.session) and AdmissionsBooking.objects.filter(id=request.session['ad_last_booking']).exists():
                 booking = AdmissionsBooking.objects.get(id=request.session['ad_last_booking'])
                 arrival = AdmissionsLine.objects.filter(admissionsBooking=booking)[0].arrivalDate
@@ -2008,13 +2017,13 @@ class AdmissionsBookingSuccessView(TemplateView):
             else:
                 return redirect('home')
 
-        if request.user.is_staff:
-            return redirect('dash-bookings')
+#        if request.user.is_staff:
+#            return redirect('dash-bookings')
         context = {
             'admissionsBooking': booking,
             'arrival' : arrival,
             'overnight': overnight,
-            'admissionsInvoice': invoice_ref
+            'admissionsInvoice': [invoice_ref]
         }
         return render(request, self.template_name, context)
 
@@ -2191,7 +2200,12 @@ class BookingSuccessView(TemplateView):
                     # for fully paid bookings, fire off confirmation email
                     if booking.invoice_status == 'paid':
                         emails.send_booking_confirmation(booking,request, context_processor)
-                       
+                    context = {
+                      'booking': booking,
+                      'book_inv': [book_inv]
+                    }
+                    return render(request, self.template_name, context)
+ 
         except Exception as e:
 #            if 'ps_booking_internal' in request.COOKIES:
 #                print "INTERNAL REDIRECT"
@@ -2206,7 +2220,7 @@ class BookingSuccessView(TemplateView):
         #    return redirect('dash-bookings')
         context = {
             'booking': booking,
-            'book_inv': book_inv
+            'book_inv': [book_inv]
         }
         return render(request, self.template_name, context)
 
