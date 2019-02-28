@@ -1046,12 +1046,9 @@ export default {
             
             this.$refs.proposed_licence.propose_issue.licence_activity_type_id=tab_id
             this.$refs.proposed_licence.propose_issue.licence_activity_type_name=selectedTabTitle.text();
-            // this.$refs.proposed_licence.licence = this.application.proposed_issuance_licence != null ? helpers.copyObject(this.application.proposed_issuance_licence) : {};
             this.$refs.proposed_licence.isModalOpen = true;
         },
         toggleIssue:function(){
-            // this.$refs.proposed_licence.licence = helpers.copyObject(this.application.proposed_issuance_licence);
-            // this.$refs.proposed_licence.state = 'final_licence';
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;

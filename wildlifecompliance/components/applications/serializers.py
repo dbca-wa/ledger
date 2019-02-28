@@ -571,8 +571,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'comment_data',
             'licences',
             'allowed_assessors',
-            'proposed_issuance_licence',
-            'proposed_decline_status',
             'applicationdeclineddetails',
             'permit',
             'payment_status',

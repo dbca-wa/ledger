@@ -241,24 +241,18 @@ class Application(RevisionedMixin):
     assessor_data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
     schema = JSONField(blank=False, null=False)
-    proposed_issuance_licence = JSONField(blank=True, null=True)
-    # hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
-
     licence_activities = models.ManyToManyField(
         'wildlifecompliance.WildlifeLicenceActivity',
         blank=True
     )
-
     customer_status = models.CharField(
         'Customer Status',
         max_length=40,
         choices=CUSTOMER_STATUS_CHOICES,
         default=CUSTOMER_STATUS_CHOICES[0][0])
-
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
     lodgement_date = models.DateTimeField(blank=True, null=True)
-
     org_applicant = models.ForeignKey(
         Organisation,
         blank=True,
@@ -274,7 +268,6 @@ class Application(RevisionedMixin):
         blank=True,
         null=True,
         related_name='wildlifecompliance_applications')
-
     assigned_officer = models.ForeignKey(
         EmailUser,
         blank=True,
@@ -310,31 +303,17 @@ class Application(RevisionedMixin):
         max_length=30,
         choices=REVIEW_STATUS_CHOICES,
         default=REVIEW_STATUS_CHOICES[0][0])
-
     licence = models.ForeignKey(
         'wildlifecompliance.WildlifeLicence',
         null=True,
         blank=True)
-    #licence_pdf = models.ForeignKey(LicenceDocument, blank=True, null=True, related_name='licence_pdf')
     pdf_licence = models.FileField(upload_to=update_pdf_licence_filename, blank=True, null=True)
-
     previous_application = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
-    proposed_decline_status = models.BooleanField(default=False)
-    # Special Fields
-    activity = models.CharField(max_length=255, null=True, blank=True)
-    region = models.CharField(max_length=255, null=True, blank=True)
-    title = models.CharField(max_length=255, null=True, blank=True)
-    tenure = models.CharField(max_length=255, null=True, blank=True)
-
     application_fee = models.DecimalField(
         max_digits=8, decimal_places=2, default='0')
     licence_fee = models.DecimalField(
         max_digits=8, decimal_places=2, default='0')
-
-    # licence_class = models.ForeignKey('wildlifecompliance.WildlifeLicenceClass',blank=True,null=True)
-    # licence_activity_type= models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',blank=True,null=True)
-    # licence_activity= models.ForeignKey('wildlifecompliance.WildlifeLicenceActivity',blank=True,null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -496,7 +475,6 @@ class Application(RevisionedMixin):
         )
         licence_data = serializer.data
         licence_data.update({
-            'proposed_decline': self.proposed_decline_status,
             'processing_status': get_choice_value(
                 self.processing_status,
                 self.PROCESSING_STATUS_CHOICES
