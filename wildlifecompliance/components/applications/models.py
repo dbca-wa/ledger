@@ -748,13 +748,14 @@ class Application(RevisionedMixin):
         return ApplicationUserAction.log_action(self, action, request.user)
 
     def submit(self, request, viewset):
-        from wildlifecompliance.components.applications.utils import save_proponent_data
+        from wildlifecompliance.components.applications.utils import SchemaParser
         from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType
         with transaction.atomic():
             if self.can_user_edit:
                 # Save the data first
                 print("inside can_user_edit")
-                save_proponent_data(self, request, viewset)
+                parser = SchemaParser(draft=False)
+                parser.save_proponent_data(self, request, viewset)
                 # print(self.data)
                 # Check if the special fields have been completed
                 # missing_fields = self.__check_application_filled_out()

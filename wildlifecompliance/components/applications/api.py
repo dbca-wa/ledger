@@ -33,7 +33,7 @@ from ledger.checkout.utils import calculate_excl_gst
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from wildlifecompliance.components.applications.utils import save_proponent_data, save_assessor_data, get_activity_type_schema, save_assess_data
+from wildlifecompliance.components.applications.utils import SchemaParser, MissingFieldsException, get_activity_type_schema, save_assess_data
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
@@ -360,10 +360,14 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
-            print("=====FRom Submit application")
-            print(request.POST.keys())
             instance = self.get_object()
-            instance.submit(request, self)
+            try:
+                instance.submit(request, self)
+            except MissingFieldsException as e:
+                return Response({
+                    'missing': e.error_list},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -713,10 +717,16 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
     def draft(self, request, *args, **kwargs):
+        parser = SchemaParser(draft=True)
         try:
             instance = self.get_object()
-            save_proponent_data(instance, request, self)
+            parser.save_proponent_data(instance, request, self)
             return redirect(reverse('external'))
+        except MissingFieldsException as e:
+            return Response({
+                'missing': e.error_list},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -731,7 +741,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def assessor_save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            save_assessor_data(instance, request, self)
+            parser = SchemaParser()
+            parser.save_assessor_data(instance, request, self)
             return redirect(reverse('external'))
         except serializers.ValidationError:
             print(traceback.print_exc())

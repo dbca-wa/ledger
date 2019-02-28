@@ -216,147 +216,19 @@ export default {
 
 
     highlight_missing_fields: function(){
-        let vm = this;
-        for (var missing_field of vm.missing_fields) {
-            $("#" + missing_field.id).css("color", 'red');
-        }
-    },
-
-    validate: function(){
-        let vm = this;
-        var required_fields = [];
-        var tab_dict = {};
-
-        // reset default colour
-        for (var field of vm.missing_fields) {
-            $("#" + field.id).css("color", '#515151');
-        }
-        vm.missing_fields = [];
-
-        /*
-        $("#tabs").each(function() {
-            $(this).find(".nav-tabs li").each(function(index, element) {
-                required_fields.concat(
-                    $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required').not(':hidden')
-                );
-            });
-        });
-        */
-
-        //$("#tabs-section").find("li").each(function(index, element) {
-        //$('ul.nav-tabs>li').each(function() {
-        /*
-        for (var i of $('ul.nav-tabs>li')) {
-            // get all required fields, that are not hidden in the DOM
-            //var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required').not(':hidden');
-            i.tab('show')
-            required_fields.concat(
-                $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required').not(':hidden')
-            );
-        }
-        */
-
-
-        /*
-        for (var tab of $('ul.nav-tabs>li>a')) {
-            // get all required fields, that are not hidden in the DOM
-            tab
-                .click()
-                .on('shown.bs.tab', function(event){
-                    alert('tab shown');
-                    var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required').not(':hidden');
-                    tab_dict[tab.textContent] = required_fields;
-                });
-        }
-        */
-
-        var tab_dict = {};
-        for (var tab of $('ul.nav-tabs>li>a')) {
-            // get all required fields, that are not hidden in the DOM
-            var required_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required').not(':hidden');
-            tab_dict[tab.textContent] = required_fields;
+        for (const missing_field of this.missing_fields) {
+            $("#id_" + missing_field.name).css("color", 'red');
         }
 
-        // loop through all (non-hidden) required fields, and check data has been entered
-        //required_fields.each(function() {
-        for (var key in tab_dict){
-            var required_fields = tab_dict[key];
-            required_fields.each(function() {
-                //console.log('type: ' + this.type + ' ' + this.name)
-                var id = 'id_' + this.name
-                if (this.type == 'radio') {
-                    //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
-                    if (!$("input[name="+this.name+"]").is(':checked')) {
-                        var text = $('#'+id).text()
-                        console.log('radio not checked: ' + this.type + ' ' + text)
-                        vm.missing_fields.push({id: id, label: text});
-                    }
-                }
-
-                if (this.type == 'checkbox') {
-                    //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
-                    var id = 'id_' + this.classList['value']
-                    if ($("[class="+this.classList['value']+"]:checked").length == 0) {
-                        var text = $('#'+id).text()
-                        console.log('checkbox not checked: ' + this.type + ' ' + text)
-                        vm.missing_fields.push({id: id, label: text});
-                    }
-                }
-
-                if (this.type == 'select-one') {
-                    if ($(this).val() == '') {
-                        var text = $('#'+id).text()  // this is the (question) label
-                        var id = 'id_' + $(this).prop('name'); // the label id
-                        console.log('selector not selected: ' + this.type + ' ' + text)
-                        vm.missing_fields.push({id: id, label: text});
-                    }
-                }
-
-                if (this.type == 'file') {
-                    var num_files = $('#'+id).attr('num_files')
-                    if (num_files == "0") {
-                        var text = $('#'+id).text()
-                        console.log('file not uploaded: ' + this.type + ' ' + this.name)
-                        vm.missing_fields.push({id: id, label: text});
-                    }
-                }
-
-                if (this.type == 'text') {
-                    if (this.value == '') {
-                        var text = $('#'+id).text()
-                        console.log('text not provided: ' + this.type + ' ' + this.name)
-                        vm.missing_fields.push({id: id, label: text});
-                    }
-                }
-
-                if (this.type == 'textarea') {
-                    if (this.value == '') {
-                        var text = $('#'+id).text()
-                        console.log('textarea not provided: ' + this.type + ' ' + this.name)
-                        vm.missing_fields.push({id: id, label: text});
-                    }
-                }
-
-            });
-        }
-        return vm.missing_fields.length
+        var top = ($('#error').offset() || { "top": NaN }).top;
+        $('html, body').animate({
+            scrollTop: top
+        }, 1);
     },
     submit: function(){
         let vm = this;
         console.log('SUBMIT VM FORM and CHECKOUT');
         let formData = new FormData(vm.form);
-
-        /*
-        var num_missing_fields = vm.validate()
-        if (num_missing_fields > 0) {
-            vm.highlight_missing_fields()
-            var top = ($('#error').offset() || { "top": NaN }).top;
-            $('html, body').animate({
-                scrollTop: top
-            }, 1);
-            return false;
-        }
-        */
 
         let swal_title = 'Submit Application'
         let swal_html = 'Are you sure you want to submit this application?'
@@ -395,11 +267,18 @@ export default {
                         });
                     }
                 },err=>{
-                    swal(
-                        'Submit Error',
-                        helpers.apiVueResourceError(err),
-                        'error'
-                    )
+                    console.log("Error details: ", err);
+                    if(err.body.missing) {
+                      this.missing_fields = err.body.missing;
+                      this.highlight_missing_fields();
+                    }
+                    else {
+                      swal(
+                          'Submit Error',
+                          helpers.apiVueResourceError(err),
+                          'error'
+                      )
+                    }
                 });
             }
         },(error) => {

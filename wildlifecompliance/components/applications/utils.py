@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
@@ -11,135 +12,240 @@ from wildlifecompliance.utils.assess_utils import create_app_activity_type_model
 import traceback
 
 
-def create_data_from_form(
-        schema,
-        post_data,
-        file_data,
-        post_data_index=None,
-        special_fields=[],
-        assessor_data=False):
-    data = {}
-    special_fields_list = []
-    assessor_data_list = []
-    comment_data_list = {}
-    special_fields_search = SpecialFieldsSearch(special_fields)
-    if assessor_data:
-        assessor_fields_search = AssessorDataSearch()
-        comment_fields_search = CommentDataSearch()
-    try:
-        for item in schema:
-            data.update(
-                _create_data_from_item(
+class MissingFieldsException(ValidationError):
+    def __init__(self, error_list, code=None, params=None):
+        self.error_list = error_list
+        super(ValidationError, self).__init__(error_list, code, params)
+
+
+class SchemaParser(object):
+
+    def __init__(self, **kwargs):
+        self.draft = kwargs.get('draft')
+        self.missing_fields = []
+
+    def raise_missing_fields_exception(self):
+        if not self.missing_fields or self.draft:
+            return
+        raise MissingFieldsException(
+            [{'name': item['name'], 'label': '{activity_type}{label}'.format(
+                activity_type='{}: '.format(item['activity_type_name']) if item['activity_type_name'] else '',
+                label=item['label']
+            )} for item in self.missing_fields]
+        )
+
+    def save_proponent_data(self, instance, request, viewset):
+        with transaction.atomic():
+            try:
+                extracted_fields = self.create_data_from_form(
+                    instance.schema, request.POST, request.FILES)
+
+                self.raise_missing_fields_exception()
+                instance.data = extracted_fields
+                data = {
+                    'data': extracted_fields,
+                    'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
+                    'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
+                }
+                serializer = SaveApplicationSerializer(
+                    instance, data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                viewset.perform_update(serializer)
+
+                # set the isEditable fields
+                #import ipdb; ipdb.set_trace()
+                for activity_type in instance.activity_types:
+                    if not activity_type.data or (activity_type.data and 'editable' not in activity_type.data[0]):
+                        activity_type.data = [{'editable': get_activity_type_sys_answers(activity_type)}]
+                        activity_type.save()
+
+                # Save Documents
+    #            for f in request.FILES:
+    #                try:
+    #                    #document = instance.documents.get(name=str(request.FILES[f]))
+    #                    document = instance.documents.get(input_name=f)
+    #                except ApplicationDocument.DoesNotExist:
+    #                    document = instance.documents.get_or_create(input_name=f)[0]
+    #                document.name = str(request.FILES[f])
+    #                if document._file and os.path.isfile(document._file.path):
+    #                    os.remove(document._file.path)
+    #                document._file = request.FILES[f]
+    #                document.save()
+                # End Save Documents
+            except BaseException:
+                raise
+
+    def save_assessor_data(self, instance, request, viewset):
+        with transaction.atomic():
+            try:
+                extracted_fields, assessor_data, comment_data = self.create_data_from_form(
+                    instance.schema, request.POST, request.FILES, assessor_data=True)
+                data = {
+                    'data': extracted_fields,
+                    'assessor_data': assessor_data,
+                    'comment_data': comment_data,
+                }
+                serializer = SaveApplicationSerializer(
+                    instance, data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                viewset.perform_update(serializer)
+                # Save Documents
+                for f in request.FILES:
+                    try:
+                        #document = instance.documents.get(name=str(request.FILES[f]))
+                        document = instance.documents.get(input_name=f)
+                    except ApplicationDocument.DoesNotExist:
+                        document = instance.documents.get_or_create(input_name=f)[
+                            0]
+                    document.name = str(request.FILES[f])
+                    if document._file and os.path.isfile(document._file.path):
+                        os.remove(document._file.path)
+                    document._file = request.FILES[f]
+                    document.save()
+                # End Save Documents
+            except BaseException:
+                raise
+
+    def create_data_from_form(
+            self,
+            schema,
+            post_data,
+            file_data,
+            post_data_index=None,
+            assessor_data=False):
+        data = {}
+        assessor_data_list = []
+        comment_data_list = {}
+        if assessor_data:
+            assessor_fields_search = AssessorDataSearch()
+            comment_fields_search = CommentDataSearch()
+        try:
+            for item in schema:
+                data.update(
+                    self._create_data_from_item(
+                        item,
+                        post_data,
+                        file_data,
+                        0,
+                        '',
+                        activity_type_name=item['name']))
+                if assessor_data:
+                    assessor_fields_search.extract_special_fields(
+                        item, post_data, file_data, 0, '')
+                    comment_fields_search.extract_special_fields(
+                        item, post_data, file_data, 0, '')
+            if assessor_data:
+                assessor_data_list = assessor_fields_search.assessor_data
+                comment_data_list = comment_fields_search.comment_data
+        except BaseException:
+            traceback.print_exc()
+        if assessor_data:
+            return [data], assessor_data_list, comment_data_list
+
+        return [data]
+
+    def _create_data_from_item(self, item, post_data, file_data, repetition, suffix, **kwargs):
+        item_data = {}
+        activity_type_name = kwargs.get('activity_type_name', '')
+        if 'name' in item:
+            extended_item_name = item['name']
+        else:
+            raise Exception('Missing name in item %s' % item['label'])
+
+        if 'children' not in item:
+            if item['type'] in ['checkbox' 'declaration']:
+                item_data[item['name']] = extended_item_name in post_data
+            elif item['type'] == 'file':
+                if extended_item_name in file_data:
+                    item_data[item['name']] = str(
+                        file_data.get(extended_item_name))
+                    # TODO save the file here
+                elif extended_item_name + '-existing' in post_data and len(post_data[extended_item_name + '-existing']) > 0:
+                    item_data[item['name']] = post_data.get(
+                        extended_item_name + '-existing')
+                else:
+                    item_data[item['name']] = ''
+            else:
+                if extended_item_name in post_data:
+                    if item['type'] == 'multi-select':
+                        item_data[item['name']] = post_data.getlist(
+                            extended_item_name)
+                    else:
+                        item_data[item['name']] = post_data.get(extended_item_name)
+        else:
+            if 'repetition' in item:
+                item_data = self.generate_item_data(extended_item_name,
+                                            item,
+                                            item_data,
+                                            post_data,
+                                            file_data,
+                                            len(post_data[item['name']]),
+                                            suffix,
+                                            **kwargs)
+            else:
+                item_data = self.generate_item_data(
+                    extended_item_name,
                     item,
+                    item_data,
                     post_data,
                     file_data,
-                    0,
-                    ''))
-            special_fields_search.extract_special_fields(
-                item, post_data, file_data, 0, '')
-            if assessor_data:
-                assessor_fields_search.extract_special_fields(
-                    item, post_data, file_data, 0, '')
-                comment_fields_search.extract_special_fields(
-                    item, post_data, file_data, 0, '')
-        special_fields_list = special_fields_search.special_fields
-        if assessor_data:
-            assessor_data_list = assessor_fields_search.assessor_data
-            comment_data_list = comment_fields_search.comment_data
-    except BaseException:
-        traceback.print_exc()
-    if assessor_data:
-        return [data], special_fields_list, assessor_data_list, comment_data_list
+                    1,
+                    suffix,
+                    **kwargs)
 
-    return [data], special_fields_list
+        if 'conditions' in item:
+            for condition in item['conditions'].keys():
+                for child in item['conditions'][condition]:
+                    # print(child)
+                    item_data.update(
+                        self._create_data_from_item(
+                            child,
+                            post_data,
+                            file_data,
+                            repetition,
+                            suffix,
+                            **kwargs))
+
+        try:
+            if item['isRequired']:
+                try:
+                    value = str(item_data[item['name']])
+                except KeyError:
+                    value = ''
+                if not len(value):
+                    missing_item = {'activity_type_name': activity_type_name}
+                    missing_item.update(item)
+                    self.missing_fields.append(missing_item)
+        except KeyError:
+            pass
+
+        return item_data
+
+    def generate_item_data(
+            self,
+            item_name,
+            item,
+            item_data,
+            post_data,
+            file_data,
+            repetition,
+            suffix, **kwargs):
+        item_data_list = []
+        for rep in xrange(0, repetition):
+            child_data = {}
+            for child_item in item.get('children'):
+                # print(child_item)
+                child_data.update(self._create_data_from_item(
+                    child_item, post_data, file_data, 0, '{}-{}'.format(suffix, rep),
+                    **kwargs))
+            item_data_list.append(child_data)
+
+            item_data[item['name']] = item_data_list
+        return item_data
 
 
 def _extend_item_name(name, suffix, repetition):
     return '{}{}-{}'.format(name, suffix, repetition)
-
-
-def _create_data_from_item(item, post_data, file_data, repetition, suffix):
-    item_data = {}
-
-    if 'name' in item:
-        extended_item_name = item['name']
-    else:
-        raise Exception('Missing name in item %s' % item['label'])
-
-    if 'children' not in item:
-        if item['type'] in ['checkbox' 'declaration']:
-            #item_data[item['name']] = post_data[item['name']]
-            item_data[item['name']] = extended_item_name in post_data
-        elif item['type'] == 'file':
-            if extended_item_name in file_data:
-                item_data[item['name']] = str(
-                    file_data.get(extended_item_name))
-                # TODO save the file here
-            elif extended_item_name + '-existing' in post_data and len(post_data[extended_item_name + '-existing']) > 0:
-                item_data[item['name']] = post_data.get(
-                    extended_item_name + '-existing')
-            else:
-                item_data[item['name']] = ''
-        else:
-            if extended_item_name in post_data:
-                if item['type'] == 'multi-select':
-                    item_data[item['name']] = post_data.getlist(
-                        extended_item_name)
-                else:
-                    item_data[item['name']] = post_data.get(extended_item_name)
-    else:
-        if 'repetition' in item:
-            item_data = generate_item_data(extended_item_name,
-                                           item,
-                                           item_data,
-                                           post_data,
-                                           file_data,
-                                           len(post_data[item['name']]),
-                                           suffix)
-        else:
-            item_data = generate_item_data(
-                extended_item_name,
-                item,
-                item_data,
-                post_data,
-                file_data,
-                1,
-                suffix)
-
-    if 'conditions' in item:
-        for condition in item['conditions'].keys():
-            for child in item['conditions'][condition]:
-                # print(child)
-                item_data.update(
-                    _create_data_from_item(
-                        child,
-                        post_data,
-                        file_data,
-                        repetition,
-                        suffix))
-
-    return item_data
-
-
-def generate_item_data(
-        item_name,
-        item,
-        item_data,
-        post_data,
-        file_data,
-        repetition,
-        suffix):
-    item_data_list = []
-    for rep in xrange(0, repetition):
-        child_data = {}
-        for child_item in item.get('children'):
-            # print(child_item)
-            child_data.update(_create_data_from_item(
-                child_item, post_data, file_data, 0, '{}-{}'.format(suffix, rep)))
-        item_data_list.append(child_data)
-
-        item_data[item['name']] = item_data_list
-    return item_data
 
 
 class AssessorDataSearch(object):
@@ -401,94 +507,6 @@ class SpecialFieldsSearch(object):
             item_data[item['name']] = item_data_list
         return item_data
 
-
-def save_proponent_data(instance, request, viewset):
-    with transaction.atomic():
-        try:
-            lookable_fields = [
-                'isTitleColumnForDashboard',
-                'isActivityColumnForDashboard',
-                'isRegionColumnForDashboard']
-            extracted_fields, special_fields = create_data_from_form(
-                instance.schema, request.POST, request.FILES, special_fields=lookable_fields)
-            instance.data = extracted_fields
-            data = {
-                'region': special_fields.get(
-                    'isRegionColumnForDashboard',
-                    None),
-                'title': special_fields.get(
-                    'isTitleColumnForDashboard',
-                    None),
-                'activity': special_fields.get(
-                    'isActivityColumnForDashboard',
-                    None),
-                'data': extracted_fields,
-                'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
-                'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
-            }
-            serializer = SaveApplicationSerializer(
-                instance, data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            viewset.perform_update(serializer)
-
-            # set the isEditable fields
-            #import ipdb; ipdb.set_trace()
-            for activity_type in instance.activity_types:
-                if not activity_type.data or (activity_type.data and 'editable' not in activity_type.data[0]):
-                    activity_type.data = [{'editable': get_activity_type_sys_answers(activity_type)}]
-                    activity_type.save()
-
-            # Save Documents
-#            for f in request.FILES:
-#                try:
-#                    #document = instance.documents.get(name=str(request.FILES[f]))
-#                    document = instance.documents.get(input_name=f)
-#                except ApplicationDocument.DoesNotExist:
-#                    document = instance.documents.get_or_create(input_name=f)[0]
-#                document.name = str(request.FILES[f])
-#                if document._file and os.path.isfile(document._file.path):
-#                    os.remove(document._file.path)
-#                document._file = request.FILES[f]
-#                document.save()
-            # End Save Documents
-        except BaseException:
-            raise
-
-
-def save_assessor_data(instance, request, viewset):
-    with transaction.atomic():
-        try:
-            lookable_fields = [
-                'isTitleColumnForDashboard',
-                'isActivityColumnForDashboard',
-                'isRegionColumnForDashboard']
-            extracted_fields, special_fields, assessor_data, comment_data = create_data_from_form(
-                instance.schema, request.POST, request.FILES, special_fields=lookable_fields, assessor_data=True)
-            data = {
-                'data': extracted_fields,
-                'assessor_data': assessor_data,
-                'comment_data': comment_data,
-            }
-            serializer = SaveApplicationSerializer(
-                instance, data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            viewset.perform_update(serializer)
-            # Save Documents
-            for f in request.FILES:
-                try:
-                    #document = instance.documents.get(name=str(request.FILES[f]))
-                    document = instance.documents.get(input_name=f)
-                except ApplicationDocument.DoesNotExist:
-                    document = instance.documents.get_or_create(input_name=f)[
-                        0]
-                document.name = str(request.FILES[f])
-                if document._file and os.path.isfile(document._file.path):
-                    os.remove(document._file.path)
-                document._file = request.FILES[f]
-                document.save()
-            # End Save Documents
-        except BaseException:
-            raise
 
 def save_assess_data(instance,request,viewset):
 
