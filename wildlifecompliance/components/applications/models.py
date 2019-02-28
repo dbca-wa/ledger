@@ -535,12 +535,14 @@ class Application(RevisionedMixin):
         return missing_fields
 
     def can_assess(self, user):
-        if self.processing_status == 'with_assessor' or self.processing_status == 'with_assessor_conditions':
-            return self.__assessor_group() in user.applicationassessorgroup_set.all()
-        elif self.processing_status == 'with_approver':
-            return self.__approver_group() in user.applicationapprovergroup_set.all()
-        else:
-            return False
+        # TODO: this should probably be a status on the licenced activity not a property function on Application
+        return False
+        # if self.processing_status == 'with_assessor' or self.processing_status == 'with_assessor_conditions':
+        #     return self.__assessor_group() in user.applicationassessorgroup_set.all()
+        # elif self.processing_status == 'with_approver':
+        #     return self.__approver_group() in user.applicationapprovergroup_set.all()
+        # else:
+        #     return False
 
     def has_assessor_mode(self, user):
         status_without_assessor = ['With Officer', 'With Assessor']
@@ -745,10 +747,6 @@ class Application(RevisionedMixin):
     def assign_officer(self, request, officer):
         with transaction.atomic():
             try:
-                # if not self.can_assess(request.user):
-                #     raise exceptions.ApplicationNotAuthorized()
-                # if not self.can_assess(officer):
-                #     raise ValidationError('The selected person is not authorised to be assigned to this application')
                 if self.processing_status == 'with_approver':
                     if officer != self.assigned_approver:
                         self.assigned_approver = officer
@@ -776,8 +774,6 @@ class Application(RevisionedMixin):
     def unassign(self, request):
         with transaction.atomic():
             try:
-                if not self.can_assess(request.user):
-                    raise exceptions.ApplicationNotAuthorized()
                 if self.processing_status == 'with_approver':
                     if self.assigned_approver:
                         self.assigned_approver = None
@@ -808,8 +804,6 @@ class Application(RevisionedMixin):
     def update_activity_status(self, request, activity_id, status):
         with transaction.atomic():
             try:
-                # if not self.can_assess(request.user):
-                #     raise exceptions.ApplicationNotAuthorized()
                 if status in Application.ACTIVITY_PROCESSING_STATUS_CHOICES:
                     for activity_type in self.licence_type_data['activity_type']:
                         if activity_type["id"] == int(
@@ -890,8 +884,6 @@ class Application(RevisionedMixin):
     def proposed_decline(self, request, details):
         with transaction.atomic():
             try:
-                # if not self.can_assess(request.user):
-                #     raise exceptions.ApplicationNotAuthorized()
                 for activity_type in self.licence_type_data['activity_type']:
                     if activity_type["id"] == details.get('activity_type'):
                         if activity_type["processing_status"] != "With Officer-Conditions":
@@ -1014,8 +1006,6 @@ class Application(RevisionedMixin):
     def proposed_licence(self, request, details):
         with transaction.atomic():
             try:
-                # if not self.can_assess(request.user):
-                #     raise exceptions.ApplicationNotAuthorized()
                 for activity_type in self.licence_type_data['activity_type']:
                     if activity_type["id"] == details.get('activity_type'):
                         if activity_type["processing_status"] != "With Officer-Conditions":
@@ -1093,8 +1083,6 @@ class Application(RevisionedMixin):
         from wildlifecompliance.components.licences.models import WildlifeLicence
         with transaction.atomic():
             try:
-                # if not self.can_assess(request.user):
-                #     raise exceptions.ApplicationNotAuthorized()
                 # if self.processing_status != 'with_approver':
                 #     raise ValidationError('You cannot issue the licence if it is not with an approver')
                 # if not self.applicant.organisation.postal_address:

@@ -292,11 +292,6 @@ module.exports = {
             default:
             return "";
         }
-//        if (assessorMode && $.inArray(c.type,['declaration','group','section','label']) == -1 && c.canBeEditedByAssessor){
-//            var boxes = this.generateAssessorTextBoxes(h,c,val,assessorLevel,assessorData,assessorInfo);
-//            // Merge assessor boxes to _elements array
-//            Array.prototype.push.apply(_elements,boxes);
-//        }
         return _elements;
     },
     handleRadioChange(e){
