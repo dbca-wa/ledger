@@ -205,9 +205,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         model = Application
         fields = (
             'id',
-            'activity',
-            'title',
-            'region',
             'data',
             'schema',
             'licence_type_data',
@@ -217,7 +214,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'customer_status',
             'processing_status',
             'review_status',
-            # 'hard_copy',
             'applicant',
             'org_applicant',
             'proxy_applicant',
@@ -427,9 +423,6 @@ class CreateExternalApplicationSerializer(serializers.ModelSerializer):
         model = Application
         fields = (
             'id',
-            'activity',
-            'title',
-            'region',
             'data',
             'schema',
             'licence_type_data',
@@ -457,9 +450,6 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
         model = Application
         fields = (
             'id',
-            'activity',
-            'title',
-            'region',
             'data',
             'assessor_data',
             'comment_data',
@@ -467,7 +457,6 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
             'customer_status',
             'processing_status',
             'review_status',
-            # 'hard_copy',
             'org_applicant',
             'proxy_applicant',
             'submitter',
@@ -526,7 +515,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     assessor_mode = serializers.SerializerMethodField()
     current_assessor = serializers.SerializerMethodField()
     assessor_data = serializers.SerializerMethodField()
-    allowed_assessors = EmailUserSerializer(many=True)
     licences = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
     assigned_officer = serializers.CharField(
@@ -539,9 +527,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
         model = Application
         fields = (
             'id',
-            'activity',
-            'title',
-            'region',
             'data',
             'schema',
             'customer_status',
@@ -550,7 +535,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'id_check_status',
             'character_check_status',
             'licence_type_data',
-            # 'hard_copy',
             'applicant',
             'org_applicant',
             'proxy_applicant',
@@ -570,9 +554,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'assessor_data',
             'comment_data',
             'licences',
-            'allowed_assessors',
-            'proposed_issuance_licence',
-            'proposed_decline_status',
             'applicationdeclineddetails',
             'permit',
             'payment_status',
@@ -596,9 +577,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             request.user, '_wrapped') else request.user
         return {
             'assessor_mode': True,
-            # 'has_assessor_mode': obj.has_assessor_mode(user),
             'has_assessor_mode': True,
-            # 'assessor_can_assess': obj.can_assess(user),
             'assessor_level': 'assessor'
         }
 

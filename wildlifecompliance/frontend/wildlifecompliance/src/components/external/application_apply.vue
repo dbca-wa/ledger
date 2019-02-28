@@ -18,7 +18,7 @@
                                 </div>
                                 <div class="radio">
                                     <label>
-                                      <input :disabled="hasOrgs" type="radio" name="select_licence" v-model="licence_select" value="New_licence" > apply for a new licence?
+                                      <input type="radio" name="select_licence" v-model="licence_select" value="New_licence" > apply for a new licence?
                                     </label>
                                 </div>
                                 <div class="radio">

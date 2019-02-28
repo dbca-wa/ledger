@@ -12,9 +12,9 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
-
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
+
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.payments.invoice.models import Invoice
 from wildlifecompliance import exceptions
@@ -56,20 +56,6 @@ class ApplicationType(models.Model):
 def update_application_comms_log_filename(instance, filename):
     return 'wildlifecompliance/applications/{}/communications/{}/{}'.format(
         instance.log_entry.application.id, instance.id, filename)
-
-
-class TaggedApplicationAssessorGroupRegions(TaggedItemBase):
-    content_object = models.ForeignKey("ApplicationAssessorGroup")
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
-
-class TaggedApplicationAssessorGroupActivities(TaggedItemBase):
-    content_object = models.ForeignKey("ApplicationAssessorGroup")
-
-    class Meta:
-        app_label = 'wildlifecompliance'
 
 
 class ApplicationGroupType(models.Model):
@@ -119,128 +105,6 @@ class ApplicationGroupType(models.Model):
         # return False
         return False
 
-# class applicatio_dummy_group(models.Model):
-#     name= models.CharField(max_length=255)
-#     licence_class=models.ForeignKey('wildlifecompliance.components.WildlifeLicenceClass')
-
-
-class ApplicationAssessorGroup(models.Model):
-    name = models.CharField(max_length=255)
-    members = models.ManyToManyField(EmailUser, blank=True)
-    regions = TaggableManager(
-        verbose_name="Regions",
-        help_text="A comma-separated list of regions.",
-        through=TaggedApplicationAssessorGroupRegions,
-        related_name="+",
-        blank=True)
-    activities = TaggableManager(
-        verbose_name="Activities",
-        help_text="A comma-separated list of activities.",
-        through=TaggedApplicationAssessorGroupActivities,
-        related_name="+",
-        blank=True)
-    default = models.BooleanField(default=False)
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
-    def __str__(self):
-        return self.name
-
-    def clean(self):
-        try:
-            default = ApplicationAssessorGroup.objects.get(default=True)
-        except ApplicationAssessorGroup.DoesNotExist:
-            default = None
-
-        if default and self.pk:
-            if int(self.pk) != int(default.id):
-                if default and self.default:
-                    raise ValidationError(
-                        'There can only be one default application assessor group')
-        else:
-            if default and self.default:
-                raise ValidationError(
-                    'There can only be one default application assessor group')
-
-    def member_is_assigned(self, member):
-        for p in self.current_applications:
-            if p.assigned_officer == member:
-                return True
-        return False
-
-    @property
-    def current_applications(self):
-        assessable_states = ['with_assessor', 'with_assessor_conditions']
-        return Application.objects.filter(
-            processing_status__in=assessable_states)
-
-
-class TaggedApplicationApproverGroupRegions(TaggedItemBase):
-    content_object = models.ForeignKey("ApplicationApproverGroup")
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
-
-class TaggedApplicationApproverGroupActivities(TaggedItemBase):
-    content_object = models.ForeignKey("ApplicationApproverGroup")
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
-
-class ApplicationApproverGroup(models.Model):
-    name = models.CharField(max_length=255)
-    members = models.ManyToManyField(EmailUser, blank=True)
-    regions = TaggableManager(
-        verbose_name="Regions",
-        help_text="A comma-separated list of regions.",
-        through=TaggedApplicationApproverGroupRegions,
-        related_name="+",
-        blank=True)
-    activities = TaggableManager(
-        verbose_name="Activities",
-        help_text="A comma-separated list of activities.",
-        through=TaggedApplicationApproverGroupActivities,
-        related_name="+",
-        blank=True)
-    default = models.BooleanField(default=False)
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
-    def __str__(self):
-        return self.name
-
-    def clean(self):
-        try:
-            default = ApplicationApproverGroup.objects.get(default=True)
-        except ApplicationApproverGroup.DoesNotExist:
-            default = None
-
-        if default and self.pk:
-            if int(self.pk) != int(default.id):
-                if default and self.default:
-                    raise ValidationError(
-                        'There can only be one default application approver group')
-        else:
-            if default and self.default:
-                raise ValidationError(
-                    'There can only be one default application approver group')
-
-    def member_is_assigned(self, member):
-        for p in self.current_applications:
-            if p.assigned_approver == member:
-                return True
-        return False
-
-    @property
-    def current_applications(self):
-        assessable_states = ['with_approver']
-        return Application.objects.filter(
-            processing_status__in=assessable_states)
-
 
 class ApplicationDocument(Document):
     application = models.ForeignKey('Application', related_name='documents')
@@ -274,20 +138,25 @@ class Application(RevisionedMixin):
     APPLICANT_TYPE_PROXY = 'PRX'
     APPLICANT_TYPE_SUBMITTER = 'SUB'
 
-    PROCESSING_STATUS_DRAFT = ('draft', 'Draft')
-    CUSTOMER_STATUS_CHOICES = (PROCESSING_STATUS_DRAFT,
-                               ('under_review', 'Under Review'),
-                               ('amendment_required', 'Amendment Required'),
-                               ('accepted', 'Accepted'),
-                               ('partially_approved', 'Partially Approved'),
-                               ('declined', 'Declined'),
-                               )
+    PROCESSING_STATUS_DRAFT = (
+        'draft', 'Draft'
+    )
+
+    CUSTOMER_STATUS_CHOICES = (
+        PROCESSING_STATUS_DRAFT,
+        ('under_review', 'Under Review'),
+        ('amendment_required', 'Amendment Required'),
+        ('accepted', 'Accepted'),
+        ('partially_approved', 'Partially Approved'),
+        ('declined', 'Declined'),
+    )
 
     # List of statuses from above that allow a customer to edit an application.
-    CUSTOMER_EDITABLE_STATE = ['temp',
-                               PROCESSING_STATUS_DRAFT[0],
-                               'amendment_required',
-                               ]
+    CUSTOMER_EDITABLE_STATE = [
+        'temp',
+        PROCESSING_STATUS_DRAFT[0],
+        'amendment_required',
+    ]
 
     # List of statuses from above that allow a customer to view an application
     # (read-only)
@@ -298,26 +167,28 @@ class Application(RevisionedMixin):
         'returns_required',
         'approved',
         'declined',
-        'partially_approved']
+        'partially_approved'
+    ]
 
-    PROCESSING_STATUS_CHOICES = (PROCESSING_STATUS_DRAFT,
-                                 ('with_officer', 'With Officer'),
-                                 ('with_assessor', 'With Assessor'),
-                                 ('with_assessor_conditions', 'With Assessor (Conditions)'),
-                                 ('with_approver', 'With Approver'),
-                                 ('renewal', 'Renewal'),
-                                 ('licence_amendment', 'Licence Amendment'),
-                                 ('awaiting_applicant_response', 'Awaiting Applicant Response'),
-                                 ('awaiting_assessor_response', 'Awaiting Assessor Response'),
-                                 ('awaiting_responses', 'Awaiting Responses'),
-                                 ('ready_for_conditions', 'Ready for Conditions'),
-                                 ('ready_to_issue', 'Ready to Issue'),
-                                 ('approved', 'Approved'),
-                                 ('partially_approved', 'Partially Approved'),
-                                 ('declined', 'Declined'),
-                                 ('discarded', 'Discarded'),
-                                 ('under_review', 'Under Review'),
-                                 )
+    PROCESSING_STATUS_CHOICES = (
+        PROCESSING_STATUS_DRAFT,
+        ('with_officer', 'With Officer'),
+        ('with_assessor', 'With Assessor'),
+        ('with_assessor_conditions', 'With Assessor (Conditions)'),
+        ('with_approver', 'With Approver'),
+        ('renewal', 'Renewal'),
+        ('licence_amendment', 'Licence Amendment'),
+        ('awaiting_applicant_response', 'Awaiting Applicant Response'),
+        ('awaiting_assessor_response', 'Awaiting Assessor Response'),
+        ('awaiting_responses', 'Awaiting Responses'),
+        ('ready_for_conditions', 'Ready for Conditions'),
+        ('ready_to_issue', 'Ready to Issue'),
+        ('approved', 'Approved'),
+        ('partially_approved', 'Partially Approved'),
+        ('declined', 'Declined'),
+        ('discarded', 'Discarded'),
+        ('under_review', 'Under Review'),
+    )
 
     ACTIVITY_PROCESSING_STATUS_CHOICES = [
         PROCESSING_STATUS_DRAFT[1],
@@ -326,40 +197,34 @@ class Application(RevisionedMixin):
         'With Officer-Conditions',
         'With Officer-Finalisation',
         'Accepted',
-        'Declined']
+        'Declined'
+    ]
 
     ID_CHECK_STATUS_CHOICES = (
-        ('not_checked',
-         'Not Checked'),
-        ('awaiting_update',
-         'Awaiting Update'),
-        ('updated',
-         'Updated'),
-        ('accepted',
-         'Accepted'))
+        ('not_checked', 'Not Checked'),
+        ('awaiting_update', 'Awaiting Update'),
+        ('updated', 'Updated'),
+        ('accepted', 'Accepted')
+    )
 
     RETURN_CHECK_STATUS_CHOICES = (
-        ('not_checked',
-         'Not Checked'),
-        ('awaiting_returns',
-         'Awaiting Returns'),
-        ('completed',
-         'Completed'),
-        ('accepted',
-         'Accepted'))
+        ('not_checked', 'Not Checked'),
+        ('awaiting_returns', 'Awaiting Returns'),
+        ('completed', 'Completed'),
+        ('accepted', 'Accepted')
+    )
 
     CHARACTER_CHECK_STATUS_CHOICES = (
-        ('not_checked', 'Not Checked'), ('accepted', 'Accepted'))
+        ('not_checked', 'Not Checked'),
+        ('accepted', 'Accepted')
+    )
 
     REVIEW_STATUS_CHOICES = (
-        ('not_reviewed',
-         'Not Reviewed'),
-        ('awaiting_amendments',
-         'Awaiting Amendments'),
-        ('amended',
-         'Amended'),
-        ('accepted',
-         'Accepted'))
+        ('not_reviewed', 'Not Reviewed'),
+        ('awaiting_amendments', 'Awaiting Amendments'),
+        ('amended', 'Amended'),
+        ('accepted', 'Accepted')
+    )
 
     APPLICATION_TYPE_CHOICES = (
         ('new_licence', 'New Licence'),
@@ -376,24 +241,18 @@ class Application(RevisionedMixin):
     assessor_data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
     schema = JSONField(blank=False, null=False)
-    proposed_issuance_licence = JSONField(blank=True, null=True)
-    # hard_copy = models.ForeignKey(Document, blank=True, null=True, related_name='hard_copy')
-
     licence_activities = models.ManyToManyField(
         'wildlifecompliance.WildlifeLicenceActivity',
         blank=True
     )
-
     customer_status = models.CharField(
         'Customer Status',
         max_length=40,
         choices=CUSTOMER_STATUS_CHOICES,
         default=CUSTOMER_STATUS_CHOICES[0][0])
-
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
     lodgement_date = models.DateTimeField(blank=True, null=True)
-
     org_applicant = models.ForeignKey(
         Organisation,
         blank=True,
@@ -409,7 +268,6 @@ class Application(RevisionedMixin):
         blank=True,
         null=True,
         related_name='wildlifecompliance_applications')
-
     assigned_officer = models.ForeignKey(
         EmailUser,
         blank=True,
@@ -445,31 +303,17 @@ class Application(RevisionedMixin):
         max_length=30,
         choices=REVIEW_STATUS_CHOICES,
         default=REVIEW_STATUS_CHOICES[0][0])
-
     licence = models.ForeignKey(
         'wildlifecompliance.WildlifeLicence',
         null=True,
         blank=True)
-    #licence_pdf = models.ForeignKey(LicenceDocument, blank=True, null=True, related_name='licence_pdf')
     pdf_licence = models.FileField(upload_to=update_pdf_licence_filename, blank=True, null=True)
-
     previous_application = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
-    proposed_decline_status = models.BooleanField(default=False)
-    # Special Fields
-    activity = models.CharField(max_length=255, null=True, blank=True)
-    region = models.CharField(max_length=255, null=True, blank=True)
-    title = models.CharField(max_length=255, null=True, blank=True)
-    tenure = models.CharField(max_length=255, null=True, blank=True)
-
     application_fee = models.DecimalField(
         max_digits=8, decimal_places=2, default='0')
     licence_fee = models.DecimalField(
         max_digits=8, decimal_places=2, default='0')
-
-    # licence_class = models.ForeignKey('wildlifecompliance.WildlifeLicenceClass',blank=True,null=True)
-    # licence_activity_type= models.ForeignKey('wildlifecompliance.WildlifeLicenceActivityType',blank=True,null=True)
-    # licence_activity= models.ForeignKey('wildlifecompliance.WildlifeLicenceActivity',blank=True,null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -576,8 +420,8 @@ class Application(RevisionedMixin):
         1 - It is a draft
         2- or if the application has been pushed back to the user
         """
-        return self.customer_status == Application.PROCESSING_STATUS_DRAFT[
-            0] or self.processing_status == 'awaiting_applicant_response'
+        return self.customer_status == Application.PROCESSING_STATUS_DRAFT[0]\
+            or self.processing_status == 'awaiting_applicant_response'
 
     @property
     def is_deletable(self):
@@ -631,7 +475,6 @@ class Application(RevisionedMixin):
         )
         licence_data = serializer.data
         licence_data.update({
-            'proposed_decline': self.proposed_decline_status,
             'processing_status': get_choice_value(
                 self.processing_status,
                 self.PROCESSING_STATUS_CHOICES
@@ -676,38 +519,6 @@ class Application(RevisionedMixin):
         except AttributeError:
             return ''
 
-    def __assessor_group(self):
-        # TODO get list of assessor groups based on region and activity
-        if self.region and self.activity:
-            try:
-                check_group = ApplicationAssessorGroup.objects.filter(
-                    activities__name__in=[self.activity],
-                    regions__name__in=self.regions_list
-                ).distinct()
-                if check_group:
-                    return check_group[0]
-            except ApplicationAssessorGroup.DoesNotExist:
-                pass
-        default_group = ApplicationAssessorGroup.objects.get(default=True)
-
-        return default_group
-
-    def __approver_group(self):
-        # TODO get list of approver groups based on region and activity
-        if self.region and self.activity:
-            try:
-                check_group = ApplicationApproverGroup.objects.filter(
-                    activities__name__in=[self.activity],
-                    regions__name__in=self.regions_list
-                ).distinct()
-                if check_group:
-                    return check_group[0]
-            except ApplicationApproverGroup.DoesNotExist:
-                pass
-        default_group = ApplicationApproverGroup.objects.get(default=True)
-
-        return default_group
-
     def __check_application_filled_out(self):
         if not self.data:
             raise exceptions.ApplicationNotComplete()
@@ -724,12 +535,14 @@ class Application(RevisionedMixin):
         return missing_fields
 
     def can_assess(self, user):
-        if self.processing_status == 'with_assessor' or self.processing_status == 'with_assessor_conditions':
-            return self.__assessor_group() in user.applicationassessorgroup_set.all()
-        elif self.processing_status == 'with_approver':
-            return self.__approver_group() in user.applicationapprovergroup_set.all()
-        else:
-            return False
+        # TODO: this should probably be a status on the licenced activity not a property function on Application
+        return False
+        # if self.processing_status == 'with_assessor' or self.processing_status == 'with_assessor_conditions':
+        #     return self.__assessor_group() in user.applicationassessorgroup_set.all()
+        # elif self.processing_status == 'with_approver':
+        #     return self.__approver_group() in user.applicationapprovergroup_set.all()
+        # else:
+        #     return False
 
     def has_assessor_mode(self, user):
         status_without_assessor = ['With Officer', 'With Assessor']
@@ -935,10 +748,6 @@ class Application(RevisionedMixin):
     def assign_officer(self, request, officer):
         with transaction.atomic():
             try:
-                # if not self.can_assess(request.user):
-                #     raise exceptions.ApplicationNotAuthorized()
-                # if not self.can_assess(officer):
-                #     raise ValidationError('The selected person is not authorised to be assigned to this application')
                 if self.processing_status == 'with_approver':
                     if officer != self.assigned_approver:
                         self.assigned_approver = officer
@@ -966,8 +775,6 @@ class Application(RevisionedMixin):
     def unassign(self, request):
         with transaction.atomic():
             try:
-                if not self.can_assess(request.user):
-                    raise exceptions.ApplicationNotAuthorized()
                 if self.processing_status == 'with_approver':
                     if self.assigned_approver:
                         self.assigned_approver = None
@@ -998,8 +805,6 @@ class Application(RevisionedMixin):
     def update_activity_status(self, request, activity_id, status):
         with transaction.atomic():
             try:
-                # if not self.can_assess(request.user):
-                #     raise exceptions.ApplicationNotAuthorized()
                 if status in Application.ACTIVITY_PROCESSING_STATUS_CHOICES:
                     for activity_type in self.licence_type_data['activity_type']:
                         if activity_type["id"] == int(
@@ -1080,8 +885,6 @@ class Application(RevisionedMixin):
     def proposed_decline(self, request, details):
         with transaction.atomic():
             try:
-                # if not self.can_assess(request.user):
-                #     raise exceptions.ApplicationNotAuthorized()
                 for activity_type in self.licence_type_data['activity_type']:
                     if activity_type["id"] == details.get('activity_type'):
                         if activity_type["processing_status"] != "With Officer-Conditions":
@@ -1204,8 +1007,6 @@ class Application(RevisionedMixin):
     def proposed_licence(self, request, details):
         with transaction.atomic():
             try:
-                # if not self.can_assess(request.user):
-                #     raise exceptions.ApplicationNotAuthorized()
                 for activity_type in self.licence_type_data['activity_type']:
                     if activity_type["id"] == details.get('activity_type'):
                         if activity_type["processing_status"] != "With Officer-Conditions":
@@ -1283,8 +1084,6 @@ class Application(RevisionedMixin):
         from wildlifecompliance.components.licences.models import WildlifeLicence
         with transaction.atomic():
             try:
-                # if not self.can_assess(request.user):
-                #     raise exceptions.ApplicationNotAuthorized()
                 # if self.processing_status != 'with_approver':
                 #     raise ValidationError('You cannot issue the licence if it is not with an approver')
                 # if not self.applicant.organisation.postal_address:
@@ -1495,10 +1294,9 @@ class ApplicationRequest(models.Model):
 
 class ReturnRequest(ApplicationRequest):
     REASON_CHOICES = (
-        ('outstanding',
-         'There are currently outstanding returns for the previous licence'),
-        ('other',
-         'Other'))
+        ('outstanding', 'There are currently outstanding returns for the previous licence'),
+        ('other', 'Other')
+    )
     reason = models.CharField(
         'Reason',
         max_length=30,
@@ -1510,14 +1308,15 @@ class ReturnRequest(ApplicationRequest):
 
 
 class AmendmentRequest(ApplicationRequest):
-    STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
+    STATUS_CHOICES = (
+        ('requested', 'Requested'),
+        ('amended', 'Amended')
+    )
     REASON_CHOICES = (
-        ('insufficient_detail',
-         'The information provided was insufficient'),
-        ('missing_information',
-         'There was missing information'),
-        ('other',
-         'Other'))
+        ('insufficient_detail', 'The information provided was insufficient'),
+        ('missing_information', 'There was missing information'),
+        ('other', 'Other')
+    )
     status = models.CharField(
         'Status',
         max_length=30,
@@ -1558,14 +1357,11 @@ class AmendmentRequest(ApplicationRequest):
 
 class Assessment(ApplicationRequest):
     STATUS_CHOICES = (
-        ('awaiting_assessment',
-         'Awaiting Assessment'),
-        ('assessed',
-         'Assessed'),
-        ('completed',
-         'Completed'),
-        ('recalled',
-         'Recalled'))
+        ('awaiting_assessment', 'Awaiting Assessment'),
+        ('assessed', 'Assessed'),
+        ('completed', 'Completed'),
+        ('recalled', 'Recalled')
+    )
     assigned_assessor = models.ForeignKey(EmailUser, blank=True, null=True)
     status = models.CharField(
         'Status',
@@ -1669,16 +1465,12 @@ class Assessment(ApplicationRequest):
 
 class ApplicationDeclinedDetails(models.Model):
     STATUS_CHOICES = (
-        ('default',
-         'Default'),
-        ('propose_decline',
-         'Propose Decline'),
-        ('declined',
-         'Declined'),
-        ('propose_issue',
-         'Propose Issue'),
-        ('issued',
-         'Issued'))
+        ('default', 'Default'),
+        ('propose_decline', 'Propose Decline'),
+        ('declined', 'Declined'),
+        ('propose_issue', 'Propose Issue'),
+        ('issued', 'Issued')
+    )
     status = models.CharField(
         'Status',
         max_length=20,
@@ -1701,12 +1493,10 @@ class ApplicationDeclinedDetails(models.Model):
 
 class ApplicationDecisionPropose(models.Model):
     PROPOSED_ACTION_CHOICES = (
-        ('default',
-         'Default'),
-        ('propose_decline',
-         'Propose Decline'),
-        ('propose_issue',
-         'Propose Issue'))
+        ('default', 'Default'),
+        ('propose_decline', 'Propose Decline'),
+        ('propose_issue', 'Propose Issue')
+    )
     DECISION_ACTION_CHOICES = (
         ('default', 'Default'), ('declined', 'Declined'), ('issued', 'Issued'))
     proposed_action = models.CharField(
