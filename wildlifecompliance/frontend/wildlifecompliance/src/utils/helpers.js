@@ -122,5 +122,8 @@ module.exports = {
                 e.preventDefault();
                 return true;
             });
+    },
+    strToBool(val) {
+      return (`${val}`.toLowerCase() === 'true');
     } 
 };
