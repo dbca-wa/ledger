@@ -88,7 +88,7 @@ from '@/utils/hooks'
 <style lang="css" scoped>
 .borderDecoration {
     border: 1px solid;
-    border-radius: 15px;
+    border-radius: 5px;
     padding: 5px;
     margin-top: 5px;
 }

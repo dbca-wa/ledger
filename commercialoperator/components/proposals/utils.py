@@ -289,6 +289,55 @@ class SpecialFieldsSearch(object):
             item_data[item['name']] = item_data_list
         return item_data
 
+def save_park_activiy_data(instance,request,viewset,parks):
+    with transaction.atomic():
+        try:
+#            
+            data = {}
+            serializer = SaveProposalSerializer(instance, data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            viewset.perform_update(serializer)
+            if parks:
+                try:
+                    current_parks=instance.parks.all()
+                    if current_parks:
+                        for p in current_parks:
+                            p.delete()
+                    for item in parks:
+                        try:
+                            data_park={
+                            'park': item,
+                            'proposal': instance.id
+                            }
+                            serializer=SaveProposalParkSerializer(data=data_park)
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except:
+                            raise                        
+                except:
+                    raise
+            if trails:
+                try:
+                    current_trails=instance.trails.all()
+                    if current_trails:
+                        for t in current_trails:
+                            t.delete()
+                    for item in trails:
+                        try:
+                            data_trail={
+                            'trail': item,
+                            'proposal': instance.id
+                            }
+                            serializer=SaveProposalTrailSerializer(data=data_trail)
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except:
+                            raise                        
+                except:
+                    raise
+        except:
+            raise
+
 
 def save_proponent_data(instance,request,viewset,parks,trails):
     with transaction.atomic():

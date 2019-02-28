@@ -19,7 +19,7 @@
               <label class="control-label">Access</label>
               <div class="" v-for="a in accessTypes">
                 <div class="form-check">
-                  <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_access" :value="a.name" data-parsley-required   />
+                  <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_access" :value="a.id" data-parsley-required   />
                   {{ a.name }}
                 </div>
               </div>
@@ -51,8 +51,9 @@
                   </div>
                   <div class="" v-for="p in d.parks">
                     <div class="form-check col-sm-12">
-                      <input :onclick="isClickable"  name="selected" v-model="selected" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                      <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
                     {{ p.name }}
+                      <span><a @click="edit_activities()" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
                     </div>
                   </div>
                 </div>
@@ -113,6 +114,9 @@
         </div>
       </div>
       <div>{{selected_trails}}</div>
+      <div>
+              <editParkActivities ref="edit_activities" :proposal="proposal"></editParkActivities>
+      </div>
 
     </div>
   </div>
@@ -122,6 +126,7 @@
 <script>
 import Vue from 'vue' 
 import VehicleTable from '@/components/common/vehicle_table.vue'
+import editParkActivities from './edit_park_activities.vue'
 import {
   api_endpoints,
   helpers
@@ -141,9 +146,12 @@ export default {
                 accessTypes:null,
                 api_regions:null,
                 trails:null,
-                selected:[],
+                selected_parks:[],
+                selected_parks_before:[],
                 selected_access:[],
+                selected_access_before:[],
                 selected_activities:[],
+                selected_activities_before:[],
                 selected_trails:[],
                 activities:[],
                 access:[],
@@ -154,33 +162,161 @@ export default {
         },
         components: {
           VehicleTable,
+          editParkActivities,
         },
         watch:{
-          selected: function() {
+          selected_parks: function() {
             let vm = this;
             if (vm.proposal) {
-                vm.proposal.parks = vm.selected
-                //vm.proposal.trails=vm.selected_trails;
-               // for (var i = 0; i < vm.proposal.parks.length; i++) {
-               //  vm.proposal.parks[i].land_activities=vm.selected_activities;
-               // }
-               //Storing and sending activities to API is still incomplete
-               vm.selected_parks_activities=[]
-               for (var i = 0; i < vm.selected.length; i++) {
+                vm.proposal.parks = vm.selected_parks
+            }
+            var removed_park=$(vm.selected_parks_before).not(vm.selected_parks).get();
+            var added_park=$(vm.selected_parks).not(vm.selected_parks_before).get();
+            vm.selected_parks_before=vm.selected_parks;
+
+            var current_activities=vm.selected_activities
+            var current_access=vm.selected_access
+
+            if(vm.selected_parks_activities.length==0){
+              for (var i = 0; i < vm.selected_parks.length; i++) {
                  var data=null;
                  data={
-                  'park': vm.selected[i],
-                  'activities': vm.selected_activities
+                  'park': vm.selected_parks[i],
+                  'activities': current_activities,
+                  'access': current_access
                  }
                  vm.selected_parks_activities.push(data);
                }
+            }
+            else{
+              if(added_park.length!=0){
+                for(var i=0; i<added_park.length; i++)
+                { 
+                  var found=false
+                  for (var j=0; j<vm.selected_parks_activities.length; j++){
+                    if(vm.selected_parks_activities[j].park==added_park[i]){ 
+                      found = true;}
+                  }
+                  if(found==false)
+                  {
+                    data={
+                    'park': added_park[i],
+                    'activities': current_activities,
+                    'access': current_access
+                   }
+                   vm.selected_parks_activities.push(data);
+                  }
+                }
+              }
+              if(removed_park.length!=0){
+                for(var i=0; i<removed_park.length; i++)
+                { 
+                  for (var j=0; j<vm.selected_parks_activities.length; j++){
+                    if(vm.selected_parks_activities[j].park==removed_park[i]){ 
+                      vm.selected_parks_activities.splice(j,1)}
+                  }
+                }
+              }
+            }
+        },
+        selected_activities: function(){
+          let vm=this;
+          var removed=$(vm.selected_activities_before).not(vm.selected_activities).get();
+          var added=$(vm.selected_activities).not(vm.selected_activities_before).get();
+          vm.selected_activities_before=vm.selected_activities;
+          if(vm.selected_parks_activities.length==0){
+            for (var i = 0; i < vm.selected_parks.length; i++) {
+                 var data=null;
+                 data={
+                  'park': vm.selected_parks[i],
+                  'activities': vm.selected_activities,
+                  'access': vm.selected_access
+                 }
+                 vm.selected_parks_activities.push(data);
+               }
+          }
+          else{
+            
+            for (var i=0; i<vm.selected_parks_activities.length; i++)
+            { 
+              if(added.length!=0){
+                for(var j=0; j<added.length; j++)
+                {
+                  if(vm.selected_parks_activities[i].activities.indexOf(added[j])<0){
+                    vm.selected_parks_activities[i].activities.push(added[j]);
+                  }
+                }
+              }
+              if(removed.length!=0){
+                for(var j=0; j<removed.length; j++)
+                {
+                  var index=vm.selected_parks_activities[i].activities.indexOf(removed[j]);
+                  if(index!=-1){
+                    vm.selected_parks_activities[i].activities.splice(index,1)
+                  }
+                }
+              }
+            }
+            // for(var temp of vm.selected_parks_activities){
+            //   if(added.length!=0){
+            //     if(temp.activities.indexOf(added[0])<0){
+            //       temp.activities.push(added[0]);
+            //     }
+            //    }
+            // }
+
+          }
+        },
+        selected_access: function(){
+          let vm=this;
+          var removed=$(vm.selected_access_before).not(vm.selected_access).get();
+          var added=$(vm.selected_access).not(vm.selected_access_before).get();
+          vm.selected_access_before=vm.selected_access;
+          if(vm.selected_parks_activities.length==0){
+            for (var i = 0; i < vm.selected_parks.length; i++) {
+                 var data=null;
+                 data={
+                  'park': vm.selected_parks[i],
+                  'activities': vm.selected_activities,
+                  'access': vm.selected_access
+                 }
+                 vm.selected_parks_activities.push(data);
+               }
+          }
+          else{
+            for (var i=0; i<vm.selected_parks_activities.length; i++)
+            { 
+              if(added.length!=0){
+               
+                for(var j=0; j<added.length; j++)
+                {
+                  if(vm.selected_parks_activities[i].access.indexOf(added[j])<0){
+                    vm.selected_parks_activities[i].access.push(added[j]);
+                  }
+                }
+              }
+              if(removed.length!=0){
+                for(var j=0; j<removed.length; j++)
+                {
+                  var index=vm.selected_parks_activities[i].access.indexOf(removed[j]);
+                  if(index!=-1){
+                    vm.selected_parks_activities[i].access.splice(index,1)
+                  }
+                }
+              }
+            }
+          }
+        },
+        selected_parks_activities: function(){
+            let vm=this;
+            if (vm.proposal){
+              vm.proposal.selected_parks_activities=vm.selected_parks_activities;
             }
         },
         selected_trails: function(){
             let vm=this;
             if (vm.proposal){
               vm.proposal.trails=vm.selected_trails;
-              //console.log(vm.proposal.trails);
             }
           }
         },
@@ -188,7 +324,7 @@ export default {
           fetchRegions: function(){
             let vm = this;
 
-            vm.$http.get(api_endpoints.regions).then((response) => {
+            vm.$http.get(api_endpoints.regions).then((response) => { 
             vm.api_regions = response.body;
             },(error) => {
             console.log(error);
@@ -207,6 +343,9 @@ export default {
             console.log(error);
             })
           },
+          edit_activities: function(){
+            this.$refs.edit_activities.isModalOpen = true;
+        },
         },
 
         mounted: function() {
@@ -226,7 +365,7 @@ export default {
             vm.fetchRegions(); 
             vm.fetchTrails();
             for (var i = 0; i < vm.proposal.parks.length; i++) {
-              this.selected.push(vm.proposal.parks[i].park.id);
+              this.selected_parks.push(vm.proposal.parks[i].park.id);
               //still testing below code, part of functionality to fetch and store park and park actitivies
               for (var j = 0; j < vm.proposal.parks[i].land_activities.length; j++) {
                 this.selected_activities.push(vm.proposal.parks[i].land_activities[j].activity.id);
