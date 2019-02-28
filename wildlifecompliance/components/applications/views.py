@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import View, TemplateView
 from django.conf import settings
 from django.template.loader import render_to_string
-from wildlifecompliance.components.applications.utils import create_data_from_form
+from wildlifecompliance.components.applications.utils import SchemaParser
 from wildlifecompliance.components.applications.models import Application, ApplicationActivityType
 from wildlifecompliance.components.applications.email import send_application_invoice_email_notification
 from wildlifecompliance.components.main.utils import get_session_application, delete_session_application, bind_application_to_invoice
@@ -32,7 +32,8 @@ class ApplicationView(TemplateView):
             application_id = request.POST.pop('application_id')
             application = Application.objects.get(application_id)
             schema = json.loads(request.POST.pop('schema')[0])
-            extracted_fields = create_data_from_form(
+            parser = SchemaParser()
+            extracted_fields = parser.create_data_from_form(
                 schema, request.POST, request.FILES)
             application.schema = schema
             application.data = extracted_fields
@@ -96,8 +97,9 @@ class _AssessView(TemplateView):
             application_id = request.POST.pop('application_id')
             application = Application.objects.get(application_id)
             schema = json.loads(request.POST.pop('schema')[0])
-            extracted_fields = create_data_from_form(schema,request.POST, request.FILES)
-            application.schema = schema;
+            parser = SchemaParser()
+            extracted_fields = parser.create_data_from_form(schema, request.POST, request.FILES)
+            application.schema = schema
             application.data = extracted_fields
             print(application_id)
             print(application)
