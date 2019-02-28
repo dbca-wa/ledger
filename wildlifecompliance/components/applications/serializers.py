@@ -205,9 +205,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         model = Application
         fields = (
             'id',
-            'activity',
-            'title',
-            'region',
             'data',
             'schema',
             'licence_type_data',
@@ -217,7 +214,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'customer_status',
             'processing_status',
             'review_status',
-            # 'hard_copy',
             'applicant',
             'org_applicant',
             'proxy_applicant',
