@@ -17,7 +17,8 @@ import HelpText from '../components/forms/help_text.vue'
 import HelpTextUrl from '../components/forms/help_text_url.vue'
 import CommentRadioCheckBox from '../components/forms/comment_icon_checkbox_radio.vue'
 import Table from '../components/forms/table.vue'
-import {helpers,api_endpoints} from "@/utils/hooks.js"
+import { helpers, api_endpoints } from "@/utils/hooks.js"
+import { strToBool } from "@/utils/helpers.js";
 
 module.exports = {
     renderChildren(h,c,data=null,assessorData=null,_readonly) {
@@ -281,7 +282,7 @@ module.exports = {
                 break;
             case 'file':
                 _elements.push(
-                    <File name={c.name} label={c.label} value={val} id={id} comment_value={comment_val} isRepeatable={c.isRepeatable} handleChange={this.handleFileChange} readonly={readonly} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} docsUrl={this.status_data.docs_url} readonly={readonly} assessor_readonly={assessor_visibility} application_id={applicationId} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <File name={c.name} label={c.label} value={val} id={id} comment_value={comment_val} isRepeatable={strToBool(c.isRepeatable)} handleChange={this.handleFileChange} readonly={readonly} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} docsUrl={this.status_data.docs_url} readonly={readonly} assessor_readonly={assessor_visibility} application_id={applicationId} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
                 )
                 break;
             case 'date':
