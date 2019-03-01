@@ -54,10 +54,12 @@ class SchemaParser(object):
 
                 # set the isEditable fields
                 #import ipdb; ipdb.set_trace()
+                """
                 for activity in instance.activities:
                     if not activity.data or (activity.data and 'editable' not in activity.data[0]):
                         activity.data = [{'editable': get_activity_sys_answers(activity)}]
                         activity.save()
+                """
 
                 # Save Documents
     #            for f in request.FILES:

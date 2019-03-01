@@ -190,16 +190,6 @@ class Application(RevisionedMixin):
         ('under_review', 'Under Review'),
     )
 
-    ACTIVITY_PROCESSING_STATUS_CHOICES = [
-        PROCESSING_STATUS_DRAFT[1],
-        'With Officer',
-        'With Assessor',
-        'With Officer-Conditions',
-        'With Officer-Finalisation',
-        'Accepted',
-        'Declined'
-    ]
-
     ID_CHECK_STATUS_CHOICES = (
         ('not_checked', 'Not Checked'),
         ('awaiting_update', 'Awaiting Update'),
@@ -474,12 +464,12 @@ class Application(RevisionedMixin):
             }
         )
         licence_data = serializer.data
-        licence_data.update({
-            'processing_status': get_choice_value(
-                self.processing_status,
+        for activity in licence_data['activity']:
+            selected_activity = self.get_selected_activity(activity['id'])
+            activity['processing_status'] = get_choice_value(
+                selected_activity.processing_status,
                 self.PROCESSING_STATUS_CHOICES
-            ),
-        })
+            )
         return licence_data
 
     @property
@@ -518,6 +508,18 @@ class Application(RevisionedMixin):
             return self.licence_purposes.first().licence_category.display_name
         except AttributeError:
             return ''
+
+    def get_selected_activity(self, activity_id):
+        selected_activity = ApplicationSelectedActivity.objects.filter(
+            application_id=self.id,
+            licence_activity_id=activity_id
+        ).first()
+        if not selected_activity:
+            selected_activity = ApplicationSelectedActivity.objects.create(
+                application_id=self.id,
+                licence_activity_id=activity_id
+            )
+        return selected_activity
 
     def __check_application_filled_out(self):
         if not self.data:
@@ -803,21 +805,9 @@ class Application(RevisionedMixin):
                 raise
 
     def update_activity_status(self, request, activity_id, status):
-        with transaction.atomic():
-            try:
-                if status in Application.ACTIVITY_PROCESSING_STATUS_CHOICES:
-                    for activity in self.licence_type_data['activity']:
-                        if activity["id"] == int(
-                                activity_id) and activity["processing_status"] != status:
-                            activity["processing_status"] = status
-                            self.save()
-                            ApplicationDecisionPropose.objects.get(
-                                application_id=self.id, licence_activity_id=int(activity_id)).delete()
-                else:
-                    raise ValidationError(
-                        'The provided status cannot be found.')
-            except BaseException:
-                raise
+        selected_activity = self.get_selected_activity(activity_id)
+        selected_activity.processing_status = status
+        selected_activity.save()
 
     def complete_assessment(self, request):
         with transaction.atomic():
@@ -892,7 +882,7 @@ class Application(RevisionedMixin):
                                 'You cannot propose for licence if it is not with officer for conditions')
                 activity = details.get('activity')
                 for item1 in activity:
-                    ApplicationDecisionPropose.objects.update_or_create(
+                    ApplicationSelectedActivity.objects.update_or_create(
                         application=self,
                         officer=request.user,
                         proposed_action='propose_decline',
@@ -985,17 +975,16 @@ class Application(RevisionedMixin):
     @property
     def activities(self):
         """ returns a queryset of activity/purposes attached to application """
-        return ApplicationActivity.objects.filter(application=self)
-
+        return ApplicationSelectedActivity.objects.filter(application=self)
 
     def get_proposed_decisions(self, request):
         with transaction.atomic():
             try:
                 proposed_states = ['propose_decline', 'propose_issue']
-                qs = ApplicationDecisionPropose.objects.filter(
+                qs = ApplicationSelectedActivity.objects.filter(
                     application=self, proposed_action__in=proposed_states)
                 for q in qs:
-                    if ApplicationDecisionPropose.objects.filter(
+                    if ApplicationSelectedActivity.objects.filter(
                             application=self,
                             licence_activity=q.licence_activity,
                             decision_action__isnull=False).exists():
@@ -1014,7 +1003,7 @@ class Application(RevisionedMixin):
                                 'You cannot propose for licence if it is not with officer for conditions')
                     activity = details.get('activity')
                     for item1 in activity:
-                        ApplicationDecisionPropose.objects.update_or_create(
+                        ApplicationSelectedActivity.objects.update_or_create(
                             application=self,
                             officer=request.user,
                             proposed_action='propose_issue',
@@ -1028,18 +1017,17 @@ class Application(RevisionedMixin):
                     for item in activity:
                         for activity in self.licence_type_data['activity']:
                             if activity["id"] == item:
-                                activity["proposed_issue"] = True
                                 activity["processing_status"] = "With Officer-Finalisation"
                                 self.save()
 
                 try:
-                    ApplicationDecisionPropose.objects.get(
+                    ApplicationSelectedActivity.objects.get(
                         application=self,
                         licence_activity_id=details.get('licence_activity_id'))
                     raise ValidationError(
                         'This activity has already been proposed to issue')
-                except ApplicationDecisionPropose.DoesNotExist:
-                    ApplicationDecisionPropose.objects.update_or_create(
+                except ApplicationSelectedActivity.DoesNotExist:
+                    ApplicationSelectedActivity.objects.update_or_create(
                         application=self,
                         officer=request.user,
                         proposed_action='propose_issue',
@@ -1110,7 +1098,7 @@ class Application(RevisionedMixin):
                             start_date=item['start_date'],
                             licence_activity_id=item['id']
                         )
-                        ApplicationDecisionPropose.objects.create(
+                        ApplicationSelectedActivity.objects.create(
                             application=self,
                             officer=request.user,
                             decision_action='issued',
@@ -1143,7 +1131,7 @@ class Application(RevisionedMixin):
                                 activity["processing_status"] = "Accepted"
                                 self.save()
                     else:
-                        ApplicationDecisionPropose.objects.create(
+                        ApplicationSelectedActivity.objects.create(
                             application=self,
                             officer=request.user,
                             decision_action='declined',
@@ -1491,7 +1479,7 @@ class ApplicationDeclinedDetails(models.Model):
         app_label = 'wildlifecompliance'
 
 
-class ApplicationDecisionPropose(models.Model):
+class ApplicationSelectedActivity(models.Model):
     PROPOSED_ACTION_CHOICES = (
         ('default', 'Default'),
         ('propose_decline', 'Propose Decline'),
@@ -1499,6 +1487,15 @@ class ApplicationDecisionPropose(models.Model):
     )
     DECISION_ACTION_CHOICES = (
         ('default', 'Default'), ('declined', 'Declined'), ('issued', 'Issued'))
+    ACTIVITY_PROCESSING_STATUS_CHOICES = (
+        Application.PROCESSING_STATUS_DRAFT,
+        ('with_officer', 'With Officer'),
+        ('with_assessor', 'With Assessor'),
+        ('with_officer_conditions', 'With Officer-Conditions'),
+        ('with_officer_finalisation', 'With Officer-Finalisation'),
+        ('accepted', 'Accepted'),
+        ('declined', 'Declined'),
+    )
     proposed_action = models.CharField(
         'Action',
         max_length=20,
@@ -1509,8 +1506,13 @@ class ApplicationDecisionPropose(models.Model):
         max_length=20,
         choices=DECISION_ACTION_CHOICES,
         default=DECISION_ACTION_CHOICES[0][0])
+    processing_status = models.CharField(
+        'Processing Status',
+        max_length=30,
+        choices=ACTIVITY_PROCESSING_STATUS_CHOICES,
+        default=ACTIVITY_PROCESSING_STATUS_CHOICES[0][0])
     application = models.ForeignKey(Application, related_name='decisions')
-    officer = models.ForeignKey(EmailUser, null=False)
+    officer = models.ForeignKey(EmailUser, null=True)
     reason = models.TextField(blank=True)
     cc_email = models.TextField(null=True)
     activity = JSONField(blank=True, null=True)
@@ -1519,6 +1521,19 @@ class ApplicationDecisionPropose(models.Model):
     proposed_start_date = models.DateField(null=True, blank=True)
     proposed_end_date = models.DateField(null=True, blank=True)
     is_activity_renewable = models.BooleanField(default=False)
+
+    purpose = models.TextField(blank=True, null=True)
+    additional_info = models.TextField(blank=True, null=True)
+    conditions = models.TextField(blank=True, null=True)
+    issue_date = models.DateTimeField(blank=True, null=True)
+    start_date = models.DateField(blank=True, null=True)
+    expiry_date = models.DateField(blank=True, null=True)
+
+
+    @staticmethod
+    def is_valid_status(status):
+        return filter(lambda x: x[0] == status,
+                      ApplicationSelectedActivity.ACTIVITY_PROCESSING_STATUS_CHOICES)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -1738,63 +1753,6 @@ class ExcelActivity(models.Model):
 #            ('{}-issued'.format(self.code), self.issued),
 #            ('{}-processed'.format(self.code), self.processed),
 #        ])
-
-class ApplicationActivity(models.Model):
-    application = models.ForeignKey(Application, related_name='app_activities')
-    activity_name = models.CharField(max_length=68)
-    name = models.CharField(max_length=68)
-    short_name = models.CharField(max_length=68)
-    code = models.CharField(max_length=4)
-    data = JSONField(blank=True, null=True)
-    purpose = models.TextField(blank=True, null=True)
-    additional_info = models.TextField(blank=True, null=True)
-    advanced = models.NullBooleanField('Standard/Advanced', default=None)
-    conditions = models.TextField(blank=True, null=True)
-    issue_date = models.DateTimeField(blank=True, null=True)
-    start_date = models.DateField(blank=True, null=True)
-    expiry_date = models.DateField(blank=True, null=True)
-    to_be_issued = models.NullBooleanField(default=None)
-    processed = models.NullBooleanField(default=None)
-
-    class Meta:
-        unique_together = (('application', 'short_name'))
-        app_label = 'wildlifecompliance'
-
-    def __str__(self):
-        return 'Application {} - Activity Name {} - Short Name {} - Name {}'.format(self.application.id, self.activity_name, self.short_name, self.name)
-
-    @property
-    def licence_category(self):
-        #return self.application.licence_category
-        return self.application.licence_type_short_name
-
-    @property
-    def lodgement_number(self):
-        return self.application.lodgement_number
-
-    @property
-    def licence_number(self):
-        return self.application.licence.licence_number if self.application.licence else None
-
-    @property
-    def applicant(self):
-        return self.application.applicant
-
-    @property
-    def applicant_id(self):
-        return self.application.applicant_id
-
-    @property
-    def applicant_details(self):
-        return self.application.applicant_details
-
-    @property
-    def applicant_type(self):
-        return self.application.applicant_type
-
-    @property
-    def activity_name_str(self):
-        return replace_special_chars(self.activity_name)
 
 @receiver(pre_delete, sender=Application)
 def delete_documents(sender, instance, *args, **kwargs):

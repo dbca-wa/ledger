@@ -5,7 +5,7 @@ from django.views.generic import View, TemplateView
 from django.conf import settings
 from django.template.loader import render_to_string
 from wildlifecompliance.components.applications.utils import SchemaParser
-from wildlifecompliance.components.applications.models import Application, ApplicationActivity
+from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.applications.email import send_application_invoice_email_notification
 from wildlifecompliance.components.main.utils import get_session_application, delete_session_application, bind_application_to_invoice
 import json
@@ -108,28 +108,6 @@ class _AssessView(TemplateView):
         except:
             traceback.print_exc
             return JsonResponse({error:"something went wrong"},safe=False,status=400)
-
-from django.views.generic.edit import UpdateView
-from wildlifecompliance.components.applications.forms import ApplicationActivityForm
-class AssessView(UpdateView):
-    model = ApplicationActivity
-    form_class = ApplicationActivityForm
-    #fields = ['activity_name', 'short_name']
-    template_name = 'wildlifecompliance/application_update_form.html'
-    #template_name_suffix = '_update_form'
-
-    def get_context_data(self, **kwargs):
-        context = super(AssessView, self).get_context_data(**kwargs)
-        self.object = self.get_object()
-
-        d = {"Tab 1": "Value 1", "Tab 2": "Value 2"}
-
-        context.update({
-            #'form': BushfireSnapshotViewForm(instance=self.object.initial_snapshot),
-            'obj': self.object,
-            'tabs': d,
-        })
-        return context
 
 def pdflatex(request):
 

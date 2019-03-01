@@ -1,8 +1,7 @@
 from django import forms
 from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.applications.models import (
-    ApplicationGroupType,
-    ApplicationActivity
+    ApplicationGroupType
 )
 
 
@@ -20,15 +19,6 @@ class ApplicationGroupTypeAdminForm(forms.ModelForm):
     def clean(self):
         super(ApplicationGroupTypeAdminForm, self).clean()
 
-
-class ApplicationActivityForm(forms.ModelForm):
-    class Meta:
-        model = ApplicationActivity
-        fields = ['activity_name', 'short_name', 'name', 'purpose', 'additional_info','advanced','conditions','issue_date','start_date','expiry_date','to_be_issued','processed']
-#    activity_name = forms.CharField(widget=forms.TextInput(attrs={'readonly':'readonly'}))
-#    short_name = forms.CharField(widget=forms.TextInput(attrs={'readonly':'readonly'}))
-#    name = forms.CharField(widget=forms.TextInput(attrs={'readonly':'readonly'}))
-#    purpose = forms.CharField(widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
 def clean_email(self):
     return self.initial['email']

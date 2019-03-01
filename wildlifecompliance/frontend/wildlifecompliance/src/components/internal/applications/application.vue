@@ -1244,7 +1244,8 @@ export default {
         },
         returnToOfficerConditions: function(){
             let vm = this;
-            vm.updateActivityStatus(vm.selectedActivity.id,'With Officer-Conditions');
+            let id = vm.selectedActivity.id;
+            vm.updateActivityStatus(id,'with_officer_conditions');
             swal(
                  'Return to Officer - Conditions',
                  'The licenced activity has been returned to Officer - Conditions.',
@@ -1616,21 +1617,22 @@ export default {
         });
     },
     beforeRouteEnter: function(to, from, next) {
-          Vue.http.get(`/api/application/${to.params.application_id}/internal_application.json`).then(res => {
-              next(vm => {
-                vm.application = res.body;
-                vm.original_application = helpers.copyObject(res.body);
-                if (vm.applicantType == 'org') {
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                };
-                if (vm.applicantType == 'proxy') {
-                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
-                };
-              });
-            },
-            err => {
-              console.log(err);
+
+        Vue.http.get(`/api/application/${to.params.application_id}/internal_application.json`).then(res => {
+            next(vm => {
+            vm.application = res.body;
+            vm.original_application = helpers.copyObject(res.body);
+            if (vm.applicantType == 'org') {
+                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
+            };
+            if (vm.applicantType == 'proxy') {
+                vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
+            };
             });
+        },
+        err => {
+            console.log(err);
+        });
     },
     beforeRouteUpdate: function(to, from, next) {
           Vue.http.get(`/api/application/${to.params.application_id}.json`).then(res => {

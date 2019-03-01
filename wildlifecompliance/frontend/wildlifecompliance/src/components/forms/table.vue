@@ -80,7 +80,7 @@ import HelpTextUrl from './help_text_url.vue'
 export default {
     //props:["name","value", "id", "isRequired", "help_text","help_text_assessor","assessorMode","label","readonly","comment_value","assessor_readonly", "help_text_url", "help_text_assessor_url"],
     props:{
-        headers: [],
+        headers: String,  // Input received as String, later converted to JSON within data() below
         name: String,
         label: String,
         id: String,
@@ -160,15 +160,16 @@ export default {
             }
         }
 
-        if(vm.readonly) {
-            return { isClickable: "return false;" }
-        } else {
-            return { isClickable: "return true;" }
-        }
-
-        return {
+        let data = {
             showingComment: false,
         }
+        if(vm.readonly) {
+            data.isClickable = "return false;";
+        } else {
+            data.isClickable = "return true;";
+        }
+
+        return data;
 
     },
     methods: {
