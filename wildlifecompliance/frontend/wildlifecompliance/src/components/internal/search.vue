@@ -92,13 +92,14 @@
                 </div>
                 <div class="panel-body collapse" :id="rBody">
                     <div class="row">
-                        <form name="searchReferenceNumberForm">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label class="control-label" for="ReferenceNumber">Search Reference Number</label>
-                                </div>
-                            </div>
-                        </form>
+                       <label for="" class="control-label col-lg-12">Reference Number</label>
+                          <div class="col-md-8">
+                              <input type="search"  class="form-control input-sm" name="referenceWord" placeholder="" v-model="referenceWord"></input>
+                          </div>
+                          <div >
+                            <input type="button" @click.prevent="search_reference" class="btn btn-primary" style="margin-bottom: 5px" value="Search"/>
+                        </div>
+                        <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                     </div>
                 </div>
             </div>
@@ -127,6 +128,9 @@ export default {
       loading: [],
       selected_organisation:'',
       organisations: null,
+      referenceWord: '',
+      errors: false,
+      errorString: ''
     }
   },
     watch: {},
@@ -165,7 +169,27 @@ export default {
                 var selected = $(e.currentTarget);
                 vm.selected_organisation = selected.val();
             });
-        }
+        },
+        search_reference: function() {
+          let vm = this;
+          if(vm.referenceWord)
+          {
+            vm.$http.post('/api/search_reference.json',{
+              reference_number: vm.referenceWord,
+
+            }).then(res => {
+              console.log(res)
+              vm.errors = false;
+              vm.errorString = '';
+              vm.$router.push({ path: '/internal/'+res.body.type+'/'+res.body.id });
+              },
+            error => {
+              console.log(error);
+              vm.errors = true;
+              vm.errorString = helpers.apiVueResourceError(error);
+            });
+          }
+        },
     },
     mounted: function () {
         let vm = this;

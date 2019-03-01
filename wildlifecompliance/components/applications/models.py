@@ -1800,3 +1800,37 @@ class ApplicationActivityType(models.Model):
 def delete_documents(sender, instance, *args, **kwargs):
     for document in instance.documents.all():
         document.delete()
+
+
+def search_keywords(search_words, search_application, search_licence, search_return, is_internal=True):
+    return True
+
+
+def search_reference(reference_number):
+    from wildlifecompliance.components.licences.models import WildlifeLicence
+    from wildlifecompliance.components.returns.models import Return
+    application_list = Application.objects.all().exclude(processing_status__in=['discarded'])
+    licence_list = WildlifeLicence.objects.all().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
+    returns_list = Return.objects.all().exclude(processing_status__in=['future'])
+    record = {}
+    try:
+        result = application_list.get(lodgement_number=reference_number)
+        record = {'id': result.id,
+                  'type': 'application'}
+    except Application.DoesNotExist:
+        try:
+            result = licence_list.get(lodgement_number=reference_number)
+            record = {'id': result.id,
+                      'type': 'licence'}
+        except WildlifeLicence.DoesNotExist:
+            try:
+                for r in returns_list:
+                    if r.reference == reference_number:
+                        record = {'id': r.id,
+                                  'type': 'compliance'}
+            except BaseException:
+                raise ValidationError('Record with provided reference number does not exist')
+    if record:
+        return record
+    else:
+        raise ValidationError('Record with provided reference number does not exist')

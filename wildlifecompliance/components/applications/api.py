@@ -47,7 +47,9 @@ from wildlifecompliance.components.applications.models import (
     Assessment,
     ApplicationGroupType,
     AmendmentRequest,
-    ApplicationUserAction
+    ApplicationUserAction,
+    search_keywords,
+    search_reference
 )
 from wildlifecompliance.components.applications.serializers import (
     ApplicationTypeSerializer,
@@ -71,7 +73,9 @@ from wildlifecompliance.components.applications.serializers import (
     AmendmentRequestSerializer,
     ExternalAmendmentRequestSerializer,
     ApplicationProposedIssueSerializer,
-    DTAssessmentSerializer
+    DTAssessmentSerializer,
+    SearchKeywordSerializer,
+    SearchReferenceSerializer
 )
 
 
@@ -1166,3 +1170,43 @@ class AmendmentRequestReasonChoicesView(views.APIView):
                 choices_list.append({'key': c[0], 'value': c[1]})
 
         return Response(choices_list)
+
+
+class SearchKeywordsView(views.APIView):
+    renderer_classes = [JSONRenderer]
+
+    def post(self, request, format=None):
+        qs = []
+        search_words = request.data.get('searchKeywords')
+        search_application = request.data.get('searchProposal')
+        search_licence = request.data.get('searchApproval')
+        search_returns = request.data.get('searchCompliance')
+        if search_words:
+            qs = search_keywords(search_words, search_application, search_licence, search_returns)
+        serializer = SearchKeywordSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class SearchReferenceView(views.APIView):
+    renderer_classes = [JSONRenderer]
+
+    def post(self, request, format=None):
+        try:
+            qs = []
+            reference_number = request.data.get('reference_number')
+            if reference_number:
+                qs = search_reference(reference_number)
+            serializer = SearchReferenceSerializer(qs)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                print e
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))

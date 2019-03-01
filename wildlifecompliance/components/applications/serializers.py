@@ -744,3 +744,18 @@ class DTAssessmentSerializer(serializers.ModelSerializer):
 
     def get_status(self, obj):
         return obj.get_status_display()
+
+
+class SearchKeywordSerializer(serializers.Serializer):
+    number = serializers.CharField()
+    id = serializers.IntegerField()
+    type = serializers.CharField()
+    org_applicant = serializers.CharField()
+    proxy_applicant = serializers.CharField()
+    submitter = serializers.CharField()
+    text = serializers.JSONField(required=False)
+
+
+class SearchReferenceSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    type = serializers.CharField()
