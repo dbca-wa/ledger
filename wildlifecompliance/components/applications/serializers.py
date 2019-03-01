@@ -606,7 +606,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
 
     def get_processed(self, obj):
         """ check if any activities have been processed """
-        return True if obj.activities.filter(issue_date__isnull=False).first() else False
+        return True if obj.activities.filter(processing_status__in=['accepted', 'declined']).first() else False
 
 
 class ApplicationUserActionSerializer(serializers.ModelSerializer):
