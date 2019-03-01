@@ -26,18 +26,7 @@
                   </div>
                   <div class="panel-body panel-collapse in" :id="pdBody">
                     <div class="col-sm-12">
-                      <div class="row">
-                        <label style="width:70%;" class="col-sm-4">Do you want to Lodge a nil Return?</label>
-                        <input type="radio" id="nilYes" name="nilYes" value="yes" v-model='returns.nil'>
-                        <label style="width:10%;" for="nilYes">Yes</label>
-                        <input type="radio" id="nilNo" name="nilNo" value="no" v-model='returns.nil'>
-                        <label style="width:10%;" for="nilNo">No</label>
-                      </div>
-                      <div v-if="returns.nil == 'yes'" class="row">
-                        <label style="width:70%;" class="col-sm-4">Reason for providing a Nil return.</label>
-                        <input type="textarea" name="nilReason" v-model="returns.nilReason">
-                      </div>
-                      <div v-if="returns.nil == 'no'">
+                      <div>
                         <div v-for="(item,index) in returns.table">
                           <tr v-for="question in item.headers">
                             <div v-for="(answer,key) in item.data">
@@ -108,6 +97,15 @@ export default {
         returnTab: 'returnTab'+vm._uid,
         form: null,
         returnBtn: 'Submit',
+        dateFormat: 'DD/MM/YYYY',
+        datepickerOptions:{
+            format: 'DD/MM/YYYY',
+            showClear:true,
+            useCurrent:false,
+            keepInvalid:true,
+            allowInputToggle:true
+        },
+        filterAnswerDatePicker: '',
     }
     returns: null
   },
@@ -131,19 +129,36 @@ export default {
       // TODO: set return button for payment.
       // returnBtn = return.requires_payment ? 'Pay and Submit' : 'Submit'
 
-    }
-
+    },
+    addEventListeners: function(){
+      console.log('addEventListeners')
+      let vm = this;
+      // Initialise Application Date Filters
+      //$(vm.$refs.answerDatePicker).data('date') = '27/02/2019';
+      $(vm.$refs.answerDatePicker).datetimepicker(vm.datepickerOptions);
+      $(vm.$refs.answerDatePicker).on('dp.change', function(e){
+         if ($(vm.$refs.answerDatePicker).data('DateTimePicker').date()) {
+            vm.filterAnswerDatePicker =  e.date.format('DD/MM/YYYY');
+         }
+         else if ($(vm.$refs.answerDatePicker).data('date') === "") {
+            vm.filterAnswerDatePicker = "27/02/2019";
+         }
+      });
+    },
   },
   computed: {
 
+  },
+  watch:{
+    filterAnswerDatePicker: function() {
+    }
   },
   beforeRouteEnter: function(to, from, next) {
     console.log('BEFORE-ROUTE func()')
      Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
         next(vm => {
            vm.returns = res.body;
-           console.log(vm.returns);
-
+           console.log(vm);
         // TODO: set return button if requires payment.
         // if (vm.returns.requires_pay)
         //   returnBtn = 'Pay and Submit'
@@ -159,8 +174,8 @@ export default {
         vm.form = document.forms.enter_return_question;
         console.log("from mounted")
         console.log(vm.form)
-
-    },
+        vm.addEventListeners();
+   },
 
 }
 </script>
