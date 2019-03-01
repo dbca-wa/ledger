@@ -465,9 +465,9 @@ class Application(RevisionedMixin):
 
     @property
     def licence_type_data(self):
-        from wildlifecompliance.components.licences.serializers import UserLicenceCategorySerializer
+        from wildlifecompliance.components.licences.serializers import LicenceCategorySerializer
 
-        serializer = UserLicenceCategorySerializer(
+        serializer = LicenceCategorySerializer(
             self.licence_purposes.first().licence_category,
             context={
                 'purpose_records': self.licence_purposes
