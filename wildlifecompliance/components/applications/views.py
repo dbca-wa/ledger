@@ -5,7 +5,7 @@ from django.views.generic import View, TemplateView
 from django.conf import settings
 from django.template.loader import render_to_string
 from wildlifecompliance.components.applications.utils import SchemaParser
-from wildlifecompliance.components.applications.models import Application, ApplicationActivityType
+from wildlifecompliance.components.applications.models import Application, ApplicationActivity
 from wildlifecompliance.components.applications.email import send_application_invoice_email_notification
 from wildlifecompliance.components.main.utils import get_session_application, delete_session_application, bind_application_to_invoice
 import json
@@ -110,10 +110,10 @@ class _AssessView(TemplateView):
             return JsonResponse({error:"something went wrong"},safe=False,status=400)
 
 from django.views.generic.edit import UpdateView
-from wildlifecompliance.components.applications.forms import ApplicationActivityTypeForm
+from wildlifecompliance.components.applications.forms import ApplicationActivityForm
 class AssessView(UpdateView):
-    model = ApplicationActivityType
-    form_class = ApplicationActivityTypeForm
+    model = ApplicationActivity
+    form_class = ApplicationActivityForm
     #fields = ['activity_name', 'short_name']
     template_name = 'wildlifecompliance/application_update_form.html'
     #template_name_suffix = '_update_form'

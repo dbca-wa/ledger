@@ -1,15 +1,15 @@
 import sys
 from collections import OrderedDict
-from wildlifecompliance.components.licences.models import DefaultActivity
+from wildlifecompliance.components.licences.models import DefaultPurpose
 
 
 class ActivityPurposeMap():
     activity_purpose_map = {}
 
     def __init__(self):
-        for i in DefaultActivity.objects.all():
+        for i in DefaultPurpose.objects.all():
             self.activity_purpose_map.update(
-                {i.activity_type.name: i.activity.name})
+                {i.activity.name: i.activity.name})
 
     def get(self, activity_name):
         """ Returns purpose, given activity

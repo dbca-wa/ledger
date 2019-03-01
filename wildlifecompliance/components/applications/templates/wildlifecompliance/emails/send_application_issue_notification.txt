@@ -1,11 +1,11 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {% block content %}
-    A Wildlife Licensing application activity type has been approved, with below details.
+    A Wildlife Licensing application activity has been approved, with below details.
 
     Application: {{ application.id }}
 
-    Activity Type: {{application.submitter}}
+    Activity: {{application.submitter}}
 
     Expiry Date: {{ expiry_date }}
 

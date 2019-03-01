@@ -26,7 +26,7 @@ class LicenceDocument(Document):
         app_label = 'wildlifecompliance'
 
 
-class WildlifeLicenceActivity(models.Model):
+class LicencePurpose(models.Model):
     name = models.CharField(max_length=100)
     short_name = models.CharField(max_length=30, default='')
     code = models.CharField(max_length=4, default='')
@@ -36,13 +36,13 @@ class WildlifeLicenceActivity(models.Model):
     base_licence_fee = models.DecimalField(
         max_digits=8, decimal_places=2, default='0')
     fields = JSONField(default=list)
-    licence_class = models.ForeignKey(
-        'WildlifeLicenceClass',
+    licence_category = models.ForeignKey(
+        'LicenceCategory',
         blank=True,
         null=True
     )
-    licence_activity_type = models.ForeignKey(
-        'WildlifeLicenceActivityType',
+    licence_activity = models.ForeignKey(
+        'LicenceActivity',
         blank=True,
         null=True
     )
@@ -60,13 +60,13 @@ class WildlifeLicenceActivity(models.Model):
     @staticmethod
     def get_first_record(activity_name):
         # Use filter -> first() in case of records with duplicate names (e.g. "Bioprospecting licence")
-        return WildlifeLicenceActivity.objects.filter(name=activity_name).first()
+        return LicencePurpose.objects.filter(name=activity_name).first()
 
 # class WildlifeLicenceDescriptor(models.Model):
 #     name = models.CharField(max_length = 100)
 
 
-class WildlifeLicenceActivityType(models.Model):
+class LicenceActivity(models.Model):
     LICENCE_ACTIVITY_STATUS_CHOICES = (
         ('current', 'Current'),
         ('expired', 'Expired'),
@@ -79,10 +79,10 @@ class WildlifeLicenceActivityType(models.Model):
         choices=LICENCE_ACTIVITY_STATUS_CHOICES,
         default=LICENCE_ACTIVITY_STATUS_CHOICES[0][0])
     name = models.CharField(max_length=100)
-    activity = models.ManyToManyField(
-        WildlifeLicenceActivity,
+    purpose = models.ManyToManyField(
+        LicencePurpose,
         blank=True,
-        through='DefaultActivity',
+        through='DefaultPurpose',
         related_name='wildlifecompliance_activity')
     short_name = models.CharField(max_length=30, default='')
     not_for_organisation = models.BooleanField(
@@ -103,29 +103,29 @@ class WildlifeLicenceActivityType(models.Model):
 
 # class DefaultCondition(models.Model):
 #     condition = models.ForeignKey(Condition)
-#     wildlife_licence_activity = models.ForeignKey(WildlifeLicenceActivity)
+#     wildlife_licence_activity = models.ForeignKey(LicencePurpose)
 #     order = models.IntegerField()
 
 
 # #LicenceType
-class WildlifeLicenceClass(LicenceType):
-    LICENCE_CLASS_STATUS_CHOICES = (
+class LicenceCategory(LicenceType):
+    LICENCE_CATEGORY_STATUS_CHOICES = (
         ('current', 'Current'),
         ('expired', 'Expired'),
         ('cancelled', 'Cancelled'),
         ('surrendered', 'Surrendered'),
         ('suspended', 'Suspended')
     )
-    licence_class_status = models.CharField(
+    licence_category_status = models.CharField(
         max_length=40,
-        choices=LICENCE_CLASS_STATUS_CHOICES,
-        default=LICENCE_CLASS_STATUS_CHOICES[0][0])
+        choices=LICENCE_CATEGORY_STATUS_CHOICES,
+        default=LICENCE_CATEGORY_STATUS_CHOICES[0][0])
     # name = models.CharField(max_length = 100)
-    activity_type = models.ManyToManyField(
-        WildlifeLicenceActivityType,
+    activity = models.ManyToManyField(
+        LicenceActivity,
         blank=True,
-        through='DefaultActivityType',
-        related_name='wildlifecompliance_activitytypes')
+        through='DefaultActivity',
+        related_name='wildlifecompliance_activities')
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -143,32 +143,32 @@ class WildlifeLicenceClass(LicenceType):
             return '{} (V{})'.format(result, self.version)
 
 
-class DefaultActivityType(models.Model):
-    activity_type = models.ForeignKey(WildlifeLicenceActivityType)
-    licence_class = models.ForeignKey(WildlifeLicenceClass)
+class DefaultActivity(models.Model):
+    activity = models.ForeignKey(LicenceActivity)
+    licence_category = models.ForeignKey(LicenceCategory)
 
     class Meta:
-        unique_together = (('licence_class', 'activity_type'))
+        unique_together = (('licence_category', 'activity'))
         app_label = 'wildlifecompliance'
         verbose_name = 'Licenced category - licenced activity mapping'
         verbose_name_plural = 'Licenced category - licenced activity mappings'
 
     def __str__(self):
-        return '{} - {}'.format(self.licence_class, self.activity_type)
+        return '{} - {}'.format(self.licence_category, self.activity)
 
 
-class DefaultActivity(models.Model):
-    activity = models.ForeignKey(WildlifeLicenceActivity)
-    activity_type = models.ForeignKey(WildlifeLicenceActivityType)
+class DefaultPurpose(models.Model):
+    purpose = models.ForeignKey(LicencePurpose)
+    activity = models.ForeignKey(LicenceActivity)
 
     class Meta:
-        unique_together = (('activity_type', 'activity'))
+        unique_together = (('activity', 'purpose'))
         app_label = 'wildlifecompliance'
         verbose_name = 'Licenced activity - purpose mapping'
         verbose_name_plural = 'Licenced activity - purpose mappings'
 
     def __str__(self):
-        return '{} - {}'.format(self.activity_type, self.activity)
+        return '{} - {}'.format(self.activity, self.purpose)
 
 
 class WildlifeLicence(models.Model):
@@ -228,23 +228,23 @@ class WildlifeLicence(models.Model):
         related_name='wildlifecompliance_submitter')
 
     extracted_fields = JSONField(blank=True, null=True)
-    licence_activity_type = models.ForeignKey(
-        'WildlifeLicenceActivityType', null=True)
-    licence_type = models.ForeignKey('WildlifeLicenceActivity', null=True)
+    licence_activity = models.ForeignKey(
+        'LicenceActivity', null=True)
+    licence_type = models.ForeignKey('LicencePurpose', null=True)
 
     licence_number = models.CharField(max_length=64, blank=True, null=True)
     licence_sequence = models.IntegerField(blank=True, default=1)
-    licence_class = models.ForeignKey(WildlifeLicenceClass)
+    licence_category = models.ForeignKey(LicenceCategory)
     # licence_sequence = models.IntegerField(blank=True, unique=True, default=seq_idx)
 
-    # licence_activity_type = models.ForeignKey(WildlifeLicenceActivityType)
+    # licence_activity = models.ForeignKey(LicenceActivity)
     # licence_descriptor = models.ForeignKey(WildlifeLicenceDescriptor)
 
     class Meta:
         unique_together = (
             ('licence_number',
              'licence_sequence',
-             'licence_class',
+             'licence_category',
              'licence_type'))
         app_label = 'wildlifecompliance'
 

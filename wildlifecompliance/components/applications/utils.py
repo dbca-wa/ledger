@@ -7,8 +7,8 @@ from ledger.accounts.models import EmailUser, Document
 from wildlifecompliance.components.applications.models import ApplicationDocument
 from wildlifecompliance.components.applications.serializers import SaveApplicationSerializer
 import json
-from wildlifecompliance.components.licences.models import WildlifeLicenceActivity, DefaultActivity, WildlifeLicenceActivityType, DefaultActivityType
-from wildlifecompliance.utils.assess_utils import create_app_activity_type_model, create_licence, pdflatex, get_activity_type_sys_answers
+from wildlifecompliance.components.licences.models import LicencePurpose, DefaultPurpose, LicenceActivity, DefaultActivity
+from wildlifecompliance.utils.assess_utils import create_app_activity_model, create_licence, pdflatex, get_activity_sys_answers
 import traceback
 
 
@@ -28,8 +28,8 @@ class SchemaParser(object):
         if not self.missing_fields or self.draft:
             return
         raise MissingFieldsException(
-            [{'name': item['name'], 'label': '{activity_type}{label}'.format(
-                activity_type='{}: '.format(item['activity_type_name']) if item['activity_type_name'] else '',
+            [{'name': item['name'], 'label': '{activity}{label}'.format(
+                activity='{}: '.format(item['activity_name']) if item['activity_name'] else '',
                 label=item['label']
             )} for item in self.missing_fields]
         )
@@ -54,10 +54,10 @@ class SchemaParser(object):
 
                 # set the isEditable fields
                 #import ipdb; ipdb.set_trace()
-                for activity_type in instance.activity_types:
-                    if not activity_type.data or (activity_type.data and 'editable' not in activity_type.data[0]):
-                        activity_type.data = [{'editable': get_activity_type_sys_answers(activity_type)}]
-                        activity_type.save()
+                for activity in instance.activities:
+                    if not activity.data or (activity.data and 'editable' not in activity.data[0]):
+                        activity.data = [{'editable': get_activity_sys_answers(activity)}]
+                        activity.save()
 
                 # Save Documents
     #            for f in request.FILES:
@@ -128,7 +128,7 @@ class SchemaParser(object):
                         file_data,
                         0,
                         '',
-                        activity_type_name=item['name']))
+                        activity_name=item['name']))
                 if assessor_data:
                     assessor_fields_search.extract_special_fields(
                         item, post_data, file_data, 0, '')
@@ -146,7 +146,7 @@ class SchemaParser(object):
 
     def _create_data_from_item(self, item, post_data, file_data, repetition, suffix, **kwargs):
         item_data = {}
-        activity_type_name = kwargs.get('activity_type_name', '')
+        activity_name = kwargs.get('activity_name', '')
         if 'name' in item:
             extended_item_name = item['name']
         else:
@@ -213,7 +213,7 @@ class SchemaParser(object):
                 except KeyError:
                     value = ''
                 if not len(value):
-                    missing_item = {'activity_type_name': activity_type_name}
+                    missing_item = {'activity_name': activity_name}
                     missing_item.update(item)
                     self.missing_fields.append(missing_item)
         except KeyError:
@@ -524,27 +524,27 @@ def save_assess_data(instance,request,viewset):
             #import ipdb; ipdb.set_trace()
             #instance.licences.all().last().licence_sequence
             new_app = True
-            for activity_type in instance.activity_types:
-                code = WildlifeLicenceActivity.objects.get(name=activity_type.activity_name).code.lower()
-                activity_type.purpose = request.data[code + '_purpose']
-                activity_type.additional_info = request.data[code + '_additional_info']
+            for activity in instance.activities:
+                code = LicencePurpose.objects.get(name=activity.activity_name).code.lower()
+                activity.purpose = request.data[code + '_purpose']
+                activity.additional_info = request.data[code + '_additional_info']
                 if request.data.has_key(code + '_standard_advanced'):
-                    activity_type.advanced = True if request.data[code + '_standard_advanced'] == 'on' else False
+                    activity.advanced = True if request.data[code + '_standard_advanced'] == 'on' else False
                 else:
-                    activity_type.advanced = False
+                    activity.advanced = False
 
-                activity_type.conditions = request.data[code + '_conditions']
-                activity_type.issue_date = datetime.strptime(request.data[code + '_issue_date'], "%d/%m/%Y") if request.data[code + '_issue_date'] else None
-                activity_type.start_date = datetime.strptime(request.data[code + '_start_date'], "%d/%m/%Y") if request.data[code + '_start_date'] else None
-                activity_type.expiry_date = datetime.strptime(request.data[code + '_expiry_date'], "%d/%m/%Y") if request.data[code + '_expiry_date'] else None
+                activity.conditions = request.data[code + '_conditions']
+                activity.issue_date = datetime.strptime(request.data[code + '_issue_date'], "%d/%m/%Y") if request.data[code + '_issue_date'] else None
+                activity.start_date = datetime.strptime(request.data[code + '_start_date'], "%d/%m/%Y") if request.data[code + '_start_date'] else None
+                activity.expiry_date = datetime.strptime(request.data[code + '_expiry_date'], "%d/%m/%Y") if request.data[code + '_expiry_date'] else None
                 if request.data.has_key(code + '_to_be_issued'):
-                    activity_type.to_be_issued = True if request.data[code + '_to_be_issued'] == 'on' else False
+                    activity.to_be_issued = True if request.data[code + '_to_be_issued'] == 'on' else False
                 else:
-                    activity_type.to_be_issued = False
+                    activity.to_be_issued = False
                 if request.data.has_key(code + '_processed'):
-                    activity_type.processed = True if request.data[code + '_processed'] == 'on' else False
+                    activity.processed = True if request.data[code + '_processed'] == 'on' else False
                 else:
-                    activity_type.processed = False
+                    activity.processed = False
 
                 # check if table exists and save possibly updated/overriden data
                 element_types = ['_table_', '_text_area_', '_text_']
@@ -555,35 +555,35 @@ def save_assess_data(instance,request,viewset):
                                 name = k.strip(code + element_type)
                                 if 'comment-field' not in name:
                                     #import ipdb; ipdb.set_trace()
-                                    activity_type.data[0]['editable'][name]['answer'] = request.data[k]
+                                    activity.data[0]['editable'][name]['answer'] = request.data[k]
 
 #                for kv_pair in get_kv_pair(code+'_text_area_'):
 #                    for k,v in kv_pair.iteritems():
 #                        name = k.strip(code+'_text_area_')
 #                        if 'comment-field' not in name:
-#                            activity_type.data[0]['editable'][name]['answer'] = request.data[k]
+#                            activity.data[0]['editable'][name]['answer'] = request.data[k]
 #
 #                for kv_pair in get_kv_pair(code+'_text_'):
 #                    for k,v in kv_pair.iteritems():
 #                        name = k.strip(code+'_text_')
 #                        if 'comment-field' not in name:
-#                            activity_type.data[0]['editable'][name]['answer'] = request.data[k]
+#                            activity.data[0]['editable'][name]['answer'] = request.data[k]
 
                 #import ipdb; ipdb.set_trace()
-                if can_process and activity_type.to_be_issued and not activity_type.processed:
+                if can_process and activity.to_be_issued and not activity.processed:
                     # create licences
-                    activity_type.processed = True
-                    if not activity_type.data:
-                        activity_type.data = [add_editable_items(activity_type)]
+                    activity.processed = True
+                    if not activity.data:
+                        activity.data = [add_editable_items(activity)]
 
-                    create_licence(instance, activity_type, new_app)
+                    create_licence(instance, activity, new_app)
                     new_app = False
 
-                #activity_type.data = [add_editable_items(activity_type)]
-                activity_type.save()
+                #activity.data = [add_editable_items(activity)]
+                activity.save()
                 #import ipdb; ipdb.set_trace()
 
-            if instance.licences.count() == instance.activity_types.count():
+            if instance.licences.count() == instance.activities.count():
                 instance.customer_status = 'accepted'
                 instance.processing_status = 'approved'
             elif instance.licences.count() == 0:
@@ -603,41 +603,41 @@ def save_assess_data(instance,request,viewset):
     return
 
 
-def add_editable_items(activity_type):
-    return {'editable': get_activity_type_sys_answers(activity_type)}
+def add_editable_items(activity):
+    return {'editable': get_activity_sys_answers(activity)}
 
 
-def get_activity_type_schema(activity_ids):
+def get_activity_schema(activity_ids):
     schema_activity = []
     schema_tab = []
 
     try:
-        activities = WildlifeLicenceActivity.objects.filter(
+        activities = LicencePurpose.objects.filter(
             id__in=activity_ids
         )
     except ValueError:
         return schema_tab
-    unique_type_activities = activities.distinct('licence_activity_type')
+    unique_type_activities = activities.distinct('licence_activity')
 
     for index, activity in enumerate(unique_type_activities):
-        activity_type = activity.licence_activity_type
+        activity = activity.licence_activity
         schema_activity = []
-        activity_type_item = {}
-        activity_type_item.update(
-            {key: value for key, value in activity_type.__dict__.items()}
+        activity_item = {}
+        activity_item.update(
+            {key: value for key, value in activity.__dict__.items()}
         )
-        activity_type_item["name"] = activity_type.name
-        activity_type_item["processing_status"] = "Draft"
-        activity_type_item["proposed_decline"] = False
+        activity_item["name"] = activity.name
+        activity_item["processing_status"] = "Draft"
+        activity_item["proposed_decline"] = False
 
-        for type_activity in activities.filter(licence_activity_type__id=activity_type.id):
+        for type_activity in activities.filter(licence_activity__id=activity.id):
             schema_activity += type_activity.schema
 
         update_schema_name(schema_activity, index)
         schema_tab.append({"type": "tab",
-                           "id": activity_type.id,
-                           "label": activity_type.name,
-                           "name": activity_type.name,
+                           "id": activity.id,
+                           "label": activity.name,
+                           "name": activity.name,
                            "status": "Draft",
                            "children": schema_activity
                            })

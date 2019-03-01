@@ -108,7 +108,7 @@ export default {
                     return data;
                 }
             },
-            {data: "class_name"},
+            {data: "category_name"},
             {
                 data: "activity_purpose_string",
                 mRender:function (data,type,full) {
@@ -174,7 +174,7 @@ export default {
                     return data;
                 }
             },
-            {data: "class_name"},
+            {data: "category_name"},
             {
                 data: "activity_purpose_string",
                 mRender:function (data,type,full) {
