@@ -2459,7 +2459,12 @@ class AdmissionsCostView(TemplateView):
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
             if self.request.user.is_staff:
-                return render(self.request, self.template_name)
+                mg_array = []
+                mooring_groups = MooringAreaGroup.objects.filter(members__in=[self.request.user])
+                for mg in mooring_groups: 
+                     mg_array.append({'id': mg.id, 'name' : mg.name})
+                context = {'mooring_groups' : json.dumps(mg_array)} 
+                return render(self.request, self.template_name, context)
             return redirect('ps_home')
         return redirect('ps_home')
 

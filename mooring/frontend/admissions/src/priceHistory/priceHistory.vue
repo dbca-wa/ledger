@@ -6,7 +6,7 @@
             <h3>Price History</h3>
         </div>
         <div class="col-sm-4">
-            <button v-show="showAddBtn" @click="showHistory()" class="btn btn-primary pull-right table_btn">Add Price History</button>
+            <button iiivshow="showAddBtn" @click="showHistory()" class="btn btn-primary pull-right table_btn">Add Price History</button>
         </div>
         <datatable ref="history_dt" :dtHeaders ="dt_headers" :dtOptions="dt_options" id="ph_table"></datatable>
     <confirmbox id="deleteHistory" :options="deleteHistoryPrompt"></confirmbox>

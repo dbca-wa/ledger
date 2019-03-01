@@ -3653,7 +3653,7 @@ class BulkPricingView(generics.CreateAPIView):
 class AdmissionsRatesViewSet(viewsets.ModelViewSet):
     queryset = AdmissionsRate.objects.all()
     renderer_classes = (JSONRenderer,)
-    serializer_class = AdmissionsRateSerializer;
+    serializer_class = AdmissionsRateSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     @detail_route(methods=['GET'])
@@ -3730,12 +3730,14 @@ class AdmissionsRatesViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             start = datetime.strptime(request.data['period_start'], '%Y-%m-%d').date() + timedelta(days=-1)
-            group = MooringAreaGroup.objects.filter(members__in=[request.user,])
+
+#             mooring_group =  MooringAreaGroup.objects.get(id=request.data['period']
+#            group = MooringAreaGroup.objects.filter(members__in=[request.user,])
             request.POST._mutable = True
-            if group.count() == 1:
-                request.data['mooring_group'] = group[0].id
-            else:
-                raise ValueError('Must belong to exactly 1 mooring group when adding admissions fees.');
+#            if group.count() == 1:
+#                request.data['mooring_group'] = group[0].id
+#            else:
+#                raise ValueError('Must belong to exactly 1 mooring group when adding admissions fees.');
             request.data['period_start'] = start
             request.POST._mutable = False
             serializer = AdmissionsRateSerializer(data=request.data)

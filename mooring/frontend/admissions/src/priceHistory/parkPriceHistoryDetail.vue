@@ -94,6 +94,21 @@
                     </div>
                 </div>
             </div>
+
+            <div class="row" id="div_mooring_groups">
+                <div class="form-group">
+                    <div class="col-md-2">
+                        <label>Mooring Group: </label>
+                    </div>
+                    <div  class="col-md-4">
+                        <select class="form-control" name="mooring_group" v-model="priceHistory.mooring_group">
+                            <option value=""></option>
+                            <option v-for="mg in mooring_groups" :value="mg.id">{{mg.name}}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <reason type="price" @blur="validateReason()" v-model="priceHistory.reason" ></reason>
             <div v-show="requireDetails" class="row">
                 <div class="form-group">
@@ -105,6 +120,8 @@
                     </div>
                 </div>
             </div>
+
+
         </form>
     </div>
 
@@ -143,6 +160,7 @@ module.exports = {
             form: '',
             reasons: [],
             isOpen: false,
+            mooring_groups: [],
         }
     },
     computed: {
@@ -332,6 +350,9 @@ module.exports = {
         //     }
 
         // });
+
+        var mg = $('#mooring_groups').val();
+        vm.mooring_groups = JSON.parse( mg );
 
         $(document).foundation();
         var arrivalEl = $('#period_start');
