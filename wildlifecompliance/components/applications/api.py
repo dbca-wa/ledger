@@ -40,7 +40,7 @@ from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.utils.assess_utils import create_app_activity_model
 from wildlifecompliance.components.applications.models import (
     Application,
-    ApplicationActivity,
+    ApplicationSelectedActivity,
     ApplicationDocument,
     ApplicationCondition,
     ApplicationStandardCondition,
@@ -51,7 +51,6 @@ from wildlifecompliance.components.applications.models import (
 )
 from wildlifecompliance.components.applications.serializers import (
     ApplicationTypeSerializer,
-    ApplicationActivitySerializer,
     ApplicationSerializer,
     InternalApplicationSerializer,
     SaveApplicationSerializer,
@@ -347,13 +346,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = InternalApplicationSerializer(
             instance, context={'request': request})
-
-#        editable_items = {}
-#        for i in instance.activities:
-#            editable_items.update({i.activity_name:get_activity_sys_answers(i)})
-#
-#        serializer.data.append({'editable':editable_items})
-
         return Response(serializer.data)
 
     @detail_route(methods=['post'])
@@ -583,7 +575,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 raise serializers.ValidationError(
                     'Status and activity id is required')
             else:
-                if status not in Application.ACTIVITY_PROCESSING_STATUS_CHOICES:
+                if not ApplicationSelectedActivity.is_valid_status(status):
                     raise serializers.ValidationError(
                         'The status provided is not allowed')
             instance.update_activity_status(request, activity_id, status)
@@ -871,11 +863,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-
-
-class ApplicationActivityViewSet(viewsets.ModelViewSet):
-    queryset = ApplicationActivity.objects.all()
-    serializer_class = ApplicationActivitySerializer
 
 
 class ApplicationConditionViewSet(viewsets.ModelViewSet):

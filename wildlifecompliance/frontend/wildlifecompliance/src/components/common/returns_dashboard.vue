@@ -72,7 +72,6 @@ export default {
             filterReturnStatus: 'All',
             
             // filterApplicationRegion: 'All',
-            // filterApplicationActivity: 'All',
             // filterApplicationStatus: 'All',
             // filterApplicationLodgedFrom: '',
             // filterApplicationLodgedTo: '',
@@ -189,36 +188,6 @@ export default {
         datatable
     },
     watch:{
-        // filterApplicationActivity: function() {
-        //     let vm = this;
-        //     if (vm.filterApplicationActivity!= 'All') {
-        //         vm.$refs.application_datatable.vmDataTable.columns(2).search(vm.filterApplicationActivity).draw();
-        //     } else {
-        //         vm.$refs.application_datatable.vmDataTable.columns(2).search('').draw();
-        //     }
-        // },
-        // filterApplicationStatus: function() {
-        //     let vm = this;
-        //     if (vm.filterApplicationStatus!= 'All') {
-        //         vm.$refs.application_datatable.vmDataTable.columns(6).search(vm.filterApplicationStatus).draw();
-        //     } else {
-        //         vm.$refs.application_datatable.vmDataTable.columns(6).search('').draw();
-        //     }
-        // },
-        // filterApplicationRegion: function(){
-        //     this.$refs.application_datatable.vmDataTable.draw();
-        // },
-        // filterApplicationSubmitter: function(){
-        //     this.$refs.application_datatable.vmDataTable.draw();
-        // },
-        // filterApplicationLodgedFrom: function(){
-        //     this.$refs.application_datatable.vmDataTable.draw();
-        // },
-        // filterApplicationLodgedTo: function(){
-        //     this.$refs.application_datatable.vmDataTable.draw();
-        // }
-
-
         filterReturnLicenceType: function(){
         },
         filterReturnStatus: function(){
