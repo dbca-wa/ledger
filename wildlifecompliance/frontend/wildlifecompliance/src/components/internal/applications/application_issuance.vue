@@ -253,8 +253,8 @@ export default {
                         emulateJSON:true,
                     }).then((response)=>{
                         swal(
-                             'Issue activity type',
-                             'The activity type is successfully issued',
+                             'Issue activity',
+                             'The activity is successfully issued',
                              'success'
                         );
                         vm.close();

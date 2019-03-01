@@ -1,9 +1,9 @@
 {%  extends 'wildlifecompliance/emails/base_email.html' %}
 
 {% block content %}
-    A Wildlife Licensing application activity type has been approved, with below details.
+    A Wildlife Licensing application activity has been approved, with below details.
     <p><strong>Application: {{ application.id }}</strong></p>
-    <p><strong>Activity Type: {{ activity_name }}</strong></p>
+    <p><strong>Activity: {{ activity_name }}</strong></p>
     <p><strong>Expiry Date: {{ expiry_date }}</strong></p>
     <p><strong>Start Date: {{ start_date }}</strong></p>
     <p><strong>Link: <a href="{{url}}">{{url}}</a></strong></p>

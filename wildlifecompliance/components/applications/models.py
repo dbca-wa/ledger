@@ -581,9 +581,9 @@ class Application(RevisionedMixin):
                 self.submitter = request.user
                 # self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.lodgement_date = timezone.now()
-                # if amendment is submitted change the status of only particular activity type
+                # if amendment is submitted change the status of only particular activity
                 # else if the new application is submitted change the status of
-                # all the activity types
+                # all the activities
                 if (self.amendment_requests):
                     qs = self.amendment_requests.filter(status="requested")
                     if (qs):
@@ -823,7 +823,7 @@ class Application(RevisionedMixin):
         with transaction.atomic():
             try:
                 # Get the assessor groups the current user is member of for the
-                # selected activity type tab
+                # selected activity tab
                 qs = ApplicationGroupType.objects.filter(
                     type='assessor',
                     licence_activity_id=request.data.get('selected_assessment_tab'),
@@ -1037,7 +1037,7 @@ class Application(RevisionedMixin):
                         application=self,
                         licence_activity_id=details.get('licence_activity_id'))
                     raise ValidationError(
-                        'This activity type has already been proposed to issue')
+                        'This activity has already been proposed to issue')
                 except ApplicationDecisionPropose.DoesNotExist:
                     ApplicationDecisionPropose.objects.update_or_create(
                         application=self,
@@ -1336,7 +1336,7 @@ class AmendmentRequest(ApplicationRequest):
     def generate_amendment(self, request):
         with transaction.atomic():
             try:
-                # This is to change the status of licence activity type
+                # This is to change the status of licence activity
                 for item in self.application.licence_type_data['activity']:
                     if self.licence_activity.id == item["id"]:
                         item["processing_status"] = Application.PROCESSING_STATUS_DRAFT[1]
@@ -1383,7 +1383,7 @@ class Assessment(ApplicationRequest):
     def generate_assessment(self, request):
         with transaction.atomic():
             try:
-                # This is to change the status of licence activity type
+                # This is to change the status of licence activity
                 for item in self.application.licence_type_data['activity']:
                     if request.data.get('licence_activity') == item["id"]:
                         item["processing_status"] = "With Assessor"
@@ -1612,10 +1612,10 @@ class ApplicationUserAction(UserAction):
     ACTION_ASSESSMENT_RESENT = "Assessment Resent {}"
     ACTION_ASSESSMENT_COMPLETE = "Assessment Completed for group {} "
     ACTION_DECLINE = "Decline application {}"
-    ACTION_ENTER_CONDITIONS = "Entered condition for activity type {}"
+    ACTION_ENTER_CONDITIONS = "Entered condition for activity {}"
     ACTION_CREATE_CONDITION_ = "Create condition {}"
-    ACTION_ISSUE_LICENCE_ = "Issue Licence for activity type {}"
-    ACTION_DECLINE_LICENCE_ = "Decline Licence for activity type {}"
+    ACTION_ISSUE_LICENCE_ = "Issue Licence for activity {}"
+    ACTION_DECLINE_LICENCE_ = "Decline Licence for activity {}"
     ACTION_DISCARD_application = "Discard application {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"

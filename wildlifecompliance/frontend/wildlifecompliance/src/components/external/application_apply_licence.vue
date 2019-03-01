@@ -207,13 +207,13 @@ export default {
                 vm.licence_category.name       = vm.licence_categories[i].name
                 vm.licence_category.short_name = vm.licence_categories[i].short_name
 
-                // loop through level 2 and find selected activity type (checkboxes, one or more)
+                // loop through level 2 and find selected activity (checkboxes, one or more)
                 for(var j=0,_len2=vm.licence_categories[i].activity.length;j<_len2;j++){
 
-                    // if activity type selected
+                    // if activity selected
                     if(vm.licence_categories[i].activity[j].selected){
 
-                        // reset current loop total of selected purposes for this activity type (level 3)
+                        // reset current loop total of selected purposes for this activity (level 3)
                         count_selected_purposes_this_loop = 0
 
                         // loop through level 3 and find selected activity (checkboxes, one or more)
@@ -223,10 +223,10 @@ export default {
                             if(vm.licence_categories[i].activity[j].purpose[k].selected){
 
                                 // if this is the first level 3 item
-                                // start of list for the selected activity type
+                                // start of list for the selected activity
                                 if(count_selected_purposes_this_loop == 0){
 
-                                    // add activity type to the licence_category.activity list
+                                    // add activity to the licence_category.activity list
                                     // only do if at least one activity is selected (hence why it is in this loop)
                                     vm.licence_category.activity.push({
                                         id:         vm.licence_categories[i].activity[j].id,
@@ -234,7 +234,7 @@ export default {
                                         short_name: vm.licence_categories[i].activity[j].short_name
                                     })
 
-                                    // initialise activity list for selected activity type
+                                    // initialise activity list for selected activity
                                     vm.licence_category.activity[count_total_activities].purpose = []
                                 }
 
@@ -253,12 +253,12 @@ export default {
                         	}
                         }
 
-                        // only if there is at least one activity selected for this activity type
+                        // only if there is at least one activity selected for this activity
                         if(count_selected_purposes_this_loop > 0){
                             count_total_activities++;
                         }
 
-                        // end of selected activity type loop
+                        // end of selected activity loop
                     }
 
                 }

@@ -143,8 +143,8 @@ class ExcelWriter():
 
     def get_activity_sys_questions(self, activity_name):
         """
-        Looks up the activity type schema and return all questions (marked isEditable) that need to be added to the Excel WB.
-        Allows us to know the block size for each activity type in the WB (start_col, end_col)
+        Looks up the activity schema and return all questions (marked isEditable) that need to be added to the Excel WB.
+        Allows us to know the block size for each activity in the WB (start_col, end_col)
         """
         ordered_dict = OrderedDict([])
 
@@ -161,7 +161,7 @@ class ExcelWriter():
 
     def get_activity_sys_answers(self, qs_activity, activity_name):
         """
-        Looks up the activity type return all answers for question marked isEditable that need to be added to the Excel WB.
+        Looks up the activity return all answers for question marked isEditable that need to be added to the Excel WB.
         """
         ordered_dict = OrderedDict([])
         questions = self.get_activity_sys_questions(activity_name)
