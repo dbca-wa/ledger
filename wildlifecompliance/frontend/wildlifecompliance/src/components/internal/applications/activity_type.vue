@@ -1,35 +1,35 @@
 <template lang="html">
     <div>
-      <h3>Activity Name: {{ activity_type.activity_name }} - {{ activity_type.code  }}</h3>
+      <h3>Activity Name: {{ activity.activity_name }} - {{ activity.code  }}</h3>
       <p>Applicant: {{ application.applicant }}</p>
       <!--<p>Applicant Details: {{ application.applicant_details }}</p>-->
 
       <div>
-        <input type="text" :name="activity_type.code+'_code'" :value="activity_type.code" style="display:none;"><br>
+        <input type="text" :name="activity.code+'_code'" :value="activity.code" style="display:none;"><br>
 
-        <TextField :readonly="readonly" type="text" :name="activity_type.code+'_purpose'" :value="activity_type.purpose" label="Purpose" />
-        <TextField :readonly="readonly" type="text" :name="activity_type.code+'_additional_info'" :value="activity_type.additional_info" label="Additional information" />
-        <Checkbox :readonly="readonly" :name="activity_type.code+'_standard_advanced'" :value="activity_type.advanced" label="Standard/Advanced" :id="'id_'+activity_type.code+'_standard_advanced'" />
+        <TextField :readonly="readonly" type="text" :name="activity.code+'_purpose'" :value="activity.purpose" label="Purpose" />
+        <TextField :readonly="readonly" type="text" :name="activity.code+'_additional_info'" :value="activity.additional_info" label="Additional information" />
+        <Checkbox :readonly="readonly" :name="activity.code+'_standard_advanced'" :value="activity.advanced" label="Standard/Advanced" :id="'id_'+activity.code+'_standard_advanced'" />
 
-        <TextArea :readonly="readonly" :name="activity_type.code+'_conditions'" :value="activity_type.conditions" label="Conditions" :id="'id_'+activity_type.code+'_conditions'" />
+        <TextArea :readonly="readonly" :name="activity.code+'_conditions'" :value="activity.conditions" label="Conditions" :id="'id_'+activity.code+'_conditions'" />
 
-        <DateField :readonly="readonly" :name="activity_type.code+'_issue_date'" :value="activity_type.issue_date" label="Issue Date" :id="'id_'+activity_type.code+'_issue_date'" />
-        <DateField :readonly="readonly" :name="activity_type.code+'_start_date'" :value="activity_type.start_date" label="Start Date" :id="'id_'+activity_type.code+'_start_date'" />
-        <DateField :readonly="readonly" :name="activity_type.code+'_expiry_date'" :value="activity_type.expiry_date" label="Expiry Date" :id="'id_'+activity_type.code+'_expiry_date'" />
+        <DateField :readonly="readonly" :name="activity.code+'_issue_date'" :value="activity.issue_date" label="Issue Date" :id="'id_'+activity.code+'_issue_date'" />
+        <DateField :readonly="readonly" :name="activity.code+'_start_date'" :value="activity.start_date" label="Start Date" :id="'id_'+activity.code+'_start_date'" />
+        <DateField :readonly="readonly" :name="activity.code+'_expiry_date'" :value="activity.expiry_date" label="Expiry Date" :id="'id_'+activity.code+'_expiry_date'" />
 
-        <Checkbox :readonly="readonly" :name="activity_type.code+'_to_be_issued'" :value="activity_type.to_be_issued" label="To be issued" :id="'id_'+activity_type.code+'_to_be_issued'" />
-        <!--<Checkbox :name="activity_type.code+'_processed'" :value="activity_type.processed" label="Processed" :id="'id_'+activity_type.code+'_processed'" />-->
+        <Checkbox :readonly="readonly" :name="activity.code+'_to_be_issued'" :value="activity.to_be_issued" label="To be issued" :id="'id_'+activity.code+'_to_be_issued'" />
+        <!--<Checkbox :name="activity.code+'_processed'" :value="activity.processed" label="Processed" :id="'id_'+activity.code+'_processed'" />-->
 
         <!-- Add isEditable fields to form and allow values to be overridden (original data is NOT overwritten) -->
         <div v-for="editable_element in editable_elements">
             <div v-if="'table' in editable_element">
-                <Table :readonly="readonly" :name="activity_type.code+'_table_'+editable_element.table.name" :value="editable_element.table.value" :label="editable_element.table.label" :headers="editable_element.table.headers"/>
+                <Table :readonly="readonly" :name="activity.code+'_table_'+editable_element.table.name" :value="editable_element.table.value" :label="editable_element.table.label" :headers="editable_element.table.headers"/>
             </div>
             <div v-else-if="'text' in editable_element">
-                <TextField :readonly="readonly" type="text" :name="activity_type.code+'_text_'+editable_element.text.name" :value="editable_element.text.value" :label="editable_element.text.label" />
+                <TextField :readonly="readonly" type="text" :name="activity.code+'_text_'+editable_element.text.name" :value="editable_element.text.value" :label="editable_element.text.label" />
             </div>
             <div v-else-if="'text_area' in editable_element">
-                <TextArea :readonly="readonly" :name="activity_type.code+'_text_area_'+editable_element.text_area.name" :value="editable_element.text_area.value" :label="editable_element.text_area.label" />
+                <TextArea :readonly="readonly" :name="activity.code+'_text_area_'+editable_element.text_area.name" :value="editable_element.text_area.value" :label="editable_element.text_area.label" />
             </div>
             <!--{{ editable_element }}-->
         </div>
@@ -40,8 +40,8 @@
 -->
 
 <!--
-        <Radio name="activity_type.code+'_approve'" value="activity_type.approve" label="Approve/Decline" id="'id_'+activity_type.code+'_approve'" :options="activity_type.approve_options" />
-        <Radio name="activity_type.code+'_approve'" value="activity_type.approve" label="Approve/Decline" id="'id_'+activity_type.code+'_approve'" :options="activity_type.approve_options" />
+        <Radio name="activity.code+'_approve'" value="activity.approve" label="Approve/Decline" id="'id_'+activity.code+'_approve'" :options="activity.approve_options" />
+        <Radio name="activity.code+'_approve'" value="activity.approve" label="Approve/Decline" id="'id_'+activity.code+'_approve'" :options="activity.approve_options" />
 -->
       </div>
 
@@ -49,7 +49,7 @@
 </template>
 
     <!--
-    application = models.ForeignKey(Application, related_name='app_activity_types')
+    application = models.ForeignKey(Application, related_name='app_activities')
     activity_name = models.CharField(max_length=68)
     name = models.CharField(max_length=68)
     short_name = models.CharField(max_length=68)
@@ -75,11 +75,11 @@
     import Table from '@/components/forms/table.vue'
     export default {
         //props:["type","name","id", "comment_value","value","isRequired","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly", "help_text_url", "help_text_assessor_url"],
-        props:["readonly", "activity_type", "application", "id"],
+        props:["readonly", "activity", "application", "id"],
         components: {TextField, TextArea, DateField, Checkbox, Radio, Table},
         /*
         props:{
-            activity_type:{
+            activity:{
                 type: ,
                 required:true
             },
@@ -93,8 +93,8 @@
             let vm = this;
             vm.editable_elements = [];
 
-            if (vm.activity_type.data !== null && 'editable' in vm.activity_type.data[0]) {
-                var data = vm.activity_type.data[0]['editable'];
+            if (vm.activity.data !== null && 'editable' in vm.activity.data[0]) {
+                var data = vm.activity.data[0]['editable'];
                 for (var k in data) {
                     if (data[k]['type'] == 'table') {
                         vm.editable_elements.push({'table': {
@@ -131,8 +131,8 @@
             render_editable_elements: function() {
                 let vm = this;
                 var _elements = [];
-                if ('editable' in vm.activity_type.data[0]) {
-                    var data = vm.activity_type.data[0]['editable'];
+                if ('editable' in vm.activity.data[0]) {
+                    var data = vm.activity.data[0]['editable'];
                     for (var k in data) {
                         if (data[k]['type'] == 'table') {
                             var section_name = k;

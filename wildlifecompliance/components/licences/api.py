@@ -32,12 +32,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.licences.models import (
     WildlifeLicence,
-    WildlifeLicenceClass
+    LicenceCategory
 )
 from wildlifecompliance.components.licences.serializers import (
     WildlifeLicenceSerializer,
-    WildlifeLicenceClassSerializer,
-    UserWildlifeLicenceClassSerializer
+    LicenceCategorySerializer,
+    UserLicenceCategorySerializer
 )
 
 
@@ -93,24 +93,24 @@ class LicenceViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class WildlifeLicenceClassViewSet(viewsets.ModelViewSet):
-    queryset = WildlifeLicenceClass.objects.all()
-    serializer_class = WildlifeLicenceClassSerializer
+class LicenceCategoryViewSet(viewsets.ModelViewSet):
+    queryset = LicenceCategory.objects.all()
+    serializer_class = LicenceCategorySerializer
 
 
 class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
     # Filters to only return purposes that are
     # available for selection when applying for
     # a new application
-    queryset = WildlifeLicenceClass.objects.all()
-    serializer_class = UserWildlifeLicenceClassSerializer
+    queryset = LicenceCategory.objects.all()
+    serializer_class = UserLicenceCategorySerializer
 
     def list(self, request, *args, **kwargs):
         print(self.request)
         print(self.request.GET)
         print(self.request.GET.get('org_applicant', None))
         queryset = self.get_queryset()
-        serializer = UserWildlifeLicenceClassSerializer(queryset, many=True, context={'request':request})
+        serializer = UserLicenceCategorySerializer(queryset, many=True, context={'request':request})
         return Response(serializer.data)
 
     def get_serializer_context(self):
