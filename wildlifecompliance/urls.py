@@ -1,3 +1,4 @@
+import logging
 from django.conf import settings
 from django.conf.urls import url, include
 from django.views.generic.base import TemplateView, RedirectView
@@ -14,18 +15,23 @@ from wildlifecompliance.components.organisations import api as org_api
 from wildlifecompliance.components.applications import api as application_api
 from wildlifecompliance.components.licences import api as licence_api
 from wildlifecompliance.components.returns import api as return_api
+from wildlifecompliance.management.permissions_manager import CustomPermissionCollector
+from wildlifecompliance.utils import are_migrations_running
 
 from ledger.urls import urlpatterns as ledger_patterns
+
+logger = logging.getLogger(__name__)
 
 # API patterns
 router = routers.DefaultRouter()
 router.register(r'organisations', org_api.OrganisationViewSet)
+router.register(r'application_activity', application_api.ApplicationActivityViewSet)
 router.register(r'application', application_api.ApplicationViewSet)
 router.register(r'assessment', application_api.AssessmentViewSet)
 router.register(r'amendment', application_api.AmendmentRequestViewSet)
 router.register(r'assessor_group', application_api.AssessorGroupViewSet)
 router.register(r'licences', licence_api.LicenceViewSet)
-router.register(r'licences_class', licence_api.WildlifeLicenceClassViewSet)
+router.register(r'licences_class', licence_api.LicenceCategoryViewSet)
 router.register(r'licence_available_purposes',
                 licence_api.UserAvailableWildlifeLicencePurposesViewSet)
 router.register(r'returns', return_api.ReturnViewSet)
@@ -62,6 +68,12 @@ api_patterns = [url(r'^api/profile/$',
                 url(r'^api/organisation_access_group_members',
                     org_api.OrganisationAccessGroupMembers.as_view(),
                     name='organisation-access-group-members'),
+                url(r'^api/search_keywords',
+                    application_api.SearchKeywordsView.as_view(),
+                    name='search_keywords'),
+                url(r'^api/search_reference',
+                    application_api.SearchReferenceView.as_view(),
+                    name='search_reference'),
                 url(r'^api/',
                     include(router.urls))]
 
@@ -97,6 +109,8 @@ urlpatterns = [
     # url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$',
     #     views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
     url('^healthcheck/', views.HealthCheckView.as_view(), name='health_check'),
+    #url(r'^assess/(?P<application_pk>\d+)/$', application_views.AssessView.as_view(), name='assess'),
+    url(r'^assess/(?P<pk>\d+)/$', application_views.AssessView.as_view(), name='assess'),
 
     # following url is defined so that to include url path when sending
     # application emails to users
@@ -107,11 +121,18 @@ urlpatterns = [
         name='external-application-success-invoice'),
 
     # url(r'^export/xls/$', application_views.export_applications, name='export_applications'),
+    url(r'^export/pdf/$', application_views.pdflatex, name='pdf_latex'),
     url(r'^mgt-commands/$',
         views.ManagementCommandsView.as_view(),
         name='mgt-commands'),
 
 ] + ledger_patterns
+
+if not are_migrations_running():
+    logger.info("Verifying presence of custom group permissions in the database...")
+    permission_collector = CustomPermissionCollector()
+    permission_collector.get_or_create_models()
+    logger.info("Finished collecting custom permissions.")
 
 if settings.DEBUG:  # Serve media locally in development.
     urlpatterns += static(settings.MEDIA_URL,

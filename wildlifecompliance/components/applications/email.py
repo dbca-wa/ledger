@@ -223,7 +223,7 @@ def send_application_amendment_notification(amendment, application, request):
 
 
 def send_application_issue_notification(
-        activity_type_name,
+        activity_name,
         expiry_date,
         start_date,
         application,
@@ -238,7 +238,7 @@ def send_application_issue_notification(
                 'application_pk': application.id}))
     context = {
         'application': application,
-        'activity_type_name': activity_type_name,
+        'activity_name': activity_name,
         'expiry_date': expiry_date,
         'start_date': start_date,
         'url': url
@@ -252,7 +252,7 @@ def send_application_issue_notification(
 
 
 def send_application_decline_notification(
-        activity_type_name, application, request):
+        activity_name, application, request):
     # An email to internal users notifying about new application is submitted
     email = ApplicationDeclineNotificationEmail()
 
@@ -263,7 +263,7 @@ def send_application_decline_notification(
                 'application_pk': application.id}))
     context = {
         'application': application,
-        'activity_type_name': activity_type_name,
+        'activity_name': activity_name,
         'url': url
     }
 

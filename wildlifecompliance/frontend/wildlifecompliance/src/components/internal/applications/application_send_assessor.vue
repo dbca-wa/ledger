@@ -59,7 +59,7 @@ export default {
                 assessor_group_name:null,
                 assessor_group:null,
                 application:vm.application_id,
-                licence_activity_type:null
+                licence_activity:null
             },
             assessor_group:null,
             assessingApplication:false,

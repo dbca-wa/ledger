@@ -13,7 +13,7 @@
                                         <div v-for="item in application_licence_type">
                                             <div v-for="item1 in item">
                                                 <div v-if="item1.name && item1.processing_status=='With Officer-Conditions'">
-                                                    <input type="checkbox" :value ="item1.id" :id="item1.id" v-model="propose_issue.activity_type">{{item1.name}}
+                                                    <input type="checkbox" :value ="item1.id" :id="item1.id" v-model="propose_issue.activity">{{item1.name}}
                                                 </div>
                                             </div>
                                         </div>
@@ -115,7 +115,7 @@ export default {
             isModalOpen:false,
             form:null,
             propose_issue:{
-                activity_type:[],
+                activity:[],
                 cc_email:null,
                 reason:null,
                 expiry_date:null,
@@ -158,7 +158,7 @@ export default {
         close:function () {
             this.isModalOpen = false;
             this.propose_issue = {
-                activity_type:[],
+                activity:[],
                 cc_email:null,
                 reason:null,
                 expiry_date:null,
@@ -181,7 +181,7 @@ export default {
             vm.errors = false;
             let propose_issue = JSON.parse(JSON.stringify(vm.propose_issue));
             vm.issuingLicence = true;
-            if (propose_issue.activity_type.length > 0){
+            if (propose_issue.activity.length > 0){
                 if (vm.processing_status == 'Under Review'){
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/proposed_licence'),JSON.stringify(vm.propose_issue),{
                             emulateJSON:true,

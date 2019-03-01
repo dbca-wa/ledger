@@ -108,6 +108,8 @@ export default {
             show_spinner: false,
             documents:[],
             filename:null,
+            help_text_url:'',
+            help_text_assessor_url:''
         }
     },
 

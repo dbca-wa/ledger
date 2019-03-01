@@ -1,17 +1,15 @@
-from django.conf import settings
+import sys
 from collections import OrderedDict
-from wildlifecompliance.components.applications.models import Application
-from wildlifecompliance.components.licences.models import DefaultActivity
-#from copy import deepcopy
+from wildlifecompliance.components.licences.models import DefaultPurpose
 
 
 class ActivityPurposeMap():
     activity_purpose_map = {}
 
     def __init__(self):
-        for i in DefaultActivity.objects.all():
+        for i in DefaultPurpose.objects.all():
             self.activity_purpose_map.update(
-                {i.activity_type.name: i.activity.name})
+                {i.activity.name: i.activity.name})
 
     def get(self, activity_name):
         """ Returns purpose, given activity
@@ -215,6 +213,8 @@ def search_keys(dictionary, search_list=['help_text', 'label']):
     return help_list
 
 
+"""
+# Commented out as Proposal is not imported and undefined.
 def test_search_multiple_keys():
     p = Proposal.objects.get(id=139)
     return search_multiple_keys(
@@ -223,6 +223,7 @@ def test_search_multiple_keys():
         search_list=[
             'label',
             'name'])
+"""
 
 
 def search_multiple_keys(
@@ -316,3 +317,10 @@ def flatten(old_data, new_data=None, parent_key='', delimiter='.', width=4):
             raise AttributeError("key {} is already used".format(parent_key))
 
     return new_data
+
+
+def are_migrations_running():
+    '''
+    Checks whether the app was launched with the migration-specific params
+    '''
+    return sys.argv and ('migrate' in sys.argv or 'makemigrations' in sys.argv)

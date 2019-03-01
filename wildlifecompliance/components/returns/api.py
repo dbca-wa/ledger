@@ -10,6 +10,9 @@ from rest_framework.renderers import JSONRenderer
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.returns.utils import _is_post_data_valid,_create_return_data_from_post_data
 from wildlifecompliance.components.returns.utils import SpreadSheet
+from wildlifecompliance.components.licences.models import (
+    WildlifeLicence
+)
 from wildlifecompliance.components.returns.models import (
     Return,
 )

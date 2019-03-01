@@ -102,6 +102,7 @@ export default {
             application_activityTitles : [],
             application_regions: [],
             application_submitters: [],
+            return_licence_types: [],
             application_headers:["Number","Due Date","Status","Licence","Action"],
             application_options:{
                 language: {
