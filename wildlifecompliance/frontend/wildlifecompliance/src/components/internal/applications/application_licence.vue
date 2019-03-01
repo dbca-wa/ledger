@@ -23,7 +23,7 @@
                 <div v-for="item in application.licence_type_data">
                     <div v-for="(item1,index) in item" v-if="item1.processing_status=='Accepted'" :id="`${item1.id}`" class="tab-pane fade active in"> 
                         The licence has been issued and has been emailed to {{application.submitter.first_name}} {{application.submitter.last_name}} {{isFinalised}}
-                        <div v-for="licence in application.licences" v-if="licence.licence_activity_type_id == item1.id">
+                        <div v-for="licence in application.licences" v-if="licence.licence_activity_id == item1.id">
                             Expiry Date: {{licence.expiry_date}}
                         </div>
                     </div>
@@ -110,8 +110,8 @@ export default {
         isFinalised: function(){
             let vm=this;
             var flag=0;
-            for(var i=0, len=vm.application.licence_type_data.activity_type.length; i<len; i++){
-                if(vm.application.licence_type_data.activity_type[i].processing_status == 'Declined' || vm.application.licence_type_data.activity_type[i].processing_status == 'Accepted' ){
+            for(var i=0, len=vm.application.licence_type_data.activity.length; i<len; i++){
+                if(vm.application.licence_type_data.activity[i].processing_status == 'Declined' || vm.application.licence_type_data.activity[i].processing_status == 'Accepted' ){
                     flag=flag+1;
                 }
 
@@ -127,8 +127,8 @@ export default {
         isPartiallyFinalised: function(){
             let vm=this;
             var flag=0;
-            for(var i=0, len=vm.application.licence_type_data.activity_type.length; i<len; i++){
-                if(vm.application.licence_type_data.activity_type[i].processing_status == 'Declined' || vm.application.licence_type_data.activity_type[i].processing_status == 'Accepted' ){
+            for(var i=0, len=vm.application.licence_type_data.activity.length; i<len; i++){
+                if(vm.application.licence_type_data.activity[i].processing_status == 'Declined' || vm.application.licence_type_data.activity[i].processing_status == 'Accepted' ){
                     flag=flag+1;
                 }
 

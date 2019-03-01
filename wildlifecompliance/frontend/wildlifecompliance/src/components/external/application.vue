@@ -14,7 +14,7 @@
                       </div>
                       <div class="panel-body collapse in" :id="pBody">
                         <div v-for="a in amendment_request">
-                          <p>Activity Type:{{a.licence_activity_type.name}}</p>
+                          <p>Activity Type:{{a.licence_activity.name}}</p>
                           <p>Reason: {{a.reason}}</p>
                           <p>Details: <p v-for="t in splitText(a.text)">{{t}}</p></p>  
                       </div>
@@ -196,7 +196,7 @@ export default {
       let vm= this;
       vm.amendment_request = amendment_request;
       for(var i=0,_len=vm.amendment_request.length;i<_len;i++){
-        vm.amendment_request_id.push(vm.amendment_request[i].licence_activity_type.id)
+        vm.amendment_request_id.push(vm.amendment_request[i].licence_activity.id)
       }
 
       if (amendment_request.length > 0){

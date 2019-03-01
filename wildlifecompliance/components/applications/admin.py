@@ -11,7 +11,7 @@ class ApplicationDocumentInline(admin.TabularInline):
 
 @admin.register(models.AmendmentRequest)
 class AmendmentRequestAdmin(admin.ModelAdmin):
-    list_display = ['application', 'licence_activity_type']
+    list_display = ['application', 'licence_activity']
 
 
 @admin.register(models.ApplicationDecisionPropose)

@@ -27,16 +27,16 @@
                 <form :action="application_form_url" method="post" name="new_application" enctype="multipart/form-data">
 
                     <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
-                      <li class="nav-item" v-for="activity_type in application.activity_types">
-                        <a class="nav-link" :id="'pills-tab-'+activity_type.activity_name_str" data-toggle="pill" :href="'#pills-'+activity_type.activity_name_str" role="tab" :aria-controls="'pills-'+activity_type.activity_name_str">
-                          {{ activity_type.activity_name }}
+                      <li class="nav-item" v-for="activity in application.activities">
+                        <a class="nav-link" :id="'pills-tab-'+activity.activity_name_str" data-toggle="pill" :href="'#pills-'+activity.activity_name_str" role="tab" :aria-controls="'pills-'+activity.activity_name_str">
+                          {{ activity.activity_name }}
                         </a>
                       </li>
                     </ul>
 
                     <div class="tab-content" id="pills-tabContent">
-                      <div class="tab-pane fade" v-for="activity_type in application.activity_types" :id="'pills-'+activity_type.activity_name_str" role="tabpanel" :aria-labelledby="'pills-tab-'+activity_type.activity_name_str">
-                        <ActivityType :readonly="is_readonly" :application="application" :activity_type="activity_type" :id="'id_'+activity_type.activity_name_str"></ActivityType>
+                      <div class="tab-pane fade" v-for="activity in application.activities" :id="'pills-'+activity.activity_name_str" role="tabpanel" :aria-labelledby="'pills-tab-'+activity.activity_name_str">
+                        <Activity :readonly="is_readonly" :application="application" :activity="activity" :id="'id_'+activity.activity_name_str"></Activity>
                       </div>
                     </div>
 
@@ -55,7 +55,7 @@
                         <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                         <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                         <input type='hidden' name="application_id" :value="1" />
-                        <input type='hidden' id="selected_activity_type_tab_id" v-model="selected_activity_type_tab_id" :value=0 />
+                        <input type='hidden' id="selected_activity_tab_id" v-model="selected_activity_tab_id" :value=0 />
                         <div v-if="hasAssessorMode" class="row" style="margin-bottom:50px;">
                             <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                                 <div class="navbar-inner">
@@ -81,7 +81,7 @@
 <script>
 import Application from '../../form.vue'
 import Vue from 'vue'
-import ActivityType from './activity_type.vue'
+import Activity from './activity.vue'
 import ProposedDecline from './application_proposed_decline.vue'
 import AmendmentRequest from './amendment_request.vue'
 import SendToAssessor from './application_send_assessor.vue'
@@ -122,11 +122,11 @@ export default {
             selected_referral: '',
             selected_assessment_tab:null,
             selected_assessment_id:null,
-            selected_activity_type_tab_id:null,
+            selected_activity_tab_id:null,
             form: null,
             members: [],
             department_users : [],
-            // activity_type_data:[],
+            // activity_data:[],
             contacts_table_initialised: false,
             initialisedSelects: false,
             showingApplication:true,
@@ -190,7 +190,7 @@ export default {
     },
     components: {
         Application,
-        ActivityType,
+        Activity,
         datatable,
         ProposedDecline,
         AmendmentRequest,

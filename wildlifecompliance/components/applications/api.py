@@ -33,14 +33,14 @@ from ledger.checkout.utils import calculate_excl_gst
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from wildlifecompliance.components.applications.utils import SchemaParser, MissingFieldsException, get_activity_type_schema, save_assess_data
+from wildlifecompliance.components.applications.utils import SchemaParser, MissingFieldsException, get_activity_schema, save_assess_data
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
-from wildlifecompliance.utils.assess_utils import create_app_activity_type_model
+from wildlifecompliance.utils.assess_utils import create_app_activity_model
 from wildlifecompliance.components.applications.models import (
     Application,
-    ApplicationActivityType,
+    ApplicationActivity,
     ApplicationDocument,
     ApplicationCondition,
     ApplicationStandardCondition,
@@ -51,7 +51,7 @@ from wildlifecompliance.components.applications.models import (
 )
 from wildlifecompliance.components.applications.serializers import (
     ApplicationTypeSerializer,
-    ApplicationActivityTypeSerializer,
+    ApplicationActivitySerializer,
     ApplicationSerializer,
     InternalApplicationSerializer,
     SaveApplicationSerializer,
@@ -108,8 +108,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 #        try:
 #            instance = self.get_object()    
 #            editable_items = {}
-#            for i in instance.activity_types:
-#                editable_items.update({i.activity_name:get_activity_type_sys_answers(i)})
+#            for i in instance.activities:
+#                editable_items.update({i.activity_name:get_activity_sys_answers(i)})
 #            return Response([editable_items])
 #            #return Response(['a','b'])
 #        except Exception as e:
@@ -250,13 +250,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             qs = instance.conditions.all()
-            licence_activity_type = self.request.query_params.get(
-                'licence_activity_type', None)
-            print('activity type from conditions api')
-            print(licence_activity_type)
-            if licence_activity_type is not None:
+            licence_activity = self.request.query_params.get(
+                'licence_activity', None)
+            print('activity from conditions api')
+            print(licence_activity)
+            if licence_activity is not None:
                 print('inside if')
-                qs = qs.filter(licence_activity_type=licence_activity_type)
+                qs = qs.filter(licence_activity=licence_activity)
             print(qs)
 
             serializer = ApplicationConditionSerializer(qs, many=True)
@@ -349,8 +349,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance, context={'request': request})
 
 #        editable_items = {}
-#        for i in instance.activity_types:
-#            editable_items.update({i.activity_name:get_activity_type_sys_answers(i)})
+#        for i in instance.activities:
+#            editable_items.update({i.activity_name:get_activity_sys_answers(i)})
 #
 #        serializer.data.append({'editable':editable_items})
 
@@ -774,22 +774,22 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         try:
             app_data = self.request.data
-            licence_class_data = app_data.get('licence_class_data')
+            licence_category_data = app_data.get('licence_category_data')
             org_applicant = request.data.get('org_applicant')
             proxy_applicant = request.data.get('proxy_applicant')
             application_fee = request.data.get('application_fee')
             licence_fee = request.data.get('licence_fee')
-            licence_activities = request.data.get('licence_activities')
-            schema_data = get_activity_type_schema(licence_activities)
+            licence_purposes = request.data.get('licence_purposes')
+            schema_data = get_activity_schema(licence_purposes)
             data = {
                 'schema': schema_data,
                 'submitter': request.user.id,
-                'licence_type_data': licence_class_data,
+                'licence_type_data': licence_category_data,
                 'org_applicant': org_applicant,
                 'proxy_applicant': proxy_applicant,
                 'application_fee': application_fee,
                 'licence_fee': licence_fee,
-                'licence_activities': licence_activities,
+                'licence_purposes': licence_purposes,
             }
 
             # Use serializer for external application creation - do not expose unneeded fields
@@ -798,7 +798,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             serializer.save()
 
             #import ipdb; ipdb.set_trace()
-            create_app_activity_type_model(serializer.data['licence_category'], app_ids=[serializer.data['id']]) 
+            create_app_activity_model(serializer.data['licence_category'], app_ids=[serializer.data['id']]) 
             return Response(serializer.data)
         except Exception as e:
             print(traceback.print_exc())
@@ -834,11 +834,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         # queryset = self.get_queryset()
         instance = self.get_object()
         queryset = Assessment.objects.filter(application=instance.id)
-        licence_activity_type = self.request.query_params.get(
-            'licence_activity_type', None)
-        if licence_activity_type is not None:
+        licence_activity = self.request.query_params.get(
+            'licence_activity', None)
+        if licence_activity is not None:
             queryset = queryset.filter(
-                licence_activity_type=licence_activity_type)
+                licence_activity=licence_activity)
         serializer = AssessmentSerializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -873,9 +873,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
-class ApplicationActivityTypeViewSet(viewsets.ModelViewSet):
-    queryset = ApplicationActivityType.objects.all()
-    serializer_class = ApplicationActivityTypeSerializer
+class ApplicationActivityViewSet(viewsets.ModelViewSet):
+    queryset = ApplicationActivity.objects.all()
+    serializer_class = ApplicationActivitySerializer
 
 
 class ApplicationConditionViewSet(viewsets.ModelViewSet):
@@ -904,7 +904,7 @@ class ApplicationConditionViewSet(viewsets.ModelViewSet):
                 instance.submit()
                 instance.application.log_user_action(
                     ApplicationUserAction.ACTION_ENTER_CONDITIONS.format(
-                        instance.licence_activity_type.name), request)
+                        instance.licence_activity.name), request)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -1123,15 +1123,15 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             reason = amend_data.pop('reason')
             application = amend_data.pop('application')
             text = amend_data.pop('text')
-            activity_type_id = amend_data.pop('activity_type_id')
+            activity_id = amend_data.pop('activity_id')
             print(type(application))
             print(application)
-            for item in activity_type_id:
+            for item in activity_id:
                 data = {
                     'application': application,
                     'reason': reason,
                     'text': text,
-                    'licence_activity_type': item
+                    'licence_activity': item
                 }
                 serializer = self.get_serializer(data=data)
                 serializer.is_valid(raise_exception=True)

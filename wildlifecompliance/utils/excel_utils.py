@@ -5,13 +5,13 @@ import json
 
 from django.conf import settings
 from collections import OrderedDict
-from wildlifecompliance.components.applications.models import Application, ExcelApplication, ExcelActivityType
-from wildlifecompliance.components.licences.models import DefaultActivityType, WildlifeLicence, WildlifeLicenceClass, WildlifeLicenceActivity
+from wildlifecompliance.components.applications.models import Application, ExcelApplication, ExcelActivity
+from wildlifecompliance.components.licences.models import DefaultActivity, WildlifeLicence, LicenceCategory, LicencePurpose
 from wildlifecompliance.components.organisations.models import Organisation
 from ledger.accounts.models import OrganisationAddress
 from django.contrib.postgres.fields.jsonb import JSONField
 from wildlifecompliance.utils import SearchUtils, search_multiple_keys
-from wildlifecompliance.components.licences.models import DefaultActivity
+from wildlifecompliance.components.licences.models import DefaultPurpose
 from ledger.accounts.models import EmailUser
 
 import xlsxwriter
@@ -70,7 +70,7 @@ class ExcelWriter():
             self.create_excel_model(app.licence_category, use_id=app.id)
 
     def update_workbooks(self):
-        for licence_category in WildlifeLicenceClass.objects.all():
+        for licence_category in LicenceCategory.objects.all():
             filename = '{}.xlsx'.format(
                 self.replace_special_chars(
                     licence_category.short_name))
@@ -112,67 +112,67 @@ class ExcelWriter():
     def replace_special_chars(self, input_str, new_char='_'):
         return re.sub('[^A-Za-z0-9]+', new_char, input_str).strip('_').lower()
 
-    def get_purposes(self, licence_class_short_name):
+    def get_purposes(self, licence_category_short_name):
         """
-            activity_type --> purpose
+            activity --> purpose
 
-            for licence_class in DefaultActivityType.objects.filter(licence_class_id=13):
-                #print '{} {}'.format(licence_class.licence_class.id, licence_class.licence_class.name)
-                for activity_type in DefaultActivity.objects.filter(activity_type_id=licence_class.activity_type_id):
-                    print '    {}'.format(activity_type.activity.name, activity_type.activity.short_name)
+            for licence_category in DefaultActivity.objects.filter(licence_category_id=13):
+                #print '{} {}'.format(licence_category.licence_category.id, licence_category.licence_category.name)
+                for activity in DefaultPurpose.objects.filter(activity_id=licence_category.activity_id):
+                    print '    {}'.format(activity.activity.name, activity.activity.short_name)
             ____________________
 
-            DefaultActivityType.objects.filter(licence_class__short_name='Flora Other Purpose').values_list('licence_class__activity_type__activity__name', flat=True).distinct()
+            DefaultActivity.objects.filter(licence_category__short_name='Flora Other Purpose').values_list('licence_category__activity__purpose__name', flat=True).distinct()
         """
-        activity_type = DefaultActivityType.objects.filter(
-            licence_class__short_name=licence_class_short_name).order_by('licence_class__activity_type__activity__name')
-        return activity_type.values_list(
-            'licence_class__activity_type__activity__name',
+        activity = DefaultActivity.objects.filter(
+            licence_category__short_name=licence_category_short_name).order_by('licence_category__activity__purpose__name')
+        return activity.values_list(
+            'licence_category__activity__purpose__name',
             flat=True).distinct()
 
-    def get_licence_type(self, activity_type_name):
+    def get_licence_type(self, activity_name):
         """
-        activity_type name -- purpose name--> 'Importing Fauna (Non-Commercial)'
+        activity name -- purpose name--> 'Importing Fauna (Non-Commercial)'
         """
-        return DefaultActivityType.objects.filter(
-            licence_class__activity_type__activity__name=activity_type_name).distinct('licence_class')[0].licence_class.name
+        return DefaultActivity.objects.filter(
+            licence_category__activity__purpose__name=activity_name).distinct('licence_category')[0].licence_category.name
 
     def get_index(self, values_list, name):
         indices = [i for i, s in enumerate(values_list) if name in s]
         return indices[0] if indices else None
 
-    def get_activity_type_sys_questions(self, activity_name):
+    def get_activity_sys_questions(self, activity_name):
         """
         Looks up the activity type schema and return all questions (marked isEditable) that need to be added to the Excel WB.
         Allows us to know the block size for each activity type in the WB (start_col, end_col)
         """
         ordered_dict = OrderedDict([])
 
-        schema = WildlifeLicenceActivity.objects.get(name=activity_name).schema
+        schema = LicencePurpose.objects.get(name=activity_name).schema
         res = search_multiple_keys(schema, 'isEditable', ['name', 'label'])
         [ordered_dict.update([(i['name'], i['label'])]) for i in res]
 
         return ordered_dict
 
-    def get_tab_index(self, qs_activity_type):
-        application = qs_activity_type[0].application
-        activity_name = qs_activity_type[0].name  # 'Fauna Other - Importing'
+    def get_tab_index(self, qs_activity):
+        application = qs_activity[0].application
+        activity_name = qs_activity[0].name  # 'Fauna Other - Importing'
         return application.data[0][activity_name][0].keys()[0].split('_')[1]
 
-    def get_activity_type_sys_answers(self, qs_activity_type, activity_name):
+    def get_activity_sys_answers(self, qs_activity, activity_name):
         """
         Looks up the activity type return all answers for question marked isEditable that need to be added to the Excel WB.
         """
         ordered_dict = OrderedDict([])
-        questions = self.get_activity_type_sys_questions(activity_name)
+        questions = self.get_activity_sys_questions(activity_name)
         for k, v in questions.iteritems():
             # k - section name
             # v - question
-            if qs_activity_type:
+            if qs_activity:
                 # must append tab index to 'section name'
                 # , activity_name)
-                k = k + '_' + self.get_tab_index(qs_activity_type)
-                s = SearchUtils(qs_activity_type[0].application)
+                k = k + '_' + self.get_tab_index(qs_activity)
+                s = SearchUtils(qs_activity[0].application)
                 answer = s.search_value(k)
                 # ordered_dict.update(OrderedDict([(v,answer)]))
                 ordered_dict.update(OrderedDict([(k, answer)]))
@@ -211,14 +211,14 @@ class ExcelWriter():
 
             activities = self.get_purposes(
                 application.licence_type_data['short_name']).values_list(
-                'activity_type__short_name', flat=True)
-            for activity_type in application.licence_type_data['activity_type']:
-                if activity_type['short_name'] in list(activities):
-                    excel_activity_type, created = ExcelActivityType.objects.get_or_create(
+                'activity__short_name', flat=True)
+            for activity in application.licence_type_data['activity']:
+                if activity['short_name'] in list(activities):
+                    excel_activity, created = ExcelActivity.objects.get_or_create(
                         excel_app=excel_app,
-                        activity_name=activity_type['activity'][0]['name'],
-                        name=activity_type['name'],
-                        short_name=activity_type['short_name']
+                        activity_name=activity['activity'][0]['name'],
+                        name=activity['name'],
+                        short_name=activity['short_name']
                     )
 
         return new_excel_apps
@@ -255,12 +255,12 @@ class ExcelWriter():
         activity_name_list = self.get_purposes(licence_category)
         for activity_name in activity_name_list:
             #cols = self.cols_output(None, 'Importing Fauna (Non-Commercial)')
-            activity_type_cols = self.cols_output(None, activity_name).keys()
+            activity_cols = self.cols_output(None, activity_name).keys()
             ws.write(row_num, col_num, '', self.bold)
             col_num += 1
             cell_start = xl_rowcol_to_cell(
                 row_num, col_num, row_abs=True, col_abs=True)
-            for col_name in activity_type_cols:
+            for col_name in activity_cols:
                 ws.write(row_num, col_num, col_name, self.bold_unlocked)
                 col_num += 1
             cell_end = xl_rowcol_to_cell(
@@ -337,7 +337,7 @@ class ExcelWriter():
                                 LICENCE_NUMBER)] = licence_number
                     except ValueError as e:
                         logger.error(
-                            'Cannot find activity_type {} in Excel header./n{}'.format(purpose, e))
+                            'Cannot find activity {} in Excel header./n{}'.format(purpose, e))
 #                    except Exception, e:
 #                        import ipdb; ipdb.set_trace()
 
@@ -424,39 +424,39 @@ class ExcelWriter():
             for purpose in meta.keys():
 
                 if purpose != SYSTEM:
-                    activity_type = excel_app.excel_activity_types.filter(
+                    activity = excel_app.excel_activities.filter(
                         activity_name=purpose)
-                    activity_type_cols = self.cols_output(
-                        activity_type, purpose)
+                    activity_cols = self.cols_output(
+                        activity, purpose)
 
                     col_num = int(meta[purpose][FIRST_COL])  # + 1
-                    if activity_type.exists():
-                        for k, v in activity_type_cols.iteritems():
+                    if activity.exists():
+                        for k, v in activity_cols.iteritems():
                             #ws.write('B1', 'Here is\nsome long text\nthat\nwe wrap',      wrap)
                             #worksheet.write(row_num, col_num, v, self.unlocked_wrap)
                             self.write_row(row_num, col_num, v, worksheet)
                             col_num += 1
                     else:
-                        # create a blank activity_type bilock
-                        for _ in activity_type_cols.keys():
+                        # create a blank activity bilock
+                        for _ in activity_cols.keys():
                             #worksheet.write(row_num, col_num, '', self.unlocked)
                             self.write_row(row_num, col_num, '', worksheet)
                             col_num += 1
 
             row_num += 1
 
-#    def cols_system(self, qs_activity_type, activity_name):
+#    def cols_system(self, qs_activity, activity_name):
 #        """ qs_excel_app --> ExcelApplication """
 #        return OrderedDict([
-#            ('lodgement_number', qs_activity_type[0].excel_app.lodgement_number if qs_activity_type else None),
-#            ('application_id', qs_activity_type[0].excel_app.application.id if qs_activity_type else None),
-#            ('licence_number', qs_activity_type[0].excel_app.licence_number if qs_activity_type else None),
-#            ('applicant', qs_activity_type[0].excel_app.applicant_details if qs_activity_type else None),
-#            ('applicant_type', qs_activity_type[0].excel_app.applicant_type if qs_activity_type else None),
-#            ('applicant_id', qs_activity_type[0].excel_app.applicant_id if qs_activity_type else None),
+#            ('lodgement_number', qs_activity[0].excel_app.lodgement_number if qs_activity else None),
+#            ('application_id', qs_activity[0].excel_app.application.id if qs_activity else None),
+#            ('licence_number', qs_activity[0].excel_app.licence_number if qs_activity else None),
+#            ('applicant', qs_activity[0].excel_app.applicant_details if qs_activity else None),
+#            ('applicant_type', qs_activity[0].excel_app.applicant_type if qs_activity else None),
+#            ('applicant_id', qs_activity[0].excel_app.applicant_id if qs_activity else None),
 #        ])
 
-    def cols_common(self, qs_activity_type, activity_name, code):
+    def cols_common(self, qs_activity, activity_name, code):
         #code = activity_name[:2].lower()
         ordered_dict = OrderedDict([
             ('{}_{}'.format(code, PURPOSE), None),
@@ -465,32 +465,32 @@ class ExcelWriter():
             ('{}_{}'.format(code, COVER_PROCESSED), None),
             ('{}_{}'.format(code, COVER_PROCESSED_DATE), None),
             ('{}_{}'.format(code, COVER_PROCESSED_BY), None),
-            ('{}_{}'.format(code, CONDITIONS), qs_activity_type[0].conditions if qs_activity_type else None),
-            ('{}_{}'.format(code, ISSUE_DATE), qs_activity_type[0].issue_date if qs_activity_type else None),
-            ('{}_{}'.format(code, START_DATE), qs_activity_type[0].start_date if qs_activity_type else None),
-            ('{}_{}'.format(code, EXPIRY_DATE), qs_activity_type[0].expiry_date if qs_activity_type else None),
-            ('{}_{}'.format(code, TO_BE_ISSUED), qs_activity_type[0].issued if qs_activity_type else None),
-            ('{}_{}'.format(code, PROCESSED), qs_activity_type[0].processed if qs_activity_type else None),
+            ('{}_{}'.format(code, CONDITIONS), qs_activity[0].conditions if qs_activity else None),
+            ('{}_{}'.format(code, ISSUE_DATE), qs_activity[0].issue_date if qs_activity else None),
+            ('{}_{}'.format(code, START_DATE), qs_activity[0].start_date if qs_activity else None),
+            ('{}_{}'.format(code, EXPIRY_DATE), qs_activity[0].expiry_date if qs_activity else None),
+            ('{}_{}'.format(code, TO_BE_ISSUED), qs_activity[0].issued if qs_activity else None),
+            ('{}_{}'.format(code, PROCESSED), qs_activity[0].processed if qs_activity else None),
         ])
         return ordered_dict
 
-    def cols_output(self, qs_activity_type, activity_name):
+    def cols_output(self, qs_activity, activity_name):
         """
         excel_app = ExcelApplication.objects.all().last()
-        activity_type = excel_app.excel_activity_types.filter(activity_name='Importing Fauna (Non-Commercial)')[0]
-        cols_output(activity_type, 'Importing', 'Importing Fauna (Non-Commercial)')
+        activity = excel_app.excel_activities.filter(activity_name='Importing Fauna (Non-Commercial)')[0]
+        cols_output(activity, 'Importing', 'Importing Fauna (Non-Commercial)')
         """
-        code = WildlifeLicenceActivity.objects.get(name=activity_name).code
+        code = LicencePurpose.objects.get(name=activity_name).code
         ordered_dict = OrderedDict([
             ('{}'.format(activity_name), None),
             ('{}'.format(code), None),
         ])
         ordered_dict.update(
-            self.get_activity_type_sys_answers(
-                qs_activity_type, activity_name))
+            self.get_activity_sys_answers(
+                qs_activity, activity_name))
         ordered_dict.update(
             self.cols_common(
-                qs_activity_type,
+                qs_activity,
                 activity_name,
                 code))
         return ordered_dict
@@ -507,12 +507,12 @@ class ExcelWriter():
             applicant_id):
         """ activity_name='Importing Fauna (Non-Commercial)' """
         licence = None
-        activity = WildlifeLicenceActivity.objects.get(name=activity_name)
-        licence_class = WildlifeLicenceClass.objects.get(
+        activity = LicencePurpose.objects.get(name=activity_name)
+        licence_category = LicenceCategory.objects.get(
             short_name=licence_category)
         if applicant_type == APPLICANT_TYPE_ORGANISATION:
             qs_licence = WildlifeLicence.objects.filter(
-                org_applicant_id=applicant_id, licence_class=licence_class)
+                org_applicant_id=applicant_id, licence_category=licence_category)
             if qs_licence.exists():
                 # use existing licence, just increment sequence_number
                 licence = WildlifeLicence.objects.create(
@@ -522,7 +522,7 @@ class ExcelWriter():
                     org_applicant_id=applicant_id,
                     submitter=application.submitter,
                     licence_type=activity,
-                    licence_class=licence_class
+                    licence_category=licence_category
                 )
             else:
                 licence = WildlifeLicence.objects.create(
@@ -530,11 +530,11 @@ class ExcelWriter():
                     org_applicant_id=applicant_id,
                     submitter=application.submitter,
                     licence_type=activity,
-                    licence_class=licence_class)
+                    licence_category=licence_category)
 
         elif applicant_type == APPLICANT_TYPE_PROXY:
             qs_licence = WildlifeLicence.objects.filter(
-                proxy_applicant_id=applicant_id, licence_class=licence_class)
+                proxy_applicant_id=applicant_id, licence_category=licence_category)
             if qs_licence.exists():
                 # use existing licence, just increment sequence_number
                 licence = WildlifeLicence.objects.create(
@@ -544,7 +544,7 @@ class ExcelWriter():
                     proxy_applicant_id=applicant_id,
                     submitter=application.submitter,
                     licence_type=activity,
-                    licence_class=licence_class
+                    licence_category=licence_category
                 )
             else:
                 licence = WildlifeLicence.objects.create(
@@ -552,7 +552,7 @@ class ExcelWriter():
                     proxy_applicant_id=applicant_id,
                     submitter=application.submitter,
                     licence_type=activity,
-                    licence_class=licence_class)
+                    licence_category=licence_category)
 
         # elif applicant_type == APPLICANT_TYPE_SUBMITTER:
         else:  # assume applicant is the submitter
@@ -560,7 +560,7 @@ class ExcelWriter():
                 submitter_id=applicant_id,
                 org_applicant__isnull=True,
                 proxy_applicant__isnull=True,
-                licence_class=licence_class)
+                licence_category=licence_category)
             if qs_licence.exists():
                 # use existing licence, just increment sequence_number
                 licence = WildlifeLicence.objects.create(
@@ -570,14 +570,14 @@ class ExcelWriter():
                     # proxy_applicant_id=applicant_id,
                     submitter_id=applicant_id,
                     licence_type=activity,
-                    licence_class=licence_class
+                    licence_category=licence_category
                 )
             else:
                 licence = WildlifeLicence.objects.create(
                     current_application=application,
                     submitter_id=applicant_id,
                     licence_type=activity,
-                    licence_class=licence_class)
+                    licence_category=licence_category)
 
         return licence
 
@@ -692,7 +692,7 @@ def read_codes():
 
     for j, i in enumerate(code_list):
         try:
-            a = WildlifeLicenceActivity.objects.get(name=i[0].strip())
+            a = LicencePurpose.objects.get(name=i[0].strip())
             a.code = i[1]
             a.save()
         except Exception as e:

@@ -127,7 +127,7 @@ export default {
                         }
                     },
                     {
-                        data: "licence_activity_type",
+                        data: "licence_activity",
                         mRender:function (data,type,full) {
                             return data.id != '' && data.id != null ? `${data.name}` : '';
                         }

@@ -6,13 +6,13 @@ from django.template.loader import render_to_string
 from collections import OrderedDict
 from wildlifecompliance.components.applications.models import (
     Application,
-    ApplicationActivityType
+    ApplicationActivity
 )
 from wildlifecompliance.components.licences.models import (
-    DefaultActivityType,
+    DefaultActivity,
     WildlifeLicence,
-    WildlifeLicenceClass,
-    WildlifeLicenceActivity
+    LicenceCategory,
+    LicencePurpose
 )
 from wildlifecompliance.utils import SearchUtils, search_multiple_keys
 from django.utils import timezone
@@ -31,26 +31,26 @@ def replace_special_chars(input_str, new_char='_'):
     return re.sub('[^A-Za-z0-9]+', new_char, input_str).strip('_').lower()
 
 
-def get_purposes(licence_class_short_name):
+def get_purposes(licence_category_short_name):
     """
-        activity_type --> purpose
+        activity --> purpose
 
-        for licence_class in DefaultActivityType.objects.filter(licence_class_id=13):
-            #print '{} {}'.format(licence_class.licence_class.id, licence_class.licence_class.name)
-            for activity_type in DefaultActivity.objects.filter(activity_type_id=licence_class.activity_type_id):
-                print '    {}'.format(activity_type.activity.name, activity_type.activity.short_name)
+        for licence_category in DefaultActivity.objects.filter(licence_category_id=13):
+            #print '{} {}'.format(licence_category.licence_category.id, licence_category.licence_category.name)
+            for activity in DefaultPurpose.objects.filter(activity_id=licence_category.activity_id):
+                print '    {}'.format(activity.activity.name, activity.activity.short_name)
         ____________________
 
-        DefaultActivityType.objects.filter(licence_class__short_name='Flora Other Purpose').values_list(
-            'licence_class__activity_type__activity__name', flat=True).distinct()
+        DefaultActivity.objects.filter(licence_category__short_name='Flora Other Purpose').values_list(
+            'licence_category__activity__purpose__name', flat=True).distinct()
     """
-    activity_type = DefaultActivityType.objects.filter(
-        licence_class__short_name=licence_class_short_name
-    ).order_by('licence_class__activity_type__activity__name')
-    return activity_type.values_list('licence_class__activity_type__activity__name', flat=True).distinct()
+    activity = DefaultActivity.objects.filter(
+        licence_category__short_name=licence_category_short_name
+    ).order_by('licence_category__activity__purpose__name')
+    return activity.values_list('licence_category__activity__purpose__name', flat=True).distinct()
 
 
-def create_app_activity_type_model(licence_category, app_ids=[], exclude_app_ids=[]):
+def create_app_activity_model(licence_category, app_ids=[], exclude_app_ids=[]):
     """
     from wildlifecompliance.utils.excel_utils import write_excel_model
     write_excel_model('Fauna Other Purpose')
@@ -67,31 +67,31 @@ def create_app_activity_type_model(licence_category, app_ids=[], exclude_app_ids
     obj_list = []
     for application in applications.order_by('id'):
 
-        activities = get_purposes(application.licence_type_data['short_name']).values_list('activity_type__short_name', flat=True)
-        for activity_type in application.licence_type_data['activity_type']:
-            if activity_type['short_name'] in list(activities):
-                activity_obj = WildlifeLicenceActivity.get_first_record(activity_type['activity'][0]['name'])
-                app_activity_type, created = ApplicationActivityType.objects.get_or_create(
+        activities = get_purposes(application.licence_type_data['short_name']).values_list('activity__short_name', flat=True)
+        for activity in application.licence_type_data['activity']:
+            if activity['short_name'] in list(activities):
+                activity_obj = LicencePurpose.get_first_record(activity['purpose'][0]['name'])
+                app_activity, created = ApplicationActivity.objects.get_or_create(
                     application=application,
-                    activity_name=activity_type['activity'][0]['name'],
-                    name=activity_type['name'],
-                    short_name=activity_type['short_name'],
+                    activity_name=activity['purpose'][0]['name'],
+                    name=activity['name'],
+                    short_name=activity['short_name'],
                     code=activity_obj.code
                 )
-                obj_list.append(app_activity_type)
+                obj_list.append(app_activity)
 
     return obj_list
 
 
-def create_licence(application, activity_type, new_app):
+def create_licence(application, activity, new_app):
     """ activity_name='Importing Fauna (Non-Commercial)'
         licence_category ='Flora Other Purpose'
     """
     licence = None
-    activity = WildlifeLicenceActivity.get_first_record(activity_type.activity_name)
-    licence_class = WildlifeLicenceClass.objects.get(short_name=application.licence_category)
+    activity = LicencePurpose.get_first_record(activity.activity_name)
+    licence_category = LicenceCategory.objects.get(short_name=application.licence_category)
     if application.applicant_type == Application.APPLICANT_TYPE_ORGANISATION:
-        qs_licence = WildlifeLicence.objects.filter(org_applicant_id=application.applicant_id, licence_class=licence_class)
+        qs_licence = WildlifeLicence.objects.filter(org_applicant_id=application.applicant_id, licence_category=licence_category)
         if qs_licence.exists():
             # licence_sequence = qs_licence.last().licence_sequence + 1 if qs_licence.filter(
             # licence_type=activity).exists() else qs_licence.last().licence_sequence
@@ -105,10 +105,10 @@ def create_licence(application, activity_type, new_app):
                 org_applicant_id=application.applicant_id,
                 submitter=application.submitter,
                 licence_type=activity,
-                licence_class=licence_class,
-                expiry_date=activity_type.expiry_date,
-                issue_date=activity_type.issue_date,
-                start_date=activity_type.start_date
+                licence_category=licence_category,
+                expiry_date=activity.expiry_date,
+                issue_date=activity.issue_date,
+                start_date=activity.start_date
             )
         else:
             licence = WildlifeLicence.objects.create(
@@ -116,14 +116,14 @@ def create_licence(application, activity_type, new_app):
                 org_applicant_id=application.applicant_id,
                 submitter=application.submitter,
                 licence_type=activity,
-                licence_class=licence_class,
-                expiry_date=activity_type.expiry_date,
-                issue_date=activity_type.issue_date,
-                start_date=activity_type.start_date
+                licence_category=licence_category,
+                expiry_date=activity.expiry_date,
+                issue_date=activity.issue_date,
+                start_date=activity.start_date
             )
 
     elif application.applicant_type == Application.APPLICANT_TYPE_PROXY:
-        qs_licence = WildlifeLicence.objects.filter(proxy_applicant_id=application.applicant_id, licence_class=licence_class)
+        qs_licence = WildlifeLicence.objects.filter(proxy_applicant_id=application.applicant_id, licence_category=licence_category)
         if qs_licence.exists():
             # licence_sequence = qs_licence.last().licence_sequence + 1 if qs_licence.filter(
             # licence_type=activity).exists() else qs_licence.last().licence_sequence
@@ -137,10 +137,10 @@ def create_licence(application, activity_type, new_app):
                 proxy_applicant_id=application.applicant_id,
                 submitter=application.submitter,
                 licence_type=activity,
-                licence_class=licence_class,
-                expiry_date=activity_type.expiry_date,
-                issue_date=activity_type.issue_date,
-                start_date=activity_type.start_date
+                licence_category=licence_category,
+                expiry_date=activity.expiry_date,
+                issue_date=activity.issue_date,
+                start_date=activity.start_date
             )
         else:
             licence = WildlifeLicence.objects.create(
@@ -148,16 +148,16 @@ def create_licence(application, activity_type, new_app):
                 proxy_applicant_id=application.applicant_id,
                 submitter=application.submitter,
                 licence_type=activity,
-                licence_class=licence_class,
-                expiry_date=activity_type.expiry_date,
-                issue_date=activity_type.issue_date,
-                start_date=activity_type.start_date
+                licence_category=licence_category,
+                expiry_date=activity.expiry_date,
+                issue_date=activity.issue_date,
+                start_date=activity.start_date
             )
 
     # elif application.applicant_type == Application.APPLICANT_TYPE_SUBMITTER:
     else:  # assume applicant is the submitter
         qs_licence = WildlifeLicence.objects.filter(submitter_id=application.applicant_id, org_applicant__isnull=True,
-                                                    proxy_applicant__isnull=True, licence_class=licence_class)
+                                                    proxy_applicant__isnull=True, licence_category=licence_category)
         if qs_licence.exists():
             # licence_sequence = qs_licence.last().licence_sequence + 1 if qs_licence.filter(
             # licence_type=activity).exists() else qs_licence.last().licence_sequence
@@ -170,20 +170,20 @@ def create_licence(application, activity_type, new_app):
                 current_application=application,
                 submitter_id=application.applicant_id,
                 licence_type=activity,
-                licence_class=licence_class,
-                expiry_date=activity_type.expiry_date,
-                issue_date=activity_type.issue_date,
-                start_date=activity_type.start_date
+                licence_category=licence_category,
+                expiry_date=activity.expiry_date,
+                issue_date=activity.issue_date,
+                start_date=activity.start_date
             )
         else:
             licence = WildlifeLicence.objects.create(
                 current_application=application,
                 submitter_id=application.applicant_id,
                 licence_type=activity,
-                licence_class=licence_class,
-                expiry_date=activity_type.expiry_date,
-                issue_date=activity_type.issue_date,
-                start_date=activity_type.start_date
+                licence_category=licence_category,
+                expiry_date=activity.expiry_date,
+                issue_date=activity.issue_date,
+                start_date=activity.start_date
             )
 
     return licence
@@ -201,14 +201,14 @@ def all_related_applications(application):
     return Application.objects.filter(id__in=app_ids).order_by('id')
 
 
-def get_activity_type_sys_questions(activity_name):
+def get_activity_sys_questions(activity_name):
     """
     Looks up the activity type schema and return all questions (marked isEditable) that need to be added to the Excel WB.
     Allows us to know the block size for each activity type in the WB (start_col, end_col)
     """
     ordered_dict = OrderedDict([])
 
-    schema = WildlifeLicenceActivity.get_first_record(activity_name).schema
+    schema = LicencePurpose.get_first_record(activity_name).schema
     res = search_multiple_keys(schema, 'isEditable', ['name', 'label', 'type', 'headers'])
     for i in res:
         if 'headers' in i:
@@ -219,28 +219,28 @@ def get_activity_type_sys_questions(activity_name):
     return ordered_dict
 
 
-def get_tab_index(activity_type):
-    application = activity_type.application
-    activity_name = activity_type.name  # 'Fauna Other - Importing'
+def get_tab_index(activity):
+    application = activity.application
+    activity_name = activity.name  # 'Fauna Other - Importing'
     return application.data[0][activity_name][0].keys()[0].split('_')[1]
 
 
-def get_activity_type_sys_answers(activity_type):
+def get_activity_sys_answers(activity):
     """
     Looks up the activity type return all answers for question marked isEditable that need to be added to the Excel WB.
 
-    get_activity_type_sys_answers(ApplicationActivityType.objects.get(id=50))
+    get_activity_sys_answers(ApplicationActivity.objects.get(id=50))
     """
     ordered_dict = OrderedDict([])
-    if activity_type:
-        questions = get_activity_type_sys_questions(activity_type.activity_name)
+    if activity:
+        questions = get_activity_sys_questions(activity.activity_name)
         for k, v in questions.iteritems():
             # k - section name
             # v - question
 
             # must append tab index to 'section name'
-            k = k + '_' + get_tab_index(activity_type)
-            s = SearchUtils(activity_type.application)
+            k = k + '_' + get_tab_index(activity)
+            s = SearchUtils(activity.application)
             answer = s.search_value(k)
             v.update({'answer': answer})
             ordered_dict.update(OrderedDict([(k, v)]))

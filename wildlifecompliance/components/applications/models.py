@@ -73,10 +73,10 @@ class ApplicationGroupType(models.Model):
         max_length=40,
         choices=GROUP_TYPE_CHOICES,
         default=GROUP_TYPE_CHOICES[0][0])
-    licence_class = models.ForeignKey(
-        'wildlifecompliance.WildlifeLicenceClass')
-    licence_activity_type = models.ForeignKey(
-        'wildlifecompliance.WildlifeLicenceActivityType')
+    licence_category = models.ForeignKey(
+        'wildlifecompliance.LicenceCategory')
+    licence_activity = models.ForeignKey(
+        'wildlifecompliance.LicenceActivity')
     members = models.ManyToManyField(EmailUser, blank=True)
 
     class Meta:
@@ -87,8 +87,8 @@ class ApplicationGroupType(models.Model):
     def __str__(self):
         group = '{} - {}, {} ({} members)'.format(
             self.get_type_display(),
-            self.licence_class,
-            self.licence_activity_type,
+            self.licence_category,
+            self.licence_activity,
             self.members.count())
         if self.name:
             group = '{} - {}'.format(self.name, group)
@@ -241,8 +241,8 @@ class Application(RevisionedMixin):
     assessor_data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
     schema = JSONField(blank=False, null=False)
-    licence_activities = models.ManyToManyField(
-        'wildlifecompliance.WildlifeLicenceActivity',
+    licence_purposes = models.ManyToManyField(
+        'wildlifecompliance.LicencePurpose',
         blank=True
     )
     customer_status = models.CharField(
@@ -465,12 +465,12 @@ class Application(RevisionedMixin):
 
     @property
     def licence_type_data(self):
-        from wildlifecompliance.components.licences.serializers import UserWildlifeLicenceClassSerializer
+        from wildlifecompliance.components.licences.serializers import UserLicenceCategorySerializer
 
-        serializer = UserWildlifeLicenceClassSerializer(
-            self.licence_activities.first().licence_class,
+        serializer = UserLicenceCategorySerializer(
+            self.licence_purposes.first().licence_category,
             context={
-                'activity_records': self.licence_activities
+                'purpose_records': self.licence_purposes
             }
         )
         licence_data = serializer.data
@@ -483,39 +483,39 @@ class Application(RevisionedMixin):
         return licence_data
 
     @property
-    def licence_class_name(self):
-        first_activity = self.licence_activities.first()
+    def licence_category_name(self):
+        first_activity = self.licence_purposes.first()
         try:
-            activity_class = first_activity.licence_class.short_name
+            activity_category = first_activity.licence_category.short_name
         except AttributeError:
-            activity_class = ''
-        return activity_class
+            activity_category = ''
+        return activity_category
 
     @property
-    def licence_activity_type_names(self):
-        return list(self.licence_activities.all().values_list(
-            'licence_activity_type__short_name', flat=True
+    def licence_activity_names(self):
+        return list(self.licence_purposes.all().values_list(
+            'licence_activity__short_name', flat=True
         ).distinct())
 
     @property
     def licence_type_name(self):
-        first_activity = self.licence_activities.first()
-        activity_class = self.licence_class_name
+        first_activity = self.licence_purposes.first()
+        activity_category = self.licence_category_name
         try:
-            activity_type = first_activity.licence_activity_type.short_name
+            activity = first_activity.licence_activity.short_name
         except AttributeError:
-            activity_type = ''
-        purpose_list = ', '.join(self.licence_activities.all().values_list('short_name', flat=True))
-        return ' {activity_class}{activity_type}{purpose_list}'.format(
-            activity_class="{} - ".format(activity_class) if activity_class else "",
-            activity_type=activity_type,
+            activity = ''
+        purpose_list = ', '.join(self.licence_purposes.all().values_list('short_name', flat=True))
+        return ' {activity_category}{activity}{purpose_list}'.format(
+            activity_category="{} - ".format(activity_category) if activity_category else "",
+            activity=activity,
             purpose_list=" ({})".format(purpose_list) if purpose_list else ''
         )
 
     @property
     def licence_category(self):
         try:
-            return self.licence_activities.first().licence_class.display_name
+            return self.licence_purposes.first().licence_category.display_name
         except AttributeError:
             return ''
 
@@ -562,7 +562,7 @@ class Application(RevisionedMixin):
 
     def submit(self, request, viewset):
         from wildlifecompliance.components.applications.utils import SchemaParser
-        from wildlifecompliance.components.licences.models import WildlifeLicenceActivityType
+        from wildlifecompliance.components.licences.models import LicenceActivity
         with transaction.atomic():
             if self.can_user_edit:
                 # Save the data first
@@ -589,15 +589,15 @@ class Application(RevisionedMixin):
                     if (qs):
                         for q in qs:
                             q.status = 'amended'
-                            for activity_type in self.licence_type_data['activity_type']:
-                                if q.licence_activity_type.id == activity_type["id"]:
-                                    activity_type["processing_status"] = "With Officer"
+                            for activity in self.licence_type_data['activity']:
+                                if q.licence_activity.id == activity["id"]:
+                                    activity["processing_status"] = "With Officer"
                             q.save()
                 else:
-                    for activity_type in self.licence_type_data['activity_type']:
-                        activity_type["processing_status"] = "With Officer"
+                    for activity in self.licence_type_data['activity']:
+                        activity["processing_status"] = "With Officer"
                         qs = DefaultCondition.objects.filter(
-                            licence_activity_type=activity_type["id"])
+                            licence_activity=activity["id"])
                         if (qs):
                             print("inside if")
                             for q in qs:
@@ -608,15 +608,15 @@ class Application(RevisionedMixin):
                                     is_default=True,
                                     standard=False,
                                     application=self,
-                                    licence_activity_type=WildlifeLicenceActivityType.objects.get(
-                                        id=activity_type["id"]),
+                                    licence_activity=LicenceActivity.objects.get(
+                                        id=activity["id"]),
                                     return_type=q.return_type)
                         print(qs)
 
                 self.save()
 
                 officer_groups = ApplicationGroupType.objects.filter(
-                    licence_class=self.licence_type_data["id"], name__icontains='officer')
+                    licence_category=self.licence_type_data["id"], name__icontains='officer')
 
                 if self.amendment_requests:
                     self.log_user_action(
@@ -806,13 +806,13 @@ class Application(RevisionedMixin):
         with transaction.atomic():
             try:
                 if status in Application.ACTIVITY_PROCESSING_STATUS_CHOICES:
-                    for activity_type in self.licence_type_data['activity_type']:
-                        if activity_type["id"] == int(
-                                activity_id) and activity_type["processing_status"] != status:
-                            activity_type["processing_status"] = status
+                    for activity in self.licence_type_data['activity']:
+                        if activity["id"] == int(
+                                activity_id) and activity["processing_status"] != status:
+                            activity["processing_status"] = status
                             self.save()
                             ApplicationDecisionPropose.objects.get(
-                                application_id=self.id, licence_activity_type_id=int(activity_id)).delete()
+                                application_id=self.id, licence_activity_id=int(activity_id)).delete()
                 else:
                     raise ValidationError(
                         'The provided status cannot be found.')
@@ -826,7 +826,7 @@ class Application(RevisionedMixin):
                 # selected activity type tab
                 qs = ApplicationGroupType.objects.filter(
                     type='assessor',
-                    licence_activity_type_id=request.data.get('selected_assessment_tab'),
+                    licence_activity_id=request.data.get('selected_assessment_tab'),
                     members__email=request.user.email)
 
                 # For each assessor groups get the assessments of current
@@ -834,7 +834,7 @@ class Application(RevisionedMixin):
                 # as complete
                 for q in qs:
                     assessments = Assessment.objects.filter(
-                        licence_activity_type_id=request.data.get('selected_assessment_tab'),
+                        licence_activity_id=request.data.get('selected_assessment_tab'),
                         assessor_group=q,
                         status='awaiting_assessment',
                         application=self)
@@ -860,23 +860,23 @@ class Application(RevisionedMixin):
                 # last assessment
                 if not Assessment.objects.filter(
                         application=self,
-                        licence_activity_type=request.data.get('selected_assessment_tab'),
+                        licence_activity=request.data.get('selected_assessment_tab'),
                         status='awaiting_assessment').exists():
-                    for activity_type in self.licence_type_data['activity_type']:
+                    for activity in self.licence_type_data['activity']:
                         if int(
-                                request.data.get('selected_assessment_tab')) == activity_type["id"]:
-                            activity_type["processing_status"] = "With Officer-Conditions"
+                                request.data.get('selected_assessment_tab')) == activity["id"]:
+                            activity["processing_status"] = "With Officer-Conditions"
                             self.save()
                 # assessment = Assessment.objects.get(id=request.data.get('selected_assessment_id'))
                 # assessment.status ='completed'
                 # assessment.save()
                 # # is_last_assessment=Assessment.objects.filter(application=assessment.application,
-                # licence_activity_type=assessment.licence_activity_type).count()
+                # licence_activity=assessment.licence_activity).count()
                 # if not Assessment.objects.filter(application=assessment.application,
-                # licence_activity_type=assessment.licence_activity_type,status='awaiting_assessment').exists():
-                        #  for activity_type in  self.licence_type_data['activity_type']:
-                        #      if int(request.data.get('selected_assessment_tab'))==activity_type["id"]:
-                        #          activity_type["processing_status"]="With Officer-Conditions"
+                # licence_activity=assessment.licence_activity,status='awaiting_assessment').exists():
+                        #  for activity in  self.licence_type_data['activity']:
+                        #      if int(request.data.get('selected_assessment_tab'))==activity["id"]:
+                        #          activity["processing_status"]="With Officer-Conditions"
                         #          self.save()
 
             except BaseException:
@@ -885,27 +885,27 @@ class Application(RevisionedMixin):
     def proposed_decline(self, request, details):
         with transaction.atomic():
             try:
-                for activity_type in self.licence_type_data['activity_type']:
-                    if activity_type["id"] == details.get('activity_type'):
-                        if activity_type["processing_status"] != "With Officer-Conditions":
+                for activity in self.licence_type_data['activity']:
+                    if activity["id"] == details.get('activity'):
+                        if activity["processing_status"] != "With Officer-Conditions":
                             raise ValidationError(
                                 'You cannot propose for licence if it is not with officer for conditions')
-                activity_type = details.get('activity_type')
-                for item1 in activity_type:
+                activity = details.get('activity')
+                for item1 in activity:
                     ApplicationDecisionPropose.objects.update_or_create(
                         application=self,
                         officer=request.user,
                         proposed_action='propose_decline',
                         reason=details.get('reason'),
                         cc_email=details.get('cc_email', None),
-                        licence_activity_type_id=item1
+                        licence_activity_id=item1
                     )
 
-                for item in activity_type:
-                    for activity_type in self.licence_type_data['activity_type']:
-                        if activity_type["id"] == item:
-                            activity_type["proposed_decline"] = True
-                            activity_type["processing_status"] = "With Officer-Finalisation"
+                for item in activity:
+                    for activity in self.licence_type_data['activity']:
+                        if activity["id"] == item:
+                            activity["proposed_decline"] = True
+                            activity["processing_status"] = "With Officer-Finalisation"
                             self.save()
 
                 # Log application action
@@ -931,24 +931,24 @@ class Application(RevisionedMixin):
     def send_to_assessor(self, request):
         with transaction.atomic():
             try:
-                # activity_type=details.get('activity_type')
-                # print(activity_type)
+                # activity=details.get('activity')
+                # print(activity)
                 Assessment.objects.update_or_create(
                     application=self,
                     officer=request.user,
                     reason=request.data.get('reason'),
                     # cc_email=details.get('cc_email', None),  # TODO: fix undefined details (missing source)
-                    # activity_type=details.get('activity_type')  # TODO: fix undefined details (missing source)
+                    # activity=details.get('activity')  # TODO: fix undefined details (missing source)
                 )
-                # for item in activity_type :
+                # for item in activity :
                 #     print(item)
-                #     for activity_type in  self.licence_type_data['activity_type']:
-                #         # print(activity_type["id"])
-                #         # print(details.get('activity_type'))
-                #         if activity_type["id"]==item:
+                #     for activity in  self.licence_type_data['activity']:
+                #         # print(activity["id"])
+                #         # print(details.get('activity'))
+                #         if activity["id"]==item:
                 #             print('Hello')
-                #             activity_type["proposed_decline"]=True
-                #             print(activity_type["proposed_decline"])
+                #             activity["proposed_decline"]=True
+                #             print(activity["proposed_decline"])
                 #             self.save()
 
                 # Log application action
@@ -983,9 +983,9 @@ class Application(RevisionedMixin):
             return None
 
     @property
-    def activity_types(self):
-        """ returns a queryset of activity_type/purposes attached to application """
-        return ApplicationActivityType.objects.filter(application=self)
+    def activities(self):
+        """ returns a queryset of activity/purposes attached to application """
+        return ApplicationActivity.objects.filter(application=self)
 
 
     def get_proposed_decisions(self, request):
@@ -997,7 +997,7 @@ class Application(RevisionedMixin):
                 for q in qs:
                     if ApplicationDecisionPropose.objects.filter(
                             application=self,
-                            licence_activity_type=q.licence_activity_type,
+                            licence_activity=q.licence_activity,
                             decision_action__isnull=False).exists():
                         qs.exclude(id=q.id)
                 return qs
@@ -1007,13 +1007,13 @@ class Application(RevisionedMixin):
     def proposed_licence(self, request, details):
         with transaction.atomic():
             try:
-                for activity_type in self.licence_type_data['activity_type']:
-                    if activity_type["id"] == details.get('activity_type'):
-                        if activity_type["processing_status"] != "With Officer-Conditions":
+                for activity in self.licence_type_data['activity']:
+                    if activity["id"] == details.get('activity'):
+                        if activity["processing_status"] != "With Officer-Conditions":
                             raise ValidationError(
                                 'You cannot propose for licence if it is not with officer for conditions')
-                    activity_type = details.get('activity_type')
-                    for item1 in activity_type:
+                    activity = details.get('activity')
+                    for item1 in activity:
                         ApplicationDecisionPropose.objects.update_or_create(
                             application=self,
                             officer=request.user,
@@ -1022,20 +1022,20 @@ class Application(RevisionedMixin):
                             cc_email=details.get('cc_email', None),
                             proposed_start_date=details.get('start_date', None),
                             proposed_end_date=details.get('expiry_date', None),
-                            licence_activity_type_id=item1
+                            licence_activity_id=item1
                         )
 
-                    for item in activity_type:
-                        for activity_type in self.licence_type_data['activity_type']:
-                            if activity_type["id"] == item:
-                                activity_type["proposed_issue"] = True
-                                activity_type["processing_status"] = "With Officer-Finalisation"
+                    for item in activity:
+                        for activity in self.licence_type_data['activity']:
+                            if activity["id"] == item:
+                                activity["proposed_issue"] = True
+                                activity["processing_status"] = "With Officer-Finalisation"
                                 self.save()
 
                 try:
                     ApplicationDecisionPropose.objects.get(
                         application=self,
-                        licence_activity_type_id=details.get('licence_activity_type_id'))
+                        licence_activity_id=details.get('licence_activity_id'))
                     raise ValidationError(
                         'This activity type has already been proposed to issue')
                 except ApplicationDecisionPropose.DoesNotExist:
@@ -1053,11 +1053,11 @@ class Application(RevisionedMixin):
                         proposed_end_date=details.get(
                             'expiry_date',
                             None),
-                        licence_activity_type_id=details.get('licence_activity_type_id'))
-                    for activity_type in self.licence_type_data['activity_type']:
-                        if activity_type["id"] == details.get(
-                                'licence_activity_type_id'):
-                            activity_type["processing_status"] = "With Officer-Finalisation"
+                        licence_activity_id=details.get('licence_activity_id'))
+                    for activity in self.licence_type_data['activity']:
+                        if activity["id"] == details.get(
+                                'licence_activity_id'):
+                            activity["processing_status"] = "With Officer-Finalisation"
                             self.save()
 
                 # Log application action
@@ -1090,7 +1090,7 @@ class Application(RevisionedMixin):
                 #     raise ValidationError('The applicant needs to have set their postal address before approving\
                 #     this application.')
 
-                for item in request.data.get('activity_type'):
+                for item in request.data.get('activity'):
                     if item['final_status'] == "Issue":
                         try:
                             # check if parent licence is available
@@ -1108,13 +1108,13 @@ class Application(RevisionedMixin):
                             issue_date=timezone.now(),
                             expiry_date=item['end_date'],
                             start_date=item['start_date'],
-                            licence_activity_type_id=item['id']
+                            licence_activity_id=item['id']
                         )
                         ApplicationDecisionPropose.objects.create(
                             application=self,
                             officer=request.user,
                             decision_action='issued',
-                            licence_activity_type_id=item['id']
+                            licence_activity_id=item['id']
                         )
                         print('Generate returns')
                         self.generate_returns(licence, request)
@@ -1138,16 +1138,16 @@ class Application(RevisionedMixin):
                         send_application_issue_notification(
                             item['name'], item['end_date'], item['start_date'], self, request)
 
-                        for activity_type in self.licence_type_data['activity_type']:
-                            if activity_type["id"] == item['id']:
-                                activity_type["processing_status"] = "Accepted"
+                        for activity in self.licence_type_data['activity']:
+                            if activity["id"] == item['id']:
+                                activity["processing_status"] = "Accepted"
                                 self.save()
                     else:
                         ApplicationDecisionPropose.objects.create(
                             application=self,
                             officer=request.user,
                             decision_action='declined',
-                            licence_activity_type_id=item['id']
+                            licence_activity_id=item['id']
                         )
                         # Log application action
                         self.log_user_action(
@@ -1169,9 +1169,9 @@ class Application(RevisionedMixin):
                         send_application_decline_notification(
                             item['name'], self, request)
 
-                        for activity_type in self.licence_type_data['activity_type']:
-                            if activity_type["id"] == item['id']:
-                                activity_type["processing_status"] = "Declined"
+                        for activity in self.licence_type_data['activity']:
+                            if activity["id"] == item['id']:
+                                activity["processing_status"] = "Declined"
                                 self.save()
 
             except BaseException:
@@ -1327,8 +1327,8 @@ class AmendmentRequest(ApplicationRequest):
         max_length=30,
         choices=REASON_CHOICES,
         default=REASON_CHOICES[0][0])
-    licence_activity_type = models.ForeignKey(
-        'wildlifecompliance.WildlifeLicenceActivityType', null=True)
+    licence_activity = models.ForeignKey(
+        'wildlifecompliance.LicenceActivity', null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -1337,8 +1337,8 @@ class AmendmentRequest(ApplicationRequest):
         with transaction.atomic():
             try:
                 # This is to change the status of licence activity type
-                for item in self.application.licence_type_data['activity_type']:
-                    if self.licence_activity_type.id == item["id"]:
+                for item in self.application.licence_type_data['activity']:
+                    if self.licence_activity.id == item["id"]:
                         item["processing_status"] = Application.PROCESSING_STATUS_DRAFT[1]
                         # self.application.save()
                 self.application.customer_status = 'amendment_required'
@@ -1371,9 +1371,9 @@ class Assessment(ApplicationRequest):
     date_last_reminded = models.DateField(null=True, blank=True)
     assessor_group = models.ForeignKey(
         ApplicationGroupType, null=False, default=1)
-    activity_type = JSONField(blank=True, null=True)
-    licence_activity_type = models.ForeignKey(
-        'wildlifecompliance.WildlifeLicenceActivityType', null=True)
+    activity = JSONField(blank=True, null=True)
+    licence_activity = models.ForeignKey(
+        'wildlifecompliance.LicenceActivity', null=True)
     comment = models.TextField(blank=True)
     purpose = models.TextField(blank=True)
 
@@ -1384,8 +1384,8 @@ class Assessment(ApplicationRequest):
         with transaction.atomic():
             try:
                 # This is to change the status of licence activity type
-                for item in self.application.licence_type_data['activity_type']:
-                    if request.data.get('licence_activity_type') == item["id"]:
+                for item in self.application.licence_type_data['activity']:
+                    if request.data.get('licence_activity') == item["id"]:
                         item["processing_status"] = "With Assessor"
                         self.application.save()
                         # self.save()
@@ -1413,7 +1413,7 @@ class Assessment(ApplicationRequest):
                 print(self)
                 print(self.status)
                 print(self.id)
-                # select_group = ApplicationGroupType.objects.get(licence_class=self.licence_type_data["id"])
+                # select_group = ApplicationGroupType.objects.get(licence_category=self.licence_type_data["id"])
                 select_group = self.assessor_group.members.all()
                 # send email
                 send_assessment_reminder_email(select_group, self, request)
@@ -1432,9 +1432,9 @@ class Assessment(ApplicationRequest):
             try:
                 self.status = "recalled"
                 print(self.__dict__)
-                for item in self.application.licence_type_data['activity_type']:
-                    print(self.licence_activity_type)
-                    if self.licence_activity_type_id == item["id"]:
+                for item in self.application.licence_type_data['activity']:
+                    print(self.licence_activity)
+                    if self.licence_activity_id == item["id"]:
                         item["processing_status"] = "With Officer"
                         self.application.save()
                 self.save()
@@ -1449,9 +1449,9 @@ class Assessment(ApplicationRequest):
         with transaction.atomic():
             try:
                 self.status = "awaiting_assessment"
-                for item in self.application.licence_type_data['activity_type']:
-                    print(self.licence_activity_type)
-                    if self.licence_activity_type_id == item["id"]:
+                for item in self.application.licence_type_data['activity']:
+                    print(self.licence_activity)
+                    if self.licence_activity_id == item["id"]:
                         item["processing_status"] = "With Assessor"
                         self.application.save()
                 self.save()
@@ -1480,9 +1480,9 @@ class ApplicationDeclinedDetails(models.Model):
     officer = models.ForeignKey(EmailUser, null=False)
     reason = models.TextField(blank=True)
     cc_email = models.TextField(null=True)
-    activity_type = JSONField(blank=True, null=True)
-    licence_activity_type = models.ForeignKey(
-        'wildlifecompliance.WildlifeLicenceActivityType', null=True)
+    activity = JSONField(blank=True, null=True)
+    licence_activity = models.ForeignKey(
+        'wildlifecompliance.LicenceActivity', null=True)
     proposed_start_date = models.DateField(null=True, blank=True)
     proposed_end_date = models.DateField(null=True, blank=True)
     is_activity_renewable = models.BooleanField(default=False)
@@ -1513,9 +1513,9 @@ class ApplicationDecisionPropose(models.Model):
     officer = models.ForeignKey(EmailUser, null=False)
     reason = models.TextField(blank=True)
     cc_email = models.TextField(null=True)
-    activity_type = JSONField(blank=True, null=True)
-    licence_activity_type = models.ForeignKey(
-        'wildlifecompliance.WildlifeLicenceActivityType', null=True)
+    activity = JSONField(blank=True, null=True)
+    licence_activity = models.ForeignKey(
+        'wildlifecompliance.LicenceActivity', null=True)
     proposed_start_date = models.DateField(null=True, blank=True)
     proposed_end_date = models.DateField(null=True, blank=True)
     is_activity_renewable = models.BooleanField(default=False)
@@ -1540,8 +1540,8 @@ class ApplicationStandardCondition(RevisionedMixin):
 
 class DefaultCondition(OrderedModel):
     condition = models.TextField(null=True, blank=True)
-    licence_activity_type = models.ForeignKey(
-        'wildlifecompliance.WildlifeLicenceActivityType', null=True)
+    licence_activity = models.ForeignKey(
+        'wildlifecompliance.LicenceActivity', null=True)
     return_type = models.ForeignKey('wildlifecompliance.ReturnType', null=True)
 
     class Meta:
@@ -1563,8 +1563,8 @@ class ApplicationCondition(OrderedModel):
     recurrence_pattern = models.SmallIntegerField(
         choices=RECURRENCE_PATTERNS, default=1)
     recurrence_schedule = models.IntegerField(null=True, blank=True)
-    licence_activity_type = models.ForeignKey(
-        'wildlifecompliance.WildlifeLicenceActivityType', null=True)
+    licence_activity = models.ForeignKey(
+        'wildlifecompliance.LicenceActivity', null=True)
     return_type = models.ForeignKey('wildlifecompliance.ReturnType', null=True)
     # order = models.IntegerField(default=1)
 
@@ -1660,8 +1660,8 @@ class ExcelApplication(models.Model):
         ])
 
     @property
-    def licence_class(self):
-        # return self.application.licence_class
+    def licence_category(self):
+        # return self.application.licence_category
         return self.application.licence_type_short_name
 
     @property
@@ -1694,10 +1694,10 @@ class ExcelApplication(models.Model):
 # OrganisationAddress.objects.get(organisation__name=self.applicant.name).__str__())
 
 
-class ExcelActivityType(models.Model):
+class ExcelActivity(models.Model):
     excel_app = models.ForeignKey(
         ExcelApplication,
-        related_name='excel_activity_types')
+        related_name='excel_activities')
     activity_name = models.CharField(max_length=68, blank=True)
     name = models.CharField(max_length=68, blank=True)
     short_name = models.CharField(max_length=68, blank=True)
@@ -1714,9 +1714,9 @@ class ExcelActivityType(models.Model):
         app_label = 'wildlifecompliance'
 
 #    def save(self, *args, **kwargs):
-#        super(ExcelActivityType, self).save(*args, **kwargs)
+#        super(ExcelActivity, self).save(*args, **kwargs)
 #        if self.short_name == '':
-#           self.short_name = self.excel_app.licence_class
+#           self.short_name = self.excel_app.licence_category
 #            self.save()
 
     @property
@@ -1739,8 +1739,8 @@ class ExcelActivityType(models.Model):
 #            ('{}-processed'.format(self.code), self.processed),
 #        ])
 
-class ApplicationActivityType(models.Model):
-    application = models.ForeignKey(Application, related_name='app_activity_types')
+class ApplicationActivity(models.Model):
+    application = models.ForeignKey(Application, related_name='app_activities')
     activity_name = models.CharField(max_length=68)
     name = models.CharField(max_length=68)
     short_name = models.CharField(max_length=68)
@@ -1757,15 +1757,15 @@ class ApplicationActivityType(models.Model):
     processed = models.NullBooleanField(default=None)
 
     class Meta:
-        unique_together = (('application','short_name'))
+        unique_together = (('application', 'short_name'))
         app_label = 'wildlifecompliance'
 
     def __str__(self):
         return 'Application {} - Activity Name {} - Short Name {} - Name {}'.format(self.application.id, self.activity_name, self.short_name, self.name)
 
     @property
-    def licence_class(self):
-        #return self.application.licence_class
+    def licence_category(self):
+        #return self.application.licence_category
         return self.application.licence_type_short_name
 
     @property
