@@ -2,8 +2,9 @@ import re
 from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
-from commercialoperator.components.proposals.models import ProposalDocument
+from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity
 from commercialoperator.components.proposals.serializers import SaveProposalSerializer, SaveProposalParkSerializer, SaveProposalTrailSerializer
+from commercialoperator.components.main.models import Activity, Park
 import traceback
 import os
 
@@ -289,50 +290,62 @@ class SpecialFieldsSearch(object):
             item_data[item['name']] = item_data_list
         return item_data
 
-def save_park_activiy_data(instance,request,viewset,parks):
+def save_park_activity_data(instance,select_parks_activities):
     with transaction.atomic():
         try:
-#            
-            data = {}
-            serializer = SaveProposalSerializer(instance, data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            viewset.perform_update(serializer)
-            if parks:
+            if select_parks_activities:
                 try:
-                    current_parks=instance.parks.all()
-                    if current_parks:
-                        for p in current_parks:
-                            p.delete()
-                    for item in parks:
-                        try:
-                            data_park={
-                            'park': item,
-                            'proposal': instance.id
-                            }
-                            serializer=SaveProposalParkSerializer(data=data_park)
-                            serializer.is_valid(raise_exception=True)
-                            serializer.save()
-                        except:
-                            raise                        
-                except:
-                    raise
-            if trails:
-                try:
-                    current_trails=instance.trails.all()
-                    if current_trails:
-                        for t in current_trails:
-                            t.delete()
-                    for item in trails:
-                        try:
-                            data_trail={
-                            'trail': item,
-                            'proposal': instance.id
-                            }
-                            serializer=SaveProposalTrailSerializer(data=data_trail)
-                            serializer.is_valid(raise_exception=True)
-                            serializer.save()
-                        except:
-                            raise                        
+                    #current_parks=instance.parks.all()
+                    selected_parks=[]
+                    for item in select_parks_activities:
+                        if item['park']:
+                            selected_parks.append(item['park'])
+                            try:
+                                #Check if PrposalPark record already exists. If exists, check for activities
+                                park=ProposalPark.objects.get(park=item['park'],proposal=instance)
+                                current_activities=park.land_activities.all()
+                                current_activities_id=[a.activity_id for a in current_activities]
+                                if item['activities']:
+                                    for a in item['activities']:
+                                        if a in current_activities_id:
+                                            #if activity already exists then pass otherwise create the record.
+                                            pass
+                                        else:
+                                            try:
+                                                activity=Activity.objects.get(id=a)
+                                                ProposalParkActivity.objects.create(proposal_park=park, activity=activity)
+                                            except:
+                                                raise
+                            except ProposalPark.DoesNotExist:
+                                try:
+                                    #If ProposalPark does not exists then create a new record and activities for it.
+                                    park_instance=Park.objects.get(id=item['park'])
+                                    park=ProposalPark.objects.create(park=park_instance, proposal=instance)
+                                    current_activities=[]
+                                    for a in item['activities']:
+                                        try:
+                                            activity=Activity.objects.get(id=a)
+                                            ProposalParkActivity.objects.create(proposal_park=park, activity=activity)
+                                        except:
+                                            raise  
+                                except:
+                                    raise
+                            #compare all activities (new+old) with the list of activities selected activities to get
+                            #the list of deleted activities.
+                            new_activities=park.land_activities.all()
+                            new_activities_id=set(a.activity_id for a in new_activities)
+                            diff_activity=set(new_activities_id).difference(set(item['activities']))
+                            print ("activities",new_activities_id, diff_activity)
+                            for d in diff_activity:
+                                act=ProposalParkActivity.objects.get(activity_id=d, proposal_park=park)
+                                act.delete()
+                    new_parks=instance.parks.filter(park__park_type='land')
+                    new_parks_id=set(p.park_id for p in new_parks)
+                    diff_parks=set(new_parks_id).difference(set(selected_parks))
+                    print("parks", new_parks_id, selected_parks, diff_parks)
+                    for d in diff_parks:
+                        pk=ProposalPark.objects.get(park=d, proposal=instance)
+                        pk.delete()
                 except:
                     raise
         except:
