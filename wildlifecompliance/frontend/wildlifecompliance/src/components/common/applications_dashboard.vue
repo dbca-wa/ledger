@@ -150,11 +150,9 @@ export default {
                 mRender:function (data,type,full) {
                     let links = '';
                     if (!vm.is_external){
-                        links +=  full.can_be_processed ? `<a href='/internal/application/${full.id}'>Process</a><br/>`: `<a href='/external/application/${full.id}'>View</a><br/>`;
-
-                        if (full.processing_status!='Draft') {
-                            links +=  `<a href='/internal/application/${full.id}'>Assess</a><br/>`;
-                        }
+                        links +=  full.can_be_processed ?
+                            `<a href='/internal/application/${full.id}'>Process</a><br/>` :
+                            `<a href='/external/application/${full.id}'>View</a><br/>`;
                     }
                     if (vm.is_external){
                         if (full.can_current_user_edit) {
