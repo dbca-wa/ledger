@@ -1803,7 +1803,52 @@ def delete_documents(sender, instance, *args, **kwargs):
 
 
 def search_keywords(search_words, search_application, search_licence, search_return, is_internal=True):
-    return True
+    from wildlifecompliance.utils import search, search_licences, search_returns
+    from wildlifecompliance.components.licences.models import WildlifeLicence
+    from wildlifecompliance.components.returns.models import Return
+    qs = []
+    if is_internal:
+        application_list = Application.objects.exclude(processing_status__in=['discarded', 'draft'])
+        licence_list = WildlifeLicence.objects.all()\
+            .order_by('lodgement_number', '-issue_date')\
+            .distinct('lodgement_number')
+        return_list = Return.objects.all()
+    if search_words:
+        if search_application:
+            for a in application_list:
+                if a.data:
+                    try:
+                        results = search(a.data[0], search_words)
+                        final_results = {}
+                        if results:
+                            for r in results:
+                                for key, value in r.iteritems():
+                                    final_results.update({'key': key, 'value': value})
+                            res = {
+                                'number': a.lodgement_number,
+                                'id': a.id,
+                                'type': 'Application',
+                                'applicant': a.applicant.name,
+                                'text': final_results,
+                                }
+                            qs.append(res)
+                    except BaseException:
+                        raise
+        if search_licence:
+            for l in licence_list:
+                try:
+                    results = search_licences(l, search_words)
+                    qs.extend(results)
+                except BaseException:
+                    raise
+        if search_return:
+            for r in return_list:
+                try:
+                    results = search_returns(r, search_words)
+                    qs.extend(results)
+                except BaseException:
+                    raise
+        return qs
 
 
 def search_reference(reference_number):

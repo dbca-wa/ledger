@@ -238,6 +238,10 @@ export default {
     computed: {
         isLoading: function () {
             return this.loading.length == 0;
+        },
+        showError: function() {
+            var vm = this;
+            return vm.errors;
         }
     },
     methods: {
@@ -278,9 +282,57 @@ export default {
             });
           }
         },
+        addKeyword: function() {
+          let vm = this;
+          if(vm.keyWord != null)
+          {
+            vm.searchKeywords.push(vm.keyWord);
+          }
+        },
+        removeKeyword: function(index) {
+          let vm = this;
+          if(index >-1)
+          {
+            vm.searchKeywords.splice(index,1);
+          }
+        },
+        clearKeywordSearch: function() {
+          let vm = this;
+          if(vm.keyWord != null)
+          {
+            vm.searchKeywords = [];
+          }
+          vm.keyWord = null;
+          vm.results = [];
+          vm.$refs.keyword_search_datatable.vmDataTable.clear()
+          vm.$refs.keyword_search_datatable.vmDataTable.draw();
+        },
+        searchKeyword: function() {
+          let vm = this;
+          if(this.searchKeywords.length > 0)
+          {
+            vm.$http.post('/api/search_keywords.json',{
+              searchKeywords: vm.searchKeywords,
+              searchApplication: vm.searchApplication,
+              searchLicence: vm.searchLicence,
+              searchReturn: vm.searchReturn,
+              is_internal: true,
+            }).then(res => {
+              vm.results = res.body;
+              vm.$refs.keyword_search_datatable.vmDataTable.clear()
+              vm.$refs.keyword_search_datatable.vmDataTable.rows.add(vm.results);
+              vm.$refs.keyword_search_datatable.vmDataTable.draw();
+            },
+            err => {
+              console.log(err);
+            });
+          }
+        },
     },
     mounted: function () {
         let vm = this;
+        vm.keyword_search_options.data = vm.results;
+        vm.$refs.keyword_search_datatable.vmDataTable.draw();
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];
             window.setTimeout( function () {
