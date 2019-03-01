@@ -102,7 +102,6 @@ class AdmissionsRatesViewSetTestCase(TestSetup):
         self.data['reason'] = self.adReason.id
         self.data['mooring_group'] = self.ria.id
         response = self.client.post(self.url2, json.dumps(self.data), content_type='application/json')
-        print response
         self.assertEqual(response.status_code, 200)
 
     def test_api_post_non_admin(self):
