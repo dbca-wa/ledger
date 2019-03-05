@@ -521,21 +521,6 @@ class Application(RevisionedMixin):
             )
         return selected_activity
 
-    def __check_application_filled_out(self):
-        if not self.data:
-            raise exceptions.ApplicationNotComplete()
-        missing_fields = []
-        required_fields = {
-            'region': 'Region/District',
-            'title': 'Title',
-            'activity': 'Activity'
-        }
-        for k, v in required_fields.items():
-            val = getattr(self, k)
-            if not val:
-                missing_fields.append(v)
-        return missing_fields
-
     def can_assess(self, user):
         # TODO: this should probably be a status on the licenced activity not a property function on Application
         return False
@@ -571,17 +556,9 @@ class Application(RevisionedMixin):
                 print("inside can_user_edit")
                 parser = SchemaParser(draft=False)
                 parser.save_proponent_data(self, request, viewset)
-                # print(self.data)
-                # Check if the special fields have been completed
-                # missing_fields = self.__check_application_filled_out()
-                # if missing_fields:
-                #     error_text = 'The application has these missing fields, {}'.format(','.join(missing_fields))
-                #     raise exceptions.ApplicationMissingFields(detail=error_text)
-
                 self.processing_status = 'under_review'
                 self.customer_status = 'under_review'
                 self.submitter = request.user
-                # self.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 self.lodgement_date = timezone.now()
                 # if amendment is submitted change the status of only particular activity
                 # else if the new application is submitted change the status of
@@ -593,11 +570,11 @@ class Application(RevisionedMixin):
                             q.status = 'amended'
                             for activity in self.licence_type_data['activity']:
                                 if q.licence_activity.id == activity["id"]:
-                                    activity["processing_status"] = "With Officer"
+                                    activity["processing_status"] = "with_officer"
                             q.save()
                 else:
                     for activity in self.licence_type_data['activity']:
-                        activity["processing_status"] = "With Officer"
+                        activity["processing_status"] = "with_officer"
                         qs = DefaultCondition.objects.filter(
                             licence_activity=activity["id"])
                         if (qs):
