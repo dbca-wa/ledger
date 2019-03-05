@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 # API patterns
 router = routers.DefaultRouter()
 router.register(r'organisations', org_api.OrganisationViewSet)
-router.register(r'application_activity', application_api.ApplicationActivityViewSet)
 router.register(r'application', application_api.ApplicationViewSet)
 router.register(r'assessment', application_api.AssessmentViewSet)
 router.register(r'amendment', application_api.AmendmentRequestViewSet)
@@ -109,8 +108,6 @@ urlpatterns = [
     # url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$',
     #     views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
     url('^healthcheck/', views.HealthCheckView.as_view(), name='health_check'),
-    #url(r'^assess/(?P<application_pk>\d+)/$', application_views.AssessView.as_view(), name='assess'),
-    url(r'^assess/(?P<pk>\d+)/$', application_views.AssessView.as_view(), name='assess'),
 
     # following url is defined so that to include url path when sending
     # application emails to users

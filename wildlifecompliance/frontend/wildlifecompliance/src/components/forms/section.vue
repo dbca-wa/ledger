@@ -15,7 +15,7 @@
 
 <script>
 export default {
-    name:"section",
+    name:"FormSection",
     props:["label","Index"],
     data:function () {
         return {

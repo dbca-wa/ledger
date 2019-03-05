@@ -123,7 +123,7 @@
 
                             <div v-if="display_activity_matrix_selectbox">
 								<div v-if="activities.length > 0">
-									<label for="" class="control-label" >Activity * <a :href="activity_type_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></label>
+									<label for="" class="control-label" >Activity Type * <a :href="activity_type_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></label>
 									<div class="col-sm-12">
 										<div class="form-group">
 											<select v-model="selected_activity" @change="chainedSelectSubActivities1(selected_activity)" class="form-control" style="width:40%">

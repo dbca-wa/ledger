@@ -14,8 +14,8 @@ class AmendmentRequestAdmin(admin.ModelAdmin):
     list_display = ['application', 'licence_activity']
 
 
-@admin.register(models.ApplicationDecisionPropose)
-class ApplicationDecisionPropose(admin.ModelAdmin):
+@admin.register(models.ApplicationSelectedActivity)
+class ApplicationSelectedActivity(admin.ModelAdmin):
     pass
 
 

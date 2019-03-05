@@ -1,4 +1,4 @@
-import Section from '../components/forms/section.vue'
+import FormSection from '../components/forms/section.vue'
 import Group from '../components/forms/group.vue'
 import Group2 from '../components/forms/group2.vue'
 import Radio from '../components/forms/radio.vue'
@@ -215,7 +215,7 @@ module.exports = {
                 }
                 this.sections.push({name:c.name,label:c.label});
                 _elements.push(
-                    <Section label={c.label} Index={c.name} id={c.name}>
+                    <FormSection label={c.label} Index={c.name} id={c.name}>
                         {c.children.map(d=>{
                             return (
                                 <div>
@@ -223,7 +223,7 @@ module.exports = {
                                 </div>
                             )
                         })}
-                    </Section>
+                    </FormSection>
 
                 )
                 break;

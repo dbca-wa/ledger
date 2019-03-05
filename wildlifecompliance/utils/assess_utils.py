@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 from collections import OrderedDict
 from wildlifecompliance.components.applications.models import (
     Application,
-    ApplicationActivity
+    ApplicationSelectedActivity
 )
 from wildlifecompliance.components.licences.models import (
     DefaultActivity,
@@ -71,12 +71,9 @@ def create_app_activity_model(licence_category, app_ids=[], exclude_app_ids=[]):
         for activity in application.licence_type_data['activity']:
             if activity['short_name'] in list(activities):
                 activity_obj = LicencePurpose.get_first_record(activity['purpose'][0]['name'])
-                app_activity, created = ApplicationActivity.objects.get_or_create(
+                app_activity, created = ApplicationSelectedActivity.objects.get_or_create(
                     application=application,
-                    activity_name=activity['purpose'][0]['name'],
-                    name=activity['name'],
-                    short_name=activity['short_name'],
-                    code=activity_obj.code
+                    licence_activity__id=activity_obj.id
                 )
                 obj_list.append(app_activity)
 
@@ -229,7 +226,7 @@ def get_activity_sys_answers(activity):
     """
     Looks up the activity return all answers for question marked isEditable that need to be added to the Excel WB.
 
-    get_activity_sys_answers(ApplicationActivity.objects.get(id=50))
+    get_activity_sys_answers(ApplicationSelectedActivity.objects.get(id=50))
     """
     ordered_dict = OrderedDict([])
     if activity:

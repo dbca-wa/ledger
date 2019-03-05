@@ -282,7 +282,7 @@ export default {
             data.licence_category_data=vm.licence_category;
             data.application_fee=vm.application_fee;
             data.licence_fee=vm.licence_fee;
-            data.licence_purposes=licence_purposes
+            data.licence_purposes=licence_purposes;
             console.log(' ---- application apply licence createApplication() ---- ');
             console.log(`Licence category ID: ${data.licence_category_id}`);
             console.log(vm.application_fee)
