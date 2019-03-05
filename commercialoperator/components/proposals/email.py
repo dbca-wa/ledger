@@ -60,7 +60,7 @@ class ApproverSendBackNotificationEmail(TemplateEmailBase):
     html_template = 'commercialoperator/emails/proposals/send_approver_sendback_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_approver_sendback_notification.txt'
 
-def send_referral_email_notification(referral,request,reminder=False):
+def send_referral_email_notification(referral,recipients,request,reminder=False):
     email = ReferralSendNotificationEmail()
     url = request.build_absolute_uri(reverse('internal-referral-detail',kwargs={'proposal_pk':referral.proposal.id,'referral_pk':referral.id}))
 
@@ -71,13 +71,17 @@ def send_referral_email_notification(referral,request,reminder=False):
         'comments': referral.text
     }
 
-    msg = email.send(referral.referral.email, context=context)
+    #import ipdb; ipdb.set_trace()
+    #msg = email.send(referral.referral.email, context=context)
+    #recipients = list(ReferralRecipientGroup.objects.get(name=referral.email_group).members.all().values_list('email', flat=True))
+    msg = email.send(recipients, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_referral_email(msg, referral, sender=sender)
     _log_org_email(msg, referral.proposal.applicant, referral.referral, sender=sender)
 
 def send_referral_complete_email_notification(referral,request):
     email = ReferralCompleteNotificationEmail()
+    email.subject = referral.sent_by.email + ': ' + email.subject
     url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': referral.proposal.id}))
 
     context = {

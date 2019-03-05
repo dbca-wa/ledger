@@ -8,6 +8,7 @@ module.exports = {
     users: '/api/users.json',
     profile: '/api/profile',
     department_users: '/api/department_users',
+    referral_recipient_groups: '/api/referrals/user_group_list',
     //other
     countries: "https://restcountries.eu/rest/v1/?fullText=true",
     proposal_type:"/api/proposal_type",

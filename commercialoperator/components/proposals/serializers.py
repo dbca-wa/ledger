@@ -543,7 +543,8 @@ class ProposalLogEntrySerializer(CommunicationLogEntrySerializer):
         return [[d.name,d._file.url] for d in obj.documents.all()]
 
 class SendReferralSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    #email = serializers.EmailField()
+    email_group = serializers.CharField()
     text = serializers.CharField(allow_blank=True)
 
 class DTReferralSerializer(serializers.ModelSerializer):

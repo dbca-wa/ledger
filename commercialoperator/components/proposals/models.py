@@ -709,37 +709,45 @@ class Proposal(RevisionedMixin):
 
                     # Check if the user is in ledger
                     try:
-                        user = EmailUser.objects.get(email__icontains=referral_email)
-                    except EmailUser.DoesNotExist:
-                        # Validate if it is a deparment user
-                        department_user = get_department_user(referral_email)
-                        if not department_user:
-                            raise ValidationError('The user you want to send the referral to is not a member of the department')
-                        # Check if the user is in ledger or create
-                        #import ipdb; ipdb.set_trace()
-                        email = department_user['email'].lower()
-                        user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
-                        if created:
-                            user.first_name = department_user['given_name']
-                            user.last_name = department_user['surname']
-                            user.save()
+                        #user = EmailUser.objects.get(email__icontains=referral_email)
+                        referral_group = ReferralRecipientGroup.objects.get(name__icontains=referral_email)
+                    #except EmailUser.DoesNotExist:
+                    except ReferralRecipientGroup.DoesNotExist:
+                        raise exceptions.ProposalReferralCannotBeSent()
+#                        # Validate if it is a deparment user
+#                        department_user = get_department_user(referral_email)
+#                        if not department_user:
+#                            raise ValidationError('The user you want to send the referral to is not a member of the department')
+#                        # Check if the user is in ledger or create
+#                        #import ipdb; ipdb.set_trace()
+#                        email = department_user['email'].lower()
+#                        user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
+#                        if created:
+#                            user.first_name = department_user['given_name']
+#                            user.last_name = department_user['surname']
+#                            user.save()
                     try:
-                        Referral.objects.get(referral=user,proposal=self)
-                        raise ValidationError('A referral has already been sent to this user')
+                        #Referral.objects.get(referral=user,proposal=self)
+                        Referral.objects.get(referral_group=referral_group,proposal=self)
+                        raise ValidationError('A referral has already been sent to this group')
                     except Referral.DoesNotExist:
                         # Create Referral
                         referral = Referral.objects.create(
                             proposal = self,
-                            referral=user,
+                            #referral=user,
+                            referral_group=referral_group,
                             sent_by=request.user,
                             text=referral_text
                         )
                     # Create a log entry for the proposal
-                    self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+                    #self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+                    self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}'.format(referral_group.name)),request)
                     # Create a log entry for the organisation
-                    self.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+                    #self.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+                    self.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}'.format(referral_group.name)),request)
                     # send email
-                    send_referral_email_notification(referral,request)
+                    recipients = referral_group.members_list
+                    send_referral_email_notification(referral,recipients,request)
                 else:
                     raise exceptions.ProposalReferralCannotBeSent()
             except:
@@ -1560,6 +1568,10 @@ class ReferralRecipientGroup(models.Model):
     def filtered_members(self):
         return self.members.all()
 
+    @property
+    def members_list(self):
+            return list(self.members.all().values_list('email', flat=True))
+
     class Meta:
         app_label = 'commercialoperator'
         verbose_name_plural = "Referral recipient group"
@@ -1601,6 +1613,7 @@ class Referral(models.Model):
     proposal = models.ForeignKey(Proposal,related_name='referrals')
     sent_by = models.ForeignKey(EmailUser,related_name='commercialoperator_assessor_referrals')
     referral = models.ForeignKey(EmailUser,null=True,blank=True,related_name='commercialoperator_referalls')
+    referral_group = models.ForeignKey(ReferralRecipientGroup,null=True,blank=True,related_name='commercialoperator_referral_groups')
     linked = models.BooleanField(default=False)
     sent_from = models.SmallIntegerField(choices=SENT_CHOICES,default=SENT_CHOICES[0][0])
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
@@ -1646,11 +1659,13 @@ class Referral(models.Model):
             if not self.proposal.can_assess(request.user):
                 raise exceptions.ProposalNotAuthorized()
             # Create a log entry for the proposal
-            self.proposal.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            #self.proposal.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            self.proposal.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
             # Create a log entry for the organisation
-            self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
             # send email
-            send_referral_email_notification(self,request,reminder=True)
+            recipients = self.referral_group.members_list
+            send_referral_email_notification(self,recipients,request,reminder=True)
 
     def resend(self,request):
         with transaction.atomic():
@@ -1662,11 +1677,14 @@ class Referral(models.Model):
             self.sent_from = 1
             self.save()
             # Create a log entry for the proposal
-            self.proposal.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            #self.proposal.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            self.proposal.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
             # Create a log entry for the organisation
-            self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            #self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
             # send email
-            send_referral_email_notification(self,request)
+            recipients = self.referral_group.members_list
+            send_referral_email_notification(self,recipients,request)
 
     def complete(self,request, referral_comment):
         with transaction.atomic():
@@ -1677,9 +1695,11 @@ class Referral(models.Model):
                 self.referral_text = referral_comment
                 self.save()
                 # TODO Log proposal action
-                self.proposal.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+                #self.proposal.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+                self.proposal.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
                 # TODO log organisation action
-                self.proposal.applicant.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+                #self.proposal.applicant.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+                self.proposal.applicant.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
                 send_referral_complete_email_notification(self,request)
             except:
                 raise
@@ -1687,6 +1707,7 @@ class Referral(models.Model):
     def send_referral(self,request,referral_email,referral_text):
         with transaction.atomic():
             try:
+                import ipdb; ipdb.set_trace()
                 if self.proposal.processing_status == 'with_referral':
                     if request.user != self.referral:
                         raise exceptions.ReferralNotAuthorized()
@@ -1730,7 +1751,8 @@ class Referral(models.Model):
                     # Create a log entry for the organisation
                     self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.proposal.id,'{}({})'.format(user.get_full_name(),user.email)),request)
                     # send email
-                    send_referral_email_notification(referral,request)
+                    recipients = self.email_group.members_list
+                    send_referral_email_notification(referral,recipients,request)
                 else:
                     raise exceptions.ProposalReferralCannotBeSent()
             except:

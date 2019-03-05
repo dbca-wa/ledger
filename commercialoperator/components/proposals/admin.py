@@ -142,7 +142,7 @@ class Activity(admin.ModelAdmin):
 
 @admin.register(AccessType)
 class VehicleAdmin(admin.ModelAdmin):
-    list_display = ['id','name', 'visible']
+    list_display = ['id','name','visible']
     ordering = ('id',)
 
 @admin.register(models.ReferralRecipientGroup)

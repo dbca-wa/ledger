@@ -74,10 +74,19 @@
                                 <div class="col-sm-12 top-buffer-s">
                                     <strong>Referrals</strong><br/>
                                     <div class="form-group">
+
+                                        <!--
                                         <select :disabled="!canLimitedAction" ref="department_users" class="form-control">
                                             <option value="null"></option>
                                             <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
                                         </select>
+                                        -->
+
+                                        <select :disabled="!canLimitedAction" ref="referral_recipient_groups" class="form-control">
+                                            <option value="null"></option>
+                                            <option v-for="group in referral_recipient_groups" :value="group">{{group}}</option>
+                                        </select>
+
                                         <template v-if='!sendingReferral'>
                                             <template v-if="selected_referral">
                                                 <label class="control-label pull-left"  for="Name">Comments</label>
@@ -99,7 +108,7 @@
                                         </tr>
                                         <tr v-for="r in proposal.latest_referrals">
                                             <td>
-                                                <small><strong>{{r.referral}}</strong></small><br/>
+                                                <small><strong>{{r.referral_group}.name}</strong></small><br/>
                                                 <small><strong>{{r.lodged_on | formatDate}}</strong></small>
                                             </td>
                                             <td>
@@ -420,6 +429,7 @@ export default {
             form: null,
             members: [],
             department_users : [],
+            referral_recipient_groups : [],
             contacts_table_initialised: false,
             initialisedSelects: false,
             showingProposal:false,
@@ -802,6 +812,19 @@ export default {
                 vm.loading.splice('Loading Department Users',1);
             })
         },
+        fetchReferralRecipientGroups: function(){
+            let vm = this;
+            vm.loading.push('Loading Referral Recipient Groups');
+            vm.$http.get(api_endpoints.referral_recipient_groups).then((response) => {
+                vm.referral_recipient_groups = response.body
+                vm.loading.splice('Loading Referral Recipient Groups',1);
+            },(error) => {
+                console.log(error);
+                vm.loading.splice('Loading Referral Recipient Groups',1);
+            })
+        },
+
+
         initialiseAssignedOfficerSelect:function(reinit=false){
             let vm = this;
             if (reinit){
@@ -841,7 +864,8 @@ export default {
         initialiseSelects: function(){
             let vm = this;
             if (!vm.initialisedSelects){
-                $(vm.$refs.department_users).select2({
+                //$(vm.$refs.department_users).select2({
+                $(vm.$refs.referral_recipient_groups).select2({
                     "theme": "bootstrap",
                     allowClear: true,
                     placeholder:"Select Referral"
@@ -865,65 +889,38 @@ export default {
             vm.sendingReferral = true;
             vm.$http.post(vm.proposal_form_url,formData).then(res=>{
             
-            let data = {'email':vm.selected_referral, 'text': vm.referral_text};
-            //vm.sendingReferral = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assesor_send_referral')),JSON.stringify(data),{
-                emulateJSON:true
-            }).then((response) => {
-                vm.sendingReferral = false;
-                vm.original_proposal = helpers.copyObject(response.body);
-                vm.proposal = response.body;
-                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
-                swal(
-                    'Referral Sent',
-                    'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
-                    'success'
-                )
-                $(vm.$refs.department_users).val(null).trigger("change");
-                vm.selected_referral = '';
-                vm.referral_text = '';
-            }, (error) => {
-                console.log(error);
-                swal(
-                    'Referral Error',
-                    helpers.apiVueResourceError(error),
-                    'error'
-                )
-                vm.sendingReferral = false;
-            });
+                let data = {'email_group':vm.selected_referral, 'text': vm.referral_text};
+                //vm.sendingReferral = true;
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assesor_send_referral')),JSON.stringify(data),{
+                    emulateJSON:true
+                }).then((response) => {
+                    vm.sendingReferral = false;
+                    vm.original_proposal = helpers.copyObject(response.body);
+                    vm.proposal = response.body;
+                    vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                    swal(
+                        'Referral Sent',
+                        //'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
+                        'The referral has been sent to '+vm.referral_recipient_groups.find(d => d.email == vm.selected_referral).name,
+                        'success'
+                    )
+                    //$(vm.$refs.department_users).val(null).trigger("change");
+                    $(vm.$refs.referral_recipient_groups).val(null).trigger("change");
+                    vm.selected_referral = '';
+                    vm.referral_text = '';
+                }, (error) => {
+                    console.log(error);
+                    swal(
+                        'Referral Error',
+                        helpers.apiVueResourceError(error),
+                        'error'
+                    )
+                    vm.sendingReferral = false;
+                });
 
               
-          },err=>{
-          });
-         
-        //this.$refs.referral_comment.selected_referral = vm.selected_referral;           
-        //this.$refs.referral_comment.isModalOpen = true;
-
-          /*  let data = {'email':vm.selected_referral};
-            vm.sendingReferral = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assesor_send_referral')),JSON.stringify(data),{
-                emulateJSON:true
-            }).then((response) => {
-                vm.sendingReferral = false;
-                vm.original_proposal = helpers.copyObject(response.body);
-                vm.proposal = response.body;
-                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
-                swal(
-                    'Referral Sent',
-                    'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
-                    'success'
-                )
-                $(vm.$refs.department_users).val(null).trigger("change");
-                vm.selected_referral = '';
-            }, (error) => {
-                console.log(error);
-                swal(
-                    'Referral Error',
-                    helpers.apiVueResourceError(error),
-                    'error'
-                )
-                vm.sendingReferral = false;
-            }); */
+            },err=>{
+            });
         },
         remindReferral:function(r){
             let vm = this;
@@ -993,6 +990,7 @@ export default {
     mounted: function() {
         let vm = this;
         vm.fetchDeparmentUsers();
+        vm.fetchReferralRecipientGroups();
         
     },
     updated: function(){

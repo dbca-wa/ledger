@@ -37,6 +37,7 @@ from commercialoperator.components.proposals.models import (
     Proposal,
     ProposalDocument,
     Referral,
+    ReferralRecipientGroup,
     ProposalRequirement,
     ProposalStandardRequirement,
     AmendmentRequest,
@@ -908,12 +909,13 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def assesor_send_referral(self, request, *args, **kwargs):
         try:
+            #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             serializer = SendReferralSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             #text=serializer.validated_data['text']
             #instance.send_referral(request,serializer.validated_data['email'])
-            instance.send_referral(request,serializer.validated_data['email'], serializer.validated_data['text'])
+            instance.send_referral(request,serializer.validated_data['email_group'], serializer.validated_data['text'])
             serializer = InternalProposalSerializer(instance,context={'request':request})
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -1166,6 +1168,11 @@ class ReferralViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @list_route(methods=['GET',])
+    def user_group_list(self, request, *args, **kwargs):
+        qs = ReferralRecipientGroup.objects.filter().values_list('name', flat=True)
+        return Response(qs)
+
+    @list_route(methods=['GET',])
     def datatable_list(self, request, *args, **kwargs):
         proposal = request.GET.get('proposal',None)
         qs = self.get_queryset().all()
@@ -1239,6 +1246,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['GET',])
     def resend(self, request, *args, **kwargs):
         try:
+            import ipdb; ipdb.set_trace()
             instance = self.get_object()
             instance.resend(request)
             serializer = InternalProposalSerializer(instance.proposal,context={'request':request})
@@ -1256,6 +1264,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def send_referral(self, request, *args, **kwargs):
         try:
+            import ipdb; ipdb.set_trace()
             instance = self.get_object()
             serializer = SendReferralSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
