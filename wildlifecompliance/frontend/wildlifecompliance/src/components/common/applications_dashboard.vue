@@ -248,6 +248,9 @@ export default {
             application_status: [],
             application_ex_headers:["Number","Licence Category","Activity","Submitter","Applicant","Status","Lodged on","Action"],
             application_ex_options:{
+                order: [
+                    [0, 'desc']
+                ],
                 autoWidth: false,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -310,6 +313,9 @@ export default {
             },
             application_headers:internal_application_headers,
             application_options:{
+                order: [
+                    [0, 'desc']
+                ],
                 autoWidth: false,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"

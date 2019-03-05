@@ -103,6 +103,9 @@ export default {
             application_submitters: [],
             application_headers:["Number","Licence Category","Activity","Submitter","Applicant","Status","Lodged on","Action"],
             application_options:{
+                order: [
+                    [0, 'desc']
+                ],
                 customApplicationSearch: true,
                 tableID: 'application-datatable-'+vm._uid,
                 language: {
