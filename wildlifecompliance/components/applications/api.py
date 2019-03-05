@@ -521,6 +521,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     def assign_to(self, request, *args, **kwargs):
+        #TODO: turn this into "Assign to Officer" as Assessor functionality is different than Disturbance
         try:
             instance = self.get_object()
             user_id = request.data.get('assessor_id', None)
