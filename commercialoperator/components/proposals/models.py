@@ -673,7 +673,7 @@ class Proposal(RevisionedMixin):
                 try:
                     current_parks=self.parks.all()
                     if current_parks:
-                        print current_parks
+                        #print current_parks
                         for p in current_parks:
                             p.delete()
                     for item in parks:
@@ -681,7 +681,7 @@ class Proposal(RevisionedMixin):
                             park=Park.objects.get(id=item)
                             ProposalPark.objects.create(proposal=self, park=park)
                         except:
-                            raise                        
+                            raise
                 except:
                     raise
 
@@ -1297,7 +1297,7 @@ class ProposalParkActivity(models.Model):
     activity = models.ForeignKey(Activity, blank=True, null=True)
 
     class Meta:
-        app_label = 'commercialoperator' 
+        app_label = 'commercialoperator'
         unique_together = ('proposal_park', 'activity')
 
 class ProposalTrail(models.Model):
@@ -1330,7 +1330,7 @@ class Vessel(models.Model):
     spv_no = models.CharField(max_length=200, blank=True)
     hire_rego = models.CharField(max_length=200, blank=True)
     craft_no = models.CharField(max_length=200, blank=True)
-    size = models.CharField(max_length=200, blank=True)  
+    size = models.CharField(max_length=200, blank=True)
     #rego_expiry= models.DateField(blank=True, null=True)
     proposal = models.ForeignKey(Proposal, related_name='vessels')
 
@@ -1549,7 +1549,7 @@ class ProposalUserAction(UserAction):
 
 
 class ReferralRecipientGroup(models.Model):
-    #site = models.OneToOneField(Site, default='1') 
+    #site = models.OneToOneField(Site, default='1')
     name = models.CharField(max_length=30, unique=True)
     members = models.ManyToManyField(EmailUser)
 
@@ -1575,7 +1575,7 @@ class ReferralRecipientGroup(models.Model):
     class Meta:
         app_label = 'commercialoperator'
         verbose_name_plural = "Referral recipient group"
-        
+
 #class ReferralRequestUserAction(UserAction):
 #    ACTION_LODGE_REQUEST = "Lodge request {}"
 #    ACTION_ASSIGN_TO = "Assign to {}"

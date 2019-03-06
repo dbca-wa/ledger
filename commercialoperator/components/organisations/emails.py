@@ -230,7 +230,7 @@ def send_org_access_group_request_accept_email_notification(org_request, request
     _log_org_request_email(msg, org_request, sender=sender)
 
     # commenting out because Organisation does not yet exist - only OrganisationRequest exists
-    #_log_org_email(msg, organisation, org_request.requester, sender=sender) 
+    #_log_org_email(msg, organisation, org_request.requester, sender=sender)
 
 
 def send_organisation_request_decline_email_notification(org_request,request):

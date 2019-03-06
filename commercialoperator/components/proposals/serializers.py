@@ -384,7 +384,8 @@ class ApplicantSerializer(serializers.ModelSerializer):
 
 
 class ProposalReferralSerializer(serializers.ModelSerializer):
-    referral = serializers.CharField(source='referral.get_full_name')
+    #referral = serializers.CharField(source='referral.get_full_name')
+    referral = serializers.CharField(source='referral_group.name')
     processing_status = serializers.CharField(source='get_processing_status_display')
     class Meta:
         model = Referral

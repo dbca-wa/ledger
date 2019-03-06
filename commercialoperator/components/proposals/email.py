@@ -103,7 +103,7 @@ def send_amendment_email_notification(amendment_request, request, proposal):
     url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
 
     if "-internal" in url:
-        # remove '-internal'. This email is for external submitters 
+        # remove '-internal'. This email is for external submitters
         url = ''.join(url.split('-internal'))
 
     context = {
@@ -141,7 +141,7 @@ def send_external_submit_email_notification(request, proposal):
     url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
 
     if "-internal" in url:
-        # remove '-internal'. This email is for external submitters 
+        # remove '-internal'. This email is for external submitters
         url = ''.join(url.split('-internal'))
 
     context = {
