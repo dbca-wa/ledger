@@ -1291,6 +1291,14 @@ class ProposalParkActivity(models.Model):
         app_label = 'commercialoperator' 
         unique_together = ('proposal_park', 'activity')
 
+class ProposalParkAccess(models.Model):
+    proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='access_types')
+    access_type = models.ForeignKey(AccessType, blank=True, null=True)
+
+    class Meta:
+        app_label = 'commercialoperator' 
+        unique_together = ('proposal_park', 'access_type')
+
 class ProposalTrail(models.Model):
     trail = models.ForeignKey(Trail, blank=True, null=True, related_name='proposals')
     proposal = models.ForeignKey(Proposal, blank=True, null=True, related_name='trails')

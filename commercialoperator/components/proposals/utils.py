@@ -2,9 +2,9 @@ import re
 from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
-from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity
+from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess
 from commercialoperator.components.proposals.serializers import SaveProposalSerializer, SaveProposalParkSerializer, SaveProposalTrailSerializer
-from commercialoperator.components.main.models import Activity, Park
+from commercialoperator.components.main.models import Activity, Park, AccessType
 import traceback
 import os
 
@@ -297,6 +297,7 @@ def save_park_activity_data(instance,select_parks_activities):
                 try:
                     #current_parks=instance.parks.all()
                     selected_parks=[]
+                    print("2 step", select_parks_activities)
                     for item in select_parks_activities:
                         if item['park']:
                             selected_parks.append(item['park'])
@@ -305,6 +306,9 @@ def save_park_activity_data(instance,select_parks_activities):
                                 park=ProposalPark.objects.get(park=item['park'],proposal=instance)
                                 current_activities=park.land_activities.all()
                                 current_activities_id=[a.activity_id for a in current_activities]
+                                #Get the access records related to ProposalPark
+                                current_access=park.access_types.all()
+                                current_access_id=[a.access_type_id for a in current_access]
                                 if item['activities']:
                                     for a in item['activities']:
                                         if a in current_activities_id:
@@ -312,8 +316,21 @@ def save_park_activity_data(instance,select_parks_activities):
                                             pass
                                         else:
                                             try:
+                                                #TODO add logging
                                                 activity=Activity.objects.get(id=a)
                                                 ProposalParkActivity.objects.create(proposal_park=park, activity=activity)
+                                            except:
+                                                raise
+                                if item['access']:
+                                    for a in item['access']:
+                                        if a in current_access_id:
+                                            #if access type already exists then pass otherwise create the record.
+                                            pass
+                                        else:
+                                            try:
+                                                #TODO add logging
+                                                access=AccessType.objects.get(id=a)
+                                                ProposalParkAccess.objects.create(proposal_park=park, access_type=access)
                                             except:
                                                 raise
                             except ProposalPark.DoesNotExist:
@@ -327,7 +344,13 @@ def save_park_activity_data(instance,select_parks_activities):
                                             activity=Activity.objects.get(id=a)
                                             ProposalParkActivity.objects.create(proposal_park=park, activity=activity)
                                         except:
-                                            raise  
+                                            raise
+                                    for a in item['access']:
+                                        try:
+                                            access=AccessType.objects.get(id=a)
+                                            ProposalParkAccess.objects.create(proposal_park=park, access_type=access)
+                                        except:
+                                            raise   
                                 except:
                                     raise
                             #compare all activities (new+old) with the list of activities selected activities to get
@@ -335,10 +358,16 @@ def save_park_activity_data(instance,select_parks_activities):
                             new_activities=park.land_activities.all()
                             new_activities_id=set(a.activity_id for a in new_activities)
                             diff_activity=set(new_activities_id).difference(set(item['activities']))
-                            print ("activities",new_activities_id, diff_activity)
                             for d in diff_activity:
                                 act=ProposalParkActivity.objects.get(activity_id=d, proposal_park=park)
                                 act.delete()
+                            new_access=park.access_types.all()
+                            new_access_id=set(a.access_type_id for a in new_access)
+                            diff_access=set(new_access_id).difference(set(item['access']))
+                            print ("access",new_access_id, diff_access)
+                            for d in diff_access:
+                                acc=ProposalParkAccess.objects.get(access_type_id=d, proposal_park=park)
+                                acc.delete()
                     new_parks=instance.parks.filter(park__park_type='land')
                     new_parks_id=set(p.park_id for p in new_parks)
                     diff_parks=set(new_parks_id).difference(set(selected_parks))
@@ -352,7 +381,7 @@ def save_park_activity_data(instance,select_parks_activities):
             raise
 
 
-def save_proponent_data(instance,request,viewset,parks,trails):
+def save_proponent_data(instance,request,viewset,select_parks_activities,trails):
     with transaction.atomic():
         try:
 #            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
@@ -376,23 +405,24 @@ def save_proponent_data(instance,request,viewset,parks,trails):
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
-            if parks:
+            if select_parks_activities:
                 try:
-                    current_parks=instance.parks.all()
-                    if current_parks:
-                        for p in current_parks:
-                            p.delete()
-                    for item in parks:
-                        try:
-                            data_park={
-                            'park': item,
-                            'proposal': instance.id
-                            }
-                            serializer=SaveProposalParkSerializer(data=data_park)
-                            serializer.is_valid(raise_exception=True)
-                            serializer.save()
-                        except:
-                            raise                        
+                    print("1 step", select_parks_activities)
+                    save_park_activity_data(instance, select_parks_activities)
+                    # if current_parks:
+                    #     for p in current_parks:
+                    #         p.delete()
+                    # for item in parks:
+                    #     try:
+                    #         data_park={
+                    #         'park': item,
+                    #         'proposal': instance.id
+                    #         }
+                    #         serializer=SaveProposalParkSerializer(data=data_park)
+                    #         serializer.is_valid(raise_exception=True)
+                    #         serializer.save()
+                    #     except:
+                    #         raise                        
                 except:
                     raise
             if trails:

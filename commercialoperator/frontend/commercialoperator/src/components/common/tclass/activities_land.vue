@@ -434,6 +434,31 @@ export default {
           edit_activities: function(){
             this.$refs.edit_activities.isModalOpen = true;
         },
+        find_recurring: function(array){
+          var common=new Map();
+          array.forEach(function(obj){
+           var values=Object.values(obj)[0];//no need for uniqueness as OP states that they are already unique..
+           values.forEach(function(val){
+               common.set(val,(common.get(val)||0)+1);
+           });
+          });
+          var result=[];
+          common.forEach(function(appearance,el){
+            if(appearance===array.length){
+             result.push(el);
+            }
+          });
+
+          return result;
+        },
+        find_recurring2: function(array){
+          return [...
+            [].concat(...array.map((o) => Object.values(o)[0])) // combine to one array
+           .reduce((m, v) => m.set(v, (m.get(v) || 0) + 1), new Map()) // count the appearance of all values in a map
+         ] // convert the map to array of key/value pairs
+         .filter(([, v]) => v === array.length) // filter those that don't appear enough times
+         .map(([k]) => k); // extract just the keys
+                }
         },
 
         mounted: function() {
@@ -452,14 +477,46 @@ export default {
                   }); 
             vm.fetchRegions(); 
             vm.fetchTrails();
-            for (var i = 0; i < vm.proposal.parks.length; i++) {
-              this.selected_parks.push(vm.proposal.parks[i].park.id);
-              //still testing below code, part of functionality to fetch and store park and park actitivies
-              for (var j = 0; j < vm.proposal.parks[i].land_activities.length; j++) {
-                this.selected_activities.push(vm.proposal.parks[i].land_activities[j].activity.id);
-               }
+            // for (var i = 0; i < vm.proposal.parks.length; i++) {
+            //   this.selected_parks.push(vm.proposal.parks[i].park.id);
+            //   //still testing below code, part of functionality to fetch and store park and park actitivies
+            //   for (var j = 0; j < vm.proposal.parks[i].land_activities.length; j++) {
+            //     this.selected_activities.push(vm.proposal.parks[i].land_activities[j].activity.id);
+            //    }
+            // }
 
+            for (var i = 0; i < vm.proposal.parks.length; i++) {
+              var current_park=vm.proposal.parks[i].park.id
+              var current_activities=[]
+              var current_access=[]
+              for (var j = 0; j < vm.proposal.parks[i].land_activities.length; j++) {
+                current_activities.push(vm.proposal.parks[i].land_activities[j].activity.id);
+              }
+               for (var k = 0; k < vm.proposal.parks[i].access_types.length; k++){
+                current_access.push(vm.proposal.parks[i].access_types[k].access_type.id);
+               }
+               var data={
+                'park': current_park,
+                'activities': current_activities,
+                'access':current_access  
+               }
+               vm.selected_parks_activities.push(data)
             }
+
+            var activity_list=[]
+            var access_list=[]
+            var park_list=[]
+            for (var i=0; i<vm.selected_parks_activities.length; i++)
+            { 
+              park_list.push(vm.selected_parks_activities[i].park);
+              activity_list.push({'key' : vm.selected_parks_activities[i].activities});
+              access_list.push({'key' : vm.selected_parks_activities[i].access});
+            }
+
+            vm.selected_activities = vm.find_recurring(activity_list)
+            vm.selected_access=vm.find_recurring(access_list)
+            vm.selected_parks=park_list
+
             for (var i = 0; i < vm.proposal.trails.length; i++) {
               this.selected_trails.push(vm.proposal.trails[i].trail.id);
             }  
