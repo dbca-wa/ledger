@@ -58,7 +58,7 @@ def booking_refunds(start,end):
         # Get the required invoices
         for e in cash:
             booking, invoice = None, None
-            if e.invoice.system == '0019':
+            if e.invoice.system == '0516':
                 try:
                     booking = BookingInvoice.objects.get(invoice_reference=e.invoice.reference).booking
                     invoice = e.invoice
@@ -87,7 +87,7 @@ def booking_refunds(start,end):
             booking, invoice = None, None
             try:
                 invoice = Invoice.objects.get(reference=b.crn1)
-                if invoice.system == '0019':
+                if invoice.system == '0516':
                     try:
                         booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
                     except BookingInvoice.DoesNotExist:
