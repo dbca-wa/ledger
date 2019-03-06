@@ -222,25 +222,6 @@ def ooolldcreate_booking_by_site(campsite_id, start_date, end_date, num_adult=0,
     # On success, return the temporary booking
     return booking
 
-def check_mooring_availablity_old(mooring_id, start_date, end_date):
-
-    start_date_time = datetime.strptime(str(start_date)+str(' 00:00'), '%Y-%m-%d %H:%M')
-    end_date_time = datetime.strptime(str(end_date)+str(' 23:59'), '%Y-%m-%d %H:%M')
-
-    bookings_qs =  MooringsiteBooking.objects.filter(
-                        campsite_id=mooring_id,
-                        from_dt__gte=start_date_time,
-                        to_dt__lt=end_date_time,
-                   ).order_by('date', 'campsite__name')
-
-    duration = (end_date-start_date).days
-
-    avail_check = bookings_qs.count()
-    if avail_check > 0:
-       return "full"
-    else:
-       return "free"
-
 def check_mooring_available_by_time(campsite_id, start_date_time, end_date_time):
 
      # Confirmed Bookings
