@@ -520,8 +520,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST', ])
-    def assign_to(self, request, *args, **kwargs):
-        #TODO: turn this into "Assign to Officer" as Assessor functionality is different than Disturbance
+    def assign_officer(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             user_id = request.data.get('assessor_id', None)
@@ -553,10 +552,10 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET', ])
-    def unassign(self, request, *args, **kwargs):
+    def unassign_officer(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            instance.unassign(request)
+            instance.unassign_officer(request)
             serializer = InternalApplicationSerializer(
                 instance, context={'request': request})
             return Response(serializer.data)

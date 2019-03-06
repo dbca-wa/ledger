@@ -13,7 +13,6 @@ from wildlifecompliance.exceptions import BindApplicationException
 import xlwt
 from wildlifecompliance.utils import serialize_export, unique_column_names
 from datetime import datetime
-from wildlifecompliance.utils.excel_utils import ExcelWriter
 from django.utils import timezone
 import os
 import subprocess

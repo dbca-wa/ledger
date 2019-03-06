@@ -98,13 +98,6 @@ class ApplicationGroupType(models.Model):
     def display_name(self):
         return self.__str__
 
-    def member_is_assigned(self, member):
-        # for p in self.current_applications:
-        #     if p.assigned_officer == member:
-        #         return True
-        # return False
-        return False
-
 
 class ApplicationDocument(Document):
     application = models.ForeignKey('Application', related_name='documents')
@@ -125,12 +118,6 @@ class ApplicationDocument(Document):
     class Meta:
         app_label = 'wildlifecompliance'
 
-#class PdfLicenceDocument(Document):
-#    application = models.ForeignKey('Application',related_name='pdf_licence_documents')
-#    _file = models.FileField(upload_to=update_licence_doc_filename)
-#
-#    class Meta:
-#        app_label = 'wildlifecompliance'
 
 class Application(RevisionedMixin):
 
@@ -263,11 +250,6 @@ class Application(RevisionedMixin):
         blank=True,
         null=True,
         related_name='wildlifecompliance_applications_assigned')
-    assigned_approver = models.ForeignKey(
-        EmailUser,
-        blank=True,
-        null=True,
-        related_name='wildlifecompliance_applications_licences')
     processing_status = models.CharField(
         'Processing Status',
         max_length=30,
@@ -727,57 +709,25 @@ class Application(RevisionedMixin):
     def assign_officer(self, request, officer):
         with transaction.atomic():
             try:
-                if self.processing_status == 'with_approver':
-                    if officer != self.assigned_approver:
-                        self.assigned_approver = officer
-                        self.save()
-                        # Create a log entry for the application
-                        self.log_user_action(ApplicationUserAction.ACTION_ASSIGN_TO_APPROVER.format(
-                            self.id, '{}({})'.format(officer.get_full_name(), officer.email)), request)
-                        # Create a log entry for the organisation
-                        self.applicant.log_user_action(
-                            ApplicationUserAction.ACTION_ASSIGN_TO_APPROVER.format(
-                                self.id, '{}({})'.format(
-                                    officer.get_full_name(), officer.email)), request)
-                else:
-                    if officer != self.assigned_officer:
-                        self.assigned_officer = officer
-                        self.save()
-                        # Create a log entry for the application
-                        self.log_user_action(ApplicationUserAction.ACTION_ASSIGN_TO_ASSESSOR.format(
-                            self.id, '{}({})'.format(officer.get_full_name(), officer.email)), request)
-                        # Create a log entry for the organisation
-                        # self.applicant.log_user_action(ApplicationUserAction.ACTION_ASSIGN_TO_ASSESSOR.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
+                if officer != self.assigned_officer:
+                    self.assigned_officer = officer
+                    self.save()
+                    # Create a log entry for the application
+                    self.log_user_action(ApplicationUserAction.ACTION_ASSIGN_TO_OFFICER.format(
+                        self.id, '{}({})'.format(officer.get_full_name(), officer.email)), request)
             except BaseException:
                 raise
 
-    def unassign(self, request):
+    def unassign_officer(self, request):
         with transaction.atomic():
             try:
-                if self.processing_status == 'with_approver':
-                    if self.assigned_approver:
-                        self.assigned_approver = None
-                        self.save()
-                        # Create a log entry for the application
-                        self.log_user_action(
-                            ApplicationUserAction.ACTION_UNASSIGN_APPROVER.format(
-                                self.id), request)
-                        # Create a log entry for the organisation
-                        self.applicant.log_user_action(
-                            ApplicationUserAction.ACTION_UNASSIGN_APPROVER.format(
-                                self.id), request)
-                else:
-                    if self.assigned_officer:
-                        self.assigned_officer = None
-                        self.save()
-                        # Create a log entry for the application
-                        self.log_user_action(
-                            ApplicationUserAction.ACTION_UNASSIGN_ASSESSOR.format(
-                                self.id), request)
-                        # Create a log entry for the organisation
-                        self.applicant.log_user_action(
-                            ApplicationUserAction.ACTION_UNASSIGN_ASSESSOR.format(
-                                self.id), request)
+                if self.assigned_officer:
+                    self.assigned_officer = None
+                    self.save()
+                    # Create a log entry for the application
+                    self.log_user_action(
+                        ApplicationUserAction.ACTION_UNASSIGN_OFFICER.format(
+                            self.id), request)
             except BaseException:
                 raise
 
@@ -1498,7 +1448,6 @@ class ApplicationSelectedActivity(models.Model):
     proposed_start_date = models.DateField(null=True, blank=True)
     proposed_end_date = models.DateField(null=True, blank=True)
     is_activity_renewable = models.BooleanField(default=False)
-
     purpose = models.TextField(blank=True, null=True)
     additional_info = models.TextField(blank=True, null=True)
     conditions = models.TextField(blank=True, null=True)
@@ -1585,10 +1534,10 @@ class ApplicationUserAction(UserAction):
     ACTION_CREATE_CUSTOMER_ = "Create customer {}"
     ACTION_CREATE_PROFILE_ = "Create profile {}"
     ACTION_LODGE_APPLICATION = "Lodge application {}"
-    ACTION_ASSIGN_TO_ASSESSOR = "Assign application {} to {} as the assessor"
-    ACTION_UNASSIGN_ASSESSOR = "Unassign assessor from application {}"
-    ACTION_ASSIGN_TO_APPROVER = "Assign application {} to {} as the approver"
-    ACTION_UNASSIGN_APPROVER = "Unassign approver from application {}"
+    ACTION_ASSIGN_TO_OFFICER = "Assign application {} to officer {}"
+    ACTION_UNASSIGN_OFFICER = "Unassign officer from application {}"
+    # ACTION_ASSIGN_TO_APPROVER = "Assign application {} to {} as the approver"
+    # ACTION_UNASSIGN_APPROVER = "Unassign approver from application {}"
     ACTION_ACCEPT_ID = "Accept ID"
     ACTION_RESET_ID = "Reset ID"
     ACTION_ID_REQUEST_UPDATE = 'Request ID update'
@@ -1629,107 +1578,6 @@ class ApplicationUserAction(UserAction):
 
     application = models.ForeignKey(Application, related_name='action_logs')
 
-
-class ExcelApplication(models.Model):
-    application = models.ForeignKey(
-        Application, related_name='excel_applications')
-    data = JSONField(blank=True, null=True)
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
-    @property
-    def cols_output(self):
-        return OrderedDict([
-            ('lodgement_number', self.lodgement_number),
-            ('application_id', self.application.id),
-            ('licence_number', self.licence_number),
-            ('applicant', self.applicant_details),
-            ('applicant_type', self.applicant_type),
-            ('applicant_id', self.applicant_id),
-            # ('applicant', None),
-            # ('applicant_id', None),
-        ])
-
-    @property
-    def licence_category(self):
-        # return self.application.licence_category
-        return self.application.licence_type_short_name
-
-    @property
-    def lodgement_number(self):
-        return self.application.lodgement_number
-
-    @property
-    def licence_number(self):
-        return self.application.licence.licence_number if self.application.licence else None
-
-    @property
-    def applicant(self):
-        return self.application.applicant
-
-    @property
-    def applicant_id(self):
-        return self.application.applicant_id
-
-    @property
-    def applicant_details(self):
-        return self.application.applicant_details
-
-    @property
-    def applicant_type(self):
-        return self.application.applicant_type
-
-#    @property
-#    def applicant_block(self):
-# return '{}\n{}'.format(self.applicant,
-# OrganisationAddress.objects.get(organisation__name=self.applicant.name).__str__())
-
-
-class ExcelActivity(models.Model):
-    excel_app = models.ForeignKey(
-        ExcelApplication,
-        related_name='excel_activities')
-    activity_name = models.CharField(max_length=68, blank=True)
-    name = models.CharField(max_length=68, blank=True)
-    short_name = models.CharField(max_length=68, blank=True)
-    data = JSONField(blank=True, null=True)
-    conditions = models.TextField(blank=True, null=True)
-    issue_date = models.DateTimeField(blank=True, null=True)
-    start_date = models.DateField(blank=True, null=True)
-    expiry_date = models.DateField(blank=True, null=True)
-    issued = models.NullBooleanField(default=None)
-    processed = models.NullBooleanField(default=None)
-
-    class Meta:
-        unique_together = (('excel_app', 'short_name'))
-        app_label = 'wildlifecompliance'
-
-#    def save(self, *args, **kwargs):
-#        super(ExcelActivity, self).save(*args, **kwargs)
-#        if self.short_name == '':
-#           self.short_name = self.excel_app.licence_category
-#            self.save()
-
-    @property
-    def application(self):
-        return self.excel_app.application
-
-    @property
-    def code(self):
-        return self.short_name[:2].lower()
-
-#    @property
-#    def cols_output(self):
-#        return OrderedDict([
-#            #('short_name', self.short_name),
-#            ('{}-conditions'.format(self.code), self.conditions),
-#            ('{}-application_id'.format(self.code), self.issue_date),
-#            ('{}-licence_number'.format(self.code), self.start_date),
-#            ('{}-applicant'.format(self.code), self.expiry_date),
-#            ('{}-issued'.format(self.code), self.issued),
-#            ('{}-processed'.format(self.code), self.processed),
-#        ])
 
 @receiver(pre_delete, sender=Application)
 def delete_documents(sender, instance, *args, **kwargs):

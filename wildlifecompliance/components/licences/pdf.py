@@ -324,9 +324,17 @@ def _create_licence(licence_buffer, licence, application):
                             colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
                             style=dates_licensing_officer_table_style))
 
-    # proponent details
+    # applicant details
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    address = application.applicant.organisation.postal_address
+    if application.applicant_type == application.APPLICANT_TYPE_ORGANISATION:
+        address = application.org_applicant.postal_address
+        pass
+    elif application.applicant_type == application.APPLICANT_TYPE_PROXY:
+        address = application.proxy_applicant.residential_address
+        pass
+    else:  # application.applicant_type == application.APPLICANT_TYPE_SUBMITTER
+        address = application.submitter.residential_address
+
     address_paragraphs = [
         Paragraph(
             address.line1, styles['Left']), Paragraph(
