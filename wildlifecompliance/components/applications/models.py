@@ -870,11 +870,7 @@ class Application(RevisionedMixin):
 
                 # Log application action
                 self.log_user_action(
-                    ApplicationUserAction.ACTION_PROPOSED_DECLINE.format(
-                        self.id), request)
-                # Log entry for organisation
-                self.applicant.log_user_action(
-                    ApplicationUserAction.ACTION_PROPOSED_DECLINE.format(
+                    ApplicationUserAction.ACTION_SEND_FOR_ASSESSMENT_TO_.format(
                         self.id), request)
             except BaseException:
                 raise
