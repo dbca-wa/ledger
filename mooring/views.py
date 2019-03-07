@@ -939,16 +939,12 @@ class MakeBookingsView(TemplateView):
 
         # if was discounted, include discount line and set total cost of booking.
         if booking.override_price and overidden:
-            print ("BOOKING OVER RIDE")
-            print (booking.override_price)
             discount_line = utils.override_lineitems(booking.override_price, booking.override_reason, total, oracle_code, booking.override_reason_info)
             for line in discount_line:
                 lines.append(line)
             #total = booking.override_price
         total = sum([Decimal(p['price_incl_tax'])*p['quantity'] for p in lines])
 
-        print "LINES"
-        print (lines)
         # get the customer object
         if request.user.is_anonymous() or request.user.is_staff:
             if booking.old_booking is None:     
