@@ -261,14 +261,6 @@ export default {
                 }
               }
             }
-            // for(var temp of vm.selected_parks_activities){
-            //   if(added.length!=0){
-            //     if(temp.activities.indexOf(added[0])<0){
-            //       temp.activities.push(added[0]);
-            //     }
-            //    }
-            // }
-
           }
         },
         selected_access: function(){
@@ -368,7 +360,7 @@ export default {
               }
             }
           },
-          trail_activities: function(){
+        trail_activities: function(){
           let vm=this;
           var removed=$(vm.trail_activities_before).not(vm.trail_activities).get();
           var added=$(vm.trail_activities).not(vm.trail_activities_before).get();
@@ -422,11 +414,7 @@ export default {
             let vm = this;
             vm.$http.get('/api/trails.json').then((response) => {
             vm.trails = response.body;
-            //console.log(vm.trails);
-
-            // for (var i = 0; i < vm.api_regions.length; i++) {
-            //         this.regions.push( {text: vm.api_regions[i].name, value: vm.api_regions[i].id, districts: vm.api_regions[i].districts} );
-            //     }
+            
             },(error) => {
             console.log(error);
             })
@@ -434,31 +422,22 @@ export default {
           edit_activities: function(){
             this.$refs.edit_activities.isModalOpen = true;
         },
-        find_recurring: function(array){
-          var common=new Map();
-          array.forEach(function(obj){
-           var values=Object.values(obj)[0];//no need for uniqueness as OP states that they are already unique..
-           values.forEach(function(val){
-               common.set(val,(common.get(val)||0)+1);
-           });
-          });
-          var result=[];
-          common.forEach(function(appearance,el){
-            if(appearance===array.length){
-             result.push(el);
-            }
-          });
-
-          return result;
+          find_recurring: function(array){
+            var common=new Map();
+            array.forEach(function(obj){
+             var values=Object.values(obj)[0];
+             values.forEach(function(val){
+                 common.set(val,(common.get(val)||0)+1);
+             });
+            });
+            var result=[];
+            common.forEach(function(appearance,el){
+              if(appearance===array.length){
+               result.push(el);
+              }
+            });
+            return result;
         },
-        find_recurring2: function(array){
-          return [...
-            [].concat(...array.map((o) => Object.values(o)[0])) // combine to one array
-           .reduce((m, v) => m.set(v, (m.get(v) || 0) + 1), new Map()) // count the appearance of all values in a map
-         ] // convert the map to array of key/value pairs
-         .filter(([, v]) => v === array.length) // filter those that don't appear enough times
-         .map(([k]) => k); // extract just the keys
-                }
         },
 
         mounted: function() {
@@ -477,13 +456,6 @@ export default {
                   }); 
             vm.fetchRegions(); 
             vm.fetchTrails();
-            // for (var i = 0; i < vm.proposal.parks.length; i++) {
-            //   this.selected_parks.push(vm.proposal.parks[i].park.id);
-            //   //still testing below code, part of functionality to fetch and store park and park actitivies
-            //   for (var j = 0; j < vm.proposal.parks[i].land_activities.length; j++) {
-            //     this.selected_activities.push(vm.proposal.parks[i].land_activities[j].activity.id);
-            //    }
-            // }
 
             for (var i = 0; i < vm.proposal.parks.length; i++) {
               var current_park=vm.proposal.parks[i].park.id

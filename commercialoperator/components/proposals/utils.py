@@ -297,7 +297,6 @@ def save_park_activity_data(instance,select_parks_activities):
                 try:
                     #current_parks=instance.parks.all()
                     selected_parks=[]
-                    print("2 step", select_parks_activities)
                     for item in select_parks_activities:
                         if item['park']:
                             selected_parks.append(item['park'])
@@ -317,8 +316,12 @@ def save_park_activity_data(instance,select_parks_activities):
                                         else:
                                             try:
                                                 #TODO add logging
-                                                activity=Activity.objects.get(id=a)
-                                                ProposalParkActivity.objects.create(proposal_park=park, activity=activity)
+                                                if a in park.park.allowed_activities_ids:
+                                                    #raise Exception('Activity not allowed for this park')
+                                                    pass
+                                                else:    
+                                                    activity=Activity.objects.get(id=a)
+                                                    ProposalParkActivity.objects.create(proposal_park=park, activity=activity)
                                             except:
                                                 raise
                                 if item['access']:
@@ -341,8 +344,12 @@ def save_park_activity_data(instance,select_parks_activities):
                                     current_activities=[]
                                     for a in item['activities']:
                                         try:
-                                            activity=Activity.objects.get(id=a)
-                                            ProposalParkActivity.objects.create(proposal_park=park, activity=activity)
+                                            if a in park.park.allowed_activities_ids:
+                                                    #raise Exception('Activity not allowed for this park')
+                                                    pass
+                                            else:
+                                                activity=Activity.objects.get(id=a)
+                                                ProposalParkActivity.objects.create(proposal_park=park, activity=activity)
                                         except:
                                             raise
                                     for a in item['access']:
@@ -364,14 +371,12 @@ def save_park_activity_data(instance,select_parks_activities):
                             new_access=park.access_types.all()
                             new_access_id=set(a.access_type_id for a in new_access)
                             diff_access=set(new_access_id).difference(set(item['access']))
-                            print ("access",new_access_id, diff_access)
                             for d in diff_access:
                                 acc=ProposalParkAccess.objects.get(access_type_id=d, proposal_park=park)
                                 acc.delete()
                     new_parks=instance.parks.filter(park__park_type='land')
                     new_parks_id=set(p.park_id for p in new_parks)
                     diff_parks=set(new_parks_id).difference(set(selected_parks))
-                    print("parks", new_parks_id, selected_parks, diff_parks)
                     for d in diff_parks:
                         pk=ProposalPark.objects.get(park=d, proposal=instance)
                         pk.delete()
