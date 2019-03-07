@@ -406,12 +406,10 @@ class Application(RevisionedMixin):
 
     @property
     def licence_officers(self):
-        selected_activity_ids = list(
-            ApplicationSelectedActivity.objects.filter(
-                application_id=self.id,
-                licence_activity__isnull=False
-            ).values_list('licence_activity__id', flat=True)
-        )
+        selected_activity_ids = ApplicationSelectedActivity.objects.filter(
+            application_id=self.id,
+            licence_activity__isnull=False
+        ).values_list('licence_activity__id', flat=True)
         if not selected_activity_ids:
             return []
 
