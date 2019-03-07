@@ -150,11 +150,9 @@ export default {
                 mRender:function (data,type,full) {
                     let links = '';
                     if (!vm.is_external){
-                        links +=  full.can_be_processed ? `<a href='/internal/application/${full.id}'>Process</a><br/>`: `<a href='/external/application/${full.id}'>View</a><br/>`;
-
-                        if (full.processing_status!='Draft') {
-                            links +=  `<a href='/internal/application/${full.id}'>Assess</a><br/>`;
-                        }
+                        links +=  full.can_be_processed ?
+                            `<a href='/internal/application/${full.id}'>Process</a><br/>` :
+                            `<a href='/external/application/${full.id}'>View</a><br/>`;
                     }
                     if (vm.is_external){
                         if (full.can_current_user_edit) {
@@ -250,6 +248,9 @@ export default {
             application_status: [],
             application_ex_headers:["Number","Licence Category","Activity","Submitter","Applicant","Status","Lodged on","Action"],
             application_ex_options:{
+                order: [
+                    [0, 'desc']
+                ],
                 autoWidth: false,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -312,6 +313,9 @@ export default {
             },
             application_headers:internal_application_headers,
             application_options:{
+                order: [
+                    [0, 'desc']
+                ],
                 autoWidth: false,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"

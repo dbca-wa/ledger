@@ -67,6 +67,12 @@ api_patterns = [url(r'^api/profile/$',
                 url(r'^api/organisation_access_group_members',
                     org_api.OrganisationAccessGroupMembers.as_view(),
                     name='organisation-access-group-members'),
+                url(r'^api/search_keywords',
+                    application_api.SearchKeywordsView.as_view(),
+                    name='search_keywords'),
+                url(r'^api/search_reference',
+                    application_api.SearchReferenceView.as_view(),
+                    name='search_reference'),
                 url(r'^api/',
                     include(router.urls))]
 

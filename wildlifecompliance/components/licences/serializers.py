@@ -66,26 +66,7 @@ class DefaultActivitySerializer(serializers.ModelSerializer):
         )
 
 
-class LicenceCategorySerializer(serializers.ModelSerializer):
-    category_status = serializers.SerializerMethodField()
-    activity = DefaultActivitySerializer(many=True, read_only=True)
-
-    class Meta:
-        model = LicenceCategory
-        fields = (
-            'id',
-            'name',
-            'short_name',
-            'category_status',
-            'activity'
-
-        )
-
-    def get_category_status(self, obj):
-        return obj.get_licence_category_status_display()
-
-
-class UserPurposeSerializer(serializers.ModelSerializer):
+class PurposeSerializer(serializers.ModelSerializer):
     name = serializers.CharField()
     purpose_in_current_licence = serializers.SerializerMethodField(read_only=True)
 
@@ -112,7 +93,7 @@ class UserPurposeSerializer(serializers.ModelSerializer):
         return False
 
 
-class UserActivitySerializer(serializers.ModelSerializer):
+class ActivitySerializer(serializers.ModelSerializer):
     name = serializers.CharField()
     purpose = serializers.SerializerMethodField()
 
@@ -129,14 +110,14 @@ class UserActivitySerializer(serializers.ModelSerializer):
     def get_purpose(self, obj):
         purposes = self.context.get('purpose_records')
         purpose_records = purposes if purposes else obj.purpose.all()
-        serializer = UserPurposeSerializer(
+        serializer = PurposeSerializer(
             purpose_records,
             many=True,
         )
         return serializer.data
 
 
-class UserLicenceCategorySerializer(serializers.ModelSerializer):
+class LicenceCategorySerializer(serializers.ModelSerializer):
     category_status = serializers.SerializerMethodField()
     activity = serializers.SerializerMethodField()
 
@@ -163,7 +144,7 @@ class UserLicenceCategorySerializer(serializers.ModelSerializer):
             id__in=activity_ids
         ) if activity_ids else obj.activity.all()
 
-        serializer = UserActivitySerializer(
+        serializer = ActivitySerializer(
             activities,
             many=True,
             context={

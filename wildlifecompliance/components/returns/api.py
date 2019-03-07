@@ -145,18 +145,9 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
 
     @list_route(methods=['GET', ])
     def sheet_details(self, request, *args, **kwargs):
-        #instance = self.get_object()
-
-        #serializer = ReturnSerializer(qs, many=True)
-        #instance = self.get_object()
-        #serializer = self.get_serializer(instance)
-        #ret = Return.objects.get(id=5)
-
-        #serializer = self.get_serializer(ret)
-
         qs = self.get_queryset()
-        qs = qs.filter(id=5)
-
+        return_id = self.request.query_params.get('return_id')
+        qs = qs.filter(id=return_id)
         serializer = ReturnSerializer(qs, many=True)
 
         return Response(serializer.data)

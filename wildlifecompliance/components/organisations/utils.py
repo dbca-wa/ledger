@@ -106,8 +106,8 @@ def get_officer_email_list(organisation):
         if application.is_assigned:
             emails.add(application.assigned_officer.email)
         # Officer belonging to a group assigned to the application
-        for assessor in application.allowed_assessors:
-            emails.add(assessor.email)
+        for officer in application.licence_officers:
+            emails.add(officer.email)
     return emails
 
 
