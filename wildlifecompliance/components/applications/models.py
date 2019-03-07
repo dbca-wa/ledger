@@ -406,9 +406,22 @@ class Application(RevisionedMixin):
 
     @property
     def licence_officers(self):
-        #group = self.__assessor_group()
-        #  TODO: list all groups for all activities linked with application and return all distinct members
-        return group.members.all() if group else []
+        selected_activity_ids = list(
+            ApplicationSelectedActivity.objects.filter(
+                application_id=self.id,
+                licence_activity__isnull=False
+            ).values_list('licence_activity__id', flat=True)
+        )
+        if not selected_activity_ids:
+            return []
+
+        groups = ActivityPermissionGroup.objects.filter(
+            permissions__codename='licensing_officer',
+            licence_activities__id__in=selected_activity_ids
+        ).values_list('id', flat=True)
+        return EmailUser.objects.filter(
+            groups__id__in=groups
+        ).distinct()
 
     @property
     def licence_type_short_name(self):
@@ -554,9 +567,10 @@ class Application(RevisionedMixin):
                                     return_type=q.return_type)
 
                 self.save()
-
                 officer_groups = ActivityPermissionGroup.objects.filter(
-                    licence_category=self.licence_type_data["id"], name__icontains='officer')
+                    permissions__codename='licensing_officer',
+                    licence_activities__purpose__licence_category__id=self.licence_type_data["id"]
+                )
 
                 if self.amendment_requests:
                     self.log_user_action(
@@ -720,10 +734,11 @@ class Application(RevisionedMixin):
             try:
                 # Get the assessor groups the current user is member of for the
                 # selected activity tab
-                qs = ActivityPermissionGroup.objects.filter(
-                    #group_type='assessor',
+                qs = request.user.get_wildlifelicence_permission_group(
+                    permission_codename='assessor',
                     licence_activity_id=request.data.get('selected_assessment_tab'),
-                    members__email=request.user.email)
+                    first=False
+                )
 
                 # For each assessor groups get the assessments of current
                 # application whose status is awaiting_assessment and mark it

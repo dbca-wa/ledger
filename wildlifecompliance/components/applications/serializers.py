@@ -504,6 +504,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     can_be_processed = serializers.SerializerMethodField(read_only=True)
     activities = serializers.SerializerMethodField()
     processed = serializers.SerializerMethodField()
+    licence_officers = EmailUserAppViewSerializer(many=True)
 
     class Meta:
         model = Application
@@ -543,7 +544,8 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'licence_category',
             'pdf_licence',
             'activities',
-            'processed'
+            'processed',
+            'licence_officers',
         )
         read_only_fields = ('documents', 'conditions')
 

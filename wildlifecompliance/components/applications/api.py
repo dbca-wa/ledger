@@ -960,8 +960,7 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET', ])
     def user_list(self, request, *args, **kwargs):
         # Get the assessor groups the current user is member of
-        assessor_groups = ActivityPermissionGroup.objects.filter(
-            group_type='assessor', members__email=request.user.email)
+        assessor_groups = request.user.get_wildlifelicence_permission_group('assessor', first=False)
 
         # For each assessor groups get the assessments
         queryset = self.get_queryset().none()
@@ -1054,7 +1053,9 @@ class AssessorGroupViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if is_internal(self.request):
-            return ActivityPermissionGroup.objects.filter(group_type='assessor')
+            return ActivityPermissionGroup.objects.filter(
+                permissions__codename='assessor'
+            )
         elif is_customer(self.request):
             return ActivityPermissionGroup.objects.none()
         return ActivityPermissionGroup.objects.none()
