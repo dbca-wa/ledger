@@ -108,6 +108,9 @@ export default {
             licence_categoryStatus: [],
             licence_headers:["Number","Licence Type","Licence Holder","Status","Issue Date","Licence","Action"],
             licence_options:{
+                order: [
+                    [0, 'desc']
+                ],
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },

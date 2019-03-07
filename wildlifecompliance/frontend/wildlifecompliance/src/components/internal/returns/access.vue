@@ -51,7 +51,7 @@
                                             </select>
                                             <select @change="assignTo"  v-if="!isLoading" class="form-control">
                                                 <option value="null">Unassigned</option>
-                                                <!-- <option v-for="member in compliance.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option> -->
+                                                <!-- <option v-for="member in return.return_curators" :value="member.id">{{member.first_name}} {{member.last_name}}</option> -->
                                             </select>
                                             <!-- <a v-if="!canViewonly && check_assessor()" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a> -->
                                         </div>
@@ -127,7 +127,7 @@
         Vue.http.get(helpers.add_endpoint_json(api_endpoints.returns,to.params.return_id)).then((response) => {
             next(vm => {
                 vm.returns = response.body
-                // vm.members = vm.compliance.allowed_assessors
+                // vm.members = vm.return.return_curators
             })
         },(error) => {
             console.log(error);
@@ -211,7 +211,7 @@
                                     </select>
                                     <select @change="assignTo" :disabled="canViewonly || !check_assessor()" v-if="!isLoading" class="form-control" v-model="compliance.assigned_to">
                                         <option value="null">Unassigned</option>
-                                        <option v-for="member in compliance.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
+                                        <option v-for="member in return.return_curators" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
                                     </select>
                                     <a v-if="!canViewonly && check_assessor()" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
                                 </div>
@@ -300,7 +300,7 @@ export default {
     Vue.http.get(helpers.add_endpoint_json(api_endpoints.returns,to.params.return_id)).then((response) => {
         next(vm => {
             vm.returns = response.body
-            // vm.members = vm.compliance.allowed_assessors
+            // vm.members = vm.return.return_curators
         })
     },(error) => {
         console.log(error);

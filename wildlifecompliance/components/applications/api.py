@@ -47,7 +47,9 @@ from wildlifecompliance.components.applications.models import (
     Assessment,
     ApplicationGroupType,
     AmendmentRequest,
-    ApplicationUserAction
+    ApplicationUserAction,
+    search_keywords,
+    search_reference
 )
 from wildlifecompliance.components.applications.serializers import (
     ApplicationTypeSerializer,
@@ -70,7 +72,9 @@ from wildlifecompliance.components.applications.serializers import (
     AmendmentRequestSerializer,
     ExternalAmendmentRequestSerializer,
     ApplicationProposedIssueSerializer,
-    DTAssessmentSerializer
+    DTAssessmentSerializer,
+    SearchKeywordSerializer,
+    SearchReferenceSerializer
 )
 
 
@@ -479,26 +483,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['POST', ])
-    def send_to_assessor(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            print(request.data)
-            # instance.send_to_assessor(request)
-            # serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
     @detail_route(methods=['GET', ])
-    def assign_request_user(self, request, *args, **kwargs):
+    def assign_to_me(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             instance.assign_officer(request, request.user)
@@ -516,13 +502,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST', ])
-    def assign_to(self, request, *args, **kwargs):
+    def assign_officer(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            user_id = request.data.get('assessor_id', None)
+            user_id = request.data.get('officer_id', None)
             user = None
             if not user_id:
-                raise serializers.ValidationError('An assessor id is required')
+                raise serializers.ValidationError('An officer id is required')
             try:
                 user = EmailUser.objects.get(id=user_id)
             except EmailUser.DoesNotExist:
@@ -531,7 +517,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
             if not request.user.has_perm('can_assign_officers'):
                 raise serializers.ValidationError(
-                    'You are not authorized to assign assessors.')
+                    'You are not authorized to assign officers.')
 
             instance.assign_officer(request, user)
             serializer = InternalApplicationSerializer(
@@ -548,10 +534,10 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET', ])
-    def unassign(self, request, *args, **kwargs):
+    def unassign_officer(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            instance.unassign(request)
+            instance.unassign_officer(request)
             serializer = InternalApplicationSerializer(
                 instance, context={'request': request})
             return Response(serializer.data)
@@ -1153,3 +1139,43 @@ class AmendmentRequestReasonChoicesView(views.APIView):
                 choices_list.append({'key': c[0], 'value': c[1]})
 
         return Response(choices_list)
+
+
+class SearchKeywordsView(views.APIView):
+    renderer_classes = [JSONRenderer]
+
+    def post(self, request, format=None):
+        qs = []
+        search_words = request.data.get('searchKeywords')
+        search_application = request.data.get('searchProposal')
+        search_licence = request.data.get('searchApproval')
+        search_returns = request.data.get('searchCompliance')
+        if search_words:
+            qs = search_keywords(search_words, search_application, search_licence, search_returns)
+        serializer = SearchKeywordSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class SearchReferenceView(views.APIView):
+    renderer_classes = [JSONRenderer]
+
+    def post(self, request, format=None):
+        try:
+            qs = []
+            reference_number = request.data.get('reference_number')
+            if reference_number:
+                qs = search_reference(reference_number)
+            serializer = SearchReferenceSerializer(qs)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                print e
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
