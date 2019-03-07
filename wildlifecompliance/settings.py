@@ -21,8 +21,6 @@ INSTALLED_APPS += [
     'rest_framework_gis'
 ]
 
-SITE_ID = 1
-
 # maximum number of days allowed for a booking
 WSGI_APPLICATION = 'wildlifecompliance.wsgi.application'
 
