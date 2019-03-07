@@ -6,42 +6,29 @@
                     <form class="form-horizontal" name="vehicleForm">
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
-                            <div class="form-group">
-                                <div class="row">
-                                    
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <div class="row">
-                                    
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <div class="row">
-                                    
-                                </div>
-                            </div>
-
-                            
-                            <div class="form-group">
-                                <div class="row">
-                                    
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <div class="row">
-                                    <div class="col-sm-3">
-                                        
-                                        <label class="control-label pull-left"  for="Name">Transport licence no.</label>
+                            <form>
+                                <div class="form-horizontal col-sm-6">
+                                  <label class="control-label">Access</label>
+                                  <div class="" v-for="a in access_types">
+                                    <div class="form-check">
+                                      <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="park_access" :value="a.id" data-parsley-required   />
+                                      {{ a.name }}
                                     </div>
-                                    <div class="col-sm-9">
-                                        <input class="form-control" name="license" ref="license" v-model="vehicle.license" type="text">
-                                    </div>
+                                  </div>
                                 </div>
-                            </div>                           
+                            </form>
+
+                            <form>
+                                <div class="form-horizontal col-sm-6">
+                                  <label class="control-label">Activities</label>
+                                  <div class="" v-for="a in allowed_activities">
+                                    <div class="form-check">
+                                      <input :onclick="isClickable" class="form-check-input" v-model="park_activities" :value="a.id" ref="Checkbox" type="checkbox" data-parsley-required  />
+                                      {{ a.name }}
+                                    </div>
+                                  </div>
+                                </div>
+                            </form>                        
                         </div>
                     </form>
                 </div>
@@ -82,11 +69,14 @@ export default {
         return {
             isModalOpen:false,
             form:null,
-            vehicle: Object,
-            vehicle_id: Number,
+            park: Object,
+            park_id: null,
+            park_name: '',
             access_types: null,
+            allowed_activities:[],
+            park_access:[],
+            park_activities:[],
             vehicle_access_id: null,
-            state: 'proposed_vehicle',
             issuingVehicle: false,
             validation_form: null,
             errors: false,
@@ -109,35 +99,38 @@ export default {
             return vm.errors;
         },
         title: function(){
-            return this.vehicle_action == 'add' ? 'Add a new Vehicle record' : 'Edit a vehicle record';
+            return this.park_name ? 'Edit Access and Activities for '+this.park_name : 'Edit Access and Activities';
         }
     },
     methods:{
         ok:function () {
             let vm =this;
             if($(vm.form).valid()){
-                vm.sendData();
-               
+                //vm.sendData();
+                var allowed_activities_id=[]
+                for(var i=0; i<vm.allowed_activities.length; i++){
+                    allowed_activities_id.push(vm.allowed_activities[i].id)
+                }
+                for(var j=0; j<vm.park_activities.length; j++) {
+                    if(allowed_activities_id.indexOf(vm.park_activities[j])==-1){
+                        vm.park_activities.splice(j,1)
+                    }
+                }
+                vm.$emit('refreshSelectionFromResponse',vm.park_id, vm.park_activities, vm.park_access);
             }
+            vm.close();
         },
         cancel:function () {
             this.close()
         },
         close:function () {
             this.isModalOpen = false;
-            this.vehicle = {};
+            this.park_id = null;
+            this.park_access=[];
+            this.park_activities=[];
             this.errors = false;
             $('.has-error').removeClass('has-error');
-            $(this.$refs.rego_expiry).data('DateTimePicker').clear();
             this.validation_form.resetForm();
-        },
-        fetchContact: function(id){
-            let vm = this;
-            vm.$http.get(api_endpoints.contact(id)).then((response) => {
-                vm.contact = response.body; vm.isModalOpen = true;
-            },(error) => {
-                console.log(error);
-            } );
         },
         fetchAccessTypes: function(){
             let vm=this;
@@ -148,72 +141,16 @@ export default {
                         console.log(err);
                   });
         },
-        fetchVehicle: function(vid){
+        fetchAllowedActivities: function(park_id){
             let vm=this;
-            Vue.http.get(helpers.add_endpoint_json(api_endpoints.vehicles,vid)).then((res) => {
-                      vm.vehicle=res.body; 
-                      if(vm.vehicle.access_type)
-                      {
-                        vm.vehicle_access_id=vm.vehicle.access_type.id
-                      }
-                      // if(vm.vehicle.rego_expiry){
-                      //   vm.vehicle.rego_expiry=vm.vehicle.rego_expiry.format('DD/MM/YYYY')
-                      //   }
+            Vue.http.get(helpers.add_endpoint_json(api_endpoints.parks,park_id+'/allowed_activities')).then((res) => {
+                      vm.allowed_activities=res.body;                 
                 },
               err => { 
                         console.log(err);
                   });
         },
 
-        sendData:function(){
-            let vm = this;
-            vm.errors = false;
-            if(vm.vehicle_access_id!=null){
-                vm.vehicle.access_type=vm.vehicle_access_id
-            }
-            // if(vm.vehicle.rego_expiry){
-            //     vm.vehicle.rego_expiry=vm.vehicle.rego_expiry.format('YYYY-MM-DD')
-            // }
-            let vehicle = JSON.parse(JSON.stringify(vm.vehicle));
-            vm.issuingVehicle = true;
-            if(vm.vehicle_action=="add" && vm.vehicle_id==null)
-            {
-                vm.$http.post(api_endpoints.vehicles,JSON.stringify(vehicle),{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        vm.issuingVehicle = false;
-                        vm.close();
-                        swal(
-                             'Created',
-                             'New vehicle record has been created.',
-                             'success'
-                        );
-                        vm.$emit('refreshFromResponse',response);
-                    },(error)=>{
-                        vm.errors = true;
-                        vm.issuingVehicle = false;
-                        vm.errorString = helpers.apiVueResourceError(error);
-                    });
-            }
-            else{
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.vehicles,vm.vehicle_id+'/edit_vehicle'),JSON.stringify(vehicle),{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        vm.issuingVehicle = false;
-                        vm.close();
-                        swal(
-                             'Saved',
-                             'Vehicle details has been saved.',
-                             'success'
-                        );
-                        vm.$emit('refreshFromResponse',response);
-                    },(error)=>{
-                        vm.errors = true;
-                        vm.issuingVehicle = false;
-                        vm.errorString = helpers.apiVueResourceError(error);
-                    });
-                }
-        },
         addFormValidations: function() {
             let vm = this;
             vm.validation_form = $(vm.form).validate({
@@ -243,53 +180,12 @@ export default {
             });
        },
        eventListeners:function () {
-            let vm = this;
-            $(vm.$refs.rego_expiry).datetimepicker(vm.datepickerOptions);
-            $(vm.$refs.rego_expiry).on('dp.change', function(e){
-                if ($(vm.$refs.rego_expiry).data('DateTimePicker').date()) {
-                    vm.vehicle.rego_expiry =  e.date.format('DD/MM/YYYY');
-                    //vm.vehicle.rego_expiry =  e.date.format('YYYY-MM-DD')
-                }
-                else if ($(vm.$refs.rego_expiry).data('date') === "") {
-                    vm.vehicle.rego_expiry = null;
-                }
-             });
-
-            // Intialise select2
-            // $(vm.$refs.access_type).select2({
-            //     "theme": "bootstrap",
-            //     allowClear: true,
-            //     placeholder:"Select access"
-            // }).
-            // on("select2:select",function (e) {
-            //     var selected = $(e.currentTarget);
-            //     //vm.vehicle.access_type = selected.val();
-            //     vm.vehicle_access_id = selected.val();
-            // }).
-            // on("select2:unselect",function (e) {
-            //     var selected = $(e.currentTarget);
-            //     //vm.vehicle.access_type = selected.val();
-            //     vm.vehicle_access_id = selected.val();
-            // });
-
-
-            //Initialise Date Picker TODO: Check why this is not working
-            // console.log($(vm.$refs.rego_expiry).datetimepicker(vm.datepickerOptions))
-            // $(vm.$refs.rego_expiry).datetimepicker(vm.datepickerOptions);
-            // $(vm.$refs.rego_expiry).on('dp.change', function(e){
-            //     if ($(vm.$refs.rego_expiry).data('DateTimePicker').date()) {
-            //         vm.vehicle.rego_expiry =  e.date.format('DD/MM/YYYY');
-            //     }
-            //     else if ($(vm.$refs.rego_expiry).data('date') === "") {
-            //         vm.vehicle.rego_expiry = "";
-            //     }
-            //  });
+            
        }
    },
    mounted:function () {
         let vm =this;
-        vm.fetchAccessTypes();
-        
+        vm.fetchAccessTypes();        
         vm.form = document.forms.vehicleForm;
         vm.addFormValidations();
         this.$nextTick(()=>{

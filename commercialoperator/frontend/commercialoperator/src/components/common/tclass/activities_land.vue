@@ -43,17 +43,19 @@
                 <div class="form-check">
                   <input :onclick="isClickable" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
                   {{ r.name }}
+                  <a data-toggle="collapse" :href="'#'+r.id" role="button" aria-expanded="true" aria controls="r.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a>
                 </div>
-                <div class="col-sm-12" v-for="d in r.districts">
+                <div class="col-sm-12 collapse" v-for="d in r.districts" :id="r.id">
                   <div class="form-check ">
                     <input :onclick="isClickable"  :value="d.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
                     {{ d.name }}
+                   <!--  <a data-toggle="collapse" :href="'#'+d.id+r.id" role="button" aria-expanded="true" aria controls="d.id+r.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
                   </div>
                   <div class="" v-for="p in d.land_parks">
                     <div class="form-check col-sm-12">
                       <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
                     {{ p.name }}
-                      <span><a @click="edit_activities()" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
+                      <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
                     </div>
                   </div>
                 </div>
@@ -116,7 +118,7 @@
       <div>{{selected_trails}}</div>
       <div>{{selected_trails_activities}}</div>
       <div>
-              <editParkActivities ref="edit_activities" :proposal="proposal"></editParkActivities>
+              <editParkActivities ref="edit_activities" :proposal="proposal" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editParkActivities>
       </div>
 
     </div>
@@ -419,9 +421,28 @@ export default {
             console.log(error);
             })
           },
-          edit_activities: function(){
-            this.$refs.edit_activities.isModalOpen = true;
-        },
+          edit_activities: function(p_id, p_name){
+            let vm=this;
+            for (var j=0; j<vm.selected_parks_activities.length; j++){
+              if(vm.selected_parks_activities[j].park==p_id){ 
+                this.$refs.edit_activities.park_activities= vm.selected_parks_activities[j].activities;
+                this.$refs.edit_activities.park_access= vm.selected_parks_activities[j].access
+              }
+            }
+            this.$refs.edit_activities.park_id=p_id;
+            this.$refs.edit_activities.park_name=p_name;
+            this.$refs.edit_activities.fetchAllowedActivities(p_id)
+            this. $refs.edit_activities.isModalOpen = true;
+          },
+          refreshSelectionFromResponse: function(park_id, park_activities, park_access){
+              let vm=this;
+              for (var j=0; j<vm.selected_parks_activities.length; j++){
+              if(vm.selected_parks_activities[j].park==park_id){ 
+                vm.selected_parks_activities[j].activities= park_activities;
+                vm.selected_parks_activities[j].access= park_access;
+              }
+            }
+          },
           find_recurring: function(array){
             var common=new Map();
             array.forEach(function(obj){
@@ -491,7 +512,15 @@ export default {
 
             for (var i = 0; i < vm.proposal.trails.length; i++) {
               this.selected_trails.push(vm.proposal.trails[i].trail.id);
-            }  
+            } 
+
+            //check why this is not working
+            $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
+            var chev = $( this ).children()[ 0 ];
+            window.setTimeout( function () {
+                $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
+            }, 100 );
+            }); 
         }
     }
 </script>
