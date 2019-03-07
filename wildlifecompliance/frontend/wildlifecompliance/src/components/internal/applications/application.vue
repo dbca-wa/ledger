@@ -55,7 +55,7 @@
                                 <strong>Assigned Officer</strong><br/>
                                 <div class="form-group">
                                     <template>
-                                        <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="application.assigned_officer">
+                                        <select ref="assigned_officer" :disabled="!canAssignToOfficer" class="form-control" v-model="application.assigned_officer">
                                             <option v-for="member in application.licence_officers" :value="member.id" v-bind:key="member.id">{{member.first_name}} {{member.last_name}}</option>
                                         </select>
                                         <a @click.prevent="assignToMe()" class="actionBtn pull-right">Assign to me</a>
@@ -891,21 +891,9 @@ export default {
         isCharacterCheckAccepted: function(){
             return this.application.character_check_status == 'Accepted';
         },
-        canAction: function(){
-            if (this.application.processing_status == 'With Approver'){
-                return this.application && (this.application.processing_status == 'With Approver' || this.application.processing_status == 'With Assessor' || this.application.processing_status == 'With Assessor (Conditions)') && !this.isFinalised && !this.application.can_user_edit && (this.application.current_assessor.id == this.application.assigned_approver || this.application.assigned_approver == null ) && this.application.assessor_mode.assessor_can_assess? true : false;
-            }
-            else{
-                return this.application && (this.application.processing_status == 'With Approver' || this.application.processing_status == 'With Assessor' || this.application.processing_status == 'With Assessor (Conditions)') && !this.isFinalised && !this.application.can_user_edit && (this.application.current_assessor.id == this.application.assigned_officer || this.application.assigned_officer == null ) && this.application.assessor_mode.assessor_can_assess? true : false;
-            }
-        },
-        canLimitedAction: function(){
-            if (this.application.processing_status == 'With Approver'){
-                return this.application && (this.application.processing_status == 'With Assessor' || this.application.processing_status == 'With Assessor (Conditions)') && !this.isFinalised && !this.application.can_user_edit && (this.application.current_assessor.id == this.application.assigned_approver || this.application.assigned_approver == null ) && this.application.assessor_mode.assessor_can_assess? true : false;
-            }
-            else{
-                return this.application && (this.application.processing_status == 'With Assessor' || this.application.processing_status == 'With Assessor (Conditions)') && !this.isFinalised && !this.application.can_user_edit && (this.application.current_assessor.id == this.application.assigned_officer || this.application.assigned_officer == null ) && this.application.assessor_mode.assessor_can_assess? true : false;
-            }
+        canAssignToOfficer: function(){
+            return this.application && this.application.processing_status == 'Under Review' && !this.isFinalised && !this.application.can_user_edit ? true : false;
+                //&& this.application.assessor_mode.assessor_can_assess && (this.application.current_assessor.id == this.application.assigned_officer || this.application.assigned_officer == null )
         },
         canSeeSubmission: function(){
             return this.application && (this.application.processing_status != 'With Assessor (Conditions)' && this.application.processing_status != 'With Approver' && !this.isFinalised)

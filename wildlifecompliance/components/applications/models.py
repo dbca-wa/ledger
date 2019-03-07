@@ -425,9 +425,10 @@ class Application(RevisionedMixin):
 
     @property
     def licence_officers(self):
-        #group = self.__assessor_group()
+        officers = []
         #  TODO: list all groups for all activities linked with application and return all distinct members
-        return group.members.all() if group else []
+
+        return officers
 
     @property
     def licence_type_short_name(self):

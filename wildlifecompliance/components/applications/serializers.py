@@ -543,7 +543,8 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'licence_category',
             'pdf_licence',
             'activities',
-            'processed'
+            'processed',
+            'licence_officers'
         )
         read_only_fields = ('documents', 'conditions')
 
