@@ -521,7 +521,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'org_applicant',
             'proxy_applicant',
             'submitter',
-            'assigned_approver',
             'previous_application',
             'lodgement_date',
             'lodgement_number',

@@ -52,19 +52,13 @@
                                 </div>
                             </div>
                              <div v-if="!isFinalised" class="col-sm-12 top-buffer-s">
-                                <strong>Currently assigned to</strong><br/>
+                                <strong>Assigned Officer</strong><br/>
                                 <div class="form-group">
-                                    <template v-if="application.processing_status == 'With Approver'">
-                                        <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="application.assigned_approver">
-                                            <option v-for="member in application.allowed_assessors" :value="member.id" v-bind:key="member.id">{{member.first_name}} {{member.last_name}}</option>
-                                        </select>
-                                        <a @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
-                                    </template>
-                                    <template v-else>
+                                    <template>
                                         <select ref="assigned_officer" :disabled="!canAction" class="form-control" v-model="application.assigned_officer">
-                                            <option v-for="member in application.allowed_assessors" :value="member.id" v-bind:key="member.id">{{member.first_name}} {{member.last_name}}</option>
+                                            <option v-for="member in application.licence_officers" :value="member.id" v-bind:key="member.id">{{member.first_name}} {{member.last_name}}</option>
                                         </select>
-                                        <a @click.prevent="assignRequestUser()" class="actionBtn pull-right">Assign to me</a>
+                                        <a @click.prevent="assignToMe()" class="actionBtn pull-right">Assign to me</a>
                                     </template>
                                 </div>
                             </div>
@@ -1284,14 +1278,8 @@ export default {
         },
         updateAssignedOfficerSelect:function(){
             let vm = this;
-            if (vm.application.processing_status == 'With Approver'){
-                $(vm.$refs.assigned_officer).val(vm.application.assigned_approver);
-                $(vm.$refs.assigned_officer).trigger('change');
-            }
-            else{
-                $(vm.$refs.assigned_officer).val(vm.application.assigned_officer);
-                $(vm.$refs.assigned_officer).trigger('change');
-            }
+            $(vm.$refs.assigned_officer).val(vm.application.assigned_officer);
+            $(vm.$refs.assigned_officer).trigger('change');
         },
         completeAssessment:function(){
             let vm = this;
@@ -1340,9 +1328,9 @@ export default {
                 )
             });
         },
-        assignRequestUser: function(){
+        assignToMe: function(){
             let vm = this;
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/assign_request_user')))
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/assign_to_me')))
             .then((response) => {
                 vm.application = response.body;
                 vm.original_application = helpers.copyObject(response.body);
@@ -1388,14 +1376,8 @@ export default {
             let vm = this;
             let unassign = true;
             let data = {};
-            if (vm.processing_status == 'With Approver'){
-                unassign = vm.application.assigned_approver != null && vm.application.assigned_approver != 'undefined' ? false: true;
-                data = {'assessor_id': vm.application.assigned_approver};
-            }
-            else{
-                unassign = vm.application.assigned_officer != null && vm.application.assigned_officer != 'undefined' ? false: true;
-                data = {'assessor_id': vm.application.assigned_officer};
-            }
+            unassign = vm.application.assigned_officer != null && vm.application.assigned_officer != 'undefined' ? false: true;
+            data = {'officer_id': vm.application.assigned_officer};
             if (!unassign){
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/assign_officer')),JSON.stringify(data),{
                     emulateJSON:true
@@ -1472,10 +1454,6 @@ export default {
                 if (vm.applicantType == 'proxy') {
                     vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
                 };
-//                vm.$nextTick(() => {
-//                    vm.initialiseAssignedOfficerSelect(true);
-//                    vm.updateAssignedOfficerSelect();
-//                });
             }, (error) => {
                 vm.application = helpers.copyObject(vm.original_application)
                 if (vm.applicantType == 'org') {
@@ -1527,12 +1505,7 @@ export default {
             }).
             on("select2:select",function (e) {
                 var selected = $(e.currentTarget);
-                if (vm.application.processing_status == 'With Approver'){
-                    vm.application.assigned_approver = selected.val();
-                }
-                else{
-                    vm.application.assigned_officer = selected.val();
-                }
+                vm.application.assigned_officer = selected.val();
                 vm.assignTo();
             }).on("select2:unselecting", function(e) {
                 var self = $(this);
@@ -1541,12 +1514,7 @@ export default {
                 }, 0);
             }).on("select2:unselect",function (e) {
                 var selected = $(e.currentTarget);
-                if (vm.application.processing_status == 'With Approver'){
-                    vm.application.assigned_approver = null;
-                }
-                else{
-                    vm.application.assigned_officer = null;
-                }
+                vm.application.assigned_officer = null;
                 vm.assignTo();
             });
         },

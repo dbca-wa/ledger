@@ -424,11 +424,9 @@ class Application(RevisionedMixin):
         return self.licence.licence_document._file.url if self.licence else None
 
     @property
-    def allowed_assessors(self):
-        if self.processing_status == 'with_approver':
-            group = self.__approver_group()
-        else:
-            group = self.__assessor_group()
+    def licence_officers(self):
+        #group = self.__assessor_group()
+        #  TODO: list all groups for all activities linked with application and return all distinct members
         return group.members.all() if group else []
 
     @property

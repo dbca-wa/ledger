@@ -483,26 +483,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['POST', ])
-    def send_to_assessor(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            print(request.data)
-            # instance.send_to_assessor(request)
-            # serializer = InternalApplicationSerializer(instance,context={'request':request})
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
     @detail_route(methods=['GET', ])
-    def assign_request_user(self, request, *args, **kwargs):
+    def assign_to_me(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             instance.assign_officer(request, request.user)
@@ -523,10 +505,10 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def assign_officer(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            user_id = request.data.get('assessor_id', None)
+            user_id = request.data.get('officer_id', None)
             user = None
             if not user_id:
-                raise serializers.ValidationError('An assessor id is required')
+                raise serializers.ValidationError('An officer id is required')
             try:
                 user = EmailUser.objects.get(id=user_id)
             except EmailUser.DoesNotExist:
@@ -535,7 +517,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
             if not request.user.has_perm('can_assign_officers'):
                 raise serializers.ValidationError(
-                    'You are not authorized to assign assessors.')
+                    'You are not authorized to assign officers.')
 
             instance.assign_officer(request, user)
             serializer = InternalApplicationSerializer(
