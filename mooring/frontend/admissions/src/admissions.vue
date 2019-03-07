@@ -357,7 +357,7 @@ export default {
                     lastName: lastName,
                     email: email,
                     location: location,
-                    mooring_group: mooring_group
+                    // mooring_group: mooring_group
                 }
                 $.ajax({
                     url: vm.mooringUrl + "/api/create_admissions_booking",

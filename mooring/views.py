@@ -242,7 +242,6 @@ class CancelBookingView(TemplateView):
                   booking_session.delete()
                utils.delete_session_booking(request.session)
 
-
         context_processor = template_context(request)
         booking_id = kwargs['pk']
         booking_total = Decimal('0.00')
@@ -271,6 +270,8 @@ class CancelBookingView(TemplateView):
             refund = bpoint.refund(info,request.user)
             invoice = Invoice.objects.get(reference=bpoint.crn1)
             update_payments(invoice.reference)
+            emails.send_refund_completed_email_customer(booking, context_processor)
+ 
         except: 
             emails.send_refund_failure_email(booking, context_processor)
             emails.send_refund_failure_email_customer(booking, context_processor)
@@ -285,10 +286,12 @@ class CancelBookingView(TemplateView):
         booking.booking_type = 4
         booking.save()
         emails.send_booking_cancellation_email_customer(booking, context_processor)
-        booking_admission.booking_type = 4
-        booking_admission.save()
+
+        if booking.admission_payment:
+            booking_admission.booking_type = 4
+            booking_admission.save()
         
-        return HttpResponseRedirect('/success/')
+        return HttpResponseRedirect(reverse('public_booking_cancelled', args=(booking.id,)))
 
 
 class CancelAdmissionsBookingView(TemplateView):
@@ -348,21 +351,20 @@ class CancelAdmissionsBookingView(TemplateView):
             refund = bpoint.refund(info,request.user)
             invoice = Invoice.objects.get(reference=bpoint.crn1)
             update_payments(invoice.reference)
+            emails.send_refund_completed_email_customer_admissions(booking, context_processor)
         except: 
-            emails.send_refund_failure_email(booking, context_processor)
-            emails.send_refund_failure_email_customer(booking, context_processor)
+            emails.send_refund_failure_email_admissions(booking, context_processor)
+            emails.send_refund_failure_email_customer_admissions(booking, context_processor)
             booking_invoice = AdmissionsBookingInvoice.objects.filter(admissions_booking=booking).order_by('id')
             for bi in booking_invoice:
                 invoice = Invoice.objects.get(reference=bi.invoice_reference)
-            
+            RefundFailed.objects.create(admission_booking=booking, invoice_reference=invoice.reference, refund_amount=b_total,status=0)
+    
         invoice.voided = True
         invoice.save()
         booking.booking_type = 4
         booking.save()
-
-        return HttpResponseRedirect('/success/')
-
-
+        return HttpResponseRedirect(reverse('public_admission_booking_cancelled', args=(booking.id,)))
 
 class RefundPaymentView(TemplateView):
     template_name = 'mooring/booking/refund_booking.html'
@@ -422,6 +424,7 @@ class RefundPaymentView(TemplateView):
                 refund = bpoint.refund(info,request.user)
                 invoice = Invoice.objects.get(reference=bpoint.crn1)
                 update_payments(invoice.reference)
+                emails.send_refund_completed_email_customer(booking, context_processor)
              except:
                 emails.send_refund_failure_email(booking, context_processor)
                 emails.send_refund_failure_email_customer(booking, context_processor)
@@ -2027,6 +2030,47 @@ class AdmissionsBookingSuccessView(TemplateView):
         }
         return render(request, self.template_name, context)
 
+class BookingCancelCompletedView(LoginRequiredMixin, TemplateView):
+    template_name = 'mooring/booking/cancel_completed.html'
+
+    def get(self, request, *args, **kwargs):
+        context = {}
+        booking_id = kwargs['booking_id']
+        booking = None
+        refund_failed = None
+        if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
+             booking = Booking.objects.get(pk=booking_id)
+             if RefundFailed.objects.filter(booking=booking).count() > 0:
+                refund_failed = RefundFailed.objects.filter(booking=booking)
+
+        context = {
+           'booking_id': booking_id,
+           'booking': booking,
+           'refund_failed' : refund_failed
+        }
+        return render(request, self.template_name, context)
+
+class AdmissionBookingCancelCompletedView(LoginRequiredMixin, TemplateView):
+    template_name = 'mooring/booking/admission_cancel_completed.html'
+
+    def get(self, request, *args, **kwargs):
+        context = {}
+        booking_id = kwargs['booking_id']
+        booking = None
+        refund_failed = None
+        if request.user.is_staff or request.user.is_superuser or AdmissionsBooking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
+             booking = AdmissionsBooking.objects.get(pk=booking_id)
+             if RefundFailed.objects.filter(admission_booking=booking).count() > 0:
+                refund_failed = RefundFailed.objects.filter(admission_booking=booking)
+
+        context = {
+           'booking_id': booking_id,
+           'booking': booking,
+           'refund_failed' : refund_failed
+        }
+        return render(request, self.template_name, context)
+
+
 class BookingSuccessView(TemplateView):
     template_name = 'mooring/booking/success.html'
 
@@ -2035,6 +2079,8 @@ class BookingSuccessView(TemplateView):
         try:
             context_processor = template_context(self.request)
             booking = utils.get_session_booking(request.session)
+            print ("BOOKING")
+            print booking
             invoice_ref = request.GET.get('invoice')
             if booking.booking_type == 3:
                 try:
@@ -2045,7 +2091,6 @@ class BookingSuccessView(TemplateView):
                 except Invoice.DoesNotExist:
                     logger.error('{} tried making a booking with an incorrect invoice'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user'))
                     return redirect('public_make_booking')
-
                 if inv.system not in ['0516']:
                     logger.error('{} tried making a booking with an invoice from another system with reference number {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',inv.reference))
                     return redirect('public_make_booking')
@@ -2058,15 +2103,15 @@ class BookingSuccessView(TemplateView):
                     logger.info('{} finished temporary booking {}, creating new BookingInvoice with reference {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id, invoice_ref))
                     # FIXME: replace with server side notify_url callback
                     book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
-
                     if booking.old_booking:
                         old_booking = Booking.objects.get(id=booking.old_booking.id)
                         old_booking.booking_type = 4
                         old_booking.save()
                         booking_items = MooringsiteBooking.objects.filter(booking=old_booking)
                         # Find admissions booking for old booking
-                        old_booking.admission_payment.booking_type = 4
-                        old_booking.admission_payment.save()
+                        if old_booking.admission_payment:
+                            old_booking.admission_payment.booking_type = 4
+                            old_booking.admission_payment.save()
                         for bi in booking_items:
                             bi.booking_type = 4
                             bi.save()
@@ -2087,7 +2132,6 @@ class BookingSuccessView(TemplateView):
                     # set booking to be permanent fixture
                     booking.booking_type = 1  # internet booking
                     booking.expiry_time = None
-
                     #Calculate Admissions and create object
                     # rego = booking.details['vessel_rego']
                     # found_vessel = RegisteredVessels.objects.filter(rego_no=rego.upper())
@@ -2197,12 +2241,18 @@ class BookingSuccessView(TemplateView):
                     # send out the invoice before the confirmation is sent if total is greater than zero
                     if booking.cost_total > 0: 
                         emails.send_booking_invoice(booking,request,context_processor)
-                    # for fully paid bookings, fire off confirmation email
+                    # for fully paid bookings, fire off confirmation emaili
                     if booking.invoice_status == 'paid':
                         emails.send_booking_confirmation(booking,request, context_processor)
+                    refund_failed = None
+                    if RefundFailed.objects.filter(booking=booking).count() > 0:
+                        refund_failed = RefundFailed.objects.filter(booking=booking)
+
+                    
                     context = {
                       'booking': booking,
-                      'book_inv': [book_inv]
+                      'book_inv': [book_inv],
+                      'refund_failed' : refund_failed
                     }
                     return render(request, self.template_name, context)
  
@@ -2215,6 +2265,8 @@ class BookingSuccessView(TemplateView):
                 book_inv = BookingInvoice.objects.get(booking=booking).invoice_reference
             else:
                 return redirect('home')
+        print ("BOOKING EXCEPT")
+        print booking.id
 
         #if request.user.is_staff:
         #    return redirect('dash-bookings')
