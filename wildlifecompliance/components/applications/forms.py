@@ -1,23 +1,31 @@
 from django import forms
-from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.applications.models import (
-    ApplicationGroupType
+    ActivityPermissionGroup
 )
+from django.contrib.auth.models import Permission
+
+from django.forms.models import ModelMultipleChoiceField
+from django.contrib.admin.widgets import FilteredSelectMultiple
 
 
-class ApplicationGroupTypeAdminForm(forms.ModelForm):
+class GroupPermissionsField(ModelMultipleChoiceField):
+    widget = FilteredSelectMultiple(verbose_name='Group Permissions / Roles', is_stacked=True)
+
+
+class ActivityPermissionGroupAdminForm(forms.ModelForm):
+    permissions = GroupPermissionsField(
+        queryset=Permission.objects.filter(content_type__model='activitypermissiongroup')
+    )
+
     class Meta:
-        model = ApplicationGroupType
+        model = ActivityPermissionGroup
         fields = '__all__'
 
     def __init__(self, *args, **kwargs):
-        super(ApplicationGroupTypeAdminForm, self).__init__(*args, **kwargs)
-        if self.instance:
-            self.fields['members'].queryset = EmailUser.objects.filter(
-                email__icontains='@dbca.wa.gov.au')
+        super(ActivityPermissionGroupAdminForm, self).__init__(*args, **kwargs)
 
     def clean(self):
-        super(ApplicationGroupTypeAdminForm, self).clean()
+        super(ActivityPermissionGroupAdminForm, self).clean()
 
 
 def clean_email(self):

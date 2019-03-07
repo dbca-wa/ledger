@@ -922,7 +922,7 @@ class OrganisationRequest(models.Model):
         return OrganisationRequestUserAction.log_action(
             self, action, request.user)
 
-
+"""
 class OrganisationAccessGroup(models.Model):
     site = models.OneToOneField(Site, default='1')
     members = models.ManyToManyField(EmailUser)
@@ -950,6 +950,7 @@ class OrganisationAccessGroup(models.Model):
     class Meta:
         app_label = 'wildlifecompliance'
         verbose_name_plural = 'Organisation Access Group'
+"""
 
 
 class OrganisationRequestUserAction(UserAction):

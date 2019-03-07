@@ -9,7 +9,7 @@ from wildlifecompliance.components.applications.models import (
     ApplicationStandardCondition,
     ApplicationDeclinedDetails,
     Assessment,
-    ApplicationGroupType,
+    ActivityPermissionGroup,
     AmendmentRequest,
     ApplicationSelectedActivity
 )
@@ -97,9 +97,9 @@ class EmailUserAppViewSerializer(serializers.ModelSerializer):
                   'mobile_number',)
 
 
-class ApplicationGroupTypeSerializer(serializers.ModelSerializer):
+class ActivityPermissionGroupSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ApplicationGroupType
+        model = ActivityPermissionGroup
         fields = (
             'id',
             'name',
@@ -109,7 +109,7 @@ class ApplicationGroupTypeSerializer(serializers.ModelSerializer):
 
 
 class AssessmentSerializer(serializers.ModelSerializer):
-    assessor_group = ApplicationGroupTypeSerializer(read_only=True)
+    assessor_group = ActivityPermissionGroupSerializer(read_only=True)
     status = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -694,7 +694,7 @@ class ProposedDeclineSerializer(serializers.Serializer):
 
 
 class DTAssessmentSerializer(serializers.ModelSerializer):
-    assessor_group = ApplicationGroupTypeSerializer(read_only=True)
+    assessor_group = ActivityPermissionGroupSerializer(read_only=True)
     status = serializers.SerializerMethodField(read_only=True)
     licence_activity = ActivitySerializer(read_only=True)
     submitter = serializers.SerializerMethodField(read_only=True)

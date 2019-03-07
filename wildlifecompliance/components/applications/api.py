@@ -45,7 +45,7 @@ from wildlifecompliance.components.applications.models import (
     ApplicationCondition,
     ApplicationStandardCondition,
     Assessment,
-    ApplicationGroupType,
+    ActivityPermissionGroup,
     AmendmentRequest,
     ApplicationUserAction
 )
@@ -65,7 +65,7 @@ from wildlifecompliance.components.applications.serializers import (
     ProposedLicenceSerializer,
     ProposedDeclineSerializer,
     AssessmentSerializer,
-    ApplicationGroupTypeSerializer,
+    ActivityPermissionGroupSerializer,
     SaveAssessmentSerializer,
     AmendmentRequestSerializer,
     ExternalAmendmentRequestSerializer,
@@ -974,8 +974,8 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET', ])
     def user_list(self, request, *args, **kwargs):
         # Get the assessor groups the current user is member of
-        assessor_groups = ApplicationGroupType.objects.filter(
-            type='assessor', members__email=request.user.email)
+        assessor_groups = ActivityPermissionGroup.objects.filter(
+            group_type='assessor', members__email=request.user.email)
 
         # For each assessor groups get the assessments
         queryset = self.get_queryset().none()
@@ -1062,16 +1062,16 @@ class AssessmentViewSet(viewsets.ModelViewSet):
 
 
 class AssessorGroupViewSet(viewsets.ModelViewSet):
-    queryset = ApplicationGroupType.objects.filter(type='assessor')
-    serializer_class = ApplicationGroupTypeSerializer
+    queryset = ActivityPermissionGroup.objects.none()
+    serializer_class = ActivityPermissionGroupSerializer
     renderer_classes = [JSONRenderer, ]
 
     def get_queryset(self):
         if is_internal(self.request):
-            return ApplicationGroupType.objects.filter(type='assessor')
+            return ActivityPermissionGroup.objects.filter(group_type='assessor')
         elif is_customer(self.request):
-            return ApplicationGroupType.objects.none()
-        return ApplicationGroupType.objects.none()
+            return ActivityPermissionGroup.objects.none()
+        return ActivityPermissionGroup.objects.none()
 
     @list_route(methods=['POST', ])
     def user_list(self, request, *args, **kwargs):
