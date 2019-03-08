@@ -16,6 +16,8 @@ from wildlifecompliance.components.applications import api as application_api
 from wildlifecompliance.components.licences import api as licence_api
 from wildlifecompliance.components.returns import api as return_api
 from wildlifecompliance.management.permissions_manager import CollectorManager
+from wildlifecompliance.components.call_email import api as call_email_api
+
 from wildlifecompliance.utils import are_migrations_running
 
 from ledger.urls import urlpatterns as ledger_patterns
@@ -45,6 +47,7 @@ router.register(r'users', users_api.UserViewSet)
 router.register(r'profiles', users_api.ProfileViewSet)
 router.register(r'my_profiles', users_api.MyProfilesViewSet)
 router.register(r'emailidentities', users_api.EmailIdentityViewSet)
+router.register(r'calls_emails', call_email_api.CallEmailViewSet)
 
 api_patterns = [url(r'^api/profile/$',
                     users_api.GetProfile.as_view(),
