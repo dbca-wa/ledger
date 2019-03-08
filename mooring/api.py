@@ -7,6 +7,7 @@ import json
 import calendar
 import time
 import math
+import hashlib
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
@@ -1847,8 +1848,16 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
 ##           row['item'] = ms.campsite.name
 #           total_price = total_price +ms.amount
 #           current_booking.append(row)
- 
-
+        booking_changed = True
+        if ongoing_booking.old_booking:
+             
+             current_booking_obj = MooringsiteBooking.objects.filter(booking=ongoing_booking).values('campsite','from_dt','to_dt','booking_period_option')
+             old_booking_obj = MooringsiteBooking.objects.filter(booking=ongoing_booking.old_booking).values('campsite','from_dt','to_dt','booking_period_option')
+             # compare old and new booking for changes
+             if hashlib.md5(str(current_booking_obj)).hexdigest() == hashlib.md5(str(old_booking_obj)).hexdigest():
+                   booking_changed = False
+                  
+              
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date, ongoing_booking, request)
         # create our result object, which will be returned as JSON
         result = {
@@ -1858,6 +1867,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             'map': ground.mooring_map.url if ground.mooring_map else None,
             'ongoing_booking': True if ongoing_booking else False,
             'ongoing_booking_id': ongoing_booking.id if ongoing_booking else None,
+            'booking_changed': booking_changed,
             'expiry': expiry,
             'timer': timer,
             'current_booking': current_booking,
