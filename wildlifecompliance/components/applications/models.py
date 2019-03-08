@@ -79,6 +79,12 @@ class ActivityPermissionGroup(Group):
     def display_name(self):
         return self.__str__
 
+    @property
+    def members(self):
+        return EmailUser.objects.filter(
+            groups__id=self.id
+        ).distinct()
+
 
 class ApplicationDocument(Document):
     application = models.ForeignKey('Application', related_name='documents')
@@ -569,14 +575,14 @@ class Application(RevisionedMixin):
                     permissions__codename='licensing_officer',
                     licence_activities__purpose__licence_category__id=self.licence_type_data["id"]
                 )
+                group_users = EmailUser.objects.filter(groups__id__in=officer_groups.values_list('id', flat=True))
 
                 if self.amendment_requests:
                     self.log_user_action(
                         ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS_SUBMIT.format(
                             self.id), request)
-                    for group in officer_groups:
-                        send_amendment_submit_email_notification(
-                            group.members.all(), self, request)
+                    send_amendment_submit_email_notification(
+                        group_users, self, request)
                 else:
                     # Create a log entry for the application
                     self.log_user_action(
@@ -599,9 +605,9 @@ class Application(RevisionedMixin):
                     # Send email to submitter, then to linked Officer Groups
                     send_application_submitter_email_notification(
                         self, request)
-                    for group in officer_groups:
-                        send_application_submit_email_notification(
-                            group.members.all(), self, request)
+
+                    send_application_submit_email_notification(
+                        group_users, self, request)
 
                     self.documents.all().update(can_delete=False)
 
