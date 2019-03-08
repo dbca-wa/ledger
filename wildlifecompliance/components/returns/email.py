@@ -13,14 +13,34 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_NAME = 'Wildlife Compliance Automated Message'
 
+
 class ReturnExternalSubmitSendNotificationEmail(TemplateEmailBase):
     subject = 'Your Return with requirements has been submitted.'
     html_template = 'wildlifecompliance/emails/send_external_submit_email_notification.html'
     txt_template = 'wildlifecompliance/emails/send_external_submit_email_notification.txt'
 
+
+class ReturnAcceptNotificationEmail(TemplateEmailBase):
+    subject = 'Your Return with conditions has been accepted.'
+    html_template = 'wildlifecompliance/emails/send_external_return_accept_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_external_return_accept_notification.txt'
+
+
+def send_return_accept_email_notification(return_obj, request):
+    email = ReturnAcceptNotificationEmail()
+
+    context = {
+        'Return': return_obj
+    }
+    msg = email.send(return_obj.submitter.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_return_email(msg, return_obj, sender=sender)
+    # _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender)
+
+
 def send_external_submit_email_notification(request, return_obj):
     email = ReturnExternalSubmitSendNotificationEmail()
-    #Below code adds url
+    # Below code adds url
     # url = request.build_absolute_uri(reverse('external-return-detail',kwargs={'return_pk': return_obj.id}))
     # url = ''.join(url.split('-internal'))
     # context = {
@@ -43,16 +63,19 @@ def send_external_submit_email_notification(request, return_obj):
 def _log_return_email(email_message, return_obj, sender=None):
     from wildlifecompliance.components.returns.models import ReturnLogEntry
     if isinstance(email_message, (EmailMultiAlternatives, EmailMessage,)):
-        # TODO this will log the plain text body, should we log the html instead
+        # TODO this will log the plain text body, should we log the html
+        # instead
         text = email_message.body
         subject = email_message.subject
-        fromm = smart_text(sender) if sender else smart_text(email_message.from_email)
+        fromm = smart_text(sender) if sender else smart_text(
+            email_message.from_email)
         # the to email is normally a list
         if isinstance(email_message.to, list):
             to = ','.join(email_message.to)
         else:
             to = smart_text(email_message.to)
-        # we log the cc and bcc in the same cc field of the log entry as a ',' comma separated string
+        # we log the cc and bcc in the same cc field of the log entry as a ','
+        # comma separated string
         all_ccs = []
         if email_message.cc:
             all_ccs += list(email_message.cc)
@@ -86,19 +109,23 @@ def _log_return_email(email_message, return_obj, sender=None):
 
     return email_entry
 
-def _log_org_email(email_message, organisation, customer ,sender=None):
+
+def _log_org_email(email_message, organisation, customer, sender=None):
     from wildlifecompliance.components.organisations.models import OrganisationLogEntry
     if isinstance(email_message, (EmailMultiAlternatives, EmailMessage,)):
-        # TODO this will log the plain text body, should we log the html instead
+        # TODO this will log the plain text body, should we log the html
+        # instead
         text = email_message.body
         subject = email_message.subject
-        fromm = smart_text(sender) if sender else smart_text(email_message.from_email)
+        fromm = smart_text(sender) if sender else smart_text(
+            email_message.from_email)
         # the to email is normally a list
         if isinstance(email_message.to, list):
             to = ','.join(email_message.to)
         else:
             to = smart_text(email_message.to)
-        # we log the cc and bcc in the same cc field of the log entry as a ',' comma separated string
+        # we log the cc and bcc in the same cc field of the log entry as a ','
+        # comma separated string
         all_ccs = []
         if email_message.cc:
             all_ccs += list(email_message.cc)

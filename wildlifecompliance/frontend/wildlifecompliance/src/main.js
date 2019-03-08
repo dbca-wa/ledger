@@ -63,9 +63,6 @@ window.vue = new Vue( {
         App
     },
     computed: {
-        wc_version: function (){
-            return wc_version;
-        }
     },
     created:function() {
         this.globalVar = "It's will change global var";
@@ -76,12 +73,12 @@ window.vue = new Vue( {
             /*
             var tab_id = target.href.split('#')[1];
             vm.tabID = target.href.split('#')[1];
-            this.$children[0].$children[0].$children[0].$children[0].$children[0].selected_activity_type_tab_id = parseInt(tab_id);
+            this.$children[0].$children[0].$children[0].$children[0].$children[0].selected_activity_tab_id = parseInt(tab_id);
             return parseInt(tab_id);
             */
             //vm.tabID = parseInt(target.href.split('#')[1]);
             //this.current_tab = $("ul#tabs-section li.active")[0].textContent;
-            this.$children[0].$children[0].$children[0].$children[0].$children[0].selected_activity_type_tab_id = vm.tabID;
+            this.$children[0].$children[0].$children[0].$children[0].$children[0].selected_activity_tab_id = vm.tabID;
             return vm.tabID;
         },
         /*

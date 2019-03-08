@@ -17,19 +17,35 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ReturnType',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('data_descriptor', django.contrib.postgres.fields.jsonb.JSONField()),
-                ('condition', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='wildlifecompliance_condition', to='wildlifecompliance.ApplicationCondition')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
+                ('data_descriptor',
+                 django.contrib.postgres.fields.jsonb.JSONField()),
+                ('condition',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     related_name='wildlifecompliance_condition',
+                     to='wildlifecompliance.ApplicationCondition')),
             ],
         ),
         migrations.AddField(
             model_name='return',
             name='condition',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='returns_condition', to='wildlifecompliance.ApplicationCondition'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='returns_condition',
+                to='wildlifecompliance.ApplicationCondition'),
         ),
         migrations.AddField(
             model_name='return',
             name='text',
-            field=models.TextField(blank=True),
+            field=models.TextField(
+                blank=True),
         ),
     ]

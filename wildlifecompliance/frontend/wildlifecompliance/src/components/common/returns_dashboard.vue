@@ -53,7 +53,7 @@ export default {
             type: String,
             required: true,
             validator:function(val) {
-                let options = ['internal','referral','external'];
+                let options = ['internal','external'];
                 return options.indexOf(val) != -1 ? true: false;
             }
         },
@@ -72,7 +72,6 @@ export default {
             filterReturnStatus: 'All',
             
             // filterApplicationRegion: 'All',
-            // filterApplicationActivity: 'All',
             // filterApplicationStatus: 'All',
             // filterApplicationLodgedFrom: '',
             // filterApplicationLodgedTo: '',
@@ -96,13 +95,13 @@ export default {
                 'Temporary',
                 'Draft',
                 'With Assessor',
-                'With Referral',
                 'Issued',
                 'Declined'
             ],
             application_activityTitles : [],
             application_regions: [],
             application_submitters: [],
+            return_licence_types: [],
             application_headers:["Number","Due Date","Status","Licence","Action"],
             application_options:{
                 language: {
@@ -138,18 +137,19 @@ export default {
                         mRender:function (data,type,full) {
                             let vm=this;
                             let links = '';
-                            links +=  `<a href='/external/return/${full.id}'>View</a><br/>`;
+
+                            links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;
+                            links +=  `<a href='/external/return/${full.id}'>Continue</a><br/>`;
                             // if (!vm.is_external){
+
                             //     links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;
                             // }
                             // else{
-                            //     if (full.can_user_edit) {
                             //         links +=  `<a href='/external/return/${full.id}'>Continue</a><br/>`;
-                            //         links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
-                            //     }
-                            //     else if (full.can_user_view) {
-                            //         links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
-                            //     }
+                                    
+                            //     // else if (full.can_user_view) {
+                            //     //     links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
+                            //     // }
                             // }
                             return links;
                         }
@@ -188,36 +188,6 @@ export default {
         datatable
     },
     watch:{
-        // filterApplicationActivity: function() {
-        //     let vm = this;
-        //     if (vm.filterApplicationActivity!= 'All') {
-        //         vm.$refs.application_datatable.vmDataTable.columns(2).search(vm.filterApplicationActivity).draw();
-        //     } else {
-        //         vm.$refs.application_datatable.vmDataTable.columns(2).search('').draw();
-        //     }
-        // },
-        // filterApplicationStatus: function() {
-        //     let vm = this;
-        //     if (vm.filterApplicationStatus!= 'All') {
-        //         vm.$refs.application_datatable.vmDataTable.columns(6).search(vm.filterApplicationStatus).draw();
-        //     } else {
-        //         vm.$refs.application_datatable.vmDataTable.columns(6).search('').draw();
-        //     }
-        // },
-        // filterApplicationRegion: function(){
-        //     this.$refs.application_datatable.vmDataTable.draw();
-        // },
-        // filterApplicationSubmitter: function(){
-        //     this.$refs.application_datatable.vmDataTable.draw();
-        // },
-        // filterApplicationLodgedFrom: function(){
-        //     this.$refs.application_datatable.vmDataTable.draw();
-        // },
-        // filterApplicationLodgedTo: function(){
-        //     this.$refs.application_datatable.vmDataTable.draw();
-        // }
-
-
         filterReturnLicenceType: function(){
         },
         filterReturnStatus: function(){
@@ -231,9 +201,6 @@ export default {
         is_external: function(){
             return this.level == 'external';
         },
-        is_referral: function(){
-            return this.level == 'referral';
-        }
     },
     methods:{
         addEventListeners: function(){
@@ -350,6 +317,8 @@ export default {
         this.$nextTick(() => {
             vm.addEventListeners();
             vm.initialiseSearch();
+            // console.log(vm.is_external)
+
         });
     }
 }

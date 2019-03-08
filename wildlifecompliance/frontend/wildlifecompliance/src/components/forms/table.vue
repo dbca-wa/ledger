@@ -16,7 +16,7 @@
                 <HelpTextUrl :help_text_url="help_text_assessor_url" assessorMode={assessorMode} isForAssessor={true} />
             </template> 
 
-            <template v-if="assessorMode && !assessor_readonly && wc_version != 1.0">
+            <template v-if="assessorMode && !assessor_readonly">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
@@ -80,7 +80,7 @@ import HelpTextUrl from './help_text_url.vue'
 export default {
     //props:["name","value", "id", "isRequired", "help_text","help_text_assessor","assessorMode","label","readonly","comment_value","assessor_readonly", "help_text_url", "help_text_assessor_url"],
     props:{
-        headers: [],
+        headers: String,  // Input received as String, later converted to JSON within data() below
         name: String,
         label: String,
         id: String,
@@ -160,15 +160,16 @@ export default {
             }
         }
 
-        if(vm.readonly) {
-            return { isClickable: "return false;" }
-        } else {
-            return { isClickable: "return true;" }
-        }
-
-        return {
+        let data = {
             showingComment: false,
         }
+        if(vm.readonly) {
+            data.isClickable = "return false;";
+        } else {
+            data.isClickable = "return true;";
+        }
+
+        return data;
 
     },
     methods: {
@@ -209,9 +210,6 @@ export default {
     },
 
     computed:{
-        wc_version: function (){
-            return this.$root.wc_version;
-        },
     },
 
 
@@ -253,14 +251,11 @@ export default {
       width: 100%;
     }
 
-    .editable-table {
-
-      [type="text"] {
+    .editable-table[type="text"] {
         background: none;
         border: none;
         display: block;
         width: 100%;
-      }
     }
 
     .output {

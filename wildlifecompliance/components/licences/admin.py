@@ -3,26 +3,32 @@ from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.licences import models
 # Register your models here.
 
-@admin.register(models.WildlifeLicenceClass)
-class WildlifeLicenceClassAdmin(admin.ModelAdmin):
+
+@admin.register(models.LicenceCategory)
+class LicenceCategoryAdmin(admin.ModelAdmin):
     pass
 
-@admin.register(models.WildlifeLicenceActivityType)
-class WildlifeLicenceActivityTypeAdmin(admin.ModelAdmin):
+
+@admin.register(models.LicenceActivity)
+class LicenceActivityAdmin(admin.ModelAdmin):
     pass
+
 
 @admin.register(models.WildlifeLicence)
 class WildlifeLicence(admin.ModelAdmin):
     pass
 
-@admin.register(models.DefaultActivityType)
-class DefaultActivityTypeAdmin(admin.ModelAdmin):
-    pass
-
-@admin.register(models.WildlifeLicenceActivity)
-class WildlifeLicenceActivitydmin(admin.ModelAdmin):
-    pass
 
 @admin.register(models.DefaultActivity)
 class DefaultActivityAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.LicencePurpose)
+class LicencePurposeAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(models.DefaultPurpose)
+class DefaultPurposeAdmin(admin.ModelAdmin):
     pass

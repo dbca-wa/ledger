@@ -7,8 +7,9 @@
             Please ensure that your payment for the application fee is processed as soon as possible to avoid delays processing your application. An email will be sent confirming your payment. If you have not yet paid, you can log into the system and click on the Process Payment link for the application.
         {% endif %}
 
-        Application : {{ application.id }}
+        Application: {{ application.id }}
 
         Link: {{url}}
 
+        Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.
 {%  endblock %}

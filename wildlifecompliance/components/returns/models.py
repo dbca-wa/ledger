@@ -1,33 +1,25 @@
 
 from __future__ import unicode_literals
-
-import json
-import datetime
-from preserialize.serialize import serialize
-from django.db import models,transaction
-from django.dispatch import receiver
-from django.db.models.signals import pre_delete
-from django.utils.encoding import python_2_unicode_compatible
-from django.core.exceptions import ValidationError
+from django.db import models, transaction
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
-from django.contrib.sites.models import Site
-from taggit.managers import TaggableManager
-from taggit.models import TaggedItemBase
-from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin
-from ledger.licence.models import  Licence
-from wildlifecompliance import exceptions
-from wildlifecompliance.components.returns.utils_schema import Schema, create_return_template_workbook
-from wildlifecompliance.components.organisations.models import Organisation
-from wildlifecompliance.components.applications.models import ApplicationCondition,Application
-from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
-from wildlifecompliance.components.returns.email import send_external_submit_email_notification
-
+from wildlifecompliance.components.returns.utils_schema import Schema
+from wildlifecompliance.components.applications.models import ApplicationCondition, Application
+from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction
+from wildlifecompliance.components.returns.email import send_external_submit_email_notification, \
+                                                        send_return_accept_email_notification
 
 
 class ReturnType(models.Model):
-    Name=models.TextField(null=True,blank=True,max_length=200)
+    """
+    A Type to identify the method used to facilitate Return.
+    """
+    RETURN_TYPE_CHOICES = (('SHEET', 'Sheet'),
+                           ('QUESTION', 'Question'),
+                           ('DATA', 'Data'))
+
+    Name = models.TextField(null=True, blank=True, max_length=200)
     data_descriptor = JSONField()
 
     class Meta:
@@ -49,35 +41,57 @@ class ReturnType(models.Model):
 
 
 class Return(models.Model):
-    PROCESSING_STATUS_CHOICES = (('due', 'Due'), 
-                                 ('overdue','Overdue'),
-                                 ('draft','Draft'),
-                                 ('future', 'Future'), 
+    """
+    A number of requirements relating to a Licence condition.
+    """
+    PROCESSING_STATUS_CHOICES = (('due', 'Due'),
+                                 ('overdue', 'Overdue'),
+                                 ('draft', 'Draft'),
+                                 ('future', 'Future'),
                                  ('with_curator', 'With Curator'),
                                  ('accepted', 'Accepted'),
                                  )
     CUSTOMER_STATUS_CHOICES = (('due', 'Due'),
-                                 ('overdue','Overdue'),
-                                 ('draft','Draft'),
-                                 ('future', 'Future'),
-                                 ('under_review', 'Under Review'),
-                                 ('accepted', 'Accepted'),
-                                 
-                                 )
+                               ('overdue', 'Overdue'),
+                               ('draft', 'Draft'),
+                               ('future', 'Future'),
+                               ('under_review', 'Under Review'),
+                               ('accepted', 'Accepted'),
+
+                               )
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
-    application = models.ForeignKey(Application,related_name='returns')
-    licence = models.ForeignKey('wildlifecompliance.WildlifeLicence',related_name='returns')
+    application = models.ForeignKey(Application, related_name='returns')
+    licence = models.ForeignKey(
+        'wildlifecompliance.WildlifeLicence',
+        related_name='returns')
     due_date = models.DateField()
     text = models.TextField(blank=True)
-    processing_status = models.CharField(choices=PROCESSING_STATUS_CHOICES,max_length=20)
-    customer_status = models.CharField(choices=CUSTOMER_STATUS_CHOICES,max_length=20, default=CUSTOMER_STATUS_CHOICES[1][0])
-    assigned_to = models.ForeignKey(EmailUser,related_name='wildlifecompliance_return_assignments',null=True,blank=True)
-    condition = models.ForeignKey(ApplicationCondition, blank=True, null=True, related_name='returns_condition', on_delete=models.SET_NULL)
+    processing_status = models.CharField(
+        choices=PROCESSING_STATUS_CHOICES, max_length=20)
+    customer_status = models.CharField(
+        choices=CUSTOMER_STATUS_CHOICES,
+        max_length=20,
+        default=CUSTOMER_STATUS_CHOICES[1][0])
+    assigned_to = models.ForeignKey(
+        EmailUser,
+        related_name='wildlifecompliance_return_assignments',
+        null=True,
+        blank=True)
+    condition = models.ForeignKey(
+        ApplicationCondition,
+        blank=True,
+        null=True,
+        related_name='returns_condition',
+        on_delete=models.SET_NULL)
     lodgement_date = models.DateTimeField(blank=True, null=True)
-    submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='disturbance_compliances')
+    submitter = models.ForeignKey(
+        EmailUser,
+        blank=True,
+        null=True,
+        related_name='disturbance_compliances')
     reminder_sent = models.BooleanField(default=False)
     post_reminder_sent = models.BooleanField(default=False)
-    return_type=models.ForeignKey(ReturnType,null=True)
+    return_type = models.ForeignKey(ReturnType, null=True)
     nil_return = models.BooleanField(default=False)
     comments = models.TextField(blank=True, null=True)
 
@@ -105,6 +119,10 @@ class Return(models.Model):
         return self.return_type.data_descriptor.get('resources', [])
 
     @property
+    def type(self):
+        return self.return_type.Name
+
+    @property
     def table(self):
         tables = []
         for resource in self.return_type.resources:
@@ -112,10 +130,10 @@ class Return(models.Model):
             schema = Schema(resource.get('schema'))
             headers = []
             for f in schema.fields:
-                # print(type(f.name))
                 header = {
                     "title": f.name,
-                    "required": f.required
+                    "required": f.required,
+                    "type": f.type.name
                 }
                 if f.is_species:
                     header["species"] = f.species_type
@@ -128,45 +146,146 @@ class Return(models.Model):
             }
             try:
                 return_table = self.returntable_set.get(name=resource_name)
-                rows = [return_row.data for return_row in return_table.returnrow_set.all()]
+                rows = [
+                    return_row.data for return_row in return_table.returnrow_set.all()]
                 validated_rows = schema.rows_validator(rows)
                 table['data'] = validated_rows
             except ReturnTable.DoesNotExist:
                 result = {}
-                results=[]
+                results = []
                 for field_name in schema.fields:
                     result[field_name.name] = {
                         'value': None
                     }
                 results.append(result)
-                table['data']=results
+                table['data'] = results
         tables.append(table)
         return tables
+
+    def factory(self):
+        """
+        A simple factory for Return methods.
+        :return: A specific Return method
+        """
+        if self.return_type.Name == 'sheet':
+            return ReturnSheet(self)
+
+        return self
 
     def log_user_action(self, action, request):
         return ReturnUserAction.log_action(self, action, request.user)
 
-    def set_submitted(self,request):
+    def set_submitted(self, request):
         with transaction.atomic():
             try:
-                if self.processing_status=='future' or 'due':
-                    self.customer_status="under_review"
-                    self.processing_status="with_curator"
-                    self.submitter=request.user
+                if self.processing_status == 'future' or 'due':
+                    self.customer_status = "under_review"
+                    self.processing_status = "with_curator"
+                    self.submitter = request.user
                     self.save()
 
-                #code for amendment returns is still to be added, so lodgement_date is set outside if statement
+                # code for amendment returns is still to be added, so
+                # lodgement_date is set outside if statement
                 self.lodgement_date = timezone.now()
                 self.save()
-                #this below code needs to be reviewed
+                # this below code needs to be reviewed
                 # self.save(version_comment='Return submitted:{}'.format(self.id))
                 # self.application.save(version_comment='Return submitted:{}'.format(self.id))
-                self.log_user_action(ReturnUserAction.ACTION_SUBMIT_REQUEST.format(self.id),request)
-                send_external_submit_email_notification(request,self)
+                self.log_user_action(
+                    ReturnUserAction.ACTION_SUBMIT_REQUEST.format(
+                        self.id), request)
+                send_external_submit_email_notification(request, self)
                 # send_submit_email_notification(request,self)
-            except:
+            except BaseException:
                 raise
 
+    def accept(self, request):
+        with transaction.atomic():
+            self.processing_status = 'accepted'
+            self.customer_status = 'accepted'
+            self.save()
+            self.log_user_action(
+                ReturnUserAction.ACTION_ACCEPT_REQUEST.format(
+                    self.id), request)
+            send_return_accept_email_notification(self, request)
+
+
+class ReturnSheet(object):
+    """
+    A Running Sheet of requirements supporting licence conditions.
+    """
+    RETURN_SHEET_SCHEMA = {"name": "sheet", "title": "Standard return for stock", "resources": [{"name":
+                           "sheet", "path": "", "title": "Stock Return", "schema": {"fields": [{"stype": {"type":
+                           "species", "speciesType": "fauna"}, "name": "SPECIES", "type": "string",
+                           "constraints": {"required": True}}, {"name": "DATE", "type": "date", "format":
+                           "fmt:%d/%m/%Y", "constraints": {"required": True}}, {"sgroup": {"type": "speciesGroup",
+                           "speciesGroup": "stock"}, "name": "TYPE", "type": "string", "constraints": {"required":
+                           True}}, {"name": "QUANTITY", "type": "number", "constraints": {"required": True}}, {
+                           "name": "TOTAL", "type": "number", "constraints": {"required": True}}, {
+                           "name": "COMMENTS", "type": "string"}]}}]}
+
+    def __init__(self, a_return):
+        self._return = a_return
+        self._return.return_type.data_descriptor = self.RETURN_SHEET_SCHEMA
+        self._rows = []
+
+    def _get_table_rows_from_post(self, table_name, post_data):
+        table_namespace = table_name + '::'
+        by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(
+            key)) for key in post_data.keys() if key.startswith(table_namespace)])
+        # by_column is of format {'col_header':[row1_val, row2_val,...],...}
+        num_rows = len(
+            list(
+                by_column.values())[0]) if len(
+            by_column.values()) > 0 else 0
+        self._rows = []
+        for row_num in range(num_rows):
+            row_data = {}
+            for key, value in by_column.items():
+                row_data[key] = value[row_num]
+            # filter empty rows.
+            is_empty = True
+            for value in row_data.values():
+                if len(value.strip()) > 0:
+                    is_empty = False
+                    break
+            if not is_empty:
+                self._rows.append(row_data)
+
+    def _create_return_data_from_post_data(self, ret, tables_info, post_data):
+        self._get_table_rows_from_post(tables_info, post_data)
+        if self._rows:
+            return_table = ReturnTable.objects.get_or_create(
+                name=tables_info, ret=ret)[0]
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in self._rows]
+            ReturnRow.objects.bulk_create(return_rows)
+
+    @property
+    def table(self):
+        return self._return.table
+
+    def create_species_data(self):
+        pass
+
+    def update_species_data(self):
+        pass
+
+    def retrieve_species_data(self):
+        pass
+
+    def delete_species_data(self):
+        pass
+
+    def is_valid(self):
+        pass
+
+    def __str__(self):
+        return self._return.return_type.Name
 
 
 class ReturnTable(RevisionedMixin):
@@ -190,6 +309,7 @@ class ReturnRow(RevisionedMixin):
 class ReturnUserAction(UserAction):
     ACTION_CREATE = "Lodge Return {}"
     ACTION_SUBMIT_REQUEST = "Submit Return {}"
+    ACTION_ACCEPT_REQUEST = "Accept Return {}"
     ACTION_ASSIGN_TO = "Assign to {}"
     ACTION_UNASSIGN = "Unassign"
     ACTION_DECLINE_REQUEST = "Decline request"
@@ -223,4 +343,3 @@ class ReturnLogEntry(CommunicationsLogEntry):
         if not self.reference:
             self.reference = self.return_obj.id
         super(ReturnLogEntry, self).save(**kwargs)
-

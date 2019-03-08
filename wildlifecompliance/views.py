@@ -10,22 +10,27 @@ from datetime import datetime, timedelta
 
 from wildlifecompliance.helpers import is_internal
 from wildlifecompliance.forms import *
-from wildlifecompliance.components.applications.models import Referral,Application
+from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.returns.models import Return
-from wildlifecompliance.components.applications.mixins import ReferralOwnerMixin
 from wildlifecompliance.components.main import utils
 from wildlifecompliance.exceptions import BindApplicationException
 from django.core.management import call_command
 
+
+class ApplicationView(DetailView):
+    model = Application
+    template_name = 'wildlifecompliance/dash/index.html'
 
 
 class ExternalApplicationView(DetailView):
     model = Application
     template_name = 'wildlifecompliance/dash/index.html'
 
+
 class ExternalReturnView(DetailView):
     model = Return
     template_name = 'wildlifecompliance/dash/index.html'
+
 
 class InternalView(UserPassesTestMixin, TemplateView):
     template_name = 'wildlifecompliance/dash/index.html'
@@ -37,8 +42,9 @@ class InternalView(UserPassesTestMixin, TemplateView):
         context = super(InternalView, self).get_context_data(**kwargs)
         context['dev'] = settings.DEV_STATIC
         context['dev_url'] = settings.DEV_STATIC_URL
-        context['wc_version'] = settings.WC_VERSION
+        context['app_build_url'] = settings.DEV_APP_BUILD_URL
         return context
+
 
 class ExternalView(LoginRequiredMixin, TemplateView):
     template_name = 'wildlifecompliance/dash/index.html'
@@ -47,16 +53,9 @@ class ExternalView(LoginRequiredMixin, TemplateView):
         context = super(ExternalView, self).get_context_data(**kwargs)
         context['dev'] = settings.DEV_STATIC
         context['dev_url'] = settings.DEV_STATIC_URL
-        context['wc_version'] = settings.WC_VERSION
+        context['app_build_url'] = settings.DEV_APP_BUILD_URL
         return context
 
-class ReferralView(ReferralOwnerMixin, DetailView):
-    model = Referral
-    template_name = 'wildlifecompliance/dash/index.html'
-
-class ApplicationView(ReferralOwnerMixin,DetailView):
-    model=Application
-    template_name='wildlifecompliance/dash/index.html'
 
 class WildlifeComplianceRoutingView(TemplateView):
     template_name = 'wildlifecompliance/index.html'
@@ -68,6 +67,7 @@ class WildlifeComplianceRoutingView(TemplateView):
             return redirect('external')
         kwargs['form'] = LoginForm
         return super(WildlifeComplianceRoutingView, self).get(*args, **kwargs)
+
 
 @login_required(login_url='wc_home')
 def first_time(request):
@@ -121,4 +121,3 @@ class ManagementCommandsView(LoginRequiredMixin, TemplateView):
             data.update({command_script: 'true'})
 
         return render(request, self.template_name, data)
-

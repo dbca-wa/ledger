@@ -16,16 +16,28 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='application',
             name='licence_activity',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.WildlifeLicenceActivity'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='wildlifecompliance.WildlifeLicenceActivity'),
         ),
         migrations.AddField(
             model_name='application',
             name='licence_activity_type',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.WildlifeLicenceActivityType'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='wildlifecompliance.WildlifeLicenceActivityType'),
         ),
         migrations.AddField(
             model_name='application',
             name='licence_category',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.WildlifeLicenceCategory'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='wildlifecompliance.WildlifeLicenceCategory'),
         ),
     ]

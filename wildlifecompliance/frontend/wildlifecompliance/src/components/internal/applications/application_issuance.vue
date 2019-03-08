@@ -1,7 +1,7 @@
 <template id="application_issuance">
 
                 <div class="col-md-12">
-                    <div class="row" v-for="(item,index) in licence.activity_type">
+                    <div class="row" v-for="(item,index) in licence.activity">
                         <div class="panel panel-default">
                             <div class="panel-heading">
                                 <h3 class="panel-title">Issue/Decline - {{item.name}}
@@ -16,10 +16,10 @@
                                         <div class="form-group">
                                             <div class="row">
                                                 <div class="col-sm-3">
-                                                    <input type="radio"  id="issue" name="licence_category" v-model="licence.activity_type[index].final_status"  value="Issue" > Issue
+                                                    <input type="radio"  id="issue" name="licence_category" v-model="licence.activity[index].final_status"  value="Issue" > Issue
                                                 </div>
                                                 <div class="col-sm-3">
-                                                    <input type="radio"  id="decline" name="licence_category" v-model="licence.activity_type[index].final_status"  value="Decline" > Decline
+                                                    <input type="radio"  id="decline" name="licence_category" v-model="licence.activity[index].final_status"  value="Decline" > Decline
                                                 </div>
                                             </div>
                                             <div class="row">
@@ -29,7 +29,7 @@
                                                 </div>
                                                 <div class="col-sm-9">
                                                     <div class="input-group date" ref="start_date" style="width: 70%;">
-                                                        <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY" v-model="licence.activity_type[index].start_date">
+                                                        <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY" v-model="licence.activity[index].start_date">
                                                         <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
                                                         </span>
@@ -43,7 +43,7 @@
                                                 </div>
                                                 <div class="col-sm-9">
                                                     <div class="input-group date" ref="end_date" style="width: 70%;">
-                                                        <input type="text" class="form-control" name="end_date" placeholder="DD/MM/YYYY" v-model="licence.activity_type[index].end_date">
+                                                        <input type="text" class="form-control" name="end_date" placeholder="DD/MM/YYYY" v-model="licence.activity[index].end_date">
                                                         <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
                                                         </span>
@@ -57,7 +57,7 @@
                                                 </div>
                                                 <div class="col-sm-9">
                                                     <div class="input-group date" ref="fee" style="width: 70%;">
-                                                        <input type="text" class="form-control" name="fee" v-model="licence.activity_type[index].fee">
+                                                        <input type="text" class="form-control" name="fee" v-model="licence.activity[index].fee">
                                                         
                                                     </div>
                                                 </div>
@@ -69,7 +69,7 @@
                                                 </div>
                                                 <div class="col-sm-9">
                                                     <div class="input-group date" ref="reduced_fee" style="width: 70%;">
-                                                        <input type="text" class="form-control" name="reduced_fee" v-model="licence.activity_type[index].reduced_fee">
+                                                        <input type="text" class="form-control" name="reduced_fee" v-model="licence.activity[index].reduced_fee">
                                                         
                                                     </div>
                                                 </div>
@@ -198,7 +198,7 @@ export default {
     name: 'InternalApplicationIssuance',
     props: {
         application: Object,
-        licence_activity_type_tab:Number
+        licence_activity_tab:Number
     },
     data: function() {
         let vm = this;
@@ -206,7 +206,7 @@ export default {
             panelBody: "application-issuance-"+vm._uid,
             proposed_licence:{},
             licence:{
-                activity_type:[],
+                activity:[],
                 id_check:false,
                 character_check:false,
                 current_application: vm.application.id,
@@ -253,8 +253,8 @@ export default {
                         emulateJSON:true,
                     }).then((response)=>{
                         swal(
-                             'Issue activity type',
-                             'The activity type is successfully issued',
+                             'Issue activity',
+                             'The activity is successfully issued',
                              'success'
                         );
                         vm.close();
@@ -277,9 +277,9 @@ export default {
                 if (vm.proposed_licence[i].proposed_action =='Propose Decline'){
                     final_status="Decline"
                 }
-                vm.licence.activity_type.push({
-                                        id:         vm.proposed_licence[i].licence_activity_type.id,
-                                        name:       vm.proposed_licence[i].licence_activity_type.name,
+                vm.licence.activity.push({
+                                        id:         vm.proposed_licence[i].licence_activity.id,
+                                        name:       vm.proposed_licence[i].licence_activity.name,
                                         start_date: vm.proposed_licence[i].proposed_start_date,
                                         end_date: vm.proposed_licence[i].proposed_end_date,
                                         final_status:final_status
@@ -330,7 +330,7 @@ export default {
             //     $(vm.$refs.end_date[i]).datetimepicker(vm.datepickerOptions);
             //     $(vm.$refs.end_date[i]).on('dp.change', function(e){
             //         if ($(vm.$refs.end_date[i]).data('DateTimePicker').date()) {
-            //             vm.licence.activity_type[i].expiry_date=  e.date.format('DD/MM/YYYY');
+            //             vm.licence.activity[i].expiry_date=  e.date.format('DD/MM/YYYY');
             //         }
                     
             //      });

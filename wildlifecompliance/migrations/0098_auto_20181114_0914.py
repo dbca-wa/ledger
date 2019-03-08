@@ -17,21 +17,41 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ReturnRow',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('data', django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True)),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
+                ('data',
+                 django.contrib.postgres.fields.jsonb.JSONField(
+                     blank=True,
+                     null=True)),
             ],
         ),
         migrations.CreateModel(
             name='ReturnTable',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=50)),
-                ('ret', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.Return')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
+                ('name',
+                 models.CharField(
+                     max_length=50)),
+                ('ret',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='wildlifecompliance.Return')),
             ],
         ),
         migrations.AddField(
             model_name='returnrow',
             name='return_table',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='wildlifecompliance.ReturnTable'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='wildlifecompliance.ReturnTable'),
         ),
     ]

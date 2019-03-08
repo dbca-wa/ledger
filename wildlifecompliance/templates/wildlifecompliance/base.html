@@ -3,6 +3,8 @@
 {% load static %}
 
 {% load users %}
+{% load tagutils %}
+{% get_instance_type as instance_type %}
 {% is_internal as is_internal_login %}
 {% is_officer as is_officer_login %}
 {% is_wildlifecompliance_admin as is_wildlifecompliance_admin_login %}
@@ -19,9 +21,6 @@
             {% endif %}
             {% block extra_css %}
             {% endblock %}
-            <script>
-                wc_version = "{{ wc_version }}"
-            </script>
             {% block extra_js %}
             {% endblock %}
             <title>
@@ -36,7 +35,7 @@
     <body>
         <header class="topmast">
             {% block header %}
-                {% include 'wildlifecompliance/header.html' %}
+                {% include 'wildlifecompliance/header.html' with instance_type=instance_type %}
             {% endblock %}
         </header>
         {% block menu %}
@@ -64,12 +63,10 @@
                                 <ul class="nav navbar-nav">
                                     {% block left_menu_items %}
                                         {% if is_internal_login %}
-                                            {% if wc_version != 1.0 %}
-                                                <li><a href="/internal/licences">Licences</a></li>
-                                                <li><a href="/internal/returns">Returns</a></li>
-                                                <li><a href="/internal/tag_purchases">Tag Purchases</a></li>
-                                                <li><a href="/internal/advices">Advices to CEO</a></li>
-                                            {% endif %}
+                                            <li><a href="/internal/licences">Licences</a></li>
+                                            <li><a href="/internal/returns">Returns</a></li>
+                                            <li><a href="/internal/tag_purchases">Tag Purchases</a></li>
+                                            <li><a href="/internal/advices">Advices to CEO</a></li>
                                             {% if is_officer_login %}
                                                 <li><a href="/internal/organisations/access">Organisation Access Requests</a></li>
                                                 <li><a href="/internal/search">Search</a></li>
@@ -101,12 +98,15 @@
                                             <ul class="dropdown-menu">
                                                 {% if is_wildlifecompliance_admin_login %}
                                                     <li><a href="{% url 'admin:index' %}">Admin</a></li>
-                                                    <li role="separator" class="divider"></li>
                                                 {% endif %}
                                                 {% if request.user.is_superuser %}
                                                     <li><a href="{% url 'mgt-commands' %}">Management Commands</a></li>
                                                 {% endif %}
+                                                {% if request.user.is_superuser or is_wildlifecompliance_admin_login %}
+                                                    <li role="separator" class="divider"></li>
+                                                {% endif %}
                                                 <li><a href="{% url 'manage-account' %}">Manage Account</a></li>
+                                                <li><a href="{% url 'pdf_latex' %}">Create PDF</a></li>
                                                 <li><a href="{% url 'manage-profiles' %}">Manage Profiles</a></li>
                                                 {% for org in request.user.wildlifecompliance_organisations.all %}
                                                     {% for org_contact in org.contacts.all%}
@@ -157,7 +157,11 @@
             <script type="text/javascript" src="https://static.dbca.wa.gov.au/static/libs/jquery/3.3.1/jquery.min.js"></script>
             <script type="text/javascript" src="{% static 'wildlifecompliance_vue/static/js/manifest.js' %}"></script>
             <script type="text/javascript" src="{% static 'wildlifecompliance_vue/static/js/vendor.js' %}"></script>
-            <script type="text/javascript" src="{% static 'wildlifecompliance_vue/static/js/app.js' %}"></script>
+            {% if app_build_url %}
+                <script type="text/javascript" src="{{ app_build_url }}"></script>
+            {% else %}
+                <script type="text/javascript" src="{% static 'wildlifecompliance_vue/static/js/app.js' %}"></script>
+            {% endif %}
         {% else %}
             <script type="text/javascript" src="{{ dev_url }}"></script>
         {% endif %}

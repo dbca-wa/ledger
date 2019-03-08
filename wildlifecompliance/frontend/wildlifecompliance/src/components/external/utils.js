@@ -65,6 +65,16 @@ export default {
             });
         });
     },
+    fetchLicenceAvailablePurposes: function(data){
+        return new Promise ((resolve,reject) => {
+            Vue.http.get(helpers.add_endpoint_join(api.licence_available_purposes,''), JSON.stringify(data), {emulateJSON:true}).then((response) => {
+                resolve(response.body);
+            },
+            (error) => {
+                reject(error);
+            });
+        });
+    },
     fetchOrganisation: function(id){
         return new Promise ((resolve,reject) => {
             Vue.http.get(helpers.add_endpoint_json(api.organisations,id)).then((response) => {

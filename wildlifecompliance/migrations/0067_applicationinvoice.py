@@ -16,9 +16,23 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ApplicationInvoice',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('invoice_reference', models.CharField(blank=True, default='', max_length=50, null=True)),
-                ('application', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='invoices', to='wildlifecompliance.Application')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
+                ('invoice_reference',
+                 models.CharField(
+                     blank=True,
+                     default='',
+                     max_length=50,
+                     null=True)),
+                ('application',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     related_name='invoices',
+                     to='wildlifecompliance.Application')),
             ],
         ),
     ]

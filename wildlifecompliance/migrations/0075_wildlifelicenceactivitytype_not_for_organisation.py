@@ -15,6 +15,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='wildlifelicenceactivitytype',
             name='not_for_organisation',
-            field=models.BooleanField(default=False, help_text='If ticked, this licenced activity will not be available for applications on behalf of an organisation.'),
+            field=models.BooleanField(
+                default=False,
+                help_text='If ticked, this licenced activity will not be available for applications on behalf of an organisation.'),
         ),
     ]

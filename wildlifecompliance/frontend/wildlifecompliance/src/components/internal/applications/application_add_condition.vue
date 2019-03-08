@@ -122,7 +122,7 @@ export default {
                 type: Array,
                 required: true
             },
-            licence_activity_type_tab:{
+            licence_activity_tab:{
                 type:Number,
                 required:true
             }
@@ -138,7 +138,7 @@ export default {
                 recurrence: false,
                 recurrence_pattern: '1',
                 application: vm.application_id,
-                licence_activity_type:null
+                licence_activity:null
             },
             addingCondition: false,
             updatingCondition: false,
@@ -226,7 +226,7 @@ export default {
         sendData:function(){
             let vm = this;
             vm.errors = false;
-            vm.condition.licence_activity_type=vm.licence_activity_type_tab
+            vm.condition.licence_activity=vm.licence_activity_tab
             let condition = JSON.parse(JSON.stringify(vm.condition));
             if (condition.standard){
                 condition.free_condition = '';

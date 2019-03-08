@@ -1,8 +1,9 @@
 {%  extends 'wildlifecompliance/emails/base_email.html' %}
 
 {%  block content %}
-        <p>An amendment has been submitted with below details</p>
+        <p>An amendment to an application has been submitted with the following details:</p>
         <p><strong>Application : {{ application.id }}</strong></p>
         <p><strong>Submitter: {{application.submitter}}</strong></p>
-        <p><strong>Link: {{url}}</strong></p>
+        <p><strong>Link: <a href="{{url}}">{{url}}</a></strong></p>
+        <p>Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.</p>
 {%  endblock %}

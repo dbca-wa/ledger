@@ -17,7 +17,7 @@
             </template> 
 
 
-            <template v-if="assessorMode && !assessor_readonly && wc_version != 1.0">
+            <template v-if="assessorMode && !assessor_readonly">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
@@ -26,10 +26,10 @@
             </template>
             <span v-if="min!='' || max!=''">
                 <input :readonly="readonly" :type="type" :min="min" :max="max" class="form-control" :name="name" :value="value" :required="isRequired" />
-            <span>
+            </span>
             <span v-else>
                 <input :readonly="readonly" :type="type" class="form-control" :name="name" :value="value" :required="isRequired" />
-            <span>
+            </span>
         </div>
         <Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> 
     </div>
@@ -54,9 +54,6 @@ export default {
         }
     },
     computed: {
-        wc_version: function (){
-            return this.$root.wc_version;
-        },
     }
 }
 </script>

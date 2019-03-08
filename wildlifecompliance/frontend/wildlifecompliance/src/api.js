@@ -20,7 +20,6 @@ module.exports = {
     application_type:"/api/application_type/",
     applications:"/api/application/",
     licences:"/api/licences/",
-    referrals:"/api/referrals/",
     returns:"/api/returns/",
     application_standard_conditions:"/api/application_standard_conditions/",
     application_conditions:"/api/application_conditions/",

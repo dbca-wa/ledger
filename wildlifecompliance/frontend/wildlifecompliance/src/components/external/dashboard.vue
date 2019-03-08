@@ -11,7 +11,7 @@
         </div>
     </div>
     <ApplicationDashTable level='external' :url='applications_url'/>
-    <div v-if="wc_version != 1.0">
+    <div>
         <LicenceDashTable level='external' :url='licences_url'/>
         <ReturnDashTable level='external' :url='returns_url'/>
     </div>
@@ -46,9 +46,6 @@ export default {
     },
     watch: {},
     computed: {
-        wc_version: function (){
-            return this.$root.wc_version;
-        }
     },
     methods: {
     },

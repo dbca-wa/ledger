@@ -101,8 +101,11 @@ export default {
             application_licence_types: [],
             application_regions: [],
             application_submitters: [],
-            application_headers:["Number","Licence Category","Activity Type","Submitter","Applicant","Status","Lodged on","Action"],
+            application_headers:["Number","Licence Category","Activity","Submitter","Applicant","Status","Lodged on","Action"],
             application_options:{
+                order: [
+                    [0, 'desc']
+                ],
                 customApplicationSearch: true,
                 tableID: 'application-datatable-'+vm._uid,
                 language: {
@@ -127,7 +130,7 @@ export default {
                         }
                     },
                     {
-                        data: "licence_activity_type",
+                        data: "licence_activity",
                         mRender:function (data,type,full) {
                             return data.id != '' && data.id != null ? `${data.name}` : '';
                         }
@@ -308,9 +311,7 @@ export default {
                     let found = false;
                     let filtered_regions = vm.filterApplicationRegion;
                     if (filtered_regions.length == 0){ return true; } 
-
                     let regions = original.region != '' && original.region != null ? original.region.split(','): [];
-
                     $.each(regions,(i,r) => {
                         if (filtered_regions.indexOf(r) != -1){
                             found = true;
@@ -318,7 +319,6 @@ export default {
                         }
                     });
                     if  (found) { return true; }
-
                     return false;
                 }
             );
@@ -340,7 +340,6 @@ export default {
                     let from = vm.filterApplicationLodgedFrom;
                     let to = vm.filterApplicationLodgedTo;
                     let val = original.lodgement_date;
-
                     if ( from == '' && to == ''){
                         return true;
                     }

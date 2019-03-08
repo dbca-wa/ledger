@@ -71,7 +71,7 @@ export default {
             type: String,
             required: true,
             validator:function(val) {
-                let options = ['internal','referral','external'];
+                let options = ['internal','external'];
                 return options.indexOf(val) != -1 ? true: false;
             }
         },
@@ -102,8 +102,15 @@ export default {
             licence_activityTitles : [],
             licence_regions: [],
             licence_submitters: [],
+            licence_licenceTypes: [],
+            licence_status: [],
+            licence_categories: [],
+            licence_categoryStatus: [],
             licence_headers:["Number","Licence Type","Licence Holder","Status","Issue Date","Licence","Action"],
             licence_options:{
+                order: [
+                    [0, 'desc']
+                ],
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
@@ -180,36 +187,6 @@ export default {
         datatable
     },
     watch:{
-        // filterApplicationActivity: function() {
-        //     let vm = this;
-        //     if (vm.filterApplicationActivity!= 'All') {
-        //         vm.$refs.application_datatable.vmDataTable.columns(2).search(vm.filterApplicationActivity).draw();
-        //     } else {
-        //         vm.$refs.application_datatable.vmDataTable.columns(2).search('').draw();
-        //     }
-        // },
-
-
-        // filterApplicationStatus: function() {
-        //     let vm = this;
-        //     if (vm.filterApplicationStatus!= 'All') {
-        //         vm.$refs.application_datatable.vmDataTable.columns(5).search(vm.filterApplicationStatus).draw();
-        //     } else {
-        //         vm.$refs.application_datatable.vmDataTable.columns(5).search('').draw();
-        //     }
-        // },
-        // filterApplicationRegion: function(){
-        //     this.$refs.application_datatable.vmDataTable.draw();
-        // },
-        // filterApplicationSubmitter: function(){
-        //     this.$refs.application_datatable.vmDataTable.draw();
-        // },
-        // filterApplicationLodgedFrom: function(){
-        //     this.$refs.application_datatable.vmDataTable.draw();
-        // },
-        // filterApplicationLodgedTo: function(){
-        //     this.$refs.application_datatable.vmDataTable.draw();
-        // }
         filterLicenceType: function(){
         },
         filterLicenceStatus: function(){
@@ -227,9 +204,7 @@ export default {
         is_external: function(){
             return this.level == 'external';
         },
-        is_referral: function(){
-            return this.level == 'referral';
-        }
+        
     },
     methods:{
         addEventListeners: function(){

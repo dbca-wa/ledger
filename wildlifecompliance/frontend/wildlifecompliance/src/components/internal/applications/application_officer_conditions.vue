@@ -21,7 +21,7 @@
                             </div>
                         </div>
                     </div>
-                    <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions" :licence_activity_type_tab="licence_activity_type_tab"/>
+                    <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions" :licence_activity_tab="licence_activity_tab"/>
                 </div>
 
             
@@ -38,7 +38,7 @@ export default {
     name: 'InternalApplicationConditions',
     props: {
         application: Object,
-        licence_activity_type_tab: Number,
+        licence_activity_tab: Number,
         final_view_conditions: Boolean
     },
     data: function() {
@@ -55,7 +55,7 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/conditions/?licence_activity_type='+vm.licence_activity_type_tab),
+                    "url": helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/conditions/?licence_activity='+vm.licence_activity_tab),
                     "dataSrc": ''
                 },
                 order: [],
@@ -139,7 +139,7 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/conditions/?licence_activity_type='+vm.licence_activity_type_tab),
+                    "url": helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/conditions/?licence_activity='+vm.licence_activity_tab),
                     "dataSrc": ''
                 },
                 order: [],
@@ -199,7 +199,7 @@ export default {
             var selectedTabTitle = $("li.active");
             var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
 
-            this.$refs.condition_detail.licence_activity_type=tab_id
+            this.$refs.condition_detail.licence_activity=tab_id
             this.$refs.condition_detail.isModalOpen = true;
         },
         removeCondition(_id){

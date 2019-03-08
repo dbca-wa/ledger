@@ -22,19 +22,29 @@ def _render(template, context):
 
 
 def host_reverse(name, args=None, kwargs=None):
-    return "{}{}".format(settings.DEFAULT_HOST, reverse(name, args=args, kwargs=kwargs))
+    return "{}{}".format(
+        settings.DEFAULT_HOST, reverse(
+            name, args=args, kwargs=kwargs))
 
 
 class TemplateEmailBase(object):
     subject = ''
     html_template = 'wildlifecompliance/emails/base_email.html'
-    # txt_template can be None, in this case a 'tag-stripped' version of the html will be sent. (see send)
+    # txt_template can be None, in this case a 'tag-stripped' version of the
+    # html will be sent. (see send)
     txt_template = 'wildlifecompliance/emails/base-email.txt'
 
     def send_to_user(self, user, context=None):
         return self.send(user.email, context=context)
 
-    def send(self, to_addresses, from_address=None, context=None, attachments=None, cc=None, bcc=None):
+    def send(
+            self,
+            to_addresses,
+            from_address=None,
+            context=None,
+            attachments=None,
+            cc=None,
+            bcc=None):
         """
         Send an email using EmailMultiAlternatives with text and html.
         :param to_addresses: a string or a list of addresses
@@ -47,7 +57,8 @@ class TemplateEmailBase(object):
         :param cc:
         :return:
         """
-        # The next line will throw a TemplateDoesNotExist if html template cannot be found
+        # The next line will throw a TemplateDoesNotExist if html template
+        # cannot be found
         html_template = loader.get_template(self.html_template)
         # render html
         html_body = _render(html_template, context)
@@ -78,12 +89,20 @@ class TemplateEmailBase(object):
                 _attachments.append((filename, content, mime))
             else:
                 _attachments.append(attachment)
-        msg = EmailMultiAlternatives(self.subject, txt_body, from_email=from_address, to=to_addresses,
-                                     attachments=_attachments, cc=cc, bcc=bcc)
+        msg = EmailMultiAlternatives(
+            self.subject,
+            txt_body,
+            from_email=from_address,
+            to=to_addresses,
+            attachments=_attachments,
+            cc=cc,
+            bcc=bcc)
         msg.attach_alternative(html_body, 'text/html')
         try:
             msg.send(fail_silently=False)
             return msg
         except Exception as e:
-            logger.exception("Error while sending email to {}: {}".format(to_addresses, e))
+            logger.exception(
+                "Error while sending email to {}: {}".format(
+                    to_addresses, e))
             return None

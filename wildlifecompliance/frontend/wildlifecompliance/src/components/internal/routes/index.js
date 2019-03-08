@@ -6,9 +6,10 @@ import Organisation from '../organisations/manage.vue'
 import UserDashTable from '../users/dashboard.vue'
 import User from '../users/manage.vue'
 import Application from '../applications/application.vue'
-import Referral from '../referrals/referral.vue'
 import LicenceDashTable from '../licences/dashboard.vue'
 import ReturnDashTable from '../returns/dashboard.vue'
+import Returns from '../returns/access.vue'
+
 export default
 {
     path: '/internal',
@@ -38,6 +39,11 @@ export default
             path: 'search',
             component: Search,
             name:"internal-search"
+        },
+        {
+            path: 'return/:return_id',
+            component: Returns,
+            name:'access_return'
         },
         {
             path: 'users',
@@ -110,11 +116,7 @@ export default
                             component: Application,
                             name:"internal-application"
                         },
-                        {
-                            path: 'referral/:referral_id',
-                            component: Referral,
-                            name:"internal-referral"
-                        },
+                        
                     ]
                 },
  

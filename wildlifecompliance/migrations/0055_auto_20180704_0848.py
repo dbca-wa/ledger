@@ -15,6 +15,14 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='applicationgrouptype',
             name='name',
-            field=models.CharField(choices=[('officer', 'Officer'), ('assessor', 'Assessor')], default='officer', max_length=40, verbose_name='Group Type'),
+            field=models.CharField(
+                choices=[
+                    ('officer',
+                     'Officer'),
+                    ('assessor',
+                     'Assessor')],
+                default='officer',
+                max_length=40,
+                verbose_name='Group Type'),
         ),
     ]

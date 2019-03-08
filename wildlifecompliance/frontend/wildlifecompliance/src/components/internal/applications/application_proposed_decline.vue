@@ -13,7 +13,7 @@
                                         <div v-for="item in application_licence_type">
                                             <div v-for="item1 in item">
                                                 <div v-if="item1.name && item1.processing_status=='With Officer-Conditions'">
-                                                    <input type="checkbox" :value ="item1.id" :id="item1.id" v-model="propose_decline.activity_type">{{item1.name}}
+                                                    <input type="checkbox" :value ="item1.id" :id="item1.id" v-model="propose_decline.activity">{{item1.name}}
                                                 </div>
                                             </div>
                                         </div>
@@ -80,11 +80,11 @@ export default {
             isModalOpen:false,
             form:null,
             propose_decline:{
-                activity_type:[],
+                activity:[],
                 cc_email:null,
                 reason:null,
             },
-            selected_activity_type:null,
+            selected_activity:null,
             decliningApplication: false,
             errors: false,
             validation_form: null,
@@ -115,7 +115,7 @@ export default {
         close:function () {
             this.isModalOpen = false;
             this.propose_decline = {
-                activity_type:[],
+                activity:[],
                 cc_email:null,
                 reason:null,
             };
@@ -128,7 +128,7 @@ export default {
             vm.errors = false;
             let propose_decline = JSON.parse(JSON.stringify(vm.propose_decline));
             vm.decliningApplication = true;
-            if (propose_decline.activity_type.length > 0){
+            if (propose_decline.activity.length > 0){
                 if (vm.processing_status == 'Under Review'){
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/proposed_decline'),JSON.stringify(propose_decline),{
                             emulateJSON:true,

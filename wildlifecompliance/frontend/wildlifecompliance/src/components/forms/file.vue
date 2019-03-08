@@ -19,7 +19,7 @@
             </template> 
 
 
-            <template v-if="assessorMode && !assessor_readonly && wc_version != 1.0">
+            <template v-if="assessorMode && !assessor_readonly">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
@@ -108,6 +108,8 @@ export default {
             show_spinner: false,
             documents:[],
             filename:null,
+            help_text_url:'',
+            help_text_assessor_url:''
         }
     },
 
@@ -123,9 +125,6 @@ export default {
         },
         application_document_action: function() {
           return (this.application_id) ? `/api/application/${this.application_id}/process_document/` : '';
-        },
-        wc_version: function (){
-            return this.$root.wc_version;
         },
     },
 

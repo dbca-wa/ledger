@@ -1,83 +1,63 @@
 from django.contrib import admin
-from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.applications import models
-from wildlifecompliance.components.applications import forms 
+from wildlifecompliance.components.applications import forms
 from reversion.admin import VersionAdmin
-# Register your models here.
 
-# @admin.register(models.ApplicationType)
-# class ApplicationTypeAdmin(admin.ModelAdmin):
-#     exclude=("site",) 
 
 class ApplicationDocumentInline(admin.TabularInline):
     model = models.ApplicationDocument
     extra = 0
 
-@admin.register(models.ApplicationType)
-class ApplicationTypeAdmin(admin.ModelAdmin):
-    pass
 
 @admin.register(models.AmendmentRequest)
 class AmendmentRequestAdmin(admin.ModelAdmin):
-    list_display = ['application','licence_activity_type']
+    list_display = ['application', 'licence_activity']
 
-@admin.register(models.ApplicationDecisionPropose)
-class ApplicationDecisionPropose(admin.ModelAdmin):
+
+@admin.register(models.ApplicationSelectedActivity)
+class ApplicationSelectedActivity(admin.ModelAdmin):
     pass
+
 
 @admin.register(models.Assessment)
 class Assessment(admin.ModelAdmin):
     pass
 
+
 @admin.register(models.ApplicationCondition)
 class ApplicationCondition(admin.ModelAdmin):
     pass
+
 
 @admin.register(models.DefaultCondition)
 class DefaultCondition(admin.ModelAdmin):
     pass
 
-@admin.register(models.ApplicationGroupType)
-class ApplicationGroupTypeAdmin(admin.ModelAdmin):
-    list_display = ['name','display_name']
-    filter_horizontal = ('members',)
-    form = forms.ApplicationGroupTypeAdminForm
+
+@admin.register(models.ActivityPermissionGroup)
+class ActivityPermissionGroupAdmin(admin.ModelAdmin):
+    list_display = ['name', 'display_name']
+    filter_horizontal = ('licence_activities',)
+    form = forms.ActivityPermissionGroupAdminForm
 
     def has_delete_permission(self, request, obj=None):
-        return super(ApplicationGroupTypeAdmin, self).has_delete_permission(request, obj)
+        return super(
+            ActivityPermissionGroupAdmin,
+            self).has_delete_permission(
+            request,
+            obj)
+
 
 class ApplicationInvoiceInline(admin.TabularInline):
     model = models.ApplicationInvoice
     extra = 0
 
+
 @admin.register(models.Application)
 class ApplicationAdmin(VersionAdmin):
-    inlines =[ApplicationDocumentInline,ApplicationInvoiceInline]
+    inlines = [ApplicationDocumentInline, ApplicationInvoiceInline]
 
-@admin.register(models.ApplicationAssessorGroup)
-class ApplicationAssessorGroupAdmin(admin.ModelAdmin):
-    list_display = ['name','default']
-    filter_horizontal = ('members',)
-    form = forms.ApplicationAssessorGroupAdminForm
-    readonly_fields = ['default']
-
-    def has_delete_permission(self, request, obj=None):
-        if obj and obj.default:
-            return False
-        return super(ApplicationAssessorGroupAdmin, self).has_delete_permission(request, obj)
-
-@admin.register(models.ApplicationApproverGroup)
-class ApplicationApproverGroupAdmin(admin.ModelAdmin):
-    list_display = ['name','default']
-    filter_horizontal = ('members',)
-    form = forms.ApplicationApproverGroupAdminForm
-    readonly_fields = ['default']
-
-    def has_delete_permission(self, request, obj=None):
-        if obj and obj.default:
-            return False
-        return super(ApplicationApproverGroupAdmin, self).has_delete_permission(request, obj)
 
 @admin.register(models.ApplicationStandardCondition)
 class ApplicationStandardConditionAdmin(admin.ModelAdmin):
-    list_display = ['code','text','obsolete']
+    list_display = ['code', 'text', 'obsolete']

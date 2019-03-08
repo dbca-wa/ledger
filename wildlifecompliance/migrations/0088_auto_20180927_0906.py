@@ -18,16 +18,31 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='wildlifelicence',
             name='org_applicant',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='wildlifecompliance_org_applicant', to='wildlifecompliance.Organisation'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='wildlifecompliance_org_applicant',
+                to='wildlifecompliance.Organisation'),
         ),
         migrations.AddField(
             model_name='wildlifelicence',
             name='proxy_applicant',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='wildlifecompliance_proxy_applicant', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='wildlifecompliance_proxy_applicant',
+                to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
             model_name='wildlifelicence',
             name='submitter',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='wildlifecompliance_submitter', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='wildlifecompliance_submitter',
+                to=settings.AUTH_USER_MODEL),
         ),
     ]

@@ -14,6 +14,7 @@ User = get_user_model()
 class LoginForm(Form):
     email = EmailField(max_length=254)
 
+
 class PersonalForm(ModelForm):
 
     class Meta:
@@ -27,18 +28,19 @@ class PersonalForm(ModelForm):
         self.helper.attrs = {'novalidate': ''}
         # Define the form layout.
         self.helper.layout = Layout(
-            'first_name', 'last_name', 
+            'first_name', 'last_name',
             FormActions(
                 Submit('save', 'Save', css_class='btn-lg'),
                 Submit('cancel', 'Cancel')
             )
         )
 
+
 class ContactForm(ModelForm):
 
     class Meta:
         model = User
-        fields = ['email', 'phone_number','mobile_number']
+        fields = ['email', 'phone_number', 'mobile_number']
 
     def __init__(self, *args, **kwargs):
         super(ProfileForm, self).__init__(*args, **kwargs)
@@ -47,7 +49,7 @@ class ContactForm(ModelForm):
         self.helper.attrs = {'novalidate': ''}
         # Define the form layout.
         self.helper.layout = Layout(
-            'phone_number', 'mobile_number','email', 
+            'phone_number', 'mobile_number', 'email',
             FormActions(
                 Submit('save', 'Save', css_class='btn-lg'),
                 Submit('cancel', 'Cancel')
@@ -77,9 +79,12 @@ class OrganisationAdminForm(ModelForm):
 
     def clean_abn(self):
         data = self.cleaned_data['abn']
-        # If it's changed, check for any existing organisations with the same ABN.
-        if data and self.instance.abn != data and Organisation.objects.filter(abn=data).exists():
-            raise ValidationError('An organisation with this ABN already exists.')
+        # If it's changed, check for any existing organisations with the same
+        # ABN.
+        if data and self.instance.abn != data and Organisation.objects.filter(
+                abn=data).exists():
+            raise ValidationError(
+                'An organisation with this ABN already exists.')
         return data
 
 
@@ -93,7 +98,8 @@ class OrganisationForm(OrganisationAdminForm):
         super(OrganisationForm, self).__init__(*args, **kwargs)
         self.fields['name'].label = 'Company name'
         self.fields['identification'].label = 'Certificate of incorporation'
-        self.fields['identification'].help_text = 'Electronic copy of current certificate (e.g. image/PDF)'
+        self.fields[
+            'identification'].help_text = 'Electronic copy of current certificate (e.g. image/PDF)'
         self.helper = BaseFormHelper(self)
         self.helper.form_id = 'id_form_organisation'
         self.helper.attrs = {'novalidate': ''}
@@ -114,10 +120,20 @@ class UnlinkDelegateForm(ModelForm):
 
     class Meta:
         model = Organisation
-        exclude = ['name', 'abn', 'identification', 'postal_address', 'billing_address', 'delegates']
+        exclude = [
+            'name',
+            'abn',
+            'identification',
+            'postal_address',
+            'billing_address',
+            'delegates']
 
     def __init__(self, *args, **kwargs):
         super(UnlinkDelegateForm, self).__init__(*args, **kwargs)
         self.helper = BaseFormHelper(self)
-        self.helper.add_input(Submit('unlink', 'Unlink user', css_class='btn-lg btn-danger'))
+        self.helper.add_input(
+            Submit(
+                'unlink',
+                'Unlink user',
+                css_class='btn-lg btn-danger'))
         self.helper.add_input(Submit('cancel', 'Cancel'))
