@@ -15,7 +15,7 @@ from wildlifecompliance.components.organisations import api as org_api
 from wildlifecompliance.components.applications import api as application_api
 from wildlifecompliance.components.licences import api as licence_api
 from wildlifecompliance.components.returns import api as return_api
-from wildlifecompliance.management.permissions_manager import CustomPermissionCollector
+from wildlifecompliance.management.permissions_manager import CollectorManager
 from wildlifecompliance.utils import are_migrations_running
 
 from ledger.urls import urlpatterns as ledger_patterns
@@ -126,10 +126,7 @@ urlpatterns = [
 ] + ledger_patterns
 
 if not are_migrations_running():
-    logger.info("Verifying presence of custom group permissions in the database...")
-    permission_collector = CustomPermissionCollector()
-    permission_collector.get_or_create_models()
-    logger.info("Finished collecting custom permissions.")
+    CollectorManager()
 
 if settings.DEBUG:  # Serve media locally in development.
     urlpatterns += static(settings.MEDIA_URL,

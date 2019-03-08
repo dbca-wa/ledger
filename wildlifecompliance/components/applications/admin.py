@@ -34,15 +34,15 @@ class DefaultCondition(admin.ModelAdmin):
     pass
 
 
-@admin.register(models.ApplicationGroupType)
-class ApplicationGroupTypeAdmin(admin.ModelAdmin):
+@admin.register(models.ActivityPermissionGroup)
+class ActivityPermissionGroupAdmin(admin.ModelAdmin):
     list_display = ['name', 'display_name']
-    filter_horizontal = ('members',)
-    form = forms.ApplicationGroupTypeAdminForm
+    filter_horizontal = ('licence_activities',)
+    form = forms.ActivityPermissionGroupAdminForm
 
     def has_delete_permission(self, request, obj=None):
         return super(
-            ApplicationGroupTypeAdmin,
+            ActivityPermissionGroupAdmin,
             self).has_delete_permission(
             request,
             obj)
