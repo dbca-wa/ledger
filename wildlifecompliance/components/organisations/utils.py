@@ -3,23 +3,15 @@ import random
 
 
 def can_manage_org(organisation, user):
-    from wildlifecompliance.components.organisations.models import Organisation, UserDelegation
-    from ledger.accounts.models import EmailUser
+    from wildlifecompliance.components.organisations.models import UserDelegation
     try:
         UserDelegation.objects.get(organisation=organisation, user=user)
         return True
     except UserDelegation.DoesNotExist:
         pass
-    try:
-        group = OrganisationAccessGroup.objects.first()
-        if group:
-            group.members.get(id=user.id)
-        return True
-    except EmailUser.DoesNotExist:
-        pass
     if user.is_superuser:
         return True
-    return False
+    return user.has_perm('organisation_access_request')
 
 
 def is_last_admin(organisation, user):
@@ -81,8 +73,7 @@ def can_approve(organisation, user):
 
 
 def is_consultant(organisation, user):
-    from wildlifecompliance.components.organisations.models import Organisation, OrganisationAccessGroup, UserDelegation, OrganisationContact
-    from ledger.accounts.models import EmailUser
+    from wildlifecompliance.components.organisations.models import OrganisationContact
     try:
         org_contact = OrganisationContact.objects.get(
             organisation_id=organisation, email=user.email)

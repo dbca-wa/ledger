@@ -83,7 +83,7 @@ class ActivityPermissionGroup(Group):
     def members(self):
         return EmailUser.objects.filter(
             groups__id=self.id
-        ).distinct()
+        )
 
 
 class ApplicationDocument(Document):
