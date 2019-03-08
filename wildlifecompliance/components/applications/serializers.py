@@ -16,7 +16,7 @@ from wildlifecompliance.components.applications.models import (
 from wildlifecompliance.components.organisations.models import (
     Organisation
 )
-from wildlifecompliance.components.licences.models import LicenceActivity, LicenceCategory
+from wildlifecompliance.components.licences.models import LicenceActivity
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from wildlifecompliance.components.organisations.serializers import OrganisationSerializer
 from wildlifecompliance.components.users.serializers import UserAddressSerializer, DocumentSerializer
@@ -54,6 +54,7 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
 
 class ApplicationTypeSerializer(serializers.ModelSerializer):
     activities = serializers.SerializerMethodField()
+
     class Meta:
         model = ApplicationType
         fields = (
@@ -64,6 +65,7 @@ class ApplicationTypeSerializer(serializers.ModelSerializer):
 
     def get_activities(self, obj):
         return obj.activities.names()
+
 
 class EmailUserSerializer(serializers.ModelSerializer):
     class Meta:
