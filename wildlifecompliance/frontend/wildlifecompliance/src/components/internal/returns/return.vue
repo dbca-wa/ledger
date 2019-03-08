@@ -51,7 +51,7 @@
                                     </select>
                                     <select @change="assignTo" :disabled="canViewonly" v-if="!isLoading" class="form-control" v-model="returns.assigned_to">
                                         <option value="null">Unassigned</option>
-                                        <option v-for="member in returns.allowed_assessors" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
+                                        <option v-for="member in returns.return_curators" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
                                     </select>
                                     <a v-if="!canViewonly" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
                                 </div>
@@ -209,7 +209,7 @@ export default {
         next(vm => {
             vm.returns = response.body
             console.log(vm.returns.table.data)
-            // vm.members = vm.returns.allowed_assessors
+            // vm.members = vm.returns.return_curators
         })
     },(error) => {
         console.log(error);

@@ -44,8 +44,8 @@ def in_dbca_domain(request):
 
 
 def is_departmentUser(request):
-    return request.user.is_authenticated() and is_model_backend(
-        request) and in_dbca_domain(request)
+    return request.user.is_authenticated() and (is_model_backend(
+        request) or settings.ALLOW_EMAIL_ADMINS) and in_dbca_domain(request)
 
 
 def is_customer(request):

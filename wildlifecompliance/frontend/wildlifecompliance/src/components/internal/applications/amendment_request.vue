@@ -13,11 +13,11 @@
                                 <div class="col-sm-offset-2 col-sm-8">
 
                                     <label class="control-label"  for="Name">Licensed activity to amend </label>
-                                    <div v-for="item in amendment.activity_type_name" v-model="amendment.activity_type_name">{{item}}</div>
+                                    <div v-for="item in amendment.activity_name" v-model="amendment.activity_name">{{item}}</div>
                                     <!-- <div  v-for="item in application_licence_type">
                                         <div v-for="item1 in item">
-                                            <div  v-if="item1.name===amendment.activity_type_name && item1.processing_status==='With Officer'" >
-                                                <input type="text" disabled class="form-control" :id="item1.id" :value="item1.name" v-model="amendment.activity_type_name">
+                                            <div  v-if="item1.name===amendment.activity_name && item1.processing_status==='With Officer'" >
+                                                <input type="text" disabled class="form-control" :id="item1.id" :value="item1.name" v-model="amendment.activity_name">
                                                 
                                             </div>
                                         </div>
@@ -81,8 +81,8 @@ export default {
                 amendingApplication: false,
                 application: vm.application_id ,
                 text:null,
-                activity_type_name:null,
-                activity_type_id:[]
+                activity_name:null,
+                activity_id:[]
             },
             reason_choices: {},
             errors: false,
@@ -111,8 +111,8 @@ export default {
                 reason: '',
                 application: this.application_id,
                 text:null,
-                licence_activity_type:null,
-                activity_type_name:null
+                licence_activity:null,
+                activity_name:null
             };
         },
         close:function () {
@@ -121,8 +121,8 @@ export default {
                 reason: '',
                 application: this.application_id,
                 text:null,
-                licence_activity_type:null,
-                activity_type_name:null
+                licence_activity:null,
+                activity_name:null
             };
             this.errors = false;
             $(this.$refs.reason).val(null).trigger('change');
@@ -144,10 +144,10 @@ export default {
         sendData:function(){
             let vm = this;
             vm.errors = false;
-            // for(var activity_type_index=0, len2=vm.application_licence_type.activity_type.length; activity_type_index<len2; activity_type_index++){
-            //     if (vm.application_licence_type.activity_type[activity_type_index].name==vm.amendment.activity_type_name){
-            //         console.log(vm.application_licence_type.activity_type[activity_type_index].id)
-            //         vm.amendment.licence_activity_type=vm.application_licence_type.activity_type[activity_type_index].id
+            // for(var activity_index=0, len2=vm.application_licence_type.activity.length; activity_index<len2; activity_index++){
+            //     if (vm.application_licence_type.activity[activity_index].name==vm.amendment.activity_name){
+            //         console.log(vm.application_licence_type.activity[activity_index].id)
+            //         vm.amendment.licence_activity=vm.application_licence_type.activity[activity_index].id
 
             //     }
             // }

@@ -32,7 +32,6 @@ from wildlifecompliance.components.organisations.models import (
     OrganisationRequest,
     OrganisationRequestUserAction,
     OrganisationContact,
-    OrganisationAccessGroup,
     OrganisationRequestLogEntry,
     OrganisationAction,
 )
@@ -67,8 +66,7 @@ from wildlifecompliance.components.organisations.emails import (
 from wildlifecompliance.components.applications.models import (
     Application,
     Assessment,
-    ApplicationRequest,
-    ApplicationGroupType
+    ApplicationRequest
 )
 
 
@@ -811,6 +809,7 @@ class OrganisationAccessGroupMembers(views.APIView):
 
     def get(self, request, format=None):
         members = []
+        """
         if is_internal(request):
             group = OrganisationAccessGroup.objects.first()
             if group:
@@ -820,6 +819,7 @@ class OrganisationAccessGroupMembers(views.APIView):
                 for m in EmailUser.objects.filter(
                         is_superuser=True, is_staff=True, is_active=True):
                     members.append({'name': m.get_full_name(), 'id': m.id})
+        """
         return Response(members)
 
 

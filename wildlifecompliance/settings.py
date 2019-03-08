@@ -7,6 +7,7 @@ SITE_ID = 1
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_wc')
 
 INSTALLED_APPS += [
+    'django.contrib.humanize',
     'bootstrap3',
     'wildlifecompliance',
     'wildlifecompliance.components.main',
@@ -20,8 +21,6 @@ INSTALLED_APPS += [
     'rest_framework_gis'
 ]
 
-SITE_ID = 1
-
 # maximum number of days allowed for a booking
 WSGI_APPLICATION = 'wildlifecompliance.wsgi.application'
 
@@ -34,6 +33,8 @@ WSGI_APPLICATION = 'wildlifecompliance.wsgi.application'
 MIDDLEWARE_CLASSES += [
     'wildlifecompliance.middleware.FirstTimeNagScreenMiddleware'
 ]
+
+LATEX_GRAPHIC_FOLDER = os.path.join(BASE_DIR,"templates","latex","images")
 
 TEMPLATES[0]['DIRS'].append(
     os.path.join(
@@ -122,3 +123,4 @@ SITE_DOMAIN = env('SITE_DOMAIN')
 SITE_URL = env('SITE_URL', 'https://' + SITE_PREFIX + '.' + SITE_DOMAIN)
 EXT_USER_API_ROOT_URL = env('EXT_USER_API_ROOT_URL', None)
 EXCEL_OUTPUT_PATH = env('EXCEL_OUTPUT_PATH')
+ALLOW_EMAIL_ADMINS = env('ALLOW_EMAIL_ADMINS', False)  # Allows internal pages to be accessed via email authentication
