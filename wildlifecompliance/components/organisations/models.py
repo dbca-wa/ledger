@@ -29,9 +29,6 @@ from wildlifecompliance.components.organisations.emails import (
     send_organisation_id_upload_email_notification,
     send_organisation_contact_consultant_email_notification,
 )
-from wildlifecompliance.components.applications.models import (
-    ActivityPermissionGroup
-)
 
 
 @python_2_unicode_compatible
