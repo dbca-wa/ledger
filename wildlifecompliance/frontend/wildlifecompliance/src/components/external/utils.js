@@ -66,8 +66,6 @@ export default {
         });
     },
     fetchLicenceAvailablePurposes: function(data){
-        console.log('asdfasdfajksdfkjhgasdfkjhgasdf');
-        console.log(data);
         return new Promise ((resolve,reject) => {
             Vue.http.get(helpers.add_endpoint_join(api.licence_available_purposes,''), JSON.stringify(data), {emulateJSON:true}).then((response) => {
                 resolve(response.body);

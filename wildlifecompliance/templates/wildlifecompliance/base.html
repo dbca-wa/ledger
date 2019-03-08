@@ -106,6 +106,7 @@
                                                     <li role="separator" class="divider"></li>
                                                 {% endif %}
                                                 <li><a href="{% url 'manage-account' %}">Manage Account</a></li>
+                                                <li><a href="{% url 'pdf_latex' %}">Create PDF</a></li>
                                                 <li><a href="{% url 'manage-profiles' %}">Manage Profiles</a></li>
                                                 {% for org in request.user.wildlifecompliance_organisations.all %}
                                                     {% for org_contact in org.contacts.all%}

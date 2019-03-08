@@ -18,7 +18,7 @@
                                 </div>
                                 <div class="radio">
                                     <label>
-                                      <input :disabled="hasOrgs" type="radio" name="select_licence" v-model="licence_select" value="New_licence" > apply for a new licence?
+                                      <input type="radio" name="select_licence" v-model="licence_select" value="New_licence" > apply for a new licence?
                                     </label>
                                 </div>
                                 <div class="radio">
@@ -76,6 +76,9 @@ export default {
   computed: {
     isLoading: function() {
       return this.loading.length > 0
+    },
+    hasOrgs: function() {
+        return this.profile.wildlifecompliance_organisations && this.profile.wildlifecompliance_organisations.length > 0 ? true: false;
     },
     org: function() {
         let vm = this;

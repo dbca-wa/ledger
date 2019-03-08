@@ -1,8 +1,8 @@
 from wildlifecompliance.components.licences.models import (
     WildlifeLicence,
-    WildlifeLicenceClass,
-    WildlifeLicenceActivityType,
-    WildlifeLicenceActivity)
+    LicenceCategory,
+    LicenceActivity,
+    LicencePurpose)
 from wildlifecompliance.components.applications.serializers import BaseApplicationSerializer
 from rest_framework import serializers
 
@@ -36,11 +36,11 @@ class WildlifeLicenceSerializer(serializers.ModelSerializer):
         )
 
 
-class DefaultActivitySerializer(serializers.ModelSerializer):
+class DefaultPurposeSerializer(serializers.ModelSerializer):
     name = serializers.CharField()
 
     class Meta:
-        model = WildlifeLicenceActivity
+        model = LicencePurpose
         fields = (
             'id',
             'name',
@@ -50,12 +50,13 @@ class DefaultActivitySerializer(serializers.ModelSerializer):
         )
 
 
-class DefaultActivityTypeSerializer(serializers.ModelSerializer):
-    name = serializers.CharField()
-    activity = DefaultActivitySerializer(many=True, read_only=True)
+class DefaultActivitySerializer(serializers.ModelSerializer):
 
+    name = serializers.CharField()
+    activity = DefaultPurposeSerializer(many=True, read_only=True)
+    #activity = DefaultPurposeSerializer(many=True,read_only=True, queryset=self.qs_purpose())
     class Meta:
-        model = WildlifeLicenceActivityType
+        model = LicenceActivity
         fields = (
             'id',
             'name',
@@ -65,33 +66,13 @@ class DefaultActivityTypeSerializer(serializers.ModelSerializer):
         )
 
 
-
-class WildlifeLicenceClassSerializer(serializers.ModelSerializer):
-    class_status = serializers.SerializerMethodField()
-    activity_type = DefaultActivityTypeSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = WildlifeLicenceClass
-        fields = (
-            'id',
-            'name',
-            'short_name',
-            'class_status',
-            'activity_type'
-
-        )
-
-    def get_class_status(self, obj):
-        return obj.get_licence_class_status_display()
-
-
-class UserActivitySerializer(serializers.ModelSerializer):
+class PurposeSerializer(serializers.ModelSerializer):
     name = serializers.CharField()
     purpose_in_current_licence = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         # list_serializer_class = UserActivityExcludeSerializer
-        model = WildlifeLicenceActivity
+        model = LicencePurpose
         fields = (
             'id',
             'name',
@@ -112,34 +93,62 @@ class UserActivitySerializer(serializers.ModelSerializer):
         return False
 
 
-class UserActivityTypeSerializer(serializers.ModelSerializer):
+class ActivitySerializer(serializers.ModelSerializer):
     name = serializers.CharField()
-    activity = UserActivitySerializer(many=True, read_only=True)
+    purpose = serializers.SerializerMethodField()
 
     class Meta:
-        model = WildlifeLicenceActivityType
+        model = LicenceActivity
         fields = (
             'id',
             'name',
-            'activity',
+            'purpose',
             'short_name',
             'not_for_organisation'
         )
 
+    def get_purpose(self, obj):
+        purposes = self.context.get('purpose_records')
+        purpose_records = purposes if purposes else obj.purpose.all()
+        serializer = PurposeSerializer(
+            purpose_records,
+            many=True,
+        )
+        return serializer.data
 
-class UserWildlifeLicenceClassSerializer(serializers.ModelSerializer):
-    class_status = serializers.SerializerMethodField()
-    activity_type = UserActivityTypeSerializer(many=True, read_only=True)
+
+class LicenceCategorySerializer(serializers.ModelSerializer):
+    category_status = serializers.SerializerMethodField()
+    activity = serializers.SerializerMethodField()
 
     class Meta:
-        model = WildlifeLicenceClass
+        model = LicenceCategory
         fields = (
             'id',
             'name',
             'short_name',
-            'class_status',
-            'activity_type'
+            'category_status',
+            'activity'
         )
 
-    def get_class_status(self, obj):
-        return obj.get_licence_class_status_display()
+    def get_category_status(self, obj):
+        return obj.get_licence_category_status_display()
+
+    def get_activity(self, obj):
+        purposes = self.context.get('purpose_records')
+        activity_ids = list(purposes.values_list(
+            'licence_activity_id', flat=True
+        )) if purposes else []
+
+        activities = obj.activity.filter(
+            id__in=activity_ids
+        ) if activity_ids else obj.activity.all()
+
+        serializer = ActivitySerializer(
+            activities,
+            many=True,
+            context={
+                'purpose_records': purposes
+            }
+        )
+        return serializer.data

@@ -1,43 +1,20 @@
-
 import traceback
-import os
-import datetime
-import base64
-import geojson
-from six.moves.urllib.parse import urlparse
-from wsgiref.util import FileWrapper
-from django.db.models import Q, Min
+
+from django.db.models import Q
 from django.db import transaction
-from django.http import HttpResponse
-from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
-from django.conf import settings
-from django.contrib import messages
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
-from rest_framework import viewsets, serializers, status, generics, views
+from rest_framework import viewsets, serializers, status
 from rest_framework.decorators import detail_route, list_route, renderer_classes
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
-from rest_framework.pagination import PageNumberPagination
-from datetime import datetime, timedelta
-from collections import OrderedDict
-from django.core.cache import cache
-from ledger.accounts.models import EmailUser, Address
-from ledger.address.models import Country
-from datetime import datetime, timedelta, date
-from django.urls import reverse
-from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.helpers import is_customer, is_internal
-from wildlifecompliance.utils import excel
-from wildlifecompliance.components.returns.utils import _is_post_data_valid, _get_table_rows_from_post, _create_return_data_from_post_data
+from wildlifecompliance.components.returns.utils import _is_post_data_valid,_create_return_data_from_post_data
 from wildlifecompliance.components.returns.utils import SpreadSheet
+from wildlifecompliance.components.licences.models import (
+    WildlifeLicence
+)
 from wildlifecompliance.components.returns.models import (
     Return,
-    ReturnUserAction,
-    ReturnLogEntry
 )
 from wildlifecompliance.components.returns.serializers import (
     ReturnSerializer,
@@ -91,21 +68,13 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
     def update_details(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            print("print from api")
-            print(self.request.data)
-            print("==========posting keys=========")
-            print(request.POST.keys())
-            print("============printing post data")
+
             if 'save_continue' in request.POST:
-                print('inside save continue ==========')
-            print(request.POST)
-            for key in request.POST.keys():
-                if key == "nilYes":
-                    print("nil return")
-                    print(self.request.data.get('nilReason'))
-                    instance.nil_return = True
-                    instance.comments = self.request.data.get('nilReason')
-                    instance.save()
+                for key in request.POST.keys():
+                    if key == "nilYes":
+                        instance.nil_return = True
+                        instance.comments = self.request.data.get('nilReason')
+                        instance.save()
                 if key == "nilNo":
                     returns_tables = self.request.data.get('table_name')
                     if _is_post_data_valid(
@@ -173,6 +142,15 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @list_route(methods=['GET', ])
+    def sheet_details(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        return_id = self.request.query_params.get('return_id')
+        qs = qs.filter(id=return_id)
+        serializer = ReturnSerializer(qs, many=True)
+
+        return Response(serializer.data)
 
     @detail_route(methods=['GET', ])
     def comms_log(self, request, *args, **kwargs):

@@ -108,7 +108,7 @@ export default {
                     return data;
                 }
             },
-            {data: "class_name"},
+            {data: "category_name"},
             {
                 data: "activity_purpose_string",
                 mRender:function (data,type,full) {
@@ -150,15 +150,14 @@ export default {
                 mRender:function (data,type,full) {
                     let links = '';
                     if (!vm.is_external){
-                        links +=  full.can_be_processed ? `<a href='/internal/application/${full.id}'>Process</a><br/>`: `<a href='/internal/application/${full.id}'>View</a><br/>`;
+                        links +=  full.can_be_processed ?
+                            `<a href='/internal/application/${full.id}'>Process</a><br/>` :
+                            `<a href='/external/application/${full.id}'>View</a><br/>`;
                     }
-                    else{
+                    if (vm.is_external){
                         if (full.can_current_user_edit) {
                             links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
                             links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
-                        }
-                        else if (full.can_user_view) {
-                            links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
                         }
                     }
                     return links;
@@ -173,7 +172,7 @@ export default {
                     return data;
                 }
             },
-            {data: "class_name"},
+            {data: "category_name"},
             {
                 data: "activity_purpose_string",
                 mRender:function (data,type,full) {
@@ -249,6 +248,9 @@ export default {
             application_status: [],
             application_ex_headers:["Number","Licence Category","Activity","Submitter","Applicant","Status","Lodged on","Action"],
             application_ex_options:{
+                order: [
+                    [0, 'desc']
+                ],
                 autoWidth: false,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -311,6 +313,9 @@ export default {
             },
             application_headers:internal_application_headers,
             application_options:{
+                order: [
+                    [0, 'desc']
+                ],
                 autoWidth: false,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -380,14 +385,6 @@ export default {
         datatable
     },
     watch:{
-        // filterApplicationActivity: function() {
-        //     let vm = this;
-        //     if (vm.filterApplicationActivity!= 'All') {
-        //         vm.$refs.application_datatable.vmDataTable.columns(2).search(vm.filterApplicationActivity).draw();
-        //     } else {
-        //         vm.$refs.application_datatable.vmDataTable.columns(2).search('').draw();
-        //     }
-        // },
         filterApplicationStatus: function() {
             let vm = this;
             if (vm.filterApplicationStatus!= 'All') {
@@ -396,9 +393,6 @@ export default {
                 vm.$refs.application_datatable.vmDataTable.columns(6).search('').draw();
             }
         },
-        // filterApplicationRegion: function(){
-        //     this.$refs.application_datatable.vmDataTable.draw();
-        // },
         filterApplicationSubmitter: function(){
             this.$refs.application_datatable.vmDataTable.draw();
         },

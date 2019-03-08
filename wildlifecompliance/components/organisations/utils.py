@@ -3,7 +3,7 @@ import random
 
 
 def can_manage_org(organisation, user):
-    from wildlifecompliance.components.organisations.models import Organisation, OrganisationAccessGroup, UserDelegation
+    from wildlifecompliance.components.organisations.models import Organisation, UserDelegation
     from ledger.accounts.models import EmailUser
     try:
         UserDelegation.objects.get(organisation=organisation, user=user)
@@ -40,7 +40,7 @@ def is_last_admin(organisation, user):
 
 
 def can_admin_org(organisation, user):
-    from wildlifecompliance.components.organisations.models import Organisation, OrganisationAccessGroup, UserDelegation, OrganisationContact
+    from wildlifecompliance.components.organisations.models import Organisation, UserDelegation, OrganisationContact
     from ledger.accounts.models import EmailUser
     try:
         org_contact = OrganisationContact.objects.get(
@@ -106,8 +106,8 @@ def get_officer_email_list(organisation):
         if application.is_assigned:
             emails.add(application.assigned_officer.email)
         # Officer belonging to a group assigned to the application
-        for assessor in application.allowed_assessors:
-            emails.add(assessor.email)
+        for officer in application.licence_officers:
+            emails.add(officer.email)
     return emails
 
 

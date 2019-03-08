@@ -175,3 +175,7 @@ def bind_application_to_invoice(request, application, invoice_ref):
         # for fully paid applications, fire off confirmation email
         # if application.paid:
         #    send_application_confirmation(application, request)
+
+
+def get_choice_value(key, choices):
+    return [choice[1] for choice in choices if choice[0] == key][0]
