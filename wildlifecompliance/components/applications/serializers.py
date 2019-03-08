@@ -16,7 +16,7 @@ from wildlifecompliance.components.applications.models import (
 from wildlifecompliance.components.organisations.models import (
     Organisation
 )
-from wildlifecompliance.components.licences.models import LicenceActivity, LicenceCategory
+from wildlifecompliance.components.licences.models import LicenceActivity
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from wildlifecompliance.components.organisations.serializers import OrganisationSerializer
 from wildlifecompliance.components.users.serializers import UserAddressSerializer, DocumentSerializer
@@ -54,6 +54,7 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
 
 class ApplicationTypeSerializer(serializers.ModelSerializer):
     activities = serializers.SerializerMethodField()
+
     class Meta:
         model = ApplicationType
         fields = (
@@ -64,6 +65,7 @@ class ApplicationTypeSerializer(serializers.ModelSerializer):
 
     def get_activities(self, obj):
         return obj.activities.names()
+
 
 class EmailUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -549,9 +551,10 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
 
     def get_assessor_mode(self, obj):
         # TODO check if the application has been accepted or declined
-        request = self.context['request']
-        user = request.user._wrapped if hasattr(
-            request.user, '_wrapped') else request.user
+        # request = self.context['request']
+        # TODO: remove or finish code below (?)
+        # user = request.user._wrapped if hasattr(
+        #    request.user, '_wrapped') else request.user
         return {
             'assessor_mode': True,
             'has_assessor_mode': True,

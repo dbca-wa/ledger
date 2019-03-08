@@ -79,6 +79,11 @@ class LicenceActivity(models.Model):
         choices=LICENCE_ACTIVITY_STATUS_CHOICES,
         default=LICENCE_ACTIVITY_STATUS_CHOICES[0][0])
     name = models.CharField(max_length=100)
+    licence_category = models.ForeignKey(
+        'LicenceCategory',
+        blank=True,
+        null=True
+    )
     purpose = models.ManyToManyField(
         LicencePurpose,
         blank=True,

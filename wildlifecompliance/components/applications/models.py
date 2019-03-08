@@ -3,22 +3,19 @@ from __future__ import unicode_literals
 import datetime
 import logging
 import re
-import os
 from django.db import models, transaction
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
 from taggit.managers import TaggableManager
-from taggit.models import TaggedItemBase
 
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.payments.invoice.models import Invoice
-from wildlifecompliance import exceptions
 
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
@@ -34,7 +31,6 @@ from wildlifecompliance.components.applications.email import (
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
-from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 
@@ -43,16 +39,20 @@ def update_application_doc_filename(instance, filename):
     return 'wildlifecompliance/applications/{}/documents/{}'.format(
         instance.application.id, filename)
 
+
 def update_pdf_licence_filename(instance, filename):
-    return 'applications/{}/wildlife_compliance_licence/{}'.format(instance.id,filename)
+    return 'applications/{}/wildlife_compliance_licence/{}'.format(instance.id, filename)
+
 
 def replace_special_chars(input_str, new_char='_'):
     return re.sub('[^A-Za-z0-9]+', new_char, input_str).strip('_').lower()
 
+
 class ApplicationType(models.Model):
     schema = JSONField()
-    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
+    activities = TaggableManager(verbose_name="Activities", help_text="A comma-separated list of activities.")
     site = models.OneToOneField(Site, default='1')
+
 
 def update_application_comms_log_filename(instance, filename):
     return 'wildlifecompliance/applications/{}/communications/{}/{}'.format(
@@ -78,6 +78,12 @@ class ActivityPermissionGroup(Group):
     @property
     def display_name(self):
         return self.__str__
+
+    @property
+    def members(self):
+        return EmailUser.objects.filter(
+            groups__id=self.id
+        )
 
 
 class ApplicationDocument(Document):
@@ -569,14 +575,14 @@ class Application(RevisionedMixin):
                     permissions__codename='licensing_officer',
                     licence_activities__purpose__licence_category__id=self.licence_type_data["id"]
                 )
+                group_users = EmailUser.objects.filter(groups__id__in=officer_groups.values_list('id', flat=True))
 
                 if self.amendment_requests:
                     self.log_user_action(
                         ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS_SUBMIT.format(
                             self.id), request)
-                    for group in officer_groups:
-                        send_amendment_submit_email_notification(
-                            group.members.all(), self, request)
+                    send_amendment_submit_email_notification(
+                        group_users, self, request)
                 else:
                     # Create a log entry for the application
                     self.log_user_action(
@@ -599,9 +605,9 @@ class Application(RevisionedMixin):
                     # Send email to submitter, then to linked Officer Groups
                     send_application_submitter_email_notification(
                         self, request)
-                    for group in officer_groups:
-                        send_application_submit_email_notification(
-                            group.members.all(), self, request)
+
+                    send_application_submit_email_notification(
+                        group_users, self, request)
 
                     self.documents.all().update(can_delete=False)
 
@@ -1075,10 +1081,10 @@ class Application(RevisionedMixin):
                     current_date = req.due_date
                     # create a first Return
                     try:
-                        returns = Return.objects.get(
+                        Return.objects.get(
                             condition=req, due_date=current_date)
                     except Return.DoesNotExist:
-                        returns = Return.objects.create(
+                        Return.objects.create(
                             application=self,
                             due_date=current_date,
                             processing_status='future',
@@ -1104,7 +1110,7 @@ class Application(RevisionedMixin):
                             # Create the Return
                             if current_date <= licence_expiry:
                                 try:
-                                    returns = Return.objects.get(
+                                    Return.objects.get(
                                         condition=req, due_date=current_date)
                                 except Return.DoesNotExist:
                                     Return.objects.create(
@@ -1403,7 +1409,6 @@ class ApplicationSelectedActivity(models.Model):
     start_date = models.DateField(blank=True, null=True)
     expiry_date = models.DateField(blank=True, null=True)
 
-
     @staticmethod
     def is_valid_status(status):
         return filter(lambda x: x[0] == status,
@@ -1561,7 +1566,7 @@ def search_keywords(search_words, search_application, search_licence, search_ret
                                 'type': 'Application',
                                 'applicant': a.applicant.name,
                                 'text': final_results,
-                                }
+                            }
                             qs.append(res)
                     except BaseException:
                         raise
