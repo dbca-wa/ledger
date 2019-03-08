@@ -594,7 +594,7 @@
                                     <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                                     <input type='hidden' name="application_id" :value="1" />
                                     <input type='hidden' id="selected_activity_tab_id" v-model="selected_activity_tab_id" />
-                                    <div v-if="hasAssessorMode" class="row" style="margin-bottom:50px;">
+                                    <div class="row" style="margin-bottom:50px;">
                                         <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                                             <div class="navbar-inner">
                                                 <div class="container">
@@ -870,12 +870,6 @@ export default {
             }
             
         },
-        canAssess: function(){
-            return this.application && this.application.assessor_mode.assessor_can_assess ? true : false;
-        },
-        hasAssessorMode:function(){
-            return this.application && this.application.assessor_mode.has_assessor_mode ? true : false;
-        },
         isIdCheckAccepted: function(){
             return this.application.id_check_status == 'Accepted';
         },
@@ -893,7 +887,6 @@ export default {
         },
         canAssignToOfficer: function(){
             return this.application && this.application.processing_status == 'Under Review' && !this.isFinalised && !this.application.can_user_edit ? true : false;
-                //&& this.application.assessor_mode.assessor_can_assess && (this.application.current_assessor.id == this.application.assigned_officer || this.application.assigned_officer == null )
         },
         canSeeSubmission: function(){
             return this.application && (this.application.processing_status != 'With Assessor (Conditions)' && this.application.processing_status != 'With Approver' && !this.isFinalised)

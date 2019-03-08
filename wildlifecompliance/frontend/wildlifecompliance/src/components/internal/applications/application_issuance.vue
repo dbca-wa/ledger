@@ -219,15 +219,8 @@ export default {
         }
     },
     watch:{
-        hasAssessorMode(){
-            // reload the table
-        }
     },
-    
     computed:{
-        hasAssessorMode(){
-            return this.application.assessor_mode.has_assessor_mode;
-        },
         isIdCheckAccepted: function(){
             console.log(this.application.id_check_status)
             return this.application.id_check_status == 'Accepted';

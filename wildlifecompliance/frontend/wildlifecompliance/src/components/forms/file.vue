@@ -1,25 +1,22 @@
 <template lang="html">
     <div>
         <div class="form-group">
-
-            <!-- using num_files to determine if files have been uploaded for this question/label (used in disturbance/frontend/disturbance/src/components/external/application.vue) -->
             <label :id="id" :num_files="num_documents()">{{label}}</label>
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>
-            <template v-if="help_text_assessor && assessorMode">
-                <HelpText :help_text="help_text_assessor" assessorMode={assessorMode} isForAssessor={true} />
+            <template v-if="help_text_assessor">
+                <HelpText :help_text="help_text_assessor" />
             </template> 
 
             <template v-if="help_text_url">
                 <HelpTextUrl :help_text_url="help_text_url" />
             </template>
-            <template v-if="help_text_assessor_url && assessorMode">
-                <HelpTextUrl :help_text_url="help_text_assessor_url" assessorMode={assessorMode} isForAssessor={true} />
+            <template v-if="help_text_assessor_url">
+                <HelpTextUrl :help_text_url="help_text_assessor_url" />
             </template> 
 
-
-            <template v-if="assessorMode && !assessor_readonly">
+            <template>
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
@@ -34,9 +31,7 @@
                             <a @click="delete_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
                         </span>
                         <span v-else>
-                            <span v-if="!assessorMode">
-                                <i class="fa fa-info-circle" aria-hidden="true" title="Previously submitted documents cannot be deleted" style="cursor: pointer;"></i>
-                            </span>
+                            <i class="fa fa-info-circle" aria-hidden="true" title="Previously submitted documents cannot be deleted" style="cursor: pointer;"></i>
                         </span>
                     </p>
                 </div>
@@ -49,7 +44,7 @@
             </div>
 
         </div>
-        <Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value" :required="isRequired"/> 
+        <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :value="comment_value" :required="isRequired"/>
     </div>
 </template>
 
@@ -69,14 +64,8 @@ export default {
         id:String,
         isRequired:String,
         comment_value: String,
-        assessor_readonly: Boolean,
         help_text:String,
         help_text_assessor:String,
-        assessorMode:{
-            default:function(){
-                return false;
-            }
-        },
         value:{
             default:function () {
                 return null;

@@ -104,9 +104,6 @@ export default {
     components:{
     },
     computed:{
-        hasAssessorMode(){
-            return this.application.assessor_mode.has_assessor_mode;
-        },
         isFinalised: function(){
             let vm=this;
             var flag=0;
