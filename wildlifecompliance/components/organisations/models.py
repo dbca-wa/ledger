@@ -29,9 +29,6 @@ from wildlifecompliance.components.organisations.emails import (
     send_organisation_id_upload_email_notification,
     send_organisation_contact_consultant_email_notification,
 )
-from wildlifecompliance.components.applications.models import (
-    ActivityPermissionGroup
-)
 
 
 @python_2_unicode_compatible
@@ -763,6 +760,8 @@ class OrganisationRequest(models.Model):
             self.__accept(request)
 
     def __accept(self, request):
+        from wildlifecompliance.components.applications.models import ActivityPermissionGroup
+
         # Check if orgsanisation exists in ledger
         ledger_org = None
         try:
@@ -888,6 +887,8 @@ class OrganisationRequest(models.Model):
                 OrganisationRequestUserAction.ACTION_UNASSIGN, request)
 
     def decline(self, request):
+        from wildlifecompliance.components.applications.models import ActivityPermissionGroup
+
         with transaction.atomic():
             self.status = 'declined'
             self.save()
@@ -916,6 +917,8 @@ class OrganisationRequest(models.Model):
                         self, request, recipients)
 
     def send_organisation_request_email_notification(self, request):
+        from wildlifecompliance.components.applications.models import ActivityPermissionGroup
+
         # user submits a new organisation request
         # send email to organisation access group
         groups = ActivityPermissionGroup.objects.filter(
