@@ -177,8 +177,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     amendment_requests = serializers.SerializerMethodField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
-    assigned_officer = serializers.CharField(
-        source='assigned_officer.get_full_name')
     can_be_processed = serializers.SerializerMethodField(read_only=True)
     activities = serializers.SerializerMethodField()
     processed = serializers.SerializerMethodField()
@@ -376,8 +374,6 @@ class ApplicationSerializer(BaseApplicationSerializer):
     amendment_requests = serializers.SerializerMethodField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
-    assigned_officer = serializers.CharField(
-        source='assigned_officer.get_full_name')
     can_be_processed = serializers.SerializerMethodField(read_only=True)
 
     def get_readonly(self, obj):
@@ -499,8 +495,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     assessor_data = serializers.SerializerMethodField()
     licences = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
-    assigned_officer = serializers.CharField(
-        source='assigned_officer.get_full_name')
     can_be_processed = serializers.SerializerMethodField(read_only=True)
     activities = serializers.SerializerMethodField()
     processed = serializers.SerializerMethodField()
