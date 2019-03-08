@@ -83,7 +83,7 @@ class ActivityPermissionGroup(Group):
     def members(self):
         return EmailUser.objects.filter(
             groups__id=self.id
-        )
+        ).distinct()
 
 
 class ApplicationDocument(Document):
@@ -552,7 +552,9 @@ class Application(RevisionedMixin):
                     permissions__codename='licensing_officer',
                     licence_activities__purpose__licence_category__id=self.licence_type_data["id"]
                 )
-                group_users = EmailUser.objects.filter(groups__id__in=officer_groups.values_list('id', flat=True))
+                group_users = EmailUser.objects.filter(
+                    groups__id__in=officer_groups.values_list('id', flat=True)
+                ).distinct()
 
                 if self.amendment_requests:
                     self.log_user_action(

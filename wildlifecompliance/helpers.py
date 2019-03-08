@@ -59,8 +59,3 @@ def is_internal(request):
 def is_officer(request):
     return request.user.is_authenticated() and (belongs_to(
         request.user, 'Wildlife Compliance Officers') or request.user.is_superuser)
-
-
-def get_all_officers():
-    return EmailUser.objects.filter(
-        groups__name='Wildlife Compliance Officers')
