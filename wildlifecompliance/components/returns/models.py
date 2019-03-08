@@ -1,31 +1,24 @@
 
 from __future__ import unicode_literals
-
-import json
-import datetime
-from preserialize.serialize import serialize
 from django.db import models, transaction
-from django.dispatch import receiver
-from django.db.models.signals import pre_delete
-from django.utils.encoding import python_2_unicode_compatible
-from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
-from django.contrib.sites.models import Site
-from taggit.managers import TaggableManager
-from taggit.models import TaggedItemBase
-from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin
-from ledger.licence.models import Licence
-from wildlifecompliance import exceptions
-from wildlifecompliance.components.returns.utils_schema import Schema, create_return_template_workbook
-from wildlifecompliance.components.organisations.models import Organisation
+from wildlifecompliance.components.returns.utils_schema import Schema
 from wildlifecompliance.components.applications.models import ApplicationCondition, Application
-from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
-from wildlifecompliance.components.returns.email import send_external_submit_email_notification, send_return_accept_email_notification
+from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction
+from wildlifecompliance.components.returns.email import send_external_submit_email_notification, \
+                                                        send_return_accept_email_notification
 
 
 class ReturnType(models.Model):
+    """
+    A Type to identify the method used to facilitate Return.
+    """
+    RETURN_TYPE_CHOICES = (('SHEET', 'Sheet'),
+                           ('QUESTION', 'Question'),
+                           ('DATA', 'Data'))
+
     Name = models.TextField(null=True, blank=True, max_length=200)
     data_descriptor = JSONField()
 
@@ -48,6 +41,9 @@ class ReturnType(models.Model):
 
 
 class Return(models.Model):
+    """
+    A number of requirements relating to a Licence condition.
+    """
     PROCESSING_STATUS_CHOICES = (('due', 'Due'),
                                  ('overdue', 'Overdue'),
                                  ('draft', 'Draft'),
@@ -134,7 +130,6 @@ class Return(models.Model):
             schema = Schema(resource.get('schema'))
             headers = []
             for f in schema.fields:
-                # print(type(f.name))
                 header = {
                     "title": f.name,
                     "required": f.required,
@@ -166,6 +161,16 @@ class Return(models.Model):
                 table['data'] = results
         tables.append(table)
         return tables
+
+    def factory(self):
+        """
+        A simple factory for Return methods.
+        :return: A specific Return method
+        """
+        if self.return_type.Name == 'sheet':
+            return ReturnSheet(self)
+
+        return self
 
     def log_user_action(self, action, request):
         return ReturnUserAction.log_action(self, action, request.user)
@@ -203,6 +208,84 @@ class Return(models.Model):
                 ReturnUserAction.ACTION_ACCEPT_REQUEST.format(
                     self.id), request)
             send_return_accept_email_notification(self, request)
+
+
+class ReturnSheet(object):
+    """
+    A Running Sheet of requirements supporting licence conditions.
+    """
+    RETURN_SHEET_SCHEMA = {"name": "sheet", "title": "Standard return for stock", "resources": [{"name":
+                           "sheet", "path": "", "title": "Stock Return", "schema": {"fields": [{"stype": {"type":
+                           "species", "speciesType": "fauna"}, "name": "SPECIES", "type": "string",
+                           "constraints": {"required": True}}, {"name": "DATE", "type": "date", "format":
+                           "fmt:%d/%m/%Y", "constraints": {"required": True}}, {"sgroup": {"type": "speciesGroup",
+                           "speciesGroup": "stock"}, "name": "TYPE", "type": "string", "constraints": {"required":
+                           True}}, {"name": "QUANTITY", "type": "number", "constraints": {"required": True}}, {
+                           "name": "TOTAL", "type": "number", "constraints": {"required": True}}, {
+                           "name": "COMMENTS", "type": "string"}]}}]}
+
+    def __init__(self, a_return):
+        self._return = a_return
+        self._return.return_type.data_descriptor = self.RETURN_SHEET_SCHEMA
+        self._rows = []
+
+    def _get_table_rows_from_post(self, table_name, post_data):
+        table_namespace = table_name + '::'
+        by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(
+            key)) for key in post_data.keys() if key.startswith(table_namespace)])
+        # by_column is of format {'col_header':[row1_val, row2_val,...],...}
+        num_rows = len(
+            list(
+                by_column.values())[0]) if len(
+            by_column.values()) > 0 else 0
+        self._rows = []
+        for row_num in range(num_rows):
+            row_data = {}
+            for key, value in by_column.items():
+                row_data[key] = value[row_num]
+            # filter empty rows.
+            is_empty = True
+            for value in row_data.values():
+                if len(value.strip()) > 0:
+                    is_empty = False
+                    break
+            if not is_empty:
+                self._rows.append(row_data)
+
+    def _create_return_data_from_post_data(self, ret, tables_info, post_data):
+        self._get_table_rows_from_post(tables_info, post_data)
+        if self._rows:
+            return_table = ReturnTable.objects.get_or_create(
+                name=tables_info, ret=ret)[0]
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in self._rows]
+            ReturnRow.objects.bulk_create(return_rows)
+
+    @property
+    def table(self):
+        return self._return.table
+
+    def create_species_data(self):
+        pass
+
+    def update_species_data(self):
+        pass
+
+    def retrieve_species_data(self):
+        pass
+
+    def delete_species_data(self):
+        pass
+
+    def is_valid(self):
+        pass
+
+    def __str__(self):
+        return self._return.return_type.Name
 
 
 class ReturnTable(RevisionedMixin):
