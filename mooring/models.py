@@ -5,11 +5,13 @@ import uuid
 import base64
 import binascii
 import hashlib
+import calendar
 from decimal import Decimal as D
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.contrib.gis.db import models
+from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.db import IntegrityError, transaction, connection
 from django.utils import timezone
@@ -46,9 +48,16 @@ class Contact(models.Model):
     description = models.TextField(null=True,blank=True)
     opening_hours = models.TextField(null=True)
     other_services = models.TextField(null=True)
+    mooring_group = models.ForeignKey('mooring.MooringAreaGroup', blank=True, null=True)
 
     def __str__(self):
         return "{}: {}".format(self.name, self.phone_number)
+
+    def save(self, *args, **kwargs):
+        if self.mooring_group == None:
+            raise ValidationError("Mooring Group required, please select from list.")
+        else:
+            super(Contact,self).save(*args,**kwargs)
 
 
 class MarinePark(models.Model):
@@ -80,7 +89,9 @@ class MarinePark(models.Model):
     entry_fee_required = models.BooleanField(default=True)
     oracle_code = models.CharField(max_length=50, null=True,blank=True)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
-    zoom_level = models.IntegerField(choices=ZOOM_LEVEL,default=-1)
+    zoom_level = models.IntegerField(choices=ZOOM_LEVEL,default=-1)  
+    distance_radius = models.IntegerField(default=25)
+    mooring_group = models.ForeignKey('mooring.MooringAreaGroup', blank=True, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.name, self.district)
@@ -90,23 +101,58 @@ class MarinePark(models.Model):
             raise ValidationError('A park entry oracle code is required if entry fee is required.')
 
     def save(self,*args,**kwargs):
-        cache.delete('parks')
-        self.full_clean()
-        super(MarinePark,self).save(*args,**kwargs)
+        if self.mooring_group == None:
+            raise ValidationError("Mooring Group required, please select from list.")
+        else:
+            cache.delete('parks')
+            self.full_clean()
+            super(MarinePark,self).save(*args,**kwargs)
 
     class Meta:
         unique_together = (('name',),)
 
 
 class PromoArea(models.Model):
+
+
+    ZOOM_LEVEL = (
+        (0, 'default'),
+        (1, '1'),
+        (2, '2'),
+        (3, '3'),
+        (4, '4'),
+        (5, '4'),
+        (6, '6'),
+        (7, '7'),
+        (8, '8'),
+        (9, '9'),
+        (10, '10'),
+        (11, '11'),
+        (12, '12'),
+        (13, '13'),
+        (14, '14'),
+        (15, '15'),
+        (16, '16'),
+
+    )
+
     name = models.CharField(max_length=255, unique=True)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
+    zoom_level = models.IntegerField(choices=ZOOM_LEVEL,default=-1)
+    mooring_group = models.ForeignKey('mooring.MooringAreaGroup', blank=True, null=True)
 
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if self.mooring_group == None:
+            raise ValidationError("Mooring Group required, please select from list.")
+        else:
+            super(PromoArea,self).save(*args,**kwargs)
+
 def update_mooring_map_filename(instance, filename):
     return 'mooring/mooring_maps/{}/{}'.format(instance.id,filename)
+
 
 class MooringArea(models.Model):
 
@@ -127,6 +173,18 @@ class MooringArea(models.Model):
         (0, 'Bookable Per Site'),
        (1, 'Bookable Per Site Type'),
         #(2, 'Bookable Per Site Type (hide site number)'),
+    )
+
+    MOORING_PHYSICAL_TYPE_CHOICES = (
+        (0, 'Mooring'),
+        (1, 'Jetty Pen'),
+        (2, 'Beach Pen')
+    )
+
+    MOORING_CLASS_CHOICES = (
+        ('small', 'Small'),
+        ('medium', 'Medium'),
+        ('large','Large')
     )
 
     name = models.CharField(max_length=255, null=True)
@@ -156,14 +214,21 @@ class MooringArea(models.Model):
     dog_permitted = models.BooleanField(default=False)
     check_in = models.TimeField(default=time(14))
     check_out = models.TimeField(default=time(10))
-    max_advance_booking = models.IntegerField(default =180)
+    max_advance_booking = models.IntegerField(default=180)
     oracle_code = models.CharField(max_length=50,null=True,blank=True)
     mooring_map = models.FileField(upload_to=update_mooring_map_filename,null=True,blank=True)
     vessel_size_limit = models.IntegerField(default=0)
     vessel_draft_limit = models.IntegerField(default=0)
+    vessel_beam_limit = models.IntegerField(default=0)
+    vessel_weight_limit = models.IntegerField(default=0)
+    mooring_physical_type = models.SmallIntegerField(choices=MOORING_PHYSICAL_TYPE_CHOICES, default=0)
+    mooring_class = models.CharField(choices=MOORING_CLASS_CHOICES, default=0, max_length=20)
 
     def __str__(self):
         return self.name
+
+    def __unicode__(self):
+        return unicode(self.name)
 
     def save(self,*args,**kwargs):
         cache.delete('marina')
@@ -187,13 +252,27 @@ class MooringArea(models.Model):
 
     @property
     def active(self):
-        return self._is_open(datetime.now().date())
+        return self._is_open(timezone.now())
 
     @property
     def current_closure(self):
         closure = self._get_current_closure()
         if closure:
-            return 'Start: {} Reopen: {}'.format(closure.range_start.strftime('%d/%m/%Y'), closure.range_end.strftime('%d/%m/%Y') if closure.range_end else "")
+            start = closure.range_start
+            timestamp = calendar.timegm(start.timetuple())
+            local_dt = datetime.fromtimestamp(timestamp)
+            start = local_dt.replace(microsecond=start.microsecond)
+            start = start.strftime('%d/%m/%Y %H:%M')
+            if closure.range_end:
+                end = closure.range_end if closure.range_end else ""
+                timestamp = calendar.timegm(end.timetuple())
+                local_dt = datetime.fromtimestamp(timestamp)
+                end = local_dt.replace(microsecond=end.microsecond)
+                end = end.strftime('%d/%m/%Y %H:%M')
+            else:
+                end = ""
+            strTime = 'Start: {} Reopen: {}'.format(start, end)
+            return strTime
         return ''
 
     @property
@@ -259,7 +338,7 @@ class MooringArea(models.Model):
 
     def _get_current_closure(self):
         closure_period = None
-        period = datetime.now().date()
+        period = timezone.now()
         if not self.active:
             closure = self.booking_ranges.filter(Q(range_start__lte=period),~Q(status=0),Q(range_end__isnull=True) |Q(range_end__gte=period)).order_by('updated_on')
             if closure:
@@ -293,7 +372,9 @@ class MooringArea(models.Model):
             else:
                 b.save()
         except MooringAreaBookingRange.DoesNotExist:
+            print ("DEBUG-count pre b save: ", MooringAreaBookingRange.objects.filter(campground=self.id).count())
             b.save()
+            print ("DEBUG-count post b save: ", MooringAreaBookingRange.objects.filter(campground=self.id).count())
         except:
             raise
 
@@ -307,6 +388,7 @@ class MooringArea(models.Model):
                     cr = MooringsiteRate(**data)
                     cr.campsite = c
                     cr.save()
+                    MooringsiteRateLog.objects.create(change_type=0,mooringarea=self,booking_period=cr.booking_period, date_start=cr.date_start, date_end=cr.date_end,reason=cr.reason,details=cr.details)
         except Exception as e:
             raise
 
@@ -320,6 +402,7 @@ class MooringArea(models.Model):
                 for r in rates:
                     if r.campsite in campsites and r.update_level == 0:
                         r.update(_new)
+                        MooringsiteRateLog.objects.create(change_type=1,mooringarea=self,booking_period=_new['booking_period'], date_start=r.date_start, date_end=_new['date_end'],reason=_new['reason'],details=_new['details'])
         except Exception as e:
             raise
 
@@ -332,7 +415,9 @@ class MooringArea(models.Model):
             with transaction.atomic():
                 for r in rates:
                     if r.campsite in campsites and r.update_level == 0:
+                        MooringsiteRateLog.objects.create(change_type=2,mooringarea=self,booking_period=r.booking_period, date_start=r.date_start, date_end=r.date_end,reason=r.reason,details=r.details)
                         r.delete()
+
         except Exception as e:
             raise
 
@@ -414,6 +499,99 @@ class MooringAreaImage(models.Model):
             pass
         super(MooringAreaImage,self).delete(*args,**kwargs)
 
+
+class ChangePricePeriod(models.Model):
+
+    REFUND_CALCULATION_TYPE = (
+        (0, 'Percentage'),
+        (1, 'Fixed Price'),
+    )
+
+    calulation_type = models.SmallIntegerField(choices=REFUND_CALCULATION_TYPE, default=0)
+    percentage = models.FloatField(blank=True,null=True)
+    amount =  models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    days = models.IntegerField()
+    oracle_code = models.CharField(max_length=50,null=True,blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        if self.calulation_type == 0:
+           return 'Percentage - {}% for {} day/s'.format(str(self.percentage), str(self.days))
+        else:
+           return 'Fixed Price - ${} for {} day/s'.format(str(self.amount), str(self.days))
+
+class ChangeGroup(models.Model):
+    name = models.CharField(max_length=100)
+    change_period = models.ManyToManyField(ChangePricePeriod, related_name='refund_period_options')
+    created = models.DateTimeField(auto_now_add=True)
+    mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
+
+    def __str__(self):
+        return self.name
+
+
+class CancelPricePeriod(models.Model):
+
+    REFUND_CALCULATION_TYPE = (
+        (0, 'Percentage'),
+        (1, 'Fixed Price'),
+    )
+
+    calulation_type = models.SmallIntegerField(choices=REFUND_CALCULATION_TYPE, default=0)
+    percentage = models.FloatField(blank=True,null=True)
+    amount =  models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    days = models.IntegerField()
+    oracle_code = models.CharField(max_length=50,null=True,blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        if self.calulation_type == 0:
+           return 'Percentage - {}% for {} day/s'.format(str(self.percentage), str(self.days))
+        else:
+           return 'Fixed Price - ${} for {} day/s'.format(str(self.amount), str(self.days))
+
+class CancelGroup(models.Model):
+    name = models.CharField(max_length=100)
+    cancel_period = models.ManyToManyField(CancelPricePeriod, related_name='cancel_period_options')
+    created = models.DateTimeField(auto_now_add=True)
+    mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
+
+    def __str__(self):
+        return self.name
+
+
+class BookingPeriodOption(models.Model):
+    period_name = models.CharField(max_length=15)
+    option_description = models.CharField(max_length=255)
+    small_price = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False)
+    medium_price = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False)
+    large_price = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False)
+    start_time = models.TimeField(null=True, blank=True)
+    finish_time = models.TimeField(null=True, blank=True)
+    all_day = models.BooleanField(default=True)
+    change_group = models.ForeignKey('ChangeGroup',null=True,blank=True)
+    cancel_group = models.ForeignKey('CancelGroup',null=True,blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    #mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
+
+    def __str__(self):
+        return self.period_name
+
+    def __unicode__(self):
+        return unicode(self.period_name) or u''
+
+class BookingPeriod(models.Model):
+    name = models.CharField(max_length=100)
+    booking_period = models.ManyToManyField(BookingPeriodOption, related_name='booking_period_options')
+    mooring_group = models.ForeignKey('MooringAreaGroup', blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    def __unicode__(self):
+        return unicode(self.name) or u''
+
 class BookingRange(models.Model):
     BOOKING_RANGE_CHOICES = (
         (0, 'Open'),
@@ -426,8 +604,8 @@ class BookingRange(models.Model):
     closure_reason = models.ForeignKey('ClosureReason',null=True,blank=True)
     open_reason = models.ForeignKey('OpenReason',null=True,blank=True)
     details = models.TextField(blank=True,null=True)
-    range_start = models.DateField(blank=True, null=True)
-    range_end = models.DateField(blank=True, null=True)
+    range_start = models.DateTimeField(blank=True, null=True)
+    range_end = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         abstract = True
@@ -436,7 +614,7 @@ class BookingRange(models.Model):
     # ====================================
     @property
     def editable(self):
-        today = datetime.now().date()
+        today = timezone.now()
         if self.status != 0 and((self.range_start <= today and not self.range_end) or (self.range_start <= today and self.range_end > today) or (self.range_start > today and not self.range_end) or ( self.range_start >= today <= self.range_end)):
             return True
         elif self.status == 0 and ((self.range_start <= today and not self.range_end) or self.range_start > today):
@@ -459,7 +637,6 @@ class BookingRange(models.Model):
         return False
 
     def clean(self, *args, **kwargs):
-        print(self.__dict__)
         if self.range_end and self.range_end < self.range_start:
             raise ValidationError('The end date cannot be before the start date.')
 
@@ -468,9 +645,9 @@ class BookingRange(models.Model):
         if not skip_validation:
             self.full_clean()
         if self.status == 1 and not self.closure_reason:
-            self.closure_reason = ClosureReason.objects.get(pk=1)
+            self.closure_reason = ClosureReason.objects.all().first()
         elif self.status == 0 and not self.open_reason:
-            self.open_reason = OpenReason.objects.get(pk=1)
+            self.open_reason = OpenReason.objects.all().first()
 
         super(BookingRange, self).save(*args, **kwargs)
 
@@ -511,7 +688,7 @@ class StayHistory(models.Model):
         if self.min_days < 1:
             raise ValidationError('The minimum days should be greater than 0.')
         if self.max_days > 28:
-            raise ValidationError('The maximum days should not be grater than 28.')
+            raise ValidationError('The maximum days should not be greater than 28.')
 
 class MooringAreaBookingRange(BookingRange):
     campground = models.ForeignKey('MooringArea', on_delete=models.CASCADE,related_name='booking_ranges')
@@ -542,10 +719,28 @@ class MooringAreaBookingRange(BookingRange):
             original = MooringAreaBookingRange.objects.get(pk=self.pk)
             if not original.editable:
                 raise ValidationError('This Booking Range is not editable')
-            if self.range_start < datetime.now().date() and original.range_start != self.range_start:
+            if self.range_start < timezone.now() and original.range_start != self.range_start:
                 raise ValidationError('The start date can\'t be in the past')
         super(MooringAreaBookingRange,self).clean(*args, **kwargs)
 
+class MooringsiteRateLog(models.Model):
+    CHANGE_TYPE = (
+        (0, 'New'),
+        (1, 'Change'),
+        (2, 'Delete')
+    )
+
+    change_type = models.SmallIntegerField(choices=CHANGE_TYPE, default=None, null=True, blank=True)
+    mooringarea= models.ForeignKey('MooringArea', on_delete=models.PROTECT, related_name='marinearea')
+    booking_period = models.ForeignKey(BookingPeriod, on_delete=models.PROTECT, null=True, blank=True)
+    date_start = models.DateField(default=date.today)
+    date_end = models.DateField(null=True, blank=True)
+    reason = models.ForeignKey('PriceReason')
+    details = models.TextField(null=True,blank=True)
+    created = models.DateTimeField(auto_now_add=True, null=True,blank=True)
+
+    def __str__(self):
+        return self.mooringarea
 
 class Mooringsite(models.Model):
     mooringarea = models.ForeignKey('MooringArea', db_index=True, on_delete=models.PROTECT, related_name='campsites')
@@ -696,24 +891,24 @@ class MooringsiteBookingRange(BookingRange):
     # Methods
     # =====================================
     def _is_same(self,other):
-        if not isinstance(other, MooringsiteBookingRange) and self.id != other.id:
-            return False
-        if self.range_start == other.range_start and self.range_end == other.range_end:
-            return True
+#        if not isinstance(other, MooringsiteBookingRange) and self.id != other.id:
+#            return False
+#        if self.range_start == other.range_start and self.range_end == other.range_end:
+#            return True
         return False
 
-    def clean(self, *args, **kwargs):
-        original = None
-        # Preventing ranges within other ranges
-        within = MooringsiteBookingRange.objects.filter(Q(campsite=self.campsite),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
-        if within:
-            raise BookingRangeWithinException('This Booking Range is within the range of another one')
-        if self.pk:
-            original = MooringsiteBookingRange.objects.get(pk=self.pk)
-            if not original.editable:
-                raise ValidationError('This Booking Range is not editable')
-            if self.range_start < datetime.now().date() and original.range_start != self.range_start:
-                raise ValidationError('The start date can\'t be in the past')
+#    def clean(self, *args, **kwargs):
+#        original = None
+#        # Preventing ranges within other ranges
+#        within = MooringsiteBookingRange.objects.filter(Q(campsite=self.campsite),~Q(pk=self.pk),Q(status=self.status),Q(range_start__lte=self.range_start), Q(range_end__gte=self.range_start) | Q(range_end__isnull=True) )
+#        if within:
+#            raise BookingRangeWithinException('This Booking Range is within the range of another one')
+#        if self.pk:
+#            original = MooringsiteBookingRange.objects.get(pk=self.pk)
+#            if not original.editable:
+#                raise ValidationError('This Booking Range is not editable')
+#            if self.range_start < datetime.now().date() and original.range_start != self.range_start:
+#                raise ValidationError('The start date can\'t be in the past')
 
     def __str__(self):
         return '{}: {} {} - {}'.format(self.campsite, self.status, self.range_start, self.range_end)
@@ -768,19 +963,32 @@ class Region(models.Model):
     ratis_id = models.IntegerField(default=-1)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     zoom_level = models.IntegerField(choices=ZOOM_LEVEL,default=-1)
+    mooring_group = models.ForeignKey(MooringAreaGroup, blank=True, null=True)
 
     def __str__(self):
         return self.name
-
+        
+    def save(self, *args, **kwargs):
+        if self.mooring_group == None:
+            raise ValidationError("Mooring Group required, please select from list.")
+        else:
+            super(Region,self).save(*args,**kwargs)
 
 class District(models.Model):
     name = models.CharField(max_length=255, unique=True)
     abbreviation = models.CharField(max_length=16, null=True, unique=True)
     region = models.ForeignKey('Region', on_delete=models.PROTECT)
     ratis_id = models.IntegerField(default=-1)
+    mooring_group = models.ForeignKey(MooringAreaGroup, blank=True, null=True)
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if self.mooring_group == None:
+            raise ValidationError("Mooring Group required, please select from list.")
+        else:
+            super(District,self).save(*args,**kwargs)
 
 
 class MooringsiteClass(models.Model):
@@ -864,19 +1072,26 @@ class MooringsiteBooking(models.Model):
         (0, 'Reception booking'),
         (1, 'Internet booking'),
         (2, 'Black booking'),
-        (3, 'Temporary reservation')
+        (3, 'Temporary reservation'),
+        (4, 'Cancelled Booking'),
+        (5, 'Changed Booking')
     )
 
     campsite = models.ForeignKey('Mooringsite', db_index=True, on_delete=models.PROTECT)
     date = models.DateField(db_index=True)
+    # ria multiple booking
+    from_dt = models.DateTimeField(blank=True, null=True)
+    to_dt = models.DateTimeField(blank=True, null=True)
+    amount = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=True, null=True, unique=False) 
     booking = models.ForeignKey('Booking',related_name="campsites", on_delete=models.CASCADE, null=True)
     booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
+    booking_period_option = models.ForeignKey('BookingPeriodOption', related_name="booking_period_option", on_delete=models.PROTECT, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.campsite, self.date)
 
-    class Meta:
-        unique_together = (('campsite', 'date'),)
+#    class Meta:
+#        unique_together = (('campsite', 'date'),)
 
 
 class Rate(models.Model):
@@ -919,6 +1134,7 @@ class MooringsiteRate(models.Model):
 
     campsite = models.ForeignKey('Mooringsite', on_delete=models.PROTECT, related_name='rates')
     rate = models.ForeignKey('Rate', on_delete=models.PROTECT)
+    booking_period = models.ForeignKey(BookingPeriod, on_delete=models.PROTECT, null=True, blank=True)
     allow_public_holidays = models.BooleanField(default=True)
     date_start = models.DateField(default=date.today)
     date_end = models.DateField(null=True, blank=True)
@@ -927,7 +1143,7 @@ class MooringsiteRate(models.Model):
     reason = models.ForeignKey('PriceReason')
     details = models.TextField(null=True,blank=True)
     update_level = models.SmallIntegerField(choices=UPDATE_LEVEL_CHOICES, default=0)
-
+   
     def get_rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
         return self.rate.adult*num_adult + self.rate.concession*num_concession + \
                 self.rate.child*num_child + self.rate.infant*num_infant
@@ -952,7 +1168,7 @@ class MooringsiteRate(models.Model):
         today = datetime.now().date()
         if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
             return True
-        return False
+        return True 
 
     # Methods
     # =================================
@@ -967,7 +1183,9 @@ class Booking(models.Model):
         (0, 'Reception booking'),
         (1, 'Internet booking'),
         (2, 'Black booking'),
-        (3, 'Temporary reservation')
+        (3, 'Temporary reservation'),
+        (4, 'Cancelled Booking'),
+        (5, 'Changed Booking')
     )
 
     customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, blank=True, null=True)
@@ -991,6 +1209,8 @@ class Booking(models.Model):
     confirmation_sent = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
     canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='canceled_bookings')
+    old_booking = models.ForeignKey('Booking', null=True, blank=True)
+    admission_payment = models.ForeignKey('AdmissionsBooking', null=True, blank=True)
 
     # Properties
     # =================================
@@ -1122,6 +1342,9 @@ class Booking(models.Model):
             else:
                 return status
         return 'Paid'
+    @property
+    def invoice_status(self):
+        return self.__check_invoice_payment_status()
 
     @property
     def confirmation_number(self):
@@ -1136,6 +1359,10 @@ class Booking(models.Model):
     def has_history(self):
         return self.history.count() > 0
 
+    @property
+    def in_future(self):
+        return self.departure > date.today()
+
     # Methods
     # =================================
     def clean(self,*args,**kwargs):
@@ -1147,8 +1374,8 @@ class Booking(models.Model):
         other_bookings = Booking.objects.filter(Q(departure__gt=arrival,departure__lte=departure) | Q(arrival__gte=arrival,arrival__lt=departure),customer=customer)
         if self.pk:
             other_bookings.exclude(id=self.pk)
-        if customer and other_bookings and self.booking_type != 3:
-            raise ValidationError('You cannot make concurrent bookings.')
+        #if customer and other_bookings and (self.booking_type != 3 or self.booking_type != 4):
+        #    raise ValidationError('You cannot make concurrent bookings.')
         #if not self.mooringarea.oracle_code:
         #    raise ValidationError('Campground does not have an Oracle code.')
         if self.mooringarea.park.entry_fee_required and not self.mooringarea.park.oracle_code:
@@ -1168,6 +1395,27 @@ class Booking(models.Model):
         elif self.legacy_id:
             amount =  D(self.cost_total)
         return amount
+
+    def __check_invoice_payment_status(self):
+        invoices = []
+        payment_amount = D('0.0')
+        invoice_amount = D('0.0')
+        references = self.invoices.all().values('invoice_reference')
+        for r in references:
+            try:
+                invoices.append(Invoice.objects.get(reference=r.get("invoice_reference")))
+            except Invoice.DoesNotExist:
+                pass
+        for i in invoices:
+            if not i.voided:
+                payment_amount += i.payment_amount
+                invoice_amount += i.amount
+
+        if invoice_amount == payment_amount:
+            return 'paid'
+        if payment_amount > invoice_amount:
+            return 'over_paid'
+        return "unpaid"
 
     def __check_payment_status(self):
         invoices = []
@@ -1343,6 +1591,7 @@ class OutstandingBookingRecipient(models.Model):
     def __str__(self):
         return self.email
 
+
 class BookingInvoice(models.Model):
     booking = models.ForeignKey(Booking, related_name='invoices')
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
@@ -1403,16 +1652,47 @@ class MarinaEntryRate(models.Model):
         today = datetime.now().date()
         return (self.period_start > today and not self.period_end) or ( self.period_start > today <= self.period_end)
 
+class RegisteredVessels(models.Model):
+    rego_no = models.CharField(max_length=200)
+    vessel_size = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    vessel_draft = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    vessel_beam = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    vessel_weight = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    sticker_l = models.IntegerField(default=None, blank=True, null=True)
+    sticker_au = models.IntegerField(default=None, blank=True, null=True)
+    sticker_an = models.IntegerField(default=None, blank=True, null=True)
+    expiry_l = models.DateField(null=True, blank=True)
+    expiry_au = models.DateField(null=True, blank=True)
+    expiry_an = models.DateField(null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = "Registered Vessels"
+
+    @property
+    def admissionsPaid(self):
+        if self.sticker_l > 0 or self.sticker_au > 0 or self.sticker_an > 0:
+            return True
+        else:
+            return False
+
 
 # REASON MODELS
 # =====================================
 class Reason(models.Model):
     text = models.TextField()
+    detailRequired = models.BooleanField(default=False)
     editable = models.BooleanField(default=True,editable=False)
+    mooring_group = models.ForeignKey(MooringAreaGroup, blank=True, null=True)
 
     class Meta:
         ordering = ('id',)
         abstract = True
+
+    def save(self, *args, **kwargs):
+        if self.mooring_group == None:
+            raise ValidationError("Mooring Group required, please select from list.")
+        else:
+            super(Reason,self).save(*args,**kwargs)
 
     # Properties
     # ==============================
@@ -1437,16 +1717,22 @@ class OpenReason(Reason):
 
 class PriceReason(Reason):
     pass
+class AdmissionsReason(Reason):
+    pass
 class DiscountReason(Reason):
     pass
+
 
 # VIEWS
 # =====================================
 class ViewPriceHistory(models.Model):
+
+    # Created because id was used as a primary_key to a foriegn model link as such need to create unique row id..
     id = models.IntegerField(primary_key=True)
     date_start = models.DateField()
     date_end = models.DateField()
     rate_id = models.IntegerField()
+    booking_period_id = models.IntegerField()
     mooring = models.DecimalField(max_digits=8, decimal_places=2)
     adult = models.DecimalField(max_digits=8, decimal_places=2)
     concession = models.DecimalField(max_digits=8, decimal_places=2)
@@ -1454,12 +1740,14 @@ class ViewPriceHistory(models.Model):
     details = models.TextField()
     reason_id = models.IntegerField()
     infant = models.DecimalField(max_digits=8, decimal_places=2)
+    price_id = models.IntegerField()
 
     class Meta:
         abstract =True
 
     # Properties
     # ====================================
+
     @property
     def deletable(self):
         today = datetime.now().date()
@@ -1470,7 +1758,10 @@ class ViewPriceHistory(models.Model):
     @property
     def editable(self):
         today = datetime.now().date()
-        if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
+        #if (self.date_start > today and not self.date_end) or ( self.date_start > today <= self.date_end):
+        if self.date_end is None:
+             return True
+        elif self.date_end > today:
             return True
         return False
 
@@ -1492,6 +1783,188 @@ class MooringsiteClassPriceHistory(ViewPriceHistory):
         managed = False
         db_table = 'mooring_mooringsiteclass_pricehistory_v'
         ordering = ['-date_start',]
+
+class AdmissionsLocation(models.Model):
+    key = models.CharField(max_length=5, blank=False, null=False, unique=True)
+    text = models.CharField(max_length=255, blank=False, null=False)
+    mooring_group = models.ForeignKey(MooringAreaGroup, blank=False, null=False)
+
+    def __str__(self):
+        return self.text
+
+class AdmissionsBooking(models.Model):
+    BOOKING_TYPE_CHOICES = (
+        (0, 'Reception booking'),
+        (1, 'Internet booking'),
+        (2, 'Black booking'),
+        (3, 'In-complete booking'),
+        (4, 'Cancelled booking')
+    )
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, blank=True, null=True)
+    booking_type = models.SmallIntegerField(choices=BOOKING_TYPE_CHOICES, default=0)
+    vesselRegNo = models.CharField(max_length=200, blank=True )
+    noOfAdults = models.IntegerField()
+    noOfConcessions = models.IntegerField()
+    noOfChildren = models.IntegerField()
+    noOfInfants = models.IntegerField()
+    warningReferenceNo = models.CharField(max_length=200, blank=True)
+    totalCost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    created = models.DateTimeField(default=timezone.now)
+    location = models.ForeignKey(AdmissionsLocation, blank=True, null=True)    
+
+    def __str__(self):
+        email = ''
+        if self.customer:
+            email = self.customer.email
+        return 'AD{} : {}'.format(self.id, email)
+
+    @property
+    def confirmation_number(self):
+        return 'AD{}'.format(self.id)
+
+    @property
+    def total_admissions(self):
+        return self.noOfAdults + self.noOfConcessions + self.noOfChildren + self.noOfInfants
+
+    @property
+    def in_future(self):
+        lines = AdmissionsLine.objects.filter(admissionsBooking=self)
+        future = False
+        for line in lines:
+            if line.arrivalDate > date.today():
+                future = True
+                break
+        return future
+
+    @property
+    def part_booking(self):
+        res = Booking.objects.filter(admission_payment=self).count()
+        if res == 0:
+            return False
+        else:
+            return True
+
+class AdmissionsLine(models.Model):
+    arrivalDate = models.DateField()
+    overnightStay = models.BooleanField(default=False)
+    admissionsBooking = models.ForeignKey(AdmissionsBooking, on_delete=models.PROTECT, blank=False, null=False)
+    cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    location = models.ForeignKey(AdmissionsLocation, blank=True, null=True)
+    
+
+class AdmissionsOracleCode(models.Model):
+    oracle_code = models.CharField(max_length=50, null=True,blank=True)
+    mooring_group = models.OneToOneField('MooringAreaGroup', blank=False, null=False, on_delete=models.PROTECT)
+
+
+class AdmissionsBookingInvoice(models.Model):
+    admissions_booking = models.ForeignKey(AdmissionsBooking, related_name='invoices')
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+
+    def __str__(self):
+        return 'Fee Payment {} : Invoice #{}'.format(self.id,self.invoice_reference)
+
+    # Properties
+    # ==================
+    @property
+    def active(self):
+        try:
+            invoice = Invoice.objects.get(reference=self.invoice_reference)
+            return False if invoice.voided else True
+        except Invoice.DoesNotExist:
+            pass
+        return False
+
+class AdmissionsRate(models.Model):
+    period_start = models.DateField(blank=False, null=False)
+    period_end = models.DateField(blank=True, null=True)
+    adult_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    adult_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    concession_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    concession_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    children_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    children_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    infant_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    infant_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    family_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    family_overnight_cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    comment = models.CharField(max_length=250, blank=True, null=True)
+    reason = models.ForeignKey('AdmissionsReason')
+    mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
+
+    def __str__(self):
+        return '{} - {} ({})'.format(self.period_start, self.period_end, self.comment)
+    
+    # Properties
+    # =================================
+    @property
+    def deletable(self):
+        today = datetime.now().date()
+        if self.date_start >= today:
+            return True
+        return False
+
+    @property
+    def editable(self):
+        today = datetime.now().date()
+        if (self.period_start > today and not self.period_end) or ( self.period_start > today <= self.period_end):
+            return True
+        return False
+
+        
+class GlobalSettings(models.Model):
+    keys = (
+        (0, 'Non Online Booking Fee'),
+        (1, 'Max Stay'),
+        (2, 'Max Advance Booking'),
+        (3, 'Max Length Small'),
+        (4, 'Max Length Medium'),
+        (5, 'Max Length Large'),
+        (6, 'Max Draft Small'),
+        (7, 'Max Draft Medium'),
+        (8, 'Max Draft Large'),
+        (9, 'Max Beam Small'),
+        (10, 'Max Beam Medium'),
+        (11, 'Max Beam Large'),
+        (12, 'Max Weight Small'),
+        (13, 'Max Weight Medium'),
+        (14, 'Max Weight Large'),
+        (15, 'URL - Internal'),
+        (16, 'URL - External'),
+        (17, 'Non Online Booking Oracle Code')
+    )
+    mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
+    key = models.SmallIntegerField(choices=keys, blank=False, null=False)
+    value = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = ('mooring_group', 'key',)
+        verbose_name_plural = "Global Settings"
+
+    def save(self, *args, **kwargs):
+        try:
+            if self.key < 15:
+                int(self.value)
+        except Exception as e:
+            pass
+        self.full_clean()
+        super(GlobalSettings,self).save(*args,**kwargs)
+
+
+class RefundFailed(models.Model):
+    STATUS = (
+        (0, 'Pending'),
+        (1, 'Refund Completed'),
+    )
+
+
+    booking = models.ForeignKey(Booking, related_name = "booking_refund")
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+    refund_amount = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)            
+    status = models.SmallIntegerField(choices=STATUS, default=0)
+    created = models.DateTimeField(default=timezone.now)
+    completed_date = models.DateTimeField(null=True, blank=True)
+    completed_by = models.ForeignKey(EmailUser, blank=True, null=True) 
 
 # LISTENERS
 # ======================================
@@ -1521,7 +1994,7 @@ class MooringAreaBookingRangeListener(object):
                 pass
         if instance.status == 0 and not instance.range_end:
             try:
-                another_open = MooringAreaBookingRange.objects.filter(campground=instance.campground,range_start=instance.range_start+timedelta(days=1),status=0).latest('updated_on')
+                another_open = MooringAreaBookingRange.objects.filter(campground=instance.campground,range_start=instance.range_start+timedelta(seconds=1),status=0).latest('updated_on')
                 instance.range_end = instance.range_start
             except MooringAreaBookingRange.DoesNotExist:
                 pass
@@ -1529,10 +2002,10 @@ class MooringAreaBookingRangeListener(object):
     @staticmethod
     @receiver(post_delete, sender=MooringAreaBookingRange)
     def _post_delete(sender, instance, **kwargs):
-        today = datetime.now().date()
+        today = timezone.now()
         if instance.status != 0 and instance.range_end:
             try:
-                linked_open = MooringAreaBookingRange.objects.filter(range_start=instance.range_end + timedelta(days=1), status=0).order_by('updated_on')
+                linked_open = MooringAreaBookingRange.objects.filter(range_start=instance.range_end + timedelta(seconds=1), status=0).order_by('updated_on')
                 if instance.range_start >= today:
                     if linked_open:
                         linked_open = linked_open[0]
@@ -1568,10 +2041,10 @@ class MooringAreaBookingRangeListener(object):
 
         # Check if its a closure and has an end date to create new opening range
         if instance.status != 0 and instance.range_end:
-            another_open = MooringAreaBookingRange.objects.filter(campground=instance.campground,range_start=datetime.now().date()+timedelta(days=1),status=0)
+            another_open = MooringAreaBookingRange.objects.filter(campground=instance.campground,range_start=instance.range_end+timedelta(seconds=1),status=0)
             if not another_open:
                 try:
-                    MooringAreaBookingRange.objects.create(campground=instance.campground,range_start=instance.range_end+timedelta(days=1),status=0)
+                    MooringAreaBookingRange.objects.create(campground=instance.campground,range_start=instance.range_end+timedelta(seconds=1),status=0)
                 except BookingRangeWithinException as e:
                     pass
 
@@ -1755,7 +2228,7 @@ class MooringsiteRateListener(object):
         else:
             try:
                 within = MooringsiteRate.objects.get(Q(campsite=instance.campsite),Q(date_start__lte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True) )
-                within.date_end = instance.date_start - timedelta(days=2)
+                within.date_end = instance.date_start - timedelta(days=1)
                 within.save()
             except MooringsiteRate.DoesNotExist:
                 pass
@@ -1763,7 +2236,7 @@ class MooringsiteRateListener(object):
             x = MooringsiteRate.objects.filter(Q(campsite=instance.campsite),Q(date_start__gte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True) ).order_by('date_start')
             if x:
                 x = x[0]
-                instance.date_end = x.date_start - timedelta(days=2)
+                instance.date_end = x.date_start - timedelta(days=1)
 
     @staticmethod
     @receiver(pre_delete, sender=MooringsiteRate)
@@ -1891,3 +2364,59 @@ class MarinaEntryRateListener(object):
             price_before = price_before[0]
             price_before.period_end = None
             price_before.save()
+
+
+class AdmissionsRateListener(object):
+    """
+    Event listener for AdmissionsRate
+    """
+
+    @staticmethod
+    @receiver(pre_save, sender=AdmissionsRate)
+    def _pre_save(sender, instance, **kwargs):
+        if instance.pk:
+            original_instance = AdmissionsRate.objects.filter(pk=instance.pk)
+            if original_instance.exists():
+                setattr(instance, "_original_instance", original_instance.first())
+            price_before = AdmissionsRate.objects.filter(mooring_group=instance.mooring_group, period_start__lt=instance.period_start).order_by("-period_start")
+            if price_before:
+                if price_before[0].pk == instance.pk:
+                    price_before = price_before[1]
+                else:
+                    price_before = price_before[0]
+                price_before.period_end = instance.period_start + timedelta(days=-1)
+                price_before.save()
+        elif hasattr(instance, "_original_instance"):
+            delattr(instance, "_original_instance")
+        else:
+            try:
+                price_before = AdmissionsRate.objects.filter(mooring_group=instance.mooring_group, period_start__lt=instance.period_start).order_by("-period_start")
+                if price_before:
+                    price_before = price_before[0]
+                    price_before.period_end = instance.period_start 
+                    price_before.save()
+                    instance.period_start = instance.period_start + timedelta(days=1)
+                price_after = AdmissionsRate.objects.filter(mooring_group=instance.mooring_group, period_start__gt=instance.period_start).order_by("period_start")
+                if price_after:
+                    price_after = price_after[0]
+                    instance.period_end = price_after.period_start - timedelta(days=1)
+            except Exception as e:
+                pass
+
+    @staticmethod
+    @receiver(post_delete, sender=AdmissionsRate)
+    def _post_delete(sender, instance, **kwargs):
+        price_before = AdmissionsRate.objects.filter(mooring_group=instance.mooring_group, period_start__lt=instance.period_start).order_by("-period_start")
+        price_after = AdmissionsRate.objects.filter(mooring_group=instance.mooring_group, period_start__gt=instance.period_start).order_by("period_start")
+        if price_after:
+            price_after = price_after[0]
+            if price_before:
+                price_before = price_before[0]
+                price_before.period_end =  price_after.period_start - timedelta(days=1)
+                price_before.save()
+        elif price_before:
+            price_before = price_before[0]
+            price_before.period_end = None
+            price_before.save()
+
+

@@ -1,0 +1,80 @@
+{% extends 'mooring/base.html' %}
+{% load static %}
+{% load users %}
+{% block extra_css %}
+    <link href="/static/ledger/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/common/css/dataTables.bootstrap.min.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link href="/static/common/css/select2.min.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link href="/static/common/css/select2-bootstrap.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link href="/static/common/css/font-awesome.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link rel="stylesheet" href="{% static 'mooring/css/dashboard.css' %}?ver={{ GIT_COMMIT_HASH }}">
+{% endblock %}
+{% block extra_js %}
+{% endblock %}
+{% block requirements %}
+{% endblock %}
+
+{% block content %}
+
+    <div class="container" id="dashboard-table-container">
+
+
+ <a href='{% url 'dash-bookingpolicy' %}' type="button" class="btn btn-primary" style="">Go Back</a><BR><BR>
+<div class="panel panel-default">
+    <div class="panel-heading" role="tab" id="title_heading">
+        <h1 class="panel-title">
+            <a role="button" data-toggle="collapse" href="#search_person_company_collapse" aria-expanded="false" aria-controls="search_person_company_collapse">
+                Policy for {{ object.name }}
+            </a>
+        </h1>
+    </div>
+
+    <div class="panel-collapse collapse in" id="search_person_company_collapse" role="tabpanel" aria-labelledby="search_person_company_heading">
+        <div class="panel-body">
+
+        <div class="col-lg-12">
+          <div class="row">
+          <div class="col-lg-3">
+	    <a href='{% url 'dash-bookingpolicy' %}' type="button" class="btn btn-primary" style="">Back</a>
+          </div>
+          <div class="col-lg-6">
+          </div>
+          <div class="col-lg-3">
+            <span class="pull-right"><a href='{% url 'dash-booking-policy-cancel-option-view' object.id %}' type="button" class="btn btn-primary" style="">Add Policy</a></span>
+          </div>
+	  
+          </div>
+        </div> 
+        <div class="col-lg-12">
+		&nbsp;
+	</div>	
+        <table width="100%" id='table-policy' class='hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline'>
+        <thead>
+        <tr><th>ID</th><th>Calculation Type</th><th>Amount/Percentage</th><th>Days</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+        {% for policy in object.cancel_period.all %}
+            <tr><td>{{ policy.id }}</td><td>{{ policy.get_calulation_type_display }}</td><td>{% if policy.calulation_type == 0 %}{{ policy.percentage }}%{% else %}${{ policy.amount }}{% endif %}</td><td>{{ policy.days }}</td><td><a href='{% url 'dash-booking-policy-cancel-option-edit' object.id policy.id %}'>Edit</a></td></tr>
+
+	{% endfor %}
+        </tbody>
+        </table>
+
+    </div>
+</div>
+</div>
+</div>
+
+<script>
+function loadTable() {
+    $('#table-policy').dataTable({searching: false, paging: true, "pageLength": 25, "order": [[ 3, "desc" ]],
+     columnDefs: [
+       { 'bSortable': false, type: 'natural-nohtml', targets: 0 }, { 'bSortable': false, 'aTargets':  1 },  {  type: 'natural-nohtml', targets: 3 },{ 'bSortable': false, 'aTargets':  2 }, { 'bSortable': false, 'aTargets':  4 }
+     ]
+    });
+}
+window.onload= function() {
+    loadTable();
+}
+</script>
+{% endblock %}
