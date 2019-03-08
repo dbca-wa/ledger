@@ -329,6 +329,23 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     dummy_email_suffix = ".s058@ledger.dpaw.wa.gov.au"
     dummy_email_suffix_len = len(dummy_email_suffix)
 
+    def has_wildlifelicenceactivity_perm(self, permission_codename, licence_activity_id):
+        return self.groups.filter(
+            permissions__codename=permission_codename,
+            activitypermissiongroup__licence_activities__id=licence_activity_id
+        ).count()
+
+    def get_wildlifelicence_permission_group(self, permission_codename, activity_id=None, first=True):
+        qs = self.groups.filter(
+            permissions__codename=permission_codename
+        )
+        if activity_id is not None:
+            if type(activity_id) == list:
+                qs.filter(licence_activities__id__in=activity_id)
+            else:
+                qs.filter(licence_activities__id=activity_id)
+        return qs.first() if first else qs
+
     @property
     def is_dummy_user(self):
         return not self.email or self.email[-1 * self.dummy_email_suffix_len:] == self.dummy_email_suffix
