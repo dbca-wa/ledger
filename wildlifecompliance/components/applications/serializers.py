@@ -490,8 +490,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     character_check_status = serializers.SerializerMethodField(read_only=True)
     submitter = EmailUserAppViewSerializer()
     applicationdeclineddetails = ApplicationDeclinedDetailsSerializer()
-    assessor_mode = serializers.SerializerMethodField()
-    current_assessor = serializers.SerializerMethodField()
     assessor_data = serializers.SerializerMethodField()
     licences = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
@@ -525,8 +523,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'can_user_edit',
             'can_user_view',
             'documents_url',
-            'assessor_mode',
-            'current_assessor',
             'assessor_data',
             'comment_data',
             'licences',
@@ -547,17 +543,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
         application_activities = ApplicationSelectedActivity.objects.filter(application_id=obj.id)
         return ApplicationSelectedActivitySerializer(application_activities, many=True).data
 
-    def get_assessor_mode(self, obj):
-        # TODO check if the application has been accepted or declined
-        request = self.context['request']
-        user = request.user._wrapped if hasattr(
-            request.user, '_wrapped') else request.user
-        return {
-            'assessor_mode': True,
-            'has_assessor_mode': True,
-            'assessor_level': 'assessor'
-        }
-
     def get_id_check_status(self, obj):
         return obj.get_id_check_status_display()
 
@@ -566,13 +551,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
 
     def get_readonly(self, obj):
         return True
-
-    def get_current_assessor(self, obj):
-        return {
-            'id': self.context['request'].user.id,
-            'name': self.context['request'].user.get_full_name(),
-            'email': self.context['request'].user.email
-        }
 
     def get_assessor_data(self, obj):
         return obj.assessor_data

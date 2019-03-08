@@ -74,21 +74,8 @@
     import Radio from '@/components/forms/radio.vue'
     import Table from '@/components/forms/table.vue'
     export default {
-        //props:["type","name","id", "comment_value","value","isRequired","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly", "help_text_url", "help_text_assessor_url"],
         props:["readonly", "activity", "application", "id"],
         components: {TextField, TextArea, DateField, Checkbox, Radio, Table},
-        /*
-        props:{
-            activity:{
-                type: ,
-                required:true
-            },
-            id:{
-                type:Number,
-            },
-
-        },
-        */
         data:function () {
             let vm = this;
             vm.editable_elements = [];

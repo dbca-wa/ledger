@@ -499,29 +499,6 @@ class Application(RevisionedMixin):
             )
         return selected_activity
 
-    def can_assess(self, user):
-        # TODO: this should probably be a status on the licenced activity not a property function on Application
-        return False
-        # if self.processing_status == 'with_assessor' or self.processing_status == 'with_assessor_conditions':
-        #     return self.__assessor_group() in user.applicationassessorgroup_set.all()
-        # elif self.processing_status == 'with_approver':
-        #     return self.__approver_group() in user.applicationapprovergroup_set.all()
-        # else:
-        #     return False
-
-    def has_assessor_mode(self, user):
-        status_without_assessor = ['With Officer', 'With Assessor']
-        if self.processing_status in status_without_assessor:
-            return False
-        else:
-            if self.assigned_officer:
-                if self.assigned_officer == user:
-                    return self.__assessor_group() in user.applicationassessorgroup_set.all()
-                else:
-                    return False
-            else:
-                return self.__assessor_group() in user.applicationassessorgroup_set.all()
-
     def log_user_action(self, action, request):
         return ApplicationUserAction.log_action(self, action, request.user)
 

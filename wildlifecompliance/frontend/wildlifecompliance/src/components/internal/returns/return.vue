@@ -142,7 +142,7 @@
             </table>
             </div>
         </div>
-        <div v-if="hasAssessorMode" class="row" style="margin-bottom:50px;">
+        <div class="row" style="margin-bottom:50px;">
             <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                 <div class="navbar-inner">
                     <div class="container">
@@ -196,10 +196,6 @@ export default {
   computed: {
     isWithCurator: function() {
         console.log('isWithCurator Function')
-        return true;
-    },
-    hasAssessorMode: function() {
-        console.log('hasAssessorMode Function')
         return true;
     },
   },
