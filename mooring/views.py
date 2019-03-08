@@ -1060,6 +1060,12 @@ class BookingPolicyChangeView(UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super(BookingPolicyChangeView, self).get_context_data(**kwargs)
+        change_period_options = self.object.change_period.all()
+        cpo = False
+        for i in change_period_options:
+            if i.days == 0:
+               cpo = True
+        context['cpo_check'] = cpo
         context['query_string'] = ''
         return context
 
@@ -1083,6 +1089,13 @@ class BookingPolicyCancelView(UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super(BookingPolicyCancelView, self).get_context_data(**kwargs)
+        cancel_period_options = self.object.cancel_period.all()
+        cpo = False
+        for i in cancel_period_options:
+            if i.days == 0:
+               cpo = True
+        context['cpo_check'] = cpo
+
         context['query_string'] = ''
         return context
 
