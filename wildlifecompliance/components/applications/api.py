@@ -1,47 +1,30 @@
 import traceback
 import os
-import datetime
-import base64
-import json
-import geojson
-from six.moves.urllib.parse import urlparse
-from wsgiref.util import FileWrapper
-from django.db.models import Q, Min
+from django.db.models import Q
 from django.db import transaction
-from django.http import HttpResponse
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.exceptions import ValidationError
-from django.conf import settings
-from wildlifecompliance import settings
-from django.contrib import messages
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
-from rest_framework import viewsets, serializers, status, generics, views
-from rest_framework.decorators import detail_route, list_route, renderer_classes, parser_classes
+from rest_framework import viewsets, serializers, status, views
+from rest_framework.decorators import detail_route, list_route, renderer_classes
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
-from rest_framework.pagination import PageNumberPagination
-from datetime import datetime, timedelta
-from collections import OrderedDict
-from django.core.cache import cache
-from ledger.accounts.models import EmailUser, Address
-from ledger.address.models import Country
+from ledger.accounts.models import EmailUser
 from ledger.checkout.utils import calculate_excl_gst
-from datetime import datetime, timedelta, date
 from django.urls import reverse
-from django.shortcuts import render, redirect, get_object_or_404
-from wildlifecompliance.components.applications.utils import SchemaParser, MissingFieldsException, get_activity_schema, save_assess_data
-from wildlifecompliance.components.main.models import Document
+from django.shortcuts import redirect
+from wildlifecompliance.components.applications.utils import (
+    SchemaParser,
+    MissingFieldsException,
+    get_activity_schema,
+    save_assess_data
+)
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.utils.assess_utils import create_app_activity_model
 from wildlifecompliance.components.applications.models import (
     Application,
     ApplicationSelectedActivity,
-    ApplicationDocument,
     ApplicationCondition,
     ApplicationStandardCondition,
     Assessment,
@@ -52,7 +35,6 @@ from wildlifecompliance.components.applications.models import (
     search_reference
 )
 from wildlifecompliance.components.applications.serializers import (
-    ApplicationTypeSerializer,
     ApplicationSerializer,
     InternalApplicationSerializer,
     SaveApplicationSerializer,
@@ -109,7 +91,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 #    @detail_route(methods=['GET',])
 #    def is_editable_fields(self, request, *args, **kwargs):
 #        try:
-#            instance = self.get_object()    
+#            instance = self.get_object()
 #            editable_items = {}
 #            for i in instance.activities:
 #                editable_items.update({i.activity_name:get_activity_sys_answers(i)})
@@ -123,7 +105,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def process_document(self, request, *args, **kwargs):
         try:
-            #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             action = request.POST.get('action')
             section = request.POST.get('input_name')
@@ -736,7 +717,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def assess_save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            save_assess_data(instance,request,self)
+            save_assess_data(instance, request, self)
             return redirect(reverse('external'))
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -746,7 +727,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-
 
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
@@ -775,8 +755,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
 
-            #import ipdb; ipdb.set_trace()
-            create_app_activity_model(serializer.data['licence_category'], app_ids=[serializer.data['id']]) 
+            create_app_activity_model(serializer.data['licence_category'], app_ids=[serializer.data['id']])
             return Response(serializer.data)
         except Exception as e:
             print(traceback.print_exc())
@@ -784,7 +763,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         try:
-            http_status = status.HTTP_200_OK
             instance = self.get_object()
             serializer = SaveApplicationSerializer(instance, data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -822,10 +800,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @detail_route(permission_classes=[], methods=['GET'])
     def application_checkout_status(self, request, *args, **kwargs):
-        from django.utils import timezone
-        http_status = status.HTTP_200_OK
         try:
-            instance = self.get_object()
+            # instance = self.get_object()
             response = {
                 'status': 'rejected',
                 'error': ''
