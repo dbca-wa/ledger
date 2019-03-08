@@ -169,6 +169,9 @@ module.exports = {
             vm.form.validate({
                 rules: {
                     closure_start: "required",
+                    closure_start_time: "required",
+                    closure_end: "required",
+                    closure_end_time: "required",
                     closure_status: "required",
                     closure_details: {
                         required: {
@@ -185,6 +188,9 @@ module.exports = {
                 },
                 messages: {
                     closure_start: "Enter a start date",
+                    closure_start_time: "Enter a start time",
+                    closure_end: "Enter a end date",
+                    closure_end_time: "Enter a end time",
                     closure_status: "Select a closure reason from the options",
                     closure_details: "Details required if Other reason is selected"
                 },
