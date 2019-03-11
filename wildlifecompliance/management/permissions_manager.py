@@ -112,7 +112,21 @@ class CustomGroupCollector(PermissionCollector):
     COLLECTION_SOURCE = 'PERMISSION_GROUPS'
 
     def get_or_create_group(self, group_name, config):
-        group, created = ActivityPermissionGroup.objects.get_or_create(name=group_name)
+        created = None
+        group = ActivityPermissionGroup.objects.filter(name=group_name).first()
+        if not group:
+            base_group = Group.objects.filter(name=group_name).first()
+            if base_group:
+                group = created = ActivityPermissionGroup.objects.create(
+                    group_ptr_id=base_group.id,
+                    name=base_group.name
+                )
+            else:
+                group = created = ActivityPermissionGroup.objects.create(name=group_name)
+
+        if created:
+            logger.info("Created custom group: %s" % (group_name))
+
         if config['permissions'] and created:
             for permission_codename in config['permissions']:
                 try:
@@ -127,12 +141,10 @@ class CustomGroupCollector(PermissionCollector):
                     ))
                 except ObjectDoesNotExist:
                     logger.error("Cannot assign non-existent permission {permission_name} to: {group}".format(
-                            permission_name=permission_codename,
-                            group=group_name
-                        ))
+                        permission_name=permission_codename,
+                        group=group_name
+                    ))
                     raise 
-                    
-                    
 
         return group
 
