@@ -58,7 +58,7 @@
                                         <select ref="assigned_officer" :disabled="!canAssignToOfficer" class="form-control" v-model="application.assigned_officer">
                                             <option v-for="member in application.licence_officers" :value="member.id" v-bind:key="member.id">{{member.first_name}} {{member.last_name}}</option>
                                         </select>
-                                        <a @click.prevent="assignToMe()" class="actionBtn pull-right">Assign to me</a>
+                                        <a v-if="canAssignToOfficer" @click.prevent="assignToMe()" class="actionBtn pull-right">Assign to me</a>
                                     </template>
                                 </div>
                             </div>
@@ -886,7 +886,7 @@ export default {
             return this.application.character_check_status == 'Accepted';
         },
         canAssignToOfficer: function(){
-            return this.application && this.application.processing_status == 'Under Review' && !this.isFinalised && !this.application.can_user_edit ? true : false;
+            return this.application && this.application.processing_status == 'Under Review' && !this.isFinalised && !this.application.can_user_edit && this.application.user_in_licence_officers ? true : false;
         },
         canSeeSubmission: function(){
             return this.application && (this.application.processing_status != 'With Assessor (Conditions)' && this.application.processing_status != 'With Approver' && !this.isFinalised)
