@@ -1466,8 +1466,6 @@ class ApplicationUserAction(UserAction):
     ACTION_LODGE_APPLICATION = "Lodge application {}"
     ACTION_ASSIGN_TO_OFFICER = "Assign application {} to officer {}"
     ACTION_UNASSIGN_OFFICER = "Unassign officer from application {}"
-    # ACTION_ASSIGN_TO_APPROVER = "Assign application {} to {} as the approver"
-    # ACTION_UNASSIGN_APPROVER = "Unassign approver from application {}"
     ACTION_ACCEPT_ID = "Accept ID"
     ACTION_RESET_ID = "Reset ID"
     ACTION_ID_REQUEST_UPDATE = 'Request ID update'
