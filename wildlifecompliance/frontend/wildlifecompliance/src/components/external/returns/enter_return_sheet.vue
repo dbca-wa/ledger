@@ -128,54 +128,31 @@ export default {
                 }
             },
             columns: [
-              {
-                data: "date",
-                mRender:function (data,type,full) {
+              { data: "date" },
+              { data: "activity" },
+              { data: "quantity" },
+              { data: "total" },
+              { data: "comment" },
+              { data: "editable",
+                mRender: function(data, type, full) {
+                  if (full.activity) {
+                     var column = `<a class="edit-row" data-date=\"__DATE__\" ` +
+                                  `data-activity=\"__ACTIVITY__\"  data-quantity=\"__QTY__\" ` +
+                                  `data-total=\"__TOTAL__\" data-comment=\"__COMMENT__\" ` +
+                                  `data-licence=\"__LICENCE__\">Edit</a><br/>`
 
-                   //return vm.returns.table[0]['data'][0]['DATE']['value']
-                   return '23/01/2019'
-
+                     column = column.replace(/__DATE__/g, full.date)
+                     column = column.replace(/__ACTIVITY__/g, full.activity)
+                     column = column.replace(/__QTY__/g, full.quantity)
+                     column = column.replace(/__TOTAL__/g, full.total)
+                     column = column.replace(/__COMMENT__/g, full.comment)
+                     column = column.replace(/__LICENCE__/g, full.licence)
+                     return column
+                  } else {
+                     return "";
+                  }
                 }
-              },
-              {
-                data: "activity",
-                mRender:function (data,type,full) {
-
-                    //return full.table[0]['data'][0]['TYPE']['value'];
-                    return 'Stock'
-                }
-              },
-              {
-                data: "number",
-                mRender:function (data,type,full) {
-
-                    //return full.table[0]['data'][0]['NUMBER']['value'];
-                    return 5
-                }
-              },
-              {
-                data: "total",
-                mRender:function (data,type,full) {
-
-                   //return full.table[0]['data'][0]['TOTAL NUMBER']['value'];
-                   return 5
-                }
-              },
-              {
-                data: "comment",
-                mRender:function (data,type,full) {
-
-                    //return full.table[0]['data'][0]['COMMENTS']['value'];
-                    return 'Initial stock taking'
-                }
-              },
-              {
-                mRender:function (data,type,full) {
-                    return `<a data-activity='001' data-licence='L245375' data-number=5 data-total=5 ` +
-                           `data-comment='Initial stock taking' ` +
-                           `class="edit-row">Edit</a><br/>`;
-                }
-              },
+              }
             ],
             processing: true,
         }
@@ -248,7 +225,7 @@ export default {
      vm.$refs.return_datatable.vmDataTable.on('click','.edit-row', function(e) {
         e.preventDefault();
         vm.$refs.sheet_entry.entryActivity = $(this).attr('data-activity');
-        vm.$refs.sheet_entry.entryNumber = $(this).attr('data-number');
+        vm.$refs.sheet_entry.entryNumber = $(this).attr('data-quantity');
         vm.$refs.sheet_entry.entryTotal = $(this).attr('data-total');
         vm.$refs.sheet_entry.entryComment = $(this).attr('data-comment');
         vm.$refs.sheet_entry.entryLicence = $(this).attr('data-licence');

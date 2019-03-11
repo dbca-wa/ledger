@@ -145,12 +145,9 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
 
     @list_route(methods=['GET', ])
     def sheet_details(self, request, *args, **kwargs):
-        qs = self.get_queryset()
         return_id = self.request.query_params.get('return_id')
-        qs = qs.filter(id=return_id)
-        serializer = ReturnSerializer(qs, many=True)
-
-        return Response(serializer.data)
+        instance = Return.objects.get(id=return_id)
+        return Response(instance.sheet.data)
 
     @detail_route(methods=['GET', ])
     def comms_log(self, request, *args, **kwargs):
@@ -177,7 +174,7 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
                 instance = self.get_object()
                 request.data['compliance'] = u'{}'.format(instance.id)
                 request.data['staff'] = u'{}'.format(request.user.id)
-                serializer = ComplianceCommsSerializer(data=request.data)
+                serializer = ReturnCommsSerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
                 comms = serializer.save()
                 # Save the files

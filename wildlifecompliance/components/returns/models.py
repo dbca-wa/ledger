@@ -162,15 +162,15 @@ class Return(models.Model):
         tables.append(table)
         return tables
 
-    def factory(self):
+    @property
+    def sheet(self):
         """
-        A simple factory for Return methods.
-        :return: A specific Return method
+        A Running sheet of Return data.
+        :return: ReturnSheet with activity data for species.
         """
         if self.return_type.Name == 'sheet':
             return ReturnSheet(self)
-
-        return self
+        return None
 
     def log_user_action(self, action, request):
         return ReturnUserAction.log_action(self, action, request.user)
@@ -214,22 +214,21 @@ class ReturnSheet(object):
     """
     A Running Sheet of requirements supporting licence conditions.
     """
-    RETURN_SHEET_SCHEMA = {"name": "sheet", "title": "Standard return for stock", "resources": [{"name":
-                           "sheet", "path": "", "title": "Stock Return", "schema": {"fields": [{"stype": {"type":
-                           "species", "speciesType": "fauna"}, "name": "SPECIES", "type": "string",
-                           "constraints": {"required": True}}, {"name": "DATE", "type": "date", "format":
-                           "fmt:%d/%m/%Y", "constraints": {"required": True}}, {"sgroup": {"type": "speciesGroup",
-                           "speciesGroup": "stock"}, "name": "TYPE", "type": "string", "constraints": {"required":
-                           True}}, {"name": "QUANTITY", "type": "number", "constraints": {"required": True}}, {
-                           "name": "TOTAL", "type": "number", "constraints": {"required": True}}, {
-                           "name": "COMMENTS", "type": "string"}]}}]}
+
+    _SHEET_SCHEMA = {"name": "sheet", "title": "Running Sheet of Return Data", "resources": [{"name":
+                     "SpecieID", "path": "", "title": "Return Data for Specie", "schema": {"fields": [{"name":
+                     "Date", "type": "date", "format": "fmt:%d/%m/%Y", "constraints": {"required": True}}, {"name":
+                     "Activity", "type": "string", "constraints": {"required": True}}, {"name": "Quantity", "type":
+                     "number", "constraints": {"required": True}}, {"name": "Total", "type": "number",
+                     "constraints": {"required": True}}, {"name": "Licence", "type": "string"}, {"name": "Comment",
+                     "type": "string"}]}}]}
 
     def __init__(self, a_return):
         self._return = a_return
-        self._return.return_type.data_descriptor = self.RETURN_SHEET_SCHEMA
-        self._rows = []
+        self._return.return_type.data_descriptor = self._SHEET_SCHEMA
+        self._species = []
 
-    def _get_table_rows_from_post(self, table_name, post_data):
+    def _get_table_rows(self, table_name, post_data):
         table_namespace = table_name + '::'
         by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(
             key)) for key in post_data.keys() if key.startswith(table_namespace)])
@@ -252,8 +251,8 @@ class ReturnSheet(object):
             if not is_empty:
                 self._rows.append(row_data)
 
-    def _create_return_data_from_post_data(self, ret, tables_info, post_data):
-        self._get_table_rows_from_post(tables_info, post_data)
+    def _create_return_data(self, ret, tables_info, post_data):
+        self._get_table_rows(tables_info, post_data)
         if self._rows:
             return_table = ReturnTable.objects.get_or_create(
                 name=tables_info, ret=ret)[0]
@@ -266,20 +265,14 @@ class ReturnSheet(object):
             ReturnRow.objects.bulk_create(return_rows)
 
     @property
+    def data(self):
+        return self.table['data']
+
+    @property
     def table(self):
-        return self._return.table
-
-    def create_species_data(self):
-        pass
-
-    def update_species_data(self):
-        pass
-
-    def retrieve_species_data(self):
-        pass
-
-    def delete_species_data(self):
-        pass
+        _specie_activities = {'data': [{'date': '2019/03/02', 'activity': '001', 'quantity': '5', 'total': '5',
+                                        'comment': 'Initial Stock Taking', 'licence': ''}]}
+        return _specie_activities
 
     def is_valid(self):
         pass
