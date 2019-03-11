@@ -21,9 +21,8 @@ import { helpers, api_endpoints } from "@/utils/hooks.js"
 import { strToBool } from "@/utils/helpers.js";
 
 module.exports = {
-    renderChildren(h,c,data=null,assessorData=null,_readonly) {
+    renderChildren(h,c,data=null,_readonly) {
         var is_readonly = this.status_data.readonly;
-        var assessorData = this.status_data.assessorData;
         var commentData = this.status_data.commentData;
         var applicationId = this.status_data.applicationId;
         var readonly = false;
@@ -333,10 +332,9 @@ module.exports = {
         return this.tabs_list;
     },
     status_data : {},
-    store_status_data(readonly,assessorData,commentData,can_user_edit,docs_url, applicationId){
+    store_status_data(readonly,commentData,can_user_edit,docs_url, applicationId){
         this.status_data = {
             'readonly': readonly,
-            'assessorData': assessorData,
             'commentData': commentData,
             'can_user_edit': can_user_edit,
             'docs_url': docs_url,
