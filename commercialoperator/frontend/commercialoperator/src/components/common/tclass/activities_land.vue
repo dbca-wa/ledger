@@ -19,7 +19,7 @@
               <label class="control-label">Access</label>
               <div class="" v-for="a in accessTypes">
                 <div class="form-check">
-                  <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_access" :value="a.id" data-parsley-required   />
+                  <input  class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_access" :value="a.id" data-parsley-required   />
                   {{ a.name }}
                 </div>
               </div>
@@ -30,7 +30,7 @@
               <label class="control-label">Activities</label>
               <div class="" v-for="a in activities">
                 <div class="form-check">
-                  <input :onclick="isClickable" class="form-check-input" v-model="selected_activities" :value="a.id" ref="Checkbox" type="checkbox" data-parsley-required  />
+                  <input  class="form-check-input" v-model="selected_activities" :value="a.id" ref="Checkbox" type="checkbox" data-parsley-required  />
                   {{ a.name }}
                 </div>
               </div>
@@ -41,19 +41,19 @@
               <label class="control-label">Select Parks</label>
               <div class="" v-for="r in api_regions">
                 <div class="form-check">
-                  <input :onclick="isClickable" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                  <input @click="clickRegion($event, r)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" data-parsley-required />
                   {{ r.name }}
-                  <a data-toggle="collapse" :href="'#'+r.id" role="button" aria-expanded="true" aria controls="r.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a>
+                  <!-- <a data-toggle="collapse" :href="'#'+r.id" role="button" aria-expanded="true" aria controls="r.id" ><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
                 </div>
-                <div class="col-sm-12 collapse" v-for="d in r.districts" :id="r.id">
+                <div class="col-sm-12" v-for="d in r.districts" :id="r.id">
                   <div class="form-check ">
-                    <input :onclick="isClickable"  :value="d.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                    <input @click="clickDistrict($event, d)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" data-parsley-required />
                     {{ d.name }}
                    <!--  <a data-toggle="collapse" :href="'#'+d.id+r.id" role="button" aria-expanded="true" aria controls="d.id+r.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
                   </div>
                   <div class="" v-for="p in d.land_parks">
                     <div class="form-check col-sm-12">
-                      <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" :id="'park'+p.id" data-parsley-required />
                     {{ p.name }}
                       <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
                     </div>
@@ -62,8 +62,38 @@
               </div>
             </div>
 
-            <div>{{selected_activities}}</div>
+            <!-- The below test code works for multiselect but it doesn't work with v-model -->
+            <!-- <div class="form-horizontal col-sm-12">
+              <label class="control-label">Select Parks test</label>
+              <ul class="" v-for="r in api_regions">
+                <li class="form-check">
+                  <input :onclick="isClickable()" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" data-parsley-required />
+                  {{ r.name }} -->
+                  <!-- <a data-toggle="collapse" :href="'#'+r.id" role="button" aria-expanded="true" aria controls="r.id" ><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
+                
+                <!-- <ul class="col-sm-12" v-for="d in r.districts" :id="r.id">
+                  <li class="form-check ">
+                    <input :onclick="isClickable()"  :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" type="checkbox" data-parsley-required />
+                    {{ d.name }} -->
+                   <!--  <a data-toggle="collapse" :href="'#'+d.id+r.id" role="button" aria-expanded="true" aria controls="d.id+r.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
+                  
+                  <!-- <ul class="" v-for="p in d.land_parks">
+                    <li class="form-check col-sm-12">
+                      <input :onclick="isClickable()"  name="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" :id="'park'+p.id" data-parsley-required />
+                    {{ p.name }}
+                      <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
+                    </li>
+                  </ul>
+                  </li>
+                </ul>
+                </li>
+              </ul>
+            </div> -->
+            <!-- test finish -->
+
+            <div>{{selected_parks}}</div>
             <div>{{selected_parks_activities}}</div>
+            
             
 <!--           </form>
 
@@ -93,7 +123,7 @@
                 <label class="control-label">Activities</label>
                 <div class="" v-for="a in accessTypes">
                   <div class="form-check">
-                    <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="trail_activities" :value="a.id" data-parsley-required/>
+                    <input  class="form-check-input" ref="Checkbox" type="checkbox" v-model="trail_activities" :value="a.id" data-parsley-required/>
                       {{ a.name }}
                   </div>
                 </div>
@@ -105,7 +135,7 @@
                   <label class="control-label">Select the long distance trails</label>
                   <div class="" v-for="t in trails">
                     <div class="form-check">
-                      <input :onclick="isClickable"  name="selected_trails" v-model="selected_trails" :value="t.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                      <input   name="selected_trails" v-model="selected_trails" :value="t.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
                       {{ t.name }}
                     </div>
                   </div>
@@ -160,6 +190,9 @@ export default {
                 trail_activities_before:[],
                 activities:[],
                 access:[],
+                selected_regions:[],
+                selected_regions_before:[],
+                selected_districts:[],
                 //vehicles_url: api_endpoints.vehicles,
                 vehicles_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/vehicles'),
                 selected_parks_activities:[],
@@ -171,7 +204,13 @@ export default {
           editParkActivities,
         },
         watch:{
-          selected_parks: function() {
+          selected_regions: function(val){
+            //WIP
+            let vm=this;
+            var added_region=$(vm.selected_regions).not(vm.selected_regions_before).get();
+            //console.log(added_region)
+          },
+          selected_parks: function(){
             let vm = this;
             if (vm.proposal) {
                 vm.proposal.parks = vm.selected_parks
@@ -443,6 +482,103 @@ export default {
               }
             }
           },
+          clickRegion: function(e, r){
+            var checked=e.target.checked;
+            if(checked){
+              for(var i=0; i<r.districts.length; i++){
+                var index=this.selected_districts.indexOf(r.districts[i].id);
+                if(index==-1)
+                {
+                  this.selected_districts.push(r.districts[i].id)
+                }
+              }
+            }
+            else{
+              for(var i=0; i<r.districts.length; i++){
+                var index=this.selected_districts.indexOf(r.districts[i].id);
+                if(index!=-1){
+                  this.selected_districts.splice(index,1)
+                }
+              }
+            }
+          },
+          clickDistrict: function(e, d){
+            let vm=this;
+            var checked=e.target.checked;
+            if(checked){
+              for(var i=0; i<d.land_parks.length; i++){
+                var index=this.selected_parks.indexOf(d.land_parks[i].id);
+                if(index==-1)
+                {
+                  //this.selected_parks.push(d.land_parks[i].id)
+                  Vue.set(this.selected_parks, this.selected_parks.length, d.land_parks[i].id);
+                }
+              }
+            }
+            else{
+              for(var i=0; i<d.land_parks.length; i++){
+                var index=this.selected_parks.indexOf(d.land_parks[i].id);
+                if(index!=-1){
+                  this.selected_parks.splice(index,1)
+                }
+              }
+            }
+          },
+          // isClickable: function() {
+            
+          //   $('input[type="checkbox"]').change(function(e) {
+
+          //   var checked = $(this).prop("checked"),
+          //       container = $(this).parent(),
+          //       siblings = container.siblings();
+
+          //   console.log(siblings)
+
+          //   container.find('input[type="checkbox"]').prop({
+          //     indeterminate: false,
+          //     checked: checked
+          //   });
+
+          //   function checkSiblings(el) {
+
+          //     var parent = el.parent().parent(),
+          //         all = true;
+
+          //     el.siblings().each(function() {
+          //       return all = ($(this).children('input[type="checkbox"]').prop("checked") === checked);
+          //     });
+
+          //     if (all && checked) {
+
+          //       parent.children('input[type="checkbox"]').prop({
+          //         indeterminate: false,
+          //         checked: checked
+          //       });
+
+          //       checkSiblings(parent);
+
+          //     } else if (all && !checked) {
+
+          //       parent.children('input[type="checkbox"]').prop("checked", checked);
+          //       parent.children('input[type="checkbox"]').prop("indeterminate", (parent.find('input[type="checkbox"]:checked').length > 0));
+          //       checkSiblings(parent);
+
+          //     } else {
+
+          //       el.parents("li").children('input[type="checkbox"]').prop({
+          //         indeterminate: true,
+          //         checked: false
+          //       });
+
+          //     }
+
+          //   }
+
+          //   checkSiblings(container);
+          //   });
+
+
+          // },
           find_recurring: function(array){
             var common=new Map();
             array.forEach(function(obj){
@@ -514,6 +650,9 @@ export default {
               this.selected_trails.push(vm.proposal.trails[i].trail.id);
             } 
 
+            // this.$nextTick(()=>{
+            //   vm.eventListeners();
+            // });
             //check why this is not working
             $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];
