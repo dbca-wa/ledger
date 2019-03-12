@@ -1307,6 +1307,13 @@ class ProposalTrail(models.Model):
         app_label = 'commercialoperator'
         unique_together = ('trail', 'proposal')
 
+class ProposalTrailActivity(models.Model):
+    proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='trail_activities')
+    activity = models.ForeignKey(Activity, blank=True, null=True)
+
+    class Meta:
+        app_label = 'commercialoperator' 
+        unique_together = ('proposal_trail', 'activity')
 
 @python_2_unicode_compatible
 class Vehicle(models.Model):

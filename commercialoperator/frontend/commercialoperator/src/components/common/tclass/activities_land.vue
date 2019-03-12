@@ -39,6 +39,10 @@
           <!-- <form> -->
             <div class="form-horizontal col-sm-12">
               <label class="control-label">Select Parks</label>
+              <div class="form-check">
+                  <input  class="form-check-input" @click="clickSelectAll" ref="Checkbox" type="checkbox" data-parsley-required  />
+                  Select all parks from all regions
+              </div>
               <div class="" v-for="r in api_regions">
                 <div class="form-check">
                   <input @click="clickRegion($event, r)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" data-parsley-required />
@@ -193,6 +197,7 @@ export default {
                 selected_regions:[],
                 selected_regions_before:[],
                 selected_districts:[],
+                select_all: false,
                 //vehicles_url: api_endpoints.vehicles,
                 vehicles_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/vehicles'),
                 selected_parks_activities:[],
@@ -482,6 +487,27 @@ export default {
               }
             }
           },
+          clickSelectAll: function(e){
+            let vm=this;
+            var checked=e.target.checked;
+            var new_regions=[];
+            var new_district=[];
+            var new_parks = [];
+            if(checked){
+              for(var i=0; i<vm.api_regions.length; i++){
+                new_regions.push(vm.api_regions[i].id);
+                for (var j=0; j<vm.api_regions[i].districts.length; j++){
+                  new_district.push(vm.api_regions[i].districts[j].id);
+                  for (var k=0; k<vm.api_regions[i].districts[j].land_parks.length; k++){
+                    new_parks.push(vm.api_regions[i].districts[j].land_parks[k].id);
+                  }
+                }
+              }
+              vm.selected_regions=new_regions;
+              vm.selected_districts=new_district;
+              vm.selected_parks=new_parks;
+            }
+          },
           clickRegion: function(e, r){
             var checked=e.target.checked;
             if(checked){
@@ -490,6 +516,15 @@ export default {
                 if(index==-1)
                 {
                   this.selected_districts.push(r.districts[i].id)
+                  for(var j=0; j<r.districts[i].land_parks.length; j++){
+                    var index_park=this.selected_parks.indexOf(r.districts[i].land_parks[j].id);
+                    if(index_park==-1)
+                    {
+                      var s = helpers.copyObject(this.selected_parks);
+                      s.push(r.districts[i].land_parks[j].id);
+                      this.selected_parks=s
+                    }
+                  }   
                 }
               }
             }
@@ -498,6 +533,16 @@ export default {
                 var index=this.selected_districts.indexOf(r.districts[i].id);
                 if(index!=-1){
                   this.selected_districts.splice(index,1)
+                  for(var j=0; j<r.districts[i].land_parks.length; j++){
+                    var index_park=this.selected_parks.indexOf(r.districts[i].land_parks[j].id);
+                    if(index_park!=-1)
+                    {
+                      var s = helpers.copyObject(this.selected_parks);
+                      s.splice(index_park,1);
+                      this.selected_parks=s
+                    }
+                  }
+
                 }
               }
             }
@@ -510,8 +555,10 @@ export default {
                 var index=this.selected_parks.indexOf(d.land_parks[i].id);
                 if(index==-1)
                 {
-                  //this.selected_parks.push(d.land_parks[i].id)
-                  Vue.set(this.selected_parks, this.selected_parks.length, d.land_parks[i].id);
+                  var r = helpers.copyObject(this.selected_parks);
+                  r.push(d.land_parks[i].id);
+                  this.selected_parks=r
+                  
                 }
               }
             }
@@ -519,66 +566,15 @@ export default {
               for(var i=0; i<d.land_parks.length; i++){
                 var index=this.selected_parks.indexOf(d.land_parks[i].id);
                 if(index!=-1){
-                  this.selected_parks.splice(index,1)
+                  var r = helpers.copyObject(this.selected_parks);
+                  r.splice(index,1);
+                  this.selected_parks=r
+                  //this.selected_parks.splice(index,1)
                 }
               }
             }
           },
-          // isClickable: function() {
-            
-          //   $('input[type="checkbox"]').change(function(e) {
-
-          //   var checked = $(this).prop("checked"),
-          //       container = $(this).parent(),
-          //       siblings = container.siblings();
-
-          //   console.log(siblings)
-
-          //   container.find('input[type="checkbox"]').prop({
-          //     indeterminate: false,
-          //     checked: checked
-          //   });
-
-          //   function checkSiblings(el) {
-
-          //     var parent = el.parent().parent(),
-          //         all = true;
-
-          //     el.siblings().each(function() {
-          //       return all = ($(this).children('input[type="checkbox"]').prop("checked") === checked);
-          //     });
-
-          //     if (all && checked) {
-
-          //       parent.children('input[type="checkbox"]').prop({
-          //         indeterminate: false,
-          //         checked: checked
-          //       });
-
-          //       checkSiblings(parent);
-
-          //     } else if (all && !checked) {
-
-          //       parent.children('input[type="checkbox"]').prop("checked", checked);
-          //       parent.children('input[type="checkbox"]').prop("indeterminate", (parent.find('input[type="checkbox"]:checked').length > 0));
-          //       checkSiblings(parent);
-
-          //     } else {
-
-          //       el.parents("li").children('input[type="checkbox"]').prop({
-          //         indeterminate: true,
-          //         checked: false
-          //       });
-
-          //     }
-
-          //   }
-
-          //   checkSiblings(container);
-          //   });
-
-
-          // },
+          
           find_recurring: function(array){
             var common=new Map();
             array.forEach(function(obj){
@@ -595,7 +591,7 @@ export default {
             });
             return result;
         },
-        },
+    },
 
         mounted: function() {
             let vm = this;
