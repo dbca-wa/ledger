@@ -2,9 +2,9 @@ import re
 from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
-from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess
+from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrailActivity, ProposalTrail
 from commercialoperator.components.proposals.serializers import SaveProposalSerializer, SaveProposalParkSerializer, SaveProposalTrailSerializer
-from commercialoperator.components.main.models import Activity, Park, AccessType
+from commercialoperator.components.main.models import Activity, Park, AccessType, Trail
 import traceback
 import os
 
@@ -385,13 +385,14 @@ def save_park_activity_data(instance,select_parks_activities):
         except:
             raise
 
-def save_trail_activity_data(instance,select_parks_activities):
+def save_trail_activity_data(instance,select_trails_activities):
     with transaction.atomic():
         try:
             if select_trails_activities:
                 try:
                     #current_parks=instance.parks.all()
                     selected_trails=[]
+                    #print("selected_trails",selected_trails)
                     for item in select_trails_activities:
                         if item['trail']:
                             selected_trails.append(item['trail'])
@@ -442,7 +443,7 @@ def save_trail_activity_data(instance,select_parks_activities):
                                 act=ProposalTrailActivity.objects.get(activity_id=d, proposal_trail=trail)
                                 act.delete()
                     new_trails=instance.trails.all()
-                    new_trails_id=set(p.trail_id for p in new_parks)
+                    new_trails_id=set(p.trail_id for p in new_trails)
                     diff_trails=set(new_trails_id).difference(set(selected_trails))
                     for d in diff_trails:
                         pk=ProposalTrail.objects.get(trail=d, proposal=instance)
@@ -452,7 +453,7 @@ def save_trail_activity_data(instance,select_parks_activities):
         except:
             raise
 
-def save_proponent_data(instance,request,viewset,select_parks_activities,trails):
+def save_proponent_data(instance,request,viewset,select_parks_activities,select_trails_activities):
     with transaction.atomic():
         try:
 #            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
@@ -496,23 +497,9 @@ def save_proponent_data(instance,request,viewset,select_parks_activities,trails)
                     #         raise                        
                 except:
                     raise
-            if trails:
+            if select_trails_activities:
                 try:
-                    current_trails=instance.trails.all()
-                    if current_trails:
-                        for t in current_trails:
-                            t.delete()
-                    for item in trails:
-                        try:
-                            data_trail={
-                            'trail': item,
-                            'proposal': instance.id
-                            }
-                            serializer=SaveProposalTrailSerializer(data=data_trail)
-                            serializer.is_valid(raise_exception=True)
-                            serializer.save()
-                        except:
-                            raise                        
+                    save_trail_activity_data(instance, select_trails_activities)                    
                 except:
                     raise
         except:

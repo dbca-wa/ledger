@@ -125,7 +125,7 @@
             <form>
               <div class="form-horizontal col-sm-6">
                 <label class="control-label">Activities</label>
-                <div class="" v-for="a in accessTypes">
+                <div class="" v-for="a in activities">
                   <div class="form-check">
                     <input  class="form-check-input" ref="Checkbox" type="checkbox" v-model="trail_activities" :value="a.id" data-parsley-required/>
                       {{ a.name }}
@@ -353,6 +353,12 @@ export default {
             let vm=this;
             if (vm.proposal){
               vm.proposal.selected_parks_activities=vm.selected_parks_activities;
+            }
+        },
+        selected_trails_activities: function(){
+            let vm=this;
+            if (vm.proposal){
+              vm.proposal.selected_trails_activities=vm.selected_trails_activities;
             }
         },
         selected_trails: function(){

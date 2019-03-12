@@ -939,8 +939,9 @@ class ProposalViewSet(viewsets.ModelViewSet):
             sc=json.loads(schema)
             #import ipdb; ipdb.set_trace()
             select_parks_activities=sc['selected_parks_activities']
-            trails=list(sc['trails'])
-            save_proponent_data(instance,request,self,select_parks_activities, trails)
+            select_trails_activities=sc['selected_trails_activities']
+            #trails=list(sc['trails'])
+            save_proponent_data(instance,request,self,select_parks_activities, select_trails_activities)
             # if parks:
             #     instance.save_parks(request,parks)
             return redirect(reverse('external'))
