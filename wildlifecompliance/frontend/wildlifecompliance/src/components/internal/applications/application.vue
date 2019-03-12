@@ -51,7 +51,7 @@
                                     </div>
                                 </div>
                             </div>
-                             <div v-if="!isFinalised" class="col-sm-12 top-buffer-s">
+                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Assigned Officer</strong><br/>
                                 <div class="form-group">
                                     <template>
@@ -669,7 +669,6 @@ export default {
             selected_assessment_id:null,
             selected_activity_tab_id:null,
             form: null,
-            members: [],
             department_users : [],
             // activity_data:[],
             contacts_table_initialised: false,
@@ -1475,6 +1474,7 @@ export default {
         },
         initialiseAssignedOfficerSelect:function(reinit=false){
             let vm = this;
+            console.log('init assigned officer select');
             if (reinit){
                 $(vm.$refs.assigned_officer).data('select2') ? $(vm.$refs.assigned_officer).select2('destroy'): '';
             }
@@ -1501,6 +1501,7 @@ export default {
         },
         initialiseSelects: function(){
             let vm = this;
+            console.log('init selects');
             if (!vm.initialisedSelects){
                 vm.initialiseAssignedOfficerSelect();
                 vm.initialisedSelects = true;
@@ -1560,7 +1561,6 @@ export default {
         this.$nextTick(() => {
             vm.initialiseOrgContactTable();
             vm.initialiseSelects();
-            
             vm.form = document.forms.new_application;
             vm.eventListeners();
         });

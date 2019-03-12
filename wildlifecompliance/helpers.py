@@ -69,13 +69,25 @@ def is_internal(request):
 
 def is_officer(request):
     licence_officer_groups = [group.name for group in ActivityPermissionGroup.objects.filter(
-            permissions__codename='licensing_officer')]
+            permissions__codename__in=['read_only',
+                                       'organisation_access_request',
+                                       'licensing_officer',
+                                       'issuing_officer',
+                                       'assessor',
+                                       'return_curator',
+                                       'payment_officer'])]
     return request.user.is_authenticated() and (belongs_to_list(
         request.user, licence_officer_groups) or request.user.is_superuser)
 
 
 def get_all_officers():
     licence_officer_groups = ActivityPermissionGroup.objects.filter(
-            permissions__codename='licensing_officer')
+            permissions__codename__in=['read_only',
+                                       'organisation_access_request',
+                                       'licensing_officer',
+                                       'issuing_officer',
+                                       'assessor',
+                                       'return_curator',
+                                       'payment_officer'])
     return EmailUser.objects.filter(
         groups__name__in=licence_officer_groups)

@@ -213,26 +213,53 @@ class OrganisationRequestSerializer(serializers.ModelSerializer):
     identification = serializers.FileField()
     requester = OrgRequestRequesterSerializer(read_only=True)
     status = serializers.SerializerMethodField()
-    # role = serializers.SerializerMethodField()
+    can_be_processed = serializers.SerializerMethodField()
+    user_can_process_org_access_requests = serializers.SerializerMethodField()
 
     class Meta:
         model = OrganisationRequest
-        fields = '__all__'
+        fields = (
+            'id',
+            'identification',
+            'requester',
+            'status',
+            'name',
+            'abn',
+            'role',
+            'lodgement_date',
+            'assigned_officer',
+            'can_be_processed',
+            'user_can_process_org_access_requests'
+        )
         read_only_fields = ('requester', 'lodgement_date', 'assigned_officer')
 
     def get_status(self, obj):
         return obj.get_status_display()
-    # def get_role(self,obj):
-    #     return obj.get_role_display()
+
+    def get_can_be_processed(self, obj):
+        return obj.status == 'with_assessor'
+
+    def get_user_can_process_org_access_requests(self, obj):
+        if self.context['request'].user and self.context['request'].\
+                user.has_perm('wildlifecompliance.organisation_access_request'):
+            return True
+        return False
 
 
 class OrganisationRequestDTSerializer(OrganisationRequestSerializer):
     assigned_officer = serializers.CharField(
         source='assigned_officer.get_full_name')
     requester = serializers.SerializerMethodField()
+    user_can_process_org_access_requests = serializers.SerializerMethodField()
 
     def get_requester(self, obj):
         return obj.requester.get_full_name()
+
+    def get_user_can_process_org_access_requests(self, obj):
+        if self.context['request'].user and self.context['request'].\
+                user.has_perm('wildlifecompliance.organisation_access_request'):
+            return True
+        return False
 
 
 class UserOrganisationSerializer(serializers.ModelSerializer):
