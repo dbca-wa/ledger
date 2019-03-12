@@ -1352,7 +1352,7 @@ export default {
                 vm.updateAssignedOfficerSelect();
             });
         },
-        assignTo: function(){
+        assignOfficer: function(){
             let vm = this;
             let unassign = true;
             let data = {};
@@ -1474,7 +1474,6 @@ export default {
         },
         initialiseAssignedOfficerSelect:function(reinit=false){
             let vm = this;
-            console.log('init assigned officer select');
             if (reinit){
                 $(vm.$refs.assigned_officer).data('select2') ? $(vm.$refs.assigned_officer).select2('destroy'): '';
             }
@@ -1487,7 +1486,7 @@ export default {
             on("select2:select",function (e) {
                 var selected = $(e.currentTarget);
                 vm.application.assigned_officer = selected.val();
-                vm.assignTo();
+                vm.assignOfficer();
             }).on("select2:unselecting", function(e) {
                 var self = $(this);
                 setTimeout(() => {
@@ -1496,12 +1495,11 @@ export default {
             }).on("select2:unselect",function (e) {
                 var selected = $(e.currentTarget);
                 vm.application.assigned_officer = null;
-                vm.assignTo();
+                vm.assignOfficer();
             });
         },
         initialiseSelects: function(){
             let vm = this;
-            console.log('init selects');
             if (!vm.initialisedSelects){
                 vm.initialiseAssignedOfficerSelect();
                 vm.initialisedSelects = true;

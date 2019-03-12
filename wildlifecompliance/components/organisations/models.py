@@ -879,7 +879,7 @@ class OrganisationRequest(models.Model):
                 OrganisationRequestUserAction.ACTION_ASSIGN_TO.format(
                     user.get_full_name()), request)
 
-    def unassign(self, request):
+    def unassign_officer(self, request):
         with transaction.atomic():
             self.assigned_officer = None
             self.save()

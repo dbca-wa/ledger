@@ -666,10 +666,10 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET', ])
-    def unassign(self, request, *args, **kwargs):
+    def unassign_officer(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            instance.unassign(request)
+            instance.unassign_officer(request)
             serializer = OrganisationRequestSerializer(
                 instance, context={'request': request})
             return Response(serializer.data)

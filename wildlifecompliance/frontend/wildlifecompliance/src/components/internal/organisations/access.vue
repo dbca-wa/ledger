@@ -47,7 +47,7 @@
                                 <strong>Assigned Officer</strong><br/>
                                 <div class="form-group">
                                     <template>
-                                        <select ref="assigned_officer" :disabled="!officerCanProcess" v-if="!isLoading" class="form-control" v-model="access.assigned_officer">
+                                        <select ref="assigned_officer" :disabled="!officerCanProcess" class="form-control" v-model="access.assigned_officer">
                                             <option v-for="member in organisation_access_group_members" :value="member.id" v-bind:key="member.id">{{member.name}}</option>
                                         </select>
                                         <a v-if="officerCanProcess" @click.prevent="assignToMe()" class="actionBtn pull-right">Assign to me</a>
@@ -125,7 +125,6 @@
 </div>
 </template>
 <script>
-import $ from 'jquery'
 import Vue from 'vue'
 import datatable from '@vue-utils/datatable.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
@@ -354,42 +353,56 @@ export default {
         let vm = this;
         vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/assign_to_me')))
         .then((response) => {
-            console.log(response);
             vm.access = response.body;
+            vm.updateAssignedOfficerSelect();
         }, (error) => {
-            console.log(error);
+            vm.updateAssignedOfficerSelect();
+            swal(
+                'Application Error',
+                helpers.apiVueResourceError(error),
+                'error'
+            )
         });
-        vm.updateAssignedOfficerSelect();
     },
     assignOfficer: function(){
         let vm = this;
-        if ( vm.access.assigned_officer != 'null'){
-            let data = {'officer_id': vm.access.assigned_officer};
+        let unassign = true;
+        let data = {};
+        unassign = vm.access.assigned_officer != null && vm.access.assigned_officer != 'undefined' ? false: true;
+        data = {'officer_id': vm.access.assigned_officer};
+        if (!unassign){
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/assign_officer')),JSON.stringify(data),{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
                 vm.access = response.body;
+                vm.updateAssignedOfficerSelect();
             }, (error) => {
-                console.log(error);
+                vm.updateAssignedOfficerSelect();
+                swal(
+                    'Application Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
             });
-            vm.updateAssignedOfficerSelect();
         }
         else{
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/unassign')))
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/unassign_officer')))
             .then((response) => {
-                console.log(response);
                 vm.access = response.body;
+                vm.updateAssignedOfficerSelect();
             }, (error) => {
-                console.log(error);
+                vm.updateAssignedOfficerSelect();
+                swal(
+                    'Application Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
             });
-            vm.updateAssignedOfficerSelect();
         }
     },
     updateAssignedOfficerSelect:function(){
         let vm = this;
-        console.log('updating assigned officer select list');
-        $(vm.$refs.assigned_officer).val(vm.assess.assigned_officer);
+        $(vm.$refs.assigned_officer).val(vm.access.assigned_officer);
         $(vm.$refs.assigned_officer).trigger('change');
     },
     acceptRequest: function() {
@@ -491,14 +504,9 @@ export default {
     },
     initialiseAssignedOfficerSelect:function(reinit=false){
         let vm = this;
-        console.log('init assigned officer select');
         if (reinit){
-            console.log('init assigned officer select reinit');
             $(vm.$refs.assigned_officer).data('select2') ? $(vm.$refs.assigned_officer).select2('destroy'): '';
         }
-        console.log('init assigned officer select 1');
-        console.log($(vm.$refs));
-        console.log($(vm.$refs.assigned_officer));
         // Assigned officer select
         $(vm.$refs.assigned_officer).select2({
             "theme": "bootstrap",
@@ -507,8 +515,8 @@ export default {
         }).
         on("select2:select",function (e) {
             var selected = $(e.currentTarget);
-            vm.assess.assigned_officer = selected.val();
-            vm.assignTo();
+            vm.access.assigned_officer = selected.val();
+            vm.assignOfficer();
         }).on("select2:unselecting", function(e) {
             var self = $(this);
             setTimeout(() => {
@@ -516,15 +524,13 @@ export default {
             }, 0);
         }).on("select2:unselect",function (e) {
             var selected = $(e.currentTarget);
-            vm.assess.assigned_officer = null;
-            vm.assignTo();
+            vm.access.assigned_officer = null;
+            vm.assignOfficer();
         });
-        console.log('init assigned officer select 2');
     },
     initialiseSelects: function(){
         let vm = this;
         if (!vm.initialisedSelects){
-            console.log('init selects');
             vm.initialiseAssignedOfficerSelect();
             vm.initialisedSelects = true;
         }
