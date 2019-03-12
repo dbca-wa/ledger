@@ -815,7 +815,6 @@ class MakeBookingsView(TemplateView):
             booking.details['non_online_booking'] = True if request.POST.get('nononline') else False
 
         overidden = True if request.POST.get('override') else False
-        print "OVERRIDDEN"
         if overidden:
             override_price = Decimal(request.POST.get('overridePrice')) if request.POST.get('overridePrice') else 0
             if override_price > 0:
@@ -2094,7 +2093,6 @@ class BookingSuccessView(TemplateView):
             context_processor = template_context(self.request)
             booking = utils.get_session_booking(request.session)
             print ("BOOKING")
-            print booking
             invoice_ref = request.GET.get('invoice')
             if booking.booking_type == 3:
                 try:
