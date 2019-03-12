@@ -499,7 +499,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             except EmailUser.DoesNotExist:
                 raise serializers.ValidationError(
                     'A user with the id passed in does not exist')
-            if not request.user.has_perm('can_assign_officers'):
+            if not request.user.has_perm('licensing_officer'):
                 raise serializers.ValidationError(
                     'You are not authorised to assign officers.')
             if user not in instance.licence_officers:

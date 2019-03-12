@@ -715,13 +715,13 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST', ])
-    def assign_to(self, request, *args, **kwargs):
+    def assign_officer(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             user_id = request.data.get('user_id', None)
             user = None
             if not user_id:
-                raise serializers.ValiationError('A user id is required')
+                raise serializers.ValiationError('An officer id is required')
             try:
                 user = EmailUser.objects.get(id=user_id)
             except EmailUser.DoesNotExist:

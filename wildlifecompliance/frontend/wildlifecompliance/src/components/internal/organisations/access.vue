@@ -44,7 +44,7 @@
                                 {{ access.status }}
                             </div>
                             <div class="col-sm-12 top-buffer-s">
-                                <strong>Currently assigned to</strong><br/>
+                                <strong>Assigned Officer</strong><br/>
                                 <div class="form-group">
                                     <select v-show="isLoading" class="form-control">
                                         <option value="">Loading...</option>
@@ -53,7 +53,7 @@
                                         <option value="null">Unassigned</option>
                                         <option v-for="member in members" :value="member.id">{{member.name}}</option>
                                     </select>
-                                    <a v-if="!isFinalised" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
+                                    <a v-if="!isFinalised" @click.prevent="assignToMe()" class="actionBtn pull-right">Assign to me</a>
                                 </div>
                             </div>
                             <div class="col-sm-12 top-buffer-s" v-if="!isFinalised">
@@ -348,7 +348,7 @@ export default {
         })
 
     },
-    assignMyself: function(){
+    assignToMe: function(){
         let vm = this;
         vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/assign_request_user')))
         .then((response) => {
