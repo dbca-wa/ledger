@@ -2093,7 +2093,6 @@ class BookingSuccessView(TemplateView):
             context_processor = template_context(self.request)
             booking = utils.get_session_booking(request.session)
             print ("BOOKING")
-            print booking
             invoice_ref = request.GET.get('invoice')
             if booking.booking_type == 3:
                 try:
