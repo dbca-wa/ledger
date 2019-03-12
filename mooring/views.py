@@ -2278,7 +2278,6 @@ class BookingSuccessView(TemplateView):
             else:
                 return redirect('home')
         print ("BOOKING EXCEPT")
-        print booking.id
 
         #if request.user.is_staff:
         #    return redirect('dash-bookings')
