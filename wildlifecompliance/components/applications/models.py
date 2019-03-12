@@ -428,6 +428,25 @@ class Application(RevisionedMixin):
         ).distinct()
 
     @property
+    def officers_and_assessors(self):
+        selected_activity_ids = ApplicationSelectedActivity.objects.filter(
+            application_id=self.id,
+            licence_activity__isnull=False
+        ).values_list('licence_activity__id', flat=True)
+        if not selected_activity_ids:
+            return []
+
+        groups = ActivityPermissionGroup.objects.filter(
+            permissions__codename__in=['licensing_officer',
+                                       'assessor',
+                                       'issuing_officer'],
+            licence_activities__id__in=selected_activity_ids
+        ).values_list('id', flat=True)
+        return EmailUser.objects.filter(
+            groups__id__in=groups
+        ).distinct()
+
+    @property
     def licence_type_short_name(self):
         return self.licence_category
 

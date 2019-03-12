@@ -316,6 +316,7 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
     assigned_officer = serializers.CharField(
         source='assigned_officer.get_full_name')
     can_be_processed = serializers.SerializerMethodField(read_only=True)
+    user_in_officers_and_assessors = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Application
@@ -335,8 +336,14 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
             'can_current_user_edit',
             'payment_status',
             'assigned_officer',
-            'can_be_processed'
+            'can_be_processed',
+            'user_in_officers_and_assessors'
         )
+
+    def get_user_in_officers_and_assessors(self, obj):
+        if self.context['request'].user and self.context['request'].user in obj.officers_and_assessors:
+            return True
+        return False
 
 
 class DTExternalApplicationSerializer(BaseApplicationSerializer):
