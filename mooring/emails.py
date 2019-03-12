@@ -363,6 +363,48 @@ def send_booking_period_email(moorings, group, days):
     }
     email_obj.send(emails, from_address=default_from_email, context=context)
 
+### Admission Emails
+def send_refund_failure_email_admissions(booking, context_processor):
+
+    subject = 'Failed to refund for {}, requires manual intervention.'.format(booking)
+    template = 'mooring/email/refund_failed_admissions.html'
+    cc = None
+    bcc = None
+    from_email = None
+    context= {'booking': booking}
+    template_group = context_processor['TEMPLATE_GROUP']
+    if not settings.PRODUCTION_EMAIL:
+       to = settings.NON_PROD_EMAIL
+       sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
+    else:
+       for u in user_list:
+          to = u.email
+          sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
+
+
+def send_refund_completed_email_customer_admissions(booking, context_processor):
+    subject = 'Your refund for booking {} was completed.'.format(booking.id)
+    template = 'mooring/email/refund_completed_customer_admissions.html'
+    cc = None
+    bcc = None
+    from_email = None
+    context= {'booking': booking}
+    to = booking.customer.email
+    template_group = context_processor['TEMPLATE_GROUP']
+    sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
+
+def send_refund_failure_email_customer_admissions(booking, context_processor):
+
+    subject = 'Your refund for booking has failed {}.'.format(booking.id)
+    template = 'mooring/email/refund_failed_customer_admissions.html'
+    cc = None
+    bcc = None
+    from_email = None
+    context= {'booking': booking}
+    to = booking.customer.email
+    template_group = context_processor['TEMPLATE_GROUP']
+    sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
+####
 
 def send_refund_failure_email(booking, context_processor):
 
@@ -380,6 +422,18 @@ def send_refund_failure_email(booking, context_processor):
        for u in user_list:
           to = u.email
           sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
+
+
+def send_refund_completed_email_customer(booking, context_processor):
+    subject = 'Your refund for booking {} was completed.'.format(booking.id)
+    template = 'mooring/email/refund_completed_customer.html'
+    cc = None
+    bcc = None
+    from_email = None
+    context= {'booking': booking}
+    to = booking.customer.email
+    template_group = context_processor['TEMPLATE_GROUP']
+    sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
 
 def send_refund_failure_email_customer(booking, context_processor):
 

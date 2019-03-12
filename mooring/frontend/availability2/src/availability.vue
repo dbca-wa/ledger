@@ -74,8 +74,8 @@
                             <button title="Please enter vessel details" style="border-radius: 4px; border: 1px solid #2e6da4" class="button small-12 medium-12 large-12" @click="validateVessel()">Proceed to Check Out</button>
                         </div>
                         <div v-else>
-                            <a  v-show="current_booking.length > 0" class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'" style="border-radius: 4px; border: 1px solid #2e6da4">Proceed to Check Out</a>
-                            <button  title="Please add items into your trolley." v-show="current_booking.length == 0 " style="color: #000000; background-color: rgb(224, 217, 217); border: 1px solid #000; border-radius: 4px;" class="button small-12 medium-12 large-12" disabled >Add items to Proceed to Check Out</button>                </div>
+                            <a  v-show="current_booking.length > 0 && booking_changed == true" class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'" style="border-radius: 4px; border: 1px solid #2e6da4">Proceed to Check Out</a>
+                            <button  title="Please add items into your trolley." v-show="current_booking.length == 0 || booking_changed == false" style="color: #000000; background-color: rgb(224, 217, 217); border: 1px solid #000; border-radius: 4px;" class="button small-12 medium-12 large-12" disabled >Add items to Proceed to Check Out</button>                </div>
                         </div>
         </div>
         </div>
@@ -511,6 +511,7 @@ export default {
             ongoing_booking: false,
             ongoing_booking_id: null,
             current_booking: [],
+            booking_changed: true,
             total_booking: '0.00',
             showSecondErrorLine: true,
             timer: -1,
@@ -1004,6 +1005,7 @@ export default {
                                 vm.max_advance_booking = data.max_advance_booking;
                                 vm.max_advance_booking_days = data.max_advance_booking_days;
                                 vm.current_booking = data.current_booking;
+                                vm.booking_changed = data.booking_changed;
                                 vm.total_booking = data.total_booking;
                                 vm.timer = data.timer;
                                 vm.expiry = data.expiry;

@@ -520,7 +520,7 @@ export default {
                                 if (full.booking_type == 0 || full.booking_type == 1 || full.booking_type == 2) { 
                                     var cancel_booking = "<a href='/cancel-admissions-booking/"+full.id+"' class='text-primary'> Cancel</a><br/>";
                                     column += cancel_booking;
-				                }
+			        }
                             }
                             // invoices += " <a href='/booking-history/{{ full.id }}'>View History</a>";
                             column += invoices;

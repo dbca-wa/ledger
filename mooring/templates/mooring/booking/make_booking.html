@@ -817,7 +817,7 @@
                 vm.entryFee = 0;
                 vm.total = 0;
                 vm.total = '{{ booking_total }}';
-                vm.total = parseInt(vm.total);
+                vm.total = parseFloat(vm.total);
                 vm.admissionFee = 0;
 
                 if (vm.nononline){
@@ -884,8 +884,8 @@
                             thisAdmission += (family * parseFloat(vm.linesAdmissions[i].family));
                         }
                         vm.linesAdmissions[i].admissionFee = parseFloat(thisAdmission).toFixed(2);
-                        vm.admissionFee += parseInt(thisAdmission);
-                        vm.total += parseInt(thisAdmission);
+                        vm.admissionFee += parseFloat(thisAdmission);
+                        vm.total += parseFloat(thisAdmission);
 
                     }
                     vm.admissionsLines = JSON.stringify(vm.linesAdmissions);

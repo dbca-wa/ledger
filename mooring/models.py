@@ -1958,7 +1958,8 @@ class RefundFailed(models.Model):
     )
 
 
-    booking = models.ForeignKey(Booking, related_name = "booking_refund")
+    booking = models.ForeignKey(Booking, related_name = "booking_refund", null=True, blank=True)
+    admission_booking = models.ForeignKey(AdmissionsBooking, null=True, blank=True)
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
     refund_amount = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)            
     status = models.SmallIntegerField(choices=STATUS, default=0)
