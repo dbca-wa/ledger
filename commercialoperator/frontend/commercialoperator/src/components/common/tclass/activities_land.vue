@@ -66,35 +66,6 @@
               </div>
             </div>
 
-            <!-- The below test code works for multiselect but it doesn't work with v-model -->
-            <!-- <div class="form-horizontal col-sm-12">
-              <label class="control-label">Select Parks test</label>
-              <ul class="" v-for="r in api_regions">
-                <li class="form-check">
-                  <input :onclick="isClickable()" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" data-parsley-required />
-                  {{ r.name }} -->
-                  <!-- <a data-toggle="collapse" :href="'#'+r.id" role="button" aria-expanded="true" aria controls="r.id" ><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
-                
-                <!-- <ul class="col-sm-12" v-for="d in r.districts" :id="r.id">
-                  <li class="form-check ">
-                    <input :onclick="isClickable()"  :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" type="checkbox" data-parsley-required />
-                    {{ d.name }} -->
-                   <!--  <a data-toggle="collapse" :href="'#'+d.id+r.id" role="button" aria-expanded="true" aria controls="d.id+r.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
-                  
-                  <!-- <ul class="" v-for="p in d.land_parks">
-                    <li class="form-check col-sm-12">
-                      <input :onclick="isClickable()"  name="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" :id="'park'+p.id" data-parsley-required />
-                    {{ p.name }}
-                      <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
-                    </li>
-                  </ul>
-                  </li>
-                </ul>
-                </li>
-              </ul>
-            </div> -->
-            <!-- test finish -->
-
             <div>{{selected_parks}}</div>
             <div>{{selected_parks_activities}}</div>
             
@@ -139,7 +110,7 @@
                   <label class="control-label">Select the long distance trails</label>
                   <div class="" v-for="t in trails">
                     <div class="form-check">
-                      <input   name="selected_trails" v-model="selected_trails" :value="t.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                      <input   name="selected_trails" v-model="selected_trails" :value="{'trail': t.id,'sections': t.section_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
                       {{ t.name }}
                     </div>
                   </div>
@@ -376,9 +347,22 @@ export default {
             if(vm.selected_trails_activities.length==0){
               for (var i = 0; i < vm.selected_trails.length; i++) {
                  var data=null;
+                 // data={
+                 //  'trail': vm.selected_trails[i],
+                 //  'activities': current_activities
+                 // }
+                 var section_activities=[];
+
+                 for (var j=0; j<vm.selected_trails[i].sections.length; j++){
+                  var section_data={
+                    'section': vm.selected_trails[i].sections[j],
+                    'activities': current_activities
+                  }
+                  section_activities.push(section_data)
+                 }
                  data={
-                  'trail': vm.selected_trails[i],
-                  'activities': current_activities
+                  'trail': vm.selected_trails[i].trail,
+                  'activities': section_activities 
                  }
                  vm.selected_trails_activities.push(data);
                }
@@ -394,9 +378,17 @@ export default {
                   }
                   if(found==false)
                   {//original data object
+                    var section_activities=[];
+                    for(var k=0; k<added_trail[i].sections.length; k++){
+                      var section_data={
+                    'section': added_trail[i].sections[k],
+                    'activities': current_activities
+                    }
+                    section_activities.push(section_data)
+                  }
                     data={
-                    'trail': added_trail[i],
-                    'activities': current_activities,                   }
+                    'trail': added_trail[i].trail,
+                    'activities': section_activities,                   }
                     // data={
                     // 'trail': added_trail[i].trail,
                     // 'activities':{
@@ -412,7 +404,7 @@ export default {
                 for(var i=0; i<removed_trail.length; i++)
                 { 
                   for (var j=0; j<vm.selected_trails_activities.length; j++){
-                    if(vm.selected_trails_activities[j].trail==removed_trail[i]){
+                    if(vm.selected_trails_activities[j].trail==removed_trail[i].trail){
                       vm.selected_trails_activities.splice(j,1)}
                   }
                 }
@@ -441,18 +433,30 @@ export default {
                
                 for(var j=0; j<added.length; j++)
                 {
-                  if(vm.selected_trails_activities[i].activities.indexOf(added[j])<0){
-                    vm.selected_trails_activities[i].activities.push(added[j]);
+                  // if(vm.selected_trails_activities[i].activities.indexOf(added[j])<0){
+                  //   vm.selected_trails_activities[i].activities.push(added[j]);
+                  // }
+                  for(var k=0; k<vm.selected_trails_activities[i].activities.length; k++){
+                    if(vm.selected_trails_activities[i].activities[k].activities.indexOf(added[j])<0){
+                    vm.selected_trails_activities[i].activities[k].activities.push(added[j]);
                   }
+                }
                 }
               }
               if(removed.length!=0){
                 for(var j=0; j<removed.length; j++)
                 {
-                  var index=vm.selected_trails_activities[i].activities.indexOf(removed[j]);
-                  if(index!=-1){
-                    vm.selected_trails_activities[i].activities.splice(index,1)
+                  // var index=vm.selected_trails_activities[i].activities.indexOf(removed[j]);
+                  // if(index!=-1){
+                  //   vm.selected_trails_activities[i].activities.splice(index,1)
+                  // }
+                  for(var k=0; k<vm.selected_trails_activities[i].activities.length; k++){
+                    var index=vm.selected_trails_activities[i].activities[k].activities.indexOf(removed[j]);
+                    if(index!=-1){
+                      vm.selected_trails_activities[i].activities[k].activities.splice(index,1)
+                    }
                   }
+
                 }
               }
             }
@@ -655,9 +659,9 @@ export default {
             vm.selected_access=vm.find_recurring(access_list)
             vm.selected_parks=park_list
 
-            for (var i = 0; i < vm.proposal.trails.length; i++) {
-              this.selected_trails.push(vm.proposal.trails[i].trail.id);
-            } 
+            // for (var i = 0; i < vm.proposal.trails.length; i++) {
+            //   this.selected_trails.push(vm.proposal.trails[i].trail.id);
+            // } 
 
             // this.$nextTick(()=>{
             //   vm.eventListeners();
