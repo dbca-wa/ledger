@@ -2309,17 +2309,19 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
                 overnight = adl[0].overnightStay
             invoice_reference = ''
             if AdmissionsBookingInvoice.objects.filter(admissions_booking=ad).count() > 0:
-                 invoice_reference =  AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference
-            to_add = [ad, arrival, overnight, invoice_reference]
+                 bk_invoices = []
+                 for i in AdmissionsBookingInvoice.objects.filter(admissions_booking=ad):
+                      bk_invoices.append(i.invoice_reference)
+ 
+            to_add = [ad, arrival, overnight, bk_invoices]
             ad_current.append(to_add)
         ad_pasts = admissions.distinct().filter(admissionsline__arrivalDate__lt=today)
         ad_past = []
         for ad in ad_pasts:
             bk_invoices = []
-            for i in AdmissionsBookingInvoice.objects.get(admissions_booking=ad):
+            for i in AdmissionsBookingInvoice.objects.filter(admissions_booking=ad):
                  bk_invoices.append(i.invoice_reference)
-            to_add = [bk, bk_invoices]
- #           to_add = [ad, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
+            to_add = [ad, bk_invoices]
             ad_past.append(to_add)
 
         bk_currents = bookings.filter(departure__gte=today).order_by('arrival')
@@ -2329,7 +2331,6 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
             bk_invoices = []
             for i in BookingInvoice.objects.filter(booking=bk):
                 bk_invoices.append(i.invoice_reference)    
-#            to_add = [bk, BookingInvoice.objects.get(booking=bk).invoice_reference]
             to_add = [bk, bk_invoices]
             bk_current.append(to_add)
         bk_pasts = bookings.filter(departure__lt=today).order_by('-arrival')
@@ -2339,7 +2340,6 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
             for i in BookingInvoice.objects.filter(booking=bk):
                 bk_invoices.append(i.invoice_reference)
             to_add = [bk, bk_invoices]  
-#            to_add = [bk, BookingInvoice.objects.get(booking=bk).invoice_reference]
             bk_past.append(to_add)
         context = {
             'current_bookings': bk_current,
