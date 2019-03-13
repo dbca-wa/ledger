@@ -41,7 +41,7 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <strong>Status</strong><br/>
-                                {{ access.status }}
+                                {{ access.status.name }}
                             </div>
                              <div class="col-sm-12 top-buffer-s">
                                 <strong>Assigned Officer</strong><br/>
@@ -141,7 +141,8 @@ export default {
     return {
         loading: [],
         access: {
-            requester: {}
+            requester: {},
+            status: {},
         },
         initialisedSelects: false,
         DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
@@ -324,10 +325,10 @@ export default {
       return this.loading.length > 0;
     },
     isFinalised: function(){
-        return this.access.status == 'Approved' || this.access.status == 'Declined';
+        return this.access.status.id == 'approved' || this.access.status.id == 'declined';
     },
     isAmendmentRequested: function(){
-        return this.access.status == 'Amendment Requested';
+        return this.access.status.id == 'amendment_requested';
     },
     officerCanProcess: function(){
         return this.access && this.access.can_be_processed && !this.isFinalised && this.access.user_can_process_org_access_requests ? true : false;

@@ -18,6 +18,7 @@ from wildlifecompliance.components.organisations.utils import (
     can_approve,
     is_last_admin,
 )
+from wildlifecompliance.components.main.fields import CustomChoiceField
 from rest_framework import serializers, status
 import rest_framework_gis.serializers as gis_serializers
 
@@ -179,18 +180,12 @@ class DetailsSerializer(serializers.ModelSerializer):
 
 
 class OrganisationContactSerializer(serializers.ModelSerializer):
-    user_status = serializers.SerializerMethodField()
-    user_role = serializers.SerializerMethodField()
+    user_status = CustomChoiceField(read_only=True)
+    user_role = CustomChoiceField(read_only=True)
 
     class Meta:
         model = OrganisationContact
         fields = '__all__'
-
-    def get_user_status(self, obj):
-        return obj.get_user_status_display()
-
-    def get_user_role(self, obj):
-        return obj.get_user_role_display()
 
 
 class OrgRequestRequesterSerializer(serializers.ModelSerializer):
@@ -212,7 +207,7 @@ class OrgRequestRequesterSerializer(serializers.ModelSerializer):
 class OrganisationRequestSerializer(serializers.ModelSerializer):
     identification = serializers.FileField()
     requester = OrgRequestRequesterSerializer(read_only=True)
-    status = serializers.SerializerMethodField()
+    status = CustomChoiceField(read_only=True)
     can_be_processed = serializers.SerializerMethodField()
     user_can_process_org_access_requests = serializers.SerializerMethodField()
 
@@ -232,9 +227,6 @@ class OrganisationRequestSerializer(serializers.ModelSerializer):
             'user_can_process_org_access_requests'
         )
         read_only_fields = ('requester', 'lodgement_date', 'assigned_officer')
-
-    def get_status(self, obj):
-        return obj.get_status_display()
 
     def get_can_be_processed(self, obj):
         return obj.status == 'with_assessor'
