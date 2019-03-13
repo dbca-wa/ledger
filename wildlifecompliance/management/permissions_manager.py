@@ -113,6 +113,11 @@ class CustomGroupCollector(PermissionCollector):
 
     def get_or_create_group(self, group_name, config):
         created = None
+        if settings.GROUP_PREFIX not in group_name:
+            group_name = "{prefix} - {name}".format(
+                prefix=settings.GROUP_PREFIX,
+                name=group_name
+            )
         group = ActivityPermissionGroup.objects.filter(name=group_name).first()
         if not group:
             base_group = Group.objects.filter(name=group_name).first()
