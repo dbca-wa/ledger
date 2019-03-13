@@ -1849,14 +1849,17 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
 #           total_price = total_price +ms.amount
 #           current_booking.append(row)
         booking_changed = True
-        if ongoing_booking.old_booking:
+
+        if ongoing_booking:
+             # When changing a book this check for changes
+             if ongoing_booking.old_booking is not None:
              
-             current_booking_obj = MooringsiteBooking.objects.filter(booking=ongoing_booking).values('campsite','from_dt','to_dt','booking_period_option')
-             old_booking_obj = MooringsiteBooking.objects.filter(booking=ongoing_booking.old_booking).values('campsite','from_dt','to_dt','booking_period_option')
-             # compare old and new booking for changes
-             if hashlib.md5(str(current_booking_obj)).hexdigest() == hashlib.md5(str(old_booking_obj)).hexdigest():
-                   booking_changed = False
-                  
+                 current_booking_obj = MooringsiteBooking.objects.filter(booking=ongoing_booking).values('campsite','from_dt','to_dt','booking_period_option')
+                 old_booking_obj = MooringsiteBooking.objects.filter(booking=ongoing_booking.old_booking).values('campsite','from_dt','to_dt','booking_period_option')
+                 # compare old and new booking for changes
+                 if hashlib.md5(str(current_booking_obj)).hexdigest() == hashlib.md5(str(old_booking_obj)).hexdigest():
+                       booking_changed = False
+                      
               
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date, ongoing_booking, request)
         # create our result object, which will be returned as JSON
