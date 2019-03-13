@@ -34,6 +34,9 @@ logger = logging.getLogger(__name__)
 def update_proposal_doc_filename(instance, filename):
     return 'proposals/{}/documents/{}'.format(instance.proposal.id,filename)
 
+def update_referral_doc_filename(instance, filename):
+    return 'proposals/{}/referral/{}/documents/{}'.format(instance.referral.proposal.id,instance.referral.id,filename)
+
 def update_proposal_comms_log_filename(instance, filename):
     return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
 
@@ -194,6 +197,19 @@ class ProposalDocument(Document):
     class Meta:
         app_label = 'commercialoperator'
 
+class ReferralDocument(Document):
+    referral = models.ForeignKey('Referral',related_name='referral_documents')
+    _file = models.FileField(upload_to=update_referral_doc_filename)
+    input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+
+    def delete(self):
+        if self.can_delete:
+            return super(ProposalDocument, self).delete()
+        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+
+    class Meta:
+        app_label = 'commercialoperator'
 
 class ProposalApplicantDetails(models.Model):
     first_name = models.CharField(max_length=24, blank=True, default='')
@@ -1620,6 +1636,7 @@ class Referral(models.Model):
                                          default=PROCESSING_STATUS_CHOICES[0][0])
     text = models.TextField(blank=True) #Assessor text
     referral_text = models.TextField(blank=True)
+    document = models.ForeignKey(ReferralDocument, blank=True, null=True, related_name='referral_document')
 
 
     class Meta:
@@ -1694,8 +1711,8 @@ class Referral(models.Model):
                 if group and group[0] in u.referralrecipientgroup_set.all():
                     raise exceptions.ReferralNotAuthorized()
                 self.processing_status = 'completed'
-                self.referral_text = referral_comment
                 self.referral = request.user
+                self.referral_text = request.user.get_full_name() + ': ' + referral_comment
                 self.save()
                 # TODO Log proposal action
                 #self.proposal.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
