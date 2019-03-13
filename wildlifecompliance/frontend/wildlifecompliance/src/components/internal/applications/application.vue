@@ -51,14 +51,14 @@
                                     </div>
                                 </div>
                             </div>
-                             <div v-if="!isFinalised" class="col-sm-12 top-buffer-s">
+                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Assigned Officer</strong><br/>
                                 <div class="form-group">
                                     <template>
                                         <select ref="assigned_officer" :disabled="!canAssignToOfficer" class="form-control" v-model="application.assigned_officer">
                                             <option v-for="member in application.licence_officers" :value="member.id" v-bind:key="member.id">{{member.first_name}} {{member.last_name}}</option>
                                         </select>
-                                        <a @click.prevent="assignToMe()" class="actionBtn pull-right">Assign to me</a>
+                                        <a v-if="canAssignToOfficer" @click.prevent="assignToMe()" class="actionBtn pull-right">Assign to me</a>
                                     </template>
                                 </div>
                             </div>
@@ -669,7 +669,6 @@ export default {
             selected_assessment_id:null,
             selected_activity_tab_id:null,
             form: null,
-            members: [],
             department_users : [],
             // activity_data:[],
             contacts_table_initialised: false,
@@ -886,7 +885,7 @@ export default {
             return this.application.character_check_status == 'Accepted';
         },
         canAssignToOfficer: function(){
-            return this.application && this.application.processing_status == 'Under Review' && !this.isFinalised && !this.application.can_user_edit ? true : false;
+            return this.application && this.application.processing_status == 'Under Review' && !this.isFinalised && !this.application.can_user_edit && this.application.user_in_licence_officers ? true : false;
         },
         canSeeSubmission: function(){
             return this.application && (this.application.processing_status != 'With Assessor (Conditions)' && this.application.processing_status != 'With Approver' && !this.isFinalised)
@@ -1353,7 +1352,7 @@ export default {
                 vm.updateAssignedOfficerSelect();
             });
         },
-        assignTo: function(){
+        assignOfficer: function(){
             let vm = this;
             let unassign = true;
             let data = {};
@@ -1487,7 +1486,7 @@ export default {
             on("select2:select",function (e) {
                 var selected = $(e.currentTarget);
                 vm.application.assigned_officer = selected.val();
-                vm.assignTo();
+                vm.assignOfficer();
             }).on("select2:unselecting", function(e) {
                 var self = $(this);
                 setTimeout(() => {
@@ -1496,7 +1495,7 @@ export default {
             }).on("select2:unselect",function (e) {
                 var selected = $(e.currentTarget);
                 vm.application.assigned_officer = null;
-                vm.assignTo();
+                vm.assignOfficer();
             });
         },
         initialiseSelects: function(){
@@ -1560,7 +1559,6 @@ export default {
         this.$nextTick(() => {
             vm.initialiseOrgContactTable();
             vm.initialiseSelects();
-            
             vm.form = document.forms.new_application;
             vm.eventListeners();
         });
