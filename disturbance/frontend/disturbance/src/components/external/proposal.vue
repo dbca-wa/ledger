@@ -228,7 +228,7 @@ export default {
             if (this.type == 'checkbox') {
                 var id = 'id_' + this.className
                 if ($("[class="+this.className+"]:checked").length == 0) {
-                    try { var text = $('#'+id).text() } catch(error) { var text = $('#'+id).textContent } // Internet Explorer hack
+                    try { var text = $('#'+id).text() } catch(error) { var text = $('#'+id).textContent }
                     console.log('checkbox not checked: ' + this.type + ' ' + text)
                     vm.missing_fields.push({id: id, label: text});
                 }   
