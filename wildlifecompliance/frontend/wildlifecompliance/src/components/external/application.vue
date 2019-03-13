@@ -15,7 +15,7 @@
                       <div class="panel-body collapse in" :id="pBody">
                         <div v-for="a in amendment_request">
                           <p>Activity:{{a.licence_activity.name}}</p>
-                          <p>Reason: {{a.reason}}</p>
+                          <p>Reason: {{a.reason.name}}</p>
                           <p>Details: <p v-for="t in splitText(a.text)">{{t}}</p></p>  
                       </div>
                     </div>
@@ -92,7 +92,7 @@ export default {
       amendment_request_id:[],
       application_readonly: true,
       pBody: 'pBody',
-      application_customer_status_onload: '',
+      application_customer_status_onload: {},
  	  missing_fields: [],
       //current_tab_id: null,
       //current_tab: '',
@@ -145,7 +145,7 @@ export default {
       return (this.application) ? `/api/application/${this.application.id}/draft.json` : '';
     },
     requiresCheckout: function() {
-        return this.application.application_fee > 0 && this.application_customer_status_onload == 'Draft'
+        return this.application.application_fee > 0 && this.application_customer_status_onload.id == 'draft'
     },
     tab_changed: function() {
       return this.current_tab;

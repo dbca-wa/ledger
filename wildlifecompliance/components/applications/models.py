@@ -463,10 +463,13 @@ class Application(RevisionedMixin):
         licence_data = serializer.data
         for activity in licence_data['activity']:
             selected_activity = self.get_selected_activity(activity['id'])
-            activity['processing_status'] = get_choice_value(
-                selected_activity.processing_status,
-                self.PROCESSING_STATUS_CHOICES
-            )
+            activity['processing_status'] = {
+                'id': selected_activity.processing_status,
+                'name': get_choice_value(
+                    selected_activity.processing_status,
+                    self.PROCESSING_STATUS_CHOICES
+                )
+            }
         return licence_data
 
     @property

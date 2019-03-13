@@ -17,7 +17,7 @@
                 <a :href="application.pdf_licence" target="_blank"> <i class="fa fa-file-pdf-o" style="font-size:36px;color:red"></i> </a>
             </div>
             <div style="float:left">
-                <h3>Application: {{ application.lodgement_number }} ({{ application.processing_status }})</h3>
+                <h3>Application: {{ application.lodgement_number }} ({{ application.processing_status.name }})</h3>
                 <p>Licence category: {{ application.licence_category }}</p>
             </div>
         </div>
@@ -230,7 +230,7 @@ export default {
             return this.pdf_exists ? 'The application has already been processed': 'Create Licences and PDF'
         },
         is_readonly: function() {
-            return this.pdf_exists || this.application.processing_status == 'Draft';
+            return this.pdf_exists || this.application.processing_status.id == 'draft';
         },
 
     },

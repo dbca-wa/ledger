@@ -129,13 +129,13 @@ export default {
             {
                 data: "processing_status",
                 mRender:function(data,type,full){
-                    return vm.level == 'external' ? full.customer_status: data;
+                    return vm.level == 'external'? full.customer_status.name: data.name;
                 }
             },
             {
                 data: "payment_status",
                 mRender:function(data,type,full){
-                    return vm.level == 'external' ? full.customer_status: data;
+                    return vm.level == 'external' ? full.customer_status.name: data;
                 }
             },
             {
@@ -193,7 +193,7 @@ export default {
             {
                 data: "processing_status",
                 mRender:function(data,type,full){
-                    return vm.level == 'external' ? full.customer_status: data;
+                    return vm.level == 'external'? full.customer_status.name: data.name;
                 }
             },
             {
