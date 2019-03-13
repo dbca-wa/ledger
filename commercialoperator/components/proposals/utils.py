@@ -479,7 +479,6 @@ def save_proponent_data(instance,request,viewset,select_parks_activities,select_
             viewset.perform_update(serializer)
             if select_parks_activities:
                 try:
-                    print("1 step", select_parks_activities)
                     save_park_activity_data(instance, select_parks_activities)
                     # if current_parks:
                     #     for p in current_parks:

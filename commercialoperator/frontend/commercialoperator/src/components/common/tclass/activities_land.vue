@@ -393,10 +393,17 @@ export default {
                       found = true;}
                   }
                   if(found==false)
-                  {
+                  {//original data object
                     data={
                     'trail': added_trail[i],
                     'activities': current_activities,                   }
+                    // data={
+                    // 'trail': added_trail[i].trail,
+                    // 'activities':{
+                    //   'zone': added_trail[i].zones,
+                    //   'activities': current_activities,
+                    // }
+                    //}
                    vm.selected_trails_activities.push(data);
                   }
                 }

@@ -120,6 +120,23 @@ class Trail(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def section_ids(self):
+        return [i.id for i in self.sections.all()]
+
+@python_2_unicode_compatible
+class Section(models.Model):
+    name = models.CharField(max_length=200, blank=True)
+    visible = models.BooleanField(default=True)
+    trail = models.ForeignKey(Trail, related_name='sections')
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.name
+
 @python_2_unicode_compatible
 class ActivityType(models.Model):
     ACTIVITY_TYPE_CHOICES = (

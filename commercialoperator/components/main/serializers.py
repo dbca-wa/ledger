@@ -35,7 +35,7 @@ class ParkSerializer(serializers.ModelSerializer):
 class TrailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Trail
-        fields = '__all__'
+        fields = ('id', 'name', 'code', 'section_ids')
         
 
 class DistrictSerializer(serializers.ModelSerializer):
