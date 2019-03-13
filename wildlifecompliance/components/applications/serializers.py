@@ -152,7 +152,7 @@ class AmendmentRequestSerializer(serializers.ModelSerializer):
 
 
 class ExternalAmendmentRequestSerializer(serializers.ModelSerializer):
-
+    reason = CustomChoiceField(read_only=True)
     licence_activity = ActivitySerializer(read_only=True)
 
     class Meta:
