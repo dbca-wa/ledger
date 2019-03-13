@@ -316,6 +316,7 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
     assigned_officer = serializers.CharField(
         source='assigned_officer.get_full_name')
     can_be_processed = serializers.SerializerMethodField(read_only=True)
+    user_in_officers_and_assessors = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Application
@@ -335,8 +336,14 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
             'can_current_user_edit',
             'payment_status',
             'assigned_officer',
-            'can_be_processed'
+            'can_be_processed',
+            'user_in_officers_and_assessors'
         )
+
+    def get_user_in_officers_and_assessors(self, obj):
+        if self.context['request'].user and self.context['request'].user in obj.officers_and_assessors:
+            return True
+        return False
 
 
 class DTExternalApplicationSerializer(BaseApplicationSerializer):
@@ -499,6 +506,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     activities = serializers.SerializerMethodField()
     processed = serializers.SerializerMethodField()
     licence_officers = EmailUserAppViewSerializer(many=True)
+    user_in_licence_officers = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Application
@@ -538,6 +546,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'activities',
             'processed',
             'licence_officers',
+            'user_in_licence_officers',
         )
         read_only_fields = ('documents', 'conditions')
 
@@ -582,6 +591,11 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     def get_processed(self, obj):
         """ check if any activities have been processed """
         return True if obj.activities.filter(processing_status__in=['accepted', 'declined']).first() else False
+
+    def get_user_in_licence_officers(self, obj):
+        if self.context['request'].user and self.context['request'].user in obj.licence_officers:
+            return True
+        return False
 
 
 class ApplicationUserActionSerializer(serializers.ModelSerializer):

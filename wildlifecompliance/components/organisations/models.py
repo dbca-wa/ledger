@@ -871,7 +871,7 @@ class OrganisationRequest(models.Model):
         # send_organisation_request_amendment_requested_email_notification(self,
         # org, request)
 
-    def assign_to(self, user, request):
+    def assign_officer(self, user, request):
         with transaction.atomic():
             self.assigned_officer = user
             self.save()
@@ -879,7 +879,7 @@ class OrganisationRequest(models.Model):
                 OrganisationRequestUserAction.ACTION_ASSIGN_TO.format(
                     user.get_full_name()), request)
 
-    def unassign(self, request):
+    def unassign_officer(self, request):
         with transaction.atomic():
             self.assigned_officer = None
             self.save()
