@@ -2308,8 +2308,8 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
                 arrival = adl[0].arrivalDate
                 overnight = adl[0].overnightStay
             invoice_reference = ''
+            bk_invoices = []
             if AdmissionsBookingInvoice.objects.filter(admissions_booking=ad).count() > 0:
-                 bk_invoices = []
                  for i in AdmissionsBookingInvoice.objects.filter(admissions_booking=ad):
                       bk_invoices.append(i.invoice_reference)
  
