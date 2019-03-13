@@ -17,5 +17,5 @@ class CustomChoiceField(serializers.Field):
     def to_internal_value(self, data):
         try:
             return json.loads(data)['id']
-        except KeyError:
+        except (KeyError, ValueError) as exc:
             return data
