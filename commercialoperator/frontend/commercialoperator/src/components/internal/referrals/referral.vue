@@ -95,7 +95,10 @@
                             <div class="col-sm-12">
                                 <div class="separator"></div>
                             </div>
+                            <!--
                             <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && referral.referral == proposal.current_assessor.id && referral.can_be_completed">
+                            -->
+                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && referral.can_be_completed">
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <strong>Action</strong><br/>

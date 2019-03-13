@@ -62,7 +62,8 @@ export default {
                         title: 'Referral',
                         data: 'referral',
                         render: function (data,type,full){
-                            return `<span>${data.first_name} ${data.last_name}</span>`; 
+                            //return `<span>${data.first_name} ${data.last_name}</span>`; 
+                            return `<span>${data}</span>`; 
                         }
                     },
                     {
@@ -77,7 +78,8 @@ export default {
                             if (!vm.canAction){
                                 return result;
                             }
-                            var user = full.referral.first_name + ' ' + full.referral.last_name; 
+                            //var user = full.referral.first_name + ' ' + full.referral.last_name; 
+                            var user = full.referral;
                             if (full.referral_status == 'Awaiting'){
                                 result = `<a href="" data-id="${data}" data-user="${user}" class="remindRef">Remind</a>/<a href="" data-id="${data}" data-user="${user}" class="recallRef">Recall</a>`;
                             }

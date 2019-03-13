@@ -266,7 +266,8 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         """
         #import ipdb; ipdb.set_trace()
         self.serializer_class = ReferralSerializer
-        qs = Referral.objects.filter(referral=request.user) if is_internal(self.request) else Referral.objects.none()
+        #qs = Referral.objects.filter(referral=request.user) if is_internal(self.request) else Referral.objects.none()
+        qs = Referral.objects.filter(referral_group__in=request.user.referralrecipientgroup_set.all()) if is_internal(self.request) else Referral.objects.none()
         #qs = self.filter_queryset(self.request, qs, self)
         qs = self.filter_queryset(qs)
 
@@ -1181,11 +1182,14 @@ class ReferralViewSet(viewsets.ModelViewSet):
         serializer = DTReferralSerializer(qs, many=True)
         return Response(serializer.data)
 
+
     @detail_route(methods=['GET',])
     def referral_list(self, request, *args, **kwargs):
         instance = self.get_object()
-        qs = self.get_queryset().all()
-        qs=qs.filter(sent_by=instance.referral, proposal=instance.proposal)
+        #qs = self.get_queryset().all()
+        #qs=qs.filter(sent_by=instance.referral, proposal=instance.proposal)
+
+        qs = Referral.objects.filter(referral_group__in=request.user.referralrecipientgroup_set.all(), proposal=instance.proposal)
         serializer = DTReferralSerializer(qs, many=True)
         #serializer = ProposalReferralSerializer(qs, many=True)
 

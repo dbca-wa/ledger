@@ -85,6 +85,7 @@ def send_referral_complete_email_notification(referral,request):
     url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': referral.proposal.id}))
 
     context = {
+        'completed_by': referral.referral,
         'proposal': referral.proposal,
         'url': url,
         'referral_comments': referral.referral_text
