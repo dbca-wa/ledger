@@ -100,14 +100,12 @@ export default {
                     },
                     {
                         data:"id",
-                        mRender:function(data, type, full){
-                            if (full.status == 'Approved' || full.status == 'Declined'){
-                                var column = "<a href='/internal/organisations/access/\__ID__\' >View </a>";
-                            }
-                            else{
-                                var column = "<a href='/internal/organisations/access/\__ID__\'> Process </a>";
-                            }
-                            return column.replace(/__ID__/g, data);
+                        mRender:function (data, type, full){
+                            let links = '';
+                            links += (full.can_be_processed && full.user_can_process_org_access_requests) ?
+                                `<a href='/internal/organisations/access/${full.id}'>Process</a><br/>` :
+                                `<a href='/internal/organisations/access/${full.id}'>View</a><br/>`;
+                            return links;
                         }
                     },
                 ],
