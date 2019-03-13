@@ -16,8 +16,7 @@ from django.shortcuts import redirect
 from wildlifecompliance.components.applications.utils import (
     SchemaParser,
     MissingFieldsException,
-    get_activity_schema,
-    save_assess_data
+    get_activity_schema
 )
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
