@@ -1182,11 +1182,14 @@ class ReferralViewSet(viewsets.ModelViewSet):
         serializer = DTReferralSerializer(qs, many=True)
         return Response(serializer.data)
 
+
     @detail_route(methods=['GET',])
     def referral_list(self, request, *args, **kwargs):
         instance = self.get_object()
-        qs = self.get_queryset().all()
-        qs=qs.filter(sent_by=instance.referral, proposal=instance.proposal)
+        #qs = self.get_queryset().all()
+        #qs=qs.filter(sent_by=instance.referral, proposal=instance.proposal)
+
+        qs = Referral.objects.filter(referral_group__in=request.user.referralrecipientgroup_set.all(), proposal=instance.proposal)
         serializer = DTReferralSerializer(qs, many=True)
         #serializer = ProposalReferralSerializer(qs, many=True)
 

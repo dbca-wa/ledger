@@ -555,7 +555,8 @@ class DTReferralSerializer(serializers.ModelSerializer):
     proposal_lodgement_number = serializers.CharField(source='proposal.lodgement_number')
     submitter = serializers.SerializerMethodField()
     region = serializers.CharField(source='region.name', read_only=True)
-    referral = EmailUserSerializer()
+    #referral = EmailUserSerializer()
+    referral = serializers.CharField(source='referral_group.name')
     class Meta:
         model = Referral
         fields = (
