@@ -15,9 +15,9 @@ class ReturnType(models.Model):
     """
     A Type to identify the method used to facilitate Return.
     """
-    RETURN_TYPE_CHOICES = (('SHEET', 'Sheet'),
-                           ('QUESTION', 'Question'),
-                           ('DATA', 'Data'))
+    RETURN_TYPE_CHOICES = (('sheet', 'Sheet'),
+                           ('question', 'Question'),
+                           ('data', 'Data'))
 
     Name = models.TextField(null=True, blank=True, max_length=200)
     data_descriptor = JSONField()
@@ -168,9 +168,31 @@ class Return(models.Model):
         A Running sheet of Return data.
         :return: ReturnSheet with activity data for species.
         """
-        if self.return_type.Name == 'sheet':
-            return ReturnSheet(self)
-        return None
+        return ReturnSheet(self) if self.is_sheet else None
+
+    @property
+    def is_question(self):
+        """
+        Property defining if the Return is Question based.
+        :return: Boolean
+        """
+        return True if self.return_type.Name == 'question' else False
+
+    @property
+    def is_data(self):
+        """
+        Property defining if the Return is Data based.
+        :return: Boolean
+        """
+        return True if self.return_type.Name == 'data' else False
+
+    @property
+    def is_sheet(self):
+        """
+        Property defining if the Return is Running Sheet based.
+        :return: Boolean
+        """
+        return True if self.return_type.Name == 'sheet' else False
 
     def log_user_action(self, action, request):
         return ReturnUserAction.log_action(self, action, request.user)
@@ -217,11 +239,23 @@ class ReturnSheet(object):
 
     _SHEET_SCHEMA = {"name": "sheet", "title": "Running Sheet of Return Data", "resources": [{"name":
                      "SpecieID", "path": "", "title": "Return Data for Specie", "schema": {"fields": [{"name":
-                     "Date", "type": "date", "format": "fmt:%d/%m/%Y", "constraints": {"required": True}}, {"name":
-                     "Activity", "type": "string", "constraints": {"required": True}}, {"name": "Quantity", "type":
-                     "number", "constraints": {"required": True}}, {"name": "Total", "type": "number",
-                     "constraints": {"required": True}}, {"name": "Licence", "type": "string"}, {"name": "Comment",
+                     "date", "type": "date", "format": "fmt:%d/%m/%Y", "constraints": {"required": True}}, {"name":
+                     "activity", "type": "string", "constraints": {"required": True}}, {"name": "qty", "type":
+                     "number", "constraints": {"required": True}}, {"name": "total", "type": "number",
+                     "constraints": {"required": True}}, {"name": "licence", "type": "string"}, {"name": "comment",
                      "type": "string"}]}}]}
+
+    _NO_ACTIVITY = {"echo": 1, "totalRecords": "0", "totalDisplayRecords": "0", "data": []}
+
+    _ACTIVITY_TYPES = {"SA01": "Stock", "SA02": "In through Import", "SA03": "In through birth",
+                       "SA04": "In through transfer", "SA05": "Out through export", "SA06": "Out through death",
+                       "SA07": "Out through transfer other", "SA08": "Out through transfer dealer", '': None}
+
+    _MOCK_TABLE = {'name': 'speciesId', 'data': [{'date': '2019/01/23', 'activity': 'SA01', 'qty': '5', 'total': '5',
+                  'comment': 'Initial Stock Taking', 'licence': ''}, {'date': '2019/01/31', 'activity': 'SA03',
+                  'qty': '3', 'total': '8', 'comment': 'Birth of three new species', 'licence': ''}]}
+
+    _MOCK_SPECIES = ['Cherax tenuimanus', 'Bunderia']
 
     def __init__(self, a_return):
         self._return = a_return
@@ -270,15 +304,46 @@ class ReturnSheet(object):
 
     @property
     def table(self):
-        _specie_activities = {'data': [{'date': '2019/03/02', 'activity': '001', 'quantity': '5', 'total': '5',
-                                        'comment': 'Initial Stock Taking', 'licence': ''}]}
-        return _specie_activities
+        """
+        Method to return Running Sheet data for table format. Overrides method from Return model object.
+        :return: formatted data {'name': 'speciesId', 'data': [{'date': '2019/01/23', 'activity': 'SA01', ..., }]}
+        """
+        _table = {'data': None}
+        _row = {}
+        _result = []
+        for resource in self._return.return_type.resources:
+            _resource_name = resource.get('name')
+            _schema = Schema(resource.get('schema'))
+            try:
+                _return_table = self._return.returntable_set.get(name=_resource_name)
+                rows = [_return_row.data for _return_row in _return_table.returnrow_set.all()]
+                _validated_rows = _schema.rows_validator(rows)
+                _table['data'] = _validated_rows
+            except ReturnTable.DoesNotExist:
+                _table = self._NO_ACTIVITY
+        #_table = self._MOCK_TABLE
+
+        return _table
+
+    def get_activity_list(self):
+        """
+        Method to return the full list of activity types available for all Species.
+        :return: List of Activity Types.
+        """
+        return self._ACTIVITY_TYPES
+
+    def get_species_list(self):
+
+        _species = self._species
+        #_species = self._MOCK_SPECIES
+
+        return _species
 
     def is_valid(self):
         pass
 
     def __str__(self):
-        return self._return.return_type.Name
+        return 'return-sheet-{0}'.format(self._return.id)
 
 
 class ReturnTable(RevisionedMixin):
