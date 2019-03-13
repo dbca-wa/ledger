@@ -168,7 +168,7 @@ from '@/utils/hooks'
        render(h) {
             let vm =this;
             Renderer.tabs_list = [];
-            Renderer.store_status_data(vm.application.readonly,vm.application.assessor_data,vm.application.comment_data,vm.application.current_assessor,vm.application.assessor_mode,vm.application.can_user_edit,vm.application.documents_url,vm.application.id);
+            Renderer.store_status_data(vm.application.readonly,vm.application.assessor_data,vm.application.comment_data,vm.application.can_user_edit,vm.application.documents_url,vm.application.id);
             if (vm.withSectionsSelector){
                 return (
                     <div>
@@ -197,7 +197,7 @@ from '@/utils/hooks'
                             </ul>
                             <div class="tab-content">
                                 {vm.application.schema.map(d =>{
-                                    return Renderer.renderChildren(h,d,vm.values,vm.application.assessor_data,vm.application.readonly,vm.application.assessor_mode,vm.application.assessor)
+                                    return Renderer.renderChildren(h,d,vm.values,vm.application.assessor_data,vm.application.readonly,vm.application.assessor)
                                 })}
                                 { this.$slots.default }
                             </div>
@@ -214,7 +214,7 @@ from '@/utils/hooks'
                             </ul>
                             <div class="tab-content">
                                 {vm.application.schema.map(d =>{
-                                    return Renderer.renderChildren(h,d,vm.values,vm.application.assessor_data,vm.application.readonly,vm.application.assessor_mode,vm.application.assessor)
+                                    return Renderer.renderChildren(h,d,vm.values,vm.application.assessor_data,vm.application.readonly,vm.application.assessor)
                                 })}
                                 { this.$slots.default }
                             </div>
@@ -231,7 +231,7 @@ from '@/utils/hooks'
                               </li>
                             </ul>
                                 {vm.application.schema.map(d =>{
-                                    return Renderer.renderChildren(h,d,vm.values,vm.application.assessor_data,vm.application.readonly,vm.application.assessor_mode,vm.application.assessor)
+                                    return Renderer.renderChildren(h,d,vm.values,vm.application.assessor_data,vm.application.readonly,vm.application.assessor)
                                 })}
                                 { this.$slots.default }
                         </div>

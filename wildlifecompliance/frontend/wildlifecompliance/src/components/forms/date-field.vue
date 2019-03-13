@@ -6,19 +6,18 @@
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>
-            <template v-if="help_text_assessor && assessorMode">
-                <HelpText  :help_text="help_text_assessor" assessorMode={assessorMode} isForAssessor={true} />
+            <template v-if="help_text_assessor">
+                <HelpText  :help_text="help_text_assessor" />
             </template> 
 
             <template v-if="help_text_url">
                 <HelpTextUrl :help_text_url="help_text_url" />
             </template>
-            <template v-if="help_text_assessor_url && assessorMode">
-                <HelpTextUrl :help_text_url="help_text_assessor_url" assessorMode={assessorMode} isForAssessor={true} />
+            <template v-if="help_text_assessor_url">
+                <HelpTextUrl :help_text_url="help_text_assessor_url" />
             </template> 
 
-
-            <template v-if="assessorMode && !assessor_readonly">
+            <template>
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
@@ -32,7 +31,7 @@
                 </span>
             </div>
         </div>
-        <Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> 
+        <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :value="comment_value"/>
     </div>
 </template>
 
@@ -43,7 +42,7 @@ import Comment from './comment.vue'
 import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
 export default {
-    props: ['name', 'label', 'id', 'readonly', 'help_text', 'help_text_assessor', 'assessorMode', 'value', 'conditions', "handleChange","comment_value","assessor_readonly", "isRequired", 'help_text_url', 'help_text_assessor_url'],
+    props: ['name', 'label', 'id', 'readonly', 'help_text', 'help_text_assessor', 'value', 'conditions', "handleChange","comment_value", "isRequired", 'help_text_url', 'help_text_assessor_url'],
     data(){
         return {
             showingComment: false

@@ -41,7 +41,7 @@
                           </div>
                           <div class="col-md-6">
                             <div class="form-group">
-                                <button class="btn btn-primary pull-right" name="sheet_entry">New Entry</button>
+                                <button class="btn btn-primary pull-right" @click.prevent="addSheetRow()" name="sheet_entry">New Entry</button>
                             </div>
                           </div>
                         </div>
@@ -138,7 +138,7 @@ export default {
                 }
               },
               {
-                data: "type",
+                data: "activity",
                 mRender:function (data,type,full) {
 
                     //return full.table[0]['data'][0]['TYPE']['value'];
@@ -150,7 +150,7 @@ export default {
                 mRender:function (data,type,full) {
 
                     //return full.table[0]['data'][0]['NUMBER']['value'];
-                    return '5'
+                    return 5
                 }
               },
               {
@@ -158,7 +158,7 @@ export default {
                 mRender:function (data,type,full) {
 
                    //return full.table[0]['data'][0]['TOTAL NUMBER']['value'];
-                   return '5'
+                   return 5
                 }
               },
               {
@@ -171,7 +171,9 @@ export default {
               },
               {
                 mRender:function (data,type,full) {
-                    return `<a data-date='21/03/2019' class="edit-row">Edit</a><br/>`;
+                    return `<a data-activity='001' data-licence='L245375' data-number=5 data-total=5 ` +
+                           `data-comment='Initial stock taking' ` +
+                           `class="edit-row">Edit</a><br/>`;
                 }
               },
             ],
@@ -206,6 +208,16 @@ export default {
        console.log(response.body)
        //vm.return = helpers.copyObject(response.body);
     },
+    addSheetRow: function () {
+       let vm = this;
+       vm.$refs.sheet_entry.speciesType = '<Species type 1>';
+       vm.$refs.sheet_entry.entryActivity = '';
+       vm.$refs.sheet_entry.entryNumber = '';
+       vm.$refs.sheet_entry.entryTotal = '';
+       vm.$refs.sheet_entry.entryComment = '';
+       vm.$refs.sheet_entry.entryLicence = '';
+       vm.$refs.sheet_entry.isModalOpen=true;
+    }
   },
   components:{
     SheetEntry,
@@ -233,10 +245,14 @@ export default {
      console.log('MOUNTED func')
      let vm = this;
      vm.form = document.forms.enter_return_sheet;
-     console.log(vm.form)
      vm.$refs.return_datatable.vmDataTable.on('click','.edit-row', function(e) {
         e.preventDefault();
-        console.log('event caught');
+        vm.$refs.sheet_entry.entryActivity = $(this).attr('data-activity');
+        vm.$refs.sheet_entry.entryNumber = $(this).attr('data-number');
+        vm.$refs.sheet_entry.entryTotal = $(this).attr('data-total');
+        vm.$refs.sheet_entry.entryComment = $(this).attr('data-comment');
+        vm.$refs.sheet_entry.entryLicence = $(this).attr('data-licence');
+        vm.$refs.sheet_entry.speciesType = '<Species type 1>';
         vm.$refs.sheet_entry.isModalOpen=true;
      });
   },

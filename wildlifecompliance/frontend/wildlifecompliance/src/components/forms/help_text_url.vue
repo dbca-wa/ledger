@@ -1,12 +1,6 @@
 <template lang="html">
     <span v-if="help_text_url">
-        <template v-if="!isForAssessor">
-            <a :href="help_text_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a>
-        </template>
-
-        <template v-if="assessorMode">
-            <a :href="help_text_url" target="_blank"><i class="fa fa-question-circle" style="color:green">&nbsp;</i></a>
-        </template>
+        <a :href="help_text_url" target="_blank"><i class="fa fa-question-circle" style="color:green">&nbsp;</i></a>
     </span>
 </template>
 
@@ -14,7 +8,7 @@
 
 <script>
 export default {
-    props:["help_text_url","assessorMode","isForAssessor"],
+    props:["help_text_url"],
 }
 </script>
 

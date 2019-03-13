@@ -1,6 +1,6 @@
 <template lang="html">
     <div id="externalReturnSheetEntry">
-        <modal transition="modal fade" title="[Species Type 1]  Current stock: 75" large>
+        <modal transition="modal fade" :title="title" large>
             <div class="container-fluid">
                 <div class="row">
                     <form class="form-horizontal" name="returnSheetForm">
@@ -10,15 +10,19 @@
                                 <div class="col-md-3">
                                     <label class="control-label pull-left"  for="Name">Activity:</label>
                                 </div>
-                                <div class="col-md-6">
-                                    <input type='text' v-model='entryActivity'>
+                                <div class="col-md-3">
+                                    <select class="form-control" v-model="entryActivity">
+                                        <option value="ALL">All</option>
+                                        <option value="001">Stock</option>
+                                        <option value="002">In through Import</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-3">
                                     <label class="control-label pull-left"  for="Name">Number:</label>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-3">
                                     <input type='text' v-model='entryNumber' >
                                 </div>
                             </div>
@@ -26,15 +30,15 @@
                                 <div class="col-md-3">
                                     <label class="control-label pull-left"  for="Name">Total Number:</label>
                                 </div>
-                                <div class="col-md-6">
-                                    <input type='text' v-model='entryTotalNumber' >
+                                <div class="col-md-3">
+                                    <input type='text' v-model='entryTotal' >
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-3">
                                     <label class="control-label pull-left"  for="Name">Receiving licence:</label>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-3">
                                     <input type='text' v-model='entryLicence' >
                                 </div>
                             </div>
@@ -42,8 +46,8 @@
                                 <div class="col-md-3">
                                     <label class="control-label pull-left"  for="Name">Comments:</label>
                                 </div>
-                                <div class="col-md-6">
-                                    <textarea style="width: 95%;"class="form-control" name="entry_comments" v-model="entryComments"></textarea>
+                                <div class="col-md-9">
+                                    <textarea style="width: 95%;"class="form-control" name="entry_comments" v-model="entryComment"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -51,8 +55,8 @@
                 </div>
             </div>
             <div slot="footer">
-                <button class="btn btn-primary" @click.prevent="close()">Pay</button>
-                <button class="btn btn-primary" @click.prevent="close()">Cancel</button>
+                <button style="width: 15%;" class="btn btn-primary" @click.prevent="close()">Pay</button>
+                <button style="width: 15%;" class="btn btn-primary" @click.prevent="close()">Cancel</button>
             </div>
         </modal>
     </div>
@@ -86,18 +90,25 @@ export default {
             errorString: '',
             successString: '',
             success:false,
-            entryActivity: 'Out through transfer other',
-            entryNumber: '45',
-            entryTotalNumber: '30',
-            entryLicence: 'L245375',
-            entryComments: '',
+            entryActivity: '',
+            entryNumber: 0,
+            entryTotal: 0,
+            entryLicence: '',
+            entryComment: '',
+            currentStock: 0,
+            speciesType: '',
         }
     },
     computed: {
         showError: function() {
             var vm = this;
             return vm.errors;
+        },
+        title: function(){
+            this.currentStock = +this.entryNumber + +this.entryTotal;
+            return this.speciesType + '   Current stock: ' + this.currentStock;
         }
+
     },
     methods:{
         ok:function () {
@@ -116,7 +127,9 @@ export default {
         }
     },
     mounted:function () {
+        console.log('modal Mounted');
         let vm =this;
+        vm.currentStock = vm.entryNumber + vm.entryTotal;
     }
 }
 </script>
