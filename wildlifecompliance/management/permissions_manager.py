@@ -113,7 +113,7 @@ class CustomGroupCollector(PermissionCollector):
 
     def get_or_create_group(self, group_name, config):
         created = None
-        if settings.GROUP_PREFIX not in group_name:
+        if settings.GROUP_PREFIX and settings.GROUP_PREFIX not in group_name:
             group_name = "{prefix} - {name}".format(
                 prefix=settings.GROUP_PREFIX,
                 name=group_name
