@@ -712,21 +712,21 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['post'])
-    @renderer_classes((JSONRenderer,))
-    def assess_save(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            save_assess_data(instance, request, self)
-            return redirect(reverse('external'))
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+    # @detail_route(methods=['post'])
+    # @renderer_classes((JSONRenderer,))
+    # def assess_save(self, request, *args, **kwargs):
+    #     try:
+    #         instance = self.get_object()
+    #         save_assess_data(instance, request, self)
+    #         return redirect(reverse('external'))
+    #     except serializers.ValidationError:
+    #         print(traceback.print_exc())
+    #         raise
+    #     except ValidationError as e:
+    #         raise serializers.ValidationError(repr(e.error_dict))
+    #     except Exception as e:
+    #         print(traceback.print_exc())
+    #         raise serializers.ValidationError(str(e))
 
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
