@@ -41,22 +41,20 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <strong>Status</strong><br/>
-                                {{ access.status }}
+                                {{ access.status.name }}
                             </div>
-                            <div class="col-sm-12 top-buffer-s">
-                                <strong>Currently assigned to</strong><br/>
+                             <div class="col-sm-12 top-buffer-s">
+                                <strong>Assigned Officer</strong><br/>
                                 <div class="form-group">
-                                    <select v-show="isLoading" class="form-control">
-                                        <option value="">Loading...</option>
-                                    </select>
-                                    <select @change="assignTo" :disabled="isFinalised" v-if="!isLoading" class="form-control" v-model="access.assigned_officer">
-                                        <option value="null">Unassigned</option>
-                                        <option v-for="member in members" :value="member.id">{{member.name}}</option>
-                                    </select>
-                                    <a v-if="!isFinalised" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
+                                    <template>
+                                        <select ref="assigned_officer" :disabled="!officerCanProcess" class="form-control" v-model="access.assigned_officer">
+                                            <option v-for="member in organisation_access_group_members" :value="member.id" v-bind:key="member.id">{{member.name}}</option>
+                                        </select>
+                                        <a v-if="officerCanProcess" @click.prevent="assignToMe()" class="actionBtn pull-right">Assign to me</a>
+                                    </template>
                                 </div>
                             </div>
-                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised">
+                            <div class="col-sm-12 top-buffer-s" v-if="officerCanProcess">
                                 <strong>Action</strong><br/>
                                 <button v-if="!isAmendmentRequested" class="btn btn-primary" @click.prevent="acceptRequest()">Accept</button>
                                 <button v-if="isAmendmentRequested" disabled class="btn btn-primary">Accept</button><br/>
@@ -127,7 +125,6 @@
 </div>
 </template>
 <script>
-import $ from 'jquery'
 import Vue from 'vue'
 import datatable from '@vue-utils/datatable.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
@@ -144,10 +141,12 @@ export default {
     return {
         loading: [],
         access: {
-            requester: {}
+            requester: {},
+            status: {},
         },
+        initialisedSelects: false,
         DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
-        members: [],
+        organisation_access_group_members: [],
         // Filters
         logs_url: helpers.add_endpoint_json(api_endpoints.organisation_requests,vm.$route.params.access_id+'/action_log'),
         comms_url: helpers.add_endpoint_json(api_endpoints.organisation_requests,vm.$route.params.access_id+'/comms_log'),
@@ -326,10 +325,13 @@ export default {
       return this.loading.length > 0;
     },
     isFinalised: function(){
-        return this.access.status == 'With Assesor' || this.access.status == 'Approved' || this.access.status == 'Declined';
+        return this.access.status.id == 'approved' || this.access.status.id == 'declined';
     },
     isAmendmentRequested: function(){
-        return this.access.status == 'Amendment Requested';
+        return this.access.status.id == 'amendment_requested';
+    },
+    officerCanProcess: function(){
+        return this.access && this.access.can_be_processed && !this.isFinalised && this.access.user_can_process_org_access_requests ? true : false;
     }
   },
   methods: {
@@ -340,7 +342,7 @@ export default {
         let vm = this;
         vm.loading.push('Loading Access Group Members');
         vm.$http.get(api_endpoints.organisation_access_group_members).then((response) => {
-            vm.members = response.body
+            vm.organisation_access_group_members = response.body
             vm.loading.splice('Loading Access Group Members',1);
         },(error) => {
             console.log(error);
@@ -348,39 +350,61 @@ export default {
         })
 
     },
-    assignMyself: function(){
+    assignToMe: function(){
         let vm = this;
-        vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/assign_request_user')))
+        vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/assign_to_me')))
         .then((response) => {
-            console.log(response);
             vm.access = response.body;
+            vm.updateAssignedOfficerSelect();
         }, (error) => {
-            console.log(error);
+            vm.updateAssignedOfficerSelect();
+            swal(
+                'Application Error',
+                helpers.apiVueResourceError(error),
+                'error'
+            )
         });
     },
-    assignTo: function(){
+    assignOfficer: function(){
         let vm = this;
-        if ( vm.access.assigned_officer != 'null'){
-            let data = {'user_id': vm.access.assigned_officer};
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/assign_to')),JSON.stringify(data),{
+        let unassign = true;
+        let data = {};
+        unassign = vm.access.assigned_officer != null && vm.access.assigned_officer != 'undefined' ? false: true;
+        data = {'officer_id': vm.access.assigned_officer};
+        if (!unassign){
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/assign_officer')),JSON.stringify(data),{
                 emulateJSON:true
             }).then((response) => {
-                console.log(response);
                 vm.access = response.body;
+                vm.updateAssignedOfficerSelect();
             }, (error) => {
-                console.log(error);
+                vm.updateAssignedOfficerSelect();
+                swal(
+                    'Application Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
             });
-            console.log('there');
         }
         else{
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/unassign')))
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,(vm.access.id+'/unassign_officer')))
             .then((response) => {
-                console.log(response);
                 vm.access = response.body;
+                vm.updateAssignedOfficerSelect();
             }, (error) => {
-                console.log(error);
+                vm.updateAssignedOfficerSelect();
+                swal(
+                    'Application Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
             });
         }
+    },
+    updateAssignedOfficerSelect:function(){
+        let vm = this;
+        $(vm.$refs.assigned_officer).val(vm.access.assigned_officer);
+        $(vm.$refs.assigned_officer).trigger('change');
     },
     acceptRequest: function() {
         let vm = this;
@@ -479,11 +503,50 @@ export default {
         });
 
     },
+    initialiseAssignedOfficerSelect:function(reinit=false){
+        let vm = this;
+        if (reinit){
+            $(vm.$refs.assigned_officer).data('select2') ? $(vm.$refs.assigned_officer).select2('destroy'): '';
+        }
+        // Assigned officer select
+        $(vm.$refs.assigned_officer).select2({
+            "theme": "bootstrap",
+            allowClear: true,
+            placeholder:"Select Officer"
+        }).
+        on("select2:select",function (e) {
+            var selected = $(e.currentTarget);
+            vm.access.assigned_officer = selected.val();
+            vm.assignOfficer();
+        }).on("select2:unselecting", function(e) {
+            var self = $(this);
+            setTimeout(() => {
+                self.select2('close');
+            }, 0);
+        }).on("select2:unselect",function (e) {
+            var selected = $(e.currentTarget);
+            vm.access.assigned_officer = null;
+            vm.assignOfficer();
+        });
+    },
+    initialiseSelects: function(){
+        let vm = this;
+        if (!vm.initialisedSelects){
+            vm.initialiseAssignedOfficerSelect();
+            vm.initialisedSelects = true;
+        }
+    },
   },
   mounted: function () {
     let vm = this;
     this.fetchAccessGroupMembers();
-  }
+  },
+    updated: function(){
+        let vm = this;
+        this.$nextTick(() => {
+            vm.initialiseSelects();
+        });
+    },
 }
 </script>
 <style scoped>

@@ -21,32 +21,18 @@ import { helpers, api_endpoints } from "@/utils/hooks.js"
 import { strToBool } from "@/utils/helpers.js";
 
 module.exports = {
-    renderChildren(h,c,data=null,assessorData=null,_readonly) {
+    renderChildren(h,c,data=null,_readonly) {
         var is_readonly = this.status_data.readonly;
-        var assessorStatus = this.status_data.assessorStatus;
-        var assessorData = this.status_data.assessorData;
         var commentData = this.status_data.commentData;
-        var assessorInfo = this.status_data.assessorInfo;
         var applicationId = this.status_data.applicationId;
-        var assessorMode = false;
-        var assessorCanAssess = false;
-        var assessorLevel = '';
         var readonly = false;
         var _elements = [];
-
-        if (assessorStatus != null){
-            assessorMode = assessorStatus['assessor_mode'];
-            assessorCanAssess = assessorStatus['has_assessor_mode'];
-            assessorLevel = assessorStatus['assessor_level'];
-        }
 
         var site_url = (api_endpoints.site_url.endsWith("/")) ? (api_endpoints.site_url): (api_endpoints.site_url + "/");
 
         // Visibility
-        var visibility = this.getVisibility(h,c,is_readonly,assessorMode,assessorCanAssess)
+        var visibility = this.getVisibility(h,c,is_readonly)
         if (!visibility.visible){ return "" }
-        var assessor_visibility = assessorLevel == 'assessor' && this.status_data.assessorStatus.has_assessor_mode? true : false;
-        assessor_visibility = !assessor_visibility;
 
         // Editablility
         readonly = !visibility.editable;
@@ -100,17 +86,17 @@ module.exports = {
             case 'text':
                 readonly = (c.readonly) ? (c.readonly): (readonly);
                 _elements.push(
-                    <TextField type="text" name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <TextField type="text" name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={help_text_assessor} readonly={readonly} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
                 )
                 break;
             case 'number':
                 _elements.push(
-                    <TextField type="number" name={c.name} value={val} id={id} min={c.min} max={c.max} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <TextField type="number" name={c.name} value={val} id={id} min={c.min} max={c.max} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={help_text_assessor} readonly={readonly} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
                 )
                 break;
             case 'email':
                 _elements.push(
-                    <TextField type="email" name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} readonly={readonly} assessor_readonly={assessor_visibility} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <TextField type="email" name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={help_text_assessor} readonly={readonly} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
                 )
                 break;
             case 'select':
@@ -120,24 +106,24 @@ module.exports = {
                 }
                 _elements.push(
                     <div>
-                        <Select readonly={readonly} name={c.name} label={c.label} value={c.value} id={id} comment_value={comment_val} options={c.options} help_text={help_text} help_text_assessor={help_text_assessor} value={val} handleChange={this.selectionChanged}  conditions={c.conditions} assessorMode={assessorMode} assessor_readonly={assessor_visibility} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                        <Select readonly={readonly} name={c.name} label={c.label} value={c.value} id={id} comment_value={comment_val} options={c.options} help_text={help_text} help_text_assessor={help_text_assessor} value={val} handleChange={this.selectionChanged}  conditions={c.conditions} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
                         <SelectConditions conditions={c.conditions} renderer={this} name={c.name} data={data} id={id1} readonly={readonly} isRequired={c.isRequired}/>
                     </div>
                 )
                 break;
             case 'multi-select':
                 _elements.push(
-                    <Select name={c.name} label={c.label} value={val} id={id} comment_value={comment_val} options={c.options} value={val} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} handleChange={this.selectionChanged} readonly={readonly} isMultiple={true} assessor_readonly={assessor_visibility} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <Select name={c.name} label={c.label} value={val} id={id} comment_value={comment_val} options={c.options} value={val} help_text={help_text} help_text_assessor={help_text_assessor} handleChange={this.selectionChanged} readonly={readonly} isMultiple={true} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
                 )
                 break;
             case 'text_area':
                 _elements.push(
-                    <TextArea readonly={readonly} name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} assessorMode={assessorMode} assessor_readonly={assessor_visibility} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <TextArea readonly={readonly} name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
                 )
                 break;
             case 'table':
                 _elements.push(
-                    <Table headers={c.headers} readonly={readonly} name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} assessorMode={assessorMode} assessor_readonly={assessor_visibility} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <Table headers={c.headers} readonly={readonly} name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
                 )
                 break;
             case 'label':
@@ -154,10 +140,10 @@ module.exports = {
                     <div class="form-group">
                         <label id={id} class="inline">{c.label}</label>
                             <HelpText help_text={help_text}/>
-                            <HelpText help_text={help_text_assessor} assessorMode={assessorMode} isForAssessor={true}/>
+                            <HelpText help_text={help_text_assessor}/>
                             <HelpTextUrl help_text_url={help_text_url}/>
-                            <HelpTextUrl help_text_url={help_text_assessor_url} assessorMode={assessorMode} isForAssessor={true}/>
-                            <CommentRadioCheckBox assessor_readonly={assessor_visibility} name={c.name} comment_value={comment_val} assessorMode={assessorMode} label={c.label}/>
+                            <HelpTextUrl help_text_url={help_text_assessor_url}/>
+                            <CommentRadioCheckBox name={c.name} comment_value={comment_val} label={c.label}/>
                             {c.options.map(op =>{
                                 return(
                                     <Radio name={c.name} label={op.label} value={op.value} isRequired={op.isRequired || c.isRequired} id={id1} savedValue={val} handleChange={this.handleRadioChange} conditions={c.conditions} readonly={readonly}/>
@@ -282,12 +268,12 @@ module.exports = {
                 break;
             case 'file':
                 _elements.push(
-                    <File name={c.name} label={c.label} value={val} id={id} comment_value={comment_val} isRepeatable={strToBool(c.isRepeatable)} handleChange={this.handleFileChange} readonly={readonly} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} docsUrl={this.status_data.docs_url} readonly={readonly} assessor_readonly={assessor_visibility} application_id={applicationId} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <File name={c.name} label={c.label} value={val} id={id} comment_value={comment_val} isRepeatable={strToBool(c.isRepeatable)} handleChange={this.handleFileChange} readonly={readonly} help_text={help_text} help_text_assessor={help_text_assessor} docsUrl={this.status_data.docs_url} readonly={readonly} application_id={applicationId} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
                 )
                 break;
             case 'date':
                 _elements.push(
-                    <DateField name={c.name} label={c.label} value={val} id={id} comment_value={comment_val}  handleChange={this.handleFileChange} readonly={readonly} help_text={help_text} help_text_assessor={help_text_assessor} assessorMode={assessorMode} assessor_readonly={assessor_visibility} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <DateField name={c.name} label={c.label} value={val} id={id} comment_value={comment_val}  handleChange={this.handleFileChange} readonly={readonly} help_text={help_text} help_text_assessor={help_text_assessor} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
                 )
                 break;
             default:
@@ -346,44 +332,21 @@ module.exports = {
         return this.tabs_list;
     },
     status_data : {},
-    store_status_data(readonly,assessorData,commentData,assessorEmail,assessorMode,can_user_edit,docs_url, applicationId){
+    store_status_data(readonly,commentData,can_user_edit,docs_url, applicationId){
         this.status_data = {
             'readonly': readonly,
-            'assessorData': assessorData,
             'commentData': commentData,
-            'assessorInfo': assessorEmail,
-            'assessorStatus': assessorMode,
             'can_user_edit': can_user_edit,
             'docs_url': docs_url,
             'applicationId': applicationId,
         }
     },
-    getVisibility(h,c,readonly,assessor_mode,assessor_can_assess){
+    getVisibility(h,c,readonly){
         var _status = {
             'visible':true,
             'editable':true
         }
-        if (assessor_mode){
-            if (c.isVisibleForAssessorOnly){
-                if (this.status_data.can_user_edit){
-                    _status.visible = false;
-                }
-                if (!assessor_can_assess){ _status.editable = false }
-                return _status;
-            }
-            else {
-                _status.editable = readonly ? false : true;
-            }
-        }
-        else{
-            if (c.isVisibleForAssessorOnly){
-                _status.visible = false;
-                _status.editable = false;
-            }
-            else{
-                _status.editable = readonly ? false : true;
-            }
-        }
+        _status.editable = readonly ? false : true;
         return _status;
     }
 }

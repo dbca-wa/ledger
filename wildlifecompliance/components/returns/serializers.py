@@ -26,6 +26,8 @@ class ReturnSerializer(serializers.ModelSerializer):
     processing_status = serializers.CharField(
         source='get_processing_status_display')
     submitter = EmailUserSerializer()
+    sheet_activity_list = serializers.SerializerMethodField()
+    sheet_species_list = serializers.SerializerMethodField()
 
     class Meta:
         model = Return
@@ -43,8 +45,22 @@ class ReturnSerializer(serializers.ModelSerializer):
             'table',
             'condition',
             'text',
-            'type'
+            'type',
+            'sheet_activity_list',
+            'sheet_species_list'
         )
+
+    def get_sheet_activity_list(self, _return):
+        """
+        Gets the list of Activities available for a Return Running Sheet.
+        :param _return: Return instance
+        :return: List of available activities
+        """
+        return _return.sheet.get_activity_list() if _return.is_sheet else []
+
+    def get_sheet_species_list(self, _return):
+
+        return _return.sheet.get_species_list() if _return.is_sheet else []
 
 
 class ReturnTypeSerializer(serializers.ModelSerializer):

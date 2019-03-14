@@ -145,12 +145,25 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
 
     @list_route(methods=['GET', ])
     def sheet_details(self, request, *args, **kwargs):
-        qs = self.get_queryset()
         return_id = self.request.query_params.get('return_id')
-        qs = qs.filter(id=return_id)
-        serializer = ReturnSerializer(qs, many=True)
+        instance = Return.objects.get(id=return_id)
+        return Response(instance.sheet.data)
 
-        return Response(serializer.data)
+    @detail_route(methods=['POST', ])
+    def save(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET', ])
     def comms_log(self, request, *args, **kwargs):
@@ -177,7 +190,7 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
                 instance = self.get_object()
                 request.data['compliance'] = u'{}'.format(instance.id)
                 request.data['staff'] = u'{}'.format(request.user.id)
-                serializer = ComplianceCommsSerializer(data=request.data)
+                serializer = ReturnCommsSerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
                 comms = serializer.save()
                 # Save the files
