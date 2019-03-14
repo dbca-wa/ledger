@@ -777,34 +777,20 @@ export default {
             return false;
         },
         canSendToAssessor: function(){
-            var activities_list = this.application.licence_type_data.activity
-            for(var i=0;i<activities_list.length;i++){
-                if(activities_list[i].processing_status.id == 'with_officer' || activities_list[i].processing_status.id == 'with_officer_conditions' || activities_list[i].processing_status.id == 'with_assessor'){
-                    return true;
-                }
-            }
-            return false;
+            return this.hasActivityStatus([
+                'with_officer',
+                'with_officer_conditions',
+                'with_assessor',
+                ]);
         },
         canReturnToConditions: function(){
             return this.selected_activity_tab_id && this.selectedActivity.processing_status.id == 'with_officer_finalisation' ? true : false;
         },
         canOfficerReviewConditions: function(){
-            var activities_list = this.application.licence_type_data.activity
-            for(var i=0;i<activities_list.length;i++){
-                if(activities_list[i].processing_status.id == 'with_officer_conditions'){
-                    return true;
-                }
-            }
-            return false;
+            return this.hasActivityStatus('with_officer_conditions');
         },
         canProposeIssueOrDecline: function(){
-            var activities_list = this.application.licence_type_data.activity
-            for(var i=0;i<activities_list.length;i++){
-                if(activities_list[i].processing_status.id == 'with_officer_conditions'){
-                    return true;
-                }
-            }
-            return false;
+            return this.hasActivityStatus('with_officer_conditions');
         },
         canCompleteAssessment: function(){
             return this.selected_activity_tab_id && this.selectedActivity.processing_status.id == 'with_assessor' ? true : false;
@@ -831,38 +817,18 @@ export default {
           return (this.application) ? `/api/application/${this.application.id}/assessor_save.json` : '';
         },
         isFinalised: function(){
-            let vm=this;
-            var flag=0;
-            for(var i=0, len=vm.application.licence_type_data.activity.length; i<len; i++){
-                if(vm.application.licence_type_data.activity[i].processing_status.id == 'declined' || vm.application.licence_type_data.activity[i].processing_status.id == 'accepted' ){
-                    flag=flag+1;
-                }
-
-            }
-            if(flag>0 && flag==len){
-                return true;
-            }
-            else{
-                return false;
-            }
-            
+            return this.hasActivityStatus([
+                'declined',
+                'accepted'
+            ], this.application.licence_type_data.activity.length);
         },
         isPartiallyFinalised: function(){
-            let vm=this;
-            var flag=0;
-            for(var i=0, len=vm.application.licence_type_data.activity.length; i<len; i++){
-                if(vm.application.licence_type_data.activity[i].processing_status.id == 'declined' || vm.application.licence_type_data.activity[i].processing_status.id == 'accepted' ){
-                    flag=flag+1;
-                }
-
-            }
-            if(flag>0 && flag!=len){
-                return true;
-            }
-            else{
-                return false;
-            }
-            
+            const final_statuses = [
+                'declined',
+                'accepted'
+            ];
+            const activity_count = this.application.licence_type_data.activity.length;
+            return this.hasActivityStatus(final_statuses) && !this.hasActivityStatus(final_statuses, activity_count);            
         },
         isIdCheckAccepted: function(){
             return this.application.id_check_status.id == 'accepted';
@@ -1021,6 +987,15 @@ export default {
         clearSendToAssessorForm(){
             this.$refs.send_to_assessor.assessment.text='';
             this.selectedAssessor={};
+        },
+        hasActivityStatus: function(status_list, status_count=1) {
+            if(typeof(status_list) !== 'object') {
+                status_list = [status_list];
+            }
+            const activities_list = this.application.licence_type_data.activity
+            return activities_list.filter(activity =>
+                status_list.includes(activity.processing_status.id)
+            ).length >= status_count;
         },
         setAssessorTab(_index){
             return _index === 0 ? 'active' : '';
