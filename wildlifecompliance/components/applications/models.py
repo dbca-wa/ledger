@@ -544,7 +544,7 @@ class Application(RevisionedMixin):
                     if (qs):
                         for q in qs:
                             q.status = 'amended'
-                            self.application.set_activity_processing_status(q.licence_activity.id, "with_officer")
+                            self.set_activity_processing_status(q.licence_activity.id, "with_officer")
                             q.save()
                 else:
                     for activity in self.licence_type_data['activity']:
