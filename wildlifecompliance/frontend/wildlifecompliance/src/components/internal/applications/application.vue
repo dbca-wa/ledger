@@ -889,7 +889,6 @@ export default {
         }
     },
     methods: {
-        
         eventListeners: function(){
             let vm = this;
             $("ul#tabs-section").on("click", function (e) {
