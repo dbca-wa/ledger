@@ -666,8 +666,6 @@ export default {
             "loading": [],
             selected_activity_tab_id:null,
             selected_activity_tab_name:null,
-            selected_activity_assessortab_id:null,
-            selected_activity_assessortab_name:null,
             form: null,
             department_users : [],
             // activity_data:[],
@@ -1010,7 +1008,7 @@ export default {
             // var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
 
-            this.$refs.proposed_licence.propose_issue.licence_activity_id=vm.selected_activity_tab_id
+            this.$refs.proposed_licence.propose_issue.licence_activity_id=vm.selected_activity_tab_id;
             this.$refs.proposed_licence.propose_issue.licence_activity_name=selectedTabTitle.text();
             this.$refs.proposed_licence.isModalOpen = true;
         },
@@ -1143,13 +1141,6 @@ export default {
             vm.isSendingToAssessor = !vm.isSendingToAssessor;
             vm.showingApplication = false;
             vm.showingConditions = false;
-            setTimeout(function(){
-                $("ul#tabs-assessor").on("click", function (e) {
-                    vm.selected_activity_assessortab_id = e.target.href.split('#')[1];
-                    vm.selected_activity_assessortab_name = e.target.innerText;
-                });
-                $('#tabs-assessor li:first-child a').click();
-            }, 50);
             vm.fetchAssessorGroup();
         },
         save: function(e) {
@@ -1247,7 +1238,7 @@ export default {
             let vm = this;
             let data = new FormData();
 
-            data.selected_assessment_tab=vm.selected_activity_assessortab_id
+            data.selected_assessment_tab=vm.selected_activity_tab_id;
             data.application_id=vm.application_id
             
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/complete_assessment')),JSON.stringify(data),{emulateJSON:true})
