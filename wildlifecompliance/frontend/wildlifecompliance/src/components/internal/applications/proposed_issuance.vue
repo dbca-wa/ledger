@@ -12,7 +12,7 @@
                                         <label class="control-label" for="Name">Select licensed activities to Propose Issue</label>
                                         <div v-for="item in application_licence_type">
                                             <div v-for="item1 in item">
-                                                <div v-if="item1.name && item1.processing_status=='With Officer-Conditions'">
+                                                <div v-if="item1.name && item1.processing_status.id=='with_officer_conditions'">
                                                     <input type="checkbox" :value ="item1.id" :id="item1.id" v-model="propose_issue.activity">{{item1.name}}
                                                 </div>
                                             </div>
@@ -101,7 +101,7 @@ export default {
             required: true
         },
         processing_status: {
-            type: String,
+            type: Object,
             required: true
         },
         application_licence_type:{
@@ -142,7 +142,7 @@ export default {
             return vm.errors;
         },
         title: function(){
-            return this.processing_status == 'With Approver' ? 'Issue Licence' : 'Propose to issue licence';
+            return this.processing_status.id == 'with_approver' ? 'Issue Licence' : 'Propose to issue licence';
         }
     },
     methods:{
@@ -182,7 +182,7 @@ export default {
             let propose_issue = JSON.parse(JSON.stringify(vm.propose_issue));
             vm.issuingLicence = true;
             if (propose_issue.activity.length > 0){
-                if (vm.processing_status == 'Under Review'){
+                if (vm.processing_status.id == 'under_review'){
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/proposed_licence'),JSON.stringify(vm.propose_issue),{
                             emulateJSON:true,
                         }).then((response)=>{

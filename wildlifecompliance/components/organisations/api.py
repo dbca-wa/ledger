@@ -584,7 +584,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     def get_pending_requests(self, request, *args, **kwargs):
         try:
             qs = self.get_queryset().filter(requester=request.user, status='with_assessor')
-            serializer = OrganisationRequestDTSerializer(qs, many=True)
+            serializer = OrganisationRequestDTSerializer(qs, many=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -601,7 +601,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
         try:
             qs = self.get_queryset().filter(
                 requester=request.user, status='amendment_requested')
-            serializer = OrganisationRequestDTSerializer(qs, many=True)
+            serializer = OrganisationRequestDTSerializer(qs, many=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())

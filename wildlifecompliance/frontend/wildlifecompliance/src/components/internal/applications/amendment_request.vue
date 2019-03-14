@@ -16,7 +16,7 @@
                                     <div v-for="item in amendment.activity_name" v-model="amendment.activity_name">{{item}}</div>
                                     <!-- <div  v-for="item in application_licence_type">
                                         <div v-for="item1 in item">
-                                            <div  v-if="item1.name===amendment.activity_name && item1.processing_status==='With Officer'" >
+                                            <div  v-if="item1.name===amendment.activity_name && item1.processing_status.id==='with_officer'" >
                                                 <input type="text" disabled class="form-control" :id="item1.id" :value="item1.name" v-model="amendment.activity_name">
                                                 
                                             </div>

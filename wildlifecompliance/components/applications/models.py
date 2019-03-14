@@ -76,7 +76,7 @@ class ActivityPermissionGroup(Group):
     def members(self):
         return EmailUser.objects.filter(
             groups__id=self.id
-        )
+        ).distinct()
 
 
 class ApplicationDocument(Document):
@@ -356,7 +356,7 @@ class Application(RevisionedMixin):
         """
         :return: True if the application is in one of the editable status.
         """
-        return self.customer_status in self.CUSTOMER_EDITABLE_STATE and self.processing_status == 'draft'
+        return self.customer_status in self.CUSTOMER_EDITABLE_STATE
 
     @property
     def can_user_view(self):
@@ -456,10 +456,13 @@ class Application(RevisionedMixin):
         licence_data = serializer.data
         for activity in licence_data['activity']:
             selected_activity = self.get_selected_activity(activity['id'])
-            activity['processing_status'] = get_choice_value(
-                selected_activity.processing_status,
-                self.PROCESSING_STATUS_CHOICES
-            )
+            activity['processing_status'] = {
+                'id': selected_activity.processing_status,
+                'name': get_choice_value(
+                    selected_activity.processing_status,
+                    self.PROCESSING_STATUS_CHOICES
+                )
+            }
         return licence_data
 
     @property
@@ -564,7 +567,9 @@ class Application(RevisionedMixin):
                     permissions__codename='licensing_officer',
                     licence_activities__purpose__licence_category__id=self.licence_type_data["id"]
                 )
-                group_users = EmailUser.objects.filter(groups__id__in=officer_groups.values_list('id', flat=True))
+                group_users = EmailUser.objects.filter(
+                    groups__id__in=officer_groups.values_list('id', flat=True)
+                ).distinct()
 
                 if self.amendment_requests:
                     self.log_user_action(

@@ -5,11 +5,11 @@
             <div v-for="item in application.licence_type_data">
                 <ul class="nav nav-tabs" id="conditiontabs">
                     <li v-for="(item1,index) in item">
-                        <a v-if="item1.processing_status=='Accepted'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
+                        <a v-if="item1.processing_status.id=='accepted'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
                             
                                 <span class="glyphicon glyphicon-ok"></span>
                         </a>
-                        <a v-if="item1.processing_status=='Declined'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
+                        <a v-if="item1.processing_status.id=='declined'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
                             
                                 <span class="glyphicon glyphicon-remove"></span>
                         </a>
@@ -21,13 +21,13 @@
             </div>   
             <div  class="tab-content">
                 <div v-for="item in application.licence_type_data">
-                    <div v-for="(item1,index) in item" v-if="item1.processing_status=='Accepted'" :id="`${item1.id}`" class="tab-pane fade active in"> 
+                    <div v-for="(item1,index) in item" v-if="item1.processing_status.id=='accepted'" :id="`${item1.id}`" class="tab-pane fade active in"> 
                         The licence has been issued and has been emailed to {{application.submitter.first_name}} {{application.submitter.last_name}} {{isFinalised}}
                         <div v-for="licence in application.licences" v-if="licence.licence_activity_id == item1.id">
                             Expiry Date: {{licence.expiry_date}}
                         </div>
                     </div>
-                    <div v-for="(item1,index) in item" v-if="item1.processing_status=='Declined'" :id="`${item1.id}`" class="tab-pane fade active in"> 
+                    <div v-for="(item1,index) in item" v-if="item1.processing_status.id=='declined'" :id="`${item1.id}`" class="tab-pane fade active in"> 
                         The licence has been declined and has been emailed to {{application.submitter.first_name}} {{application.submitter.last_name}} 
                     </div>
                 </div>
@@ -37,20 +37,20 @@
             <div v-for="item in application.licence_type_data">
                 <ul class="nav nav-tabs" >
                     <li v-for="(item1,index) in item">
-                        <a v-if="item1.processing_status=='Accepted'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
+                        <a v-if="item1.processing_status.id=='accepted'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
                             
                                 <span class="glyphicon glyphicon-ok"></span>
                         </a>
 
-                        <a v-if="item1.processing_status=='Declined'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
+                        <a v-if="item1.processing_status.id=='declined'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
                             
                                 <span class="glyphicon glyphicon-remove"></span>
                         </a>
-                        <a v-if="item1.processing_status=='With Assessor'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
+                        <a v-if="item1.processing_status.id=='with_assessor'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
                             
                                 <span class="glyphicon glyphicon-remove"></span>
                         </a>
-                        <a v-if="item1.processing_status=='With Officer-Conditions'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
+                        <a v-if="item1.processing_status.id=='with_officer_conditions'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
                             
                                 <span class="glyphicon glyphicon-remove"></span>
                         </a>
@@ -62,16 +62,16 @@
             </div>   
             <div  class="tab-content">
                 <div v-for="item in application.licence_type_data">
-                    <div v-for="(item1,index) in item" v-if="item1.processing_status=='Accepted'" :id="`${item1.id}`" class="tab-pane fade active in"> 
+                    <div v-for="(item1,index) in item" v-if="item1.processing_status.id=='accepted'" :id="`${item1.id}`" class="tab-pane fade active in"> 
                         The licence has been issued and has been emailed to {{application.submitter.first_name}} {{application.submitter.last_name}} 
                     </div>
-                    <div v-for="(item1,index) in item" v-if="item1.processing_status=='Declined'" :id="`${item1.id}`" class="tab-pane fade active in"> 
+                    <div v-for="(item1,index) in item" v-if="item1.processing_status.id=='declined'" :id="`${item1.id}`" class="tab-pane fade active in"> 
                         The licence has been declined and has been emailed to {{application.submitter.first_name}} {{application.submitter.last_name}} 
                     </div>
-                    <div v-for="(item1,index) in item" v-if="item1.processing_status=='With Assessor'" :id="`${item1.id}`" class="tab-pane fade active in"> 
+                    <div v-for="(item1,index) in item" v-if="item1.processing_status.id=='with_assessor'" :id="`${item1.id}`" class="tab-pane fade active in"> 
                         The licensed activity cannot be issued as this licensed activity is still with assessord for assessment. 
                     </div>
-                    <div v-for="(item1,index) in item" v-if="item1.processing_status=='With Officer-Conditions'" :id="`${item1.id}`" class="tab-pane fade active in"> 
+                    <div v-for="(item1,index) in item" v-if="item1.processing_status.id=='with_officer_conditions'" :id="`${item1.id}`" class="tab-pane fade active in"> 
                         The licensed activity cannot be issued as the conditions have not been finalised yet. 
                     </div>
                 </div>
@@ -108,7 +108,7 @@ export default {
             let vm=this;
             var flag=0;
             for(var i=0, len=vm.application.licence_type_data.activity.length; i<len; i++){
-                if(vm.application.licence_type_data.activity[i].processing_status == 'Declined' || vm.application.licence_type_data.activity[i].processing_status == 'Accepted' ){
+                if(vm.application.licence_type_data.activity[i].processing_status.id == 'declined' || vm.application.licence_type_data.activity[i].processing_status.id == 'accepted' ){
                     flag=flag+1;
                 }
 
@@ -125,7 +125,7 @@ export default {
             let vm=this;
             var flag=0;
             for(var i=0, len=vm.application.licence_type_data.activity.length; i<len; i++){
-                if(vm.application.licence_type_data.activity[i].processing_status == 'Declined' || vm.application.licence_type_data.activity[i].processing_status == 'Accepted' ){
+                if(vm.application.licence_type_data.activity[i].processing_status.id == 'declined' || vm.application.licence_type_data.activity[i].processing_status.id == 'accepted' ){
                     flag=flag+1;
                 }
 
