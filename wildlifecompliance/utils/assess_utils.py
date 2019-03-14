@@ -50,36 +50,6 @@ def get_purposes(licence_category_short_name):
     return activity.values_list('licence_category__activity__purpose__name', flat=True).distinct()
 
 
-def create_app_activity_model(licence_category, app_ids=[], exclude_app_ids=[]):
-    """
-    from wildlifecompliance.utils.excel_utils import write_excel_model
-    write_excel_model('Fauna Other Purpose')
-    """
-
-    if app_ids:
-        # get a filterset with single application
-        applications = Application.objects.filter(id__in=app_ids)
-    else:
-        # applications = Application.objects.filter(licence_category=licence_category).exclude(
-        # processing_status=Application.PROCESSING_STATUS_DRAFT[0]).exclude(id__in=cur_app_ids)
-        applications = Application.objects.filter(licence_category=licence_category).exclude(id__in=exclude_app_ids)
-
-    obj_list = []
-    for application in applications.order_by('id'):
-
-        activities = get_purposes(application.licence_type_data['short_name']).values_list('activity__short_name', flat=True)
-        for activity in application.licence_type_data['activity']:
-            if activity['short_name'] in list(activities):
-                activity_obj = LicencePurpose.get_first_record(activity['purpose'][0]['name'])
-                app_activity, created = ApplicationSelectedActivity.objects.get_or_create(
-                    application=application,
-                    licence_activity__id=activity_obj.id
-                )
-                obj_list.append(app_activity)
-
-    return obj_list
-
-
 def create_licence(application, activity, new_app):
     """ activity_name='Importing Fauna (Non-Commercial)'
         licence_category ='Flora Other Purpose'

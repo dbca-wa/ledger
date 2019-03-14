@@ -223,7 +223,7 @@
                                                     <label class="control-label pull-left"  for="Name">Assessor Group</label>
                                                     <select class="form-control" v-model="selectedAssessor">
                                                         <option v-for="assessor in assessorGroup" :id="assessor.id"
-                                                        :value="assessor" v-if="application.licence_type_data.id == assessor.licence_category && item1.id == assessor.licence_activity">{{assessor.display_name}}</option>
+                                                        :value="assessor">{{assessor.display_name}}</option>
                                                     </select>
                                             </div>
                                             <div class="col-sm-2">
