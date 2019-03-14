@@ -3,22 +3,18 @@ from __future__ import unicode_literals
 import datetime
 import logging
 import re
-import os
 from django.db import models, transaction
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
-from django.contrib.auth.models import Group, Permission
-from django.contrib.sites.models import Site
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
 from taggit.managers import TaggableManager
-from taggit.models import TaggedItemBase
 
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.payments.invoice.models import Invoice
-from wildlifecompliance import exceptions
 
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
@@ -34,7 +30,6 @@ from wildlifecompliance.components.applications.email import (
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
-from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 
@@ -43,16 +38,14 @@ def update_application_doc_filename(instance, filename):
     return 'wildlifecompliance/applications/{}/documents/{}'.format(
         instance.application.id, filename)
 
+
 def update_pdf_licence_filename(instance, filename):
-    return 'applications/{}/wildlife_compliance_licence/{}'.format(instance.id,filename)
+    return 'applications/{}/wildlife_compliance_licence/{}'.format(instance.id, filename)
+
 
 def replace_special_chars(input_str, new_char='_'):
     return re.sub('[^A-Za-z0-9]+', new_char, input_str).strip('_').lower()
 
-class ApplicationType(models.Model):
-    schema = JSONField()
-    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
-    site = models.OneToOneField(Site, default='1')
 
 def update_application_comms_log_filename(instance, filename):
     return 'wildlifecompliance/applications/{}/communications/{}/{}'.format(
@@ -78,6 +71,12 @@ class ActivityPermissionGroup(Group):
     @property
     def display_name(self):
         return self.__str__
+
+    @property
+    def members(self):
+        return EmailUser.objects.filter(
+            groups__id=self.id
+        ).distinct()
 
 
 class ApplicationDocument(Document):
@@ -357,7 +356,7 @@ class Application(RevisionedMixin):
         """
         :return: True if the application is in one of the editable status.
         """
-        return self.customer_status in self.CUSTOMER_EDITABLE_STATE and self.processing_status == 'draft'
+        return self.customer_status in self.CUSTOMER_EDITABLE_STATE
 
     @property
     def can_user_view(self):
@@ -422,6 +421,25 @@ class Application(RevisionedMixin):
         ).distinct()
 
     @property
+    def officers_and_assessors(self):
+        selected_activity_ids = ApplicationSelectedActivity.objects.filter(
+            application_id=self.id,
+            licence_activity__isnull=False
+        ).values_list('licence_activity__id', flat=True)
+        if not selected_activity_ids:
+            return []
+
+        groups = ActivityPermissionGroup.objects.filter(
+            permissions__codename__in=['licensing_officer',
+                                       'assessor',
+                                       'issuing_officer'],
+            licence_activities__id__in=selected_activity_ids
+        ).values_list('id', flat=True)
+        return EmailUser.objects.filter(
+            groups__id__in=groups
+        ).distinct()
+
+    @property
     def licence_type_short_name(self):
         return self.licence_category
 
@@ -438,10 +456,13 @@ class Application(RevisionedMixin):
         licence_data = serializer.data
         for activity in licence_data['activity']:
             selected_activity = self.get_selected_activity(activity['id'])
-            activity['processing_status'] = get_choice_value(
-                selected_activity.processing_status,
-                self.PROCESSING_STATUS_CHOICES
-            )
+            activity['processing_status'] = {
+                'id': selected_activity.processing_status,
+                'name': get_choice_value(
+                    selected_activity.processing_status,
+                    self.PROCESSING_STATUS_CHOICES
+                )
+            }
         return licence_data
 
     @property
@@ -499,29 +520,6 @@ class Application(RevisionedMixin):
             )
         return selected_activity
 
-    def can_assess(self, user):
-        # TODO: this should probably be a status on the licenced activity not a property function on Application
-        return False
-        # if self.processing_status == 'with_assessor' or self.processing_status == 'with_assessor_conditions':
-        #     return self.__assessor_group() in user.applicationassessorgroup_set.all()
-        # elif self.processing_status == 'with_approver':
-        #     return self.__approver_group() in user.applicationapprovergroup_set.all()
-        # else:
-        #     return False
-
-    def has_assessor_mode(self, user):
-        status_without_assessor = ['With Officer', 'With Assessor']
-        if self.processing_status in status_without_assessor:
-            return False
-        else:
-            if self.assigned_officer:
-                if self.assigned_officer == user:
-                    return self.__assessor_group() in user.applicationassessorgroup_set.all()
-                else:
-                    return False
-            else:
-                return self.__assessor_group() in user.applicationassessorgroup_set.all()
-
     def log_user_action(self, action, request):
         return ApplicationUserAction.log_action(self, action, request.user)
 
@@ -569,14 +567,16 @@ class Application(RevisionedMixin):
                     permissions__codename='licensing_officer',
                     licence_activities__purpose__licence_category__id=self.licence_type_data["id"]
                 )
+                group_users = EmailUser.objects.filter(
+                    groups__id__in=officer_groups.values_list('id', flat=True)
+                ).distinct()
 
                 if self.amendment_requests:
                     self.log_user_action(
                         ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS_SUBMIT.format(
                             self.id), request)
-                    for group in officer_groups:
-                        send_amendment_submit_email_notification(
-                            group.members.all(), self, request)
+                    send_amendment_submit_email_notification(
+                        group_users, self, request)
                 else:
                     # Create a log entry for the application
                     self.log_user_action(
@@ -599,9 +599,9 @@ class Application(RevisionedMixin):
                     # Send email to submitter, then to linked Officer Groups
                     send_application_submitter_email_notification(
                         self, request)
-                    for group in officer_groups:
-                        send_application_submit_email_notification(
-                            group.members.all(), self, request)
+
+                    send_application_submit_email_notification(
+                        group_users, self, request)
 
                     self.documents.all().update(can_delete=False)
 
@@ -1075,10 +1075,10 @@ class Application(RevisionedMixin):
                     current_date = req.due_date
                     # create a first Return
                     try:
-                        returns = Return.objects.get(
+                        Return.objects.get(
                             condition=req, due_date=current_date)
                     except Return.DoesNotExist:
-                        returns = Return.objects.create(
+                        Return.objects.create(
                             application=self,
                             due_date=current_date,
                             processing_status='future',
@@ -1104,7 +1104,7 @@ class Application(RevisionedMixin):
                             # Create the Return
                             if current_date <= licence_expiry:
                                 try:
-                                    returns = Return.objects.get(
+                                    Return.objects.get(
                                         condition=req, due_date=current_date)
                                 except Return.DoesNotExist:
                                     Return.objects.create(
@@ -1403,7 +1403,6 @@ class ApplicationSelectedActivity(models.Model):
     start_date = models.DateField(blank=True, null=True)
     expiry_date = models.DateField(blank=True, null=True)
 
-
     @staticmethod
     def is_valid_status(status):
         return filter(lambda x: x[0] == status,
@@ -1484,8 +1483,6 @@ class ApplicationUserAction(UserAction):
     ACTION_LODGE_APPLICATION = "Lodge application {}"
     ACTION_ASSIGN_TO_OFFICER = "Assign application {} to officer {}"
     ACTION_UNASSIGN_OFFICER = "Unassign officer from application {}"
-    # ACTION_ASSIGN_TO_APPROVER = "Assign application {} to {} as the approver"
-    # ACTION_UNASSIGN_APPROVER = "Unassign approver from application {}"
     ACTION_ACCEPT_ID = "Accept ID"
     ACTION_RESET_ID = "Reset ID"
     ACTION_ID_REQUEST_UPDATE = 'Request ID update'
@@ -1561,7 +1558,7 @@ def search_keywords(search_words, search_application, search_licence, search_ret
                                 'type': 'Application',
                                 'applicant': a.applicant.name,
                                 'text': final_results,
-                                }
+                            }
                             qs.append(res)
                     except BaseException:
                         raise

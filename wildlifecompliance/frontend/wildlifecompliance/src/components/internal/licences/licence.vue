@@ -41,7 +41,7 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <strong>Status</strong><br/>
-                                {{ licence.status }}
+                                {{ licence.status.name }}
                             </div>
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Currently assigned to</strong><br/>
@@ -321,7 +321,7 @@ export default {
       return this.loading.length > 0;
     },
     isFinalised: function(){
-        return this.licence.status == 'With Assesor' || this.licence.status == 'Approved';
+        return this.licence.status.id == 'with_assesor' || this.licence.status.id == 'approved';
     }
   },
   methods: {

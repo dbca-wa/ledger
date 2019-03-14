@@ -219,30 +219,19 @@ export default {
         }
     },
     watch:{
-        hasAssessorMode(){
-            // reload the table
-        }
     },
-    
     computed:{
-        hasAssessorMode(){
-            return this.application.assessor_mode.has_assessor_mode;
-        },
         isIdCheckAccepted: function(){
-            console.log(this.application.id_check_status)
-            return this.application.id_check_status == 'Accepted';
+            return this.application.id_check_status.id == 'accepted';
         },
         isIdNotChecked: function(){
-            console.log(this.application.id_check_status)
-            return this.application.id_check_status == 'Not Checked';
+            return this.application.id_check_status.id == 'not_checked';
         },
         isCharacterCheckAccepted: function(){
-            console.log(this.application.id_check_status)
-            return this.application.character_check_status == 'Accepted';
+            return this.application.character_check_status.id == 'accepted';
         },
         isCharacterNotChecked: function(){
-            console.log(this.application.id_check_status)
-            return this.application.character_check_status == 'Not Checked';
+            return this.application.character_check_status.id == 'not_checked';
         },
     },
     methods:{
@@ -271,10 +260,10 @@ export default {
             console.log('from fetch licence')
             console.log(vm.application.id_check_status)
             for(var i=0, len=vm.proposed_licence.length; i<len; i++){
-                if (vm.proposed_licence[i].proposed_action =='Propose Issue'){
+                if (vm.proposed_licence[i].proposed_action.id =='propose_issue'){
                     final_status="Issue"
                 }
-                if (vm.proposed_licence[i].proposed_action =='Propose Decline'){
+                if (vm.proposed_licence[i].proposed_action.id =='propose_decline'){
                     final_status="Decline"
                 }
                 vm.licence.activity.push({
@@ -285,17 +274,17 @@ export default {
                                         final_status:final_status
                                     })
             }
-            if(vm.application.id_check_status == 'Accepted'){
-                vm.licence.id_check=true
+            if(vm.application.id_check_status.id == 'accepted'){
+                vm.licence.id_check=true;
             }
-            if(vm.application.id_check_status == 'Not Checked'){
-                vm.licence.id_check=false
+            if(vm.application.id_check_status.id == 'not_checked'){
+                vm.licence.id_check=false;
             }
-            if(vm.application.character_check_status == 'Accepted'){
-                vm.licence.character_check=true
+            if(vm.application.character_check_status.id == 'accepted'){
+                vm.licence.character_check=true;
             }
-            if(vm.application.character_check_status == 'Not Checked'){
-                vm.licence.character_check=false
+            if(vm.application.character_check_status.id == 'not_checked'){
+                vm.licence.character_check=false;
             }
         },
         
