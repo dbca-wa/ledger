@@ -120,6 +120,7 @@ DEP_NAME = env(
 DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
 SITE_PREFIX = env('SITE_PREFIX')
 SITE_DOMAIN = env('SITE_DOMAIN')
+GROUP_PREFIX = env('GROUP_PREFIX', 'Wildlife Compliance')
 SITE_URL = env('SITE_URL', 'https://' + SITE_PREFIX + '.' + SITE_DOMAIN)
 EXT_USER_API_ROOT_URL = env('EXT_USER_API_ROOT_URL', None)
 EXCEL_OUTPUT_PATH = env('EXCEL_OUTPUT_PATH')

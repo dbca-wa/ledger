@@ -760,6 +760,8 @@ class OrganisationRequest(models.Model):
             self.__accept(request)
 
     def __accept(self, request):
+        from wildlifecompliance.components.applications.models import ActivityPermissionGroup
+
         # Check if orgsanisation exists in ledger
         ledger_org = None
         try:
@@ -808,13 +810,15 @@ class OrganisationRequest(models.Model):
         # send email to requester
         send_organisation_request_accept_email_notification(self, org, request)
         # Notify other Organisation Access Group members of acceptance.
-        group = OrganisationAccessGroup.objects.first()
-        if group and group.filtered_members.exclude(email=request.user.email):
-            recipients = [
-                c.email for c in group.filtered_members.exclude(
-                    email=request.user.email)]
-            send_organisation_request_accept_admin_email_notification(
-                self, request, recipients)
+        groups = ActivityPermissionGroup.objects.filter(
+            permissions__codename='organisation_access_request'
+        )
+        for group in groups:
+            recipients = [member.email for member in group.members.exclude(
+                          email=request.user.email)]
+            if recipients:
+                send_organisation_request_accept_admin_email_notification(
+                    self, request, recipients)
 
     def amendment_request(self, request):
         with transaction.atomic():
@@ -867,7 +871,7 @@ class OrganisationRequest(models.Model):
         # send_organisation_request_amendment_requested_email_notification(self,
         # org, request)
 
-    def assign_to(self, user, request):
+    def assign_officer(self, user, request):
         with transaction.atomic():
             self.assigned_officer = user
             self.save()
@@ -875,7 +879,7 @@ class OrganisationRequest(models.Model):
                 OrganisationRequestUserAction.ACTION_ASSIGN_TO.format(
                     user.get_full_name()), request)
 
-    def unassign(self, request):
+    def unassign_officer(self, request):
         with transaction.atomic():
             self.assigned_officer = None
             self.save()
@@ -883,6 +887,8 @@ class OrganisationRequest(models.Model):
                 OrganisationRequestUserAction.ACTION_UNASSIGN, request)
 
     def decline(self, request):
+        from wildlifecompliance.components.applications.models import ActivityPermissionGroup
+
         with transaction.atomic():
             self.status = 'declined'
             self.save()
@@ -900,57 +906,33 @@ class OrganisationRequest(models.Model):
                 request)
             send_organisation_request_decline_email_notification(self, request)
             # Notify other members of organisation access group of decline.
-            group = OrganisationAccessGroup.objects.first()
-            if group and group.filtered_members.exclude(
-                    email=request.user.email):
-                recipients = [
-                    c.email for c in group.filtered_members.exclude(
-                        email=request.user.email)]
-                send_organisation_request_decline_admin_email_notification(
-                    self, request, recipients)
+            groups = ActivityPermissionGroup.objects.filter(
+                permissions__codename='organisation_access_request'
+            )
+            for group in groups:
+                recipients = [member.email for member in group.members.exclude(
+                              email=request.user.email)]
+                if recipients:
+                    send_organisation_request_decline_admin_email_notification(
+                        self, request, recipients)
 
     def send_organisation_request_email_notification(self, request):
+        from wildlifecompliance.components.applications.models import ActivityPermissionGroup
+
         # user submits a new organisation request
         # send email to organisation access group
-        group = OrganisationAccessGroup.objects.first()
-        if group and group.filtered_members:
-            org_access_recipients = [m.email for m in group.filtered_members]
-            send_organisation_request_email_notification(
-                self, request, org_access_recipients)
+        groups = ActivityPermissionGroup.objects.filter(
+            permissions__codename='organisation_access_request'
+        )
+        for group in groups:
+            org_access_recipients = [member.email for member in group.members]
+            if org_access_recipients:
+                send_organisation_request_email_notification(
+                    self, request, org_access_recipients)
 
     def log_user_action(self, action, request):
         return OrganisationRequestUserAction.log_action(
             self, action, request.user)
-
-"""
-class OrganisationAccessGroup(models.Model):
-    site = models.OneToOneField(Site, default='1')
-    members = models.ManyToManyField(EmailUser)
-
-    def __str__(self):
-        return 'Organisation Access Group'
-
-    @property
-    def all_members(self):
-        all_members = []
-        all_members.extend(self.members.all())
-        member_ids = [m.id for m in self.members.all()]
-        all_members.extend(
-            EmailUser.objects.filter(
-                is_superuser=True,
-                is_staff=True,
-                is_active=True).exclude(
-                id__in=member_ids))
-        return all_members
-
-    @property
-    def filtered_members(self):
-        return self.members.all()
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-        verbose_name_plural = 'Organisation Access Group'
-"""
 
 
 class OrganisationRequestUserAction(UserAction):

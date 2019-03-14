@@ -44,9 +44,9 @@ class CommunicationsLogEntry(models.Model):
                     ('main', 'Mail'), ('person', 'In Person')]
     DEFAULT_TYPE = TYPE_CHOICES[0][0]
 
-    to = models.CharField(max_length=200, blank=True, verbose_name="To")
+    to = models.TextField(blank=True, verbose_name="To")
     fromm = models.CharField(max_length=200, blank=True, verbose_name="From")
-    cc = models.CharField(max_length=200, blank=True, verbose_name="cc")
+    cc = models.TextField(blank=True, verbose_name="cc")
 
     type = models.CharField(
         max_length=20,

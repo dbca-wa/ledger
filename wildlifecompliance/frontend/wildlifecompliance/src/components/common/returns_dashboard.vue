@@ -130,7 +130,7 @@ export default {
                     {
                         data: "licence",
                         mRender:function (data,type,full) {
-                            return `A${data}`;
+                            return `A${data.name}`;
                         }
                     },
                     {

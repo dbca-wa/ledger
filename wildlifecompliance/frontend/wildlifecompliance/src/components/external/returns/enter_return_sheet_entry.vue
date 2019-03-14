@@ -20,10 +20,10 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-3">
-                                    <label class="control-label pull-left"  for="Name">Number:</label>
+                                    <label class="control-label pull-left"  for="Name">Quantity:</label>
                                 </div>
                                 <div class="col-md-3">
-                                    <input type='text' v-model='entryNumber' >
+                                    <input type='text' v-model='entryQty' >
                                 </div>
                             </div>
                             <div class="row">
@@ -56,7 +56,7 @@
             </div>
             <div slot="footer">
                 <button style="width: 15%;" class="btn btn-primary" @click.prevent="close()">Pay</button>
-                <button style="width: 15%;" class="btn btn-primary" @click.prevent="close()">Cancel</button>
+                <button style="width: 15%;" class="btn btn-primary" @click.prevent="update()">Update</button>
             </div>
         </modal>
     </div>
@@ -91,12 +91,14 @@ export default {
             successString: '',
             success:false,
             entryActivity: '',
-            entryNumber: 0,
+            entryQty: 0,
             entryTotal: 0,
             entryLicence: '',
             entryComment: '',
             currentStock: 0,
             speciesType: '',
+            row_of_data: null,
+            table: null
         }
     },
     computed: {
@@ -111,8 +113,15 @@ export default {
 
     },
     methods:{
-        ok:function () {
+        update:function () {
+            console.log('update function')
             let vm =this;
+            console.log(vm.table.row('#2019/01/31').data())
+         // FIXME: Update parent table.
+         // value = vm.$refs.return_datatable.vmDataTable.row('#2019/01/31').data()
+         // vm.row_of_data['qty'] = 10;
+         // vm.table.row('#2019/01/31').data(vm.row_of_data['qty']).draw();
+            this.isModalOpen = false;
         },
         cancel:function () {
             console.log('cancel function')
@@ -129,6 +138,7 @@ export default {
     mounted:function () {
         console.log('modal Mounted');
         let vm =this;
+        console.log(vm)
         vm.currentStock = vm.entryNumber + vm.entryTotal;
     }
 }

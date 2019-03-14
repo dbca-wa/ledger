@@ -41,7 +41,7 @@
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <strong>Status</strong><br/>
-                                        {{ returns.processing_status }}
+                                        {{ returns.processing_status.name }}
                                     </div>
                                     <div class="col-sm-12 top-buffer-s">
                                         <strong>Currently assigned to</strong><br/>
@@ -201,7 +201,7 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <strong>Status</strong><br/>
-                                {{ compliance.processing_status }}
+                                {{ compliance.processing_status.name }}
                             </div>
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Currently assigned to</strong><br/>
