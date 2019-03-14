@@ -731,7 +731,7 @@ class MakeBookingsView(TemplateView):
                     if len(request.user.mobile_number) > 1:
                        form_context['phone'] = request.user.mobile_number
                     else:
-                       form_context['phone'] = request.user.mobile_number
+                       form_context['phone'] = request.user.phone_number
                 else:
                     form_context['phone'] = request.user.phone_number
                 if  Address.objects.filter(user=request.user).count() > 0:
