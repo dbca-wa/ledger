@@ -8,7 +8,6 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.contrib.auth.models import Group
-from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
@@ -46,12 +45,6 @@ def update_pdf_licence_filename(instance, filename):
 
 def replace_special_chars(input_str, new_char='_'):
     return re.sub('[^A-Za-z0-9]+', new_char, input_str).strip('_').lower()
-
-
-class ApplicationType(models.Model):
-    schema = JSONField()
-    activities = TaggableManager(verbose_name="Activities", help_text="A comma-separated list of activities.")
-    site = models.OneToOneField(Site, default='1')
 
 
 def update_application_comms_log_filename(instance, filename):

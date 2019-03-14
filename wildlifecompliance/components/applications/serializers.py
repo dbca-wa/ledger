@@ -2,7 +2,6 @@ from ledger.accounts.models import EmailUser
 # from wildlifecompliance.components.applications.utils import amendment_requests
 from wildlifecompliance.components.applications.models import (
     Application,
-    ApplicationType,
     ApplicationUserAction,
     ApplicationLogEntry,
     ApplicationCondition,
@@ -51,21 +50,6 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
 
     def get_approve_options(self, obj):
         return [{'label': 'Approved', 'value': 'approved'}, {'label': 'Declined', 'value': 'declined'}]
-
-
-class ApplicationTypeSerializer(serializers.ModelSerializer):
-    activities = serializers.SerializerMethodField()
-
-    class Meta:
-        model = ApplicationType
-        fields = (
-            'id',
-            'schema',
-            'activities'
-        )
-
-    def get_activities(self, obj):
-        return obj.activities.names()
 
 
 class EmailUserSerializer(serializers.ModelSerializer):
