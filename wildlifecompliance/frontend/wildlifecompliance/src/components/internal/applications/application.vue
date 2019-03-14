@@ -201,7 +201,7 @@
                     <div>
                         <ul id="tabs-assessor" class="nav nav-tabs">
                             <li v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && (item1.processing_status.id=='with_officer' || item1.processing_status.id=='with_officer_conditions' || item1.processing_status.id=='with_assessor')" :class="setAssessorTab(index)" @click.prevent="clearSendToAssessorForm()">
-                                <a data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a>
+                                <a data-toggle="tab" :data-activity-tab-id="`${item1.id}`">{{item1.name}}</a>
                             </li>
                         </ul>
                     </div>
@@ -223,7 +223,7 @@
                                                     <label class="control-label pull-left"  for="Name">Assessor Group</label>
                                                     <select class="form-control" v-model="selectedAssessor">
                                                         <option v-for="assessor in assessorGroup" :id="assessor.id"
-                                                        :value="assessor">{{assessor.display_name}}</option>
+                                                        :value="assessor" v-if="isAssessorRelevant(assessor)">{{assessor.display_name}}</option>
                                                     </select>
                                             </div>
                                             <div class="col-sm-2">
@@ -652,7 +652,6 @@ export default {
         return {
             applicantTab: 'applicantTab'+vm._uid,
             applicationTab: 'applicationTab'+vm._uid,
-            taking_fauna: 'taking_fauna'+vm._uid,
             detailsBody: 'detailsBody'+vm._uid,
             identificationBody: 'identificationBody'+vm._uid,
             addressBody: 'addressBody'+vm._uid,
@@ -680,7 +679,6 @@ export default {
             isOfficerConditions:false,
             isFinalViewConditions:false,
             isofficerfinalisation:false,
-            state_options: ['conditions','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             application_assessor_datatable:vm._uid+'assessment-table',
             contacts_options:{
@@ -889,14 +887,14 @@ export default {
         }
     },
     methods: {
-        
+
         eventListeners: function(){
             let vm = this;
-            $("ul#tabs-section").on("click", function (e) {
-                vm.selected_activity_tab_id = e.target.href.split('#')[1];
-                vm.selected_activity_tab_name = e.target.innerText;
+            $("[data-activity-tab-id!=''][data-activity-tab-id]").off("click").on("click", function (e) {
+                vm.selected_activity_tab_id = $(this).data('activity-tab-id');
+                vm.selected_activity_tab_name = $(this).text();
             });
-            $('#tabs-section li:first-child a').click();
+            this.initFirstTab();
             // Listeners for Send to Assessor datatable actions
             if (vm.$refs.assessorDatatable) {
                 for (var i=0; i < vm.$refs.assessorDatatable.length; i++) {
@@ -972,6 +970,12 @@ export default {
                 }
             }
         },
+        initFirstTab: function(force){
+            if(this.selected_activity_tab_id && !force) {
+                return;
+            }
+            $('#tabs-section li:first-child a').click();
+        },
         initialiseOrgContactTable: function(){
             let vm = this;
             if (vm.application && vm.applicantType == 'org' && !vm.contacts_table_initialised){
@@ -986,6 +990,17 @@ export default {
         proposedDecline: function(){
             this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
+        },
+        isAssessorRelevant(assessor, activity_id) {
+            if(!activity_id) {
+                activity_id = this.selected_activity_tab_id;
+            }
+            if(!assessor.licence_activities) {
+                return false;
+            }
+            return assessor.licence_activities.filter(
+                activity => activity.id == activity_id
+            ).length > 0;
         },
         sendtoAssessor: function(item1){
             let vm=this;
@@ -1510,7 +1525,7 @@ export default {
                     columns: [
                         {data:'assessor_group.display_name'},
                         {data:'date_last_reminded'},
-                        {data:'status'},
+                        {data:'status.name'},
                         {
                             mRender:function (data,type,full) {
                                 let links = '';

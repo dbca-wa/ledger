@@ -83,7 +83,7 @@ from '@/utils/hooks'
             }
             else{
                 tabs.map(tsec => {
-                    $('#tabs-section').append(`<li><a data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
+                    $('#tabs-section').append(`<li><a data-toggle="tab" data-activity-tab-id='${tsec.id}'>${tsec.label}</a></li>`);
                 });
 
             }

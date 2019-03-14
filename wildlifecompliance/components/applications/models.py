@@ -486,7 +486,7 @@ class Application(RevisionedMixin):
 
     def set_activity_processing_status(self, activity_id, processing_status):
         if not activity_id:
-            logger.info("Application: %s cannot update processing status (%s) for an empty activity_id!" %
+            logger.error("Application: %s cannot update processing status (%s) for an empty activity_id!" %
                         (self.id, processing_status))
             return
 
