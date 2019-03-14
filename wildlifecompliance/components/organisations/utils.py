@@ -11,7 +11,7 @@ def can_manage_org(organisation, user):
         pass
     if user.is_superuser:
         return True
-    return user.has_perm('organisation_access_request')
+    return user.has_perm('wildlifecompliance.organisation_access_request')
 
 
 def is_last_admin(organisation, user):

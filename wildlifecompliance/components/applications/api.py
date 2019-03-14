@@ -467,6 +467,10 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def assign_to_me(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            user = request.user
+            if user not in instance.licence_officers:
+                raise serializers.ValidationError(
+                    'You are not in any relevant licence officer groups for this application.')
             instance.assign_officer(request, request.user)
             serializer = InternalApplicationSerializer(
                 instance, context={'request': request})
@@ -494,11 +498,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             except EmailUser.DoesNotExist:
                 raise serializers.ValidationError(
                     'A user with the id passed in does not exist')
-
-            if not request.user.has_perm('can_assign_officers'):
+            if not request.user.has_perm('wildlifecompliance.licensing_officer'):
                 raise serializers.ValidationError(
-                    'You are not authorized to assign officers.')
-
+                    'You are not authorised to assign officers to applications')
+            if user not in instance.licence_officers:
+                raise serializers.ValidationError(
+                    'User is not in any relevant licence officer groups for this application')
             instance.assign_officer(request, user)
             serializer = InternalApplicationSerializer(
                 instance, context={'request': request})

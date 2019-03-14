@@ -8,7 +8,6 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.contrib.auth.models import Group
-from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
@@ -46,12 +45,6 @@ def update_pdf_licence_filename(instance, filename):
 
 def replace_special_chars(input_str, new_char='_'):
     return re.sub('[^A-Za-z0-9]+', new_char, input_str).strip('_').lower()
-
-
-class ApplicationType(models.Model):
-    schema = JSONField()
-    activities = TaggableManager(verbose_name="Activities", help_text="A comma-separated list of activities.")
-    site = models.OneToOneField(Site, default='1')
 
 
 def update_application_comms_log_filename(instance, filename):
@@ -363,7 +356,7 @@ class Application(RevisionedMixin):
         """
         :return: True if the application is in one of the editable status.
         """
-        return self.customer_status in self.CUSTOMER_EDITABLE_STATE and self.processing_status == 'draft'
+        return self.customer_status in self.CUSTOMER_EDITABLE_STATE
 
     @property
     def can_user_view(self):
@@ -428,6 +421,25 @@ class Application(RevisionedMixin):
         ).distinct()
 
     @property
+    def officers_and_assessors(self):
+        selected_activity_ids = ApplicationSelectedActivity.objects.filter(
+            application_id=self.id,
+            licence_activity__isnull=False
+        ).values_list('licence_activity__id', flat=True)
+        if not selected_activity_ids:
+            return []
+
+        groups = ActivityPermissionGroup.objects.filter(
+            permissions__codename__in=['licensing_officer',
+                                       'assessor',
+                                       'issuing_officer'],
+            licence_activities__id__in=selected_activity_ids
+        ).values_list('id', flat=True)
+        return EmailUser.objects.filter(
+            groups__id__in=groups
+        ).distinct()
+
+    @property
     def licence_type_short_name(self):
         return self.licence_category
 
@@ -444,10 +456,13 @@ class Application(RevisionedMixin):
         licence_data = serializer.data
         for activity in licence_data['activity']:
             selected_activity = self.get_selected_activity(activity['id'])
-            activity['processing_status'] = get_choice_value(
-                selected_activity.processing_status,
-                self.PROCESSING_STATUS_CHOICES
-            )
+            activity['processing_status'] = {
+                'id': selected_activity.processing_status,
+                'name': get_choice_value(
+                    selected_activity.processing_status,
+                    self.PROCESSING_STATUS_CHOICES
+                )
+            }
         return licence_data
 
     @property
@@ -1468,8 +1483,6 @@ class ApplicationUserAction(UserAction):
     ACTION_LODGE_APPLICATION = "Lodge application {}"
     ACTION_ASSIGN_TO_OFFICER = "Assign application {} to officer {}"
     ACTION_UNASSIGN_OFFICER = "Unassign officer from application {}"
-    # ACTION_ASSIGN_TO_APPROVER = "Assign application {} to {} as the approver"
-    # ACTION_UNASSIGN_APPROVER = "Unassign approver from application {}"
     ACTION_ACCEPT_ID = "Accept ID"
     ACTION_RESET_ID = "Reset ID"
     ACTION_ID_REQUEST_UPDATE = 'Request ID update'

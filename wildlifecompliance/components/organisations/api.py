@@ -548,7 +548,8 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     def datatable_list(self, request, *args, **kwargs):
         try:
             qs = self.get_queryset()
-            serializer = OrganisationRequestDTSerializer(qs, many=True)
+            serializer = OrganisationRequestDTSerializer(
+                qs, many=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -583,7 +584,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     def get_pending_requests(self, request, *args, **kwargs):
         try:
             qs = self.get_queryset().filter(requester=request.user, status='with_assessor')
-            serializer = OrganisationRequestDTSerializer(qs, many=True)
+            serializer = OrganisationRequestDTSerializer(qs, many=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -600,7 +601,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
         try:
             qs = self.get_queryset().filter(
                 requester=request.user, status='amendment_requested')
-            serializer = OrganisationRequestDTSerializer(qs, many=True)
+            serializer = OrganisationRequestDTSerializer(qs, many=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -613,27 +614,64 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET', ])
-    def assign_request_user(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object(requester=request.user)
-            serializer = OrganisationRequestSerializer(instance)
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['GET', ])
-    def unassign(self, request, *args, **kwargs):
+    def assign_to_me(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            instance.unassign(request)
-            serializer = OrganisationRequestSerializer(instance)
+            user = request.user
+            if not request.user.has_perm('wildlifecompliance.organisation_access_request'):
+                raise serializers.ValidationError(
+                    'You do not have permission to process organisation access requests')
+            instance.assign_officer(request.user, request)
+            serializer = OrganisationRequestSerializer(
+                instance, context={'request': request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    def assign_officer(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            user_id = request.data.get('officer_id', None)
+            user = None
+            if not user_id:
+                raise serializers.ValiationError('An officer id is required')
+            try:
+                user = EmailUser.objects.get(id=user_id)
+            except EmailUser.DoesNotExist:
+                raise serializers.ValidationError(
+                    'A user with the id passed in does not exist')
+            if not request.user.has_perm('wildlifecompliance.organisation_access_request'):
+                raise serializers.ValidationError(
+                    'You do not have permission to process organisation access requests')
+            instance.assign_officer(user, request)
+            serializer = OrganisationRequestSerializer(
+                instance, context={'request': request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET', ])
+    def unassign_officer(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.unassign_officer(request)
+            serializer = OrganisationRequestSerializer(
+                instance, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -650,7 +688,8 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             instance.accept(request)
-            serializer = OrganisationRequestSerializer(instance)
+            serializer = OrganisationRequestSerializer(
+                instance, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -667,7 +706,8 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             instance.amendment_request(request)
-            serializer = OrganisationRequestSerializer(instance)
+            serializer = OrganisationRequestSerializer(
+                instance, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -685,7 +725,8 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             instance.reupload_identification_amendment_request(request)
-            serializer = OrganisationRequestSerializer(instance, partial=True)
+            serializer = OrganisationRequestSerializer(
+                instance, partial=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -702,33 +743,8 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             instance.decline(request)
-            serializer = OrganisationRequestSerializer(instance)
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['POST', ])
-    def assign_to(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            user_id = request.data.get('user_id', None)
-            user = None
-            if not user_id:
-                raise serializers.ValiationError('A user id is required')
-            try:
-                user = EmailUser.objects.get(id=user_id)
-            except EmailUser.DoesNotExist:
-                raise serializers.ValidationError(
-                    'A user with the id passed in does not exist')
-            instance.assign_to(user, request)
-            serializer = OrganisationRequestSerializer(instance)
+            serializer = OrganisationRequestSerializer(
+                instance, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
