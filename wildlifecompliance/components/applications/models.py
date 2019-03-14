@@ -5,13 +5,13 @@ import logging
 import re
 from django.db import models, transaction
 from django.db.models.signals import pre_delete
+from django.db.models.query import QuerySet
 from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
-from taggit.managers import TaggableManager
 
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.payments.invoice.models import Invoice
@@ -77,6 +77,27 @@ class ActivityPermissionGroup(Group):
         return EmailUser.objects.filter(
             groups__id=self.id
         ).distinct()
+
+    @staticmethod
+    def get_groups_for_activities(activities, codename):
+        """
+        Find matching ActivityPermissionGroups for a list of activities, activity ID or a LicenceActivity instance.
+        :return: ActivityPermissionGroup QuerySet
+        """
+        from wildlifecompliance.components.licences.models import LicenceActivity
+
+        if isinstance(activities, LicenceActivity):
+            activities = [activities.id]
+
+        groups = ActivityPermissionGroup.objects.filter(
+            licence_activities__id__in=activities if isinstance(
+                activities, (list, QuerySet)) else [activities]
+        )
+        if isinstance(codename, list):
+            groups = groups.filter(permissions__codename__in=codename)
+        else:
+            groups = groups.filter(permissions__codename=codename)
+        return groups.distinct()
 
 
 class ApplicationDocument(Document):
@@ -487,7 +508,7 @@ class Application(RevisionedMixin):
     def set_activity_processing_status(self, activity_id, processing_status):
         if not activity_id:
             logger.error("Application: %s cannot update processing status (%s) for an empty activity_id!" %
-                        (self.id, processing_status))
+                         (self.id, processing_status))
             return
 
         selected_activity = self.get_selected_activity(activity_id)
@@ -512,7 +533,7 @@ class Application(RevisionedMixin):
 
     def get_permission_groups(self, codename):
         """
-        :return: queryset of ActivityPermissionGroups matching the current application by activity IDs 
+        :return: queryset of ActivityPermissionGroups matching the current application by activity IDs
         """
         selected_activity_ids = ApplicationSelectedActivity.objects.filter(
             application_id=self.id,
@@ -521,14 +542,7 @@ class Application(RevisionedMixin):
         if not selected_activity_ids:
             return ActivityPermissionGroup.objects.none()
 
-        groups = ActivityPermissionGroup.objects.filter(
-            licence_activities__id__in=selected_activity_ids
-        )
-        if isinstance(codename, list):
-            groups = groups.filter(permissions__codename__in=codename)
-        else:
-            groups = groups.filter(permissions__codename=codename)
-        return groups.distinct()
+        return ActivityPermissionGroup.get_groups_for_activities(selected_activity_ids, codename)
 
     def log_user_action(self, action, request):
         return ApplicationUserAction.log_action(self, action, request.user)

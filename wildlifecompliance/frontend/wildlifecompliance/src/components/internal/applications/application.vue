@@ -973,6 +973,7 @@ export default {
             this.$refs.send_to_assessor.assessment.licence_activity=item1;
             this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id;
             this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.display_name;
+            this.$refs.send_to_assessor.assessment.licence_activity=this.selected_activity_tab_id;
             this.$refs.send_to_assessor.assessment.text='';
             if (typeof this.selectedAssessor.id == 'undefined' || typeof this.selectedAssessor.display_name == 'undefined'){
               swal(
@@ -992,7 +993,7 @@ export default {
             if(typeof(status_list) !== 'object') {
                 status_list = [status_list];
             }
-            const activities_list = this.application.licence_type_data.activity
+            const activities_list = this.application.licence_type_data.activity;
             return activities_list.filter(activity =>
                 status_list.includes(activity.processing_status.id)
             ).length >= status_count;

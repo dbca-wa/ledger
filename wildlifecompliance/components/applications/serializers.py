@@ -126,6 +126,20 @@ class SaveAssessmentSerializer(serializers.ModelSerializer):
             'text',
             'licence_activity')
 
+    def validate(self, data):
+        licence_activity = data.get('licence_activity')
+        assessor_group = data.get('assessor_group')
+        if not licence_activity:
+            raise serializers.ValidationError("No licence activity supplied!")
+
+        group_match = ActivityPermissionGroup.get_groups_for_activities(
+            licence_activity, 'assessor').filter(id=assessor_group.id).first()
+        if not group_match:
+            raise serializers.ValidationError("Invalid group (ID: %s) selected to assess activity ID: %s" % (
+                assessor_group, licence_activity))
+
+        return data
+
 
 class AmendmentRequestSerializer(serializers.ModelSerializer):
     reason = CustomChoiceField()
