@@ -295,8 +295,8 @@ class Schema:
         #     print(SchemaField(f))
         self.fields = [SchemaField(f) for f in self.schema_model.fields]
         self.species_fields = self.find_species_fields(self)
-        for f in self.fields:
-            print(f.name)
+        #for f in self.fields:
+        #    print(f.name)
 
     # implement some dict like methods
     def __getitem__(self, item):
