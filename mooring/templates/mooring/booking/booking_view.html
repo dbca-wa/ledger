@@ -49,11 +49,7 @@
                     <b>Payment status:</b>
                 </div>
                 <div class="col-sm-8">
-                    {% if booking.status == 'Over Paid' %}
-                        Paid
-                    {% else %}
-                        {{ booking.status }}
-                    {% endif %} 
+                    {{ booking.invoice_status }}
                 </div>
             </div><div class="row"><div class="col-sm-12" style="margin-top: 1em">
                 {% if booking.status == 'Paid' or booking.status == 'Over Paid' %}

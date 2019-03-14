@@ -296,7 +296,7 @@ def send_booking_confirmation(booking,request,context_processor):
         subject = "Your mooring booking and admissions confirmation"
         att2 = BytesIO()
         admissionsBooking = AdmissionsBooking.objects.get(id=booking.admission_payment.id)
-        pdf.create_admissions_confirmation(att2, admissionsBooking)
+        pdf.create_admissions_confirmation(att2, admissionsBooking, context_processor)
         att2.seek(0)
         filename = 'confirmation-AD{}.pdf'.format(admissionsBooking.id)
         sendHtmlEmail([email],subject,context,template,cc,bcc,from_email,template_group,attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf'), (filename, att2.read(), 'application/pdf')])
