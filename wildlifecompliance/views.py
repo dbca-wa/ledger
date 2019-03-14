@@ -94,6 +94,7 @@ def first_time(request):
         context['redirect_url'] = '/'
     context['dev'] = settings.DEV_STATIC
     context['dev_url'] = settings.DEV_STATIC_URL
+    context['app_build_url'] = settings.DEV_APP_BUILD_URL
     return render(request, 'wildlifecompliance/dash/index.html', context)
 
 

@@ -54,7 +54,7 @@
                             <div class="panel-body panel-collapse collapse in" :id="panelBody">
                                 <form class="form-horizontal" action="index.html" method="post">
                                     <div class="col-sm-12">
-                                        <button v-if="hasAssessorMode" @click.prevent="addCondition()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Condition</button>
+                                        <button @click.prevent="addCondition()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Condition</button>
                                     </div>
                                     <datatable ref="conditions_datatable" :id="'conditions-datatable-'+_uid" :dtOptions="condition_options" :dtHeaders="condition_headers"/>
                                 </form>
@@ -130,11 +130,6 @@ export default {
                     },
                     {
                         mRender:function (data,type,full) {
-                            let links = '';
-                            // if (vm.application.assessor_mode.has_assessor_mode){
-                            //     links +=  `<a href='#' class="editCondition" data-id="${full.id}">Edit</a><br/>`;
-                            //     links +=  `<a href='#' class="deleteCondition" data-id="${full.id}">Delete</a><br/>`;
-                            // }
                             links +=  `<a href='#' class="editCondition" data-id="${full.id}">Edit</a><br/>`;
                             links +=  `<a href='#' class="deleteCondition" data-id="${full.id}">Delete</a><br/>`;
                             return links;
@@ -145,10 +140,6 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             // TODO check permission to change the order
-                            // if (vm.application.assessor_mode.has_assessor_mode){
-                            //     links +=  `<a class="dtMoveUp" data-id="${full.id}" href='#'><i class="fa fa-angle-up fa-2x"></i></a><br/>`;
-                            //     links +=  `<a class="dtMoveDown" data-id="${full.id}" href='#'><i class="fa fa-angle-down fa-2x"></i></a><br/>`;
-                            // }
                             links +=  `<a class="dtMoveUp" data-id="${full.id}" href='#'><i class="fa fa-angle-up"></i></a><br/>`;
                             links +=  `<a class="dtMoveDown" data-id="${full.id}" href='#'><i class="fa fa-angle-down"></i></a><br/>`;
                             return links;
@@ -171,19 +162,12 @@ export default {
         }
     },
     watch:{
-        hasAssessorMode(){
-            // reload the table
-            this.updatedConditions();
-        }
     },
     components:{
         datatable,
         ConditionDetail
     },
     computed:{
-        hasAssessorMode(){
-            return this.application.assessor_mode.has_assessor_mode;
-        }
     },
     methods:{
         addCondition(){

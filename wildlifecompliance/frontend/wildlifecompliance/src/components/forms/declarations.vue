@@ -9,7 +9,7 @@
             <p class="help-block">{{ help_text }}</p>
         </template>
         <template v-if="help_text_url">
-            <HelpTextUrl  :help_text_url="help_text_assessor_url" assessorMode={assessorMode} isForAssessor={true} />
+            <HelpTextUrl  :help_text_url="help_text_assessor_url" />
         </template> 
     </div>
 </template>

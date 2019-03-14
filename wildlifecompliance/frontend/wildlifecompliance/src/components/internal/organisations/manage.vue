@@ -317,7 +317,7 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             let name = full.first_name + ' ' + full.last_name;
-                            if (full.user_status =='Draft' ){
+                            if (full.user_status.id == 'draft' ){
                                 links +=  `<a data-email='${full.email}' data-name='${name}' data-id='${full.id}' class="remove-contact">Remove</a><br/>`;
                             }
                             return links;
