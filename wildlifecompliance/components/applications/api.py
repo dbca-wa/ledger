@@ -16,8 +16,7 @@ from django.shortcuts import redirect
 from wildlifecompliance.components.applications.utils import (
     SchemaParser,
     MissingFieldsException,
-    get_activity_schema,
-    save_assess_data
+    get_activity_schema
 )
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
@@ -716,21 +715,21 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['post'])
-    @renderer_classes((JSONRenderer,))
-    def assess_save(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            save_assess_data(instance, request, self)
-            return redirect(reverse('external'))
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+    # @detail_route(methods=['post'])
+    # @renderer_classes((JSONRenderer,))
+    # def assess_save(self, request, *args, **kwargs):
+    #     try:
+    #         instance = self.get_object()
+    #         save_assess_data(instance, request, self)
+    #         return redirect(reverse('external'))
+    #     except serializers.ValidationError:
+    #         print(traceback.print_exc())
+    #         raise
+    #     except ValidationError as e:
+    #         raise serializers.ValidationError(repr(e.error_dict))
+    #     except Exception as e:
+    #         print(traceback.print_exc())
+    #         raise serializers.ValidationError(str(e))
 
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
