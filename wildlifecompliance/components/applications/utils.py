@@ -510,103 +510,103 @@ class SpecialFieldsSearch(object):
         return item_data
 
 
-def save_assess_data(instance,request,viewset):
-
-    if instance.processing_status == instance.PROCESSING_STATUS_DRAFT:
-        return
-
-    can_process = True if request.data.has_key('action') and request.data['action'] == 'process' else False
-
-    def get_kv_pair(key_substring):
-        # check if substring is part of dict key, and return key,value if so
-        return [{key:value} for key, value in request.data.items() if key_substring in key]
-
-    with transaction.atomic():
-        try:
-            #import ipdb; ipdb.set_trace()
-            #instance.licences.all().last().licence_sequence
-            new_app = True
-            for activity in instance.activities:
-                code = LicencePurpose.objects.get(name=activity.activity_name).code.lower()
-                activity.purpose = request.data[code + '_purpose']
-                activity.additional_info = request.data[code + '_additional_info']
-                if request.data.has_key(code + '_standard_advanced'):
-                    activity.advanced = True if request.data[code + '_standard_advanced'] == 'on' else False
-                else:
-                    activity.advanced = False
-
-                activity.conditions = request.data[code + '_conditions']
-                activity.issue_date = datetime.strptime(request.data[code + '_issue_date'], "%d/%m/%Y") if request.data[code + '_issue_date'] else None
-                activity.start_date = datetime.strptime(request.data[code + '_start_date'], "%d/%m/%Y") if request.data[code + '_start_date'] else None
-                activity.expiry_date = datetime.strptime(request.data[code + '_expiry_date'], "%d/%m/%Y") if request.data[code + '_expiry_date'] else None
-                if request.data.has_key(code + '_to_be_issued'):
-                    activity.to_be_issued = True if request.data[code + '_to_be_issued'] == 'on' else False
-                else:
-                    activity.to_be_issued = False
-                if request.data.has_key(code + '_processed'):
-                    activity.processed = True if request.data[code + '_processed'] == 'on' else False
-                else:
-                    activity.processed = False
-
-                # check if table exists and save possibly updated/overriden data
-                element_types = ['_table_', '_text_area_', '_text_']
-                for element_type in element_types:
-                    for kv_pair in get_kv_pair(code + element_type):
-                        for k,v in kv_pair.iteritems():
-                            if not (element_type == '_text_' and 'text_area' in k): # hack to allow strip() to work below
-                                name = k.strip(code + element_type)
-                                if 'comment-field' not in name:
-                                    #import ipdb; ipdb.set_trace()
-                                    activity.data[0]['editable'][name]['answer'] = request.data[k]
-
-#                for kv_pair in get_kv_pair(code+'_text_area_'):
-#                    for k,v in kv_pair.iteritems():
-#                        name = k.strip(code+'_text_area_')
-#                        if 'comment-field' not in name:
-#                            activity.data[0]['editable'][name]['answer'] = request.data[k]
+# def save_assess_data(instance,request,viewset):
 #
-#                for kv_pair in get_kv_pair(code+'_text_'):
-#                    for k,v in kv_pair.iteritems():
-#                        name = k.strip(code+'_text_')
-#                        if 'comment-field' not in name:
-#                            activity.data[0]['editable'][name]['answer'] = request.data[k]
+#     if instance.processing_status == instance.PROCESSING_STATUS_DRAFT:
+#         return
+#
+#     can_process = True if request.data.has_key('action') and request.data['action'] == 'process' else False
+#
+#     def get_kv_pair(key_substring):
+#         # check if substring is part of dict key, and return key,value if so
+#         return [{key:value} for key, value in request.data.items() if key_substring in key]
+#
+#     with transaction.atomic():
+#         try:
+#             #import ipdb; ipdb.set_trace()
+#             #instance.licences.all().last().licence_sequence
+#             new_app = True
+#             for activity in instance.activities:
+#                 code = LicencePurpose.objects.get(name=activity.activity_name).code.lower()
+#                 activity.purpose = request.data[code + '_purpose']
+#                 activity.additional_info = request.data[code + '_additional_info']
+#                 if request.data.has_key(code + '_standard_advanced'):
+#                     activity.advanced = True if request.data[code + '_standard_advanced'] == 'on' else False
+#                 else:
+#                     activity.advanced = False
+#
+#                 activity.conditions = request.data[code + '_conditions']
+#                 activity.issue_date = datetime.strptime(request.data[code + '_issue_date'], "%d/%m/%Y") if request.data[code + '_issue_date'] else None
+#                 activity.start_date = datetime.strptime(request.data[code + '_start_date'], "%d/%m/%Y") if request.data[code + '_start_date'] else None
+#                 activity.expiry_date = datetime.strptime(request.data[code + '_expiry_date'], "%d/%m/%Y") if request.data[code + '_expiry_date'] else None
+#                 if request.data.has_key(code + '_to_be_issued'):
+#                     activity.to_be_issued = True if request.data[code + '_to_be_issued'] == 'on' else False
+#                 else:
+#                     activity.to_be_issued = False
+#                 if request.data.has_key(code + '_processed'):
+#                     activity.processed = True if request.data[code + '_processed'] == 'on' else False
+#                 else:
+#                     activity.processed = False
+#
+#                 # check if table exists and save possibly updated/overriden data
+#                 element_types = ['_table_', '_text_area_', '_text_']
+#                 for element_type in element_types:
+#                     for kv_pair in get_kv_pair(code + element_type):
+#                         for k,v in kv_pair.iteritems():
+#                             if not (element_type == '_text_' and 'text_area' in k): # hack to allow strip() to work below
+#                                 name = k.strip(code + element_type)
+#                                 if 'comment-field' not in name:
+#                                     #import ipdb; ipdb.set_trace()
+#                                     activity.data[0]['editable'][name]['answer'] = request.data[k]
+#
+# #                for kv_pair in get_kv_pair(code+'_text_area_'):
+# #                    for k,v in kv_pair.iteritems():
+# #                        name = k.strip(code+'_text_area_')
+# #                        if 'comment-field' not in name:
+# #                            activity.data[0]['editable'][name]['answer'] = request.data[k]
+# #
+# #                for kv_pair in get_kv_pair(code+'_text_'):
+# #                    for k,v in kv_pair.iteritems():
+# #                        name = k.strip(code+'_text_')
+# #                        if 'comment-field' not in name:
+# #                            activity.data[0]['editable'][name]['answer'] = request.data[k]
+#
+#                 #import ipdb; ipdb.set_trace()
+#                 if can_process and activity.to_be_issued and not activity.processed:
+#                     # create licences
+#                     activity.processed = True
+#                     if not activity.data:
+#                         activity.data = [add_editable_items(activity)]
+#
+#                     create_licence(instance, activity, new_app)
+#                     new_app = False
+#
+#                 #activity.data = [add_editable_items(activity)]
+#                 activity.save()
+#                 #import ipdb; ipdb.set_trace()
+#
+#             if instance.licences.count() == instance.activities.count():
+#                 instance.customer_status = 'accepted'
+#                 instance.processing_status = 'approved'
+#             elif instance.licences.count() == 0:
+#                 instance.customer_status = 'declined'
+#                 instance.processing_status = 'declined'
+#             else:
+#                 instance.customer_status = 'partially_accepted'
+#                 instance.processing_status = 'partially_approved'
+#
+#         except:
+#             raise
+#
+#     #import ipdb; ipdb.set_trace()
+#     if can_process and instance.processing_status != 'declined':
+#         pdflatex(request, instance)
+#
+#     return
 
-                #import ipdb; ipdb.set_trace()
-                if can_process and activity.to_be_issued and not activity.processed:
-                    # create licences
-                    activity.processed = True
-                    if not activity.data:
-                        activity.data = [add_editable_items(activity)]
 
-                    create_licence(instance, activity, new_app)
-                    new_app = False
-
-                #activity.data = [add_editable_items(activity)]
-                activity.save()
-                #import ipdb; ipdb.set_trace()
-
-            if instance.licences.count() == instance.activities.count():
-                instance.customer_status = 'accepted'
-                instance.processing_status = 'approved'
-            elif instance.licences.count() == 0:
-                instance.customer_status = 'declined'
-                instance.processing_status = 'declined'
-            else:
-                instance.customer_status = 'partially_accepted'
-                instance.processing_status = 'partially_approved'
-
-        except:
-            raise
-
-    #import ipdb; ipdb.set_trace()
-    if can_process and instance.processing_status != 'declined':
-        pdflatex(request, instance)
-
-    return
-
-
-def add_editable_items(activity):
-    return {'editable': get_activity_sys_answers(activity)}
+# def add_editable_items(activity):
+#     return {'editable': get_activity_sys_answers(activity)}
 
 
 def get_activity_schema(activity_ids):

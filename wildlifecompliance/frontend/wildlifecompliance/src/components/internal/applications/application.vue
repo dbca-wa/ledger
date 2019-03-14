@@ -145,18 +145,18 @@
                     <LicenceScreen :application="application"/>
                 </template>
                 <template v-if="isofficerfinalisation">
-                    <IssueLicence :application="application" :licence_activity_tab="selected_assessment_tab"/>
+                    <IssueLicence :application="application" :licence_activity_tab="selected_activity_tab_id"/>
                 </template>
                 <template v-if="showingConditions">
                     <div v-for="item in application.licence_type_data">
                         <ul class="nav nav-tabs" id="conditiontabs">
-                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status.id=='with_assessor' && item1.id == selected_assessment_tab" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}</a></li>
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status.id=='with_assessor' && item1.id == selected_activity_tab_id" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}</a></li>
                         </ul>
                     </div>
                     <div  class="tab-content">
                         <div v-for="item in application.licence_type_data">
-                            <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status.id=='with_assessor' && item1.id == selected_assessment_tab" :id="`${item1.id}`" class="tab-pane fade in">
-                                <Conditions :application="application" :licence_activity_tab="selected_assessment_tab"/>
+                            <div v-for="(item1,index) in item" v-if="item1.name && item1.processing_status.id=='with_assessor' && item1.id == selected_activity_tab_id" :id="`${item1.id}`" class="tab-pane fade in">
+                                <Conditions :application="application" :licence_activity_tab="selected_activity_tab_id"/>
                             </div>
                         </div>
                     </div>
@@ -665,9 +665,10 @@ export default {
             "application": null,
             "original_application": null,
             "loading": [],
-            selected_assessment_tab:null,
-            selected_assessment_id:null,
             selected_activity_tab_id:null,
+            selected_activity_tab_name:null,
+            selected_activity_assessortab_id:null,
+            selected_activity_assessortab_name:null,
             form: null,
             department_users : [],
             // activity_data:[],
@@ -682,7 +683,6 @@ export default {
             state_options: ['conditions','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             application_assessor_datatable:vm._uid+'assessment-table',
-            selected_assesment_index:0,
             contacts_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -752,13 +752,10 @@ export default {
         applicationIsDraft: function(){
             return this.application.processing_status.id == 'draft';
         },
-        selectedTabId: function(){
-            return this.selected_activity_tab_id;
-        },
         selectedActivity: function(){
             var activities_list = this.application.licence_type_data.activity
             for(var i=0;i<activities_list.length;i++){
-                if(activities_list[i].id == this.selectedTabId){
+                if(activities_list[i].id == this.selected_activity_tab_id){
                     return activities_list[i];
                 }
             }
@@ -791,7 +788,7 @@ export default {
             return false;
         },
         canReturnToConditions: function(){
-            return this.selectedTabId && this.selectedActivity.processing_status.id == 'with_officer_finalisation' ? true : false;
+            return this.selected_activity_tab_id && this.selectedActivity.processing_status.id == 'with_officer_finalisation' ? true : false;
         },
         canOfficerReviewConditions: function(){
             var activities_list = this.application.licence_type_data.activity
@@ -812,7 +809,7 @@ export default {
             return false;
         },
         canCompleteAssessment: function(){
-            return this.selectedTabId && this.selectedActivity.processing_status.id == 'with_assessor' ? true : false;
+            return this.selected_activity_tab_id && this.selectedActivity.processing_status.id == 'with_assessor' ? true : false;
         },
         contactsURL: function(){
             return this.application!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.application.org_applicant.id+'/contacts') : '';
@@ -895,7 +892,11 @@ export default {
         
         eventListeners: function(){
             let vm = this;
-
+            $("ul#tabs-section").on("click", function (e) {
+                vm.selected_activity_tab_id = e.target.href.split('#')[1];
+                vm.selected_activity_tab_name = e.target.innerText;
+            });
+            $('#tabs-section li:first-child a').click();
             // Listeners for Send to Assessor datatable actions
             if (vm.$refs.assessorDatatable) {
                 for (var i=0; i < vm.$refs.assessorDatatable.length; i++) {
@@ -1017,8 +1018,8 @@ export default {
             var selectedTabTitle = $("#tabs-section li.active");
             // var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
-            
-            this.$refs.proposed_licence.propose_issue.licence_activity_id=tab_id
+
+            this.$refs.proposed_licence.propose_issue.licence_activity_id=vm.selected_activity_tab_id
             this.$refs.proposed_licence.propose_issue.licence_activity_name=selectedTabTitle.text();
             this.$refs.proposed_licence.isModalOpen = true;
         },
@@ -1123,18 +1124,13 @@ export default {
             let values = '';
             var activity_name=[];
             var activity_id=[];
-            var selectedTabTitle;
 
             $('.deficiency').each((i,d) => {
                 values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n`: '';
             });
 
-            selectedTabTitle = $("#tabs-section li.active");
-            vm.tab_name = $(selectedTabTitle).text();
-            vm.tab_id = selectedTabTitle.children().attr('href').split('#')[1];
-
-            activity_id.push(vm.tab_id);
-            activity_name.push(vm.tab_name);
+            activity_id.push(vm.selected_activity_tab_id);
+            activity_name.push(vm.selected_activity_tab_name);
 
             vm.$refs.amendment_request.amendment.text = values;
             vm.$refs.amendment_request.amendment.activity_name = activity_name;
@@ -1157,7 +1153,11 @@ export default {
             vm.showingApplication = false;
             vm.showingConditions = false;
             setTimeout(function(){
-                $('#tabs-assessor li:first-child a')[0].click();
+                $("ul#tabs-assessor").on("click", function (e) {
+                    vm.selected_activity_assessortab_id = e.target.href.split('#')[1];
+                    vm.selected_activity_assessortab_name = e.target.innerText;
+                });
+                $('#tabs-assessor li:first-child a').click();
             }, 50);
             vm.fetchAssessorGroup();
         },
@@ -1209,9 +1209,6 @@ export default {
             this.isOfficerConditions=false;
             this.isFinalViewConditions=false;
             this.assessmentComplete=false;
-            var selectedTabTitle = $("#tabs-section li.active");
-            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
-            this.selected_assessment_tab=tab_id
             setTimeout(function(){
                 $('#conditiontabs li a')[0].click();
             }, 50);
@@ -1233,9 +1230,6 @@ export default {
             this.isOfficerConditions=true;
             this.isFinalViewConditions=false;
             this.assessmentComplete=false;
-            var selectedTabTitle = $("#tabs-section li.active");
-            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
-            this.selected_assessment_tab=tab_id
             setTimeout(function(){
                 $('#conditiontabs li a')[0].click();
             }, 50);
@@ -1248,9 +1242,6 @@ export default {
             this.isOfficerConditions=false;
             this.isFinalViewConditions=true;
             this.assessmentComplete=false;
-            var selectedTabTitle = $("#tabs-section li.active");
-            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
-            this.selected_assessment_tab=tab_id
             setTimeout(function(){
                 $('#conditiontabs li a')[0].click();
             }, 50);
@@ -1265,12 +1256,7 @@ export default {
             let vm = this;
             let data = new FormData();
 
-            var selectedTabTitle = $("li.active");
-            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
-            
-            vm.selected_assessment_tab=tab_id
-
-            data.selected_assessment_tab=vm.selected_assessment_tab
+            data.selected_assessment_tab=vm.selected_activity_assessortab_id
             data.application_id=vm.application_id
             
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/complete_assessment')),JSON.stringify(data),{emulateJSON:true})
