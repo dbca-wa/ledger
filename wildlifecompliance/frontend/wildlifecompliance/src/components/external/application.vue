@@ -91,48 +91,15 @@ export default {
       amendment_request: [],
       amendment_request_id:[],
       application_readonly: true,
+      selected_activity_tab_id: null,
+      selected_activity_tab_name: null,
       pBody: 'pBody',
       application_customer_status_onload: {},
  	  missing_fields: [],
-      //current_tab_id: null,
-      //current_tab: '',
-      //previous_tab: '',
     }
   },
   components: {
     Application
-  },
-  /*
-  watch: {
-    // whenever current_tab changes, this function will run
-    currentTab: function () {
-        // The on tab shown event
-        $('.nav-tabs a').on('shown.bs.tab', function (e) {
-            alert('Tab has changed');
-            //vm.current_tab = e.target;
-            //vm.previous_tab = e.relatedTarget;
-            vm.current_tab_id = parseInt(e.target.href.split('#')[1]);
-        });        
-    }
-  },
-  */
-    watch: {
-        // whenever current_tab changes, this function will run
-        //tabID: function () {
-        //current_tab: function () {
-        tab_changed: function () {
-            let vm = this;
-            // The on tab shown event
-            $('.nav-tabs a').on('shown.bs.tab', function (e) {
-                console.log('Tab has changed: ***' );
-                vm.currentTab = $("ul#tabs-section li.active")[0].textContent;
-                console.log('Tab has changed: ' + vm.currentTab + ' - ' + vm.tabID);
-            });
-        }    
-    },
-
-  created: function () {
-    this.debouncedTabChange = _.debounce(this.get_current_tab, 500)
   },
   computed: {
     isLoading: function() {
@@ -147,26 +114,19 @@ export default {
     requiresCheckout: function() {
         return this.application.application_fee > 0 && this.application_customer_status_onload.id == 'draft'
     },
-    tab_changed: function() {
-      return this.current_tab;
-    },
   },
   methods: {
-    getSelectedTab: function(obj) {
-        alert('Selected Tab Event');
-    },
-    get_current_tab: function() {
-        /*
-        vm.previous_tab = vm.current_tab
-        vm.current_tab = $("ul#tabs-section li.active")[0].textContent
-        return vm.current_tab;
-        */
-        return $("ul#tabs-section li.active")[0].textContent
+    eventListeners: function(){
+        let vm = this;
+        $("ul#tabs-section").on("click", function (e) {
+            vm.selected_activity_tab_id = e.target.href.split('#')[1];
+            vm.selected_activity_tab_name = e.target.innerText;
+        });
+        $('#tabs-section li:first-child a').click();
     },
     saveExit: function(e) {
       let vm = this;
       let formData = new FormData(vm.form);
-      console.log(formData)
       vm.$http.post(vm.application_form_url,formData).then(res=>{
           swal(
             'Saved',
@@ -205,7 +165,6 @@ export default {
         
     },
     setdata: function(readonly){
-      console.log('from setdata')
       this.application_readonly = readonly;
     },
     splitText: function(aText){
@@ -213,8 +172,6 @@ export default {
       newText = aText.split("\n");
       return newText;
     },
-
-
     highlight_missing_fields: function(){
         for (const missing_field of this.missing_fields) {
             $("#id_" + missing_field.name).css("color", 'red');
@@ -227,9 +184,7 @@ export default {
     },
     submit: function(){
         let vm = this;
-        console.log('SUBMIT VM FORM and CHECKOUT');
         let formData = new FormData(vm.form);
-
         let swal_title = 'Submit Application'
         let swal_html = 'Are you sure you want to submit this application?'
         if (vm.requiresCheckout) {
@@ -267,7 +222,7 @@ export default {
                         });
                     }
                 },err=>{
-                    console.log("Error details: ", err);
+                    console.log(err);
                     if(err.body.missing) {
                       this.missing_fields = err.body.missing;
                       this.highlight_missing_fields();
@@ -286,32 +241,19 @@ export default {
     },
     fetchAmendmentRequest: function(){
       let vm= this
-      console.log("before fetch")
       Vue.http.get(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/amendment_request')).then((res) => {
-                // console.log("AMENDMENT REQUEST")
-                  console.log("inside fetch amendment request")
-                  vm.setAmendmentData(res.body);
-              },err=>{
-                      
-                  });
-
+          vm.setAmendmentData(res.body);
+      },err=>{
+      });
     },
-
   },
-  
   mounted: function() {
     let vm = this;
-    //vm.current_tab = vm.get_current_tab();
     vm.form = document.forms.new_application;
-
   },
-
   beforeRouteEnter: function(to, from, next) {
     if (to.params.application_id) {
       let vm= this;
-         
-
-         console.log("before fetch application")
       Vue.http.get(`/api/application/${to.params.application_id}.json`).then(res => {
           next(vm => {
             vm.loading.push('fetching application')
@@ -340,7 +282,13 @@ export default {
           console.log(err);
         });
     }
-  }
+  },
+  updated: function(){
+    let vm = this;
+    this.$nextTick(() => {
+        vm.eventListeners();
+    });
+  },
 }
 </script>
 

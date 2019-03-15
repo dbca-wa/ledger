@@ -851,7 +851,6 @@ export default {
         }
     },
     methods: {
-
         eventListeners: function(){
             let vm = this;
             $("[data-activity-tab-id!=''][data-activity-tab-id]").off("click").on("click", function (e) {
