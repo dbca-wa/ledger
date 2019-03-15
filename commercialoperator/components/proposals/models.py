@@ -18,7 +18,7 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
@@ -1307,13 +1307,33 @@ class ProposalTrail(models.Model):
         app_label = 'commercialoperator'
         unique_together = ('trail', 'proposal')
 
+class ProposalTrailSection(models.Model):
+    proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='sections')
+    section = models.ForeignKey(Section, blank=True, null=True, related_name='proposal_trails')
+
+    class Meta:
+        app_label = 'commercialoperator'
+        unique_together = ('section', 'proposal_trail')
+
+#TODO: Need to remove this model
 class ProposalTrailActivity(models.Model):
     proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='trail_activities')
     activity = models.ForeignKey(Activity, blank=True, null=True)
+    section=models.ForeignKey(Section, blank=True, null= True)
 
     class Meta:
         app_label = 'commercialoperator' 
         unique_together = ('proposal_trail', 'activity')
+
+class ProposalTrailSectionActivity(models.Model):
+    trail_section = models.ForeignKey(ProposalTrailSection, blank=True, null=True, related_name='trail_activities')
+    activity = models.ForeignKey(Activity, blank=True, null=True)
+    #section=models.ForeignKey(Section, blank=True, null= True)
+
+    class Meta:
+        app_label = 'commercialoperator' 
+        unique_together = ('trail_section', 'activity')
+
 
 @python_2_unicode_compatible
 class Vehicle(models.Model):

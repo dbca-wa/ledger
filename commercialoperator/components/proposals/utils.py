@@ -2,9 +2,9 @@ import re
 from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
-from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrailActivity, ProposalTrail
+from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrailActivity, ProposalTrail, ProposalTrailSectionActivity, ProposalTrailSection
 from commercialoperator.components.proposals.serializers import SaveProposalSerializer, SaveProposalParkSerializer, SaveProposalTrailSerializer
-from commercialoperator.components.main.models import Activity, Park, AccessType, Trail
+from commercialoperator.components.main.models import Activity, Park, AccessType, Trail, Section
 import traceback
 import os
 
@@ -452,6 +452,107 @@ def save_trail_activity_data(instance,select_trails_activities):
                     raise
         except:
             raise
+
+def save_trail_section_activity_data(instance,select_trails_activities):
+    with transaction.atomic():
+        try:
+            if select_trails_activities:
+                try:
+                    #current_parks=instance.parks.all()
+                    selected_trails=[]
+                    #print("selected_trails",selected_trails)
+                    for item in select_trails_activities:
+                        if item['trail']:
+                            selected_trails.append(item['trail'])
+                            selected_sections=[]
+                            try:
+                                #Check if PrposalPark record already exists. If exists, check for sections
+                                trail=ProposalTrail.objects.get(trail=item['trail'],proposal=instance)
+                                current_sections=trail.sections.all()
+                                current_sections_ids=[a.section_id for a in current_sections]
+                                if item['activities']:
+                                    for a in item['activities']:
+                                        if a['section']:
+                                            selected_sections.append(a['section'])
+                                            if a['section'] in current_sections_ids:
+                                                section=ProposalTrailSection.objects.get(proposal_trail=trail, section=a['section'])
+                                                current_activities=section.trail_activities.all()
+                                                current_activities_id=[s.activity_id for s in current_activities]
+                                                if a['activities']:
+                                                    for act in a['activities']:
+                                                        if act in current_activities_id:
+                                                            #if activity already exists then pass otherwise create the record.
+                                                            pass
+                                                        else:
+                                                            try:
+                                                                activity=Activity.objects.get(id=act)
+                                                                ProposalTrailSectionActivity.objects.create(trail_section=section, activity=activity)
+                                                            except:
+                                                                raise                                                   
+                                            else:
+                                                section_instance=Section.objects.get(id=a['section'])
+                                                section=ProposalTrailSection.objects.create(proposal_trail=trail, section=section_instance)
+                                                if a['activities']:
+                                                    for act in a['activities']:                            
+                                                        try:
+                                                            activity=Activity.objects.get(id=act)
+                                                            ProposalTrailSectionActivity.objects.create(trail_section=section, activity=activity)
+                                                        except:
+                                                            raise
+                                            new_activities=section.trail_activities.all()
+                                            new_activities_id=set(n.activity_id for n in new_activities)
+                                            diff_activity=set(new_activities_id).difference(set(a['activities']))
+                                            print("trail:",trail.trail_id,"section:",section.section_id,"new_activities:",new_activities_id, "diff:", diff_activity)
+                                            for d in diff_activity:
+                                                act=ProposalTrailSectionActivity.objects.get(activity_id=d, trail_section=section)
+                                                act.delete()
+                            except ProposalTrail.DoesNotExist:
+                                try:
+                                    #If ProposalPark does not exists then create a new record and activities for it.
+                                    trail_instance=Trail.objects.get(id=item['trail'])
+                                    trail=ProposalTrail.objects.create(trail=trail_instance, proposal=instance)
+                                    current_sections=[]
+                                    if item['activities']:
+                                        for a in item['activities']:
+                                            if a['section']:
+                                                selected_sections.append(a['section'])
+                                                section_instance=Section.objects.get(id=a['section'])
+                                                section=ProposalTrailSection.objects.create(proposal_trail=trail, section=section_instance)
+                                                if a['activities']:
+                                                    for act in a['activities']:                            
+                                                        try:
+                                                            activity=Activity.objects.get(id=act)
+                                                            ProposalTrailSectionActivity.objects.create(trail_section=section, activity=activity)
+                                                        except:
+                                                            raise
+                                            #Just to check the new activities. Next 3 lines can be deleted.                                            
+                                            new_activities=section.trail_activities.all()
+                                            new_activities_id=set(nw.activity_id for nw in new_activities)
+                                            diff_activity=set(new_activities_id).difference(set(a['activities']))
+                                            print("not deleting","trail:",trail.trail_id,"section:",section.section_id,"new_activities:",new_activities_id, "diff:", diff_activity)                               
+                                except:
+                                    raise
+                            #compare all sections (new+old) with the list of sections selected to get
+                            #the list of deleted sections.
+                            new_sections=trail.sections.all()
+                            new_sections_ids=set(a.section_id for a in new_sections)
+                            diff_sections=set(new_sections_ids).difference(set(selected_sections))
+                            print("trail:",trail.trail_id, "new_sections:", new_sections_ids,"diff_sections:", diff_sections)
+                            for d in diff_sections:
+                                    pk=ProposalTrailSection.objects.get(section=d, proposal_trail=trail)
+                                    pk.delete()
+                    new_trails=instance.trails.all()
+                    new_trails_id=set(p.trail_id for p in new_trails)
+                    diff_trails=set(new_trails_id).difference(set(selected_trails))
+                    print("new_trails", new_trails_id, "diff:", diff_trails)
+                    for d in diff_trails:
+                        pk=ProposalTrail.objects.get(trail=d, proposal=instance)
+                        pk.delete()
+                except:
+                    raise
+        except:
+            raise
+
 
 def save_proponent_data(instance,request,viewset,select_parks_activities,select_trails_activities):
     with transaction.atomic():
