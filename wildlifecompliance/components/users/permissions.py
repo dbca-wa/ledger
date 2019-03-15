@@ -10,9 +10,9 @@ PERMISSION_GROUPS = [
         'permissions': ['organisation_access_request']
     },
     {
-        'name': 'Superusers',
+        'name': 'System Administrators',
         'per_activity': False,
-        'permissions': ['superuser']
+        'permissions': ['system_administrator']
     },
     {
         'name': 'Licensing Officers',
@@ -52,8 +52,8 @@ CUSTOM_GROUP_PERMISSIONS = {
         'app_label': 'wildlifecompliance',
         'model': 'activitypermissiongroup',
     },
-    'superuser': {
-        'name': 'Superuser',
+    'system_administrator': {
+        'name': 'System Administrator',
         'app_label': 'wildlifecompliance',
         'model': 'activitypermissiongroup',
     },

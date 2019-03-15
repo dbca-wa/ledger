@@ -851,7 +851,6 @@ export default {
         }
     },
     methods: {
-
         eventListeners: function(){
             let vm = this;
             $("[data-target!=''][data-target]").off("click").on("click", function (e) {
