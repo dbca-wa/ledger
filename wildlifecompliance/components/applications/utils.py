@@ -8,7 +8,7 @@ from wildlifecompliance.components.applications.models import ApplicationDocumen
 from wildlifecompliance.components.applications.serializers import SaveApplicationSerializer
 import json
 from wildlifecompliance.components.licences.models import LicencePurpose, DefaultPurpose, LicenceActivity, DefaultActivity
-from wildlifecompliance.utils.assess_utils import create_app_activity_model, create_licence, pdflatex, get_activity_sys_answers
+from wildlifecompliance.utils.assess_utils import create_licence, pdflatex, get_activity_sys_answers
 import traceback
 
 

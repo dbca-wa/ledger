@@ -201,7 +201,7 @@
                     <div>
                         <ul id="tabs-assessor" class="nav nav-tabs">
                             <li v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && (item1.processing_status.id=='with_officer' || item1.processing_status.id=='with_officer_conditions' || item1.processing_status.id=='with_assessor')" :class="setAssessorTab(index)" @click.prevent="clearSendToAssessorForm()">
-                                <a data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a>
+                                <a data-toggle="tab" :data-activity-tab-id="`${item1.id}`">{{item1.name}}</a>
                             </li>
                         </ul>
                     </div>
@@ -223,7 +223,7 @@
                                                     <label class="control-label pull-left"  for="Name">Assessor Group</label>
                                                     <select class="form-control" v-model="selectedAssessor">
                                                         <option v-for="assessor in assessorGroup" :id="assessor.id"
-                                                        :value="assessor" v-if="application.licence_type_data.id == assessor.licence_category && item1.id == assessor.licence_activity">{{assessor.display_name}}</option>
+                                                        :value="assessor" v-if="isAssessorRelevant(assessor)">{{assessor.display_name}}</option>
                                                     </select>
                                             </div>
                                             <div class="col-sm-2">
@@ -652,7 +652,6 @@ export default {
         return {
             applicantTab: 'applicantTab'+vm._uid,
             applicationTab: 'applicationTab'+vm._uid,
-            taking_fauna: 'taking_fauna'+vm._uid,
             detailsBody: 'detailsBody'+vm._uid,
             identificationBody: 'identificationBody'+vm._uid,
             addressBody: 'addressBody'+vm._uid,
@@ -667,8 +666,6 @@ export default {
             "loading": [],
             selected_activity_tab_id:null,
             selected_activity_tab_name:null,
-            selected_activity_assessortab_id:null,
-            selected_activity_assessortab_name:null,
             form: null,
             department_users : [],
             // activity_data:[],
@@ -680,7 +677,6 @@ export default {
             isOfficerConditions:false,
             isFinalViewConditions:false,
             isofficerfinalisation:false,
-            state_options: ['conditions','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             application_assessor_datatable:vm._uid+'assessment-table',
             contacts_options:{
@@ -779,34 +775,20 @@ export default {
             return false;
         },
         canSendToAssessor: function(){
-            var activities_list = this.application.licence_type_data.activity
-            for(var i=0;i<activities_list.length;i++){
-                if(activities_list[i].processing_status.id == 'with_officer' || activities_list[i].processing_status.id == 'with_officer_conditions' || activities_list[i].processing_status.id == 'with_assessor'){
-                    return true;
-                }
-            }
-            return false;
+            return this.hasActivityStatus([
+                'with_officer',
+                'with_officer_conditions',
+                'with_assessor',
+                ]);
         },
         canReturnToConditions: function(){
             return this.selected_activity_tab_id && this.selectedActivity.processing_status.id == 'with_officer_finalisation' ? true : false;
         },
         canOfficerReviewConditions: function(){
-            var activities_list = this.application.licence_type_data.activity
-            for(var i=0;i<activities_list.length;i++){
-                if(activities_list[i].processing_status.id == 'with_officer_conditions'){
-                    return true;
-                }
-            }
-            return false;
+            return this.hasActivityStatus('with_officer_conditions');
         },
         canProposeIssueOrDecline: function(){
-            var activities_list = this.application.licence_type_data.activity
-            for(var i=0;i<activities_list.length;i++){
-                if(activities_list[i].processing_status.id == 'with_officer_conditions'){
-                    return true;
-                }
-            }
-            return false;
+            return this.hasActivityStatus('with_officer_conditions');
         },
         canCompleteAssessment: function(){
             return this.selected_activity_tab_id && this.selectedActivity.processing_status.id == 'with_assessor' ? true : false;
@@ -833,38 +815,18 @@ export default {
           return (this.application) ? `/api/application/${this.application.id}/assessor_save.json` : '';
         },
         isFinalised: function(){
-            let vm=this;
-            var flag=0;
-            for(var i=0, len=vm.application.licence_type_data.activity.length; i<len; i++){
-                if(vm.application.licence_type_data.activity[i].processing_status.id == 'declined' || vm.application.licence_type_data.activity[i].processing_status.id == 'accepted' ){
-                    flag=flag+1;
-                }
-
-            }
-            if(flag>0 && flag==len){
-                return true;
-            }
-            else{
-                return false;
-            }
-            
+            return this.hasActivityStatus([
+                'declined',
+                'accepted'
+            ], this.application.licence_type_data.activity.length);
         },
         isPartiallyFinalised: function(){
-            let vm=this;
-            var flag=0;
-            for(var i=0, len=vm.application.licence_type_data.activity.length; i<len; i++){
-                if(vm.application.licence_type_data.activity[i].processing_status.id == 'declined' || vm.application.licence_type_data.activity[i].processing_status.id == 'accepted' ){
-                    flag=flag+1;
-                }
-
-            }
-            if(flag>0 && flag!=len){
-                return true;
-            }
-            else{
-                return false;
-            }
-            
+            const final_statuses = [
+                'declined',
+                'accepted'
+            ];
+            const activity_count = this.application.licence_type_data.activity.length;
+            return this.hasActivityStatus(final_statuses) && !this.hasActivityStatus(final_statuses, activity_count);            
         },
         isIdCheckAccepted: function(){
             return this.application.id_check_status.id == 'accepted';
@@ -889,14 +851,14 @@ export default {
         }
     },
     methods: {
-        
+
         eventListeners: function(){
             let vm = this;
-            $("ul#tabs-section").on("click", function (e) {
-                vm.selected_activity_tab_id = e.target.href.split('#')[1];
-                vm.selected_activity_tab_name = e.target.innerText;
+            $("[data-activity-tab-id!=''][data-activity-tab-id]").off("click").on("click", function (e) {
+                vm.selected_activity_tab_id = $(this).data('activity-tab-id');
+                vm.selected_activity_tab_name = $(this).text();
             });
-            $('#tabs-section li:first-child a').click();
+            this.initFirstTab();
             // Listeners for Send to Assessor datatable actions
             if (vm.$refs.assessorDatatable) {
                 for (var i=0; i < vm.$refs.assessorDatatable.length; i++) {
@@ -972,6 +934,12 @@ export default {
                 }
             }
         },
+        initFirstTab: function(force){
+            if(this.selected_activity_tab_id && !force) {
+                return;
+            }
+            $('#tabs-section li:first-child a').click();
+        },
         initialiseOrgContactTable: function(){
             let vm = this;
             if (vm.application && vm.applicantType == 'org' && !vm.contacts_table_initialised){
@@ -987,11 +955,23 @@ export default {
             this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
         },
+        isAssessorRelevant(assessor, activity_id) {
+            if(!activity_id) {
+                activity_id = this.selected_activity_tab_id;
+            }
+            if(!assessor.licence_activities) {
+                return false;
+            }
+            return assessor.licence_activities.filter(
+                activity => activity.id == activity_id
+            ).length > 0;
+        },
         sendtoAssessor: function(item1){
             let vm=this;
             this.$refs.send_to_assessor.assessment.licence_activity=item1;
             this.$refs.send_to_assessor.assessment.assessor_group=this.selectedAssessor.id;
             this.$refs.send_to_assessor.assessment.assessor_group_name=this.selectedAssessor.display_name;
+            this.$refs.send_to_assessor.assessment.licence_activity=this.selected_activity_tab_id;
             this.$refs.send_to_assessor.assessment.text='';
             if (typeof this.selectedAssessor.id == 'undefined' || typeof this.selectedAssessor.display_name == 'undefined'){
               swal(
@@ -1007,6 +987,15 @@ export default {
             this.$refs.send_to_assessor.assessment.text='';
             this.selectedAssessor={};
         },
+        hasActivityStatus: function(status_list, status_count=1) {
+            if(typeof(status_list) !== 'object') {
+                status_list = [status_list];
+            }
+            const activities_list = this.application.licence_type_data.activity;
+            return activities_list.filter(activity =>
+                status_list.includes(activity.processing_status.id)
+            ).length >= status_count;
+        },
         setAssessorTab(_index){
             return _index === 0 ? 'active' : '';
         },
@@ -1019,7 +1008,7 @@ export default {
             // var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
             var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
 
-            this.$refs.proposed_licence.propose_issue.licence_activity_id=vm.selected_activity_tab_id
+            this.$refs.proposed_licence.propose_issue.licence_activity_id=vm.selected_activity_tab_id;
             this.$refs.proposed_licence.propose_issue.licence_activity_name=selectedTabTitle.text();
             this.$refs.proposed_licence.isModalOpen = true;
         },
@@ -1152,13 +1141,6 @@ export default {
             vm.isSendingToAssessor = !vm.isSendingToAssessor;
             vm.showingApplication = false;
             vm.showingConditions = false;
-            setTimeout(function(){
-                $("ul#tabs-assessor").on("click", function (e) {
-                    vm.selected_activity_assessortab_id = e.target.href.split('#')[1];
-                    vm.selected_activity_assessortab_name = e.target.innerText;
-                });
-                $('#tabs-assessor li:first-child a').click();
-            }, 50);
             vm.fetchAssessorGroup();
         },
         save: function(e) {
@@ -1256,7 +1238,7 @@ export default {
             let vm = this;
             let data = new FormData();
 
-            data.selected_assessment_tab=vm.selected_activity_assessortab_id
+            data.selected_assessment_tab=vm.selected_activity_tab_id;
             data.application_id=vm.application_id
             
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/complete_assessment')),JSON.stringify(data),{emulateJSON:true})
@@ -1510,7 +1492,7 @@ export default {
                     columns: [
                         {data:'assessor_group.display_name'},
                         {data:'date_last_reminded'},
-                        {data:'status'},
+                        {data:'status.name'},
                         {
                             mRender:function (data,type,full) {
                                 let links = '';
