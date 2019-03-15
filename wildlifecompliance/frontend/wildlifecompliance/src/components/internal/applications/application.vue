@@ -1141,6 +1141,7 @@ export default {
             vm.showingApplication = false;
             vm.showingConditions = false;
             vm.fetchAssessorGroup();
+            vm.initFirstTab(true);
         },
         save: function(e) {
             let vm = this;
