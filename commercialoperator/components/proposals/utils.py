@@ -599,7 +599,7 @@ def save_proponent_data(instance,request,viewset,select_parks_activities,select_
                     raise
             if select_trails_activities:
                 try:
-                    save_trail_activity_data(instance, select_trails_activities)                    
+                    save_trail_section_activity_data(instance, select_trails_activities)                    
                 except:
                     raise
         except:

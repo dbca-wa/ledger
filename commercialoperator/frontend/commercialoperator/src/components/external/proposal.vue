@@ -120,7 +120,7 @@ export default {
       let vm = this;
       let formData = new FormData(vm.form);
       //console.log(formData);
-      formData.append(vm.proposal.selected_trails_activities)
+      //formData.append(vm.proposal.selected_trails_activities)
       console.log(vm.proposal.selected_trails_activities);
       vm.$http.post(vm.proposal_form_url,formData).then(res=>{
           swal(
