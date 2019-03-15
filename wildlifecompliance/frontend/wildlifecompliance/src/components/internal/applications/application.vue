@@ -180,7 +180,7 @@
                         </ul>
                     </div>
                     <div class="tab-content">
-                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && item1.processing_status.id=='with_officer_conditions'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && item1.processing_status.id=='with_officer_conditions'" :id="`${item1.id}`" class="tab-pane fade active in">
                             <OfficerConditions :application="application" :licence_activity_tab="item1.id" :final_view_conditions="false"/>
                         </div>
                     </div>
@@ -192,7 +192,7 @@
                         </ul>
                     </div>
                     <div class="tab-content">
-                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && item1.processing_status.id=='with_officer_finalisation'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && item1.processing_status.id=='with_officer_finalisation'" :id="`${item1.id}`" class="tab-pane fade active in">
                             <OfficerConditions :application="application" :licence_activity_tab="item1.id" :final_view_conditions="true"/>
                         </div>
                     </div>
