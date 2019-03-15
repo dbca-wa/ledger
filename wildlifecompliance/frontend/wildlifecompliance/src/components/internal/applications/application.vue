@@ -150,7 +150,7 @@
                 <template v-if="showingConditions">
                     <div v-for="item in application.licence_type_data">
                         <ul class="nav nav-tabs" id="conditiontabs">
-                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status.id=='with_assessor' && item1.id == selected_activity_tab_id" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}</a></li>
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status.id=='with_assessor' && item1.id == selected_activity_tab_id" data-toggle="tab" :data-target="`#${item1.id}`">{{item1.name}}</a></li>
                         </ul>
                     </div>
                     <div  class="tab-content">
@@ -176,11 +176,11 @@
                 <template v-if="isOfficerConditions">
                     <div v-for="item in application.licence_type_data">
                         <ul class="nav nav-tabs" id="conditiontabs">
-                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status.id=='with_officer_conditions'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status.id=='with_officer_conditions'" data-toggle="tab" :data-target="`#${item1.id}`">{{item1.name}}</a></li>
                         </ul>
                     </div>
                     <div class="tab-content">
-                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && item1.processing_status.id=='with_officer_conditions'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && item1.processing_status.id=='with_officer_conditions'" :id="`${item1.id}`" class="tab-pane fade active in">
                             <OfficerConditions :application="application" :licence_activity_tab="item1.id" :final_view_conditions="false"/>
                         </div>
                     </div>
@@ -188,11 +188,11 @@
                 <template v-if="isFinalViewConditions">
                     <div v-for="item in application.licence_type_data">
                         <ul class="nav nav-tabs" id="conditiontabs">
-                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status.id=='with_officer_finalisation'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status.id=='with_officer_finalisation'" data-toggle="tab" :data-target="`#${item1.id}`">{{item1.name}}</a></li>
                         </ul>
                     </div>
                     <div class="tab-content">
-                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && item1.processing_status.id=='with_officer_finalisation'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && item1.processing_status.id=='with_officer_finalisation'" :id="`${item1.id}`" class="tab-pane fade active in">
                             <OfficerConditions :application="application" :licence_activity_tab="item1.id" :final_view_conditions="true"/>
                         </div>
                     </div>
@@ -207,7 +207,7 @@
                     </div>
                         
                     <div class="tab-content">
-                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && (item1.processing_status.id=='with_officer' || item1.processing_status.id=='with_officer_conditions' || item1.processing_status.id=='with_assessor')" :id="`${item1.id}`+_uid" :class="setAssessorTabContent(index)">
+                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && (item1.processing_status.id=='with_officer' || item1.processing_status.id=='with_officer_conditions' || item1.processing_status.id=='with_assessor')" :id="`${item1.id}`" :class="setAssessorTabContent(index)">
                             <div>
                                 <div class="panel panel-default">
                                     <div class="panel-heading">
@@ -937,7 +937,7 @@ export default {
             if(this.selected_activity_tab_id && !force) {
                 return;
             }
-            $('#tabs-section li:first-child a').click();
+            $('#tabs-section li:first-child a')[0].click();
         },
         initialiseOrgContactTable: function(){
             let vm = this;
@@ -1165,6 +1165,7 @@ export default {
             });
         },
         toggleApplication:function(){
+            let vm = this;
             this.showingApplication = !this.showingApplication;
             if(this.isSendingToAssessor){
                 this.isSendingToAssessor=!this.isSendingToAssessor
@@ -1183,6 +1184,7 @@ export default {
             }
             setTimeout(function(){
                 $('#tabs-main li a')[1].click();
+                vm.initFirstTab(true);
             }, 50);
         },
         toggleConditions:function(){
