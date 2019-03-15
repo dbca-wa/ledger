@@ -463,7 +463,7 @@ class Application(RevisionedMixin):
                 'id': selected_activity.processing_status,
                 'name': get_choice_value(
                     selected_activity.processing_status,
-                    self.PROCESSING_STATUS_CHOICES
+                    ApplicationSelectedActivity.ACTIVITY_PROCESSING_STATUS_CHOICES
                 )
             }
         return licence_data
@@ -753,7 +753,7 @@ class Application(RevisionedMixin):
                 # selected activity tab
                 qs = request.user.get_wildlifelicence_permission_group(
                     permission_codename='assessor',
-                    licence_activity_id=request.data.get('selected_assessment_tab'),
+                    activity_id=request.data.get('selected_assessment_tab'),
                     first=False
                 )
 

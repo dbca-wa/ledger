@@ -854,7 +854,7 @@ export default {
         eventListeners: function(){
             let vm = this;
             $("[data-target!=''][data-target]").off("click").on("click", function (e) {
-                vm.selected_activity_tab_id = $(this).data('target').replace('#', '');
+                vm.selected_activity_tab_id = parseInt($(this).data('target').replace('#', ''), 10);
                 vm.selected_activity_tab_name = $(this).text();
             });
             this.initFirstTab();

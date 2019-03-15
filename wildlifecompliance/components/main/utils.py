@@ -178,4 +178,9 @@ def bind_application_to_invoice(request, application, invoice_ref):
 
 
 def get_choice_value(key, choices):
-    return [choice[1] for choice in choices if choice[0] == key][0]
+    try:
+        return [choice[1] for choice in choices if choice[0] == key][0]
+    except IndexError:
+        logger = logging.getLogger(__name__)
+        logger.error("Key %s does not exist in choices: %s" % (key, choices))
+        raise
