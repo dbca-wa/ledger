@@ -11,7 +11,6 @@ module.exports = {
     emailidentities: '/api/emailidentities/',
     profiles: '/api/profiles/',
     my_profiles: '/api/my_profiles/',
-    department_users: '/api/department_users/',
     assessment:'/api/assessment/',
     amendment:'/api/amendment/',
     is_new_user: '/api/is_new_user/',

@@ -42,21 +42,6 @@ from wildlifecompliance.components.users.serializers import (
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
 )
-from wildlifecompliance.components.main.utils import retrieve_department_users
-
-
-class DepartmentUserList(views.APIView):
-    renderer_classes = [JSONRenderer, ]
-
-    def get(self, request, format=None):
-        if is_internal(request):
-            data = cache.get('department_users')
-            if not data:
-                retrieve_department_users()
-                data = cache.get('department_users')
-            return Response(data)
-        else:
-            return Response()
 
 
 class GetProfile(views.APIView):
