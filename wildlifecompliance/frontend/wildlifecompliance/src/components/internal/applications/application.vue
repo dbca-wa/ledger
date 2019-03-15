@@ -201,7 +201,7 @@
                     <div>
                         <ul id="tabs-assessor" class="nav nav-tabs">
                             <li v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && (item1.processing_status.id=='with_officer' || item1.processing_status.id=='with_officer_conditions' || item1.processing_status.id=='with_assessor')" :class="setAssessorTab(index)" @click.prevent="clearSendToAssessorForm()">
-                                <a data-toggle="tab" :data-activity-tab-id="`${item1.id}`">{{item1.name}}</a>
+                                <a data-toggle="tab" :data-target="`#${item1.id}`">{{item1.name}}</a>
                             </li>
                         </ul>
                     </div>
@@ -853,8 +853,8 @@ export default {
     methods: {
         eventListeners: function(){
             let vm = this;
-            $("[data-activity-tab-id!=''][data-activity-tab-id]").off("click").on("click", function (e) {
-                vm.selected_activity_tab_id = $(this).data('activity-tab-id');
+            $("[data-target!=''][data-target]").off("click").on("click", function (e) {
+                vm.selected_activity_tab_id = $(this).data('target').replace('#', '');
                 vm.selected_activity_tab_name = $(this).text();
             });
             this.initFirstTab();
