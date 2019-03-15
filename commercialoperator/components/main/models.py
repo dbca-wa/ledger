@@ -106,36 +106,36 @@ class AccessType(models.Model):
 #     def __str__(self):
 #         return self.name
 
-@python_2_unicode_compatible
-class Trail(models.Model):
-    name = models.CharField(max_length=200, unique=True)
-    code = models.CharField(max_length=10, blank=True)
-    
+# @python_2_unicode_compatible
+# class Trail(models.Model):
+#     name = models.CharField(max_length=200, unique=True)
+#     code = models.CharField(max_length=10, blank=True)
+#     allowed_activities = models.ManyToManyField(Activity, blank=True)
 
-    class Meta:
-        ordering = ['name']
-        app_label = 'commercialoperator'
-        #unique_together = ('id', 'proposal',)
+#     class Meta:
+#         ordering = ['name']
+#         app_label = 'commercialoperator'
+#         #unique_together = ('id', 'proposal',)
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
-    @property
-    def section_ids(self):
-        return [i.id for i in self.sections.all()]
+#     @property
+#     def section_ids(self):
+#         return [i.id for i in self.sections.all()]
 
-@python_2_unicode_compatible
-class Section(models.Model):
-    name = models.CharField(max_length=200, blank=True)
-    visible = models.BooleanField(default=True)
-    trail = models.ForeignKey(Trail, related_name='sections')
+# @python_2_unicode_compatible
+# class Section(models.Model):
+#     name = models.CharField(max_length=200, blank=True)
+#     visible = models.BooleanField(default=True)
+#     trail = models.ForeignKey(Trail, related_name='sections')
 
-    class Meta:
-        ordering = ['name']
-        app_label = 'commercialoperator'
+#     class Meta:
+#         ordering = ['name']
+#         app_label = 'commercialoperator'
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 @python_2_unicode_compatible
 class ActivityType(models.Model):
@@ -222,6 +222,37 @@ class Park(models.Model):
 #     class Meta:
 #         app_label = 'commercialoperator' 
 #         unique_together = ('park', 'activity')
+
+@python_2_unicode_compatible
+class Trail(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+    code = models.CharField(max_length=10, blank=True)
+    allowed_activities = models.ManyToManyField(Activity, blank=True)
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+        #unique_together = ('id', 'proposal',)
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def section_ids(self):
+        return [i.id for i in self.sections.all()]
+
+@python_2_unicode_compatible
+class Section(models.Model):
+    name = models.CharField(max_length=200, blank=True)
+    visible = models.BooleanField(default=True)
+    trail = models.ForeignKey(Trail, related_name='sections')
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.name
 
 @python_2_unicode_compatible
 class ApplicationType(models.Model):

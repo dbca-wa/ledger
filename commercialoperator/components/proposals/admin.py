@@ -114,6 +114,7 @@ class ParkAdmin(admin.ModelAdmin):
 @admin.register(Trail)
 class TrailAdmin(admin.ModelAdmin):
     list_display = ['name', 'code']
+    filter_horizontal = ('allowed_activities',)
     ordering = ('name',)
 
 @admin.register(Section)

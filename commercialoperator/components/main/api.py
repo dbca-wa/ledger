@@ -120,6 +120,15 @@ class TrailViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Trail.objects.all().order_by('id')
     serializer_class = TrailSerializer
 
+    @detail_route(methods=['GET',])
+    def allowed_activities(self, request, *args, **kwargs):
+        instance = self.get_object()
+        qs = instance.allowed_activities.all()
+        serializer = ActivitySerializer(qs,context={'request':request}, many=True)
+        #serializer = ActivitySerializer(qs)
+        return Response(serializer.data)
+
+
 class LandActivitiesViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Activity.objects.none()
     serializer_class = ActivitySerializer
