@@ -150,9 +150,11 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(instance.sheet.data)
 
     @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
     def save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            species_table = self.request.data.get('specieID')
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:

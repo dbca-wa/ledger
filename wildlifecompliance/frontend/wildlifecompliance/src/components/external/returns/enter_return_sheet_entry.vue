@@ -116,11 +116,13 @@ export default {
         update:function () {
             console.log('update function')
             let vm =this;
-            console.log(vm.table.row('#2019/01/31').data())
+         //   console.log(vm.table.row('#2019/01/31').data())
          // FIXME: Update parent table.
          // value = vm.$refs.return_datatable.vmDataTable.row('#2019/01/31').data()
          // vm.row_of_data['qty'] = 10;
          // vm.table.row('#2019/01/31').data(vm.row_of_data['qty']).draw();
+         // vm.row_of_data.data().qty='1000'
+         // vm.row_of_data.invalidate().draw()
             this.isModalOpen = false;
         },
         cancel:function () {

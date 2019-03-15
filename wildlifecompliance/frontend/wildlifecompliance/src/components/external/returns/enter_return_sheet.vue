@@ -145,7 +145,11 @@ export default {
                 },
             },
             columns: [
-              { data: "date" },
+              { data: "date",
+                mRender:function(data,type,full){
+                    return data
+                }
+              },
               { data: "activity",
                 mRender: function(data, type, full) {
                   return vm.returns.sheet_activity_list[data]
@@ -198,9 +202,14 @@ export default {
   methods: {
     save: function(e) {
       console.log('save func')
+      // FIXME: Not working yet!! (doesn't break though..)
       let vm = this;
-      vm.form=document.forms.enter_return
+      vm.form=document.forms.enter_return_sheet
       let data = new FormData(vm.form);
+      console.log(vm.$refs.return_datatable)
+      console.log(JSON.stringify(vm.$refs.return_datatable.vmDataTable.row(0).data()))
+      console.log(vm.returns)
+      data.append('specieID', vm.returns)
       vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/save'),data,{
                        emulateJSON:true,
                     }).then((response)=>{
@@ -279,8 +288,13 @@ export default {
         vm.$refs.sheet_entry.entryLicence = $(this).attr('data-licence');
         vm.$refs.sheet_entry.speciesType = '<Species type 1>';
 
-        vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#2019/01/31').data()
-        vm.$refs.sheet_entry.table = vm.$refs.return_datatable.vmDataTable
+        vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#2019/01/31')
+        //vm.$refs.sheet_entry.table = vm.$refs.return_datatable.vmDataTable
+        //vm.$refs.return_datatable.vmDataTable.row('#2019/01/31').data().qty = 100
+        //let newData = ["2019/01/23", "SA01", "5000", '5', 'Initial Stock Taking', '']
+        //console.log(vm.$refs.return_datatable.vmDataTable.row(1).data())
+        //vm.$refs.return_datatable.vmDataTable.ajax.reload()
+        // Fix the table rendering columns
         vm.$refs.sheet_entry.isModalOpen=true;
      });
   },

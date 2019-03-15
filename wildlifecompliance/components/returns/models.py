@@ -168,10 +168,10 @@ class Return(models.Model):
         A Running sheet of Return data.
         :return: ReturnSheet with activity data for species.
         """
-        return ReturnSheet(self) if self.is_sheet else None
+        return ReturnSheet(self) if self.has_sheet else None
 
     @property
-    def is_question(self):
+    def has_question(self):
         """
         Property defining if the Return is Question based.
         :return: Boolean
@@ -179,7 +179,7 @@ class Return(models.Model):
         return True if self.return_type.Name == 'question' else False
 
     @property
-    def is_data(self):
+    def has_data(self):
         """
         Property defining if the Return is Data based.
         :return: Boolean
@@ -187,7 +187,7 @@ class Return(models.Model):
         return True if self.return_type.Name == 'data' else False
 
     @property
-    def is_sheet(self):
+    def has_sheet(self):
         """
         Property defining if the Return is Running Sheet based.
         :return: Boolean
@@ -321,7 +321,7 @@ class ReturnSheet(object):
                 _table['data'] = _validated_rows
             except ReturnTable.DoesNotExist:
                 _table = self._NO_ACTIVITY
-        #_table = self._MOCK_TABLE
+        _table = self._MOCK_TABLE
 
         return _table
 
@@ -335,7 +335,7 @@ class ReturnSheet(object):
     def get_species_list(self):
 
         _species = self._species
-        #_species = self._MOCK_SPECIES
+        _species = self._MOCK_SPECIES
 
         return _species
 
@@ -343,7 +343,7 @@ class ReturnSheet(object):
         pass
 
     def __str__(self):
-        return 'return-sheet-{0}'.format(self._return.id)
+        return 'Return-Sheet-{0}'.format(self._return.id)
 
 
 class ReturnTable(RevisionedMixin):
