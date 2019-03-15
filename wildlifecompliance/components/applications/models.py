@@ -5,13 +5,13 @@ import logging
 import re
 from django.db import models, transaction
 from django.db.models.signals import pre_delete
+from django.db.models.query import QuerySet
 from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
-from taggit.managers import TaggableManager
 
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.payments.invoice.models import Invoice
@@ -77,6 +77,27 @@ class ActivityPermissionGroup(Group):
         return EmailUser.objects.filter(
             groups__id=self.id
         ).distinct()
+
+    @staticmethod
+    def get_groups_for_activities(activities, codename):
+        """
+        Find matching ActivityPermissionGroups for a list of activities, activity ID or a LicenceActivity instance.
+        :return: ActivityPermissionGroup QuerySet
+        """
+        from wildlifecompliance.components.licences.models import LicenceActivity
+
+        if isinstance(activities, LicenceActivity):
+            activities = [activities.id]
+
+        groups = ActivityPermissionGroup.objects.filter(
+            licence_activities__id__in=activities if isinstance(
+                activities, (list, QuerySet)) else [activities]
+        )
+        if isinstance(codename, list):
+            groups = groups.filter(permissions__codename__in=codename)
+        else:
+            groups = groups.filter(permissions__codename=codename)
+        return groups.distinct()
 
 
 class ApplicationDocument(Document):
@@ -405,35 +426,17 @@ class Application(RevisionedMixin):
 
     @property
     def licence_officers(self):
-        selected_activity_ids = ApplicationSelectedActivity.objects.filter(
-            application_id=self.id,
-            licence_activity__isnull=False
-        ).values_list('licence_activity__id', flat=True)
-        if not selected_activity_ids:
-            return []
-
-        groups = ActivityPermissionGroup.objects.filter(
-            permissions__codename='licensing_officer',
-            licence_activities__id__in=selected_activity_ids
-        ).values_list('id', flat=True)
+        groups = self.get_permission_groups('licensing_officer').values_list('id', flat=True)
         return EmailUser.objects.filter(
             groups__id__in=groups
         ).distinct()
 
     @property
     def officers_and_assessors(self):
-        selected_activity_ids = ApplicationSelectedActivity.objects.filter(
-            application_id=self.id,
-            licence_activity__isnull=False
-        ).values_list('licence_activity__id', flat=True)
-        if not selected_activity_ids:
-            return []
-
-        groups = ActivityPermissionGroup.objects.filter(
-            permissions__codename__in=['licensing_officer',
-                                       'assessor',
-                                       'issuing_officer'],
-            licence_activities__id__in=selected_activity_ids
+        groups = self.get_permission_groups(
+            ['licensing_officer',
+             'assessor',
+             'issuing_officer']
         ).values_list('id', flat=True)
         return EmailUser.objects.filter(
             groups__id__in=groups
@@ -503,12 +506,20 @@ class Application(RevisionedMixin):
             return ''
 
     def set_activity_processing_status(self, activity_id, processing_status):
+        if not activity_id:
+            logger.error("Application: %s cannot update processing status (%s) for an empty activity_id!" %
+                         (self.id, processing_status))
+            return
+
         selected_activity = self.get_selected_activity(activity_id)
         selected_activity.processing_status = processing_status
         selected_activity.save()
-        print("Application: %s Activity ID: %s changed processing to: %s" % (self.id, activity_id, processing_status))
+        logger.info("Application: %s Activity ID: %s changed processing to: %s" % (self.id, activity_id, processing_status))
 
     def get_selected_activity(self, activity_id):
+        if activity_id is None:
+            return ApplicationSelectedActivity.objects.none()
+
         selected_activity = ApplicationSelectedActivity.objects.filter(
             application_id=self.id,
             licence_activity_id=activity_id
@@ -519,6 +530,19 @@ class Application(RevisionedMixin):
                 licence_activity_id=activity_id
             )
         return selected_activity
+
+    def get_permission_groups(self, codename):
+        """
+        :return: queryset of ActivityPermissionGroups matching the current application by activity IDs
+        """
+        selected_activity_ids = ApplicationSelectedActivity.objects.filter(
+            application_id=self.id,
+            licence_activity__isnull=False
+        ).values_list('licence_activity__id', flat=True)
+        if not selected_activity_ids:
+            return ActivityPermissionGroup.objects.none()
+
+        return ActivityPermissionGroup.get_groups_for_activities(selected_activity_ids, codename)
 
     def log_user_action(self, action, request):
         return ApplicationUserAction.log_action(self, action, request.user)
@@ -544,7 +568,7 @@ class Application(RevisionedMixin):
                     if (qs):
                         for q in qs:
                             q.status = 'amended'
-                            self.application.set_activity_processing_status(q.licence_activity.id, "with_officer")
+                            self.set_activity_processing_status(q.licence_activity.id, "with_officer")
                             q.save()
                 else:
                     for activity in self.licence_type_data['activity']:
@@ -721,11 +745,6 @@ class Application(RevisionedMixin):
                             self.id), request)
             except BaseException:
                 raise
-
-    def update_activity_status(self, request, activity_id, status):
-        selected_activity = self.get_selected_activity(activity_id)
-        selected_activity.processing_status = status
-        selected_activity.save()
 
     def complete_assessment(self, request):
         with transaction.atomic():
@@ -905,7 +924,7 @@ class Application(RevisionedMixin):
                     raise ValidationError(
                         'You cannot propose for licence if it is not with officer for conditions')
                 for item1 in activity:
-                    ApplicationSelectedActivity.objects.update_or_create(
+                    ApplicationSelectedActivity.objects.update(
                         application=self,
                         officer=request.user,
                         proposed_action='propose_issue',
@@ -947,21 +966,8 @@ class Application(RevisionedMixin):
                             None),
                         selected_activity.save()
                 except ApplicationSelectedActivity.DoesNotExist:
-                    ApplicationSelectedActivity.objects.update_or_create(
-                        application=self,
-                        officer=request.user,
-                        proposed_action='propose_issue',
-                        reason=details.get('details'),
-                        cc_email=details.get(
-                            'cc_email',
-                            None),
-                        proposed_start_date=details.get(
-                            'start_date',
-                            None),
-                        proposed_end_date=details.get(
-                            'expiry_date',
-                            None),
-                        licence_activity_id=details.get('licence_activity_id'))
+                    # Should never happen: ApplicationSelectedActivity exists from the beginning of an application's lifecycle
+                    logger.error("Attempt to propose issuing a non-existing application activity: %s" % activity)
 
                 # Log application action
                 self.log_user_action(
