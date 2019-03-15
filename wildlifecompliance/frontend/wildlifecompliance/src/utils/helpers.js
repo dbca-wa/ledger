@@ -128,7 +128,7 @@ module.exports = {
     },
     isApplicationActivityVisible: function(application, activity_id) {
       if(!application.activities) {
-          return false;
+          return 0;
       }
       return application.activities.filter(activity => activity.licence_activity == activity_id).length;
     },
