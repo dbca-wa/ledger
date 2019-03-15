@@ -659,7 +659,7 @@ class DTAssessmentSerializer(serializers.ModelSerializer):
         source='application.lodgement_date')
     applicant = serializers.CharField(source='application.applicant')
     application_category = serializers.CharField(
-        source='application.licence_type_name')
+        source='application.licence_category_name')
 
     class Meta:
         model = Assessment
