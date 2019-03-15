@@ -347,10 +347,10 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             permissions__codename=permission_codename
         )
         if activity_id is not None:
-            if type(activity_id) == list:
-                qs.filter(licence_activities__id__in=activity_id)
+            if isinstance(activity_id, list):
+                qs.filter(activitypermissiongroup__licence_activities__id__in=activity_id)
             else:
-                qs.filter(licence_activities__id=activity_id)
+                qs.filter(activitypermissiongroup__licence_activities__id=activity_id)
         return qs.first() if first else qs
 
     @property
