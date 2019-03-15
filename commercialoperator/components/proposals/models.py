@@ -1307,6 +1307,13 @@ class ProposalTrail(models.Model):
         app_label = 'commercialoperator'
         unique_together = ('trail', 'proposal')
 
+    # @property
+    # def sections(self):
+    #     qs=self.activities.all()
+    #     categories=ActivityCategory.objects.filter(activity_type='land')
+    #     activities=qs.filter(Q(activity__activity_category__in = categories)& Q(activity__visible=True))
+    #     return activities
+
 class ProposalTrailSection(models.Model):
     proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='sections')
     section = models.ForeignKey(Section, blank=True, null=True, related_name='proposal_trails')
