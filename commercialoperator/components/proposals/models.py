@@ -256,6 +256,7 @@ class Proposal(RevisionedMixin):
     PROCESSING_STATUS_TEMP = 'temp'
     PROCESSING_STATUS_DRAFT = 'draft'
     PROCESSING_STATUS_WITH_ASSESSOR = 'with_assessor'
+    PROCESSING_STATUS_ONHOLD = 'on_hold'
     PROCESSING_STATUS_WITH_REFERRAL = 'with_referral'
     PROCESSING_STATUS_WITH_ASSESSOR_REQUIREMENTS = 'with_assessor_requirements'
     PROCESSING_STATUS_WITH_APPROVER = 'with_approver'
@@ -272,6 +273,7 @@ class Proposal(RevisionedMixin):
     PROCESSING_STATUS_CHOICES = ((PROCESSING_STATUS_TEMP, 'Temporary'),
                                  (PROCESSING_STATUS_DRAFT, 'Draft'),
                                  (PROCESSING_STATUS_WITH_ASSESSOR, 'With Assessor'),
+                                 (PROCESSING_STATUS_ONHOLD, 'On Hold'),
                                  (PROCESSING_STATUS_WITH_REFERRAL, 'With Referral'),
                                  (PROCESSING_STATUS_WITH_ASSESSOR_REQUIREMENTS, 'With Assessor (Requirements)'),
                                  (PROCESSING_STATUS_WITH_APPROVER, 'With Approver'),
@@ -937,6 +939,34 @@ class Proposal(RevisionedMixin):
             except:
                 raise
 
+    def on_hold(self,request,details):
+        with transaction.atomic():
+            try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if self.processing_status != 'with_assessor':
+                    raise ValidationError('You cannot propose to decline if it is not with assessor')
+
+                comment = details.get('comment')
+                ProposalOnHold.objects.update_or_create(
+                    proposal = self,
+                    #defaults={'officer': request.user, 'comment': comment, 'document': details.get('cc_email',None)}
+                    defaults={'officer': request.user, 'comment': comment}
+                )
+                #self.proposed_decline_status = True
+                self.processing_status = self.PROCESSING_STATUS_ONHOLD
+                self.save()
+                #self.move_to_status(request,'with_approver', approver_comment)
+                # Log proposal action
+                #self.log_user_action(ProposalUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
+                self.log_user_action(ProposalUserAction.ACTION_PUT_ONHOLD.format(self.id),request)
+                # Log entry for organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_REMOVE_ONHOLD.format(self.id),request)
+
+                #send_approver_decline_email_notification(reason, request, self)
+            except:
+                raise
+
     def proposed_approval(self,request,details):
         with transaction.atomic():
             try:
@@ -1459,6 +1489,16 @@ class ProposalDeclinedDetails(models.Model):
     class Meta:
         app_label = 'commercialoperator'
 
+class ProposalOnHold(models.Model):
+    proposal = models.OneToOneField(Proposal)
+    officer = models.ForeignKey(EmailUser, null=False)
+    comment = models.TextField(blank=True)
+    document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='onhold_document')
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+
 @python_2_unicode_compatible
 #class ProposalStandardRequirement(models.Model):
 class ProposalStandardRequirement(RevisionedMixin):
@@ -1548,6 +1588,8 @@ class ProposalUserAction(UserAction):
     #Vessel
     ACTION_CREATE_VESSEL = "Create Vessel {}"
     ACTION_EDIT_VESSEL= "Edit Vessel {}"
+    ACTION_PUT_ONHOLD = "Put Proposal On-hold {}"
+    ACTION_REMOVE_ONHOLD = "Remove Proposal On-hold {}"
 
 
     class Meta:

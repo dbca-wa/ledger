@@ -608,6 +608,9 @@ class PropedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()
     cc_email = serializers.CharField(required=False)
 
+class OnHoldSerializer(serializers.Serializer):
+    comment = serializers.CharField()
+
 
 class AmendmentRequestSerializer(serializers.ModelSerializer):
     #reason = serializers.SerializerMethodField()

@@ -190,6 +190,15 @@
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="proposedDecline()">Propose to Decline</button>
                                         </div>
                                     </div>
+                                    <div class="row">
+                                        <div v-if="proposal.processing_status!='on_hold'" class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="putOnHold()">Put On-hold</button>
+                                        </div>
+                                        <div v-else class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="removeOnHold()">Remove On-hold</button>
+                                        </div>
+                                    </div>
+
                                 </template>
                                 <template v-else-if="proposal.processing_status == 'With Assessor (Requirements)'">
                                     <div class="row">
@@ -390,6 +399,7 @@
         <ProposedDecline ref="proposed_decline" :processing_status="proposal.processing_status" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
         <AmendmentRequest ref="amendment_request" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></AmendmentRequest>
         <ProposedApproval ref="proposed_approval" :processing_status="proposal.processing_status" :proposal_id="proposal.id" :proposal_type='proposal.proposal_type' :isApprovalLevelDocument="isApprovalLevelDocument" @refreshFromResponse="refreshFromResponse"/>
+        <OnHold ref="on_hold" :processing_status="proposal.processing_status" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></OnHold>
     </div>
 </template>
 <script>
@@ -407,6 +417,7 @@ import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import ProposalTClass from '@/components/form_tclass.vue'
 import ProposalFilming from '@/components/form_filming.vue'
 import ProposalEvent from '@/components/form_event.vue'
+import OnHold from './proposal_onhold.vue'
 import {
     api_endpoints,
     helpers
@@ -493,6 +504,7 @@ export default {
         ProposalTClass,
         ProposalFilming,
         ProposalEvent,
+        OnHold,
     },
     filters: {
         formatDate: function(data){
@@ -592,6 +604,12 @@ export default {
             
             this.$refs.amendment_request.isModalOpen = true;
         },
+        putOnHold: function(){
+            this.save_wo();
+            this.$refs.on_hold.isModalOpen = true;
+        },
+
+
         save: function(e) {
           let vm = this;
           let formData = new FormData(vm.form);
