@@ -1469,9 +1469,6 @@ class ApplicationCondition(OrderedModel):
         if self.standard:
             self.return_type = self.standard_condition.return_type
             self.save()
-        else:
-            self.return_type = self.standard_condition.return_type
-            self.save()
 
     @property
     def condition(self):

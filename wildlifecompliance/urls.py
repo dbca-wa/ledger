@@ -34,6 +34,7 @@ router.register(r'licences_class', licence_api.LicenceCategoryViewSet)
 router.register(r'licence_available_purposes',
                 licence_api.UserAvailableWildlifeLicencePurposesViewSet)
 router.register(r'returns', return_api.ReturnViewSet)
+router.register(r'return_types', return_api.ReturnTypeViewSet)
 router.register(r'application_conditions',
                 application_api.ApplicationConditionViewSet)
 router.register(r'application_standard_conditions',
