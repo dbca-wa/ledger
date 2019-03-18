@@ -1,6 +1,6 @@
 <template lang="html">
     <div id="internal-proposal-amend">
-        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Amendment Request" large>
+        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Complete Referral" large>
             <div class="container-fluid">
                 <div class="row">
                     <form class="form-horizontal" name="amendForm">
@@ -9,18 +9,25 @@
                             <div class="row">
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
-                                        <label class="control-label pull-left"  for="Name">Reason</label>
-                                        <select class="form-control" name="reason" ref="reason" v-model="amendment.reason">
-                                            <option v-for="r in reason_choices" :value="r.key">{{r.value}}</option>
-                                        </select>
+                                        <!-- templated from from proposal_approval.vue -->
+                                        <label class="control-label pull-left"  for="Name">Attach Document</label>
+										<div>
+											<span v-if="!uploadedFile" class="btn btn-info btn-file pull-left">
+											    Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                            </span>
+                                            <span v-else class="pull-left" style="margin-left:10px;margin-top:10px;">
+                                                {{uploadedFileName()}}
+                                            </span>
+										</div>
                                     </div>
                                 </div>
                             </div>
+
                             <div class="row">
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
-                                        <label class="control-label pull-left"  for="Name">Details</label>
-                                        <textarea class="form-control" name="name" v-model="amendment.text"></textarea>
+                                        <label class="control-label pull-left"  for="referral_comment">Comment</label>
+                                        <textarea class="form-control" name="referral_comment" v-model="referral_comment" required="true"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -47,9 +54,9 @@ export default {
         alert
     },
     props:{
-            //proposal_id:{
-            //    type:Number,
-            //},
+            proposal_id:{
+                type:Number,
+            },
             referral_id:{
                 type:Number,
             },
@@ -69,6 +76,7 @@ export default {
             errors: false,
             errorString: '',
             validation_form: null,
+            uploadedFile: null,
         }
     },
     computed: {
@@ -79,10 +87,68 @@ export default {
     },
     methods:{
 
+        readFile: function() {
+            let vm = this;
+            let _file = null;
+            var input = $(vm.$refs.uploadedFile)[0];
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.readAsDataURL(input.files[0]); 
+                reader.onload = function(e) {
+                    _file = e.target.result;
+                };
+                _file = input.files[0];
+            }
+            vm.uploadedFile = _file;
+            //vm.save()
+        },
+        removeFile: function(){
+            let vm = this;
+            vm.uploadedFile = null;
+            vm.save()
+        },
+        save: function(){
+            let vm = this;
+                let data = new FormData(vm.form);
+                data.append('referral_document', vm.uploadedFile)
+                //if (vm.proposal.approval_level_document) {
+                //    data.append('referral_document_name', vm.proposal.referral_document[0])
+                //}
+                //vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/approval_level_document'),data,{
+                //vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal_id+'/referral_document'),data,{
+                //vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,vm.referral_id+'/referral_document'),data,{
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,vm.referral_id+'/complete'),data,{
+                emulateJSON:true
+            }).then(res=>{
+                swal(
+                    'Referral Complete',
+                    'Referral Complete',
+                    'success'
+                );
+
+                vm.proposal = res.body;
+                vm.$emit('refreshFromResponse',res);
+                vm.$router.push({ path: '/internal' }); //Navigate to dashboard after completing the referral
+
+                },err=>{
+                swal(
+                    'Submit Error',
+                    helpers.apiVueResourceError(err),
+                    'error'
+                )
+            });
+        },
+        uploadedFileName: function() {
+            return this.uploadedFile != null ? this.uploadedFile.name: '';
+        },
+
+
+
         ok:function () {
             let vm =this;
             if($(vm.form).valid()){
-                vm.sendData();
+                //vm.sendData();
+                vm.save()
             }
         },
         cancel:function () {

@@ -1533,6 +1533,7 @@ class ProposalUserAction(UserAction):
     ACTION_BACK_TO_PROCESSING = "Back to processing for proposal {}"
     RECALL_REFERRAL = "Referral {} for proposal {} has been recalled"
     CONCLUDE_REFERRAL = "{}: Referral {} for proposal {} has been concluded by group {}"
+    ACTION_REFERRAL_DOCUMENT = "Assign Referral document {}"
     #Approval
     ACTION_REISSUE_APPROVAL = "Reissue approval for proposal {}"
     ACTION_CANCEL_APPROVAL = "Cancel approval for proposal {}"
@@ -1615,7 +1616,8 @@ class ReferralRecipientGroup(models.Model):
 #        app_label = 'commercialoperator'
 
 
-class Referral(models.Model):
+#class Referral(models.Model):
+class Referral(RevisionedMixin):
     SENT_CHOICES = (
         (1,'Sent From Assessor'),
         (2,'Sent From Referral')
@@ -1703,7 +1705,7 @@ class Referral(models.Model):
             recipients = self.referral_group.members_list
             send_referral_email_notification(self,recipients,request)
 
-    def complete(self,request, referral_comment):
+    def complete(self,request):
         with transaction.atomic():
             try:
                 #if request.user != self.referral:
@@ -1712,7 +1714,8 @@ class Referral(models.Model):
                     raise exceptions.ReferralNotAuthorized()
                 self.processing_status = 'completed'
                 self.referral = request.user
-                self.referral_text = request.user.get_full_name() + ': ' + referral_comment
+                self.referral_text = request.user.get_full_name() + ': ' + request.data.get('referral_comment')
+                self.add_referral_document(request)
                 self.save()
                 # TODO Log proposal action
                 #self.proposal.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
@@ -1724,10 +1727,42 @@ class Referral(models.Model):
             except:
                 raise
 
+    def add_referral_document(self, request):
+        with transaction.atomic():
+            try:
+                referral_document = request.data['referral_document']
+                #import ipdb; ipdb.set_trace()
+                if referral_document != 'null':
+                    try:
+                        document = self.referral_documents.get(input_name=str(referral_document))
+                    except ReferralDocument.DoesNotExist:
+                        document = self.referral_documents.get_or_create(input_name=str(referral_document), name=str(referral_document))[0]
+                    document.name = str(referral_document)
+                    # commenting out below tow lines - we want to retain all past attachments - reversion can use them
+                    #if document._file and os.path.isfile(document._file.path):
+                    #    os.remove(document._file.path)
+                    document._file = referral_document
+                    document.save()
+                    d=ReferralDocument.objects.get(id=document.id)
+                    self.referral_document = d
+                    comment = 'Referral Document Added: {}'.format(document.name)
+                else:
+                    self.referral_document = None
+                    comment = 'Referral Document Deleted: {}'.format(request.data['referral_document_name'])
+                #self.save()
+                self.save(version_comment=comment) # to allow revision to be added to reversion history
+                self.proposal.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
+                # Create a log entry for the organisation
+                self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
+                return self
+            except:
+                raise
+
+
     def send_referral(self,request,referral_email,referral_text):
         with transaction.atomic():
             try:
-                import ipdb; ipdb.set_trace()
+                #import ipdb; ipdb.set_trace()
                 if self.proposal.processing_status == 'with_referral':
                     if request.user != self.referral:
                         raise exceptions.ReferralNotAuthorized()
@@ -1777,6 +1812,7 @@ class Referral(models.Model):
                     raise exceptions.ProposalReferralCannotBeSent()
             except:
                 raise
+
 
     # Properties
     @property

@@ -118,6 +118,20 @@ export default {
                             return result;
                         },
                         'createdCell': helpers.dtPopoverCellFn,
+                    },
+                    {
+                        title: 'Attached Document',
+                        data: 'document',
+                        render: function (data,type,full) {
+                            var result = '';
+                            if (Array.isArray(full.document) && full.document.length) {
+                                // if array exists and is not empty
+                                var filename = full.document[0];
+                                var file_url = full.document[1];
+                                result = `<a href="${file_url}" data-id="${filename}" target="_blank">${filename}</a>`
+                            }
+                            return result;
+                        }
                     }
                 ]
             },

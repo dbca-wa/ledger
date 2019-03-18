@@ -557,6 +557,7 @@ class DTReferralSerializer(serializers.ModelSerializer):
     region = serializers.CharField(source='region.name', read_only=True)
     #referral = EmailUserSerializer()
     referral = serializers.CharField(source='referral_group.name')
+    document = serializers.SerializerMethodField()
     class Meta:
         model = Referral
         fields = (
@@ -574,11 +575,16 @@ class DTReferralSerializer(serializers.ModelSerializer):
             'referral',
             'proposal_lodgement_date',
             'proposal_lodgement_number',
-            'referral_text'
+            'referral_text',
+            'document',
         )
 
     def get_submitter(self,obj):
         return EmailUserSerializer(obj.proposal.submitter).data
+
+    def get_document(self,obj):
+        docs =  [[d.name,d._file.url] for d in obj.referral_documents.all()]
+        return docs[0] if docs else None
 
 class ProposalRequirementSerializer(serializers.ModelSerializer):
     due_date = serializers.DateField(input_formats=['%d/%m/%Y'],required=False,allow_null=True)

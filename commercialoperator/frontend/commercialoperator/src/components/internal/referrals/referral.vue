@@ -110,18 +110,17 @@
                                     </div>
                                 </div>
                                 <div class="row">
+                                    <!--
                                     <div class="col-sm-12">
                                         <label class="control-label pull-left"  for="Name">Comments</label>
                                         <textarea class="form-control" name="name" v-model="referral_comment"></textarea>
-                                        <input type="file" class="form-control" name="file" v-model="referral_file"></input>
                                         <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="completeReferral">Complete Referral Task</button>
                                     </div>
+                                    -->
+
                                     <div class="row">
                                         <div class="col-sm-12">
-                                            <!--
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="amendmentRequest()">Request Amendment</button><br/>
-                                            -->
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="completeReferral2()">Complete Referral Task2</button><br/>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="completeReferral2()">Complete Referral Task</button><br/>
                                         </div>
                                     </div>
                                 </div>
@@ -131,7 +130,7 @@
                 </div>
             </div>
         </div>
-        <CompleteReferral ref="complete_referral" :referral_id="referral.id" @refreshFromResponse="refreshFromResponse"></CompleteReferral>
+        <CompleteReferral ref="complete_referral" :referral_id="referral.id" :proposal_id="referral.proposal.id"@refreshFromResponse="refreshFromResponse"></CompleteReferral>
 
         <div class="col-md-1"></div>
         <div class="col-md-8">
@@ -389,7 +388,7 @@ export default {
     },
     methods: {
         completeReferral2: function(){
-            this.save_wo();
+            //this.save_wo();
             let values = '';
             //$('.deficiency').each((i,d) => {
             //    values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
