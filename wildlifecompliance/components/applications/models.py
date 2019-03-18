@@ -801,31 +801,27 @@ class Application(RevisionedMixin):
     def proposed_decline(self, request, details):
         with transaction.atomic():
             try:
-                activity = details.get('activity')
+                activity_list = details.get('activity')
                 incorrect_statuses = ApplicationSelectedActivity.objects.filter(
                     application_id=self.id,
-                    licence_activity_id__in=activity
+                    licence_activity_id__in=activity_list
                 ).exclude(
                     processing_status='with_officer_conditions'
                 ).first()
+
                 if incorrect_statuses:
                     raise ValidationError(
                         'You cannot propose for licence if it is not with officer for conditions')
-                for item1 in activity:
-                    ApplicationSelectedActivity.objects.update_or_create(
-                        application=self,
-                        officer=request.user,
-                        proposed_action='propose_decline',
-                        reason=details.get('reason'),
-                        cc_email=details.get('cc_email', None),
-                        licence_activity_id=item1
-                    )
+
                 ApplicationSelectedActivity.objects.filter(
                     application_id=self.id,
-                    licence_activity_id__in=activity
+                    licence_activity_id__in=activity_list
                 ).update(
-                    proposed_decine=True,
-                    processing_status="with_officer_finalisation"
+                    officer=request.user,
+                    proposed_action='propose_decline',
+                    processing_status="with_officer_finalisation",
+                    reason=details.get('reason'),
+                    cc_email=details.get('cc_email', None),
                 )
 
                 # Log application action
@@ -912,10 +908,10 @@ class Application(RevisionedMixin):
     def proposed_licence(self, request, details):
         with transaction.atomic():
             try:
-                activity = details.get('activity')
+                activity_list = details.get('activity')
                 incorrect_statuses = ApplicationSelectedActivity.objects.filter(
                     application_id=self.id,
-                    licence_activity_id__in=activity
+                    licence_activity_id__in=activity_list
                 ).exclude(
                     processing_status='with_officer_conditions'
                 ).first()
@@ -923,51 +919,19 @@ class Application(RevisionedMixin):
                 if incorrect_statuses:
                     raise ValidationError(
                         'You cannot propose for licence if it is not with officer for conditions')
-                for item1 in activity:
-                    ApplicationSelectedActivity.objects.update(
-                        application=self,
-                        officer=request.user,
-                        proposed_action='propose_issue',
-                        reason=details.get('reason'),
-                        cc_email=details.get('cc_email', None),
-                        proposed_start_date=details.get('start_date', None),
-                        proposed_end_date=details.get('expiry_date', None),
-                        licence_activity_id=item1
-                    )
 
                 ApplicationSelectedActivity.objects.filter(
                     application_id=self.id,
-                    licence_activity_id__in=activity
+                    licence_activity_id__in=activity_list
                 ).update(
-                    proposed_decine=True,
-                    processing_status="with_officer_finalisation"
+                    officer=request.user,
+                    proposed_action='propose_issue',
+                    processing_status="with_officer_finalisation",
+                    reason=details.get('reason'),
+                    cc_email=details.get('cc_email', None),
+                    proposed_start_date=details.get('start_date', None),
+                    proposed_end_date=details.get('expiry_date', None),
                 )
-
-                try:
-                    selected_activity = ApplicationSelectedActivity.objects.get(
-                        application=self,
-                        licence_activity_id=details.get('licence_activity_id'))
-
-                    if selected_activity.proposed_action == 'propose_issue':
-                        raise ValidationError(
-                            'This activity has already been proposed to issue')
-                    else:
-                        selected_activity.proposed_action = 'propose_issue'
-                        selected_activity.officer = request.user
-                        selected_activity.reason = details.get('details')
-                        selected_activity.cc_email = details.get(
-                            'cc_email',
-                            None),
-                        selected_activity.proposed_start_date = details.get(
-                            'start_date',
-                            None),
-                        selected_activity.proposed_end_date = details.get(
-                            'expiry_date',
-                            None),
-                        selected_activity.save()
-                except ApplicationSelectedActivity.DoesNotExist:
-                    # Should never happen: ApplicationSelectedActivity exists from the beginning of an application's lifecycle
-                    logger.error("Attempt to propose issuing a non-existing application activity: %s" % activity)
 
                 # Log application action
                 self.log_user_action(
