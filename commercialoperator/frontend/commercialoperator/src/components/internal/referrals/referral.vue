@@ -116,6 +116,14 @@
                                         <input type="file" class="form-control" name="file" v-model="referral_file"></input>
                                         <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="completeReferral">Complete Referral Task</button>
                                     </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <!--
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="amendmentRequest()">Request Amendment</button><br/>
+                                            -->
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="completeReferral2()">Complete Referral Task2</button><br/>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -123,6 +131,8 @@
                 </div>
             </div>
         </div>
+        <CompleteReferral ref="complete_referral" :referral_id="referral.id" @refreshFromResponse="refreshFromResponse"></CompleteReferral>
+
         <div class="col-md-1"></div>
         <div class="col-md-8">
             <div class="row">
@@ -265,6 +275,7 @@ import Vue from 'vue'
 import datatable from '@vue-utils/datatable.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
 import MoreReferrals from '@common-utils/more_referrals.vue'
+import CompleteReferral from './complete_referral.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
     api_endpoints,
@@ -340,7 +351,8 @@ export default {
         Proposal,
         datatable,
         CommsLogs,
-        MoreReferrals
+        MoreReferrals,
+        CompleteReferral,
     },
     filters: {
         formatDate: function(data){
@@ -370,9 +382,34 @@ export default {
         },
         isFinalised: function(){
             return !(this.referral != null  && this.referral.processing_status == 'Awaiting'); 
-        }
+        },
+        referral_form_url: function() {
+          return (this.referral) ? `/api/referrals/${this.referral.id}/complete_referral.json` : '';
+        },
     },
     methods: {
+        completeReferral2: function(){
+            this.save_wo();
+            let values = '';
+            //$('.deficiency').each((i,d) => {
+            //    values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
+            //}); 
+            //this.$refs.amendment_request.amendment.text = values;
+            this.$refs.complete_referral.isModalOpen = true;
+        },
+        save_wo: function() {
+          let vm = this;
+          //let formData = new FormData(vm.form);
+          //vm.$http.post(vm.referral_form_url,formData).then(res=>{
+          let data = {'email':vm.selected_referral, 'text': vm.referral_text};
+          vm.$http.post(vm.referral_form_url, JSON.stringify(data)).then(res=>{
+
+          },err=>{
+          });
+        },
+
+
+
         refreshFromResponse:function(response){
             let vm = this;
             vm.proposal = helpers.copyObject(response.body);

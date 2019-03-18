@@ -1213,6 +1213,24 @@ class ReferralViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['GET', 'POST'])
+    def complete_referral(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            import ipdb; ipdb.set_trace()
+            referral_comment = request.data.get('referral_comment')
+            instance.complete(request, referral_comment)
+            serializer = self.get_serializer(instance, context={'request':request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     @detail_route(methods=['GET',])
     def remind(self, request, *args, **kwargs):
         try:
