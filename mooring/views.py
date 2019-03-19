@@ -68,6 +68,7 @@ from oscar.apps.order.models import Order
 from django_ical.views import ICalFeed
 from datetime import datetime, timedelta, date
 from decimal import *
+from pytz import timezone as pytimezone
 
 from mooring.helpers import is_officer, is_payment_officer
 from mooring import utils
@@ -229,7 +230,7 @@ class CancelBookingView(TemplateView):
 
         booking_cancellation_fees = utils.calculate_price_booking_cancellation(booking)
         booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking.admission_payment, booking_cancellation_fees)
-        booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
+        booking_total = Decimal('{0:.2f}'.format(booking_total + Decimal(sum(Decimal(i['amount']) for i in booking_cancellation_fees))))
         basket = {}
         return render(request, self.template_name, {'booking': booking,'basket': basket, 'booking_fees': booking_cancellation_fees, 'booking_total': booking_total, 'booking_total_positive': booking_total - booking_total - booking_total })
 
@@ -260,8 +261,11 @@ class CancelBookingView(TemplateView):
         if booking.admission_payment:
             booking_admission = AdmissionsBooking.objects.get(pk=booking.admission_payment_id)
             booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking.admission_payment, booking_cancellation_fees)
-        booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
+        booking_total = Decimal('{0:.2f}'.format(booking_total + Decimal(sum(Decimal(i['amount']) for i in booking_cancellation_fees))))
+
+#        booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
 #        booking_total =  Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total)))
+
         b_total = Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total)))
         info = {'amount': Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total))), 'details' : 'Refund via system'}
 #         info = {'amount': float('10.00'), 'details' : 'Refund via system'}
@@ -2359,12 +2363,26 @@ class ViewBookingView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         booking_id = kwargs['pk']
         booking = None
+        booking_lines_collated = []
         if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
 #             booking = Booking.objects.get(customer=request.user, booking_type__in=(0, 1), is_canceled=False, pk=booking_id)
              booking = Booking.objects.get(pk=booking_id)
+             booking_lines = MooringsiteBooking.objects.filter(booking=booking)
+             print ("BOO LINE") 
+             print booking_lines
+             print ("BOO KINE END")
+
+             for ob in booking_lines:
+                  from_dt = datetime.strptime(ob.from_dt.strftime('%Y-%m-%d'),'%Y-%m-%d')
+                  cancel_fee_amount = '0.00'
+                  description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
+                           #change_fees['amount'] = str(refund_amount)
+                  booking_lines_collated.append({'description': description,'amount': ob.amount})
+         
         context = {
            'booking_id': booking_id,
-           'booking': booking
+           'booking': booking,
+           'booking_lines' : booking_lines_collated 
  #           'past_bookings': bk_past,
  #           'current_admissions': ad_current,
  #           'past_admissions': ad_past,
