@@ -177,15 +177,21 @@ class DefaultPurpose(models.Model):
 
 
 class WildlifeLicence(models.Model):
+    STATUS_CURRENT = 'current'
+    STATUS_EXPIRED = 'expired'
+    STATUS_CANCELLED = 'cancelled'
+    STATUS_SURRENDERED = 'surrendered'
+    STATUS_SUSPENDED = 'suspended'
+
     STATUS_CHOICES = (
-        ('current', 'Current'),
-        ('expired', 'Expired'),
-        ('cancelled', 'Cancelled'),
-        ('surrendered', 'Surrendered'),
-        ('suspended', 'Suspended')
+        (STATUS_CURRENT, 'Current'),
+        (STATUS_EXPIRED, 'Expired'),
+        (STATUS_CANCELLED, 'Cancelled'),
+        (STATUS_SURRENDERED, 'Surrendered'),
+        (STATUS_SUSPENDED, 'Suspended')
     )
     status = models.CharField(max_length=40, choices=STATUS_CHOICES,
-                              default=STATUS_CHOICES[0][0])
+                              default=STATUS_CURRENT)
     parent_licence = models.ForeignKey(
         'self',
         blank=True,

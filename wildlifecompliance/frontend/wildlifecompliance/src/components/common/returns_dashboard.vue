@@ -85,14 +85,12 @@ export default {
                 allowInputToggle:true
             },
             external_status:[
-                'Temporary',
                 'Draft',
                 'Submitted',
                 'Approved',
                 'Declined'
             ],
             internal_status:[
-                'Temporary',
                 'Draft',
                 'With Assessor',
                 'Issued',
