@@ -5,6 +5,26 @@
     <div class="row">
       <div class="col-md-3">
         <h3>Return: {{ returns.id }}</h3>
+
+        <div class="panel panel-default fixed">
+          <div class="panel-heading"></div>
+          <div class="panel-body" style="padding:10px">
+           <!-- List of Species available for Return -->
+            <label>Species Types: </label>
+            <select class="form-control">
+              <option value="0000">------ Please Select ------</option>
+              <option value="SP01">Margaret River hairy Marron</option>
+              <option value="SP02">Grey Kangaroo</option>
+              <option value="SP03">Western Red Kangaroo</option>
+            </select></br></br>
+            <!-- List of applicable species available for Return -->
+            <label>Species on Return:</label>
+            <div v-for="species in returns.sheet_species_list">
+              <a href='/external/return/sheet/5'><h4>{{species}}</h4></a>
+            </div>
+          </div>
+        </div>
+
       </div>
       <!-- div class="col-md-1" div -->
       <div class="col-md-8">
@@ -19,7 +39,7 @@
               <div :id="returnTab" class="tab-pane fade active in">
                 <div class="panel panel-default">
                   <div class="panel-heading">
-                    <h3 class="panel-title">Species Type 1
+                     <h3 class="panel-title">{{ sheetTitle }}
                       <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
                          <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                       </a>
@@ -32,7 +52,6 @@
                             <div class="form-group">
                                 <label for="">Activity Type:</label>
                                 <select class="form-control" v-model="filterSheetActivityType">
-                                    <option value="ALL">All</option>
                                     <option v-for="sa in sheet_activity_type" :value="sa">{{sa}}</option>
                                 </select>
                             </div>
@@ -51,22 +70,6 @@
                     <!-- End of Sheet Return -->
                     </div>
                   </div>
-                </div>
-                <div v-for="(item,index) in returns.sheet_species_list">
-                 <div class="panel panel-default">
-                  <div class="panel-heading">
-                    <h3 class="panel-title">Species Type 2
-                      <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
-                         <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                      </a>
-                    </h3>
-                  </div>
-                  <div class="panel-body panel-collapse in" :id="pdBody">
-                    <div class="col-sm-12">
-
-                    </div>
-                  </div>
-                </div>
                 </div>
 
               </div>
@@ -128,6 +131,7 @@ export default {
         form: null,
         isModalOpen: false,
         returnBtn: 'Submit',
+        sheetTitle: null,
         sheet_activity_type: [],
         sheet_headers:["Date","Activity","Qty","Total","Comments","Action"],
         sheet_options:{
@@ -161,17 +165,8 @@ export default {
               { data: "editable",
                 mRender: function(data, type, full) {
                   if (full.activity) {
-                     var column = `<a class="edit-row" data-date=\"__DATE__\" ` +
-                                  `data-activity=\"__ACTIVITY__\"  data-qty=\"__QTY__\" ` +
-                                  `data-total=\"__TOTAL__\" data-comment=\"__COMMENT__\" ` +
-                                  `data-licence=\"__LICENCE__\">Edit</a><br/>`
-
-                     column = column.replace(/__DATE__/g, full.date)
-                     column = column.replace(/__ACTIVITY__/g, full.activity)
-                     column = column.replace(/__QTY__/g, full.qty)
-                     column = column.replace(/__TOTAL__/g, full.total)
-                     column = column.replace(/__COMMENT__/g, full.comment)
-                     column = column.replace(/__LICENCE__/g, full.licence)
+                     var column = `<a class="edit-row" data-rowid=\"__ROWID__\">Edit</a><br/>`
+                     column = column.replace(/__ROWID__/g, full.rowId)
                      return column
                   } else {
                      return "";
@@ -181,7 +176,7 @@ export default {
             ],
             processing: true,
             rowId: function(_data) {
-              return _data.date
+              return _data.rowId
             },
             initComplete: function () {
               console.log('entered init Function')
@@ -202,14 +197,19 @@ export default {
   methods: {
     save: function(e) {
       console.log('save func')
-      // FIXME: Not working yet!! (doesn't break though..)
       let vm = this;
-      vm.form=document.forms.enter_return_sheet
+      vm.form=document.forms.enter_return_sheet;
       let data = new FormData(vm.form);
-      console.log(vm.$refs.return_datatable)
-      console.log(JSON.stringify(vm.$refs.return_datatable.vmDataTable.row(0).data()))
-      console.log(vm.returns)
-      data.append('specieID', vm.returns)
+      console.log(vm.$refs.return_datatable.vmDataTable.data().length)
+      console.log(vm.$refs.return_datatable.vmDataTable.rows(1).data())
+      var speciesData = [];
+      vm.$refs.return_datatable.vmDataTable.rows().every(function(rowIdx,tableloop,rowloop) {
+        let _data = this.data();
+        speciesData[rowIdx] = JSON.stringify(_data)
+      });
+      console.log(speciesData)
+     // console.log(JSON.stringify(vm.$refs.return_datatable.vmDataTable.rows.data()))
+      data.append(vm.returns.sheet_species_list[0], speciesData);
       vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/save'),data,{
                        emulateJSON:true,
                     }).then((response)=>{
@@ -268,8 +268,10 @@ export default {
     Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
         next(vm => {
            vm.returns = res.body;
-           console.log(vm);
-           console.log(vm.returns)
+           vm.sheetTitle = 'Please Add Species Type';
+           if (vm.returns.sheet_species_list.length>0) {
+              vm.sheetTitle = vm.returns.sheet_species_list[0]
+           };
         });
     }, err => {
       console.log(err);
@@ -280,21 +282,16 @@ export default {
      let vm = this;
      vm.form = document.forms.enter_return_sheet;
      vm.$refs.return_datatable.vmDataTable.on('click','.edit-row', function(e) {
+        console.log('entered edit-row')
         e.preventDefault();
-        vm.$refs.sheet_entry.entryActivity = $(this).attr('data-activity');
-        vm.$refs.sheet_entry.entryQty = $(this).attr('data-qty');
-        vm.$refs.sheet_entry.entryTotal = $(this).attr('data-total');
-        vm.$refs.sheet_entry.entryComment = $(this).attr('data-comment');
-        vm.$refs.sheet_entry.entryLicence = $(this).attr('data-licence');
-        vm.$refs.sheet_entry.speciesType = '<Species type 1>';
-
-        vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#2019/01/31')
-        //vm.$refs.sheet_entry.table = vm.$refs.return_datatable.vmDataTable
-        //vm.$refs.return_datatable.vmDataTable.row('#2019/01/31').data().qty = 100
-        //let newData = ["2019/01/23", "SA01", "5000", '5', 'Initial Stock Taking', '']
-        //console.log(vm.$refs.return_datatable.vmDataTable.row(1).data())
-        //vm.$refs.return_datatable.vmDataTable.ajax.reload()
-        // Fix the table rendering columns
+        let rowId = $(this).attr('data-rowid');
+        vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+rowId);
+        vm.$refs.sheet_entry.entryActivity = vm.$refs.sheet_entry.row_of_data.data().activity;
+        vm.$refs.sheet_entry.entryQty = vm.$refs.sheet_entry.row_of_data.data().qty;
+        vm.$refs.sheet_entry.entryTotal = vm.$refs.sheet_entry.row_of_data.data().total;
+        vm.$refs.sheet_entry.entryComment = vm.$refs.sheet_entry.row_of_data.data().comment;
+        vm.$refs.sheet_entry.entryLicence = vm.$refs.sheet_entry.row_of_data.data().licence;
+        vm.$refs.sheet_entry.speciesType = vm.sheetTitle;
         vm.$refs.sheet_entry.isModalOpen=true;
      });
   },

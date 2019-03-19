@@ -74,7 +74,7 @@ class ReturnSerializer(serializers.ModelSerializer):
         :param _return: Return instance.
         :return: table of data details.
         """
-        return _return.sheet.data if _return.has_sheet else _return.table()
+        return _return.sheet.table if _return.has_sheet else _return.table
 
 
 class ReturnTypeSerializer(serializers.ModelSerializer):

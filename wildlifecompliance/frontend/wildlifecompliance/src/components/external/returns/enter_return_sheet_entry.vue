@@ -107,7 +107,7 @@ export default {
             return vm.errors;
         },
         title: function(){
-            this.currentStock = +this.entryNumber + +this.entryTotal;
+            this.currentStock = +this.entryQty + +this.entryTotal;
             return this.speciesType + '   Current stock: ' + this.currentStock;
         }
 
@@ -115,14 +115,13 @@ export default {
     methods:{
         update:function () {
             console.log('update function')
-            let vm =this;
-         //   console.log(vm.table.row('#2019/01/31').data())
-         // FIXME: Update parent table.
-         // value = vm.$refs.return_datatable.vmDataTable.row('#2019/01/31').data()
-         // vm.row_of_data['qty'] = 10;
-         // vm.table.row('#2019/01/31').data(vm.row_of_data['qty']).draw();
-         // vm.row_of_data.data().qty='1000'
-         // vm.row_of_data.invalidate().draw()
+            var vm = this;
+            vm.row_of_data.data().activity = vm.entryActivity;
+            vm.row_of_data.data().qty = vm.entryQty;
+            vm.row_of_data.data().total = vm.entryTotal;
+            vm.row_of_data.data().licence = vm.entryLicence;
+            vm.row_of_data.data().comment = vm.entryComment;
+            vm.row_of_data.invalidate().draw()
             this.isModalOpen = false;
         },
         cancel:function () {
@@ -139,9 +138,7 @@ export default {
     },
     mounted:function () {
         console.log('modal Mounted');
-        let vm =this;
-        console.log(vm)
-        vm.currentStock = vm.entryNumber + vm.entryTotal;
+        let vm = this;
     }
 }
 </script>
