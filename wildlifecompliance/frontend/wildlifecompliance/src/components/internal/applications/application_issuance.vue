@@ -16,10 +16,10 @@
                                         <div class="form-group">
                                             <div class="row">
                                                 <div class="col-sm-3">
-                                                    <input type="radio"  id="issue" name="licence_category" v-model="licence.activity[index].final_status"  value="Issue" > Issue
+                                                    <input type="radio"  id="issue" name="licence_category" v-model="licence.activity[index].final_status"  value="issued" > Issue
                                                 </div>
                                                 <div class="col-sm-3">
-                                                    <input type="radio"  id="decline" name="licence_category" v-model="licence.activity[index].final_status"  value="Decline" > Decline
+                                                    <input type="radio"  id="decline" name="licence_category" v-model="licence.activity[index].final_status"  value="declined" > Decline
                                                 </div>
                                             </div>
                                             <div class="row">
@@ -261,10 +261,10 @@ export default {
             console.log(vm.application.id_check_status)
             for(var i=0, len=vm.proposed_licence.length; i<len; i++){
                 if (vm.proposed_licence[i].proposed_action.id =='propose_issue'){
-                    final_status="Issue"
+                    final_status="issued"
                 }
                 if (vm.proposed_licence[i].proposed_action.id =='propose_decline'){
-                    final_status="Decline"
+                    final_status="declined"
                 }
                 vm.licence.activity.push({
                                         id:         vm.proposed_licence[i].licence_activity.id,

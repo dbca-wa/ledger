@@ -150,7 +150,7 @@
                 <template v-if="showingConditions">
                     <div v-for="item in application.licence_type_data">
                         <ul class="nav nav-tabs" id="conditiontabs">
-                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status.id=='with_assessor' && item1.id == selected_activity_tab_id" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}</a></li>
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status.id=='with_assessor' && item1.id == selected_activity_tab_id" data-toggle="tab" :data-target="`#${item1.id}`">{{item1.name}}</a></li>
                         </ul>
                     </div>
                     <div  class="tab-content">
@@ -176,11 +176,11 @@
                 <template v-if="isOfficerConditions">
                     <div v-for="item in application.licence_type_data">
                         <ul class="nav nav-tabs" id="conditiontabs">
-                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status.id=='with_officer_conditions'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status.id=='with_officer_conditions'" data-toggle="tab" :data-target="`#${item1.id}`">{{item1.name}}</a></li>
                         </ul>
                     </div>
                     <div class="tab-content">
-                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && item1.processing_status.id=='with_officer_conditions'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && item1.processing_status.id=='with_officer_conditions'" :id="`${item1.id}`" class="tab-pane fade active in">
                             <OfficerConditions :application="application" :licence_activity_tab="item1.id" :final_view_conditions="false"/>
                         </div>
                     </div>
@@ -188,11 +188,11 @@
                 <template v-if="isFinalViewConditions">
                     <div v-for="item in application.licence_type_data">
                         <ul class="nav nav-tabs" id="conditiontabs">
-                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status.id=='with_officer_finalisation'" data-toggle="tab" :href="`#${item1.id}`+_uid">{{item1.name}}</a></li>
+                            <li v-for="(item1,index) in item"><a v-if="item1.name && item1.processing_status.id=='with_officer_finalisation'" data-toggle="tab" :data-target="`#${item1.id}`">{{item1.name}}</a></li>
                         </ul>
                     </div>
                     <div class="tab-content">
-                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && item1.processing_status.id=='with_officer_finalisation'" :id="`${item1.id}`+_uid" class="tab-pane fade active in">
+                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && item1.processing_status.id=='with_officer_finalisation'" :id="`${item1.id}`" class="tab-pane fade active in">
                             <OfficerConditions :application="application" :licence_activity_tab="item1.id" :final_view_conditions="true"/>
                         </div>
                     </div>
@@ -201,13 +201,13 @@
                     <div>
                         <ul id="tabs-assessor" class="nav nav-tabs">
                             <li v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && (item1.processing_status.id=='with_officer' || item1.processing_status.id=='with_officer_conditions' || item1.processing_status.id=='with_assessor')" :class="setAssessorTab(index)" @click.prevent="clearSendToAssessorForm()">
-                                <a data-toggle="tab" :data-activity-tab-id="`${item1.id}`">{{item1.name}}</a>
+                                <a v-if="isActivityVisible(item1.id)" data-toggle="tab" :data-target="`#${item1.id}`">{{item1.name}}</a>
                             </li>
                         </ul>
                     </div>
                         
                     <div class="tab-content">
-                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && (item1.processing_status.id=='with_officer' || item1.processing_status.id=='with_officer_conditions' || item1.processing_status.id=='with_assessor')" :id="`${item1.id}`+_uid" :class="setAssessorTabContent(index)">
+                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && (item1.processing_status.id=='with_officer' || item1.processing_status.id=='with_officer_conditions' || item1.processing_status.id=='with_assessor')" :id="`${item1.id}`" :class="setAssessorTabContent(index)">
                             <div>
                                 <div class="panel panel-default">
                                     <div class="panel-heading">
@@ -627,24 +627,25 @@
 </div>
 </template>
 <script>
-import Application from '../../form.vue'
-import Vue from 'vue'
-import ProposedDecline from './application_proposed_decline.vue'
-import AmendmentRequest from './amendment_request.vue'
-import SendToAssessor from './application_send_assessor.vue'
-import datatable from '@vue-utils/datatable.vue'
-import Conditions from './application_conditions.vue'
-import OfficerConditions from './application_officer_conditions.vue'
-import ProposedLicence from './proposed_issuance.vue'
-import IssueLicence from './application_issuance.vue'
-import LicenceScreen from './application_licence.vue'
-import CommsLogs from '@common-utils/comms_logs.vue'
-import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
+import Application from '../../form.vue';
+import Vue from 'vue';
+import ProposedDecline from './application_proposed_decline.vue';
+import AmendmentRequest from './amendment_request.vue';
+import SendToAssessor from './application_send_assessor.vue';
+import datatable from '@vue-utils/datatable.vue';
+import Conditions from './application_conditions.vue';
+import OfficerConditions from './application_officer_conditions.vue';
+import ProposedLicence from './proposed_issuance.vue';
+import IssueLicence from './application_issuance.vue';
+import LicenceScreen from './application_licence.vue';
+import CommsLogs from '@common-utils/comms_logs.vue';
+import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js";
 import {
     api_endpoints,
     helpers
 }
-from '@/utils/hooks'
+from '@/utils/hooks';
+import { isApplicationActivityVisible } from "@/utils/helpers.js";
 export default {
     name: 'InternalApplication',
     data: function() {
@@ -667,7 +668,6 @@ export default {
             selected_activity_tab_id:null,
             selected_activity_tab_name:null,
             form: null,
-            department_users : [],
             // activity_data:[],
             contacts_table_initialised: false,
             initialisedSelects: false,
@@ -851,11 +851,10 @@ export default {
         }
     },
     methods: {
-
         eventListeners: function(){
             let vm = this;
-            $("[data-activity-tab-id!=''][data-activity-tab-id]").off("click").on("click", function (e) {
-                vm.selected_activity_tab_id = $(this).data('activity-tab-id');
+            $("[data-target!=''][data-target]").off("click").on("click", function (e) {
+                vm.selected_activity_tab_id = parseInt($(this).data('target').replace('#', ''), 10);
                 vm.selected_activity_tab_name = $(this).text();
             });
             this.initFirstTab();
@@ -938,7 +937,7 @@ export default {
             if(this.selected_activity_tab_id && !force) {
                 return;
             }
-            $('#tabs-section li:first-child a').click();
+            $('#tabs-section li:first-child a')[0].click();
         },
         initialiseOrgContactTable: function(){
             let vm = this;
@@ -954,6 +953,9 @@ export default {
         proposedDecline: function(){
             this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
+        },
+        isActivityVisible: function(activity_id) {
+            return isApplicationActivityVisible(this.application, activity_id);
         },
         isAssessorRelevant(assessor, activity_id) {
             if(!activity_id) {
@@ -1005,10 +1007,8 @@ export default {
         proposedLicence: function(){
             var activity_name=[]
             var selectedTabTitle = $("#tabs-section li.active");
-            // var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
-            var tab_id=selectedTabTitle.children().attr('href').split('#')[1]
 
-            this.$refs.proposed_licence.propose_issue.licence_activity_id=vm.selected_activity_tab_id;
+            this.$refs.proposed_licence.propose_issue.licence_activity_id=this.selected_activity_tab_id;
             this.$refs.proposed_licence.propose_issue.licence_activity_name=selectedTabTitle.text();
             this.$refs.proposed_licence.isModalOpen = true;
         },
@@ -1142,6 +1142,7 @@ export default {
             vm.showingApplication = false;
             vm.showingConditions = false;
             vm.fetchAssessorGroup();
+            vm.initFirstTab(true);
         },
         save: function(e) {
             let vm = this;
@@ -1164,6 +1165,7 @@ export default {
             });
         },
         toggleApplication:function(){
+            let vm = this;
             this.showingApplication = !this.showingApplication;
             if(this.isSendingToAssessor){
                 this.isSendingToAssessor=!this.isSendingToAssessor
@@ -1182,6 +1184,7 @@ export default {
             }
             setTimeout(function(){
                 $('#tabs-main li a')[1].click();
+                vm.initFirstTab(true);
             }, 50);
         },
         toggleConditions:function(){
@@ -1417,17 +1420,6 @@ export default {
                 )
             });
         },
-        fetchDeparmentUsers: function(){
-            let vm = this;
-            vm.loading.push('Loading Department Users');
-            vm.$http.get(api_endpoints.department_users).then((response) => {
-                vm.department_users = response.body
-                vm.loading.splice('Loading Department Users',1);
-            },(error) => {
-                console.log(error);
-                vm.loading.splice('Loading Department Users',1);
-            })
-        },
         fetchAssessorGroup: function(){
             let vm = this;
             let data = {'application_id' : vm.application.id };
@@ -1476,7 +1468,6 @@ export default {
     },
     mounted: function() {
         let vm = this;
-        vm.fetchDeparmentUsers();
         vm.$nextTick(function () {
             for (var i=0;i<vm.application.licence_type_data.activity.length;i++) {
                 var activity_id = vm.application.licence_type_data.activity[i].id

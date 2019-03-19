@@ -182,32 +182,22 @@ export default {
             let propose_issue = JSON.parse(JSON.stringify(vm.propose_issue));
             vm.issuingLicence = true;
             if (propose_issue.activity.length > 0){
-                if (vm.processing_status.id == 'under_review'){
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/proposed_licence'),JSON.stringify(vm.propose_issue),{
-                            emulateJSON:true,
-                        }).then((response)=>{
-                            swal(
-                                 'Propose Issue',
-                                 'The selected licenced activities have been proposed for Issue.',
-                                 'success'
-                            )
-                            vm.issuingLicence = false;
-                            vm.close();
-                            vm.$emit('refreshFromResponse',response);
-                        },(error)=>{
-                            vm.errors = true;
-                            vm.issuingLicence = false;
-                            vm.errorString = helpers.apiVueResourceError(error);
-                        });
-                }
-                else{
-                    vm.issuingLicence = false;
-                    swal(
-                         'Propose Issue',
-                         'The licenced activity must be in status "With Officer-Conditions".',
-                         'error'
-                    )
-                }
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/proposed_licence'),JSON.stringify(vm.propose_issue),{
+                        emulateJSON:true,
+                    }).then((response)=>{
+                        swal(
+                                'Propose Issue',
+                                'The selected licenced activities have been proposed for Issue.',
+                                'success'
+                        )
+                        vm.issuingLicence = false;
+                        vm.close();
+                        vm.$emit('refreshFromResponse',response);
+                    },(error)=>{
+                        vm.errors = true;
+                        vm.issuingLicence = false;
+                        vm.errorString = helpers.apiVueResourceError(error);
+                    });
             } else {
                 vm.issuingLicence = false;
                 swal(

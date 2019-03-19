@@ -635,9 +635,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def final_decision(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            # serializer = ProposedLicenceSerializer(data=request.data)
-            # serializer.is_valid(raise_exception=True)
-            print(request.data)
             instance.final_decision(request)
             serializer = InternalApplicationSerializer(
                 instance, context={'request': request})

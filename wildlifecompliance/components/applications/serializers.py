@@ -531,7 +531,23 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
         read_only_fields = ('documents', 'conditions')
 
     def get_activities(self, obj):
+        user = self.context['request'].user
+        if user is None:
+            return []
         application_activities = ApplicationSelectedActivity.objects.filter(application_id=obj.id)
+
+        """
+        # Uncomment to filter out activities that the internal user cannot assess / process (to hide activity tabs on the UI).
+        if not user.has_perm('wildlifecompliance.system_administrator'):
+            for activity in application_activities:
+                if not user.has_wildlifelicenceactivity_perm([
+                    'assessor',
+                    'licensing_officer',
+                    'issuing_officer',
+                ], activity.licence_activity_id):
+                    application_activities = application_activities.exclude(licence_activity_id=activity.licence_activity_id)
+        """
+
         return ApplicationSelectedActivitySerializer(application_activities, many=True).data
 
     def get_readonly(self, obj):
@@ -616,7 +632,8 @@ class ApplicationConditionSerializer(serializers.ModelSerializer):
             'recurrence_schedule',
             'recurrence_pattern',
             'condition',
-            'licence_activity')
+            'licence_activity',
+            'return_type',)
         readonly_fields = ('order', 'condition')
 
 
@@ -659,7 +676,7 @@ class DTAssessmentSerializer(serializers.ModelSerializer):
         source='application.lodgement_date')
     applicant = serializers.CharField(source='application.applicant')
     application_category = serializers.CharField(
-        source='application.licence_type_name')
+        source='application.licence_category_name')
 
     class Meta:
         model = Assessment

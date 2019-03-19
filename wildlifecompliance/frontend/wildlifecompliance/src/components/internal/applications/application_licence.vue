@@ -86,7 +86,6 @@ import {
 }
 from '@/utils/hooks'
 import datatable from '@vue-utils/datatable.vue'
-import ConditionDetail from './application_add_condition.vue'
 export default {
     name: 'InternalApplicationConditions',
     props: {
