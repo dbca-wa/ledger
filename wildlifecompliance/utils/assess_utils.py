@@ -60,8 +60,6 @@ def create_licence(application, activity, new_app):
     if application.applicant_type == Application.APPLICANT_TYPE_ORGANISATION:
         qs_licence = WildlifeLicence.objects.filter(org_applicant_id=application.applicant_id, licence_category=licence_category)
         if qs_licence.exists():
-            # licence_sequence = qs_licence.last().licence_sequence + 1 if qs_licence.filter(
-            # licence_type=activity).exists() else qs_licence.last().licence_sequence
             licence_sequence = qs_licence.last().licence_sequence + 1 if new_app else qs_licence.last().licence_sequence
             # use existing licence, just increment sequence_number
             licence = WildlifeLicence.objects.create(
@@ -71,7 +69,6 @@ def create_licence(application, activity, new_app):
                 current_application=application,
                 org_applicant_id=application.applicant_id,
                 submitter=application.submitter,
-                licence_type=activity,
                 licence_category=licence_category,
                 expiry_date=activity.expiry_date,
                 issue_date=activity.issue_date,
@@ -82,7 +79,6 @@ def create_licence(application, activity, new_app):
                 current_application=application,
                 org_applicant_id=application.applicant_id,
                 submitter=application.submitter,
-                licence_type=activity,
                 licence_category=licence_category,
                 expiry_date=activity.expiry_date,
                 issue_date=activity.issue_date,
@@ -92,8 +88,6 @@ def create_licence(application, activity, new_app):
     elif application.applicant_type == Application.APPLICANT_TYPE_PROXY:
         qs_licence = WildlifeLicence.objects.filter(proxy_applicant_id=application.applicant_id, licence_category=licence_category)
         if qs_licence.exists():
-            # licence_sequence = qs_licence.last().licence_sequence + 1 if qs_licence.filter(
-            # licence_type=activity).exists() else qs_licence.last().licence_sequence
             licence_sequence = qs_licence.last().licence_sequence + 1 if new_app else qs_licence.last().licence_sequence
             # use existing licence, just increment sequence_number
             licence = WildlifeLicence.objects.create(
@@ -103,7 +97,6 @@ def create_licence(application, activity, new_app):
                 current_application=application,
                 proxy_applicant_id=application.applicant_id,
                 submitter=application.submitter,
-                licence_type=activity,
                 licence_category=licence_category,
                 expiry_date=activity.expiry_date,
                 issue_date=activity.issue_date,
@@ -114,7 +107,6 @@ def create_licence(application, activity, new_app):
                 current_application=application,
                 proxy_applicant_id=application.applicant_id,
                 submitter=application.submitter,
-                licence_type=activity,
                 licence_category=licence_category,
                 expiry_date=activity.expiry_date,
                 issue_date=activity.issue_date,
@@ -126,8 +118,6 @@ def create_licence(application, activity, new_app):
         qs_licence = WildlifeLicence.objects.filter(submitter_id=application.applicant_id, org_applicant__isnull=True,
                                                     proxy_applicant__isnull=True, licence_category=licence_category)
         if qs_licence.exists():
-            # licence_sequence = qs_licence.last().licence_sequence + 1 if qs_licence.filter(
-            # licence_type=activity).exists() else qs_licence.last().licence_sequence
             licence_sequence = qs_licence.last().licence_sequence + 1 if new_app else qs_licence.last().licence_sequence
             # use existing licence, just increment sequence_number
             licence = WildlifeLicence.objects.create(
@@ -136,7 +126,6 @@ def create_licence(application, activity, new_app):
                 licence_sequence=licence_sequence,
                 current_application=application,
                 submitter_id=application.applicant_id,
-                licence_type=activity,
                 licence_category=licence_category,
                 expiry_date=activity.expiry_date,
                 issue_date=activity.issue_date,
@@ -146,7 +135,6 @@ def create_licence(application, activity, new_app):
             licence = WildlifeLicence.objects.create(
                 current_application=application,
                 submitter_id=application.applicant_id,
-                licence_type=activity,
                 licence_category=licence_category,
                 expiry_date=activity.expiry_date,
                 issue_date=activity.issue_date,

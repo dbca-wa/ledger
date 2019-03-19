@@ -937,7 +937,10 @@ export default {
             if(this.selected_activity_tab_id && !force) {
                 return;
             }
-            $('#tabs-section li:first-child a')[0].click();
+            const tab = $('#tabs-section li:first-child a')[0];
+            if(tab) {
+                tab.click();
+            }
         },
         initialiseOrgContactTable: function(){
             let vm = this;
@@ -1008,7 +1011,7 @@ export default {
             var activity_name=[]
             var selectedTabTitle = $("#tabs-section li.active");
 
-            this.$refs.proposed_licence.propose_issue.licence_activity_id=vm.selected_activity_tab_id;
+            this.$refs.proposed_licence.propose_issue.licence_activity_id=this.selected_activity_tab_id;
             this.$refs.proposed_licence.propose_issue.licence_activity_name=selectedTabTitle.text();
             this.$refs.proposed_licence.isModalOpen = true;
         },
@@ -1502,7 +1505,7 @@ export default {
                 }
             }
 
-        })
+        });
     },
     updated: function(){
         let vm = this;

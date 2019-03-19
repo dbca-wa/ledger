@@ -30,6 +30,7 @@ from wildlifecompliance.components.applications.email import (
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
+from wildlifecompliance.components.licences.models import LicenceCategory
 
 logger = logging.getLogger(__name__)
 
@@ -126,95 +127,128 @@ class Application(RevisionedMixin):
     APPLICANT_TYPE_PROXY = 'PRX'
     APPLICANT_TYPE_SUBMITTER = 'SUB'
 
-    PROCESSING_STATUS_DRAFT = (
-        'draft', 'Draft'
-    )
-
+    CUSTOMER_STATUS_DRAFT = 'draft'
+    CUSTOMER_STATUS_UNDER_REVIEW = 'under_review'
+    CUSTOMER_STATUS_AMENDMENT_REQUIRED = 'amendment_required'
+    CUSTOMER_STATUS_ACCEPTED = 'accepted'
+    CUSTOMER_STATUS_PARTIALLY_APPROVED = 'partially_approved'
+    CUSTOMER_STATUS_DECLINED = 'declined'
     CUSTOMER_STATUS_CHOICES = (
-        PROCESSING_STATUS_DRAFT,
-        ('under_review', 'Under Review'),
-        ('amendment_required', 'Amendment Required'),
-        ('accepted', 'Accepted'),
-        ('partially_approved', 'Partially Approved'),
-        ('declined', 'Declined'),
+        (CUSTOMER_STATUS_DRAFT, 'Draft'),
+        (CUSTOMER_STATUS_UNDER_REVIEW, 'Under Review'),
+        (CUSTOMER_STATUS_AMENDMENT_REQUIRED, 'Amendment Required'),
+        (CUSTOMER_STATUS_ACCEPTED, 'Accepted'),
+        (CUSTOMER_STATUS_PARTIALLY_APPROVED, 'Partially Approved'),
+        (CUSTOMER_STATUS_DECLINED, 'Declined'),
     )
 
     # List of statuses from above that allow a customer to edit an application.
     CUSTOMER_EDITABLE_STATE = [
-        'temp',
-        PROCESSING_STATUS_DRAFT[0],
-        'amendment_required',
+        CUSTOMER_STATUS_DRAFT,
+        CUSTOMER_STATUS_AMENDMENT_REQUIRED,
     ]
+
+    PROCESSING_STATUS_DRAFT = 'draft'
+    PROCESSING_STATUS_WITH_OFFICER = 'with_officer'
+    PROCESSING_STATUS_WITH_ASSESSOR = 'with_assessor'
+    PROCESSING_STATUS_ASSESSOR_CONDITIONS = 'with_assessor_conditions'
+    PROCESSING_STATUS_WITH_APPROVER = 'with_approver'
+    PROCESSING_STATUS_RENEWAL = 'renewal'
+    PROCESSING_STATUS_LICENCE_AMENDMENT = 'licence_amendment'
+    PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE = 'awaiting_applicant_response'
+    PROCESSING_STATUS_AWAITING_ASSESSOR_RESPONSE = 'awaiting_assessor_response'
+    PROCESSING_STATUS_AWAITING_RESPONSES = 'awaiting_responses'
+    PROCESSING_STATUS_READY_FOR_CONDITIONS = 'ready_for_conditions'
+    PROCESSING_STATUS_READY_TO_ISSUE = 'ready_to_issue'
+    PROCESSING_STATUS_APPROVED = 'approved'
+    PROCESSING_STATUS_PARTIALLY_APPROVED = 'partially_approved'
+    PROCESSING_STATUS_DECLINED = 'declined'
+    PROCESSING_STATUS_DISCARDED = 'discarded'
+    PROCESSING_STATUS_UNDER_REVIEW = 'under_review'
+    PROCESSING_STATUS_CHOICES = (
+        (PROCESSING_STATUS_DRAFT, 'Draft'),
+        (PROCESSING_STATUS_WITH_OFFICER, 'With Officer'),
+        (PROCESSING_STATUS_WITH_ASSESSOR, 'With Assessor'),
+        (PROCESSING_STATUS_ASSESSOR_CONDITIONS, 'With Assessor (Conditions)'),
+        (PROCESSING_STATUS_WITH_APPROVER, 'With Approver'),
+        (PROCESSING_STATUS_RENEWAL, 'Renewal'),
+        (PROCESSING_STATUS_LICENCE_AMENDMENT, 'Licence Amendment'),
+        (PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE, 'Awaiting Applicant Response'),
+        (PROCESSING_STATUS_AWAITING_ASSESSOR_RESPONSE, 'Awaiting Assessor Response'),
+        (PROCESSING_STATUS_AWAITING_RESPONSES, 'Awaiting Responses'),
+        (PROCESSING_STATUS_READY_FOR_CONDITIONS, 'Ready for Conditions'),
+        (PROCESSING_STATUS_READY_TO_ISSUE, 'Ready to Issue'),
+        (PROCESSING_STATUS_APPROVED, 'Approved'),
+        (PROCESSING_STATUS_PARTIALLY_APPROVED, 'Partially Approved'),
+        (PROCESSING_STATUS_DECLINED, 'Declined'),
+        (PROCESSING_STATUS_DISCARDED, 'Discarded'),
+        (PROCESSING_STATUS_UNDER_REVIEW, 'Under Review'),
+    )
 
     # List of statuses from above that allow a customer to view an application
     # (read-only)
     CUSTOMER_VIEWABLE_STATE = [
-        'with_assessor',
-        'under_review',
-        'id_required',
-        'returns_required',
-        'approved',
-        'declined',
-        'partially_approved'
+        PROCESSING_STATUS_WITH_ASSESSOR,
+        PROCESSING_STATUS_UNDER_REVIEW,
+        PROCESSING_STATUS_APPROVED,
+        PROCESSING_STATUS_DECLINED,
+        PROCESSING_STATUS_PARTIALLY_APPROVED,
     ]
 
-    PROCESSING_STATUS_CHOICES = (
-        PROCESSING_STATUS_DRAFT,
-        ('with_officer', 'With Officer'),
-        ('with_assessor', 'With Assessor'),
-        ('with_assessor_conditions', 'With Assessor (Conditions)'),
-        ('with_approver', 'With Approver'),
-        ('renewal', 'Renewal'),
-        ('licence_amendment', 'Licence Amendment'),
-        ('awaiting_applicant_response', 'Awaiting Applicant Response'),
-        ('awaiting_assessor_response', 'Awaiting Assessor Response'),
-        ('awaiting_responses', 'Awaiting Responses'),
-        ('ready_for_conditions', 'Ready for Conditions'),
-        ('ready_to_issue', 'Ready to Issue'),
-        ('approved', 'Approved'),
-        ('partially_approved', 'Partially Approved'),
-        ('declined', 'Declined'),
-        ('discarded', 'Discarded'),
-        ('under_review', 'Under Review'),
-    )
-
+    ID_CHECK_STATUS_NOT_CHECKED = 'not_checked'
+    ID_CHECK_STATUS_AWAITING_UPDATE = 'awaiting_update'
+    ID_CHECK_STATUS_UPDATED = 'updated'
+    ID_CHECK_STATUS_ACCEPTED = 'accepted'
     ID_CHECK_STATUS_CHOICES = (
-        ('not_checked', 'Not Checked'),
-        ('awaiting_update', 'Awaiting Update'),
-        ('updated', 'Updated'),
-        ('accepted', 'Accepted')
+        (ID_CHECK_STATUS_NOT_CHECKED, 'Not Checked'),
+        (ID_CHECK_STATUS_AWAITING_UPDATE, 'Awaiting Update'),
+        (ID_CHECK_STATUS_UPDATED, 'Updated'),
+        (ID_CHECK_STATUS_ACCEPTED, 'Accepted')
     )
 
+    RETURN_CHECK_STATUS_NOT_CHECKED = 'not_checked'
+    RETURN_CHECK_STATUS_AWAITING_RETURNS = 'awaiting_returns'
+    RETURN_CHECK_STATUS_COMPLETED = 'completed'
+    RETURN_CHECK_STATUS_ACCEPTED = 'accepted'
     RETURN_CHECK_STATUS_CHOICES = (
-        ('not_checked', 'Not Checked'),
-        ('awaiting_returns', 'Awaiting Returns'),
-        ('completed', 'Completed'),
-        ('accepted', 'Accepted')
+        (RETURN_CHECK_STATUS_NOT_CHECKED, 'Not Checked'),
+        (RETURN_CHECK_STATUS_AWAITING_RETURNS, 'Awaiting Returns'),
+        (RETURN_CHECK_STATUS_COMPLETED, 'Completed'),
+        (RETURN_CHECK_STATUS_ACCEPTED, 'Accepted')
     )
 
+    CHARACTER_CHECK_STATUS_NOT_CHECKED = 'not_checked'
+    CHARACTER_CHECK_STATUS_ACCEPTED = 'accepted'
     CHARACTER_CHECK_STATUS_CHOICES = (
-        ('not_checked', 'Not Checked'),
-        ('accepted', 'Accepted')
+        (CHARACTER_CHECK_STATUS_NOT_CHECKED, 'Not Checked'),
+        (CHARACTER_CHECK_STATUS_ACCEPTED, 'Accepted')
     )
 
+    REVIEW_STATUS_NOT_REVIEWED = 'not_reviewed'
+    REVIEW_STATUS_AWAITING_AMENDMENTS = 'awaiting_amendments'
+    REVIEW_STATUS_AMENDED = 'amended'
+    REVIEW_STATUS_ACCEPTED = 'accepted'
     REVIEW_STATUS_CHOICES = (
-        ('not_reviewed', 'Not Reviewed'),
-        ('awaiting_amendments', 'Awaiting Amendments'),
-        ('amended', 'Amended'),
-        ('accepted', 'Accepted')
+        (REVIEW_STATUS_NOT_REVIEWED, 'Not Reviewed'),
+        (REVIEW_STATUS_AWAITING_AMENDMENTS, 'Awaiting Amendments'),
+        (REVIEW_STATUS_AMENDED, 'Amended'),
+        (REVIEW_STATUS_ACCEPTED, 'Accepted')
     )
 
+    APPLICATION_TYPE_NEW_LICENCE = 'new_licence'
+    APPLICATION_TYPE_AMENDMENT = 'amendment'
+    APPLICATION_TYPE_RENEWAL = 'renewal'
     APPLICATION_TYPE_CHOICES = (
-        ('new_licence', 'New Licence'),
-        ('amendment', 'Amendment'),
-        ('renewal', 'Renewal'),
+        (APPLICATION_TYPE_NEW_LICENCE, 'New Licence'),
+        (APPLICATION_TYPE_AMENDMENT, 'Amendment'),
+        (APPLICATION_TYPE_RENEWAL, 'Renewal'),
     )
 
     application_type = models.CharField(
         'Application Type',
         max_length=40,
         choices=APPLICATION_TYPE_CHOICES,
-        default=APPLICATION_TYPE_CHOICES[0][0])
+        default=APPLICATION_TYPE_NEW_LICENCE)
     data = JSONField(blank=True, null=True)
     assessor_data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
@@ -227,7 +261,7 @@ class Application(RevisionedMixin):
         'Customer Status',
         max_length=40,
         choices=CUSTOMER_STATUS_CHOICES,
-        default=CUSTOMER_STATUS_CHOICES[0][0])
+        default=CUSTOMER_STATUS_DRAFT)
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
     lodgement_date = models.DateTimeField(blank=True, null=True)
@@ -255,27 +289,27 @@ class Application(RevisionedMixin):
         'Processing Status',
         max_length=30,
         choices=PROCESSING_STATUS_CHOICES,
-        default=PROCESSING_STATUS_CHOICES[0][0])
+        default=PROCESSING_STATUS_DRAFT)
     id_check_status = models.CharField(
         'Identification Check Status',
         max_length=30,
         choices=ID_CHECK_STATUS_CHOICES,
-        default=ID_CHECK_STATUS_CHOICES[0][0])
+        default=ID_CHECK_STATUS_NOT_CHECKED)
     return_check_status = models.CharField(
         'Return Check Status',
         max_length=30,
         choices=RETURN_CHECK_STATUS_CHOICES,
-        default=RETURN_CHECK_STATUS_CHOICES[0][0])
+        default=RETURN_CHECK_STATUS_NOT_CHECKED)
     character_check_status = models.CharField(
         'Character Check Status',
         max_length=30,
         choices=CHARACTER_CHECK_STATUS_CHOICES,
-        default=CHARACTER_CHECK_STATUS_CHOICES[0][0])
+        default=CHARACTER_CHECK_STATUS_NOT_CHECKED)
     review_status = models.CharField(
         'Review Status',
         max_length=30,
         choices=REVIEW_STATUS_CHOICES,
-        default=REVIEW_STATUS_CHOICES[0][0])
+        default=REVIEW_STATUS_NOT_REVIEWED)
     licence = models.ForeignKey(
         'wildlifecompliance.WildlifeLicence',
         null=True,
@@ -369,10 +403,6 @@ class Application(RevisionedMixin):
         return self.assigned_officer is not None
 
     @property
-    def is_temporary(self):
-        return self.customer_status == 'temp' and self.processing_status == 'temp'
-
-    @property
     def can_user_edit(self):
         """
         :return: True if the application is in one of the editable status.
@@ -393,8 +423,8 @@ class Application(RevisionedMixin):
         1 - It is a draft
         2- or if the application has been pushed back to the user
         """
-        return self.customer_status == Application.PROCESSING_STATUS_DRAFT[0]\
-            or self.processing_status == 'awaiting_applicant_response'
+        return self.customer_status == Application.PROCESSING_STATUS_DRAFT\
+            or self.processing_status == Application.PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE
 
     @property
     def is_deletable(self):
@@ -402,7 +432,7 @@ class Application(RevisionedMixin):
         An application can be deleted only if it is a draft and it hasn't been lodged yet
         :return:
         """
-        return self.customer_status == Application.PROCESSING_STATUS_DRAFT[0] and not self.lodgement_number
+        return self.customer_status == Application.PROCESSING_STATUS_DRAFT and not self.lodgement_number
 
     @property
     def payment_status(self):
@@ -463,7 +493,7 @@ class Application(RevisionedMixin):
                 'id': selected_activity.processing_status,
                 'name': get_choice_value(
                     selected_activity.processing_status,
-                    ApplicationSelectedActivity.ACTIVITY_PROCESSING_STATUS_CHOICES
+                    ApplicationSelectedActivity.PROCESSING_STATUS_CHOICES
                 )
             }
         return licence_data
@@ -531,6 +561,13 @@ class Application(RevisionedMixin):
             )
         return selected_activity
 
+    def get_licence_category(self):
+        first_activity = self.licence_purposes.first()
+        try:
+            return first_activity.licence_category
+        except AttributeError:
+            return LicenceCategory.objects.none()
+
     def get_permission_groups(self, codename):
         """
         :return: queryset of ActivityPermissionGroups matching the current application by activity IDs
@@ -556,8 +593,8 @@ class Application(RevisionedMixin):
                 print("inside can_user_edit")
                 parser = SchemaParser(draft=False)
                 parser.save_proponent_data(self, request, viewset)
-                self.processing_status = 'under_review'
-                self.customer_status = 'under_review'
+                self.processing_status = Application.PROCESSING_STATUS_UNDER_REVIEW
+                self.customer_status = Application.CUSTOMER_STATUS_UNDER_REVIEW
                 self.submitter = request.user
                 self.lodgement_date = timezone.now()
                 # if amendment is submitted change the status of only particular activity
@@ -568,11 +605,13 @@ class Application(RevisionedMixin):
                     if (qs):
                         for q in qs:
                             q.status = 'amended'
-                            self.set_activity_processing_status(q.licence_activity.id, "with_officer")
+                            self.set_activity_processing_status(
+                                q.licence_activity.id, ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER)
                             q.save()
                 else:
                     for activity in self.licence_type_data['activity']:
-                        self.set_activity_processing_status(activity["id"], 'with_officer')
+                        self.set_activity_processing_status(
+                            activity["id"], ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER)
                         qs = DefaultCondition.objects.filter(
                             licence_activity=activity["id"])
                         if (qs):
@@ -764,11 +803,11 @@ class Application(RevisionedMixin):
                     assessments = Assessment.objects.filter(
                         licence_activity_id=request.data.get('selected_assessment_tab'),
                         assessor_group=q,
-                        status='awaiting_assessment',
+                        status=Assessment.STATUS_AWAITING_ASSESSMENT,
                         application=self)
 
                     for q1 in assessments:
-                        q1.status = 'completed'
+                        q1.status = Assessment.STATUS_COMPLETED
                         q1.save()
                         # Log application action
                         self.log_user_action(
@@ -789,11 +828,12 @@ class Application(RevisionedMixin):
                 if not Assessment.objects.filter(
                         application=self,
                         licence_activity=request.data.get('selected_assessment_tab'),
-                        status='awaiting_assessment').exists():
+                        status=Assessment.STATUS_AWAITING_ASSESSMENT).exists():
                     for activity in self.licence_type_data['activity']:
                         if int(
                                 request.data.get('selected_assessment_tab')) == activity["id"]:
-                            self.set_activity_processing_status(activity["id"], 'with_officer_conditions')
+                            self.set_activity_processing_status(
+                                activity["id"], ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_CONDITIONS)
 
             except BaseException:
                 raise
@@ -801,31 +841,27 @@ class Application(RevisionedMixin):
     def proposed_decline(self, request, details):
         with transaction.atomic():
             try:
-                activity = details.get('activity')
+                activity_list = details.get('activity')
                 incorrect_statuses = ApplicationSelectedActivity.objects.filter(
                     application_id=self.id,
-                    licence_activity_id__in=activity
+                    licence_activity_id__in=activity_list
                 ).exclude(
-                    processing_status='with_officer_conditions'
+                    processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_CONDITIONS
                 ).first()
+
                 if incorrect_statuses:
                     raise ValidationError(
                         'You cannot propose for licence if it is not with officer for conditions')
-                for item1 in activity:
-                    ApplicationSelectedActivity.objects.update_or_create(
-                        application=self,
-                        officer=request.user,
-                        proposed_action='propose_decline',
-                        reason=details.get('reason'),
-                        cc_email=details.get('cc_email', None),
-                        licence_activity_id=item1
-                    )
+
                 ApplicationSelectedActivity.objects.filter(
                     application_id=self.id,
-                    licence_activity_id__in=activity
+                    licence_activity_id__in=activity_list
                 ).update(
-                    proposed_decine=True,
-                    processing_status="with_officer_finalisation"
+                    officer=request.user,
+                    proposed_action=ApplicationSelectedActivity.PROPOSED_ACTION_DECLINE,
+                    processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION,
+                    reason=details.get('reason'),
+                    cc_email=details.get('cc_email', None),
                 )
 
                 # Log application action
@@ -876,27 +912,31 @@ class Application(RevisionedMixin):
     @property
     def assessments(self):
         qs = Assessment.objects.filter(
-            application=self, status='awaiting_assessment')
+            application=self, status=Assessment.STATUS_AWAITING_ASSESSMENT)
         return qs
 
     @property
     def licences(self):
         from wildlifecompliance.components.licences.models import WildlifeLicence
         try:
-            qs = WildlifeLicence.objects.filter(current_application=self)
-            return qs
+            return WildlifeLicence.objects.filter(current_application=self)
         except WildlifeLicence.DoesNotExist:
-            return None
+            return WildlifeLicence.objects.none()
 
     @property
     def activities(self):
         """ returns a queryset of activity/purposes attached to application """
         return ApplicationSelectedActivity.objects.filter(application=self)
 
+    def get_licences_by_status(self, status):
+        return self.licences.filter(current_application__selected_activities__activity_status=status).distinct()
+
     def get_proposed_decisions(self, request):
         with transaction.atomic():
             try:
-                proposed_states = ['propose_decline', 'propose_issue']
+                proposed_states = [ApplicationSelectedActivity.PROPOSED_ACTION_DECLINE,
+                                   ApplicationSelectedActivity.PROPOSED_ACTION_ISSUE
+                                   ]
                 qs = ApplicationSelectedActivity.objects.filter(
                     application=self, proposed_action__in=proposed_states)
                 for q in qs:
@@ -912,62 +952,30 @@ class Application(RevisionedMixin):
     def proposed_licence(self, request, details):
         with transaction.atomic():
             try:
-                activity = details.get('activity')
+                activity_list = details.get('activity')
                 incorrect_statuses = ApplicationSelectedActivity.objects.filter(
                     application_id=self.id,
-                    licence_activity_id__in=activity
+                    licence_activity_id__in=activity_list
                 ).exclude(
-                    processing_status='with_officer_conditions'
+                    processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_CONDITIONS
                 ).first()
 
                 if incorrect_statuses:
                     raise ValidationError(
                         'You cannot propose for licence if it is not with officer for conditions')
-                for item1 in activity:
-                    ApplicationSelectedActivity.objects.update(
-                        application=self,
-                        officer=request.user,
-                        proposed_action='propose_issue',
-                        reason=details.get('reason'),
-                        cc_email=details.get('cc_email', None),
-                        proposed_start_date=details.get('start_date', None),
-                        proposed_end_date=details.get('expiry_date', None),
-                        licence_activity_id=item1
-                    )
 
                 ApplicationSelectedActivity.objects.filter(
                     application_id=self.id,
-                    licence_activity_id__in=activity
+                    licence_activity_id__in=activity_list
                 ).update(
-                    proposed_decine=True,
-                    processing_status="with_officer_finalisation"
+                    officer=request.user,
+                    proposed_action=ApplicationSelectedActivity.PROPOSED_ACTION_DECLINE,
+                    processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION,
+                    reason=details.get('reason'),
+                    cc_email=details.get('cc_email', None),
+                    proposed_start_date=details.get('start_date', None),
+                    proposed_end_date=details.get('expiry_date', None),
                 )
-
-                try:
-                    selected_activity = ApplicationSelectedActivity.objects.get(
-                        application=self,
-                        licence_activity_id=details.get('licence_activity_id'))
-
-                    if selected_activity.proposed_action == 'propose_issue':
-                        raise ValidationError(
-                            'This activity has already been proposed to issue')
-                    else:
-                        selected_activity.proposed_action = 'propose_issue'
-                        selected_activity.officer = request.user
-                        selected_activity.reason = details.get('details')
-                        selected_activity.cc_email = details.get(
-                            'cc_email',
-                            None),
-                        selected_activity.proposed_start_date = details.get(
-                            'start_date',
-                            None),
-                        selected_activity.proposed_end_date = details.get(
-                            'expiry_date',
-                            None),
-                        selected_activity.save()
-                except ApplicationSelectedActivity.DoesNotExist:
-                    # Should never happen: ApplicationSelectedActivity exists from the beginning of an application's lifecycle
-                    logger.error("Attempt to propose issuing a non-existing application activity: %s" % activity)
 
                 # Log application action
                 self.log_user_action(
@@ -994,36 +1002,39 @@ class Application(RevisionedMixin):
         with transaction.atomic():
             try:
                 for item in request.data.get('activity'):
-                    if item['final_status'] == "Issue":
+                    if item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_ISSUED:
                         try:
                             # check if parent licence is available
                             parent_licence = WildlifeLicence.objects.get(
-                                current_application=self, parent_licence__isnull=True)
+                                current_application=self)
                         except WildlifeLicence.DoesNotExist:
                             # if parent licence is not available create one
                             # before proceeding
                             parent_licence = WildlifeLicence.objects.create(
-                                current_application=self)
+                                current_application=self,
+                                licence_category=self.get_licence_category()
+                            )
 
-                        licence = WildlifeLicence.objects.create(
-                            current_application=self,
-                            parent_licence=parent_licence,
-                            issue_date=timezone.now(),
-                            expiry_date=item['end_date'],
-                            start_date=item['start_date'],
-                            licence_activity_id=item['id']
-                        )
-                        selected_activity = ApplicationSelectedActivity.objects.filter(
-                            application_id=self.id,
-                            licence_activity_id=item['id']
-                        ).first()
-                        if selected_activity:
-                            selected_activity.officer = request.user
-                            selected_activity.decision_action = 'issued'
-                            selected_activity.processing_status = 'accepted'
-                            selected_activity.save()
-                        print('Generate returns')
-                        self.generate_returns(licence, request)
+                        licence_activity_id = item['id']
+                        start_date = item['start_date']
+                        expiry_date = item['end_date']
+
+                        selected_activity = self.activities.filter(licence_activity__id=licence_activity_id).first()
+                        if not selected_activity:
+                            raise Exception("Application ID %s does not have licence activity: %s" % (
+                                self.id, licence_activity_id))
+
+                        selected_activity.issue_date = timezone.now()
+                        selected_activity.officer = request.user
+                        selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
+                        selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
+                        selected_activity.original_issue_date = start_date
+                        selected_activity.start_date = start_date
+                        selected_activity.expiry_date = expiry_date
+                        selected_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+                        selected_activity.save()
+
+                        self.generate_returns(parent_licence, selected_activity, request)
                         # Log application action
                         self.log_user_action(
                             ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
@@ -1043,8 +1054,8 @@ class Application(RevisionedMixin):
                                     item['name']), request)
                         send_application_issue_notification(
                             item['name'], item['end_date'], item['start_date'], self, request)
-                    else:
-                        self.set_activity_processing_status(item["id"], 'declined')
+                    elif item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_DECLINED:
+                        self.set_activity_processing_status(item["id"], ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED)
                         # Log application action
                         self.log_user_action(
                             ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(
@@ -1068,9 +1079,9 @@ class Application(RevisionedMixin):
             except BaseException:
                 raise
 
-    def generate_returns(self, licence, request):
+    def generate_returns(self, licence, selected_activity, request):
         from wildlifecompliance.components.returns.models import Return
-        licence_expiry = licence.expiry_date
+        licence_expiry = selected_activity.expiry_date
         licence_expiry = datetime.datetime.strptime(
             licence_expiry, "%Y-%m-%d").date()
         today = timezone.now().date()
@@ -1228,8 +1239,9 @@ class AmendmentRequest(ApplicationRequest):
         with transaction.atomic():
             try:
                 # This is to change the status of licence activity
-                self.application.set_activity_processing_status(self.licence_activity.id, Application.PROCESSING_STATUS_DRAFT[0])
-                self.application.customer_status = 'amendment_required'
+                self.application.set_activity_processing_status(
+                    self.licence_activity.id, ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT)
+                self.application.customer_status = Application.CUSTOMER_STATUS_AMENDMENT_REQUIRED
                 self.application.save()
 
                 # Create a log entry for the application
@@ -1244,18 +1256,22 @@ class AmendmentRequest(ApplicationRequest):
 
 
 class Assessment(ApplicationRequest):
+    STATUS_AWAITING_ASSESSMENT = 'awaiting_assessment'
+    STATUS_ASSESSED = 'assessed'
+    STATUS_COMPLETED = 'completed'
+    STATUS_RECALLED = 'recalled'
     STATUS_CHOICES = (
-        ('awaiting_assessment', 'Awaiting Assessment'),
-        ('assessed', 'Assessed'),
-        ('completed', 'Completed'),
-        ('recalled', 'Recalled')
+        (STATUS_AWAITING_ASSESSMENT, 'Awaiting Assessment'),
+        (STATUS_ASSESSED, 'Assessed'),
+        (STATUS_COMPLETED, 'Completed'),
+        (STATUS_RECALLED, 'Recalled')
     )
     assigned_assessor = models.ForeignKey(EmailUser, blank=True, null=True)
     status = models.CharField(
         'Status',
         max_length=20,
         choices=STATUS_CHOICES,
-        default=STATUS_CHOICES[0][0])
+        default=STATUS_AWAITING_ASSESSMENT)
     date_last_reminded = models.DateField(null=True, blank=True)
     assessor_group = models.ForeignKey(
         ActivityPermissionGroup, null=False, default=1)
@@ -1272,7 +1288,8 @@ class Assessment(ApplicationRequest):
         with transaction.atomic():
             try:
                 # This is to change the status of licence activity
-                self.application.set_activity_processing_status(request.data.get('licence_activity'), "with_assessor")
+                self.application.set_activity_processing_status(
+                    request.data.get('licence_activity'), ApplicationSelectedActivity.PROCESSING_STATUS_WITH_ASSESSOR)
                 self.officer = request.user
                 self.date_last_reminded = datetime.datetime.strptime(
                     timezone.now().strftime('%Y-%m-%d'), '%Y-%m-%d').date()
@@ -1309,7 +1326,8 @@ class Assessment(ApplicationRequest):
         with transaction.atomic():
             try:
                 self.status = "recalled"
-                self.application.set_activity_processing_status(self.licence_activity_id, "with_officer")
+                self.application.set_activity_processing_status(
+                    self.licence_activity_id, ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER)
                 self.save()
                 # Create a log entry for the application
                 self.application.log_user_action(
@@ -1321,8 +1339,9 @@ class Assessment(ApplicationRequest):
     def resend_assessment(self, request):
         with transaction.atomic():
             try:
-                self.status = "awaiting_assessment"
-                self.application.set_activity_processing_status(self.licence_activity_id, "with_assessor")
+                self.status = Assessment.STATUS_AWAITING_ASSESSMENT
+                self.application.set_activity_processing_status(
+                    self.licence_activity_id, ApplicationSelectedActivity.PROCESSING_STATUS_WITH_ASSESSOR)
                 self.save()
                 # Create a log entry for the application
                 self.application.log_user_action(
@@ -1361,38 +1380,75 @@ class ApplicationDeclinedDetails(models.Model):
 
 
 class ApplicationSelectedActivity(models.Model):
+    PROPOSED_ACTION_DEFAULT = 'default'
+    PROPOSED_ACTION_DECLINE = 'propose_decline'
+    PROPOSED_ACTION_ISSUE = 'propose_issue'
     PROPOSED_ACTION_CHOICES = (
-        ('default', 'Default'),
-        ('propose_decline', 'Propose Decline'),
-        ('propose_issue', 'Propose Issue')
+        (PROPOSED_ACTION_DEFAULT, 'Default'),
+        (PROPOSED_ACTION_DECLINE, 'Propose Decline'),
+        (PROPOSED_ACTION_ISSUE, 'Propose Issue')
     )
+
+    DECISION_ACTION_DEFAULT = 'default'
+    DECISION_ACTION_DECLINED = 'declined'
+    DECISION_ACTION_ISSUED = 'issued'
     DECISION_ACTION_CHOICES = (
-        ('default', 'Default'), ('declined', 'Declined'), ('issued', 'Issued'))
-    ACTIVITY_PROCESSING_STATUS_CHOICES = (
-        Application.PROCESSING_STATUS_DRAFT,
-        ('with_officer', 'With Officer'),
-        ('with_assessor', 'With Assessor'),
-        ('with_officer_conditions', 'With Officer-Conditions'),
-        ('with_officer_finalisation', 'With Officer-Finalisation'),
-        ('accepted', 'Accepted'),
-        ('declined', 'Declined'),
+        (DECISION_ACTION_DEFAULT, 'Default'),
+        (DECISION_ACTION_DECLINED, 'Declined'),
+        (DECISION_ACTION_ISSUED, 'Issued'),
+    )
+
+    ACTIVITY_STATUS_DEFAULT = 'default'
+    ACTIVITY_STATUS_CURRENT = 'current'
+    ACTIVITY_STATUS_EXPIRED = 'expired'
+    ACTIVITY_STATUS_CANCELLED = 'cancelled'
+    ACTIVITY_STATUS_SURRENDERED = 'surrendered'
+    ACTIVITY_STATUS_SUSPENDED = 'suspended'
+    ACTIVITY_STATUS_CHOICES = (
+        (ACTIVITY_STATUS_DEFAULT, 'Default'),
+        (ACTIVITY_STATUS_CURRENT, 'Current'),
+        (ACTIVITY_STATUS_EXPIRED, 'Expired'),
+        (ACTIVITY_STATUS_CANCELLED, 'Cancelled'),
+        (ACTIVITY_STATUS_SURRENDERED, 'Surrendered'),
+        (ACTIVITY_STATUS_SUSPENDED, 'Suspended')
+    )
+
+    PROCESSING_STATUS_DRAFT = 'draft'
+    PROCESSING_STATUS_WITH_OFFICER = 'with_officer'
+    PROCESSING_STATUS_WITH_ASSESSOR = 'with_assessor'
+    PROCESSING_STATUS_OFFICER_CONDITIONS = 'with_officer_conditions'
+    PROCESSING_STATUS_OFFICER_FINALISATION = 'with_officer_finalisation'
+    PROCESSING_STATUS_ACCEPTED = 'accepted'
+    PROCESSING_STATUS_DECLINED = 'declined'
+    PROCESSING_STATUS_CHOICES = (
+        (PROCESSING_STATUS_DRAFT, 'Draft'),
+        (PROCESSING_STATUS_WITH_OFFICER, 'With Officer'),
+        (PROCESSING_STATUS_WITH_ASSESSOR, 'With Assessor'),
+        (PROCESSING_STATUS_OFFICER_CONDITIONS, 'With Officer-Conditions'),
+        (PROCESSING_STATUS_OFFICER_FINALISATION, 'With Officer-Finalisation'),
+        (PROCESSING_STATUS_ACCEPTED, 'Accepted'),
+        (PROCESSING_STATUS_DECLINED, 'Declined'),
     )
     proposed_action = models.CharField(
         'Action',
         max_length=20,
         choices=PROPOSED_ACTION_CHOICES,
-        default=PROPOSED_ACTION_CHOICES[0][0])
+        default=PROPOSED_ACTION_DEFAULT)
     decision_action = models.CharField(
         'Action',
         max_length=20,
         choices=DECISION_ACTION_CHOICES,
-        default=DECISION_ACTION_CHOICES[0][0])
+        default=DECISION_ACTION_DEFAULT)
     processing_status = models.CharField(
         'Processing Status',
         max_length=30,
-        choices=ACTIVITY_PROCESSING_STATUS_CHOICES,
-        default=ACTIVITY_PROCESSING_STATUS_CHOICES[0][0])
-    application = models.ForeignKey(Application, related_name='decisions')
+        choices=PROCESSING_STATUS_CHOICES,
+        default=PROCESSING_STATUS_DRAFT)
+    activity_status = models.CharField(
+        max_length=40,
+        choices=ACTIVITY_STATUS_CHOICES,
+        default=ACTIVITY_STATUS_DEFAULT)
+    application = models.ForeignKey(Application, related_name='selected_activities')
     officer = models.ForeignKey(EmailUser, null=True)
     reason = models.TextField(blank=True)
     cc_email = models.TextField(null=True)
@@ -1405,14 +1461,16 @@ class ApplicationSelectedActivity(models.Model):
     purpose = models.TextField(blank=True, null=True)
     additional_info = models.TextField(blank=True, null=True)
     conditions = models.TextField(blank=True, null=True)
+    original_issue_date = models.DateTimeField(blank=True, null=True)
     issue_date = models.DateTimeField(blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     expiry_date = models.DateField(blank=True, null=True)
+    renewal_sent = models.BooleanField(default=False)
 
     @staticmethod
     def is_valid_status(status):
         return filter(lambda x: x[0] == status,
-                      ApplicationSelectedActivity.ACTIVITY_PROCESSING_STATUS_CHOICES)
+                      ApplicationSelectedActivity.PROCESSING_STATUS_CHOICES)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -1467,9 +1525,6 @@ class ApplicationCondition(OrderedModel):
 
     def submit(self):
         if self.standard:
-            self.return_type = self.standard_condition.return_type
-            self.save()
-        else:
             self.return_type = self.standard_condition.return_type
             self.save()
 
