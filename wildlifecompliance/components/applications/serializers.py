@@ -632,7 +632,8 @@ class ApplicationConditionSerializer(serializers.ModelSerializer):
             'recurrence_schedule',
             'recurrence_pattern',
             'condition',
-            'licence_activity')
+            'licence_activity',
+            'return_type',)
         readonly_fields = ('order', 'condition')
 
 

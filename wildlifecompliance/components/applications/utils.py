@@ -44,8 +44,8 @@ class SchemaParser(object):
                 instance.data = extracted_fields
                 data = {
                     'data': extracted_fields,
-                    'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
-                    'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
+                    'processing_status': instance.processing_status,
+                    'customer_status': instance.customer_status,
                 }
                 serializer = SaveApplicationSerializer(
                     instance, data, partial=True)

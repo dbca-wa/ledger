@@ -21,6 +21,7 @@ module.exports = {
     licences:"/api/licences/",
     returns:"/api/returns/",
     application_standard_conditions:"/api/application_standard_conditions/",
+    return_types:"/api/return_types/",
     application_conditions:"/api/application_conditions/",
     discard_application:function (id) {
       return `/api/application/${id}/`;

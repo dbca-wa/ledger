@@ -130,7 +130,7 @@ export default {
                     },
                     {
                         mRender:function (data,type,full) {
-                            links +=  `<a href='#' class="editCondition" data-id="${full.id}">Edit</a><br/>`;
+                            let links = `<a href='#' class="editCondition" data-id="${full.id}">Edit</a><br/>`;
                             links +=  `<a href='#' class="deleteCondition" data-id="${full.id}">Delete</a><br/>`;
                             return links;
                         },
@@ -171,10 +171,7 @@ export default {
     },
     methods:{
         addCondition(){
-            var selectedTabTitle = $("li.active");
-            var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
-            
-            this.$refs.condition_detail.licence_activity=tab_id
+            this.$refs.condition_detail.licence_activity=this.licence_activity_tab;
             this.$refs.condition_detail.isModalOpen = true;
         },
         removeCondition(_id){
