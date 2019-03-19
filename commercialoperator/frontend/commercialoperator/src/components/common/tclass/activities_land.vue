@@ -109,9 +109,9 @@
                 <div class="form-horizontal col-sm-12">
                   <label class="control-label">Select the long distance trails</label>
                   <div class="" v-for="t in trails">
-                    <div class="form-check">
+                    <div class="form-check col-sm-12">
                       <input   name="selected_trails" v-model="selected_trails" :value="{'trail': t.id,'sections': t.section_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
-                      {{ t.name }}
+                      {{ t.name }} <span><a @click="edit_sections(t)" target="_blank" class="control-label pull-right">Edit section and activities</a></span>
                     </div>
                   </div>
                 </div>
@@ -125,6 +125,10 @@
       <div>
               <editParkActivities ref="edit_activities" :proposal="proposal" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editParkActivities>
       </div>
+      <div>
+              <editTrailActivities ref="edit_sections" :proposal="proposal" @refreshTrailFromResponse="refreshTrailFromResponse"></editTrailActivities>
+      </div>
+
 
     </div>
   </div>
@@ -135,6 +139,7 @@
 import Vue from 'vue' 
 import VehicleTable from '@/components/common/vehicle_table.vue'
 import editParkActivities from './edit_park_activities.vue'
+import editTrailActivities from './edit_trail_activities.vue'
 import {
   api_endpoints,
   helpers
@@ -178,6 +183,7 @@ export default {
         components: {
           VehicleTable,
           editParkActivities,
+          editTrailActivities,
         },
         watch:{
           selected_regions: function(val){
@@ -496,12 +502,44 @@ export default {
             this.$refs.edit_activities.fetchAllowedActivities(p_id)
             this. $refs.edit_activities.isModalOpen = true;
           },
+          edit_sections: function(trail){
+            let vm=this;
+            //inserting a temporary variables checked and new_activities to store and display selected activities for each section.
+            for(var l=0; l<trail.sections.length; l++){
+              trail.sections[l].checked=false;
+              trail.sections[l].activities=[];
+            }
+
+            for (var i=0; i<vm.selected_trails_activities.length; i++){
+              if(vm.selected_trails_activities[i].trail==trail.id){
+                for(var j=0; j<vm.selected_trails_activities[i].activities.length; j++){
+                  for(var k=0; k<trail.sections.length; k++){
+                    if (trail.sections[k].id==vm.selected_trails_activities[i].activities[j].section){
+                      trail.sections[k].checked=true;
+                      trail.sections[k].new_activities=vm.selected_trails_activities[i].activities[j].activities
+                    }
+                  }
+                } 
+              }
+            }
+            //console.log(trail);
+            this.$refs.edit_sections.trail=trail;
+            this. $refs.edit_sections.isModalOpen = true;
+          },
           refreshSelectionFromResponse: function(park_id, park_activities, park_access){
               let vm=this;
               for (var j=0; j<vm.selected_parks_activities.length; j++){
               if(vm.selected_parks_activities[j].park==park_id){ 
                 vm.selected_parks_activities[j].activities= park_activities;
                 vm.selected_parks_activities[j].access= park_access;
+              }
+            }
+          },
+          refreshTrailFromResponse: function(trail_id, new_activities){
+              let vm=this;
+              for (var j=0; j<vm.selected_trails_activities.length; j++){
+              if(vm.selected_trails_activities[j].trail==trail_id){ 
+                vm.selected_trails_activities[j].activities= new_activities;
               }
             }
           },
