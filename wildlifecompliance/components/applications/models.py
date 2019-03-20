@@ -1001,7 +1001,20 @@ class Application(RevisionedMixin):
         from wildlifecompliance.components.licences.models import WildlifeLicence
         with transaction.atomic():
             try:
+                parent_licence = None
                 for item in request.data.get('activity'):
+                    licence_activity_id = item['id']
+                    selected_activity = self.activities.filter(
+                        licence_activity__id=licence_activity_id
+                    ).first()
+                    if not selected_activity:
+                        raise Exception("Licence activity %s is missing from Application ID %s!" % (
+                            licence_activity_id, self.id))
+
+                    if selected_activity.processing_status != ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION:
+                        raise Exception("Activity \"%s\" has an invalid processing status: %s" % (
+                            selected_activity.licence_activity.name, selected_activity.processing_status))
+
                     if item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_ISSUED:
                         try:
                             # check if parent licence is available
@@ -1015,14 +1028,8 @@ class Application(RevisionedMixin):
                                 licence_category=self.get_licence_category()
                             )
 
-                        licence_activity_id = item['id']
                         start_date = item['start_date']
                         expiry_date = item['end_date']
-
-                        selected_activity = self.activities.filter(licence_activity__id=licence_activity_id).first()
-                        if not selected_activity:
-                            raise Exception("Application ID %s does not have licence activity: %s" % (
-                                self.id, licence_activity_id))
 
                         selected_activity.issue_date = timezone.now()
                         selected_activity.officer = request.user
@@ -1055,7 +1062,10 @@ class Application(RevisionedMixin):
                         send_application_issue_notification(
                             item['name'], item['end_date'], item['start_date'], self, request)
                     elif item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_DECLINED:
-                        self.set_activity_processing_status(item["id"], ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED)
+                        selected_activity.officer = request.user
+                        selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED
+                        selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
+                        selected_activity.save()
                         # Log application action
                         self.log_user_action(
                             ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(
@@ -1075,6 +1085,10 @@ class Application(RevisionedMixin):
                                     item['name']), request)
                         send_application_decline_notification(
                             item['name'], self, request)
+
+                # If any activities were issued - re-generate PDF
+                if parent_licence is not None:
+                    parent_licence.generate_doc()
 
             except BaseException:
                 raise

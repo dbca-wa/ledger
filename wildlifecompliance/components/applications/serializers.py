@@ -261,11 +261,14 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         return amendment_request_data
 
     def get_can_be_processed(self, obj):
-        return obj.processing_status == 'under_review'
+        return obj.processing_status == Application.PROCESSING_STATUS_UNDER_REVIEW
 
     def get_processed(self, obj):
         """ check if any activities have been processed (i.e. licence issued)"""
-        return True if obj.activities.filter(processing_status__in=['accepted', 'declined']).first() else False
+        return True if obj.activities.filter(processing_status__in=[
+            ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
+            ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
+        ]).first() else False
 
     def get_can_current_user_edit(self, obj):
         result = False

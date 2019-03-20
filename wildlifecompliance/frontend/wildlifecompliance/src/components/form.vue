@@ -54,7 +54,8 @@ from '@/utils/hooks'
 
             },
             isActivityVisible: function(activity_id) {
-                return isApplicationActivityVisible(this.application, activity_id);
+                return isApplicationActivityVisible(
+                    this.application, activity_id, ['issued', 'declined']);
             },
         },
         created: function () {
