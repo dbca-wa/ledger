@@ -939,7 +939,7 @@ class Proposal(RevisionedMixin):
             except:
                 raise
 
-    def on_hold(self,request,details):
+    def on_hold(self,request):
         with transaction.atomic():
             try:
                 if not self.can_assess(request.user):
@@ -947,7 +947,7 @@ class Proposal(RevisionedMixin):
                 if self.processing_status != 'with_assessor':
                     raise ValidationError('You cannot propose to decline if it is not with assessor')
 
-                comment = details.get('comment')
+                comment = request.data.get('onhold_comment')
                 ProposalOnHold.objects.update_or_create(
                     proposal = self,
                     #defaults={'officer': request.user, 'comment': comment, 'document': details.get('cc_email',None)}
@@ -1493,7 +1493,7 @@ class ProposalOnHold(models.Model):
     proposal = models.OneToOneField(Proposal)
     officer = models.ForeignKey(EmailUser, null=False)
     comment = models.TextField(blank=True)
-    document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='onhold_document')
+    documents = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='onhold_documents')
 
     class Meta:
         app_label = 'commercialoperator'

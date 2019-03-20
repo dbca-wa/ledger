@@ -71,6 +71,7 @@ from commercialoperator.components.proposals.serializers import (
     SaveVehicleSerializer,
     VehicleSerializer,
     VesselSerializer,
+    OnHoldSerializer,
 )
 from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.approvals.serializers import ApprovalSerializer
@@ -910,10 +911,11 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST',])
     def on_hold(self, request, *args, **kwargs):
         try:
+            import ipdb; ipdb.set_trace()
             instance = self.get_object()
-            serializer = OnHoldSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            instance.on_hold(request,serializer.validated_data)
+            #serializer = OnHoldSerializer(data=request.data)
+            #serializer.is_valid(raise_exception=True)
+            instance.on_hold(request)
             serializer = InternalProposalSerializer(instance,context={'request':request})
             return Response(serializer.data)
         except serializers.ValidationError:

@@ -26,8 +26,8 @@
                             <div class="row">
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
-                                        <label class="control-label pull-left"  for="referral_comment">Comment</label>
-                                        <textarea class="form-control" name="referral_comment" v-model="referral_comment" required="true"></textarea>
+                                        <label class="control-label pull-left"  for="onhold_comment">Comment</label>
+                                        <textarea class="form-control" name="onhold_comment" v-model="onhold_comment" required="true"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -77,6 +77,7 @@ export default {
             errorString: '',
             validation_form: null,
             uploadedFile: null,
+            onhold_comment: null,
         }
     },
     computed: {
@@ -110,11 +111,14 @@ export default {
         save: function(){
             let vm = this;
                 let data = new FormData(vm.form);
-                data.append('referral_document', vm.uploadedFile)
+                data.append('onhold_document', vm.uploadedFile)
+                data.append('onhold_comment', vm.onhold_comment)
                 //if (vm.proposal.approval_level_document) {
                 //    data.append('referral_document_name', vm.proposal.referral_document[0])
                 //}
-                vm.$http.post(api_endpoints.proposals+'/on_hold'),data,{
+                //vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,vm.referral_id+'/complete'),data,{
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal_id+'/on_hold'),data,{
+                //vm.$http.post(api_endpoints.proposals+'/on_hold',data,{
                 emulateJSON:true
             }).then(res=>{
                 swal(
