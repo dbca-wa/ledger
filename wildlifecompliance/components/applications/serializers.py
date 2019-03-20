@@ -218,7 +218,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'payment_status',
             'assigned_officer',
             'can_be_processed',
-            'licence_category',
             'pdf_licence',
             'activities',
             'processed'
@@ -435,7 +434,6 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
             'readonly',
             'can_user_edit',
             'can_user_view',
-            # 'licence_category',
             'licence_type_data',
             'licence_type_name',
             'licence_category',
@@ -558,24 +556,17 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
 
     def get_licences(self, obj):
         licence_data = []
-        qs = obj.licences
+        active_licences = obj.get_licences_by_status(ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT)
 
-        if qs.exists():
-            qs = qs.filter(status='current')
-            for item in obj.licences:
-                # print(item)
-                # print(item.status)
-                print(item.licence_activity_id)
-                # print(item.parent_licence)
-
-                # amendment_request_data.append({"licence_activity":str(item.licence_activity),"id":item.licence_activity.id})
+        for licence in active_licences:
+            for activity in licence.current_activities:
                 licence_data.append(
                     {
                         "licence_activity": str(
-                            item.licence_activity),
-                        "licence_activity_id": item.licence_activity_id,
-                        "start_date": item.start_date,
-                        "expiry_date": item.expiry_date})
+                            activity.licence_activity),
+                        "licence_activity_id": activity.licence_activity_id,
+                        "start_date": activity.start_date,
+                        "expiry_date": activity.expiry_date})
         return licence_data
 
     def get_processed(self, obj):

@@ -30,6 +30,7 @@ from wildlifecompliance.components.applications.email import (
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
+from wildlifecompliance.components.licences.models import LicenceCategory
 
 logger = logging.getLogger(__name__)
 
@@ -560,6 +561,13 @@ class Application(RevisionedMixin):
             )
         return selected_activity
 
+    def get_licence_category(self):
+        first_activity = self.licence_purposes.first()
+        try:
+            return first_activity.licence_category
+        except AttributeError:
+            return LicenceCategory.objects.none()
+
     def get_permission_groups(self, codename):
         """
         :return: queryset of ActivityPermissionGroups matching the current application by activity IDs
@@ -911,15 +919,17 @@ class Application(RevisionedMixin):
     def licences(self):
         from wildlifecompliance.components.licences.models import WildlifeLicence
         try:
-            qs = WildlifeLicence.objects.filter(current_application=self)
-            return qs
+            return WildlifeLicence.objects.filter(current_application=self)
         except WildlifeLicence.DoesNotExist:
-            return None
+            return WildlifeLicence.objects.none()
 
     @property
     def activities(self):
         """ returns a queryset of activity/purposes attached to application """
         return ApplicationSelectedActivity.objects.filter(application=self)
+
+    def get_licences_by_status(self, status):
+        return self.licences.filter(current_application__selected_activities__activity_status=status).distinct()
 
     def get_proposed_decisions(self, request):
         with transaction.atomic():
@@ -996,34 +1006,35 @@ class Application(RevisionedMixin):
                         try:
                             # check if parent licence is available
                             parent_licence = WildlifeLicence.objects.get(
-                                current_application=self, parent_licence__isnull=True)
+                                current_application=self)
                         except WildlifeLicence.DoesNotExist:
                             # if parent licence is not available create one
                             # before proceeding
                             parent_licence = WildlifeLicence.objects.create(
                                 current_application=self,
-                                status=WildlifeLicence.STATUS_CURRENT
+                                licence_category=self.get_licence_category()
                             )
 
-                        licence = WildlifeLicence.objects.create(
-                            current_application=self,
-                            parent_licence=parent_licence,
-                            issue_date=timezone.now(),
-                            expiry_date=item['end_date'],
-                            start_date=item['start_date'],
-                            licence_activity_id=item['id']
-                        )
-                        selected_activity = ApplicationSelectedActivity.objects.filter(
-                            application_id=self.id,
-                            licence_activity_id=item['id']
-                        ).first()
-                        if selected_activity:
-                            selected_activity.officer = request.user
-                            selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
-                            selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
-                            selected_activity.save()
-                        print('Generate returns')
-                        self.generate_returns(licence, request)
+                        licence_activity_id = item['id']
+                        start_date = item['start_date']
+                        expiry_date = item['end_date']
+
+                        selected_activity = self.activities.filter(licence_activity__id=licence_activity_id).first()
+                        if not selected_activity:
+                            raise Exception("Application ID %s does not have licence activity: %s" % (
+                                self.id, licence_activity_id))
+
+                        selected_activity.issue_date = timezone.now()
+                        selected_activity.officer = request.user
+                        selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
+                        selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
+                        selected_activity.original_issue_date = start_date
+                        selected_activity.start_date = start_date
+                        selected_activity.expiry_date = expiry_date
+                        selected_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+                        selected_activity.save()
+
+                        self.generate_returns(parent_licence, selected_activity, request)
                         # Log application action
                         self.log_user_action(
                             ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
@@ -1068,9 +1079,9 @@ class Application(RevisionedMixin):
             except BaseException:
                 raise
 
-    def generate_returns(self, licence, request):
+    def generate_returns(self, licence, selected_activity, request):
         from wildlifecompliance.components.returns.models import Return
-        licence_expiry = licence.expiry_date
+        licence_expiry = selected_activity.expiry_date
         licence_expiry = datetime.datetime.strptime(
             licence_expiry, "%Y-%m-%d").date()
         today = timezone.now().date()
@@ -1384,7 +1395,22 @@ class ApplicationSelectedActivity(models.Model):
     DECISION_ACTION_CHOICES = (
         (DECISION_ACTION_DEFAULT, 'Default'),
         (DECISION_ACTION_DECLINED, 'Declined'),
-        (DECISION_ACTION_ISSUED, 'Issued')
+        (DECISION_ACTION_ISSUED, 'Issued'),
+    )
+
+    ACTIVITY_STATUS_DEFAULT = 'default'
+    ACTIVITY_STATUS_CURRENT = 'current'
+    ACTIVITY_STATUS_EXPIRED = 'expired'
+    ACTIVITY_STATUS_CANCELLED = 'cancelled'
+    ACTIVITY_STATUS_SURRENDERED = 'surrendered'
+    ACTIVITY_STATUS_SUSPENDED = 'suspended'
+    ACTIVITY_STATUS_CHOICES = (
+        (ACTIVITY_STATUS_DEFAULT, 'Default'),
+        (ACTIVITY_STATUS_CURRENT, 'Current'),
+        (ACTIVITY_STATUS_EXPIRED, 'Expired'),
+        (ACTIVITY_STATUS_CANCELLED, 'Cancelled'),
+        (ACTIVITY_STATUS_SURRENDERED, 'Surrendered'),
+        (ACTIVITY_STATUS_SUSPENDED, 'Suspended')
     )
 
     PROCESSING_STATUS_DRAFT = 'draft'
@@ -1418,7 +1444,11 @@ class ApplicationSelectedActivity(models.Model):
         max_length=30,
         choices=PROCESSING_STATUS_CHOICES,
         default=PROCESSING_STATUS_DRAFT)
-    application = models.ForeignKey(Application, related_name='decisions')
+    activity_status = models.CharField(
+        max_length=40,
+        choices=ACTIVITY_STATUS_CHOICES,
+        default=ACTIVITY_STATUS_DEFAULT)
+    application = models.ForeignKey(Application, related_name='selected_activities')
     officer = models.ForeignKey(EmailUser, null=True)
     reason = models.TextField(blank=True)
     cc_email = models.TextField(null=True)
@@ -1431,9 +1461,11 @@ class ApplicationSelectedActivity(models.Model):
     purpose = models.TextField(blank=True, null=True)
     additional_info = models.TextField(blank=True, null=True)
     conditions = models.TextField(blank=True, null=True)
+    original_issue_date = models.DateTimeField(blank=True, null=True)
     issue_date = models.DateTimeField(blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     expiry_date = models.DateField(blank=True, null=True)
+    renewal_sent = models.BooleanField(default=False)
 
     @staticmethod
     def is_valid_status(status):
