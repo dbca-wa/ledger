@@ -191,6 +191,12 @@ from '@/utils/hooks'
 
           }
         },
+        marine_parks_activities: function(){
+            let vm=this;
+            if (vm.proposal){
+              vm.proposal.marine_parks_activities=vm.marine_parks_activities;
+            }
+        },
         },
         methods:{
             fetchParks: function(){

@@ -118,10 +118,13 @@ export default {
   methods: {
     save: function(e) {
       let vm = this;
+      //vm.form=document.forms.new_proposal;
       let formData = new FormData(vm.form);
-      //console.log(formData);
-      //formData.append(vm.proposal.selected_trails_activities)
-      console.log(vm.proposal.selected_trails_activities);
+
+      //console.log('marine activities', vm.proposal.marine_parks_activities);
+      formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
+
+      //console.log(vm.proposal.selected_trails_activities);
       vm.$http.post(vm.proposal_form_url,formData).then(res=>{
           swal(
             'Saved',

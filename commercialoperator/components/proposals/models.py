@@ -1280,6 +1280,13 @@ class ProposalPark(models.Model):
         activities=qs.filter(Q(activity__activity_category__in = categories)& Q(activity__visible=True))
         return activities
 
+    @property
+    def marine_activities(self):
+        qs=self.activities.all()
+        categories=ActivityCategory.objects.filter(activity_type='marine')
+        activities=qs.filter(Q(activity__activity_category__in = categories)& Q(activity__visible=True))
+        return activities
+
 
 
 

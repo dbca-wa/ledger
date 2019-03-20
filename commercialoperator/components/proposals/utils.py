@@ -385,73 +385,6 @@ def save_park_activity_data(instance,select_parks_activities):
         except:
             raise
 
-def save_trail_activity_data(instance,select_trails_activities):
-    with transaction.atomic():
-        try:
-            if select_trails_activities:
-                try:
-                    #current_parks=instance.parks.all()
-                    selected_trails=[]
-                    #print("selected_trails",selected_trails)
-                    for item in select_trails_activities:
-                        if item['trail']:
-                            selected_trails.append(item['trail'])
-                            try:
-                                #Check if PrposalPark record already exists. If exists, check for activities
-                                trail=ProposalTrail.objects.get(trail=item['trail'],proposal=instance)
-                                current_activities=trail.trail_activities.all()
-                                current_activities_id=[a.activity_id for a in current_activities]
-                                #Get the access records related to ProposalPark
-                                if item['activities']:
-                                    for a in item['activities']:
-                                        if a in current_activities_id:
-                                            #if activity already exists then pass otherwise create the record.
-                                            pass
-                                        else:
-                                            try:
-                                                #TODO add logging
-                                                #if a in park.park.allowed_activities_ids:
-                                                    #raise Exception('Activity not allowed for this park')
-                                                    #pass
-                                                #else:    
-                                                    #activity=Activity.objects.get(id=a)
-                                                    #ProposalParkActivity.objects.create(proposal_park=park, activity=activity)
-                                                activity=Activity.objects.get(id=a)
-                                                ProposalTrailActivity.objects.create(proposal_trail=trail, activity=activity)
-                                            except:
-                                                raise
-                            except ProposalTrail.DoesNotExist:
-                                try:
-                                    #If ProposalPark does not exists then create a new record and activities for it.
-                                    trail_instance=Trail.objects.get(id=item['trail'])
-                                    trail=ProposalTrail.objects.create(trail=trail_instance, proposal=instance)
-                                    current_activities=[]
-                                    for a in item['activities']:
-                                        try:
-                                            activity=Activity.objects.get(id=a)
-                                            ProposalTrailActivity.objects.create(proposal_trail=trail, activity=activity)
-                                        except:
-                                            raise
-                                except:
-                                    raise
-                            #compare all activities (new+old) with the list of activities selected activities to get
-                            #the list of deleted activities.
-                            new_activities=trail.trail_activities.all()
-                            new_activities_id=set(a.activity_id for a in new_activities)
-                            diff_activity=set(new_activities_id).difference(set(item['activities']))
-                            for d in diff_activity:
-                                act=ProposalTrailActivity.objects.get(activity_id=d, proposal_trail=trail)
-                                act.delete()
-                    new_trails=instance.trails.all()
-                    new_trails_id=set(p.trail_id for p in new_trails)
-                    diff_trails=set(new_trails_id).difference(set(selected_trails))
-                    for d in diff_trails:
-                        pk=ProposalTrail.objects.get(trail=d, proposal=instance)
-                        pk.delete()
-                except:
-                    raise
-        except:
-            raise
 
 def save_trail_section_activity_data(instance,select_trails_activities):
     with transaction.atomic():
@@ -502,7 +435,7 @@ def save_trail_section_activity_data(instance,select_trails_activities):
                                             new_activities=section.trail_activities.all()
                                             new_activities_id=set(n.activity_id for n in new_activities)
                                             diff_activity=set(new_activities_id).difference(set(a['activities']))
-                                            print("trail:",trail.trail_id,"section:",section.section_id,"new_activities:",new_activities_id, "diff:", diff_activity)
+                                            #print("trail:",trail.trail_id,"section:",section.section_id,"new_activities:",new_activities_id, "diff:", diff_activity)
                                             for d in diff_activity:
                                                 act=ProposalTrailSectionActivity.objects.get(activity_id=d, trail_section=section)
                                                 act.delete()
@@ -529,7 +462,7 @@ def save_trail_section_activity_data(instance,select_trails_activities):
                                             new_activities=section.trail_activities.all()
                                             new_activities_id=set(nw.activity_id for nw in new_activities)
                                             diff_activity=set(new_activities_id).difference(set(a['activities']))
-                                            print("not deleting","trail:",trail.trail_id,"section:",section.section_id,"new_activities:",new_activities_id, "diff:", diff_activity)                               
+                                            #print("not deleting","trail:",trail.trail_id,"section:",section.section_id,"new_activities:",new_activities_id, "diff:", diff_activity)                               
                                 except:
                                     raise
                             #compare all sections (new+old) with the list of sections selected to get
@@ -537,14 +470,14 @@ def save_trail_section_activity_data(instance,select_trails_activities):
                             new_sections=trail.sections.all()
                             new_sections_ids=set(a.section_id for a in new_sections)
                             diff_sections=set(new_sections_ids).difference(set(selected_sections))
-                            print("trail:",trail.trail_id, "new_sections:", new_sections_ids,"diff_sections:", diff_sections)
+                            #print("trail:",trail.trail_id, "new_sections:", new_sections_ids,"diff_sections:", diff_sections)
                             for d in diff_sections:
                                     pk=ProposalTrailSection.objects.get(section=d, proposal_trail=trail)
                                     pk.delete()
                     new_trails=instance.trails.all()
                     new_trails_id=set(p.trail_id for p in new_trails)
                     diff_trails=set(new_trails_id).difference(set(selected_trails))
-                    print("new_trails", new_trails_id, "diff:", diff_trails)
+                    #print("new_trails", new_trails_id, "diff:", diff_trails)
                     for d in diff_trails:
                         pk=ProposalTrail.objects.get(trail=d, proposal=instance)
                         pk.delete()
@@ -554,7 +487,80 @@ def save_trail_section_activity_data(instance,select_trails_activities):
             raise
 
 
-def save_proponent_data(instance,request,viewset,select_parks_activities,select_trails_activities):
+#save marine parks and activities for Tclass license
+def save_marine_park_activity_data(instance,marine_parks_activities):
+    with transaction.atomic():
+        try:
+            if marine_parks_activities:
+                try:
+                    #current_parks=instance.parks.all()
+                    selected_parks=[]
+                    for item in marine_parks_activities:
+                        #import ipdb; ipdb.set_trace()
+                        if item['park']:
+                            selected_parks.append(item['park'])
+                            try:
+                                #Check if PrposalPark record already exists. If exists, check for activities
+                                park=ProposalPark.objects.get(park=item['park'],proposal=instance)
+                                current_activities=park.marine_activities.all()
+                                current_activities_id=[a.activity_id for a in current_activities]
+                                if item['activities']:
+                                    for a in item['activities']:
+                                        if a in current_activities_id:
+                                            #if activity already exists then pass otherwise create the record.
+                                            pass
+                                        else:
+                                            try:
+                                                #TODO add logging
+                                                if a in park.park.allowed_activities_ids:
+                                                    #raise Exception('Activity not allowed for this park')
+                                                    pass
+                                                else:    
+                                                    activity=Activity.objects.get(id=a)
+                                                    ProposalParkActivity.objects.create(proposal_park=park, activity=activity)
+                                            except:
+                                                raise                                
+                            except ProposalPark.DoesNotExist:
+                                try:
+                                    #If ProposalPark does not exists then create a new record and activities for it.
+                                    park_instance=Park.objects.get(id=item['park'])
+                                    park=ProposalPark.objects.create(park=park_instance, proposal=instance)
+                                    current_activities=[]
+                                    for a in item['activities']:
+                                        try:
+                                            if a in park.park.allowed_activities_ids:
+                                                    #raise Exception('Activity not allowed for this park')
+                                                    pass
+                                            else:
+                                                activity=Activity.objects.get(id=a)
+                                                ProposalParkActivity.objects.create(proposal_park=park, activity=activity)
+                                        except:
+                                            raise                                    
+                                except:
+                                    raise
+                            #compare all activities (new+old) with the list of activities selected activities to get
+                            #the list of deleted activities.
+                            new_activities=park.marine_activities.all()
+                            new_activities_id=set(a.activity_id for a in new_activities)
+                            diff_activity=set(new_activities_id).difference(set(item['activities']))
+                            #print('new activities:', new_activities_id, 'diff_activity:',diff_activity)
+                            for d in diff_activity:
+                                act=ProposalParkActivity.objects.get(activity_id=d, proposal_park=park)
+                                act.delete()                            
+                    new_parks=instance.parks.filter(park__park_type='marine')
+                    new_parks_id=set(p.park_id for p in new_parks)
+                    diff_parks=set(new_parks_id).difference(set(selected_parks))
+                    #print('new parks:', new_parks_id, 'diff_parks:', diff_parks)
+                    for d in diff_parks:
+                        pk=ProposalPark.objects.get(park=d, proposal=instance)
+                        pk.delete()
+                except:
+                    raise
+        except:
+            raise
+
+
+def save_proponent_data(instance,request,viewset,select_parks_activities,select_trails_activities, marine_parks_activities):
     with transaction.atomic():
         try:
 #            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
@@ -580,26 +586,17 @@ def save_proponent_data(instance,request,viewset,select_parks_activities,select_
             viewset.perform_update(serializer)
             if select_parks_activities:
                 try:
-                    save_park_activity_data(instance, select_parks_activities)
-                    # if current_parks:
-                    #     for p in current_parks:
-                    #         p.delete()
-                    # for item in parks:
-                    #     try:
-                    #         data_park={
-                    #         'park': item,
-                    #         'proposal': instance.id
-                    #         }
-                    #         serializer=SaveProposalParkSerializer(data=data_park)
-                    #         serializer.is_valid(raise_exception=True)
-                    #         serializer.save()
-                    #     except:
-                    #         raise                        
+                    save_park_activity_data(instance, select_parks_activities)                        
                 except:
                     raise
             if select_trails_activities:
                 try:
                     save_trail_section_activity_data(instance, select_trails_activities)                    
+                except:
+                    raise
+            if marine_parks_activities:
+                try:
+                    save_marine_park_activity_data(instance, marine_parks_activities)                    
                 except:
                     raise
         except:
