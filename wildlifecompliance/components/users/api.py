@@ -26,7 +26,7 @@ from ledger.accounts.models import EmailUser, Address, Profile, EmailIdentity, E
 from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from wildlifecompliance.components.organisations.models import (
-    Organisation,
+    OrganisationRequest,
 )
 
 from wildlifecompliance.helpers import is_customer, is_internal
@@ -328,7 +328,7 @@ class UserViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = OrganisationRequestDTSerializer(
                 instance.organisationrequest_set.filter(
-                    status='with_assessor'), many=True)
+                    status=OrganisationRequest.ORG_REQUEST_STATUS_WITH_ASSESSOR), many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())

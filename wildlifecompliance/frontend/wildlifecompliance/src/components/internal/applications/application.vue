@@ -817,7 +817,7 @@ export default {
           return helpers.getCookie('csrftoken')
         },
         application_form_url: function() {
-          return (this.application) ? `/api/application/${this.application.id}/assessor_save.json` : '';
+          return (this.application) ? `/api/application/${this.application.id}/application_officer_save.json` : '';
         },
         isFinalised: function(){
             return this.hasActivityStatus([

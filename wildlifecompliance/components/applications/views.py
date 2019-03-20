@@ -86,27 +86,6 @@ class ApplicationSuccessView(TemplateView):
         delete_session_application(request.session)
         return render(request, self.template_name, context)
 
-class _AssessView(TemplateView):
-    template_name = 'wildlifecompliance/assess.html'
-
-    def post(self, request, *args, **kwargs):
-        extracted_fields = []
-        try:
-            print(' ---- applications views.py ---- ')
-            application_id = request.POST.pop('application_id')
-            application = Application.objects.get(application_id)
-            schema = json.loads(request.POST.pop('schema')[0])
-            parser = SchemaParser()
-            extracted_fields = parser.create_data_from_form(schema, request.POST, request.FILES)
-            application.schema = schema
-            application.data = extracted_fields
-            print(application_id)
-            print(application)
-            application.save()
-            return redirect(reverse('external'))
-        except:
-            traceback.print_exc
-            return JsonResponse({error:"something went wrong"},safe=False,status=400)
 
 def pdflatex(request):
 

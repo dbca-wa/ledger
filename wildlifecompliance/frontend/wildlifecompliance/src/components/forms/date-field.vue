@@ -6,16 +6,10 @@
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>
-            <template v-if="help_text_assessor">
-                <HelpText  :help_text="help_text_assessor" />
-            </template> 
 
             <template v-if="help_text_url">
                 <HelpTextUrl :help_text_url="help_text_url" />
             </template>
-            <template v-if="help_text_assessor_url">
-                <HelpTextUrl :help_text_url="help_text_assessor_url" />
-            </template> 
 
             <template>
                 <template v-if="!showingComment">
@@ -42,7 +36,7 @@ import Comment from './comment.vue'
 import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
 export default {
-    props: ['name', 'label', 'id', 'readonly', 'help_text', 'help_text_assessor', 'value', 'conditions', "handleChange","comment_value", "isRequired", 'help_text_url', 'help_text_assessor_url'],
+    props: ['name', 'label', 'id', 'readonly', 'help_text', 'value', 'conditions', "handleChange","comment_value", "isRequired", 'help_text_url'],
     data(){
         return {
             showingComment: false

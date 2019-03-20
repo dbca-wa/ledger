@@ -408,7 +408,6 @@ class CreateExternalApplicationSerializer(serializers.ModelSerializer):
 
 
 class SaveApplicationSerializer(BaseApplicationSerializer):
-    assessor_data = serializers.JSONField(required=False)
 
     assigned_officer = serializers.CharField(
         source='assigned_officer.get_full_name',
@@ -421,7 +420,6 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
         fields = (
             'id',
             'data',
-            'assessor_data',
             'comment_data',
             'schema',
             'customer_status',
@@ -480,7 +478,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     character_check_status = CustomChoiceField(read_only=True)
     submitter = EmailUserAppViewSerializer()
     applicationdeclineddetails = ApplicationDeclinedDetailsSerializer()
-    assessor_data = serializers.SerializerMethodField()
     licences = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
     can_be_processed = serializers.SerializerMethodField(read_only=True)
@@ -514,7 +511,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'can_user_edit',
             'can_user_view',
             'documents_url',
-            'assessor_data',
             'comment_data',
             'licences',
             'applicationdeclineddetails',
@@ -553,9 +549,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
 
     def get_readonly(self, obj):
         return True
-
-    def get_assessor_data(self, obj):
-        return obj.assessor_data
 
     def get_licences(self, obj):
         licence_data = []

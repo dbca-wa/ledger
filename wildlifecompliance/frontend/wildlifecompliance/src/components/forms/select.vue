@@ -6,16 +6,10 @@
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>
-            <template v-if="help_text_assessor">
-                <HelpText  :help_text="help_text_assessor" />
-            </template> 
 
             <template v-if="help_text_url">
                 <HelpText :help_text_url="help_text_url" />
             </template>
-            <template v-if="help_text_assessor_url">
-                <HelpTextUrl  :help_text_url="help_text_assessor_url" />
-            </template> 
 
 
             <template>
@@ -75,9 +69,7 @@ export default {
         'id': String,
         'isRequired': String,
         'help_text':String,
-        'help_text_assessor':String,
         'help_text_url':String,
-        'help_text_assessor_url':String,
         "value":[String,Array],
         "comment_value": String,
         "options":Array,

@@ -1,4 +1,3 @@
-
 from __future__ import unicode_literals
 from django.db import models, transaction
 from django.contrib.postgres.fields.jsonb import JSONField
@@ -142,12 +141,12 @@ class Return(models.Model):
                 }
                 if f.is_species:
                     header["species"] = f.species_type
-                headers.append(header)
+                    headers.append(header)
             table = {
-                'name': resource_name,
-                'title': resource.get('title', resource.get('name')),
-                'headers': headers,
-                'data': None
+               'name': resource_name,
+               'title': resource.get('title', resource.get('name')),
+               'headers': headers,
+               'data': None
             }
             try:
                 return_table = self.returntable_set.get(name=resource_name)
@@ -173,10 +172,10 @@ class Return(models.Model):
         A Running sheet of Return data.
         :return: ReturnSheet with activity data for species.
         """
-        return ReturnSheet(self) if self.is_sheet else None
+        return ReturnSheet(self) if self.has_sheet else None
 
     @property
-    def is_question(self):
+    def has_question(self):
         """
         Property defining if the Return is Question based.
         :return: Boolean
@@ -184,7 +183,7 @@ class Return(models.Model):
         return True if self.return_type.Name == 'question' else False
 
     @property
-    def is_data(self):
+    def has_data(self):
         """
         Property defining if the Return is Data based.
         :return: Boolean
@@ -192,7 +191,7 @@ class Return(models.Model):
         return True if self.return_type.Name == 'data' else False
 
     @property
-    def is_sheet(self):
+    def has_sheet(self):
         """
         Property defining if the Return is Running Sheet based.
         :return: Boolean
@@ -237,9 +236,31 @@ class Return(models.Model):
             send_return_accept_email_notification(self, request)
 
 
+class ReturnData(object):
+    """
+    Informational data of requirements supporting licence condition.
+    """
+    def __init__(self, a_return):
+        self._return = a_return
+
+    def __str__(self):
+        return 'Return-Data-{0}'.format(self._return.id)
+
+
+class ReturnQuestion(object):
+    """
+    Informational question of requirements supporting licence condition.
+    """
+    def __init__(self, a_return):
+        self._return = a_return
+
+    def __str__(self):
+        return 'Return-Question-{0}'.format(self._return.id)
+
+
 class ReturnSheet(object):
     """
-    A Running Sheet of requirements supporting licence conditions.
+    Informational Running Sheet of Species requirements supporting licence condition.
     """
 
     _SHEET_SCHEMA = {"name": "sheet", "title": "Running Sheet of Return Data", "resources": [{"name":
@@ -256,26 +277,33 @@ class ReturnSheet(object):
                        "SA04": "In through transfer", "SA05": "Out through export", "SA06": "Out through death",
                        "SA07": "Out through transfer other", "SA08": "Out through transfer dealer", '': None}
 
-    _MOCK_TABLE = {'name': 'speciesId', 'data': [{'date': '2019/01/23', 'activity': 'SA01', 'qty': '5', 'total': '5',
-                  'comment': 'Initial Stock Taking', 'licence': ''}, {'date': '2019/01/31', 'activity': 'SA03',
+    _MOCK_TABLE = {'name': 'SPEC01', 'data': [{'rowId': '0', 'date': '2019/01/23', 'activity': 'SA01', 'qty': '5', 'total': '5',
+                  'comment': 'Initial Stock Taking', 'licence': ''}, {'rowId': '1', 'date': '2019/01/31', 'activity': 'SA03',
                   'qty': '3', 'total': '8', 'comment': 'Birth of three new species', 'licence': ''}]}
 
-    _MOCK_SPECIES = ['Cherax tenuimanus', 'Bunderia']
+    _MOCK_SPECIES = ['SPEC01', 'SPEC02', 'SPEC03']
 
     def __init__(self, a_return):
         self._return = a_return
         self._return.return_type.data_descriptor = self._SHEET_SCHEMA
-        self._species = []
+        self._species_list = []
+        for _species in ReturnTable.objects.filter(ret=a_return):
+            self._species_list.append(_species.name)
+        self._table = {'data': None}
 
-    def _get_table_rows(self, table_name, post_data):
-        table_namespace = table_name + '::'
-        by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(
-            key)) for key in post_data.keys() if key.startswith(table_namespace)])
-        # by_column is of format {'col_header':[row1_val, row2_val,...],...}
-        num_rows = len(
-            list(
-                by_column.values())[0]) if len(
-            by_column.values()) > 0 else 0
+    def _get_table_rows(self, _data):
+        """
+        Gets the formatted row of data from Species data
+        :param _data:
+        :return: by_column is of format {'col_header':[row1_val, row2_val,...],...}
+        """
+        by_column = dict([])
+        for key in _data[0].keys():
+            key_values = []
+            for cnt in range(_data.__len__()):
+                key_values.append(_data[cnt][key])
+            by_column[key] = key_values
+        num_rows = len(list(by_column.values())[0]) if len(by_column.values()) > 0 else 0
         self._rows = []
         for row_num in range(num_rows):
             row_data = {}
@@ -290,8 +318,15 @@ class ReturnSheet(object):
             if not is_empty:
                 self._rows.append(row_data)
 
-    def _create_return_data(self, ret, tables_info, post_data):
-        self._get_table_rows(tables_info, post_data)
+    def _create_return_data(self, ret, tables_info, _data):
+        """
+        Saves row of data to db.
+        :param ret:
+        :param tables_info:
+        :param _data:
+        :return:
+        """
+        self._get_table_rows(tables_info, _data)
         if self._rows:
             return_table = ReturnTable.objects.get_or_create(
                 name=tables_info, ret=ret)[0]
@@ -310,25 +345,40 @@ class ReturnSheet(object):
     @property
     def table(self):
         """
-        Method to return Running Sheet data for table format. Overrides method from Return model object.
+        Running Sheet data for Species.
+        :return: formatted data.
+        """
+        return self.get_table('NONE') if not self._species_list else self._species_list[0]
+
+    def get_table(self, _species_id):
+        """
+        Gets a return Running Sheet Species data for table format.
         :return: formatted data {'name': 'speciesId', 'data': [{'date': '2019/01/23', 'activity': 'SA01', ..., }]}
         """
-        _table = {'data': None}
         _row = {}
         _result = []
         for resource in self._return.return_type.resources:
-            _resource_name = resource.get('name')
+            _resource_name = _species_id
             _schema = Schema(resource.get('schema'))
             try:
                 _return_table = self._return.returntable_set.get(name=_resource_name)
                 rows = [_return_row.data for _return_row in _return_table.returnrow_set.all()]
                 _validated_rows = _schema.rows_validator(rows)
-                _table['data'] = _validated_rows
+                self._table['data'] = rows
             except ReturnTable.DoesNotExist:
-                _table = self._NO_ACTIVITY
-        #_table = self._MOCK_TABLE
+                self._table = self._NO_ACTIVITY
+        #self._table = self._MOCK_TABLE
 
-        return _table
+        return self._table
+
+    def set_table(self, _species_name, _data):
+        """
+        Sets data for Species Running Sheet information.
+        :param _species_name:
+        :param _data:
+        :return:
+        """
+        self._create_return_data(self._return, _species_name, _data)
 
     def get_activity_list(self):
         """
@@ -339,8 +389,9 @@ class ReturnSheet(object):
 
     def get_species_list(self):
 
-        _species = self._species
-        #_species = self._MOCK_SPECIES
+        _species = self._species_list
+
+       # _species = self._MOCK_SPECIES
 
         return _species
 
@@ -348,7 +399,7 @@ class ReturnSheet(object):
         pass
 
     def __str__(self):
-        return 'return-sheet-{0}'.format(self._return.id)
+        return 'Return-Sheet-{0}'.format(self._return.id)
 
 
 class ReturnTable(RevisionedMixin):

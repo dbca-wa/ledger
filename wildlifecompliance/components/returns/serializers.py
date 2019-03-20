@@ -5,7 +5,8 @@ from wildlifecompliance.components.returns.models import (
     Return,
     ReturnType,
     ReturnUserAction,
-    ReturnLogEntry
+    ReturnLogEntry,
+    ReturnSheet
 )
 from rest_framework import serializers
 
@@ -29,6 +30,7 @@ class ReturnSerializer(serializers.ModelSerializer):
     submitter = EmailUserSerializer()
     sheet_activity_list = serializers.SerializerMethodField()
     sheet_species_list = serializers.SerializerMethodField()
+    table = serializers.SerializerMethodField()
 
     class Meta:
         model = Return
@@ -54,14 +56,26 @@ class ReturnSerializer(serializers.ModelSerializer):
     def get_sheet_activity_list(self, _return):
         """
         Gets the list of Activities available for a Return Running Sheet.
-        :param _return: Return instance
-        :return: List of available activities
+        :param _return: Return instance.
+        :return: List of available activities.
         """
-        return _return.sheet.get_activity_list() if _return.is_sheet else []
+        return _return.sheet.get_activity_list() if _return.has_sheet else []
 
     def get_sheet_species_list(self, _return):
+        """
+        Gets the list of Species available for a Return Running Sheet.
+        :param _return: Return instance.
+        :return: List of species for a Return Running Sheet.
+        """
+        return _return.sheet.get_species_list() if _return.has_sheet else []
 
-        return _return.sheet.get_species_list() if _return.is_sheet else []
+    def get_table(self, _return):
+        """
+        Gets the table of data available for the Return.
+        :param _return: Return instance.
+        :return: table of data details.
+        """
+        return _return.sheet.table if _return.has_sheet else _return.table
 
 
 class ReturnTypeSerializer(serializers.ModelSerializer):
