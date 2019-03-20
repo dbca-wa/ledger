@@ -250,7 +250,6 @@ class Application(RevisionedMixin):
         choices=APPLICATION_TYPE_CHOICES,
         default=APPLICATION_TYPE_NEW_LICENCE)
     data = JSONField(blank=True, null=True)
-    assessor_data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
     schema = JSONField(blank=False, null=False)
     licence_purposes = models.ManyToManyField(
@@ -1266,7 +1265,6 @@ class Assessment(ApplicationRequest):
         (STATUS_COMPLETED, 'Completed'),
         (STATUS_RECALLED, 'Recalled')
     )
-    assigned_assessor = models.ForeignKey(EmailUser, blank=True, null=True)
     status = models.CharField(
         'Status',
         max_length=20,

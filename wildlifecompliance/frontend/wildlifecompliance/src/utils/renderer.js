@@ -129,7 +129,8 @@ module.exports = {
                                     <Radio name={c.name} label={op.label} value={op.value} isRequired={op.isRequired || c.isRequired} id={id1} savedValue={val} handleChange={this.handleRadioChange} conditions={c.conditions} readonly={readonly}/>
                                 )
                             })}
-                            <Conditions conditions={c.conditions} renderer={this} name={c.name} data={data} id={id2} readonly={readonly}/>
+                            <Conditions conditions={c.conditions} renderer={this}components/organisations/api.py
+ name={c.name} data={data} id={id2} readonly={readonly}/>
                     </div>
                 )
                 break;

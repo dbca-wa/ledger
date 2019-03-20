@@ -5,16 +5,10 @@
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>
-            <template v-if="help_text_assessor">
-                <HelpText :help_text="help_text_assessor" />
-            </template> 
 
             <template v-if="help_text_url">
                 <HelpTextUrl :help_text_url="help_text_url" />
             </template>
-            <template v-if="help_text_assessor_url">
-                <HelpTextUrl :help_text_url="help_text_assessor_url" />
-            </template> 
 
             <template>
                 <template v-if="!showingComment">
@@ -65,7 +59,6 @@ export default {
         isRequired:String,
         comment_value: String,
         help_text:String,
-        help_text_assessor:String,
         value:{
             default:function () {
                 return null;
@@ -98,7 +91,6 @@ export default {
             documents:[],
             filename:null,
             help_text_url:'',
-            help_text_assessor_url:''
         }
     },
 
