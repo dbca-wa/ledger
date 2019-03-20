@@ -1001,13 +1001,19 @@ class Application(RevisionedMixin):
         from wildlifecompliance.components.licences.models import WildlifeLicence
         with transaction.atomic():
             try:
+                parent_licence = None
                 for item in request.data.get('activity'):
                     licence_activity_id = item['id']
-                    selected_activity = self.activities.filter(licence_activity__id=licence_activity_id).first()
+                    selected_activity = self.activities.filter(
+                        licence_activity__id=licence_activity_id
+                    ).first()
                     if not selected_activity:
-                        raise Exception("Application ID %s does not have licence activity: %s" % (
-                            self.id, licence_activity_id))
+                        raise Exception("Licence activity %s is missing from Application ID %s!" % (
+                            licence_activity_id, self.id))
 
+                    if selected_activity.processing_status != ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION:
+                        raise Exception("Activity \"%s\" has an invalid processing status: %s" % (
+                            selected_activity.licence_activity.name, selected_activity.processing_status))
 
                     if item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_ISSUED:
                         try:
@@ -1036,7 +1042,6 @@ class Application(RevisionedMixin):
                         selected_activity.save()
 
                         self.generate_returns(parent_licence, selected_activity, request)
-                        # parent_licence.generate_doc()
                         # Log application action
                         self.log_user_action(
                             ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
@@ -1080,6 +1085,10 @@ class Application(RevisionedMixin):
                                     item['name']), request)
                         send_application_decline_notification(
                             item['name'], self, request)
+
+                # If any activities were issued - re-generate PDF
+                if parent_licence is not None:
+                    parent_licence.generate_doc()
 
             except BaseException:
                 raise

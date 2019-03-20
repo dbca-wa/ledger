@@ -1,5 +1,4 @@
 <template id="application_issuance">
-
                 <div class="col-md-12">
                     <div class="row" v-for="(item,index) in visibleLicenceActivities" v-bind:key="`issue_activity_${index}`">
                         <div class="panel panel-default">
@@ -175,7 +174,7 @@
                             <div class="navbar-inner">
                                 <div class="container">
                                     <p class="pull-right" style="margin-top:5px;">
-                                        <button v-if="licence.id_check && licence.character_check" class="btn btn-primary pull-right" @click.prevent="ok()">Issue/Decline</button>
+                                        <button v-if="canIssueOrDecline" class="btn btn-primary pull-right" @click.prevent="ok()">Issue/Decline</button>
                                         <button v-else disabled class="btn btn-primary pull-right">Issue/Decline</button>
                                     </p>
                                 </div>
@@ -221,6 +220,9 @@ export default {
     watch:{
     },
     computed:{
+        canIssueOrDecline: function() {
+            return this.licence.id_check && this.licence.character_check && this.visibleLicenceActivities.length;
+        },
         visibleLicenceActivities: function() {
             const finalisingActivities = this.application.licence_type_data.activity.filter(
                 activity => ['with_officer_finalisation'].includes(activity.processing_status.id)
@@ -241,7 +243,7 @@ export default {
         },
     },
     methods:{
-        ok:function () {
+        ok: function () {
             let vm = this;
             let licence = JSON.parse(JSON.stringify(vm.licence));
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/final_decision'),JSON.stringify(licence),{
@@ -252,25 +254,28 @@ export default {
                              'The activity is successfully issued',
                              'success'
                         );
-                        vm.close();
-                        vm.$parent.refreshFromResponse(response)
-                        // vm.$emit('refreshFromResponse',response);
+                        vm.$parent.refreshFromResponse(response);
                     },(error)=>{
-                        vm.errors = true;
-                        vm.errorString = helpers.apiVueResourceError(error);
+                        swal(
+                            'Application Error',
+                            helpers.apiVueResourceError(error),
+                            'error'
+                        )
                     });
         },
-        initialiseLicenceDetails(){
+        initialiseLicenceDetails() {
             let vm=this;
             var final_status=null
-            console.log('from fetch licence')
-            console.log(vm.application.id_check_status)
             for(var i=0, len=vm.proposed_licence.length; i<len; i++){
                 if (vm.proposed_licence[i].proposed_action.id =='propose_issue'){
                     final_status="issued"
                 }
                 if (vm.proposed_licence[i].proposed_action.id =='propose_decline'){
                     final_status="declined"
+                }
+                const processing_status = vm.proposed_licence[i].processing_status;
+                if(!['with_officer_finalisation'].includes(processing_status)) {
+                    continue;
                 }
                 vm.licence.activity.push({
                                         id:         vm.proposed_licence[i].licence_activity.id,
@@ -300,7 +305,6 @@ export default {
            vm.$http.get(helpers.add_endpoint_join(api_endpoints.applications,(vm.application.id+'/get_proposed_decisions/')))
             .then((response) => {
                 vm.proposed_licence = response.body;
-                // console.log(vm.proposed_licence)
                 this.initialiseLicenceDetails();
                 
             }, (error) => {

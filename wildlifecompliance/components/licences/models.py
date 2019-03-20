@@ -155,12 +155,6 @@ class WildlifeLicence(models.Model):
         blank=True,
         null=True,
         related_name='licence_document')
-    # TODO: review whether cover_letter_document is needed
-    cover_letter_document = models.ForeignKey(
-        LicenceDocument,
-        blank=True,
-        null=True,
-        related_name='cover_letter_document')
     replaced_by = models.ForeignKey('self', blank=True, null=True)
     extracted_fields = JSONField(blank=True, null=True)
     licence_number = models.CharField(max_length=64, blank=True, null=True)
