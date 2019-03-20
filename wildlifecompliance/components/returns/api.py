@@ -149,12 +149,21 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
     def sheet_details(self, request, *args, **kwargs):
         return_id = self.request.query_params.get('return_id')
         instance = Return.objects.get(id=return_id)
-        return Response(instance.sheet.data)
+        return Response(instance.sheet.table)
 
     @detail_route(methods=['POST', ])
     def save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+
+            if instance.has_sheet:
+                for species in instance.sheet.get_species_list():
+                    try:
+                        data = request.data.get(species).encode('utf-8')
+                        instance.sheet.set_table(species, data)
+                    except AttributeError:
+                        pass
+
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:

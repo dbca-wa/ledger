@@ -937,7 +937,10 @@ export default {
             if(this.selected_activity_tab_id && !force) {
                 return;
             }
-            $('#tabs-section li:first-child a')[0].click();
+            const tab = $('#tabs-section li:first-child a')[0];
+            if(tab) {
+                tab.click();
+            }
         },
         initialiseOrgContactTable: function(){
             let vm = this;
@@ -1502,7 +1505,7 @@ export default {
                 }
             }
 
-        })
+        });
     },
     updated: function(){
         let vm = this;

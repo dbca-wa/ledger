@@ -10,7 +10,6 @@ from rest_framework import serializers
 class WildlifeLicenceSerializer(serializers.ModelSerializer):
     licence_document = serializers.CharField(
         source='licence_document._file.url')
-    status = serializers.CharField(source='get_status_display')
     current_application = BaseApplicationSerializer(read_only=True)
 
     class Meta:
@@ -24,15 +23,11 @@ class WildlifeLicenceSerializer(serializers.ModelSerializer):
             'region',
             'tenure',
             'title',
-            'renewal_sent',
             'issue_date',
             'original_issue_date',
             'start_date',
             'expiry_date',
-            'surrender_details',
-            'suspension_details',
             'extracted_fields',
-            'status'
         )
 
 
@@ -118,7 +113,6 @@ class ActivitySerializer(serializers.ModelSerializer):
 
 
 class LicenceCategorySerializer(serializers.ModelSerializer):
-    category_status = serializers.SerializerMethodField()
     activity = serializers.SerializerMethodField()
 
     class Meta:
@@ -127,12 +121,8 @@ class LicenceCategorySerializer(serializers.ModelSerializer):
             'id',
             'name',
             'short_name',
-            'category_status',
             'activity'
         )
-
-    def get_category_status(self, obj):
-        return obj.get_licence_category_status_display()
 
     def get_activity(self, obj):
         purposes = self.context.get('purpose_records')
