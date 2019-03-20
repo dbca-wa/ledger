@@ -2612,9 +2612,12 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
         recordsTotal = None
         recordsFiltered = None
         res = None
-
+        canceled = request.GET.get('canceled','False')
+        bt = [0,1]
+        if canceled == str('True'):
+           bt = [0,1,4]
         try:
-            data = AdmissionsBooking.objects.filter(booking_type__in=(0, 1)).order_by('-pk')
+            data = AdmissionsBooking.objects.filter(booking_type__in=bt).order_by('-pk')
             groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
             # If groups then we need to filter data by groups.
             if groups.count() > 0:
@@ -2786,8 +2789,10 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sql += ' and mooring_booking.booking_type = 4 '
                 sqlCount += ' and mooring_booking.booking_type = 4 '
             else:
-                sql += ' and (mooring_booking.booking_type != 3 and mooring_booking.booking_type != 4 )'
-                sqlCount += ' and (mooring_booking.booking_type != 3 and mooring_booking.booking_type != 4) '
+#                sql += ' and (mooring_booking.booking_type != 3 and mooring_booking.booking_type != 4 )'
+#                sqlCount += ' and (mooring_booking.booking_type != 3 and mooring_booking.booking_type != 4) '
+                sql += ' and (mooring_booking.booking_type != 3)'
+                sqlCount += ' and (mooring_booking.booking_type != 3) '
 
       #         sql += ' and mooring_booking.is_canceled = %(canceled)s'
 #               sqlCount += ' and mooring_booking.is_canceled = %(canceled)s'

@@ -148,6 +148,16 @@
                             </span>
                             </div>
                         </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                            <label for="">Cancelled</label>
+                            <select class="form-control" v-model="filterCanceled2" id="filterCanceled2">
+                                    <option value="True">Yes</option>
+                                    <option value="False">No</option>
+                            </select>
+                            </div>
+                        </div>
+
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
@@ -430,6 +440,7 @@ export default {
                         if (vm.filterDateTo2) {
                             d.departure = vm.filterDateTo2;
                         }
+                        d.canceled = vm.filterCanceled2;
                     }
                 },
                 columns:[
@@ -555,6 +566,7 @@ export default {
             filterRefundStatus: 'All',
             filterDateFrom2:"",
             filterDateTo2:"",
+            filterCanceled2: 'False',
         }
     },
     watch:{
@@ -776,6 +788,9 @@ export default {
                 }
 
             });
+            $('#filterCanceled2').on('change',function (e) {
+                   vm.$refs.admissions_bookings_table.vmDataTable.ajax.reload();
+	    });
             helpers.namePopover($,vm.$refs.bookings_table.vmDataTable);
             $(document).on('keydown', function(e) {
                 if(e.ctrlKey && (e.key == "p" || e.charCode == 16 || e.charCode == 112 || e.keyCode == 80) ){
@@ -805,11 +820,14 @@ export default {
         printParams2() {
             let vm = this;
             var str = [];
+            console.log("printParams2");
             let obj = {
                 arrival : vm.filterDateFrom2 != null ? vm.filterDateFrom2: '',
                 departure : vm.filterDateTo2 != null ? vm.filterDateTo2:'' ,
-                'search[value]': vm.$refs.admissions_bookings_table.vmDataTable.search()
+                'search[value]': vm.$refs.admissions_bookings_table.vmDataTable.search(),
+                canceled: vm.filterCanceled2,
             }
+
             for(var p in obj)
                 if (obj.hasOwnProperty(p)) {
                 str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
@@ -1006,7 +1024,7 @@ export default {
         print2:function () {
             let vm =this;
             vm.exportingCSV2 = true;
-
+            
             vm.$http.get(api_endpoints.admissionsbookings+'?'+vm.printParams2()).then(res => {
                 var data = res.body.results;
 
