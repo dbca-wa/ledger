@@ -1,7 +1,7 @@
 <template id="application_issuance">
 
                 <div class="col-md-12">
-                    <div class="row" v-for="(item,index) in licence.activity">
+                    <div class="row" v-for="(item,index) in visibleLicenceActivities" v-bind:key="`issue_activity_${index}`">
                         <div class="panel panel-default">
                             <div class="panel-heading">
                                 <h3 class="panel-title">Issue/Decline - {{item.name}}
@@ -221,6 +221,12 @@ export default {
     watch:{
     },
     computed:{
+        visibleLicenceActivities: function() {
+            const finalisingActivities = this.application.licence_type_data.activity.filter(
+                activity => ['with_officer_finalisation'].includes(activity.processing_status.id)
+            ).map(activity => activity.id);
+            return this.licence.activity.filter(activity => finalisingActivities.includes(activity.id));
+        },
         isIdCheckAccepted: function(){
             return this.application.id_check_status.id == 'accepted';
         },

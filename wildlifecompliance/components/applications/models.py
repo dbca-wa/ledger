@@ -1002,6 +1002,13 @@ class Application(RevisionedMixin):
         with transaction.atomic():
             try:
                 for item in request.data.get('activity'):
+                    licence_activity_id = item['id']
+                    selected_activity = self.activities.filter(licence_activity__id=licence_activity_id).first()
+                    if not selected_activity:
+                        raise Exception("Application ID %s does not have licence activity: %s" % (
+                            self.id, licence_activity_id))
+
+
                     if item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_ISSUED:
                         try:
                             # check if parent licence is available
@@ -1015,14 +1022,8 @@ class Application(RevisionedMixin):
                                 licence_category=self.get_licence_category()
                             )
 
-                        licence_activity_id = item['id']
                         start_date = item['start_date']
                         expiry_date = item['end_date']
-
-                        selected_activity = self.activities.filter(licence_activity__id=licence_activity_id).first()
-                        if not selected_activity:
-                            raise Exception("Application ID %s does not have licence activity: %s" % (
-                                self.id, licence_activity_id))
 
                         selected_activity.issue_date = timezone.now()
                         selected_activity.officer = request.user
@@ -1035,6 +1036,7 @@ class Application(RevisionedMixin):
                         selected_activity.save()
 
                         self.generate_returns(parent_licence, selected_activity, request)
+                        # parent_licence.generate_doc()
                         # Log application action
                         self.log_user_action(
                             ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
@@ -1055,7 +1057,10 @@ class Application(RevisionedMixin):
                         send_application_issue_notification(
                             item['name'], item['end_date'], item['start_date'], self, request)
                     elif item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_DECLINED:
-                        self.set_activity_processing_status(item["id"], ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED)
+                        selected_activity.officer = request.user
+                        selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED
+                        selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
+                        selected_activity.save()
                         # Log application action
                         self.log_user_action(
                             ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(
