@@ -583,7 +583,8 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET', ])
     def get_pending_requests(self, request, *args, **kwargs):
         try:
-            qs = self.get_queryset().filter(requester=request.user, status='with_assessor')
+            qs = self.get_queryset().filter(requester=request.user,
+                                            status=OrganisationRequest.ORG_REQUEST_STATUS_WITH_ASSESSOR)
             serializer = OrganisationRequestDTSerializer(qs, many=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:

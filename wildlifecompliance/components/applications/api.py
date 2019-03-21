@@ -679,7 +679,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         parser = SchemaParser(draft=True)
         try:
             instance = self.get_object()
-            parser.save_proponent_data(instance, request, self)
+            parser.save_application_user_data(instance, request, self)
             return redirect(reverse('external'))
         except MissingFieldsException as e:
             return Response({
@@ -697,11 +697,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
-    def assessor_save(self, request, *args, **kwargs):
+    def application_officer_save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             parser = SchemaParser()
-            parser.save_assessor_data(instance, request, self)
+            parser.save_application_officer_data(instance, request, self)
             return redirect(reverse('external'))
         except serializers.ValidationError:
             print(traceback.print_exc())

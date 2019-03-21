@@ -250,7 +250,6 @@ class Application(RevisionedMixin):
         choices=APPLICATION_TYPE_CHOICES,
         default=APPLICATION_TYPE_NEW_LICENCE)
     data = JSONField(blank=True, null=True)
-    assessor_data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
     schema = JSONField(blank=False, null=False)
     licence_purposes = models.ManyToManyField(
@@ -592,7 +591,7 @@ class Application(RevisionedMixin):
                 # Save the data first
                 print("inside can_user_edit")
                 parser = SchemaParser(draft=False)
-                parser.save_proponent_data(self, request, viewset)
+                parser.save_application_user_data(self, request, viewset)
                 self.processing_status = Application.PROCESSING_STATUS_UNDER_REVIEW
                 self.customer_status = Application.CUSTOMER_STATUS_UNDER_REVIEW
                 self.submitter = request.user
@@ -1266,7 +1265,6 @@ class Assessment(ApplicationRequest):
         (STATUS_COMPLETED, 'Completed'),
         (STATUS_RECALLED, 'Recalled')
     )
-    assigned_assessor = models.ForeignKey(EmailUser, blank=True, null=True)
     status = models.CharField(
         'Status',
         max_length=20,

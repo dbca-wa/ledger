@@ -55,7 +55,7 @@
                         {{activity.name}} licence has been declined and emailed to {{application.submitter.first_name}} {{application.submitter.last_name}} 
                     </div>
                     <div v-if="activity.processing_status.id=='with_assessor'"> 
-                        {{activity.name}} licensed activity cannot be issued as this licensed activity is still with assessord for assessment. 
+                        {{activity.name}} licensed activity cannot be issued as this licensed activity is still with assessors for assessment.
                     </div>
                     <div v-if="activity.processing_status.id=='with_officer_conditions'"> 
                         {{activity.name}} licensed activity cannot be issued as the conditions have not been finalised yet. 
