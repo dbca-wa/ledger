@@ -24,6 +24,10 @@ class CallEmailSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'status',
-            'classification'
+            'classification',
+            'lodged_on',
+            'number',
+            'caller',
+            'assigned_to',
         )
 

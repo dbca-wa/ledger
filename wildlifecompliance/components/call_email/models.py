@@ -11,7 +11,17 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document
 
 class Classification(models.Model):
-    name = models.CharField(max_length=30)
+    NAME_CHOICES = (
+            ('complaint', 'Complaint'),
+            ('enquiry', 'Enquiry'),
+            ('incident', 'Incident'),
+            )
+
+    name = models.CharField(
+            max_length=30,
+            choices=NAME_CHOICES,
+            default=NAME_CHOICES[0][0]            
+            )
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -27,7 +37,7 @@ class CallEmail(models.Model):
         ('open_followup', 'Open (follow-up)'),
         ('open_inspection', 'Open (Inspection)'),
         ('open_case', 'Open (Case)'),
-        ('closed', 'Closed')
+        ('closed', 'Closed'),
     )
 
     #classification = models.CharField(max_length=30) # this should be a FK to Admin enum list
@@ -36,9 +46,12 @@ class CallEmail(models.Model):
         choices=STATUS_CHOICES,
         default=STATUS_CHOICES[0][0])
     classification = models.ForeignKey(Classification, related_name='calls')
-
-
     schema = JSONField(default=list)
+    lodged_on = models.DateField(auto_now=True)
+    number = models.CharField(max_length=50)
+    caller = models.CharField(max_length=100)
+    assigned_to = models.CharField(max_length=100)
+    
 
     class Meta:
         app_label = 'wildlifecompliance'

@@ -66,6 +66,18 @@ export default {
                             return data.name
                         }
                     },
+                    {
+                        data:"lodged_on",
+                    },
+                    {
+                        data:"number",
+                    },
+                    {
+                        data:"caller",
+                    },
+                    {
+                        data:"assigned_to",
+                    },
                 ],
                 
                 initComplete: function(){
@@ -89,7 +101,7 @@ export default {
                 }
                 
             },
-            dtHeaders:["Call/Email Status","Classification"],
+            dtHeaders:["Call/Email Status","Classification","lodged_on","number","caller","assigned_to",],
         }
     },
     
