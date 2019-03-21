@@ -202,7 +202,7 @@ class WildlifeLicence(models.Model):
             return int(licence_number_max.split('L')[1]) + 1
 
     @property
-    def activites(self):
+    def activities(self):
         return self.current_application.activities
 
 #    def seq_idx():

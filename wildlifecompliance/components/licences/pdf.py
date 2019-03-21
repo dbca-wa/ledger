@@ -255,7 +255,7 @@ def _create_licence(licence_buffer, licence, application):
 
     elements.append(Paragraph('Licence Summary', styles['InfoTitleVeryLargeCenter']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('Activites', styles['BoldLeft']))
+    elements.append(Paragraph('Activities', styles['BoldLeft']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     conditionList = ListFlowable(
