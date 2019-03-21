@@ -194,9 +194,6 @@ export default {
           },
           selected_parks: function(){
             let vm = this;
-            if (vm.proposal) {
-                vm.proposal.parks = vm.selected_parks
-            }
             var removed_park=$(vm.selected_parks_before).not(vm.selected_parks).get();
             var added_park=$(vm.selected_parks).not(vm.selected_parks_before).get();
             vm.selected_parks_before=vm.selected_parks;
@@ -706,15 +703,15 @@ export default {
             vm.fetchRegions(); 
             vm.fetchTrails();
 
-            for (var i = 0; i < vm.proposal.parks.length; i++) {
-              var current_park=vm.proposal.parks[i].park.id
+            for (var i = 0; i < vm.proposal.land_parks.length; i++) {
+              var current_park=vm.proposal.land_parks[i].park.id
               var current_activities=[]
               var current_access=[]
-              for (var j = 0; j < vm.proposal.parks[i].land_activities.length; j++) {
-                current_activities.push(vm.proposal.parks[i].land_activities[j].activity.id);
+              for (var j = 0; j < vm.proposal.land_parks[i].land_activities.length; j++) {
+                current_activities.push(vm.proposal.land_parks[i].land_activities[j].activity.id);
               }
-               for (var k = 0; k < vm.proposal.parks[i].access_types.length; k++){
-                current_access.push(vm.proposal.parks[i].access_types[k].access_type.id);
+               for (var k = 0; k < vm.proposal.land_parks[i].access_types.length; k++){
+                current_access.push(vm.proposal.land_parks[i].access_types[k].access_type.id);
                }
                var data={
                 'park': current_park,

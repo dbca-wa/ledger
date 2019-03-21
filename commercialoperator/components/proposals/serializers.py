@@ -78,6 +78,7 @@ class ProposalParkAccessSerializer(serializers.ModelSerializer):
 class ProposalParkSerializer(serializers.ModelSerializer):
     park=ParkSerializer()
     land_activities=ProposalParkActivitySerializer(many=True)
+    marine_activities=ProposalParkActivitySerializer(many=True)
     access_types=ProposalParkAccessSerializer(many=True)
     class Meta:
         model = ProposalPark
@@ -129,7 +130,8 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     applicant_details = ProposalApplicantDetailsSerializer(required=False)
     activities_land = ProposalActivitiesLandSerializer(required=False)
     activities_marine = ProposalActivitiesMarineSerializer(required=False)
-    parks=ProposalParkSerializer(many=True)
+    land_parks=ProposalParkSerializer(many=True)
+    marine_parks=ProposalParkSerializer(many=True)
     trails=ProposalTrailSerializer(many=True)
 
     get_history = serializers.ReadOnlyField()
@@ -184,7 +186,8 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'applicant_details',
                 'activities_land',
                 'activities_marine',
-                'parks',
+                'land_parks',
+                'marine_parks',
                 'trails'
                 )
         read_only_fields=('documents',)

@@ -208,6 +208,48 @@ from '@/utils/hooks'
             console.log(error);
             })
           },
+          find_recurring: function(array){
+            var common=new Map();
+            array.forEach(function(obj){
+             var values=Object.values(obj)[0];
+             values.forEach(function(val){
+                 common.set(val,(common.get(val)||0)+1);
+             });
+            });
+            var result=[];
+            common.forEach(function(appearance,el){
+              if(appearance===array.length){
+               result.push(el);
+              }
+            });
+            return result;
+        },
+        store_parks: function(parks){
+          let vm=this;
+          for (var i = 0; i < parks.length; i++) {
+              var current_park=parks[i].park.id
+              var current_activities=[]
+              for (var j = 0; j < parks[i].marine_activities.length; j++) {
+                current_activities.push(parks[i].marine_activities[j].activity.id);
+              }
+               var data={
+                'park': current_park,
+                'activities': current_activities
+               }
+               vm.marine_parks_activities.push(data)
+            }
+
+            var activity_list=[]
+            var park_list=[]
+            for (var i=0; i<vm.marine_parks_activities.length; i++)
+            { 
+              park_list.push(vm.marine_parks_activities[i].park);
+              activity_list.push({'key' : vm.marine_parks_activities[i].activities});
+            }
+
+            vm.selected_activities = vm.find_recurring(activity_list)
+            vm.selected_parks=park_list
+        }
         },
         mounted: function(){
             let vm = this;
@@ -218,6 +260,7 @@ from '@/utils/hooks'
                    console.log(err);
             });
             vm.fetchParks(); 
+            vm.store_parks(vm.proposal.marine_parks);
         }
     }
 </script>

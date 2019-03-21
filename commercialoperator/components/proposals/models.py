@@ -465,6 +465,14 @@ class Proposal(RevisionedMixin):
         return self.referrals.all()[:2]
 
     @property
+    def land_parks(self):
+        return self.parks.filter(park__park_type='land')
+
+    @property
+    def marine_parks(self):
+        return self.parks.filter(park__park_type='marine')
+
+    @property
     def regions_list(self):
         #return self.region.split(',') if self.region else []
         return [self.region.name] if self.region else []
