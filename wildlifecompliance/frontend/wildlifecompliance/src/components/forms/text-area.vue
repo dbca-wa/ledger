@@ -5,16 +5,10 @@
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>
-            <template v-if="help_text_assessor">
-                <HelpText :help_text="help_text_assessor" />
-            </template> 
 
             <template v-if="help_text_url">
                 <HelpTextUrl :help_text_url="help_text_url" />
             </template>
-            <template v-if="help_text_assessor_url">
-                <HelpTextUrl :help_text_url="help_text_assessor_url" />
-            </template> 
 
 
             <template>
@@ -35,7 +29,7 @@ import Comment from './comment.vue'
 import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
 export default {
-    props:["name","value", "id", "isRequired", "help_text","help_text_assessor","label","readonly","comment_value","help_text_url", "help_text_assessor_url"],
+    props:["name","value", "id", "isRequired", "help_text","label","readonly","comment_value","help_text_url"],
     components: {Comment, HelpText, HelpTextUrl},
     data(){
         let vm = this;

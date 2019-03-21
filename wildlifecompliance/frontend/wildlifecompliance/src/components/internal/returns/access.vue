@@ -53,7 +53,7 @@
                                                 <option value="null">Unassigned</option>
                                                 <!-- <option v-for="member in return.return_curators" :value="member.id">{{member.first_name}} {{member.last_name}}</option> -->
                                             </select>
-                                            <!-- <a v-if="!canViewonly && check_assessor()" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a> -->
+                                            <!-- <a v-if="!canViewonly" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a> -->
                                         </div>
                                     </div>
                                     <div class="col-sm-12 top-buffer-s">
@@ -209,14 +209,14 @@
                                     <select v-show="isLoading" class="form-control">
                                         <option value="">Loading...</option>
                                     </select>
-                                    <select @change="assignTo" :disabled="canViewonly || !check_assessor()" v-if="!isLoading" class="form-control" v-model="compliance.assigned_to">
+                                    <select @change="assignTo" :disabled="canViewonly" v-if="!isLoading" class="form-control" v-model="compliance.assigned_to">
                                         <option value="null">Unassigned</option>
                                         <option v-for="member in return.return_curators" :value="member.id">{{member.first_name}} {{member.last_name}}</option>
                                     </select>
-                                    <a v-if="!canViewonly && check_assessor()" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
+                                    <a v-if="!canViewonly" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a>
                                 </div>
                             </div>
-                            <div class="col-sm-12 top-buffer-s" v-if="!canViewonly && check_assessor()">
+                            <div class="col-sm-12 top-buffer-s" v-if="!canViewonly">
                                 <strong>Action</strong><br/>
                                 <button class="btn btn-primary" @click.prevent="acceptCompliance()">Accept</button><br/>
                                 <button class="btn btn-primary top-buffer-s" @click.prevent="amendmentRequest()">Request Amendment</button>

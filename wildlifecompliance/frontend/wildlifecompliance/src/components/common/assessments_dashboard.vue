@@ -150,7 +150,7 @@ export default {
                     {
                         data: "status",
                         mRender:function (data,type,full) {
-                            return data != '' && data != null ? `${data}` : '';
+                            return data.name ? `${data.name}` : '';
                         }
                     },
                     {

@@ -1,5 +1,6 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser, Address
+from wildlifecompliance.components.main.fields import CustomChoiceField
 from wildlifecompliance.components.returns.models import (
     Return,
     ReturnType,
@@ -78,11 +79,14 @@ class ReturnSerializer(serializers.ModelSerializer):
 
 
 class ReturnTypeSerializer(serializers.ModelSerializer):
+    return_type = CustomChoiceField(read_only=True)
+
     class Meta:
         model = ReturnType
         fields = (
             'id',
-            'resources'
+            'resources',
+            'return_type',
         )
 
 

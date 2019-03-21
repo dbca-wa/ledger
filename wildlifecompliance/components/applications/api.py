@@ -16,12 +16,10 @@ from django.shortcuts import redirect
 from wildlifecompliance.components.applications.utils import (
     SchemaParser,
     MissingFieldsException,
-    get_activity_schema,
-    save_assess_data
+    get_activity_schema
 )
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
-from wildlifecompliance.utils.assess_utils import create_app_activity_model
 from wildlifecompliance.components.applications.models import (
     Application,
     ApplicationSelectedActivity,
@@ -550,7 +548,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 if not ApplicationSelectedActivity.is_valid_status(status):
                     raise serializers.ValidationError(
                         'The status provided is not allowed')
-            instance.update_activity_status(request, activity_id, status)
+            instance.set_activity_processing_status(activity_id, status)
             serializer = InternalApplicationSerializer(
                 instance, context={'request': request})
             return Response(serializer.data)
@@ -637,9 +635,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def final_decision(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            # serializer = ProposedLicenceSerializer(data=request.data)
-            # serializer.is_valid(raise_exception=True)
-            print(request.data)
             instance.final_decision(request)
             serializer = InternalApplicationSerializer(
                 instance, context={'request': request})
@@ -684,7 +679,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         parser = SchemaParser(draft=True)
         try:
             instance = self.get_object()
-            parser.save_proponent_data(instance, request, self)
+            parser.save_application_user_data(instance, request, self)
             return redirect(reverse('external'))
         except MissingFieldsException as e:
             return Response({
@@ -702,11 +697,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
-    def assessor_save(self, request, *args, **kwargs):
+    def application_officer_save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
             parser = SchemaParser()
-            parser.save_assessor_data(instance, request, self)
+            parser.save_application_officer_data(instance, request, self)
             return redirect(reverse('external'))
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -717,21 +712,21 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['post'])
-    @renderer_classes((JSONRenderer,))
-    def assess_save(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            save_assess_data(instance, request, self)
-            return redirect(reverse('external'))
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+    # @detail_route(methods=['post'])
+    # @renderer_classes((JSONRenderer,))
+    # def assess_save(self, request, *args, **kwargs):
+    #     try:
+    #         instance = self.get_object()
+    #         save_assess_data(instance, request, self)
+    #         return redirect(reverse('external'))
+    #     except serializers.ValidationError:
+    #         print(traceback.print_exc())
+    #         raise
+    #     except ValidationError as e:
+    #         raise serializers.ValidationError(repr(e.error_dict))
+    #     except Exception as e:
+    #         print(traceback.print_exc())
+    #         raise serializers.ValidationError(str(e))
 
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
@@ -760,7 +755,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
 
-            create_app_activity_model(serializer.data['licence_category'], app_ids=[serializer.data['id']])
             return Response(serializer.data)
         except Exception as e:
             print(traceback.print_exc())
@@ -1032,8 +1026,10 @@ class AssessorGroupViewSet(viewsets.ModelViewSet):
     serializer_class = ActivityPermissionGroupSerializer
     renderer_classes = [JSONRenderer, ]
 
-    def get_queryset(self):
+    def get_queryset(self, application=None):
         if is_internal(self.request):
+            if application is not None:
+                return application.get_permission_groups('assessor')
             return ActivityPermissionGroup.objects.filter(
                 permissions__codename='assessor'
             )
@@ -1048,7 +1044,7 @@ class AssessorGroupViewSet(viewsets.ModelViewSet):
         id_list = set()
         for assessment in application.assessments:
             id_list.add(assessment.assessor_group.id)
-        queryset = self.get_queryset().exclude(id__in=id_list)
+        queryset = self.get_queryset(application).exclude(id__in=id_list)
         serializer = self.get_serializer(queryset, many=True)
 
         return Response(serializer.data)

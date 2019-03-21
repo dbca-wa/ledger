@@ -229,7 +229,7 @@ class OrganisationRequestSerializer(serializers.ModelSerializer):
         read_only_fields = ('requester', 'lodgement_date', 'assigned_officer')
 
     def get_can_be_processed(self, obj):
-        return obj.status == 'with_assessor'
+        return obj.status == OrganisationRequest.ORG_REQUEST_STATUS_WITH_ASSESSOR
 
     def get_user_can_process_org_access_requests(self, obj):
         if self.context['request'].user and self.context['request'].\

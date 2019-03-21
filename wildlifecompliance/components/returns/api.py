@@ -15,11 +15,13 @@ from wildlifecompliance.components.licences.models import (
 )
 from wildlifecompliance.components.returns.models import (
     Return,
+    ReturnType,
 )
 from wildlifecompliance.components.returns.serializers import (
     ReturnSerializer,
     ReturnActionSerializer,
-    ReturnCommsSerializer
+    ReturnCommsSerializer,
+    ReturnTypeSerializer,
 )
 
 
@@ -237,3 +239,18 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+class ReturnTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ReturnTypeSerializer
+    queryset = ReturnType.objects.none()
+
+    def get_queryset(self):
+        if is_internal(self.request):
+            return ReturnType.objects.all()
+        return ReturnType.objects.none()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

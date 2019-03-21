@@ -1,18 +1,13 @@
 PERMISSION_GROUPS = [
     {
-        'name': 'Read-only Internal',
-        'per_activity': False,
-        'permissions': ['read_only']
-    },
-    {
         'name': 'Organisation Access Request Officers',
         'per_activity': False,
         'permissions': ['organisation_access_request']
     },
     {
-        'name': 'Superusers',
+        'name': 'System Administrators',
         'per_activity': False,
-        'permissions': ['superuser']
+        'permissions': ['system_administrator']
     },
     {
         'name': 'Licensing Officers',
@@ -42,18 +37,13 @@ PERMISSION_GROUPS = [
 ]
 
 CUSTOM_GROUP_PERMISSIONS = {
-    'read_only': {
-        'name': 'Read-only Internal',
-        'app_label': 'wildlifecompliance',
-        'model': 'activitypermissiongroup',
-    },
     'organisation_access_request': {
         'name': 'Organisation Access Request',
         'app_label': 'wildlifecompliance',
         'model': 'activitypermissiongroup',
     },
-    'superuser': {
-        'name': 'Superuser',
+    'system_administrator': {
+        'name': 'System Administrator',
         'app_label': 'wildlifecompliance',
         'model': 'activitypermissiongroup',
     },

@@ -338,8 +338,12 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
 
     def has_wildlifelicenceactivity_perm(self, permission_codename, licence_activity_id):
         return self.groups.filter(
-            permissions__codename=permission_codename,
-            activitypermissiongroup__licence_activities__id=licence_activity_id
+            permissions__codename__in=permission_codename if isinstance(
+                permission_codename, (list, models.query.QuerySet)
+            ) else [permission_codename],
+            activitypermissiongroup__licence_activities__id__in=licence_activity_id if isinstance(
+                licence_activity_id, (list, models.query.QuerySet)
+            ) else [licence_activity_id]
         ).count()
 
     def get_wildlifelicence_permission_group(self, permission_codename, activity_id=None, first=True):
@@ -347,10 +351,11 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             permissions__codename=permission_codename
         )
         if activity_id is not None:
-            if type(activity_id) == list:
-                qs.filter(licence_activities__id__in=activity_id)
-            else:
-                qs.filter(licence_activities__id=activity_id)
+            qs = qs.filter(
+                activitypermissiongroup__licence_activities__id__in=activity_id if isinstance(
+                    activity_id, (list, models.query.QuerySet)
+                ) else [activity_id]
+            )
         return qs.first() if first else qs
 
     @property

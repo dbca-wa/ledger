@@ -129,32 +129,22 @@ export default {
             let propose_decline = JSON.parse(JSON.stringify(vm.propose_decline));
             vm.decliningApplication = true;
             if (propose_decline.activity.length > 0){
-                if (vm.processing_status.id == 'under_review'){
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/proposed_decline'),JSON.stringify(propose_decline),{
-                            emulateJSON:true,
-                        }).then((response)=>{
-                            swal(
-                                 'Propose Decline',
-                                 'The selected licenced activities have been proposed for Decline.',
-                                 'success'
-                            )
-                            vm.decliningApplication = false;
-                            vm.close();
-                            vm.$emit('refreshFromResponse',response);
-                        },(error)=>{
-                            vm.errors = true;
-                            vm.decliningApplication = false;
-                            vm.errorString = helpers.apiVueResourceError(error);
-                        });
-                }
-                else{
-                    vm.decliningApplication = false;
-                    swal(
-                         'Propose Decline',
-                         'The licenced activity must be in status "With Officer-Conditions".',
-                         'error'
-                    )
-                }
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/proposed_decline'),JSON.stringify(propose_decline),{
+                        emulateJSON:true,
+                    }).then((response)=>{
+                        swal(
+                                'Propose Decline',
+                                'The selected licenced activities have been proposed for Decline.',
+                                'success'
+                        )
+                        vm.decliningApplication = false;
+                        vm.close();
+                        vm.$emit('refreshFromResponse',response);
+                    },(error)=>{
+                        vm.errors = true;
+                        vm.decliningApplication = false;
+                        vm.errorString = helpers.apiVueResourceError(error);
+                    });
             } else {
                 vm.decliningApplication = false;
                 swal(
