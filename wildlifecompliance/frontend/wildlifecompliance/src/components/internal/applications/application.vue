@@ -64,13 +64,15 @@
                             </div>
 
                             <template v-if="application.processing_status.id == 'with_assessor_conditions' || application.processing_status.id == 'with_approver' || isFinalised">
-                                <div class="col-sm-12">
-                                    <strong>Application</strong><br/>
-                                    <a class="actionBtn" v-if="!showingApplication" @click.prevent="toggleApplication()">Show Application</a>
-                                    <a class="actionBtn" v-else @click.prevent="toggleApplication()">Hide Application</a>
-                                </div>
-                                <div class="col-sm-12">
-                                    <div class="separator"></div>
+                                <div>
+                                    <div class="col-sm-12">
+                                        <strong>Application</strong><br/>
+                                        <a class="actionBtn" v-if="!showingApplication" @click.prevent="toggleApplication()">Show Application</a>
+                                        <a class="actionBtn" v-else @click.prevent="toggleApplication()">Hide Application</a>
+                                    </div>
+                                    <div class="col-sm-12">
+                                        <div class="separator"></div>
+                                    </div>
                                 </div>
                             </template>
                             <template v-if="application.processing_status.id == 'with_approver' || isFinalised">
@@ -239,7 +241,7 @@
                         </div>
                     </div>
                 </template>
-                <template v-if="!isSendingToAssessor && !showingConditions && !isofficerfinalisation && !isFinalised && !isPartiallyFinalised && !isOfficerConditions && !isFinalViewConditions">
+                <template v-if="applicationDetailsVisible">
                     <div>
                     <ul class="nav nav-tabs" id="tabs-main">
                         <li><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
@@ -745,6 +747,9 @@ export default {
     watch: {
     },
     computed: {
+        applicationDetailsVisible: function() {
+            return !this.isSendingToAssessor && !this.showingConditions && !this.isofficerfinalisation && !this.isFinalised && !this.isOfficerConditions && !this.isFinalViewConditions;
+        },
         applicationIsDraft: function(){
             return this.application.processing_status.id == 'draft';
         },

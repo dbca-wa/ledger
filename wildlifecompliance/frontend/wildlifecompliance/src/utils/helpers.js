@@ -126,10 +126,13 @@ module.exports = {
     strToBool(val) {
       return (`${val}`.toLowerCase() === 'true');
     },
-    isApplicationActivityVisible: function(application, activity_id) {
+    isApplicationActivityVisible: function(application, activity_id, exclude_statuses) {
       if(!application.activities) {
           return 0;
       }
-      return application.activities.filter(activity => activity.licence_activity == activity_id).length;
+      return application.activities.filter(
+        activity => activity.licence_activity == activity_id &&
+          (!exclude_statuses || !exclude_statuses.includes(activity.decision_action))
+      ).length;
     },
 };
