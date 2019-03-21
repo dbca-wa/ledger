@@ -1,43 +1,22 @@
 <template>
 <div class="container" id="internalCallEmailDash">
     <div class="row">
-        <!--
-        <div class="col-md-3">
-            <div class="form-group">
-                <label for="">Organisation</label>
-                <select class="form-control" v-model="filterOrganisation">
-                    <option value="All">All</option>
-                    <option v-for="o in organisationChoices" :value="o">{{o}}</option>
-                </select>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label for="">Applicant</label>
-                <select class="form-control" v-model="filterApplicant">
-                    <option value="All">All</option>
-                    <option v-for="a  in applicantChoices" :value="a">{{a}}</option>
-                </select>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label for="">Role</label>
-                <select class="form-control" v-model="filterRole">
-                    <option value="All">All</option>
-                    <option v-for="r in roleChoices" :value="r">{{r}}</option>
-                </select>
-            </div>
-        </div>
-        -->
+    
         <div class="col-md-3">
             <div class="form-group">
                 <label for="">Call/Email status</label>
-                <select class="form-control" v-model="filterStatus">
+                <select class="form-control" v-model="filterCall">
                     <option value="All">All</option>
-                    <!--
-                    <option v-for="s in statusChoices" :value="s">{{s}}</option>
-                    -->
+                    <option v-for="c in callChoices" :value="c">{{c}}</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="">Call/Email classification</label>
+                <select class="form-control" v-model="filterClassification">
+                    <option value="All">All</option>
+                    <option v-for="i in classificationChoices" :key="i.id">{{ i.name }}</option>
                 </select>
             </div>
         </div>
@@ -61,9 +40,10 @@ export default {
     console.log("test1");
     return {
         // Filters
-        filterStatus: 'All',
-        callStatus: [],
-        callClassification: [],
+        filterCall: 'All',
+        filterClassification: 'All',
+        callChoices: [],
+        classificationChoices: [],
         dtOptions:{
                 
                 language: {
@@ -78,59 +58,60 @@ export default {
                 },
                 columns:[
                     {
-                        data:"id",
-                    },
-                    {
                         data:"status",
                     },
                     {
                         data:"classification",
+                        mRender: function(data, type, full) {
+                            return data.name
+                        }
                     },
                 ],
+                
                 initComplete: function(){
                     console.log("test2");
-                    var statusColumn = vm.$refs.call_email_table.vmDataTable.columns(1);
-                    statusColumn.data().unique().sort().each( function ( d, j ) {
-                        let statusChoices = [];
+                    var callColumn = vm.$refs.call_email_table.vmDataTable.columns(0);
+                    callColumn.data().unique().sort().each( function ( d, j ) {
+                        let call_choices = [];
                         $.each(d,(index,a) => {
-                            a != null && statusChoices.indexOf(a) < 0 ? statusChoices.push(a): '';
+                            a != null && call_choices.indexOf(a) < 0 ? call_choices.push(a): '';
                         })
-                        vm.callStatus = statusChoices;
+                        vm.callChoices = call_choices;
                     });
-                    var classificationColumn = vm.$refs.call_email_table.vmDataTable.columns(2);
+                    var classificationColumn = vm.$refs.call_email_table.vmDataTable.columns(1);
                     classificationColumn.data().unique().sort().each( function ( d, j ) {
-                        let classificationChoices = [];
+                        let classification_choices = [];
                         $.each(d,(index,a) => {
-                            a != null && classificationChoices.indexOf(a) < 0 ? classificationChoices.push(a): '';
+                            a != null && classification_choices.indexOf(a) < 0 ? classification_choices.push(a): '';
                         })
-                        vm.callClassification = classificationChoices;
+                        vm.classificationChoices = classification_choices;
                     });
                 }
+                
             },
-            dtHeaders:["Id", "Status","Classification"],
+            dtHeaders:["Call/Email Status","Classification"],
         }
     },
-    /*
+    
     watch: {
-        filterOrganisation: function() {
+        filterCall: function() {
             let vm = this;
-            if (vm.filterOrganisation!= 'All') {
-                vm.$refs.org_access_table.vmDataTable.columns(1).search(vm.filterOrganisation).draw();
+            
+            if (vm.filterCall!= 'All') {
+                vm.$refs.call_email_table.vmDataTable.columns(0).search(vm.filterCall, false).draw();
             } else {
-                vm.$refs.org_access_table.vmDataTable.columns(1).search('').draw();
+                vm.$refs.call_email_table.vmDataTable.columns(0).search('').draw();
             }
         },
-        filterApplicant: function() {
+        filterClassification: function() {
             let vm = this;
-            if (vm.filterApplicant != 'All') {
-                vm.$refs.org_access_table.vmDataTable.columns(2).search(vm.filterApplicant).draw();
+            if (vm.filterClassification != 'All') {
+                vm.$refs.call_email_table.vmDataTable.columns(1).search(vm.filterClassification).draw();
             } else {
-                vm.$refs.org_access_table.vmDataTable.columns(2).search('').draw();
+                vm.$refs.call_email_table.vmDataTable.columns(1).search('').draw();
             }
         },
     },
-    */
-    /*   
     beforeRouteEnter: function(to, from, next) {
     console.log('BEFORE-ROUTE func()')
     //Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
@@ -144,21 +125,14 @@ export default {
       console.log(err);
     });
     },
-    */
     components: {
         datatable
     },
-    /*
     computed: {
         isLoading: function () {
             return this.loading.length == 0;
         }
     },
-    */
     methods: {},
-    /*
-    mounted: function () {
-    }
-    */
 }
 </script>

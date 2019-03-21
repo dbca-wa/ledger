@@ -31,7 +31,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.call_email.models import CallEmail
 
-from wildlifecompliance.components.call_email.serializers import CallEmailSerializer
+from wildlifecompliance.components.call_email.serializers import CallEmailSerializer, ClassificationSerializer
 
 
 class CallEmailViewSet(viewsets.ModelViewSet):
