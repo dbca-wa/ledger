@@ -15,7 +15,7 @@
                             <label class="control-label">Select required activities</label>
                             <div class="" v-for="category in marine_activities">
                                 <div class="form-check">
-                                    <input :onclick="isClickable" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                                    <input @click="clickCategory($event, category)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
                                     {{ category.name }}
                                 </div>
                                 <div class="col-sm-12" v-for="activity in category.activities">
@@ -207,6 +207,33 @@ from '@/utils/hooks'
             },(error) => {
             console.log(error);
             })
+          },
+          clickCategory: function(e, c){
+            let vm=this;
+            var checked=e.target.checked;
+            if(checked){
+              for(var i=0; i<c.activities.length; i++){
+                var index=this.selected_activities.indexOf(c.activities[i].id);
+                if(index==-1)
+                {
+                  var r = helpers.copyObject(this.selected_activities);
+                  r.push(c.activities[i].id);
+                  this.selected_activities=r
+                  
+                }
+              }
+            }
+            else{
+              for(var i=0; i<c.activities.length; i++){
+                var index=this.selected_activities.indexOf(c.activities[i].id);
+                if(index!=-1){
+                  var r = helpers.copyObject(this.selected_activities);
+                  r.splice(index,1);
+                  this.selected_activities=r
+                  //this.selected_parks.splice(index,1)
+                }
+              }
+            }
           },
           find_recurring: function(array){
             var common=new Map();
