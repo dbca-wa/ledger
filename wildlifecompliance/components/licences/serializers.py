@@ -19,14 +19,6 @@ class WildlifeLicenceSerializer(serializers.ModelSerializer):
             'licence_document',
             'replaced_by',
             'current_application',
-            'activity',
-            'region',
-            'tenure',
-            'title',
-            'issue_date',
-            'original_issue_date',
-            'start_date',
-            'expiry_date',
             'extracted_fields',
         )
 

@@ -106,7 +106,7 @@ export default {
             licence_status: [],
             licence_categories: [],
             licence_categoryStatus: [],
-            licence_headers:["Number","Licence Type","Licence Holder","Status","Issue Date","Licence","Action"],
+            licence_headers:["Number","Licence Type","Licence Holder",/*"Status","Issue Date",*/"Licence","Action"],
             licence_options:{
                 order: [
                     [0, 'desc']
@@ -122,14 +122,14 @@ export default {
                 columns: [
                     {data: "id"},
                     {data: "current_application.licence_type_data.name"},
-                    {data: "applicant"},
-                    {data: "status"},
+                    {data: "current_application.applicant"},
+                    /*{data: "status"},
                     {
                         data: "issue_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
-                    },
+                    },*/
                     {
                         data: "licence_document",
                         mRender:function(data,type,full){
