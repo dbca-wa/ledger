@@ -37,13 +37,21 @@ export default {
   name: 'CallEmailTableDash',
   data() {
     let vm = this;
-    console.log("test1");
     return {
         // Filters
         filterCall: 'All',
         filterClassification: 'All',
+        filterLodgmentDate: null,
         callChoices: [],
         classificationChoices: [],
+        dateFormat: 'DD/MM/YYYY',
+        datepickerOptions:{
+                format: 'DD/MM/YYYY',
+                showClear:true,
+                useCurrent:false,
+                keepInvalid:true,
+                allowInputToggle:true
+            },
         dtOptions:{
                 
                 language: {
@@ -81,7 +89,6 @@ export default {
                 ],
                 
                 initComplete: function(){
-                    console.log("test2");
                     var callColumn = vm.$refs.call_email_table.vmDataTable.columns(0);
                     callColumn.data().unique().sort().each( function ( d, j ) {
                         let call_choices = [];
