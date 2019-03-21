@@ -10,11 +10,9 @@
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <label class="control-label" for="Name">Select licensed activities to Propose Issue</label>
-                                        <div v-for="item in application_licence_type">
-                                            <div v-for="item1 in item">
-                                                <div v-if="item1.name && item1.processing_status.id=='with_officer_conditions'">
-                                                    <input type="checkbox" :value ="item1.id" :id="item1.id" v-model="propose_issue.activity">{{item1.name}}
-                                                </div>
+                                        <div v-for="activity in visibleLicenceActivities">
+                                            <div>
+                                                <input type="checkbox" :value ="activity.id" :id="activity.id" v-model="propose_issue.activity">{{activity.name}}
                                             </div>
                                         </div>
                                     </div>
@@ -107,6 +105,10 @@ export default {
         application_licence_type:{
             type:Object,
             required:true
+        },
+        application: {
+            type: Object,
+            required: true
         }
     },
     data:function () {
@@ -143,7 +145,13 @@ export default {
         },
         title: function(){
             return this.processing_status.id == 'with_approver' ? 'Issue Licence' : 'Propose to issue licence';
-        }
+        },
+        visibleLicenceActivities: function() {
+            return this.application.licence_type_data.activity.filter(
+                activity => ['with_officer_conditions'].includes(activity.processing_status.id)
+                    && activity.name && this.userHasRole('licensing_officer', activity.id)
+            )
+        },
     },
     methods:{
         ok:function () {
@@ -259,7 +267,12 @@ export default {
                     vm.propose_issue.start_date = "";
                 }
              });
-       }
+        },
+        userHasRole: function(role, activity_id) {
+            return this.application.user_roles.filter(
+                role_record => role_record.role == role && (!activity_id || activity_id == role_record.activity_id)
+            ).length;
+        },
    },
    mounted:function () {
         let vm =this;

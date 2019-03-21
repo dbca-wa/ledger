@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import Group, ContentType, Permission
 from django.db import transaction
+from ledger.accounts.utils import get_app_label
 from wildlifecompliance.components.licences.models import LicenceActivity
 from wildlifecompliance.components.applications.models import ActivityPermissionGroup
 
@@ -176,6 +177,9 @@ class CustomGroupCollector(PermissionCollector):
 class CollectorManager(object):
 
     def __init__(self):
+        if not get_app_label():
+            raise Exception("SYSTEM_APP_LABEL is missing from settings.py or is blank!\
+            \nPlease set it to the global app_label of the current system (e.g. 'wildlifecompliance').")
         with transaction.atomic():
             logger.info("Verifying presence of custom group permissions in the database...")
             CustomPermissionCollector().get_or_create_models()

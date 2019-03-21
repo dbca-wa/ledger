@@ -244,8 +244,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         return obj.licence_activity_names
 
     def get_activities(self, obj):
-        application_activities = ApplicationSelectedActivity.objects.filter(application_id=obj.id)
-        return ApplicationSelectedActivitySerializer(application_activities, many=True).data
+        return ApplicationSelectedActivitySerializer(obj.selected_activities, many=True).data
 
     def get_amendment_requests(self, obj):
         amendment_request_data = []
@@ -261,7 +260,11 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         return amendment_request_data
 
     def get_can_be_processed(self, obj):
-        return obj.processing_status == Application.PROCESSING_STATUS_UNDER_REVIEW
+        return obj.activities.exclude(processing_status__in=[
+            ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT,
+            ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
+            ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
+        ]).exists()
 
     def get_processed(self, obj):
         """ check if any activities have been processed (i.e. licence issued)"""
@@ -485,6 +488,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     processed = serializers.SerializerMethodField()
     licence_officers = EmailUserAppViewSerializer(many=True)
     user_in_licence_officers = serializers.SerializerMethodField(read_only=True)
+    user_roles = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Application
@@ -524,6 +528,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'processed',
             'licence_officers',
             'user_in_licence_officers',
+            'user_roles',
         )
         read_only_fields = ('documents', 'conditions')
 
@@ -567,12 +572,30 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
 
     def get_processed(self, obj):
         """ check if any activities have been processed """
-        return True if obj.activities.filter(processing_status__in=['accepted', 'declined']).first() else False
+        return True if obj.activities.filter(processing_status__in=[
+            ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
+            ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
+        ]).first() else False
 
     def get_user_in_licence_officers(self, obj):
         if self.context['request'].user and self.context['request'].user in obj.licence_officers:
             return True
         return False
+
+    def get_user_roles(self, obj):
+        try:
+            user = self.context['request'].user
+        except (KeyError, AttributeError):
+            return []
+
+        available_roles = ['assessor', 'licensing_officer', 'issuing_officer', 'return_curator']
+        is_administrator = user.has_perm('wildlifecompliance.system_administrator')
+        roles = []
+        for activity in obj.selected_activities.all():
+            for role in available_roles:
+                if is_administrator or user.has_wildlifelicenceactivity_perm(role, activity.licence_activity_id):
+                    roles.append({'activity_id': activity.licence_activity_id, 'role': role})
+        return roles
 
 
 class ApplicationUserActionSerializer(serializers.ModelSerializer):

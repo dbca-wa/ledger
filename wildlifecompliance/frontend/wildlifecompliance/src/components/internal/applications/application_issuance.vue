@@ -227,7 +227,9 @@ export default {
             const finalisingActivities = this.application.licence_type_data.activity.filter(
                 activity => ['with_officer_finalisation'].includes(activity.processing_status.id)
             ).map(activity => activity.id);
-            return this.licence.activity.filter(activity => finalisingActivities.includes(activity.id));
+            return this.licence.activity.filter(
+                activity => finalisingActivities.includes(activity.id) && this.userHasRole('issuing_officer', activity.id)
+            );
         },
         isIdCheckAccepted: function(){
             return this.application.id_check_status.id == 'accepted';
@@ -345,6 +347,12 @@ export default {
             //     }
             //  });
             
+        },
+
+        userHasRole: function(role, activity_id) {
+            return this.application.user_roles.filter(
+                role_record => role_record.role == role && (!activity_id || activity_id == role_record.activity_id)
+            ).length;
         },
     },
     mounted: function(){
