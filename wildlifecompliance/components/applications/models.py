@@ -924,8 +924,8 @@ class Application(RevisionedMixin):
 
     @property
     def activities(self):
-        """ returns a queryset of activity/purposes attached to application """
-        return ApplicationSelectedActivity.objects.filter(application=self)
+        """ returns a queryset of activities attached to application (shortcut to ApplicationSelectedActivity related_name). """
+        return self.selected_activities
 
     def get_licences_by_status(self, status):
         return self.licences.filter(current_application__selected_activities__activity_status=status).distinct()
