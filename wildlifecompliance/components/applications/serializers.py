@@ -177,7 +177,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     activities = serializers.SerializerMethodField()
     processed = serializers.SerializerMethodField()
     id_check_status = CustomChoiceField(read_only=True)
-    processing_status = CustomChoiceField(read_only=True)
+    processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
 
     class Meta:
         model = Application
@@ -292,7 +292,7 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(read_only=True)
     proxy_applicant = EmailUserSerializer()
-    processing_status = CustomChoiceField(read_only=True)
+    processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
     customer_status = CustomChoiceField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
@@ -333,7 +333,7 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(read_only=True)
     proxy_applicant = EmailUserSerializer()
-    processing_status = CustomChoiceField(read_only=True)
+    processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
     customer_status = CustomChoiceField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
@@ -360,7 +360,7 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
 
 class ApplicationSerializer(BaseApplicationSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
-    processing_status = CustomChoiceField(read_only=True)
+    processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
     review_status = CustomChoiceField(read_only=True)
     customer_status = CustomChoiceField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
@@ -423,7 +423,6 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
             'comment_data',
             'schema',
             'customer_status',
-            'processing_status',
             'review_status',
             'org_applicant',
             'proxy_applicant',
@@ -472,7 +471,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     applicant = serializers.CharField(read_only=True)
     org_applicant = OrganisationSerializer()
     proxy_applicant = EmailUserAppViewSerializer()
-    processing_status = CustomChoiceField(read_only=True)
+    processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
     review_status = CustomChoiceField(read_only=True)
     customer_status = CustomChoiceField(read_only=True)
     character_check_status = CustomChoiceField(read_only=True)
@@ -567,7 +566,10 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
 
     def get_processed(self, obj):
         """ check if any activities have been processed """
-        return True if obj.activities.filter(processing_status__in=['accepted', 'declined']).first() else False
+        return True if obj.activities.filter(processing_status__in=[
+            ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
+            ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED
+        ]).first() else False
 
     def get_user_in_licence_officers(self, obj):
         if self.context['request'].user and self.context['request'].user in obj.licence_officers:

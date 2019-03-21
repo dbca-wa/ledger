@@ -305,20 +305,23 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             list(
                 self.get_queryset().filter(
                     submitter=request.user).exclude(
-                    processing_status='discarded').exclude(
-                    processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
+                    # processing_status='discarded').exclude(
+                    # processing_status=Application.PROCESSING_STATUS_CHOICES[13][0]))) 'approved'
+                    processing_status=Application.PROCESSING_STATUS_DISCARDED)))
         qs.extend(
             list(
                 self.get_queryset().filter(
                     proxy_applicant=request.user).exclude(
-                    processing_status='discarded').exclude(
-                    processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
+                    # processing_status='discarded').exclude(
+                    # processing_status=Application.PROCESSING_STATUS_CHOICES[13][0]))) 'approved'
+                    processing_status=Application.PROCESSING_STATUS_DISCARDED)))
         qs.extend(
             list(
                 self.get_queryset().filter(
                     org_applicant_id__in=user_orgs).exclude(
-                    processing_status='discarded').exclude(
-                    processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
+                    # processing_status='discarded').exclude(
+                    # processing_status=Application.PROCESSING_STATUS_CHOICES[13][0]))) 'approved'
+                    processing_status=Application.PROCESSING_STATUS_DISCARDED)))
         queryset = list(set(qs))
         serializer = DTExternalApplicationSerializer(
             queryset, many=True, context={'request': request})
@@ -775,6 +778,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             instance = self.get_object()
+            # TODO: replace discard functionality due to processing_status property method change
             serializer = SaveApplicationSerializer(
                 instance, {'processing_status': 'discarded'}, partial=True)
             serializer.is_valid(raise_exception=True)

@@ -77,7 +77,6 @@ class LicenceViewSet(viewsets.ModelViewSet):
         user_orgs = [
             org.id for org in request.user.wildlifecompliance_organisations.all()]
         qs = []
-        #qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
         qs.extend(list(self.get_queryset().filter(submitter=request.user)))
         qs.extend(
             list(

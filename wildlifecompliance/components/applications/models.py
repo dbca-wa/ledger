@@ -149,17 +149,7 @@ class Application(RevisionedMixin):
     ]
 
     PROCESSING_STATUS_DRAFT = 'draft'
-    PROCESSING_STATUS_WITH_OFFICER = 'with_officer'
-    PROCESSING_STATUS_WITH_ASSESSOR = 'with_assessor'
-    PROCESSING_STATUS_ASSESSOR_CONDITIONS = 'with_assessor_conditions'
-    PROCESSING_STATUS_WITH_APPROVER = 'with_approver'
-    PROCESSING_STATUS_RENEWAL = 'renewal'
-    PROCESSING_STATUS_LICENCE_AMENDMENT = 'licence_amendment'
     PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE = 'awaiting_applicant_response'
-    PROCESSING_STATUS_AWAITING_ASSESSOR_RESPONSE = 'awaiting_assessor_response'
-    PROCESSING_STATUS_AWAITING_RESPONSES = 'awaiting_responses'
-    PROCESSING_STATUS_READY_FOR_CONDITIONS = 'ready_for_conditions'
-    PROCESSING_STATUS_READY_TO_ISSUE = 'ready_to_issue'
     PROCESSING_STATUS_APPROVED = 'approved'
     PROCESSING_STATUS_PARTIALLY_APPROVED = 'partially_approved'
     PROCESSING_STATUS_DECLINED = 'declined'
@@ -167,17 +157,7 @@ class Application(RevisionedMixin):
     PROCESSING_STATUS_UNDER_REVIEW = 'under_review'
     PROCESSING_STATUS_CHOICES = (
         (PROCESSING_STATUS_DRAFT, 'Draft'),
-        (PROCESSING_STATUS_WITH_OFFICER, 'With Officer'),
-        (PROCESSING_STATUS_WITH_ASSESSOR, 'With Assessor'),
-        (PROCESSING_STATUS_ASSESSOR_CONDITIONS, 'With Assessor (Conditions)'),
-        (PROCESSING_STATUS_WITH_APPROVER, 'With Approver'),
-        (PROCESSING_STATUS_RENEWAL, 'Renewal'),
-        (PROCESSING_STATUS_LICENCE_AMENDMENT, 'Licence Amendment'),
         (PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE, 'Awaiting Applicant Response'),
-        (PROCESSING_STATUS_AWAITING_ASSESSOR_RESPONSE, 'Awaiting Assessor Response'),
-        (PROCESSING_STATUS_AWAITING_RESPONSES, 'Awaiting Responses'),
-        (PROCESSING_STATUS_READY_FOR_CONDITIONS, 'Ready for Conditions'),
-        (PROCESSING_STATUS_READY_TO_ISSUE, 'Ready to Issue'),
         (PROCESSING_STATUS_APPROVED, 'Approved'),
         (PROCESSING_STATUS_PARTIALLY_APPROVED, 'Partially Approved'),
         (PROCESSING_STATUS_DECLINED, 'Declined'),
@@ -188,7 +168,6 @@ class Application(RevisionedMixin):
     # List of statuses from above that allow a customer to view an application
     # (read-only)
     CUSTOMER_VIEWABLE_STATE = [
-        PROCESSING_STATUS_WITH_ASSESSOR,
         PROCESSING_STATUS_UNDER_REVIEW,
         PROCESSING_STATUS_APPROVED,
         PROCESSING_STATUS_DECLINED,
@@ -284,11 +263,11 @@ class Application(RevisionedMixin):
         blank=True,
         null=True,
         related_name='wildlifecompliance_applications_assigned')
-    processing_status = models.CharField(
-        'Processing Status',
-        max_length=30,
-        choices=PROCESSING_STATUS_CHOICES,
-        default=PROCESSING_STATUS_DRAFT)
+    # processing_status = models.CharField(
+    #     'Processing Status',
+    #     max_length=30,
+    #     choices=PROCESSING_STATUS_CHOICES,
+    #     default=PROCESSING_STATUS_DRAFT)
     id_check_status = models.CharField(
         'Identification Check Status',
         max_length=30,
@@ -389,6 +368,31 @@ class Application(RevisionedMixin):
             return self.APPLICANT_TYPE_SUBMITTER
 
     @property
+    def processing_status(self):
+        selected_activities = self.selected_activities
+        activity_statuses = [activity.processing_status for activity in selected_activities]
+        # not yet submitted
+        if activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT) == len(activity_statuses):
+            return self.PROCESSING_STATUS_DRAFT
+        # amendment request sent to user and outstanding
+        elif self.amendment_requests.filter(status='requested').count > 0:
+            return self.PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE
+        # all activities approved
+        elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED) == len(activity_statuses):
+            return self.PROCESSING_STATUS_APPROVED
+        # one or more (but not all) activities approved
+        elif 0 < activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED) < \
+                len(activity_statuses):
+            return self.PROCESSING_STATUS_PARTIALLY_APPROVED
+        # all activities declined
+        elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED) == len(activity_statuses):
+            return self.PROCESSING_STATUS_DECLINED
+        # user discarded application
+        #     return PROCESSING_STATUS_DISCARDED
+        else:
+            return self.PROCESSING_STATUS_UNDER_REVIEW
+
+    @property
     def has_amendment(self):
         qs = self.amendment_requests
         qs = qs.filter(status='requested')
@@ -421,6 +425,7 @@ class Application(RevisionedMixin):
         An application can be discarded by a customer if:
         1 - It is a draft
         2- or if the application has been pushed back to the user
+        TODO: need to confirm regarding (2) here related to ApplicationSelectedActivity
         """
         return self.customer_status == Application.PROCESSING_STATUS_DRAFT\
             or self.processing_status == Application.PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE
@@ -539,7 +544,10 @@ class Application(RevisionedMixin):
             logger.error("Application: %s cannot update processing status (%s) for an empty activity_id!" %
                          (self.id, processing_status))
             return
-
+        if processing_status not in dict(ApplicationSelectedActivity.PROCESSING_STATUS_CHOICES):
+            logger.error("Application: %s cannot update processing status (%s) for invalid processing status!" %
+                         (self.id, processing_status))
+            return
         selected_activity = self.get_selected_activity(activity_id)
         selected_activity.processing_status = processing_status
         selected_activity.save()
@@ -592,7 +600,7 @@ class Application(RevisionedMixin):
                 print("inside can_user_edit")
                 parser = SchemaParser(draft=False)
                 parser.save_application_user_data(self, request, viewset)
-                self.processing_status = Application.PROCESSING_STATUS_UNDER_REVIEW
+                # self.processing_status = Application.PROCESSING_STATUS_UNDER_REVIEW
                 self.customer_status = Application.CUSTOMER_STATUS_UNDER_REVIEW
                 self.submitter = request.user
                 self.lodgement_date = timezone.now()
@@ -1609,7 +1617,10 @@ def search_keywords(search_words, search_application, search_licence, search_ret
     from wildlifecompliance.components.returns.models import Return
     qs = []
     if is_internal:
-        application_list = Application.objects.exclude(processing_status__in=['discarded', 'draft'])
+        application_list = Application.objects.exclude(processing_status__in=[
+            Application.PROCESSING_STATUS_DISCARDED,
+            Application.PROCESSING_STATUS_DRAFT
+        ])
         licence_list = WildlifeLicence.objects.all()\
             .order_by('lodgement_number', '-issue_date')\
             .distinct('lodgement_number')
@@ -1655,7 +1666,8 @@ def search_keywords(search_words, search_application, search_licence, search_ret
 def search_reference(reference_number):
     from wildlifecompliance.components.licences.models import WildlifeLicence
     from wildlifecompliance.components.returns.models import Return
-    application_list = Application.objects.all().exclude(processing_status__in=['discarded'])
+    application_list = Application.objects.all().exclude(processing_status__in=[
+            Application.PROCESSING_STATUS_DISCARDED])
     licence_list = WildlifeLicence.objects.all().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
     returns_list = Return.objects.all().exclude(processing_status__in=['future'])
     record = {}
