@@ -300,29 +300,14 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def user_list(self, request, *args, **kwargs):
         user_orgs = [
             org.id for org in request.user.wildlifecompliance_organisations.all()]
-        qs = []
-        qs.extend(
-            list(
-                self.get_queryset().filter(
-                    submitter=request.user).exclude(
-                    # processing_status='discarded').exclude(
-                    # processing_status=Application.PROCESSING_STATUS_CHOICES[13][0]))) 'approved'
-                    processing_status=Application.PROCESSING_STATUS_DISCARDED)))
-        qs.extend(
-            list(
-                self.get_queryset().filter(
-                    proxy_applicant=request.user).exclude(
-                    # processing_status='discarded').exclude(
-                    # processing_status=Application.PROCESSING_STATUS_CHOICES[13][0]))) 'approved'
-                    processing_status=Application.PROCESSING_STATUS_DISCARDED)))
-        qs.extend(
-            list(
-                self.get_queryset().filter(
-                    org_applicant_id__in=user_orgs).exclude(
-                    # processing_status='discarded').exclude(
-                    # processing_status=Application.PROCESSING_STATUS_CHOICES[13][0]))) 'approved'
-                    processing_status=Application.PROCESSING_STATUS_DISCARDED)))
-        queryset = list(set(qs))
+
+        queryset = self.get_queryset().filter(
+            Q(submitter=request.user) |
+            Q(proxy_applicant=request.user) |
+            Q(org_applicant_id__in=user_orgs)
+        ).distinct()
+
+        queryset = queryset.computed_exclude(processing_status=Application.PROCESSING_STATUS_DISCARDED)
         serializer = DTExternalApplicationSerializer(
             queryset, many=True, context={'request': request})
         return Response(serializer.data)
