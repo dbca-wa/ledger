@@ -11,6 +11,7 @@ class WildlifeLicenceSerializer(serializers.ModelSerializer):
     licence_document = serializers.CharField(
         source='licence_document._file.url')
     current_application = BaseApplicationSerializer(read_only=True)
+    last_issue_date = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = WildlifeLicence
@@ -20,7 +21,11 @@ class WildlifeLicenceSerializer(serializers.ModelSerializer):
             'replaced_by',
             'current_application',
             'extracted_fields',
+            'last_issue_date',
         )
+
+    def get_last_issue_date(self, obj):
+        return obj.current_activities.order_by('-issue_date').first().issue_date
 
 
 class DefaultPurposeSerializer(serializers.ModelSerializer):
