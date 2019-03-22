@@ -21,7 +21,34 @@
             </div>
         </div>
     </div>
-    <datatable ref="call_email_table" id="call-email-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders"></datatable>
+    <div class="row">
+        <div class="col-md-3">
+            <label for="">Lodged From</label>
+            <div class="input-group date" ref="lodgementDateFromPicker">
+                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedFrom">
+                <span class="input-group-addon">
+                    <span class="glyphicon glyphicon-calendar"></span>
+                </span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label for="">Lodged To</label>
+            <div class="input-group date" ref="lodgementDateToPicker">
+                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedTo">
+                <span class="input-group-addon">
+                    <span class="glyphicon glyphicon-calendar"></span>
+                </span>
+            </div>
+        </div>
+    </div>
+    <p></p>
+    <div class="row">
+        <div class="col-lg-12">
+            <datatable ref="call_email_table" id="call-email-table" :dtOptions="dtOptions" 
+            :dtHeaders="dtHeaders"/>
+        </div>
+    </div>
+    
 </div>
 </template>
 <script>
@@ -41,9 +68,11 @@ export default {
         // Filters
         filterCall: 'All',
         filterClassification: 'All',
-        filterLodgmentDate: null,
+        //filterLodgmentDate: null,
         callChoices: [],
         classificationChoices: [],
+        filterLodgedFrom: '',
+        filterLodgedTo: '',
         dateFormat: 'DD/MM/YYYY',
         datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -75,7 +104,10 @@ export default {
                         }
                     },
                     {
-                        data:"lodged_on",
+                        data: "lodgement_date",
+                        mRender:function (data,type,full) {
+                            return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
+                        }
                     },
                     {
                         data:"number",
@@ -108,7 +140,7 @@ export default {
                 }
                 
             },
-            dtHeaders:["Call/Email Status","Classification","lodged_on","number","caller","assigned_to",],
+            dtHeaders:["Call/Email Status","Classification","lodgement_date","number","caller","assigned_to",],
         }
     },
     
@@ -129,6 +161,12 @@ export default {
             } else {
                 vm.$refs.call_email_table.vmDataTable.columns(1).search('').draw();
             }
+        },
+        filterLodgedFrom: function(){
+            this.$refs.call_email_table.vmDataTable.draw();
+        },
+        filterLodgedTo: function(){
+            this.$refs.call_email_table.vmDataTable.draw();
         },
     },
     beforeRouteEnter: function(to, from, next) {
@@ -152,6 +190,84 @@ export default {
             return this.loading.length == 0;
         }
     },
-    methods: {},
+    methods: {
+        addEventListeners: function(){
+            let vm = this;
+            // Initialise Application Date Filters
+            $(vm.$refs.lodgementDateToPicker).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.lodgementDateToPicker).on('dp.change', function(e){
+                if ($(vm.$refs.lodgementDateToPicker).data('DateTimePicker').date()) {
+                    vm.filterLodgedTo =  e.date.format('DD/MM/YYYY');
+                }
+                else if ($(vm.$refs.lodgementDateToPicker).data('date') === "") {
+                    vm.filterLodgedTo = "";
+                }
+             });
+            $(vm.$refs.lodgementDateFromPicker).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.lodgementDateFromPicker).on('dp.change',function (e) {
+                if ($(vm.$refs.lodgementDateFromPicker).data('DateTimePicker').date()) {
+                    vm.filterLodgedFrom = e.date.format('DD/MM/YYYY');
+                    //$(vm.$refs.lodgementDateToPicker).data("DateTimePicker").minDate(e.date);
+                }
+                else if ($(vm.$refs.lodgementDateFromPicker).data('date') === "") {
+                    vm.filterLodgedFrom = "";
+                }
+            });
+        },
+        initialiseSearch:function(){
+            this.dateSearch();
+        },
+        dateSearch:function(){
+            let vm = this;
+            vm.$refs.call_email_table.table.dataTableExt.afnFiltering.push(
+                function(settings,data,dataIndex,original){
+                    let from = vm.filterLodgedFrom;
+                    let to = vm.filterLodgedTo;
+                    let val = original.lodgement_date;
+
+                    if ( from == '' && to == ''){
+                        return true;
+                    }
+                    else if (from != '' && to != ''){
+                        return val != null && val != '' ? moment().range(moment(from,vm.dateFormat),moment(to,vm.dateFormat)).contains(moment(val)) :false;
+                    }
+                    else if(from == '' && to != ''){
+                        if (val != null && val != ''){
+                            return moment(to,vm.dateFormat).diff(moment(val)) >= 0 ? true : false;
+                        }
+                        else{
+                            return false;
+                        }
+                    }
+                    else if (to == '' && from != ''){
+                        if (val != null && val != ''){
+                            return moment(val).diff(moment(from,vm.dateFormat)) >= 0 ? true : false;
+                        }
+                        else{
+                            return false;
+                        }
+                    } 
+                    else{
+                        return false;
+                    }
+                }
+            );
+        }
+    },
+    mounted: function(){
+        let vm = this;
+        $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
+            var chev = $( this ).children()[ 0 ];
+            window.setTimeout( function () {
+                $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
+            }, 100 );
+        });
+        this.$nextTick(() => {
+            vm.initialiseSearch();
+            vm.addEventListeners();
+        });
+    }    
+
+
 }
 </script>

@@ -47,7 +47,7 @@ class CallEmail(models.Model):
         default=STATUS_CHOICES[0][0])
     classification = models.ForeignKey(Classification, related_name='calls')
     schema = JSONField(default=list)
-    lodged_on = models.DateField(auto_now=True)
+    lodged_on = models.DateField(auto_now_add=True)
     number = models.CharField(max_length=50)
     caller = models.CharField(max_length=100)
     assigned_to = models.CharField(max_length=100)
