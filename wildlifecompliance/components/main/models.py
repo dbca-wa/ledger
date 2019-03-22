@@ -96,18 +96,22 @@ class Document(models.Model):
 # Extensions for Django's QuerySet
 
 def computed_filter(self, **kwargs):
-    kwargs['filter'] = True
+    kwargs['__filter'] = True
     return self.computed_filter_or_exclude(**kwargs)
 
 
 def computed_exclude(self, **kwargs):
-    kwargs['filter'] = False
+    kwargs['__filter'] = False
     return self.computed_filter_or_exclude(**kwargs)
 
 
 def computed_filter_or_exclude(self, **kwargs):
-    do_filter = kwargs.pop('filter', True)
-    matched_pk_list = [item.pk for item in self for (field, match) in kwargs.items() if getattr(item, field) == match]
+    do_filter = kwargs.pop('__filter', True)
+    matched_pk_list = [item.pk for item in self for (field, match) in map(
+        lambda arg: (arg[0].replace('__in', ''),
+                     arg[1] if isinstance(arg[1], (list, QuerySet)) else [arg[1]]
+                     ), kwargs.items()
+    ) if getattr(item, field) in match]
     return self.filter(pk__in=matched_pk_list) if do_filter else self.exclude(pk__in=matched_pk_list)
 
 

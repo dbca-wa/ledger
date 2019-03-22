@@ -305,9 +305,10 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             Q(submitter=request.user) |
             Q(proxy_applicant=request.user) |
             Q(org_applicant_id__in=user_orgs)
+        ).computed_exclude(
+            processing_status=Application.PROCESSING_STATUS_DISCARDED
         ).distinct()
 
-        queryset = queryset.computed_exclude(processing_status=Application.PROCESSING_STATUS_DISCARDED)
         serializer = DTExternalApplicationSerializer(
             queryset, many=True, context={'request': request})
         return Response(serializer.data)
@@ -1114,9 +1115,9 @@ class SearchKeywordsView(views.APIView):
     def post(self, request, format=None):
         qs = []
         search_words = request.data.get('searchKeywords')
-        search_application = request.data.get('searchProposal')
-        search_licence = request.data.get('searchApproval')
-        search_returns = request.data.get('searchCompliance')
+        search_application = request.data.get('searchApplication')
+        search_licence = request.data.get('searchLicence')
+        search_returns = request.data.get('searchReturn')
         if search_words:
             qs = search_keywords(search_words, search_application, search_licence, search_returns)
         serializer = SearchKeywordSerializer(qs, many=True)

@@ -1617,13 +1617,13 @@ def search_keywords(search_words, search_application, search_licence, search_ret
     from wildlifecompliance.components.returns.models import Return
     qs = []
     if is_internal:
-        application_list = Application.objects.exclude(processing_status__in=[
+        application_list = Application.objects.all().computed_exclude(processing_status__in=[
             Application.PROCESSING_STATUS_DISCARDED,
             Application.PROCESSING_STATUS_DRAFT
         ])
         licence_list = WildlifeLicence.objects.all()\
-            .order_by('lodgement_number', '-issue_date')\
-            .distinct('lodgement_number')
+            .order_by('licence_number', '-id')\
+            .distinct('licence_number')
         return_list = Return.objects.all()
     if search_words:
         if search_application:
@@ -1646,6 +1646,8 @@ def search_keywords(search_words, search_application, search_licence, search_ret
                             qs.append(res)
                     except BaseException:
                         raise
+        # TODO: fix search_licences (missing fields in wildlifecompliance)
+        """
         if search_licence:
             for l in licence_list:
                 try:
@@ -1653,6 +1655,7 @@ def search_keywords(search_words, search_application, search_licence, search_ret
                     qs.extend(results)
                 except BaseException:
                     raise
+        """
         if search_return:
             for r in return_list:
                 try:
@@ -1666,8 +1669,8 @@ def search_keywords(search_words, search_application, search_licence, search_ret
 def search_reference(reference_number):
     from wildlifecompliance.components.licences.models import WildlifeLicence
     from wildlifecompliance.components.returns.models import Return
-    application_list = Application.objects.all().exclude(processing_status__in=[
-            Application.PROCESSING_STATUS_DISCARDED])
+    application_list = Application.objects.all().computed_exclude(processing_status__in=[
+        Application.PROCESSING_STATUS_DISCARDED])
     licence_list = WildlifeLicence.objects.all().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
     returns_list = Return.objects.all().exclude(processing_status__in=['future'])
     record = {}
