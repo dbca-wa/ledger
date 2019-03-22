@@ -2719,6 +2719,15 @@ class BookingViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         from django.db import connection, transaction
         try:
+
+            user_groups = MooringAreaGroup.objects.filter(members__in=[request.user])
+            sql_group = ""
+            for ug in user_groups:
+                 if sql_group == "":
+                     sql_group = "mooring_mooringareagroup_moorings.mooringareagroup_id ="+str(ug.id)
+                 else:
+                     sql_group = sql_group+" OR mooring_mooringareagroup_moorings.mooringareagroup_id ="+str(ug.id)
+
             search = request.GET.get('search[value]')
             draw = request.GET.get('draw') if request.GET.get('draw') else 1
             start = request.GET.get('start') if request.GET.get('draw') else 1
@@ -2828,7 +2837,8 @@ class BookingViewSet(viewsets.ModelViewSet):
             #print(sql)
 
             cursor = connection.cursor()
-            cursor.execute("Select count(*) from mooring_booking ")
+            #cursor.execute("Select count(*) from mooring_booking ")
+            cursor.execute("select count(*)  from mooring_booking left join mooring_mooringsitebooking on mooring_booking.id = mooring_mooringsitebooking.booking_id left join mooring_mooringsite on  mooring_mooringsitebooking.campsite_id = mooring_mooringsite.id left join mooring_mooringareagroup_moorings on mooring_mooringsite.mooringarea_id = mooring_mooringareagroup_moorings.mooringarea_id where ("+sql_group+")")
             recordsTotal = cursor.fetchone()[0]
             cursor.execute(sqlCount, sqlParams)
             recordsFiltered = cursor.fetchone()[0]
@@ -2842,11 +2852,13 @@ class BookingViewSet(viewsets.ModelViewSet):
 
 
             bookings_qs = Booking.objects.filter(id__in=[b['id'] for b in data]).prefetch_related('mooringarea', 'campsites', 'campsites__campsite', 'customer', 'regos', 'history', 'invoices', 'canceled_by')
+            
             booking_map = {b.id: b for b in bookings_qs}
             clean_data = []
             for bk in data:
                 cg = None
-                booking = booking_map[bk['id']]       
+                booking = booking_map[bk['id']]
+
                 cg = booking.mooringarea
                 bk['editable'] = booking.editable
                 if booking.booking_type == 4:
@@ -2866,7 +2878,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['canceled_by'] = booking.canceled_by.get_full_name() if booking.canceled_by else ''
                 bk['cancelation_time'] = booking.cancelation_time if booking.cancelation_time else ''
                 bk['paid'] = booking.paid
-                bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
+                bk['invoices'] = [i.invoice_reference for i in booking.invoices.all()]
                 bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
                 bk['guests'] = booking.guests
                 bk['campsite_names'] = booking.campsite_name_list
@@ -2874,10 +2886,16 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['firstname'] = booking.details.get('first_name','')
                 bk['lastname'] = booking.details.get('last_name','')
                 bk['admissions'] = { 'id' :booking.admission_payment.id, 'amount': booking.admission_payment.totalCost } if booking.admission_payment else None
-
+                
                 msb = MooringsiteBooking.objects.filter(booking=booking.id)
                 msb_list = []
+                in_mg = False
                 for book in msb:
+                    mooring_area_groups =  MooringAreaGroup.objects.filter(moorings__in=[book.campsite.mooringarea])
+                    for ug in user_groups:
+                        for mag in mooring_area_groups:
+                            if ug.id == mag.id:
+                                 in_mg = True
                     msb_list.append([book.campsite.name, book.campsite.mooringarea.park.district.region.name, book.from_dt, book.to_dt])
                 msb_list.sort(key=lambda item: item[2])
                 bk['mooringsite_bookings'] = msb_list
@@ -2904,12 +2922,15 @@ class BookingViewSet(viewsets.ModelViewSet):
                     refund_statuses = ['All','Partially Refunded','Not Refunded','Refunded']
                     if refund_status in refund_statuses:
                         if refund_status == 'All':
-                            clean_data.append(bk)
+                            if in_mg is True:
+                                clean_data.append(bk)
                         else:       
                             if refund_status == booking.refund_status:
-                                clean_data.append(bk)
+                                if in_mg is True:
+                                    clean_data.append(bk)
                 else:
-                    clean_data.append(bk)
+                    if in_mg is True:
+                        clean_data.append(bk)
             
             return Response(OrderedDict([
                 ('recordsTotal', recordsTotal),
