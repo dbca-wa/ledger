@@ -20,6 +20,11 @@ class ReturnType(models.Model):
 
     Name = models.TextField(null=True, blank=True, max_length=200)
     data_descriptor = JSONField()
+    return_type = models.CharField(
+        'Type',
+        max_length=30,
+        choices=RETURN_TYPE_CHOICES,
+        default=RETURN_TYPE_CHOICES[0][0])
 
     class Meta:
         app_label = 'wildlifecompliance'
