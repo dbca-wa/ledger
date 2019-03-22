@@ -11,7 +11,7 @@
                 <HelpTextUrl :help_text_url="help_text_url" />
             </template>
 
-            <template>
+            <template v-if="renderer.canViewComments()">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
@@ -36,7 +36,8 @@ import Comment from './comment.vue'
 import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
 export default {
-    props: ['name', 'label', 'id', 'readonly', 'help_text', 'value', 'conditions', "handleChange","comment_value", "isRequired", 'help_text_url'],
+    props: ["name", "label", "id", "readonly", "help_text", "value", "conditions", "handleChange",
+            "comment_value", "isRequired", "help_text_url", "renderer"],
     data(){
         return {
             showingComment: false

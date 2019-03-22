@@ -178,7 +178,14 @@ from '@/utils/hooks'
        render(h) {
             let vm =this;
             Renderer.tabs_list = [];
-            Renderer.store_status_data(vm.application.readonly,vm.application.comment_data,vm.application.can_user_edit,vm.application.documents_url,vm.application.id);
+            Renderer.store_status_data(
+                vm.application.readonly,
+                vm.application.comment_data,
+                vm.application.can_user_edit,
+                vm.application.documents_url,
+                vm.application.id,
+                vm.application
+            );
             if (vm.withSectionsSelector){
                 return (
                     <div>
