@@ -146,7 +146,7 @@
                 <template v-if="isFinalised || isPartiallyFinalised">
                     <LicenceScreen :application="application"/>
                 </template>
-                <template v-if="isofficerfinalisation">
+                <template v-if="canIssueDecline">
                     <IssueLicence :application="application" :licence_activity_tab="selected_activity_tab_id"/>
                 </template>
                 <template v-if="showingConditions">

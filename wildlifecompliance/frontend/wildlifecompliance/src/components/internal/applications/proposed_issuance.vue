@@ -144,6 +144,7 @@ export default {
             return vm.errors;
         },
         title: function(){
+        // TODO: check what this is doing and what this.processing_status is referring to
             return this.processing_status.id == 'with_approver' ? 'Issue Licence' : 'Propose to issue licence';
         },
         visibleLicenceActivities: function() {
