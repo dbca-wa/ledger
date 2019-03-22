@@ -10,10 +10,10 @@
                     </h3>
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
-                    <div class="">                        
+                    <div class="" >                        
                         <div class="form-horizontal col-sm-12 borderDecoration">
                             <label class="control-label">Select required activities</label>
-                            <div class="" v-for="category in marine_activities">
+                            <div  class="" v-for="category in marine_activities" >
                                 <div class="form-check">
                                     <input @click="clickCategory($event, category)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
                                     {{ category.name }}

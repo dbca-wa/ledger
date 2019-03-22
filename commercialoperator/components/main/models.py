@@ -224,6 +224,19 @@ class Park(models.Model):
 #         unique_together = ('park', 'activity')
 
 @python_2_unicode_compatible
+class Zone(models.Model):
+    name = models.CharField(max_length=200, blank=True)
+    visible = models.BooleanField(default=True)
+    park = models.ForeignKey(Park, related_name='zones')
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.name
+
+@python_2_unicode_compatible
 class Trail(models.Model):
     name = models.CharField(max_length=200, unique=True)
     code = models.CharField(max_length=10, blank=True)
