@@ -1324,7 +1324,7 @@ class ProposalParkZone(models.Model):
         unique_together = ('zone', 'proposal_park')
 
 class ProposalParkZoneActivity(models.Model):
-    park_zone = models.ForeignKey(ProposalParkZone, blank=True, null=True, related_name='zone_activities')
+    park_zone = models.ForeignKey(ProposalParkZone, blank=True, null=True, related_name='park_activities')
     activity = models.ForeignKey(Activity, blank=True, null=True)
     #section=models.ForeignKey(Section, blank=True, null= True)
 
