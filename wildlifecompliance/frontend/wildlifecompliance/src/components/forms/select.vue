@@ -12,7 +12,7 @@
             </template>
 
 
-            <template>
+            <template v-if="renderer.canViewComments()">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
@@ -80,7 +80,11 @@ export default {
                 return false;
             }
         },
-        'readonly': Boolean
+        'readonly': Boolean,
+        "renderer": {
+            type: Object,
+            required: true
+        }
     },
     data:function () {
         let vm =this;
