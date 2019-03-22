@@ -345,6 +345,7 @@ class Proposal(RevisionedMixin):
     assigned_approver = models.ForeignKey(EmailUser, blank=True, null=True, related_name='commercialoperator_proposals_approvals', on_delete=models.SET_NULL)
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
                                          default=PROCESSING_STATUS_CHOICES[1][0])
+    prev_processing_status = models.CharField(max_length=30, blank=True, null=True)
     id_check_status = models.CharField('Identification Check Status', max_length=30, choices=ID_CHECK_STATUS_CHOICES,
                                        default=ID_CHECK_STATUS_CHOICES[0][0])
     compliance_check_status = models.CharField('Return Check Status', max_length=30, choices=COMPLIANCE_CHECK_STATUS_CHOICES,
@@ -596,7 +597,7 @@ class Proposal(RevisionedMixin):
 
 
     def can_assess(self,user):
-        if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':
+        if self.processing_status == 'on_hold' or self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':
             return self.__assessor_group() in user.proposalassessorgroup_set.all()
         elif self.processing_status == 'with_approver':
             return self.__approver_group() in user.proposalapprovergroup_set.all()
@@ -944,28 +945,49 @@ class Proposal(RevisionedMixin):
             try:
                 if not self.can_assess(request.user):
                     raise exceptions.ProposalNotAuthorized()
-                if self.processing_status != 'with_assessor':
-                    raise ValidationError('You cannot propose to decline if it is not with assessor')
+                if not (self.processing_status == 'with_assessor' or self.processing_status == 'with_referral'):
+                    raise ValidationError('You cannot put on hold if it is not with assessor or with referral')
 
                 comment = request.data.get('onhold_comment')
+                # TODO add file to ProposalOnHold object (and add to action log, maybe?)
                 ProposalOnHold.objects.update_or_create(
                     proposal = self,
                     #defaults={'officer': request.user, 'comment': comment, 'document': details.get('cc_email',None)}
                     defaults={'officer': request.user, 'comment': comment}
                 )
-                #self.proposed_decline_status = True
+                self.prev_processing_status = self.processing_status
                 self.processing_status = self.PROCESSING_STATUS_ONHOLD
                 self.save()
-                #self.move_to_status(request,'with_approver', approver_comment)
                 # Log proposal action
-                #self.log_user_action(ProposalUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
                 self.log_user_action(ProposalUserAction.ACTION_PUT_ONHOLD.format(self.id),request)
+                # Log entry for organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_PUT_ONHOLD.format(self.id),request)
+
+                #send_approver_decline_email_notification(reason, request, self)
+            except:
+                raise
+
+    def on_hold_remove(self,request):
+        with transaction.atomic():
+            try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if self.processing_status != 'on_hold':
+                    raise ValidationError('You cannot remove on hold if it is not currently on hold')
+
+                #comment = request.data.get('onhold_comment')
+                self.processing_status = self.prev_processing_status
+                self.prev_processing_status = self.PROCESSING_STATUS_ONHOLD
+                self.save()
+                # Log proposal action
+                self.log_user_action(ProposalUserAction.ACTION_REMOVE_ONHOLD.format(self.id),request)
                 # Log entry for organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_REMOVE_ONHOLD.format(self.id),request)
 
                 #send_approver_decline_email_notification(reason, request, self)
             except:
                 raise
+
 
     def proposed_approval(self,request,details):
         with transaction.atomic():

@@ -191,14 +191,10 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div v-if="proposal.processing_status!='on_hold'" class="col-sm-12">
+                                        <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="putOnHold()">Put On-hold</button>
                                         </div>
-                                        <div v-else class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="removeOnHold()">Remove On-hold</button>
-                                        </div>
                                     </div>
-
                                 </template>
                                 <template v-else-if="proposal.processing_status == 'With Assessor (Requirements)'">
                                     <div class="row">
@@ -620,6 +616,32 @@ export default {
         putOnHold: function(){
             this.save_wo();
             this.$refs.on_hold.isModalOpen = true;
+        },
+        removeOnHold: function(){
+            let vm = this;
+            this.save_wo();
+
+            let data = new FormData(vm.form);
+            data.append('onhold', false)
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/on_hold'),data,{
+                emulateJSON:true
+            }).then(res=>{
+                swal(
+                    'On Hold Removed',
+                    'Proposal processing status has been changed',
+                    'success'
+                )
+
+                vm.proposal = res.body;
+                vm.$emit('refreshFromResponse',res);
+                vm.$router.push({ path: '/internal' }); //Navigate to dashboard after completing the referral
+            },err=>{
+                swal(
+                    'Submit Error',
+                    helpers.apiVueResourceError(err),
+                    'error'
+                )
+            });
         },
 
 

@@ -913,9 +913,12 @@ class ProposalViewSet(viewsets.ModelViewSet):
         try:
             import ipdb; ipdb.set_trace()
             instance = self.get_object()
-            #serializer = OnHoldSerializer(data=request.data)
-            #serializer.is_valid(raise_exception=True)
-            instance.on_hold(request)
+            is_onhold =  request.data.get('onhold')
+            if is_onhold == 'true':
+                instance.on_hold(request)
+            else:
+                instance.on_hold_remove(request)
+
             serializer = InternalProposalSerializer(instance,context={'request':request})
             return Response(serializer.data)
         except serializers.ValidationError:

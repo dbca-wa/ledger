@@ -111,6 +111,7 @@ export default {
         save: function(){
             let vm = this;
                 let data = new FormData(vm.form);
+                data.append('onhold', true)
                 data.append('onhold_document', vm.uploadedFile)
                 data.append('onhold_comment', vm.onhold_comment)
                 //if (vm.proposal.approval_level_document) {
