@@ -30,7 +30,7 @@
                             <label class="control-label"> Select the parks for which the activities are required</label>
                             <div class="" v-for="p in marine_parks">
                                 <div class="form-check col-sm-12">
-                                  <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                                  <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="{'park': p.id,'zones': p.zone_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
                                 {{ p.name }}
                                   <span><a @click="edit_activities()" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
                                 </div>
@@ -99,15 +99,27 @@ from '@/utils/hooks'
             vm.selected_parks_before=vm.selected_parks;
 
             var current_activities=vm.selected_activities
+            var zone_activities=[];
             //var current_access=vm.selected_access
 
             if(vm.marine_parks_activities.length==0){
               for (var i = 0; i < vm.selected_parks.length; i++) {
                  var data=null;
+                 // data={
+                 //  'park': vm.selected_parks[i],
+                 //  'activities': current_activities,
+                 //  //'access': current_access
+                 // }
+                 for (var j=0; j<vm.selected_parks[i].zones.length; j++){
+                  var zone_data={
+                    'zone': vm.selected_parks[i].zones[j],
+                    'activities': current_activities
+                  }
+                  zone_activities.push(zone_data)
+                 }
                  data={
-                  'park': vm.selected_parks[i],
-                  'activities': current_activities,
-                  //'access': current_access
+                  'park': vm.selected_parks[i].park,
+                  'activities': zone_activities 
                  }
                  vm.marine_parks_activities.push(data);
                }
@@ -118,17 +130,26 @@ from '@/utils/hooks'
                 { 
                   var found=false
                   for (var j=0; j<vm.marine_parks_activities.length; j++){
-                    if(vm.marine_parks_activities[j].park==added_park[i]){ 
+                    if(vm.marine_parks_activities[j].park==added_park[i].park){ 
                       found = true;}
                   }
                   if(found==false)
                   {
+                    var zone_activities=[];
+                    for(var k=0; k<added_park[i].zones.length; k++){
+                      var zone_data={
+                      'zone': added_park[i].zones[k],
+                      'activities': current_activities
+                      }
+                      zone_activities.push(zone_data)
+                    }
                     data={
-                    'park': added_park[i],
-                    'activities': current_activities,
+                    'park': added_park[i].park,
+                    'activities': zone_activities,
                     //'access': current_access
                    }
                    vm.marine_parks_activities.push(data);
+
                   }
                 }
               }
@@ -136,7 +157,7 @@ from '@/utils/hooks'
                 for(var i=0; i<removed_park.length; i++)
                 { 
                   for (var j=0; j<vm.marine_parks_activities.length; j++){
-                    if(vm.marine_parks_activities[j].park==removed_park[i]){ 
+                    if(vm.marine_parks_activities[j].park==removed_park[i].park){ 
                       vm.marine_parks_activities.splice(j,1)}
                   }
                 }
@@ -166,29 +187,32 @@ from '@/utils/hooks'
               if(added.length!=0){
                 for(var j=0; j<added.length; j++)
                 {
-                  if(vm.marine_parks_activities[i].activities.indexOf(added[j])<0){
-                    vm.marine_parks_activities[i].activities.push(added[j]);
+                  // if(vm.marine_parks_activities[i].activities.indexOf(added[j])<0){
+                  //   vm.marine_parks_activities[i].activities.push(added[j]);
+                  // }
+                  for(var k=0; k<vm.marine_parks_activities[i].activities.length; k++){
+                    if(vm.marine_parks_activities[i].activities[k].activities.indexOf(added[j])<0){
+                    vm.marine_parks_activities[i].activities[k].activities.push(added[j]);
+                    }
                   }
                 }
               }
               if(removed.length!=0){
                 for(var j=0; j<removed.length; j++)
                 {
-                  var index=vm.marine_parks_activities[i].activities.indexOf(removed[j]);
-                  if(index!=-1){
-                    vm.marine_parks_activities[i].activities.splice(index,1)
+                  // var index=vm.marine_parks_activities[i].activities.indexOf(removed[j]);
+                  // if(index!=-1){
+                  //   vm.marine_parks_activities[i].activities.splice(index,1)
+                  // }
+                  for(var k=0; k<vm.marine_parks_activities[i].activities.length; k++){
+                    var index=vm.marine_parks_activities[i].activities[k].activities.indexOf(removed[j]);
+                    if(index!=-1){
+                      vm.marine_parks_activities[i].activities[k].activities.splice(index,1)
+                    }
                   }
                 }
               }
             }
-            // for(var temp of vm.marine_parks_activities){
-            //   if(added.length!=0){
-            //     if(temp.activities.indexOf(added[0])<0){
-            //       temp.activities.push(added[0]);
-            //     }
-            //    }
-            // }
-
           }
         },
         marine_parks_activities: function(){
@@ -287,7 +311,7 @@ from '@/utils/hooks'
                    console.log(err);
             });
             vm.fetchParks(); 
-            vm.store_parks(vm.proposal.marine_parks);
+            //vm.store_parks(vm.proposal.marine_parks);
         }
     }
 </script>

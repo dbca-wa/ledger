@@ -36,7 +36,8 @@ class ParkSerializer(serializers.ModelSerializer):
     zones=ZoneSerializer(many=True)
     class Meta:
         model = Park
-        fields = '__all__'
+        #fields = '__all__'
+        fields=('id', 'zones', 'name', 'code', 'park_type', 'allowed_activities', 'zone_ids')
 
 class SectionSerializer(serializers.ModelSerializer):
     class Meta:

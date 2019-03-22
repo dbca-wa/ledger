@@ -215,6 +215,11 @@ class Park(models.Model):
     def allowed_activities_ids(self):
         return [i.id for i in self.allowed_activities.all()]
 
+    @property
+    def zone_ids(self):
+        return [i.id for i in self.zones.all()]
+
+
 # class ParkActivity(models.Model):
 #     park = models.ForeignKey(Park, blank=True, null=True, related_name='activities')
 #     activity = models.ForeignKey(Activity, blank=True, null=True, related_name='parks')
@@ -236,6 +241,7 @@ class Zone(models.Model):
     def __str__(self):
         return self.name
 
+    
 @python_2_unicode_compatible
 class Trail(models.Model):
     name = models.CharField(max_length=200, unique=True)

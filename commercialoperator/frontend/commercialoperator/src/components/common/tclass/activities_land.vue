@@ -385,11 +385,11 @@ export default {
                     var section_activities=[];
                     for(var k=0; k<added_trail[i].sections.length; k++){
                       var section_data={
-                    'section': added_trail[i].sections[k],
-                    'activities': current_activities
+                      'section': added_trail[i].sections[k],
+                      'activities': current_activities
+                      }
+                      section_activities.push(section_data)
                     }
-                    section_activities.push(section_data)
-                  }
                     data={
                     'trail': added_trail[i].trail,
                     'activities': section_activities,                   }
@@ -443,8 +443,8 @@ export default {
                   for(var k=0; k<vm.selected_trails_activities[i].activities.length; k++){
                     if(vm.selected_trails_activities[i].activities[k].activities.indexOf(added[j])<0){
                     vm.selected_trails_activities[i].activities[k].activities.push(added[j]);
+                    }
                   }
-                }
                 }
               }
               if(removed.length!=0){
