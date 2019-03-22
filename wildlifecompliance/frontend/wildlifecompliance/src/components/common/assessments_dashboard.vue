@@ -318,8 +318,8 @@ export default {
             return this.application_headers.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
         },
         filterByColumn: function(column, filterAttribute) {
-            let column_idx = this.getColumnIndex(column);
-            let filterValue = typeof(filterAttribute) == 'string' ? filterAttribute : filterAttribute.name;
+            const column_idx = this.getColumnIndex(column);
+            const filterValue = typeof(filterAttribute) == 'string' ? filterAttribute : filterAttribute.name;
             if (filterValue!= 'All') {
                 this.$refs.application_datatable.vmDataTable.columns(column_idx).search('^' + filterValue +'$', true, false).draw();
             } else {
