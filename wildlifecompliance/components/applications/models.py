@@ -375,7 +375,7 @@ class Application(RevisionedMixin):
         if activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT) == len(activity_statuses):
             return self.PROCESSING_STATUS_DRAFT
         # amendment request sent to user and outstanding
-        elif self.amendment_requests.filter(status='requested').count > 0:
+        elif self.amendment_requests.filter(status='requested').count() > 0:
             return self.PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE
         # all activities approved
         elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED) == len(activity_statuses):
@@ -913,8 +913,7 @@ class Application(RevisionedMixin):
 
     @property
     def amendment_requests(self):
-        qs = AmendmentRequest.objects.filter(application=self)
-        return qs
+        return AmendmentRequest.objects.filter(application=self)
 
     @property
     def assessments(self):
