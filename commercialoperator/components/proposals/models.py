@@ -1338,14 +1338,14 @@ class ProposalTrailSection(models.Model):
         unique_together = ('section', 'proposal_trail')
 
 #TODO: Need to remove this model
-class ProposalTrailActivity(models.Model):
-    proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='trail_activities')
-    activity = models.ForeignKey(Activity, blank=True, null=True)
-    section=models.ForeignKey(Section, blank=True, null= True)
+# class ProposalTrailActivity(models.Model):
+#     proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='trail_activities')
+#     activity = models.ForeignKey(Activity, blank=True, null=True)
+#     section=models.ForeignKey(Section, blank=True, null= True)
 
-    class Meta:
-        app_label = 'commercialoperator' 
-        unique_together = ('proposal_trail', 'activity')
+#     class Meta:
+#         app_label = 'commercialoperator' 
+#         unique_together = ('proposal_trail', 'activity')
 
 class ProposalTrailSectionActivity(models.Model):
     trail_section = models.ForeignKey(ProposalTrailSection, blank=True, null=True, related_name='trail_activities')
