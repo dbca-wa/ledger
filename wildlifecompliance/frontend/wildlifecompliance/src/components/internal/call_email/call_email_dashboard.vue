@@ -118,6 +118,11 @@ export default {
                     {
                         data:"assigned_to",
                     },
+                    {
+                        mRender:function (data,type,full) {
+                            return `<a href="http://www.google.com">link</a>`
+                        }
+                    }
                 ],
                 
                 initComplete: function(){
@@ -140,7 +145,15 @@ export default {
                 }
                 
             },
-            dtHeaders:["Call/Email Status","Classification","lodgement_date","number","caller","assigned_to",],
+            dtHeaders:[
+                "Call/Email Status",
+                "Classification",
+                "lodgement_date",
+                "number",
+                "caller",
+                "assigned_to",
+                "Action",
+                ],
         }
     },
     
