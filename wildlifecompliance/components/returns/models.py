@@ -20,11 +20,6 @@ class ReturnType(models.Model):
 
     Name = models.TextField(null=True, blank=True, max_length=200)
     data_descriptor = JSONField()
-    return_type = models.CharField(
-        'Type',
-        max_length=30,
-        choices=RETURN_TYPE_CHOICES,
-        default=RETURN_TYPE_CHOICES[0][0])
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -262,6 +257,7 @@ class ReturnSheet(object):
     """
     Informational Running Sheet of Species requirements supporting licence condition.
     """
+    _DEFAULT_SPECIES = '0000000'
 
     _SHEET_SCHEMA = {"name": "sheet", "title": "Running Sheet of Return Data", "resources": [{"name":
                      "SpecieID", "path": "", "title": "Return Data for Specie", "schema": {"fields": [{"name":
@@ -277,18 +273,24 @@ class ReturnSheet(object):
                        "SA04": "In through transfer", "SA05": "Out through export", "SA06": "Out through death",
                        "SA07": "Out through transfer other", "SA08": "Out through transfer dealer", '': None}
 
-    _MOCK_TABLE = {'name': 'SPEC01', 'data': [{'rowId': '0', 'date': '2019/01/23', 'activity': 'SA01', 'qty': '5', 'total': '5',
-                  'comment': 'Initial Stock Taking', 'licence': ''}, {'rowId': '1', 'date': '2019/01/31', 'activity': 'SA03',
-                  'qty': '3', 'total': '8', 'comment': 'Birth of three new species', 'licence': ''}]}
+    _MOCK_ACTIVITY_TYPES = {"SA01": {"label": "Stock", "edit": "true"}}
 
-    _MOCK_SPECIES = ['SPEC01', 'SPEC02', 'SPEC03']
+    _MOCK_TABLE = {'name': 'S000001', 'data': [{'rowId': '0', 'date': '100000000000', 'activity': 'SA01', 'qty': '5',
+                   'total': '5', 'comment': 'Initial Stock Taking', 'licence': '', 'accept': 'true'}, {'rowId': '1',
+                   'date': '100000000000', 'activity': 'SA03', 'qty': '3', 'total': '8',
+                   'comment': 'Birth of three new species', 'licence': '', 'accept': 'true'}], 'totalRecords': '2',
+                   'totalDisplayRecords': '2'}
+
+    _MOCK_SPECIES = ['S000001', 'S000002', 'S000003']
 
     def __init__(self, a_return):
         self._return = a_return
         self._return.return_type.data_descriptor = self._SHEET_SCHEMA
         self._species_list = []
+        self._species = self._DEFAULT_SPECIES
         for _species in ReturnTable.objects.filter(ret=a_return):
             self._species_list.append(_species.name)
+            self._species = _species
         self._table = {'data': None}
 
     def _get_table_rows(self, _data):
@@ -316,20 +318,21 @@ class ReturnSheet(object):
                     is_empty = False
                     break
             if not is_empty:
+                row_data['rowId'] = str(row_num)
                 self._rows.append(row_data)
 
-    def _create_return_data(self, ret, tables_info, _data):
+    def _create_return_data(self, ret, _species_id, _data):
         """
         Saves row of data to db.
         :param ret:
-        :param tables_info:
+        :param _species_id:
         :param _data:
         :return:
         """
-        self._get_table_rows(tables_info, _data)
+        self._get_table_rows(_data)
         if self._rows:
             return_table = ReturnTable.objects.get_or_create(
-                name=tables_info, ret=ret)[0]
+                name=_species_id, ret=ret)[0]
             # delete any existing rows as they will all be recreated
             return_table.returnrow_set.all().delete()
             return_rows = [
@@ -339,59 +342,93 @@ class ReturnSheet(object):
             ReturnRow.objects.bulk_create(return_rows)
 
     @property
-    def data(self):
-        return self.table['data']
-
-    @property
     def table(self):
         """
-        Running Sheet data for Species.
+        Running Sheet Table of data for Species. Defaults to a Species on the Return if exists.
         :return: formatted data.
         """
-        return self.get_table('NONE') if not self._species_list else self._species_list[0]
+        return self.get_activity(self._species)['data']
 
-    def get_table(self, _species_id):
+    @property
+    def species(self):
         """
-        Gets a return Running Sheet Species data for table format.
+        Species type associated with this Running Sheet of Activities.
+        :return:
+        """
+        return self._species
+
+    def get_activity(self, _species_id):
+        """
+        Get Running Sheet activity for Species;
         :return: formatted data {'name': 'speciesId', 'data': [{'date': '2019/01/23', 'activity': 'SA01', ..., }]}
         """
         _row = {}
         _result = []
+        self._species = _species_id
         for resource in self._return.return_type.resources:
             _resource_name = _species_id
             _schema = Schema(resource.get('schema'))
+
             try:
                 _return_table = self._return.returntable_set.get(name=_resource_name)
                 rows = [_return_row.data for _return_row in _return_table.returnrow_set.all()]
                 _validated_rows = _schema.rows_validator(rows)
                 self._table['data'] = rows
+                self._table['echo'] = 1
+                self._table['totalRecords'] = str(rows.__len__())
+                self._table['totalDisplayRecords'] = str(rows.__len__())
+
             except ReturnTable.DoesNotExist:
                 self._table = self._NO_ACTIVITY
+
         #self._table = self._MOCK_TABLE
 
         return self._table
 
-    def set_table(self, _species_name, _data):
+    def set_activity(self, _species_id, _data):
         """
-        Sets data for Species Running Sheet information.
-        :param _species_name:
+        Sets Running Sheet Activity for Species.
+        :param _species_id:
         :param _data:
         :return:
         """
-        self._create_return_data(self._return, _species_name, _data)
+        self._species = _species_id
+        #self._create_return_data(self._return, _species_id, _data)
 
-    def get_activity_list(self):
+    def set_species(self, _species):
+        """
+        Sets the species for the current Running Sheet.
+        :param _species:
+        :return:
+        """
+        self._species = _species
+
+    def get_species(self):
+        """
+        Gets the species for the current Running Sheet.
+        :return:
+        """
+        return self._species
+
+    def get_activity_type_list(self):
         """
         Method to return the full list of activity types available for all Species.
         :return: List of Activity Types.
         """
         return self._ACTIVITY_TYPES
 
+    def send_transfer_notification(self):
+        """
+        Method to send notification for transfer of stock.
+        :return:
+        """
+        pass
+
     def get_species_list(self):
 
         _species = self._species_list
 
-       # _species = self._MOCK_SPECIES
+        #_species = self._MOCK_SPECIES
 
         return _species
 

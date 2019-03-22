@@ -1,6 +1,5 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser, Address
-from wildlifecompliance.components.main.fields import CustomChoiceField
 from wildlifecompliance.components.returns.models import (
     Return,
     ReturnType,
@@ -30,6 +29,7 @@ class ReturnSerializer(serializers.ModelSerializer):
     submitter = EmailUserSerializer()
     sheet_activity_list = serializers.SerializerMethodField()
     sheet_species_list = serializers.SerializerMethodField()
+    sheet_species = serializers.SerializerMethodField()
     table = serializers.SerializerMethodField()
 
     class Meta:
@@ -50,7 +50,8 @@ class ReturnSerializer(serializers.ModelSerializer):
             'text',
             'type',
             'sheet_activity_list',
-            'sheet_species_list'
+            'sheet_species_list',
+            'sheet_species'
         )
 
     def get_sheet_activity_list(self, _return):
@@ -59,7 +60,7 @@ class ReturnSerializer(serializers.ModelSerializer):
         :param _return: Return instance.
         :return: List of available activities.
         """
-        return _return.sheet.get_activity_list() if _return.has_sheet else []
+        return _return.sheet.get_activity_type_list() if _return.has_sheet else None
 
     def get_sheet_species_list(self, _return):
         """
@@ -67,7 +68,15 @@ class ReturnSerializer(serializers.ModelSerializer):
         :param _return: Return instance.
         :return: List of species for a Return Running Sheet.
         """
-        return _return.sheet.get_species_list() if _return.has_sheet else []
+        return _return.sheet.get_species_list() if _return.has_sheet else None
+
+    def get_sheet_species(self, _return):
+        """
+        Gets the Species available for a Return Running Sheet.
+        :param _return: Return instance.
+        :return: species identifier for a Return Running Sheet.
+        """
+        return _return.sheet.species if _return.has_sheet else None
 
     def get_table(self, _return):
         """
@@ -79,14 +88,11 @@ class ReturnSerializer(serializers.ModelSerializer):
 
 
 class ReturnTypeSerializer(serializers.ModelSerializer):
-    return_type = CustomChoiceField(read_only=True)
-
     class Meta:
         model = ReturnType
         fields = (
             'id',
-            'resources',
-            'return_type',
+            'resources'
         )
 
 

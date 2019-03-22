@@ -12,9 +12,7 @@
                                 </div>
                                 <div class="col-md-3">
                                     <select class="form-control" v-model="entryActivity">
-                                        <option value="ALL">All</option>
-                                        <option value="001">Stock</option>
-                                        <option value="002">In through Import</option>
+                                        <option v-for="(value, key) in activityList" :value="key">{{value}}</option>
                                     </select>
                                 </div>
                             </div>
@@ -31,7 +29,7 @@
                                     <label class="control-label pull-left"  for="Name">Total Number:</label>
                                 </div>
                                 <div class="col-md-3">
-                                    <input type='text' v-model='entryTotal' >
+                                    {{ entryTotal }}
                                 </div>
                             </div>
                             <div class="row">
@@ -90,6 +88,7 @@ export default {
             errorString: '',
             successString: '',
             success:false,
+            entryDateTime: '',
             entryActivity: '',
             entryQty: 0,
             entryTotal: 0,
@@ -98,7 +97,10 @@ export default {
             currentStock: 0,
             speciesType: '',
             row_of_data: null,
-            table: null
+            table: null,
+            isAddEntry: false,
+            isChangeEntry: false,
+            activityList: []
         }
     },
     computed: {
@@ -107,7 +109,7 @@ export default {
             return vm.errors;
         },
         title: function(){
-            this.currentStock = +this.entryQty + +this.entryTotal;
+            this.currentStock = +this.entryTotal;
             return this.speciesType + '   Current stock: ' + this.currentStock;
         }
 
@@ -116,12 +118,42 @@ export default {
         update:function () {
             console.log('update function')
             var vm = this;
-            vm.row_of_data.data().activity = vm.entryActivity;
-            vm.row_of_data.data().qty = vm.entryQty;
-            vm.row_of_data.data().total = vm.entryTotal;
-            vm.row_of_data.data().licence = vm.entryLicence;
-            vm.row_of_data.data().comment = vm.entryComment;
-            vm.row_of_data.invalidate().draw()
+
+            if (vm.entryActivity.match(/^(SA01|SA02|SA03|SA04)$/)) {
+              vm.entryTotal = vm.entryTotal + vm.entryQty
+            }
+
+            if (vm.entryActivity.match(/^(SA05|SA06|SA07|SA08)$/)) {
+              vm.entryTotal = vm.entryTotal - vm.entryQty
+            }
+
+            if (vm.isAddEntry) {
+              var _currentDateTime = new Date()
+              vm.entryDateTime = Date.parse(new Date())
+              let newRowId = (vm.row_of_data.data().count()-1) + ''
+              let _data = { rowId: newRowId,
+                            date: vm.entryDateTime,
+                            activity: vm.entryActivity,
+                            qty: vm.entryQty,
+                            total: vm.entryTotal,
+                            comment: vm.entryComment,
+                            licence: vm.entryLicence
+                          };
+              vm.row_of_data.row.add(_data).node().id = newRowId
+              vm.row_of_data.draw()
+              vm.isAddEntry = false;
+            }
+
+            if (vm.isChangeEntry) {
+              vm.row_of_data.data().activity = vm.entryActivity;
+              vm.row_of_data.data().qty = vm.entryQty;
+              vm.row_of_data.data().total = vm.entryTotal;
+              vm.row_of_data.data().licence = vm.entryLicence;
+              vm.row_of_data.data().comment = vm.entryComment;
+              vm.row_of_data.invalidate().draw()
+              vm.isChangeEntry = false
+            }
+
             this.isModalOpen = false;
         },
         cancel:function () {
@@ -139,6 +171,7 @@ export default {
     mounted:function () {
         console.log('modal Mounted');
         let vm = this;
+        console.log(vm)
     }
 }
 </script>
