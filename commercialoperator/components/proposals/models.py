@@ -18,7 +18,7 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section, Zone
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
@@ -1296,8 +1296,7 @@ class ProposalPark(models.Model):
         return activities
 
 
-
-
+#To store Park activities related to Proposal T class land parks
 class ProposalParkActivity(models.Model):
     proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='activities')
     activity = models.ForeignKey(Activity, blank=True, null=True)
@@ -1306,6 +1305,7 @@ class ProposalParkActivity(models.Model):
         app_label = 'commercialoperator' 
         unique_together = ('proposal_park', 'activity')
 
+#To store Park access_types related to Proposal T class land parks
 class ProposalParkAccess(models.Model):
     proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='access_types')
     access_type = models.ForeignKey(AccessType, blank=True, null=True)
@@ -1313,6 +1313,25 @@ class ProposalParkAccess(models.Model):
     class Meta:
         app_label = 'commercialoperator' 
         unique_together = ('proposal_park', 'access_type')
+
+#To store Park zones related to Proposal T class marine parks
+class ProposalParkZone(models.Model):
+    proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='zones')
+    zone = models.ForeignKey(Zone, blank=True, null=True, related_name='proposal_zones')
+
+    class Meta:
+        app_label = 'commercialoperator'
+        unique_together = ('zone', 'proposal_park')
+
+class ProposalParkZoneActivity(models.Model):
+    park_zone = models.ForeignKey(ProposalParkZone, blank=True, null=True, related_name='zone_activities')
+    activity = models.ForeignKey(Activity, blank=True, null=True)
+    #section=models.ForeignKey(Section, blank=True, null= True)
+
+    class Meta:
+        app_label = 'commercialoperator' 
+        unique_together = ('park_zone', 'activity')
+
 
 class ProposalTrail(models.Model):
     trail = models.ForeignKey(Trail, blank=True, null=True, related_name='proposals')
