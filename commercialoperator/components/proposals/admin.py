@@ -125,6 +125,7 @@ class SectionAdmin(admin.ModelAdmin):
 @admin.register(Zone)
 class ZoneAdmin(admin.ModelAdmin):
     list_display = ['name', 'visible', 'park']
+    filter_horizontal = ('allowed_activities',)
     ordering = ('name',)
 
 @admin.register(models.Vehicle)

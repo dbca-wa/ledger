@@ -233,6 +233,8 @@ class Zone(models.Model):
     name = models.CharField(max_length=200, blank=True)
     visible = models.BooleanField(default=True)
     park = models.ForeignKey(Park, related_name='zones')
+    allowed_activities = models.ManyToManyField(Activity, blank=True)
+
 
     class Meta:
         ordering = ['name']
