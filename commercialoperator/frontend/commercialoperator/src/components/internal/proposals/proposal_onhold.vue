@@ -1,9 +1,9 @@
 <template lang="html">
-    <div id="internal-proposal-amend">
+    <div id="internal-proposal-onhold">
         <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Put Proposal On-hold" large>
             <div class="container-fluid">
                 <div class="row">
-                    <form class="form-horizontal" name="amendForm">
+                    <form class="form-horizontal" name="onholdForm">
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
 
@@ -37,8 +37,8 @@
                             <div class="row">
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
-                                        <TextArea :proposal_id="proposal_id" :readonly="readonly" :name="comments" value="comments" label="Comments" id="id_comments" />
-                                        <FileField :proposal_id="proposal_id" isRepeatable="true" :name="on_hold_file" label="Add Document" id="id_file" />
+                                        <FileField :proposal_id="proposal_id" isRepeatable="true" name="on_hold_file" label="Add Document" id="id_file"/>
+                                        <TextArea :proposal_id="proposal_id" :readonly="readonly" name="on_hold_comments" label="Comments" id="id_comments" />
                                     </div>
                                 </div>
                             </div>
@@ -90,7 +90,7 @@ export default {
             validation_form: null,
             onhold_comment: null,
             on_hold_file: 'on_hold_file',
-            comments: 'comments',
+            on_hold_comments: 'on_hold_comments',
         }
     },
     computed: {
@@ -123,10 +123,12 @@ export default {
         },
         save: function(){
             let vm = this;
+            var form = document.forms.onholdForm;
             var data = {
                 onhold: 'True',
                 file_input_name: 'on_hold_file',
                 proposal_id: vm.proposal_id,
+                comments: form.elements['on_hold_comments'].value // getting the value from the text-area.vue field
             }
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal_id+'/on_hold'),data,{
                 emulateJSON: true
