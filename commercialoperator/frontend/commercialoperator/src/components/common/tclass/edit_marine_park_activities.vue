@@ -22,7 +22,7 @@
                                     </div>
                                   </div>
                                 </div>
-                            </form>                        
+                            </form> 
                         </div>
                     </form>
                 </div>
@@ -87,7 +87,7 @@ export default {
         },
         title: function(){
             return this.park && this.park.name ? 'Edit Access and Activities for '+this.park.name : 'Edit Access and Activities';
-        }
+        },
     },
     methods:{
         ok:function () {

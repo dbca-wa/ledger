@@ -316,7 +316,7 @@ def save_park_activity_data(instance,select_parks_activities):
                                         else:
                                             try:
                                                 #TODO add logging
-                                                if a in park.park.allowed_activities_ids:
+                                                if a not in park.park.allowed_activities_ids:
                                                     #raise Exception('Activity not allowed for this park')
                                                     pass
                                                 else:    
@@ -344,7 +344,7 @@ def save_park_activity_data(instance,select_parks_activities):
                                     current_activities=[]
                                     for a in item['activities']:
                                         try:
-                                            if a in park.park.allowed_activities_ids:
+                                            if a not in park.park.allowed_activities_ids:
                                                     #raise Exception('Activity not allowed for this park')
                                                     pass
                                             else:

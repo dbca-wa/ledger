@@ -1318,6 +1318,8 @@ class ProposalParkAccess(models.Model):
 class ProposalParkZone(models.Model):
     proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='zones')
     zone = models.ForeignKey(Zone, blank=True, null=True, related_name='proposal_zones')
+    access_point = models.CharField(max_length=200, blank=True)
+
 
     class Meta:
         app_label = 'commercialoperator'

@@ -243,6 +243,10 @@ class Zone(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def allowed_activities_ids(self):
+        return [i.id for i in self.allowed_activities.all()]
+
     
 @python_2_unicode_compatible
 class Trail(models.Model):
