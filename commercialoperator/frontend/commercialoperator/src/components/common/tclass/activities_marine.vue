@@ -32,7 +32,7 @@
                                 <div class="form-check col-sm-12">
                                   <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="{'park': p.id,'zones': p.zone_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
                                 {{ p.name }}
-                                  <span><a @click="edit_activities()" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
+                                  <span><a @click="edit_activities(p)" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
                                 </div>
                             </div>
                             <div>{{selected_parks}}</div>
@@ -50,6 +50,9 @@
                         </div>
                     </div>
                 </div>
+                <div>
+                  <editMarineParkActivities ref="edit_activities" :proposal="proposal" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editMarineParkActivities>
+                </div>
             </div>
         </div>
     </div>
@@ -58,6 +61,7 @@
 <script>
 import Vue from 'vue' 
 import VesselTable from '@/components/common/vessel_table.vue' 
+import editMarineParkActivities from './edit_marine_park_activities.vue'
 import {
   api_endpoints,
   helpers
@@ -87,6 +91,7 @@ from '@/utils/hooks'
         },
         components: {
           VesselTable,
+          editMarineParkActivities,
         },
         watch: {
         selected_parks: function() {
@@ -259,6 +264,38 @@ from '@/utils/hooks'
               }
             }
           },
+          edit_activities: function(park){
+            let vm=this;
+            //inserting a temporary variables checked and new_activities to store and display selected activities for each zone.
+            for(var l=0; l<park.zones.length; l++){
+              //park.zones[l].checked=false;
+              park.zones[l].new_activities=[];
+            }
+
+            for (var i=0; i<vm.marine_parks_activities.length; i++){
+              if(vm.marine_parks_activities[i].park==park.id){
+                for(var j=0; j<vm.marine_parks_activities[i].activities.length; j++){
+                  for(var k=0; k<park.zones.length; k++){
+                    if (park.zones[k].id==vm.marine_parks_activities[i].activities[j].zone){
+                      //park.zones[k].checked=true;
+                      park.zones[k].new_activities=vm.marine_parks_activities[i].activities[j].activities
+                    }
+                  }
+                } 
+              }
+            }
+            //console.log(park);
+            this.$refs.edit_activities.park=park;
+            this. $refs.edit_activities.isModalOpen = true;
+          },
+          refreshSelectionFromResponse: function(park_id, new_activities){
+              let vm=this;
+              for (var j=0; j<vm.marine_parks_activities.length; j++){
+              if(vm.marine_parks_activities[j].park==park_id){ 
+                vm.marine_parks_activities[j].activities= new_activities;
+              }
+            }
+          },
           find_recurring: function(array){
             var common=new Map();
             array.forEach(function(obj){
@@ -274,32 +311,6 @@ from '@/utils/hooks'
               }
             });
             return result;
-        },
-        store_parks: function(parks){
-          let vm=this;
-          for (var i = 0; i < parks.length; i++) {
-              var current_park=parks[i].park.id
-              var current_activities=[]
-              for (var j = 0; j < parks[i].marine_activities.length; j++) {
-                current_activities.push(parks[i].marine_activities[j].activity.id);
-              }
-               var data={
-                'park': current_park,
-                'activities': current_activities
-               }
-               vm.marine_parks_activities.push(data)
-            }
-
-            var activity_list=[]
-            var park_list=[]
-            for (var i=0; i<vm.marine_parks_activities.length; i++)
-            { 
-              park_list.push(vm.marine_parks_activities[i].park);
-              activity_list.push({'key' : vm.marine_parks_activities[i].activities});
-            }
-
-            vm.selected_activities = vm.find_recurring(activity_list)
-            vm.selected_parks=park_list
         },
         store_parks2: function(parks){
           let vm=this;
