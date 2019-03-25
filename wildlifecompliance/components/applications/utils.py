@@ -44,7 +44,6 @@ class SchemaParser(object):
                 instance.data = extracted_fields
                 data = {
                     'data': extracted_fields,
-                    'processing_status': instance.processing_status,
                     'customer_status': instance.customer_status,
                 }
                 serializer = SaveApplicationSerializer(
@@ -415,7 +414,6 @@ def get_activity_schema(activity_ids):
             {key: value for key, value in activity.__dict__.items()}
         )
         activity_item["name"] = activity.name
-        activity_item["processing_status"] = "Draft"
         activity_item["proposed_decline"] = False
 
         for type_activity in activities.filter(licence_activity__id=activity.id):

@@ -37,7 +37,9 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             user_orgs = [
                 org.id for org in user.wildlifecompliance_organisations.all()]
             user_licences = [wildlifelicence.id for wildlifelicence in WildlifeLicence.objects.filter(
-                Q(org_applicant_id__in=user_orgs) | Q(proxy_applicant=user) | Q(submitter=user))]
+                Q(current_application__org_applicant_id__in=user_orgs) |
+                Q(current_application__proxy_applicant=user) |
+                Q(current_application__submitter=user))]
             return Return.objects.filter(Q(licence_id__in=user_licences))
         return Return.objects.none()
 
@@ -46,15 +48,15 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         # Filter by org
         org_id = request.GET.get('org_id', None)
         if org_id:
-            queryset = queryset.filter(org_applicant_id=org_id)
+            queryset = queryset.filter(current_application__org_applicant_id=org_id)
         # Filter by proxy_applicant
         proxy_applicant_id = request.GET.get('proxy_applicant_id', None)
         if proxy_applicant_id:
-            queryset = queryset.filter(proxy_applicant_id=proxy_applicant_id)
+            queryset = queryset.filter(current_application__proxy_applicant_id=proxy_applicant_id)
         # Filter by submitter
         submitter_id = request.GET.get('submitter_id', None)
         if submitter_id:
-            queryset = queryset.filter(submitter_id=submitter_id)
+            queryset = queryset.filter(current_application__submitter_id=submitter_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.db import models
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
+from django.db.models.query import QuerySet
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
@@ -90,3 +91,36 @@ class Document(models.Model):
 
     def __str__(self):
         return self.name or self.filename
+
+
+# Extensions for Django's QuerySet
+
+def computed_filter(self, **kwargs):
+    kwargs['__filter'] = True
+    return self.computed_filter_or_exclude(**kwargs)
+
+
+def computed_exclude(self, **kwargs):
+    kwargs['__filter'] = False
+    return self.computed_filter_or_exclude(**kwargs)
+
+
+def computed_filter_or_exclude(self, **kwargs):
+    do_filter = kwargs.pop('__filter', True)
+    matched_pk_list = [item.pk for item in self for (field, match) in map(
+        lambda arg: (arg[0].replace('__in', ''),
+                     arg[1] if isinstance(arg[1], (list, QuerySet)) else [arg[1]]
+                     ), kwargs.items()
+    ) if getattr(item, field) in match]
+    return self.filter(pk__in=matched_pk_list) if do_filter else self.exclude(pk__in=matched_pk_list)
+
+
+queryset_methods = {
+    'computed_filter': computed_filter,
+    'computed_exclude': computed_exclude,
+    'computed_filter_or_exclude': computed_filter_or_exclude,
+}
+
+
+for method_name, method in queryset_methods.items():
+    setattr(QuerySet, method_name, method)

@@ -300,26 +300,15 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def user_list(self, request, *args, **kwargs):
         user_orgs = [
             org.id for org in request.user.wildlifecompliance_organisations.all()]
-        qs = []
-        qs.extend(
-            list(
-                self.get_queryset().filter(
-                    submitter=request.user).exclude(
-                    processing_status='discarded').exclude(
-                    processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
-        qs.extend(
-            list(
-                self.get_queryset().filter(
-                    proxy_applicant=request.user).exclude(
-                    processing_status='discarded').exclude(
-                    processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
-        qs.extend(
-            list(
-                self.get_queryset().filter(
-                    org_applicant_id__in=user_orgs).exclude(
-                    processing_status='discarded').exclude(
-                    processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
-        queryset = list(set(qs))
+
+        queryset = self.get_queryset().filter(
+            Q(submitter=request.user) |
+            Q(proxy_applicant=request.user) |
+            Q(org_applicant_id__in=user_orgs)
+        ).computed_exclude(
+            processing_status=Application.PROCESSING_STATUS_DISCARDED
+        ).distinct()
+
         serializer = DTExternalApplicationSerializer(
             queryset, many=True, context={'request': request})
         return Response(serializer.data)
@@ -775,6 +764,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         try:
             http_status = status.HTTP_200_OK
             instance = self.get_object()
+            # TODO: replace discard functionality due to processing_status property method change
             serializer = SaveApplicationSerializer(
                 instance, {'processing_status': 'discarded'}, partial=True)
             serializer.is_valid(raise_exception=True)
@@ -1125,9 +1115,9 @@ class SearchKeywordsView(views.APIView):
     def post(self, request, format=None):
         qs = []
         search_words = request.data.get('searchKeywords')
-        search_application = request.data.get('searchProposal')
-        search_licence = request.data.get('searchApproval')
-        search_returns = request.data.get('searchCompliance')
+        search_application = request.data.get('searchApplication')
+        search_licence = request.data.get('searchLicence')
+        search_returns = request.data.get('searchReturn')
         if search_words:
             qs = search_keywords(search_words, search_application, search_licence, search_returns)
         serializer = SearchKeywordSerializer(qs, many=True)

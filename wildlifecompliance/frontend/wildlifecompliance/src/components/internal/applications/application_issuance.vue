@@ -21,7 +21,7 @@
                                                     <input type="radio"  id="decline" name="licence_category" v-model="licence.activity[index].final_status"  value="declined" > Decline
                                                 </div>
                                             </div>
-                                            <div class="row">
+                                            <div class="row" v-if="licence.activity[index].final_status == 'issued'">
                                                 <div class="col-sm-3">
                                                     
                                                     <label class="control-label pull-left">Proposed Start Date</label>
@@ -36,40 +36,16 @@
                                                 </div>
 
                                             </div>
-                                            <div class="row">
+                                            <div class="row" v-if="licence.activity[index].final_status == 'issued'">
                                                 <div class="col-sm-3">
                                                     <label class="control-label pull-left">Proposed Expiry Date</label>
                                                 </div>
                                                 <div class="col-sm-9">
                                                     <div class="input-group date" ref="end_date" style="width: 70%;">
-                                                        <input type="text" class="form-control" name="end_date" placeholder="DD/MM/YYYY" v-model="licence.activity[index].end_date">
+                                                        <input type="text" class="form-control" name="end_date" placeholder="DD/MM/YYYY">
                                                         <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
                                                         </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-3">
-                                                    
-                                                    <label class="control-label pull-left">Fee</label>
-                                                </div>
-                                                <div class="col-sm-9">
-                                                    <div class="input-group date" ref="fee" style="width: 70%;">
-                                                        <input type="text" class="form-control" name="fee" v-model="licence.activity[index].fee">
-                                                        
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-3">
-                                                    
-                                                    <label class="control-label pull-left">Reduced Fee</label>
-                                                </div>
-                                                <div class="col-sm-9">
-                                                    <div class="input-group date" ref="reduced_fee" style="width: 70%;">
-                                                        <input type="text" class="form-control" name="reduced_fee" v-model="licence.activity[index].reduced_fee">
-                                                        
                                                     </div>
                                                 </div>
                                             </div>
@@ -204,6 +180,7 @@ export default {
         return {
             panelBody: "application-issuance-"+vm._uid,
             proposed_licence:{},
+            datepickerInitialised: false,
             licence:{
                 activity:[],
                 id_check:false,
@@ -320,33 +297,6 @@ export default {
         },
        
         eventListeners(){
-            let vm = this;
-            // Initialise Date Picker
-            // console.log('printing end date refs')
-            // console.log(vm.$refs)
-            // console.log(vm.$refs.end_date)
-            
-            //     console.log('inside if application issue')
-            //     for (var i=0; i < vm.$refs.end_date.length; i++) {
-            //     $(vm.$refs.end_date[i]).datetimepicker(vm.datepickerOptions);
-            //     $(vm.$refs.end_date[i]).on('dp.change', function(e){
-            //         if ($(vm.$refs.end_date[i]).data('DateTimePicker').date()) {
-            //             vm.licence.activity[i].expiry_date=  e.date.format('DD/MM/YYYY');
-            //         }
-                    
-            //      });
-            // }
-        
-            // $(vm.$refs.start_date).datetimepicker(vm.datepickerOptions);
-            // $(vm.$refs.start_date).on('dp.change', function(e){
-            //     if ($(vm.$refs.start_date).data('DateTimePicker').date()) {
-            //         vm.propose_issue.start_date =  e.date.format('DD/MM/YYYY');
-            //     }
-            //     else if ($(vm.$refs.start_date).data('date') === "") {
-            //         vm.propose_issue.start_date = "";
-            //     }
-            //  });
-            
         },
 
         userHasRole: function(role, activity_id) {
@@ -354,6 +304,40 @@ export default {
                 role_record => role_record.role == role && (!activity_id || activity_id == role_record.activity_id)
             ).length;
         },
+
+        //Initialise Date Picker
+        initDatePicker: function() {
+            if(this.datepickerInitialised || this.$refs === undefined || this.$refs.end_date === undefined) {
+                return;
+            }
+
+            for (let i=0; i < this.$refs.end_date.length; i++) {
+                const start_date = this.$refs.start_date[i];
+                const end_date = this.$refs.end_date[i];
+
+                const proposedStartDate = new Date(this.licence.activity[i].start_date);
+                const proposedEndDate = new Date(this.licence.activity[i].end_date);
+
+                $(end_date).datetimepicker(this.datepickerOptions);
+                $(end_date).data('DateTimePicker').date(proposedEndDate);
+                $(end_date).off('dp.change').on('dp.change', (e) => {
+                    const selected_end_date = $(end_date).data('DateTimePicker').date().format('YYYY-MM-DD');
+                    if (selected_end_date && selected_end_date != this.licence.activity[i].end_date) {
+                        this.licence.activity[i].end_date = selected_end_date;
+                    }
+                });
+
+                $(start_date).datetimepicker(this.datepickerOptions);
+                $(start_date).data('DateTimePicker').date(proposedStartDate);
+                $(start_date).off('dp.change').on('dp.change', (e) => {
+                    const selected_start_date = $(start_date).data('DateTimePicker').date().format('YYYY-MM-DD');
+                    if (selected_start_date && selected_start_date != this.licence.activity[i].start_date) {
+                        this.licence.activity[i].start_date = selected_start_date;
+                    }
+                });
+            }
+            this.datepickerInitialised = true;
+        }
     },
     mounted: function(){
         let vm = this;
@@ -363,6 +347,11 @@ export default {
             vm.eventListeners();
         });
     },
+    updated: function() {
+        this.$nextTick(() => {
+            this.initDatePicker();
+        });
+    }
     
 }
 </script>
