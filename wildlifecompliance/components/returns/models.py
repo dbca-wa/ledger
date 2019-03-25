@@ -270,33 +270,37 @@ class ReturnSheet(object):
                      "activity", "type": "string", "constraints": {"required": True}}, {"name": "qty", "type":
                      "number", "constraints": {"required": True}}, {"name": "total", "type": "number",
                      "constraints": {"required": True}}, {"name": "licence", "type": "string"}, {"name": "comment",
-                     "type": "string"}]}}]}
+                     "type": "string"}, {"name": "transfer", "type": "boolean"}]}}]}
 
     _NO_ACTIVITY = {"echo": 1, "totalRecords": "0", "totalDisplayRecords": "0", "data": []}
 
-    _ACTIVITY_TYPES = {"SA01": "Stock", "SA02": "In through Import", "SA03": "In through birth",
-                       "SA04": "In through transfer", "SA05": "Out through export", "SA06": "Out through death",
-                       "SA07": "Out through transfer other", "SA08": "Out through transfer dealer", '': None}
+    _ACTIVITY_TYPES = {
+                    "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false"},
+                    "SA02": {"label": "In through import", "auto": "false", "licence": "false", "pay": "false"},
+                    "SA03": {"label": "In through birth", "auto": "false", "licence": "false", "pay": "false"},
+                    "SA04": {"label": "In through transfer", "auto": "true", "licence": "false", "pay": "false"},
+                    "SA05": {"label": "Out through export", "auto": "false", "licence": "false", "pay": "false"},
+                    "SA06": {"label": "Out through death", "auto": "false", "licence": "false", "pay": "false"},
+                    "SA07": {"label": "Out through transfer other", "auto": "false", "licence": "true", "pay": "true"},
+                    "SA08": {"label": "Out through transfer dealer", "auto": "false", "licence": "true", "pay": "false"},
+                    "": {"label": "", "auto": "false", "licence": "false", "pay": "false"}
+                      }
 
-    _MOCK_ACTIVITY_TYPES = {"SA01": {"label": "Stock", "edit": "true"}}
-
-    _MOCK_TABLE = {'name': 'S000001', 'data': [{'rowId': '0', 'date': '100000000000', 'activity': 'SA01', 'qty': '5',
-                   'total': '5', 'comment': 'Initial Stock Taking', 'licence': '', 'accept': 'true'}, {'rowId': '1',
-                   'date': '100000000000', 'activity': 'SA03', 'qty': '3', 'total': '8',
-                   'comment': 'Birth of three new species', 'licence': '', 'accept': 'true'}], 'totalRecords': '2',
-                   'totalDisplayRecords': '2'}
-
-    _MOCK_SPECIES = ['S000001', 'S000002', 'S000003']
+    _MOCK_LICENCE_SPECIES = ['S000001', 'S000002', 'S000003', 'S000004']
 
     def __init__(self, a_return):
         self._return = a_return
         self._return.return_type.data_descriptor = self._SHEET_SCHEMA
         self._species_list = []
+        self._licence_species_list = []
+        self._table = {'data': None}
+        # build list of currently added Species.
         self._species = self._DEFAULT_SPECIES
         for _species in ReturnTable.objects.filter(ret=a_return):
             self._species_list.append(_species.name)
-            self._species = _species
-        self._table = {'data': None}
+            self._species = _species.name
+        # build list of Species available on Licence.
+        self._licence_species_list = self._MOCK_LICENCE_SPECIES
 
     def _get_table_rows(self, _data):
         """
@@ -305,12 +309,20 @@ class ReturnSheet(object):
         :return: by_column is of format {'col_header':[row1_val, row2_val,...],...}
         """
         by_column = dict([])
-        for key in _data[0].keys():
-            key_values = []
-            for cnt in range(_data.__len__()):
-                key_values.append(_data[cnt][key])
-            by_column[key] = key_values
-        num_rows = len(list(by_column.values())[0]) if len(by_column.values()) > 0 else 0
+        key_values = []
+        num_rows = 0
+        if isinstance(_data, tuple):
+            for key in _data[0].keys():
+                for cnt in range(_data.__len__()):
+                    key_values.append(_data[cnt][key])
+                by_column[key] = key_values
+                key_values = []
+            num_rows = len(list(by_column.values())[0]) if len(by_column.values()) > 0 else 0
+        else:
+            for key in _data.keys():
+                by_column[key] = _data[key]
+            num_rows = num_rows + 1
+
         self._rows = []
         for row_num in range(num_rows):
             row_data = {}
@@ -319,7 +331,7 @@ class ReturnSheet(object):
             # filter empty rows.
             is_empty = True
             for value in row_data.values():
-                if len(value.strip()) > 0:
+                if len(value[row_num].strip()) > 0:
                     is_empty = False
                     break
             if not is_empty:
@@ -362,9 +374,33 @@ class ReturnSheet(object):
         """
         return self._species
 
+    @property
+    def species_list(self):
+        """
+        List of Species available with Running Sheet of Activities.
+        :return: List of Species.
+        """
+        return self._species_list
+
+    @property
+    def licence_species_list(self):
+        """
+        List of Species applicable for Running Sheet Return Licence.
+        :return: List of Species.
+        """
+        return self._licence_species_list
+
+    @property
+    def activity_list(self):
+        """
+        List of stock movement activities applicable for Running Sheet.
+        :return: List of Activities applicable for Running Sheet.
+        """
+        return self._ACTIVITY_TYPES
+
     def get_activity(self, _species_id):
         """
-        Get Running Sheet activity for Species;
+        Get Running Sheet activity for the movement of Species stock.
         :return: formatted data {'name': 'speciesId', 'data': [{'date': '2019/01/23', 'activity': 'SA01', ..., }]}
         """
         _row = {}
@@ -373,7 +409,6 @@ class ReturnSheet(object):
         for resource in self._return.return_type.resources:
             _resource_name = _species_id
             _schema = Schema(resource.get('schema'))
-
             try:
                 _return_table = self._return.returntable_set.get(name=_resource_name)
                 rows = [_return_row.data for _return_row in _return_table.returnrow_set.all()]
@@ -382,23 +417,20 @@ class ReturnSheet(object):
                 self._table['echo'] = 1
                 self._table['totalRecords'] = str(rows.__len__())
                 self._table['totalDisplayRecords'] = str(rows.__len__())
-
             except ReturnTable.DoesNotExist:
                 self._table = self._NO_ACTIVITY
-
-        #self._table = self._MOCK_TABLE
 
         return self._table
 
     def set_activity(self, _species_id, _data):
         """
-        Sets Running Sheet Activity for Species.
+        Sets Running Sheet Activity for the movement of Species stock.
         :param _species_id:
         :param _data:
         :return:
         """
-        self._species = _species_id
-        #self._create_return_data(self._return, _species_id, _data)
+        self._create_return_data(self._return, _species_id, _data)
+        self.set_species(_species_id)
 
     def set_species(self, _species):
         """
@@ -407,6 +439,7 @@ class ReturnSheet(object):
         :return:
         """
         self._species = _species
+        self._species_list.add(_species)
 
     def get_species(self):
         """
@@ -415,30 +448,29 @@ class ReturnSheet(object):
         """
         return self._species
 
-    def get_activity_type_list(self):
+    def is_valid_licence(self, _licence_no):
         """
-        Method to return the full list of activity types available for all Species.
-        :return: List of Activity Types.
+        Method to check if licence is current.
+        :param _licence_no:
+        :return: boolean
         """
-        return self._ACTIVITY_TYPES
+        return False
 
-    def send_transfer_notification(self):
+    def send_transfer_notification(self, _license_no):
         """
-        Method to send notification for transfer of stock.
+        send email notification for transfer of stock to receiving license holder.
+        :param _license_no:
+        :return: boolean
+        """
+        return False
+
+    def get_licensee_contact(self, _license_no):
+        """
+        Gets a valid License holder contact details.
+        :param _license_no:
         :return:
         """
-        pass
-
-    def get_species_list(self):
-
-        _species = self._species_list
-
-        #_species = self._MOCK_SPECIES
-
-        return _species
-
-    def is_valid(self):
-        pass
+        return None
 
     def __str__(self):
         return 'Return-Sheet-{0}'.format(self._return.id)

@@ -1,11 +1,10 @@
-from django.conf import settings
-from ledger.accounts.models import EmailUser, Address
+from ledger.accounts.models import EmailUser
+from wildlifecompliance.components.main.fields import CustomChoiceField
 from wildlifecompliance.components.returns.models import (
     Return,
     ReturnType,
     ReturnUserAction,
     ReturnLogEntry,
-    ReturnSheet
 )
 from rest_framework import serializers
 
@@ -27,10 +26,11 @@ class ReturnSerializer(serializers.ModelSerializer):
     processing_status = serializers.CharField(
         source='get_processing_status_display')
     submitter = EmailUserSerializer()
+    table = serializers.SerializerMethodField()
+    licence_species_list = serializers.SerializerMethodField()
     sheet_activity_list = serializers.SerializerMethodField()
     sheet_species_list = serializers.SerializerMethodField()
     sheet_species = serializers.SerializerMethodField()
-    table = serializers.SerializerMethodField()
 
     class Meta:
         model = Return
@@ -49,6 +49,7 @@ class ReturnSerializer(serializers.ModelSerializer):
             'condition',
             'text',
             'type',
+            'licence_species_list',
             'sheet_activity_list',
             'sheet_species_list',
             'sheet_species'
@@ -60,7 +61,7 @@ class ReturnSerializer(serializers.ModelSerializer):
         :param _return: Return instance.
         :return: List of available activities.
         """
-        return _return.sheet.get_activity_type_list() if _return.has_sheet else None
+        return _return.sheet.activity_list if _return.has_sheet else None
 
     def get_sheet_species_list(self, _return):
         """
@@ -68,7 +69,7 @@ class ReturnSerializer(serializers.ModelSerializer):
         :param _return: Return instance.
         :return: List of species for a Return Running Sheet.
         """
-        return _return.sheet.get_species_list() if _return.has_sheet else None
+        return _return.sheet.species_list if _return.has_sheet else None
 
     def get_sheet_species(self, _return):
         """
@@ -86,13 +87,24 @@ class ReturnSerializer(serializers.ModelSerializer):
         """
         return _return.sheet.table if _return.has_sheet else _return.table
 
+    def get_licence_species_list(self, _return):
+        """
+        Gets Species applicable for a Return Licence.
+        :param _return: Return instance.
+        :return: species identifiers for a Return Licence.
+        """
+        return _return.sheet.licence_species_list if _return.has_sheet else None
+
 
 class ReturnTypeSerializer(serializers.ModelSerializer):
+    return_type = CustomChoiceField(read_only=True)
+
     class Meta:
         model = ReturnType
         fields = (
             'id',
-            'resources'
+            'resources',
+            'return_type',
         )
 
 

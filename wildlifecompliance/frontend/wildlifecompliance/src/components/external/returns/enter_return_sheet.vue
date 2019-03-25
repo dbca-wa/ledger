@@ -5,26 +5,11 @@
     <div class="row">
       <div class="col-md-3">
         <h3>Return: {{ returns.id }}</h3>
-
-        <div class="panel panel-default fixed">
-          <div class="panel-heading"><label>Return Species</label></div>
-          <div class="panel-body" style="padding:10px">
-            <!-- List of Species available for Return -->
-            <label>Species Types: </label>
-            <select class="form-control" v-model="newSpecies">
-              <option value="0000000">------ Please Select ------</option>
-              <option value="S000001">Margaret River hairy Marron</option>
-              <option value="S000002">Grey Kangaroo</option>
-              <option value="S000003">Western Red Kangaroo</option>
-            </select></br></br>
-            <!-- List of applicable species available for Return -->
-            <label>Species on Return:</label>
-            <div v-for="species in returns.sheet_species_list">
-              <a href='/external/return/sheet/5/SPEC01' ><h5>{{species}}</h5></a>
-            </div>
-          </div>
+        <!-- List of applicable species available for Return -->
+        <label>Species on Return:</label>
+        <div v-for="species in returns.sheet_species_list">
+          <a href='/external/return/sheet/5' ><h5>{{fullSpeciesList[species]}}</h5></a>
         </div>
-
       </div>
       <!-- div class="col-md-1" div -->
       <div class="col-md-8">
@@ -38,11 +23,21 @@
             <div  class="tab-content">
               <div :id="returnTab" class="tab-pane fade active in">
                 <div class="panel panel-default">
-                  <div class="panel-heading">
+                  <div class="panel-heading" v-show="!isNewSpecies">
                      <h3 class="panel-title">{{ sheetTitle }}
                       <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
                          <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                       </a>
+                    </h3>
+                  </div>
+                  <div class="panel-heading" v-show="isNewSpecies">
+                     <h3 class="panel-title">
+                       <select class="form-control, col-md-9" v-model="returns.sheet_species">
+                         <option v-for="sp in returns.licence_species_list" :value="sp">{{fullSpeciesList[sp]}}</option>
+                       </select>
+                       <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
+                         <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                       </a>
                     </h3>
                   </div>
                   <div class="panel-body panel-collapse in" :id="pdBody">
@@ -52,7 +47,7 @@
                             <div class="form-group">
                                 <label for="">Activity Type:</label>
                                 <select class="form-control" v-model="filterSheetActivityType">
-                                    <option v-for="sa in sheet_activity_type" :value="sa">{{sa}}</option>
+                                    <option v-for="sa in sheet_activity_type" :value="sa">{{sa['label']}}</option>
                                 </select>
                             </div>
                           </div>
@@ -83,7 +78,7 @@
           <div class="navbar-inner">
             <div class="container">
               <p class="pull-right" style="margin-top:5px;">
-                <button class="btn btn-primary" name="add_sheet" @click.prevent="addSpeciesType()">Add Species Type</button>
+                <button class="btn btn-primary" name="add_sheet" @click.prevent="addSpecies()">Add Species Type</button>
                 <button class="btn btn-primary" name="save_sheet" @click.prevent="save()">Save</button>
                </p>
             </div>
@@ -117,7 +112,6 @@ export default {
   },
   data() {
     let vm = this;
-    let cnt = 0;
     return {
         pdBody: 'pdBody' + vm._uid,
         datatable_id: 'return-datatable',
@@ -127,10 +121,13 @@ export default {
                 data: null
             }],
         },
+        fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
+                          'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
         returnTab: 'returnTab'+vm._uid,
         form: null,
         isModalOpen: false,
         returnBtn: 'Submit',
+        isNewSpecies: false,
         newSpecies: null,
         sheetTitle: null,
         sheet_activity_type: [],
@@ -158,7 +155,7 @@ export default {
               },
               { data: "activity",
                 mRender: function(data, type, full) {
-                  return vm.returns.sheet_activity_list[data]
+                   return vm.returns.sheet_activity_list[data]['label']
                 }
               },
               { data: "qty" },
@@ -213,6 +210,9 @@ export default {
       vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/save'),data,{
                        emulateJSON:true,
                     }).then((response)=>{
+                       vm.returns = response.body;
+                       vm.sheetTitle = vm.fullSpeciesList[vm.returns.sheet_species];
+                       vm.isNewSpecies = false;
                        swal('Save',
                             'Return Sheet for Species Saved',
                             'success'
@@ -221,16 +221,17 @@ export default {
                         console.log(error);
                     });
     },
-    addSpeciesType: function(e) {
-      console.log('AddSpeciesType function')
+    addSpecies: function(e) {
+      console.log('AddSpecies function')
       let vm = this;
       vm.form=document.forms.enter_return_sheet;
       let data = new FormData(vm.form);
       var speciesData = [];
       vm.$refs.return_datatable.vmDataTable.clear().draw()
       vm.speciesTitle = vm.newSpecies
-      data.append('species_id', vm.newSpecies)
+      data.append('species_id', vm.newSpecies);
       data.append('species_data', speciesData);
+      vm.isNewSpecies = true;
     },
     addEventListeners: function() {
       let vm = this;
@@ -243,23 +244,23 @@ export default {
     refreshFromResponse:function(response){
        console.log('RefreshFromResponse function')
        let vm = this;
-       console.log(response.body)
        //vm.return = helpers.copyObject(response.body);
     },
     addSheetRow: function () {
-       let vm = this;
-       console.log(Object.keys(vm.returns.sheet_activity_list)[0])
-       vm.$refs.sheet_entry.isAddEntry = true;
-       vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
-       vm.$refs.sheet_entry.speciesType = vm.newSpecies;
-       vm.$refs.sheet_entry.entryActivity = Object.keys(vm.returns.sheet_activity_list)[0];
-       vm.$refs.sheet_entry.entryNumber = '';
-       vm.$refs.sheet_entry.entryTotal = '';
-       vm.$refs.sheet_entry.entryComment = '';
-       vm.$refs.sheet_entry.entryLicence = '';
-       vm.$refs.sheet_entry.entryDateTime = '';
-       vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable;
-       vm.$refs.sheet_entry.isModalOpen = true;
+      let vm = this;
+      console.log(Object.keys(vm.returns.sheet_activity_list)[0])
+      vm.$refs.sheet_entry.isAddEntry = true;
+      vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable;
+      vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
+      vm.$refs.sheet_entry.speciesType = vm.newSpecies;
+      vm.$refs.sheet_entry.entryActivity = Object.keys(vm.returns.sheet_activity_list)[0];
+      vm.$refs.sheet_entry.entryNumber = '';
+      vm.$refs.sheet_entry.entryTotal = '';
+      vm.$refs.sheet_entry.entryComment = '';
+      vm.$refs.sheet_entry.entryLicence = '';
+      vm.$refs.sheet_entry.entryDateTime = '';
+      vm.$refs.sheet_entry.isSubmitable = true;
+      vm.$refs.sheet_entry.isModalOpen = true;
     }
   },
   components:{
@@ -282,7 +283,7 @@ export default {
            vm.sheetTitle = 'Please Add Species Type';
            vm.newSpecies = vm.returns.sheet_species
            if (vm.returns.sheet_species != '0000000') {
-              vm.sheetTitle = vm.returns.sheet_species
+              vm.sheetTitle = vm.fullSpeciesList[vm.returns.sheet_species]
            };
         });
     }, err => {
@@ -293,8 +294,8 @@ export default {
      console.log('MOUNTED func')
      let vm = this;
      vm.form = document.forms.enter_return_sheet;
-     console.log(vm)
 
+     // Row Actions
      vm.$refs.return_datatable.vmDataTable.on('click','.edit-row', function(e) {
         console.log('entered edit-row')
         e.preventDefault();
@@ -307,7 +308,17 @@ export default {
         vm.$refs.sheet_entry.entryTotal = vm.$refs.sheet_entry.row_of_data.data().total;
         vm.$refs.sheet_entry.entryComment = vm.$refs.sheet_entry.row_of_data.data().comment;
         vm.$refs.sheet_entry.entryLicence = vm.$refs.sheet_entry.row_of_data.data().licence;
+        vm.$refs.sheet_entry.isSubmitable = true;
         vm.$refs.sheet_entry.isModalOpen = true;
+     });
+     vm.$refs.return_datatable.vmDataTable.on('click','.accept-decline-transfer', function(e) {
+        console.log('entered accept-decline-transfer')
+        e.preventDefault();
+        vm.$refs.sheet_entry.isChangeEntry = true;
+        vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
+        vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
+        vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
+        vm.$refs.sheet_entry.isModalOpen = false;
      });
   },
 };

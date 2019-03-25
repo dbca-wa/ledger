@@ -10,15 +10,18 @@
                                 <div class="col-md-3">
                                     <label class="control-label pull-left"  for="Name">Activity:</label>
                                 </div>
-                                <div class="col-md-3">
-                                    <select class="form-control" v-model="entryActivity">
-                                        <option v-for="(value, key) in activityList" :value="key">{{value}}</option>
-                                    </select>
+                                <div class="col-md-6" v-show="isAddEntry">
+                                <select class="form-control" v-model="entryActivity">
+                                  <option v-for="(activity, activityId) in activityList" :value="activityId">{{activity['label']}}</option>
+                                </select>
+                                </div>
+                                <div class="col-md-3" v-show="isChangeEntry">
+                                    <label>{{activityList[entryActivity]['label']}} </label>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-3">
-                                    <label class="control-label pull-left"  for="Name">Quantity:</label>
+                                    <label class="control-label pull-left" for="Name">Quantity:</label>
                                 </div>
                                 <div class="col-md-3">
                                     <input type='text' v-model='entryQty' >
@@ -29,7 +32,7 @@
                                     <label class="control-label pull-left"  for="Name">Total Number:</label>
                                 </div>
                                 <div class="col-md-3">
-                                    {{ entryTotal }}
+                                    <input type='text' v-model='entryTotal' >
                                 </div>
                             </div>
                             <div class="row">
@@ -53,8 +56,9 @@
                 </div>
             </div>
             <div slot="footer">
-                <button style="width: 15%;" class="btn btn-primary" @click.prevent="close()">Pay</button>
-                <button style="width: 15%;" class="btn btn-primary" @click.prevent="update()">Update</button>
+                <button v-show="isPayable" style="width: 15%;" class="btn btn-primary" @click.prevent="close()">Pay</button>
+                <button v-show="isSubmitable" style="width: 15%;" class="btn btn-primary" @click.prevent="update()">Submit</button>
+                <button style="width: 15%;" class="btn btn-primary" @click.prevent="close()">Cancel</button>
             </div>
         </modal>
     </div>
@@ -89,7 +93,7 @@ export default {
             successString: '',
             success:false,
             entryDateTime: '',
-            entryActivity: '',
+            entryActivity: 'null',
             entryQty: 0,
             entryTotal: 0,
             entryLicence: '',
@@ -100,7 +104,11 @@ export default {
             table: null,
             isAddEntry: false,
             isChangeEntry: false,
-            activityList: []
+            isPayable: false,
+            isSubmitable: false,
+            activityList: {'null': {'label': null}},
+            fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
+                              'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
         }
     },
     computed: {
@@ -110,7 +118,7 @@ export default {
         },
         title: function(){
             this.currentStock = +this.entryTotal;
-            return this.speciesType + '   Current stock: ' + this.currentStock;
+            return this.fullSpeciesList[this.speciesType] + '   Current stock: ' + this.currentStock;
         }
 
     },
@@ -119,16 +127,8 @@ export default {
             console.log('update function')
             var vm = this;
 
-            if (vm.entryActivity.match(/^(SA01|SA02|SA03|SA04)$/)) {
-              vm.entryTotal = vm.entryTotal + vm.entryQty
-            }
-
-            if (vm.entryActivity.match(/^(SA05|SA06|SA07|SA08)$/)) {
-              vm.entryTotal = vm.entryTotal - vm.entryQty
-            }
-
             if (vm.isAddEntry) {
-              var _currentDateTime = new Date()
+              let _currentDateTime = new Date()
               vm.entryDateTime = Date.parse(new Date())
               let newRowId = (vm.row_of_data.data().count()-1) + ''
               let _data = { rowId: newRowId,
@@ -141,7 +141,6 @@ export default {
                           };
               vm.row_of_data.row.add(_data).node().id = newRowId
               vm.row_of_data.draw()
-              vm.isAddEntry = false;
             }
 
             if (vm.isChangeEntry) {
@@ -151,17 +150,19 @@ export default {
               vm.row_of_data.data().licence = vm.entryLicence;
               vm.row_of_data.data().comment = vm.entryComment;
               vm.row_of_data.invalidate().draw()
-              vm.isChangeEntry = false
             }
 
-            this.isModalOpen = false;
+            vm.close();
         },
         cancel:function () {
             console.log('cancel function')
-            this.isModalOpen = false;
+            this.close()
         },
         close:function () {
             console.log('close function')
+            var vm = this;
+            vm.isChangeEntry = false;
+            vm.isAddEntry = false;
             this.isModalOpen = false;
         },
         eventListeners:function () {
@@ -171,7 +172,6 @@ export default {
     mounted:function () {
         console.log('modal Mounted');
         let vm = this;
-        console.log(vm)
     }
 }
 </script>
