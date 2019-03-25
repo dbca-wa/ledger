@@ -913,8 +913,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
         try:
             import ipdb; ipdb.set_trace()
             instance = self.get_object()
-            is_onhold =  request.data.get('onhold')
-            if is_onhold == 'true':
+            is_onhold =  eval(request.data.get('onhold'))
+            if is_onhold:
                 instance.on_hold(request)
             else:
                 instance.on_hold_remove(request)

@@ -6,10 +6,11 @@
                     <form class="form-horizontal" name="amendForm">
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
+
+                            <!--
                             <div class="row">
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
-                                        <!-- templated from from proposal_approval.vue -->
                                         <label class="control-label pull-left"  for="Name">Attach Document</label>
 										<div>
 											<span v-if="!uploadedFile" class="btn btn-info btn-file pull-left">
@@ -31,6 +32,17 @@
                                     </div>
                                 </div>
                             </div>
+                            -->
+
+                            <div class="row">
+                                <div class="col-sm-offset-2 col-sm-8">
+                                    <div class="form-group">
+                                        <TextArea :proposal_id="proposal_id" :readonly="readonly" :name="comments" value="comments" label="Comments" id="id_comments" />
+                                        <FileField :proposal_id="proposal_id" isRepeatable="true" :name="on_hold_file" label="Add Document" id="id_file" />
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </form>
                 </div>
@@ -45,11 +57,18 @@ import Vue from 'vue'
 import modal from '@vue-utils/bootstrap-modal.vue'
 import alert from '@vue-utils/alert.vue'
 
+import TextArea from '@/components/forms/text-area.vue'
+import TextField from '@/components/forms/text.vue'
+import FileField from '@/components/forms/file.vue'
+
 import {helpers, api_endpoints} from "@/utils/hooks.js"
 export default {
     //name:'referral-complete',
     name:'proposal-onhold',
     components:{
+        TextArea,
+        TextField,
+        FileField,
         modal,
         alert
     },
@@ -66,18 +85,12 @@ export default {
         return {
             isModalOpen:false,
             form:null,
-            amendment: {
-            reason:'',
-            reason_id: null,
-            amendingProposal: false,
-            proposal: vm.proposal_id 
-            },
-            reason_choices: {},
             errors: false,
             errorString: '',
             validation_form: null,
-            uploadedFile: null,
             onhold_comment: null,
+            on_hold_file: 'on_hold_file',
+            comments: 'comments',
         }
     },
     computed: {
@@ -109,6 +122,35 @@ export default {
             vm.save()
         },
         save: function(){
+            let vm = this;
+            var data = {
+                onhold: 'True',
+                file_input_name: 'on_hold_file',
+                proposal_id: vm.proposal_id,
+            }
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal_id+'/on_hold'),data,{
+                emulateJSON: true
+            }).then(res=>{
+                swal(
+                    'Put Proposal On-hold',
+                    'Proposal On-hold',
+                    'success'
+                );
+
+                vm.proposal = res.body;
+                vm.$emit('refreshFromResponse',res);
+                vm.$router.push({ path: '/internal' }); //Navigate to dashboard after completing the referral
+
+                },err=>{
+                swal(
+                    'Submit Error',
+                    helpers.apiVueResourceError(err),
+                    'error'
+                )
+            });
+        },
+
+        _save: function(){
             let vm = this;
                 let data = new FormData(vm.form);
                 data.append('onhold', true)
