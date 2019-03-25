@@ -2018,12 +2018,13 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                      for bp in v[2][date_rotate]['booking_period']:
                          bp['status'] = 'open'
                          bp['date'] = str(date_rotate)
-                          
+                            
                          if avbp_map:
                             if bp['id'] in avbp_map:
                                bp['status'] = avbp_map[bp['id']]
                                bp['booking_row_id'] = avbp_map2[bp['id']]
                                bp['past_booking'] = False
+                        
                                #if date_rotate <= datetime.now().date():
                                #   bp['past_booking'] = True
                                bp_dt = datetime.strptime(str(bp['date'])+' '+str(bp['start_time']), '%Y-%m-%d %H:%M:%S')

@@ -57,7 +57,7 @@ class BookingPeriodOptionForm(forms.ModelForm):
     #mooring_group = ChoiceField(choices=[],)
     class Meta:
         model = models.BookingPeriodOption
-        fields = ['period_name','option_description','small_price','medium_price','large_price','start_time','finish_time','change_group','cancel_group']
+        fields = ['period_name','option_description','small_price','medium_price','large_price','start_time','finish_time','change_group','cancel_group','caption']
 
     def __init__(self, *args, **kwargs):
         # User must be passed in as a kwarg.

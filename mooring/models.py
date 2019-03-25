@@ -571,6 +571,7 @@ class BookingPeriodOption(models.Model):
     all_day = models.BooleanField(default=True)
     change_group = models.ForeignKey('ChangeGroup',null=True,blank=True)
     cancel_group = models.ForeignKey('CancelGroup',null=True,blank=True)
+    caption = models.TextField(blank=True,null=True, max_length=255)
     created = models.DateTimeField(auto_now_add=True)
     #mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
 

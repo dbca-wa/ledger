@@ -85,6 +85,7 @@
                 <h1>Book mooring: {{ name }}</h1>
             </div>
         </div>
+
         <div v-if="ongoing_booking" class="row" style='display:none'>
             <div class="columns small-12 medium-12 large-12">
                 <div class="clearfix">
@@ -270,10 +271,12 @@
                         <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" align='center'>
                                      <div v-for="bp in day[1].booking_period" style='width:160px; '>
 
-                                        <div v-if="bp.status == 'open'"  >
+                                        <div v-if="bp.status == 'open'" class='tooltip2'  align='left'>
                                         <button class="button" style='width: 160px; margin-bottom: 2px;'  @click="addBooking(site.id,site.mooring_id,bp.id,bp.date)" >
                                             <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 'small'">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 'medium'">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 'large'">${{ bp.large_price }}</span></small>
-                                        </button>
+                                        </button><br>
+                                           
+                                           <span v-show="bp.caption.length > 1" class="tooltiptext">{{ bp.caption }}</span>
                                         </div>
 					<div v-else-if="bp.status == 'selected'" >
                                              <div style="position: relative; text-align: right; margin-right: 25px;"><a v-show="bp.past_booking == false" type="button" class="close" style="color: red; opacity: 1; position: absolute; padding-left: 5px;" @click="deleteBooking(bp.booking_row_id, bp.past_booking)" >x</a></div>
@@ -356,7 +359,7 @@
         width: 100%;
     }
 
-    // table font colour override
+    /* table font colour override */
     table thead tr {
         background: unset;
         color: unset;
@@ -409,6 +412,45 @@
     .continueBooking {
         text-decoration: none;
     }
+
+    /* Tooltip */
+    .tooltip2 {
+      position: relative;
+      display: inline-block;
+    }
+    
+    /* Tooltip text */
+    .tooltip2 .tooltiptext {
+      visibility: hidden;
+      width: 165px;
+      background-color: black;
+      color: #fff;
+      text-align: center;
+      padding: 8px;
+      border-radius: 6px;
+      text-align: left;
+    
+      /* Position the tooltip text - see examples below! */
+      position: absolute;
+      z-index: 1;
+    }
+    
+    /* Show the tooltip text when you mouse over the tooltip container */
+    .tooltip2:hover .tooltiptext {
+      visibility: visible;
+    }
+    
+    .tooltip2 .tooltiptext::after {
+      content: " ";
+      position: absolute;
+      bottom: 100%;  /* At the top of the tooltip */
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: transparent transparent black transparent;
+    }
+
 }
 
 </style>

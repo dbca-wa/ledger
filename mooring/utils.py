@@ -599,7 +599,7 @@ def get_visit_rates(campsites_qs, start_date, end_date):
             results[rate.campsite.pk][start+timedelta(days=i)]['child'] = str(rate.rate.child)
             results[rate.campsite.pk][start+timedelta(days=i)]['infant'] = str(rate.rate.infant)
             for b in booking_period:
-                booking_period_row = {'id':b.id, 'period_name' : b.period_name, 'small_price': format(b.small_price,'.2f'), 'medium_price': format(b.medium_price,'.2f'), 'large_price' : format(b.large_price,'.2f'), 'start_time' : b.start_time, 'finish_time' : b.finish_time,'all_day' : b.all_day, 'created' : b.created }
+                booking_period_row = {'id':b.id, 'period_name' : b.period_name, 'small_price': format(b.small_price,'.2f'), 'medium_price': format(b.medium_price,'.2f'), 'large_price' : format(b.large_price,'.2f'), 'start_time' : b.start_time, 'finish_time' : b.finish_time,'all_day' : b.all_day, 'caption': b.caption, 'created' : b.created }
 #                booking_period_row = {} 
 #                booking_period_row['id'] = b.id
 #                booking_period_row['period_name'] = b.period_name
