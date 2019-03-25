@@ -20,6 +20,7 @@
 from '@/utils/hooks'
     import Renderer from '@/utils/renderer'
     import bs from 'bootstrap'
+    import { isApplicationActivityVisible } from "@/utils/helpers.js";
     require('../../node_modules/bootstrap/dist/css/bootstrap.css');
     require('../../node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css')
     require('../../node_modules/font-awesome/css/font-awesome.min.css')
@@ -39,7 +40,7 @@ from '@/utils/hooks'
                 default: 'col-md-9'
             }
         },
-        data:function () {
+        data: function () {
             return{
                 values:null,
                 amendment_request_id:[]
@@ -52,17 +53,20 @@ from '@/utils/hooks'
                 }
 
             },
-
+            isActivityVisible: function(activity_id) {
+                return isApplicationActivityVisible(
+                    this.application, activity_id, ['issued', 'declined']);
+            },
         },
-        created:function () {
+        created: function () {
            
             this.mapDataToApplication();
         },
-        mounted:function () {
+        mounted: function () {
 
-            this.amendment_request_id=this.application.amendment_requests
-            
-            var tabs=Renderer.tabs_list
+            this.amendment_request_id=this.application.amendment_requests;
+
+            var tabs=Renderer.tabs_list;
             // tabs.map(tsec => {
             //         $('#tabs-section').append(`<li><a data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
             //     });
@@ -71,6 +75,9 @@ from '@/utils/hooks'
                 console.log("from inside if")
 
                 tabs.map(tsec => {
+                    if(!this.isActivityVisible(tsec.id)) {
+                        return;
+                    }
                     if(this.amendment_request_id.indexOf(tsec.id) < 0){
                         // $('#tabs-section').append(`<li><a class="nav-link disabled" data-toggle="tab" href='#'>${tsec.label}</a></li>`);
                     }
@@ -83,7 +90,10 @@ from '@/utils/hooks'
             }
             else{
                 tabs.map(tsec => {
-                    $('#tabs-section').append(`<li><a onclick="vue.setSelectedTabId(this);" data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
+                    if(!this.isActivityVisible(tsec.id)) {
+                        return;
+                    }
+                    $('#tabs-section').append(`<li><a data-toggle="tab" data-target='#${tsec.id}'>${tsec.label}</a></li>`);
                 });
 
             }
@@ -168,7 +178,14 @@ from '@/utils/hooks'
        render(h) {
             let vm =this;
             Renderer.tabs_list = [];
-            Renderer.store_status_data(vm.application.readonly,vm.application.comment_data,vm.application.can_user_edit,vm.application.documents_url,vm.application.id);
+            Renderer.store_status_data(
+                vm.application.readonly,
+                vm.application.comment_data,
+                vm.application.can_user_edit,
+                vm.application.documents_url,
+                vm.application.id,
+                vm.application
+            );
             if (vm.withSectionsSelector){
                 return (
                     <div>
@@ -197,6 +214,9 @@ from '@/utils/hooks'
                             </ul>
                             <div class="tab-content">
                                 {vm.application.schema.map(d =>{
+                                    if(!this.isActivityVisible(d.id)) {
+                                        return;
+                                    }
                                     return Renderer.renderChildren(h,d,vm.values,vm.application.readonly)
                                 })}
                                 { this.$slots.default }
@@ -214,6 +234,9 @@ from '@/utils/hooks'
                             </ul>
                             <div class="tab-content">
                                 {vm.application.schema.map(d =>{
+                                    if(!this.isActivityVisible(d.id)) {
+                                        return;
+                                    }
                                     return Renderer.renderChildren(h,d,vm.values,vm.application.readonly)
                                 })}
                                 { this.$slots.default }
@@ -231,6 +254,9 @@ from '@/utils/hooks'
                               </li>
                             </ul>
                                 {vm.application.schema.map(d =>{
+                                    if(!this.isActivityVisible(d.id)) {
+                                        return;
+                                    }
                                     return Renderer.renderChildren(h,d,vm.values,vm.application.readonly)
                                 })}
                                 { this.$slots.default }

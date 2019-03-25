@@ -60,11 +60,11 @@ class Organisation(models.Model):
         if val_admin:
             val = val_admin
             admin_flag = True
-            role = 'organisation_admin'
+            role = OrganisationContact.ORG_CONTACT_ROLE_ADMIN
         elif val_user:
             val = val_user
             admin_flag = False
-            role = 'organisation_user'
+            role = OrganisationContact.ORG_CONTACT_ROLE_USER
         else:
             val = False
             return val
@@ -110,7 +110,7 @@ class Organisation(models.Model):
             try:
                 org_contact = OrganisationContact.objects.get(
                     organisation=self, email=delegate.user.email)
-                org_contact.user_status = 'active'
+                org_contact.user_status = OrganisationContact.ORG_CONTACT_STATUS_ACTIVE
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
                 pass
@@ -130,7 +130,7 @@ class Organisation(models.Model):
         try:
             org_contact = OrganisationContact.objects.get(
                 organisation=self, email=user.email)
-            org_contact.user_status = 'declined'
+            org_contact.user_status = OrganisationContact.ORG_CONTACT_STATUS_DECLINED
             org_contact.save()
         except OrganisationContact.DoesNotExist:
             pass
@@ -200,7 +200,7 @@ class Organisation(models.Model):
             try:
                 org_contact = OrganisationContact.objects.get(
                     organisation=self, email=delegate.user.email)
-                org_contact.user_status = 'active'
+                org_contact.user_status = OrganisationContact.ORG_CONTACT_STATUS_ACTIVE
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
                 pass
@@ -229,7 +229,7 @@ class Organisation(models.Model):
             try:
                 org_contact = OrganisationContact.objects.get(
                     organisation=self, email=delegate.user.email)
-                org_contact.user_status = 'active'
+                org_contact.user_status = OrganisationContact.ORG_CONTACT_STATUS_ACTIVE
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
                 pass
@@ -257,13 +257,13 @@ class Organisation(models.Model):
             try:
                 org_contact = OrganisationContact.objects.get(
                     organisation=self, email=delegate.user.email)
-                if org_contact.user_role == 'organisation_admin':
-                    org_contact.user_status = 'unlinked'
+                if org_contact.user_role == OrganisationContact.ORG_CONTACT_ROLE_ADMIN:
+                    org_contact.user_status = OrganisationContact.ORG_CONTACT_STATUS_UNLINKED
                     org_contact.save()
                     # delete delegate
                     delegate.delete()
                 else:
-                    org_contact.user_status = 'unlinked'
+                    org_contact.user_status = OrganisationContact.ORG_CONTACT_STATUS_UNLINKED
                     org_contact.save()
                     # delete delegate
                     delegate.delete()
@@ -294,7 +294,7 @@ class Organisation(models.Model):
             try:
                 org_contact = OrganisationContact.objects.get(
                     organisation=self, email=delegate.user.email)
-                org_contact.user_role = 'organisation_admin'
+                org_contact.user_role = OrganisationContact.ORG_CONTACT_ROLE_ADMIN
                 org_contact.is_admin = True
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
@@ -323,7 +323,7 @@ class Organisation(models.Model):
             try:
                 org_contact = OrganisationContact.objects.get(
                     organisation=self, email=delegate.user.email)
-                org_contact.user_role = 'organisation_user'
+                org_contact.user_role = OrganisationContact.ORG_CONTACT_ROLE_USER
                 org_contact.is_admin = False
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
@@ -352,7 +352,7 @@ class Organisation(models.Model):
             try:
                 org_contact = OrganisationContact.objects.get(
                     organisation=self, email=delegate.user.email)
-                org_contact.user_role = 'consultant'
+                org_contact.user_role = OrganisationContact.ORG_CONTACT_ROLE_CONSULTANT
                 org_contact.is_admin = True
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
@@ -381,7 +381,7 @@ class Organisation(models.Model):
             try:
                 org_contact = OrganisationContact.objects.get(
                     organisation=self, email=delegate.user.email)
-                org_contact.user_status = 'suspended'
+                org_contact.user_status = OrganisationContact.ORG_CONTACT_STATUS_SUSPENDED
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
                 pass
@@ -409,7 +409,7 @@ class Organisation(models.Model):
             try:
                 org_contact = OrganisationContact.objects.get(
                     organisation=self, email=delegate.user.email)
-                org_contact.user_status = 'active'
+                org_contact.user_status = OrganisationContact.ORG_CONTACT_STATUS_ACTIVE
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
                 pass
@@ -439,8 +439,8 @@ class Organisation(models.Model):
         # Notify each Admin member of request to be linked to org.
         contacts = OrganisationContact.objects.filter(
             organisation_id=self.id,
-            user_role='organisation_admin',
-            user_status='active',
+            user_role=OrganisationContact.ORG_CONTACT_ROLE_ADMIN,
+            user_status=OrganisationContact.ORG_CONTACT_STATUS_ACTIVE,
             is_admin=True)
         recipients = [c.email for c in contacts]
         send_organisation_request_link_email_notification(
@@ -507,8 +507,8 @@ class Organisation(models.Model):
         _names = ''
         for user in OrganisationContact.objects.filter(
                 organisation_id=self.id,
-                user_role='organisation_admin',
-                user_status='active',
+                user_role=OrganisationContact.ORG_CONTACT_ROLE_ADMIN,
+                user_status=OrganisationContact.ORG_CONTACT_STATUS_ACTIVE,
                 is_admin=True):
             _names += '{0} {1} '.format(user.first_name, user.last_name)
 
@@ -516,7 +516,7 @@ class Organisation(models.Model):
 
     @property
     def has_no_admins(self):
-        return self.contacts.filter(user_role='organisation_admin').count() < 1
+        return self.contacts.filter(user_role=OrganisationContact.ORG_CONTACT_ROLE_ADMIN).count() < 1
 
     @property
     def can_contact_user_edit(self):
@@ -526,7 +526,9 @@ class Organisation(models.Model):
         org_contact = OrganisationContact.objects.get(
             organisation_id=self.id, first_name=request.user.first_name)
 
-        return org_contact.is_admin and org_contact.user_status == 'active' and org_contact.user_role == 'organisation_admin'
+        return org_contact.is_admin \
+            and org_contact.user_status == OrganisationContact.ORG_CONTACT_STATUS_ACTIVE \
+            and org_contact.user_role == OrganisationContact.ORG_CONTACT_ROLE_ADMIN
 
     @property
     def can_user_edit(self, email):
@@ -536,31 +538,42 @@ class Organisation(models.Model):
         org_contact = OrganisationContact.objects.get(
             organisation_id=self.id, email=email)
 
-        return org_contact.is_admin and org_contact.user_status == 'active' and org_contact.user_role == 'organisation_admin'
+        return org_contact.is_admin \
+            and org_contact.user_status == OrganisationContact.ORG_CONTACT_STATUS_ACTIVE \
+            and org_contact.user_role == OrganisationContact.ORG_CONTACT_ROLE_ADMIN
 
 
 @python_2_unicode_compatible
 class OrganisationContact(models.Model):
-    USER_STATUS_CHOICES = (('draft', 'Draft'),
-                           ('pending', 'Pending'),
-                           ('active', 'Active'),
-                           ('declined', 'Declined'),
-                           ('unlinked', 'Unlinked'),
-                           ('suspended', 'Suspended'))
-    USER_ROLE_CHOICES = (('organisation_admin', 'Organisation Admin'),
-                         ('organisation_user', 'Organisation User'),
-                         ('consultant', 'Consultant')
+    ORG_CONTACT_STATUS_DRAFT = 'draft'
+    ORG_CONTACT_STATUS_PENDING = 'pending'
+    ORG_CONTACT_STATUS_ACTIVE = 'active'
+    ORG_CONTACT_STATUS_DECLINED = 'declined'
+    ORG_CONTACT_STATUS_UNLINKED = 'unlinked'
+    ORG_CONTACT_STATUS_SUSPENDED = 'suspended'
+    USER_STATUS_CHOICES = ((ORG_CONTACT_STATUS_DRAFT, 'Draft'),
+                           (ORG_CONTACT_STATUS_PENDING, 'Pending'),
+                           (ORG_CONTACT_STATUS_ACTIVE, 'Active'),
+                           (ORG_CONTACT_STATUS_DECLINED, 'Declined'),
+                           (ORG_CONTACT_STATUS_UNLINKED, 'Unlinked'),
+                           (ORG_CONTACT_STATUS_SUSPENDED, 'Suspended'))
+    ORG_CONTACT_ROLE_ADMIN = 'organisation_admin'
+    ORG_CONTACT_ROLE_USER = 'organisation_user'
+    ORG_CONTACT_ROLE_CONSULTANT = 'consultant'
+    USER_ROLE_CHOICES = ((ORG_CONTACT_ROLE_ADMIN, 'Organisation Admin'),
+                         (ORG_CONTACT_ROLE_USER, 'Organisation User'),
+                         (ORG_CONTACT_ROLE_CONSULTANT, 'Consultant')
                          )
     user_status = models.CharField(
         'Status',
         max_length=40,
         choices=USER_STATUS_CHOICES,
-        default=USER_STATUS_CHOICES[0][0])
+        default=ORG_CONTACT_STATUS_DRAFT)
     user_role = models.CharField(
         'Role',
         max_length=40,
         choices=USER_ROLE_CHOICES,
-        default='organisation_user')
+        default=ORG_CONTACT_ROLE_USER)
     organisation = models.ForeignKey(Organisation, related_name='contacts')
     email = models.EmailField(blank=False)
     first_name = models.CharField(
@@ -592,14 +605,17 @@ class OrganisationContact(models.Model):
         """
         :return: True if the application is in one of the editable status.
         """
-        return self.is_admin and self.user_status == 'active' and self.user_role == 'organisation_admin'
+        return self.is_admin \
+            and self.user_status == OrganisationContact.ORG_CONTACT_STATUS_ACTIVE \
+            and self.user_role == OrganisationContact.ORG_CONTACT_ROLE_ADMIN
 
     @property
     def check_consultant(self):
         """
         :return: True if the application is in one of the editable status.
         """
-        return self.user_status == 'active' and self.user_role == 'consultant'
+        return self.user_status == OrganisationContact.ORG_CONTACT_STATUS_ACTIVE \
+            and self.user_role == OrganisationContact.ORG_CONTACT_ROLE_CONSULTANT
 
     # def unlink_user(self,user,request):
     #     with transaction.atomic():
@@ -710,15 +726,21 @@ class OrganisationLogEntry(CommunicationsLogEntry):
 
 
 class OrganisationRequest(models.Model):
+    ORG_REQUEST_STATUS_WITH_ASSESSOR = 'with_assessor'
+    ORG_REQUEST_STATUS_AMENDMENT_REQUESTED = 'amendment_requested'
+    ORG_REQUEST_STATUS_APPROVED = 'approved'
+    ORG_REQUEST_STATUS_DECLINED = 'declined'
     STATUS_CHOICES = (
-        ('with_assessor', 'With Assessor'),
-        ('amendment_requested', 'Amendment Requested'),
-        ('approved', 'Approved'),
-        ('declined', 'Declined')
+        (ORG_REQUEST_STATUS_WITH_ASSESSOR, 'With Assessor'),
+        (ORG_REQUEST_STATUS_AMENDMENT_REQUESTED, 'Amendment Requested'),
+        (ORG_REQUEST_STATUS_APPROVED, 'Approved'),
+        (ORG_REQUEST_STATUS_DECLINED, 'Declined')
     )
+    ORG_REQUEST_ROLE_EMPLOYEE = 'employee'
+    ORG_REQUEST_ROLE_CONSULTANT = 'consultant'
     ROLE_CHOICES = (
-        ('employee', 'Employee'),
-        ('consultant', 'Consultant')
+        (ORG_REQUEST_ROLE_EMPLOYEE, 'Employee'),
+        (ORG_REQUEST_ROLE_CONSULTANT, 'Consultant')
     )
     name = models.CharField(max_length=128)
     abn = models.CharField(
@@ -739,11 +761,11 @@ class OrganisationRequest(models.Model):
     status = models.CharField(
         max_length=100,
         choices=STATUS_CHOICES,
-        default="with_assessor")
+        default=ORG_REQUEST_STATUS_WITH_ASSESSOR)
     role = models.CharField(
         max_length=100,
         choices=ROLE_CHOICES,
-        default="employee")
+        default=ORG_REQUEST_ROLE_EMPLOYEE)
     lodgement_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -751,7 +773,7 @@ class OrganisationRequest(models.Model):
 
     def accept(self, request):
         with transaction.atomic():
-            self.status = 'approved'
+            self.status = OrganisationRequest.ORG_REQUEST_STATUS_APPROVED
             self.save()
             self.log_user_action(
                 OrganisationRequestUserAction.ACTION_ACCEPT_REQUEST.format(
@@ -787,10 +809,10 @@ class OrganisationRequest(models.Model):
                     delegate.user.email)),
             request)
 
-        if self.role == 'consultant':
-            role = 'consultant'
+        if self.role == OrganisationRequest.ORG_REQUEST_ROLE_CONSULTANT:
+            role = OrganisationContact.ORG_CONTACT_ROLE_CONSULTANT
         else:
-            role = 'organisation_admin'
+            role = OrganisationContact.ORG_CONTACT_ROLE_ADMIN
         # Create contact person
 
         OrganisationContact.objects.create(
@@ -802,7 +824,7 @@ class OrganisationRequest(models.Model):
             fax_number=self.requester.fax_number,
             email=self.requester.email,
             user_role=role,
-            user_status='active',
+            user_status=OrganisationContact.ORG_CONTACT_STATUS_ACTIVE,
             is_admin=True
 
         )
@@ -822,7 +844,7 @@ class OrganisationRequest(models.Model):
 
     def amendment_request(self, request):
         with transaction.atomic():
-            self.status = 'amendment_requested'
+            self.status = OrganisationRequest.ORG_REQUEST_STATUS_AMENDMENT_REQUESTED
             self.save()
             self.log_user_action(
                 OrganisationRequestUserAction.ACTION_AMENDMENT_REQUEST.format(
@@ -847,7 +869,7 @@ class OrganisationRequest(models.Model):
 
     def reupload_identification_amendment_request(self, request):
         with transaction.atomic():
-            self.status = 'with_assessor'
+            self.status = OrganisationRequest.ORG_REQUEST_STATUS_WITH_ASSESSOR
             self.identification = request.data.dict()['identification']
             self.save()
             self.log_user_action(
@@ -890,11 +912,11 @@ class OrganisationRequest(models.Model):
         from wildlifecompliance.components.applications.models import ActivityPermissionGroup
 
         with transaction.atomic():
-            self.status = 'declined'
+            self.status = OrganisationRequest.ORG_REQUEST_STATUS_DECLINED
             self.save()
             OrganisationRequestDeclinedDetails.objects.create(
                 officer=request.user,
-                reason='declined',
+                reason=OrganisationRequest.ORG_REQUEST_STATUS_DECLINED,
                 request=self
             )
             self.log_user_action(

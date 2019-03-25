@@ -10,8 +10,8 @@ from rest_framework import serializers
 class WildlifeLicenceSerializer(serializers.ModelSerializer):
     licence_document = serializers.CharField(
         source='licence_document._file.url')
-    status = serializers.CharField(source='get_status_display')
     current_application = BaseApplicationSerializer(read_only=True)
+    last_issue_date = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = WildlifeLicence
@@ -20,20 +20,12 @@ class WildlifeLicenceSerializer(serializers.ModelSerializer):
             'licence_document',
             'replaced_by',
             'current_application',
-            'activity',
-            'region',
-            'tenure',
-            'title',
-            'renewal_sent',
-            'issue_date',
-            'original_issue_date',
-            'start_date',
-            'expiry_date',
-            'surrender_details',
-            'suspension_details',
             'extracted_fields',
-            'status'
+            'last_issue_date',
         )
+
+    def get_last_issue_date(self, obj):
+        return obj.current_activities.order_by('-issue_date').first().issue_date
 
 
 class DefaultPurposeSerializer(serializers.ModelSerializer):
@@ -118,7 +110,6 @@ class ActivitySerializer(serializers.ModelSerializer):
 
 
 class LicenceCategorySerializer(serializers.ModelSerializer):
-    category_status = serializers.SerializerMethodField()
     activity = serializers.SerializerMethodField()
 
     class Meta:
@@ -127,12 +118,8 @@ class LicenceCategorySerializer(serializers.ModelSerializer):
             'id',
             'name',
             'short_name',
-            'category_status',
             'activity'
         )
-
-    def get_category_status(self, obj):
-        return obj.get_licence_category_status_display()
 
     def get_activity(self, obj):
         purposes = self.context.get('purpose_records')

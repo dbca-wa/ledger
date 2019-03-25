@@ -10,17 +10,18 @@
                                 <div class="col-md-3">
                                     <label class="control-label pull-left"  for="Name">Activity:</label>
                                 </div>
-                                <div class="col-md-3">
-                                    <select class="form-control" v-model="entryActivity">
-                                        <option value="ALL">All</option>
-                                        <option value="001">Stock</option>
-                                        <option value="002">In through Import</option>
-                                    </select>
+                                <div class="col-md-6" v-show="isAddEntry">
+                                <select class="form-control" v-model="entryActivity">
+                                  <option v-for="(activity, activityId) in activityList" :value="activityId">{{activity['label']}}</option>
+                                </select>
+                                </div>
+                                <div class="col-md-3" v-show="isChangeEntry">
+                                    <label>{{activityList[entryActivity]['label']}} </label>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-3">
-                                    <label class="control-label pull-left"  for="Name">Quantity:</label>
+                                    <label class="control-label pull-left" for="Name">Quantity:</label>
                                 </div>
                                 <div class="col-md-3">
                                     <input type='text' v-model='entryQty' >
@@ -55,8 +56,9 @@
                 </div>
             </div>
             <div slot="footer">
-                <button style="width: 15%;" class="btn btn-primary" @click.prevent="close()">Pay</button>
-                <button style="width: 15%;" class="btn btn-primary" @click.prevent="update()">Update</button>
+                <button v-show="isPayable" style="width: 15%;" class="btn btn-primary" @click.prevent="close()">Pay</button>
+                <button v-show="isSubmitable" style="width: 15%;" class="btn btn-primary" @click.prevent="update()">Submit</button>
+                <button style="width: 15%;" class="btn btn-primary" @click.prevent="close()">Cancel</button>
             </div>
         </modal>
     </div>
@@ -90,7 +92,8 @@ export default {
             errorString: '',
             successString: '',
             success:false,
-            entryActivity: '',
+            entryDateTime: '',
+            entryActivity: 'null',
             entryQty: 0,
             entryTotal: 0,
             entryLicence: '',
@@ -98,7 +101,14 @@ export default {
             currentStock: 0,
             speciesType: '',
             row_of_data: null,
-            table: null
+            table: null,
+            isAddEntry: false,
+            isChangeEntry: false,
+            isPayable: false,
+            isSubmitable: false,
+            activityList: {'null': {'label': null}},
+            fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
+                              'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
         }
     },
     computed: {
@@ -107,28 +117,52 @@ export default {
             return vm.errors;
         },
         title: function(){
-            this.currentStock = +this.entryNumber + +this.entryTotal;
-            return this.speciesType + '   Current stock: ' + this.currentStock;
+            this.currentStock = +this.entryTotal;
+            return this.fullSpeciesList[this.speciesType] + '   Current stock: ' + this.currentStock;
         }
 
     },
     methods:{
         update:function () {
             console.log('update function')
-            let vm =this;
-            console.log(vm.table.row('#2019/01/31').data())
-         // FIXME: Update parent table.
-         // value = vm.$refs.return_datatable.vmDataTable.row('#2019/01/31').data()
-         // vm.row_of_data['qty'] = 10;
-         // vm.table.row('#2019/01/31').data(vm.row_of_data['qty']).draw();
-            this.isModalOpen = false;
+            var vm = this;
+
+            if (vm.isAddEntry) {
+              let _currentDateTime = new Date()
+              vm.entryDateTime = Date.parse(new Date())
+              let newRowId = (vm.row_of_data.data().count()-1) + ''
+              let _data = { rowId: newRowId,
+                            date: vm.entryDateTime,
+                            activity: vm.entryActivity,
+                            qty: vm.entryQty,
+                            total: vm.entryTotal,
+                            comment: vm.entryComment,
+                            licence: vm.entryLicence
+                          };
+              vm.row_of_data.row.add(_data).node().id = newRowId
+              vm.row_of_data.draw()
+            }
+
+            if (vm.isChangeEntry) {
+              vm.row_of_data.data().activity = vm.entryActivity;
+              vm.row_of_data.data().qty = vm.entryQty;
+              vm.row_of_data.data().total = vm.entryTotal;
+              vm.row_of_data.data().licence = vm.entryLicence;
+              vm.row_of_data.data().comment = vm.entryComment;
+              vm.row_of_data.invalidate().draw()
+            }
+
+            vm.close();
         },
         cancel:function () {
             console.log('cancel function')
-            this.isModalOpen = false;
+            this.close()
         },
         close:function () {
             console.log('close function')
+            var vm = this;
+            vm.isChangeEntry = false;
+            vm.isAddEntry = false;
             this.isModalOpen = false;
         },
         eventListeners:function () {
@@ -137,9 +171,7 @@ export default {
     },
     mounted:function () {
         console.log('modal Mounted');
-        let vm =this;
-        console.log(vm)
-        vm.currentStock = vm.entryNumber + vm.entryTotal;
+        let vm = this;
     }
 }
 </script>

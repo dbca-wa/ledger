@@ -1,4 +1,3 @@
-
 from __future__ import unicode_literals
 from django.db import models, transaction
 from django.contrib.postgres.fields.jsonb import JSONField
@@ -21,6 +20,11 @@ class ReturnType(models.Model):
 
     Name = models.TextField(null=True, blank=True, max_length=200)
     data_descriptor = JSONField()
+    return_type = models.CharField(
+        'Type',
+        max_length=30,
+        choices=RETURN_TYPE_CHOICES,
+        default=RETURN_TYPE_CHOICES[0][0])
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -137,12 +141,12 @@ class Return(models.Model):
                 }
                 if f.is_species:
                     header["species"] = f.species_type
-                headers.append(header)
+                    headers.append(header)
             table = {
-                'name': resource_name,
-                'title': resource.get('title', resource.get('name')),
-                'headers': headers,
-                'data': None
+               'name': resource_name,
+               'title': resource.get('title', resource.get('name')),
+               'headers': headers,
+               'data': None
             }
             try:
                 return_table = self.returntable_set.get(name=resource_name)
@@ -168,10 +172,10 @@ class Return(models.Model):
         A Running sheet of Return data.
         :return: ReturnSheet with activity data for species.
         """
-        return ReturnSheet(self) if self.is_sheet else None
+        return ReturnSheet(self) if self.has_sheet else None
 
     @property
-    def is_question(self):
+    def has_question(self):
         """
         Property defining if the Return is Question based.
         :return: Boolean
@@ -179,7 +183,7 @@ class Return(models.Model):
         return True if self.return_type.Name == 'question' else False
 
     @property
-    def is_data(self):
+    def has_data(self):
         """
         Property defining if the Return is Data based.
         :return: Boolean
@@ -187,7 +191,7 @@ class Return(models.Model):
         return True if self.return_type.Name == 'data' else False
 
     @property
-    def is_sheet(self):
+    def has_sheet(self):
         """
         Property defining if the Return is Running Sheet based.
         :return: Boolean
@@ -232,10 +236,33 @@ class Return(models.Model):
             send_return_accept_email_notification(self, request)
 
 
+class ReturnData(object):
+    """
+    Informational data of requirements supporting licence condition.
+    """
+    def __init__(self, a_return):
+        self._return = a_return
+
+    def __str__(self):
+        return 'Return-Data-{0}'.format(self._return.id)
+
+
+class ReturnQuestion(object):
+    """
+    Informational question of requirements supporting licence condition.
+    """
+    def __init__(self, a_return):
+        self._return = a_return
+
+    def __str__(self):
+        return 'Return-Question-{0}'.format(self._return.id)
+
+
 class ReturnSheet(object):
     """
-    A Running Sheet of requirements supporting licence conditions.
+    Informational Running Sheet of Species requirements supporting licence condition.
     """
+    _DEFAULT_SPECIES = '0000000'
 
     _SHEET_SCHEMA = {"name": "sheet", "title": "Running Sheet of Return Data", "resources": [{"name":
                      "SpecieID", "path": "", "title": "Return Data for Specie", "schema": {"fields": [{"name":
@@ -243,34 +270,59 @@ class ReturnSheet(object):
                      "activity", "type": "string", "constraints": {"required": True}}, {"name": "qty", "type":
                      "number", "constraints": {"required": True}}, {"name": "total", "type": "number",
                      "constraints": {"required": True}}, {"name": "licence", "type": "string"}, {"name": "comment",
-                     "type": "string"}]}}]}
+                     "type": "string"}, {"name": "transfer", "type": "boolean"}]}}]}
 
     _NO_ACTIVITY = {"echo": 1, "totalRecords": "0", "totalDisplayRecords": "0", "data": []}
 
-    _ACTIVITY_TYPES = {"SA01": "Stock", "SA02": "In through Import", "SA03": "In through birth",
-                       "SA04": "In through transfer", "SA05": "Out through export", "SA06": "Out through death",
-                       "SA07": "Out through transfer other", "SA08": "Out through transfer dealer", '': None}
+    _ACTIVITY_TYPES = {
+                    "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false"},
+                    "SA02": {"label": "In through import", "auto": "false", "licence": "false", "pay": "false"},
+                    "SA03": {"label": "In through birth", "auto": "false", "licence": "false", "pay": "false"},
+                    "SA04": {"label": "In through transfer", "auto": "true", "licence": "false", "pay": "false"},
+                    "SA05": {"label": "Out through export", "auto": "false", "licence": "false", "pay": "false"},
+                    "SA06": {"label": "Out through death", "auto": "false", "licence": "false", "pay": "false"},
+                    "SA07": {"label": "Out through transfer other", "auto": "false", "licence": "true", "pay": "true"},
+                    "SA08": {"label": "Out through transfer dealer", "auto": "false", "licence": "true", "pay": "false"},
+                    "": {"label": "", "auto": "false", "licence": "false", "pay": "false"}
+                      }
 
-    _MOCK_TABLE = {'name': 'speciesId', 'data': [{'date': '2019/01/23', 'activity': 'SA01', 'qty': '5', 'total': '5',
-                  'comment': 'Initial Stock Taking', 'licence': ''}, {'date': '2019/01/31', 'activity': 'SA03',
-                  'qty': '3', 'total': '8', 'comment': 'Birth of three new species', 'licence': ''}]}
-
-    _MOCK_SPECIES = ['Cherax tenuimanus', 'Bunderia']
+    _MOCK_LICENCE_SPECIES = ['S000001', 'S000002', 'S000003', 'S000004']
 
     def __init__(self, a_return):
         self._return = a_return
         self._return.return_type.data_descriptor = self._SHEET_SCHEMA
-        self._species = []
+        self._species_list = []
+        self._licence_species_list = []
+        self._table = {'data': None}
+        # build list of currently added Species.
+        self._species = self._DEFAULT_SPECIES
+        for _species in ReturnTable.objects.filter(ret=a_return):
+            self._species_list.append(_species.name)
+            self._species = _species.name
+        # build list of Species available on Licence.
+        self._licence_species_list = self._MOCK_LICENCE_SPECIES
 
-    def _get_table_rows(self, table_name, post_data):
-        table_namespace = table_name + '::'
-        by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(
-            key)) for key in post_data.keys() if key.startswith(table_namespace)])
-        # by_column is of format {'col_header':[row1_val, row2_val,...],...}
-        num_rows = len(
-            list(
-                by_column.values())[0]) if len(
-            by_column.values()) > 0 else 0
+    def _get_table_rows(self, _data):
+        """
+        Gets the formatted row of data from Species data
+        :param _data:
+        :return: by_column is of format {'col_header':[row1_val, row2_val,...],...}
+        """
+        by_column = dict([])
+        key_values = []
+        num_rows = 0
+        if isinstance(_data, tuple):
+            for key in _data[0].keys():
+                for cnt in range(_data.__len__()):
+                    key_values.append(_data[cnt][key])
+                by_column[key] = key_values
+                key_values = []
+            num_rows = len(list(by_column.values())[0]) if len(by_column.values()) > 0 else 0
+        else:
+            for key in _data.keys():
+                by_column[key] = _data[key]
+            num_rows = num_rows + 1
+
         self._rows = []
         for row_num in range(num_rows):
             row_data = {}
@@ -279,17 +331,25 @@ class ReturnSheet(object):
             # filter empty rows.
             is_empty = True
             for value in row_data.values():
-                if len(value.strip()) > 0:
+                if len(value[row_num].strip()) > 0:
                     is_empty = False
                     break
             if not is_empty:
+                row_data['rowId'] = str(row_num)
                 self._rows.append(row_data)
 
-    def _create_return_data(self, ret, tables_info, post_data):
-        self._get_table_rows(tables_info, post_data)
+    def _create_return_data(self, ret, _species_id, _data):
+        """
+        Saves row of data to db.
+        :param ret:
+        :param _species_id:
+        :param _data:
+        :return:
+        """
+        self._get_table_rows(_data)
         if self._rows:
             return_table = ReturnTable.objects.get_or_create(
-                name=tables_info, ret=ret)[0]
+                name=_species_id, ret=ret)[0]
             # delete any existing rows as they will all be recreated
             return_table.returnrow_set.all().delete()
             return_rows = [
@@ -299,51 +359,121 @@ class ReturnSheet(object):
             ReturnRow.objects.bulk_create(return_rows)
 
     @property
-    def data(self):
-        return self.table['data']
-
-    @property
     def table(self):
         """
-        Method to return Running Sheet data for table format. Overrides method from Return model object.
+        Running Sheet Table of data for Species. Defaults to a Species on the Return if exists.
+        :return: formatted data.
+        """
+        return self.get_activity(self._species)['data']
+
+    @property
+    def species(self):
+        """
+        Species type associated with this Running Sheet of Activities.
+        :return:
+        """
+        return self._species
+
+    @property
+    def species_list(self):
+        """
+        List of Species available with Running Sheet of Activities.
+        :return: List of Species.
+        """
+        return self._species_list
+
+    @property
+    def licence_species_list(self):
+        """
+        List of Species applicable for Running Sheet Return Licence.
+        :return: List of Species.
+        """
+        return self._licence_species_list
+
+    @property
+    def activity_list(self):
+        """
+        List of stock movement activities applicable for Running Sheet.
+        :return: List of Activities applicable for Running Sheet.
+        """
+        return self._ACTIVITY_TYPES
+
+    def get_activity(self, _species_id):
+        """
+        Get Running Sheet activity for the movement of Species stock.
         :return: formatted data {'name': 'speciesId', 'data': [{'date': '2019/01/23', 'activity': 'SA01', ..., }]}
         """
-        _table = {'data': None}
         _row = {}
         _result = []
+        self._species = _species_id
         for resource in self._return.return_type.resources:
-            _resource_name = resource.get('name')
+            _resource_name = _species_id
             _schema = Schema(resource.get('schema'))
             try:
                 _return_table = self._return.returntable_set.get(name=_resource_name)
                 rows = [_return_row.data for _return_row in _return_table.returnrow_set.all()]
                 _validated_rows = _schema.rows_validator(rows)
-                _table['data'] = _validated_rows
+                self._table['data'] = rows
+                self._table['echo'] = 1
+                self._table['totalRecords'] = str(rows.__len__())
+                self._table['totalDisplayRecords'] = str(rows.__len__())
             except ReturnTable.DoesNotExist:
-                _table = self._NO_ACTIVITY
-        #_table = self._MOCK_TABLE
+                self._table = self._NO_ACTIVITY
 
-        return _table
+        return self._table
 
-    def get_activity_list(self):
+    def set_activity(self, _species_id, _data):
         """
-        Method to return the full list of activity types available for all Species.
-        :return: List of Activity Types.
+        Sets Running Sheet Activity for the movement of Species stock.
+        :param _species_id:
+        :param _data:
+        :return:
         """
-        return self._ACTIVITY_TYPES
+        self._create_return_data(self._return, _species_id, _data)
+        self.set_species(_species_id)
 
-    def get_species_list(self):
+    def set_species(self, _species):
+        """
+        Sets the species for the current Running Sheet.
+        :param _species:
+        :return:
+        """
+        self._species = _species
+        self._species_list.add(_species)
 
-        _species = self._species
-        #_species = self._MOCK_SPECIES
+    def get_species(self):
+        """
+        Gets the species for the current Running Sheet.
+        :return:
+        """
+        return self._species
 
-        return _species
+    def is_valid_licence(self, _licence_no):
+        """
+        Method to check if licence is current.
+        :param _licence_no:
+        :return: boolean
+        """
+        return False
 
-    def is_valid(self):
-        pass
+    def send_transfer_notification(self, _license_no):
+        """
+        send email notification for transfer of stock to receiving license holder.
+        :param _license_no:
+        :return: boolean
+        """
+        return False
+
+    def get_licensee_contact(self, _license_no):
+        """
+        Gets a valid License holder contact details.
+        :param _license_no:
+        :return:
+        """
+        return None
 
     def __str__(self):
-        return 'return-sheet-{0}'.format(self._return.id)
+        return 'Return-Sheet-{0}'.format(self._return.id)
 
 
 class ReturnTable(RevisionedMixin):

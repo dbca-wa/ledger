@@ -85,14 +85,12 @@ export default {
                 allowInputToggle:true
             },
             external_status:[
-                'Temporary',
                 'Draft',
                 'Submitted',
                 'Approved',
                 'Declined'
             ],
             internal_status:[
-                'Temporary',
                 'Draft',
                 'With Assessor',
                 'Issued',
@@ -139,7 +137,13 @@ export default {
                             let links = '';
 
                             links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;
-                            links +=  `<a href='/external/return/${full.id}'>Continue</a><br/>`;
+                            if (full.type == 'sheet') {
+                              links +=  `<a href='/external/return/sheet/${full.id}'>Continue</a><br/>`;
+                            } else if (full.type == 'question') {
+                              links +=  `<a href='/external/return/question/${full.id}'>Continue</a><br/>`;
+                            } else {
+                              links +=  `<a href='/external/return/${full.id}'>Continue</a><br/>`;
+                            }
                             // if (!vm.is_external){
 
                             //     links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;

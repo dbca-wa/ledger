@@ -10,11 +10,9 @@
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <label class="control-label" for="Name">Select licensed activities to Propose Decline</label>
-                                        <div v-for="item in application_licence_type">
-                                            <div v-for="item1 in item">
-                                                <div v-if="item1.name && item1.processing_status.id=='with_officer_conditions'">
-                                                    <input type="checkbox" :value ="item1.id" :id="item1.id" v-model="propose_decline.activity">{{item1.name}}
-                                                </div>
+                                        <div v-for="activity in visibleLicenceActivities">
+                                            <div>
+                                                <input type="checkbox" :value ="activity.id" :id="activity.id" v-model="propose_decline.activity">{{activity.name}}
                                             </div>
                                         </div>
                                     </div>
@@ -72,6 +70,10 @@ export default {
             application_licence_type:{
                 type:Object,
                 required:true
+            },
+            application: {
+                type: Object,
+                required: true
             }
     },
     data:function () {
@@ -100,7 +102,13 @@ export default {
         },
         title: function(){
             return 'Proposed Decline';
-        }
+        },
+        visibleLicenceActivities: function() {
+            return this.application.licence_type_data.activity.filter(
+                activity => ['with_officer_conditions'].includes(activity.processing_status.id)
+                    && activity.name && this.userHasRole('licensing_officer', activity.id)
+            )
+        },
     },
     methods:{
         ok:function () {
@@ -129,32 +137,22 @@ export default {
             let propose_decline = JSON.parse(JSON.stringify(vm.propose_decline));
             vm.decliningApplication = true;
             if (propose_decline.activity.length > 0){
-                if (vm.processing_status.id == 'under_review'){
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/proposed_decline'),JSON.stringify(propose_decline),{
-                            emulateJSON:true,
-                        }).then((response)=>{
-                            swal(
-                                 'Propose Decline',
-                                 'The selected licenced activities have been proposed for Decline.',
-                                 'success'
-                            )
-                            vm.decliningApplication = false;
-                            vm.close();
-                            vm.$emit('refreshFromResponse',response);
-                        },(error)=>{
-                            vm.errors = true;
-                            vm.decliningApplication = false;
-                            vm.errorString = helpers.apiVueResourceError(error);
-                        });
-                }
-                else{
-                    vm.decliningApplication = false;
-                    swal(
-                         'Propose Decline',
-                         'The licenced activity must be in status "With Officer-Conditions".',
-                         'error'
-                    )
-                }
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/proposed_decline'),JSON.stringify(propose_decline),{
+                        emulateJSON:true,
+                    }).then((response)=>{
+                        swal(
+                                'Propose Decline',
+                                'The selected licenced activities have been proposed for Decline.',
+                                'success'
+                        )
+                        vm.decliningApplication = false;
+                        vm.close();
+                        vm.$emit('refreshFromResponse',response);
+                    },(error)=>{
+                        vm.errors = true;
+                        vm.decliningApplication = false;
+                        vm.errorString = helpers.apiVueResourceError(error);
+                    });
             } else {
                 vm.decliningApplication = false;
                 swal(
@@ -191,10 +189,15 @@ export default {
                     }
                 }
             });
-       },
-       eventListerners:function () {
-           let vm = this;
-       }
+        },
+        eventListerners:function () {
+            let vm = this;
+        },
+        userHasRole: function(role, activity_id) {
+            return this.application.user_roles.filter(
+                role_record => role_record.role == role && (!activity_id || activity_id == role_record.activity_id)
+            ).length;
+        },
    },
    mounted:function () {
        let vm =this;

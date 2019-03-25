@@ -22,9 +22,10 @@ import { strToBool } from "@/utils/helpers.js";
 
 module.exports = {
     renderChildren(h,c,data=null,_readonly) {
-        var is_readonly = this.status_data.readonly;
-        var commentData = this.status_data.commentData;
-        var applicationId = this.status_data.applicationId;
+        const is_readonly = this.status_data.readonly;
+        const commentData = this.status_data.commentData;
+        const applicationId = this.status_data.applicationId;
+        const application = this.status_data.application;
         var readonly = false;
         var _elements = [];
 
@@ -49,15 +50,6 @@ module.exports = {
             var help_text = c.help_text;
         }
 
-        if (c && c.help_text_assessor && c.help_text_assessor.indexOf("site_url:/") >= 0) {
-            var help_text_assessor = c.help_text_assessor.replace('site_url:/', site_url);
-            if (help_text_assessor.indexOf("anchor=") >= 0) {
-                help_text_assessor = help_text_assessor.replace('anchor=', "#");
-            }
-        } else {
-            var help_text_assessor = c.help_text_assessor;
-        }
-
         // repeat for help_text_url
         if (c && c.help_text_url && c.help_text_url.indexOf("site_url:/") >= 0) {
             var help_text_url = c.help_text_url.replace('site_url:/', site_url);
@@ -66,15 +58,6 @@ module.exports = {
             }
         } else {
             var help_text_url = c.help_text_url;
-        }
-
-        if (c && c.help_text_assessor_url && c.help_text_assessor_url.indexOf("site_url:/") >= 0) {
-            var help_text_assessor_url = c.help_text_assessor_url.replace('site_url:/', site_url);
-            if (help_text_assessor_url.indexOf("anchor=") >= 0) {
-                help_text_assessor_url = help_text_assessor_url.replace('anchor=', "#");
-            }
-        } else {
-            var help_text_assessor_url = c.help_text_assessor_url;
         }
 
         var id = 'id_' + c.name;
@@ -86,17 +69,17 @@ module.exports = {
             case 'text':
                 readonly = (c.readonly) ? (c.readonly): (readonly);
                 _elements.push(
-                    <TextField type="text" name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={help_text_assessor} readonly={readonly} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <TextField type="text" name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} readonly={readonly} isRequired={c.isRequired} help_text_url={help_text_url} renderer={this}/>
                 )
                 break;
             case 'number':
                 _elements.push(
-                    <TextField type="number" name={c.name} value={val} id={id} min={c.min} max={c.max} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={help_text_assessor} readonly={readonly} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <TextField type="number" name={c.name} value={val} id={id} min={c.min} max={c.max} comment_value={comment_val} label={c.label} help_text={help_text} readonly={readonly} isRequired={c.isRequired} help_text_url={help_text_url} renderer={this}/>
                 )
                 break;
             case 'email':
                 _elements.push(
-                    <TextField type="email" name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} help_text_assessor={help_text_assessor} readonly={readonly} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <TextField type="email" name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} readonly={readonly} isRequired={c.isRequired} help_text_url={help_text_url} renderer={this}/>
                 )
                 break;
             case 'select':
@@ -106,24 +89,24 @@ module.exports = {
                 }
                 _elements.push(
                     <div>
-                        <Select readonly={readonly} name={c.name} label={c.label} value={c.value} id={id} comment_value={comment_val} options={c.options} help_text={help_text} help_text_assessor={help_text_assessor} value={val} handleChange={this.selectionChanged}  conditions={c.conditions} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                        <Select readonly={readonly} name={c.name} label={c.label} value={c.value} id={id} comment_value={comment_val} options={c.options} help_text={help_text} value={val} handleChange={this.selectionChanged}  conditions={c.conditions} isRequired={c.isRequired} help_text_url={help_text_url} renderer={this}/>
                         <SelectConditions conditions={c.conditions} renderer={this} name={c.name} data={data} id={id1} readonly={readonly} isRequired={c.isRequired}/>
                     </div>
                 )
                 break;
             case 'multi-select':
                 _elements.push(
-                    <Select name={c.name} label={c.label} value={val} id={id} comment_value={comment_val} options={c.options} value={val} help_text={help_text} help_text_assessor={help_text_assessor} handleChange={this.selectionChanged} readonly={readonly} isMultiple={true} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <Select name={c.name} label={c.label} value={val} id={id} comment_value={comment_val} options={c.options} value={val} help_text={help_text} handleChange={this.selectionChanged} readonly={readonly} isMultiple={true} isRequired={c.isRequired} help_text_url={help_text_url} />
                 )
                 break;
             case 'text_area':
                 _elements.push(
-                    <TextArea readonly={readonly} name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <TextArea readonly={readonly} name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} isRequired={c.isRequired} help_text_url={help_text_url} renderer={this}/>
                 )
                 break;
             case 'table':
                 _elements.push(
-                    <Table headers={c.headers} readonly={readonly} name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <Table headers={c.headers} readonly={readonly} name={c.name} value={val} id={id} comment_value={comment_val} label={c.label} help_text={help_text} isRequired={c.isRequired} help_text_url={help_text_url} renderer={this}/>
                 )
                 break;
             case 'label':
@@ -140,10 +123,8 @@ module.exports = {
                     <div class="form-group">
                         <label id={id} class="inline">{c.label}</label>
                             <HelpText help_text={help_text}/>
-                            <HelpText help_text={help_text_assessor}/>
                             <HelpTextUrl help_text_url={help_text_url}/>
-                            <HelpTextUrl help_text_url={help_text_assessor_url}/>
-                            <CommentRadioCheckBox name={c.name} comment_value={comment_val} label={c.label}/>
+                            <CommentRadioCheckBox name={c.name} comment_value={comment_val} label={c.label} renderer={this}/>
                             {c.options.map(op =>{
                                 return(
                                     <Radio name={c.name} label={op.label} value={op.value} isRequired={op.isRequired || c.isRequired} id={id1} savedValue={val} handleChange={this.handleRadioChange} conditions={c.conditions} readonly={readonly}/>
@@ -268,12 +249,12 @@ module.exports = {
                 break;
             case 'file':
                 _elements.push(
-                    <File name={c.name} label={c.label} value={val} id={id} comment_value={comment_val} isRepeatable={strToBool(c.isRepeatable)} handleChange={this.handleFileChange} readonly={readonly} help_text={help_text} help_text_assessor={help_text_assessor} docsUrl={this.status_data.docs_url} readonly={readonly} application_id={applicationId} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <File name={c.name} label={c.label} value={val} id={id} comment_value={comment_val} isRepeatable={strToBool(c.isRepeatable)} handleChange={this.handleFileChange} readonly={readonly} help_text={help_text} docsUrl={this.status_data.docs_url} readonly={readonly} application_id={applicationId} isRequired={c.isRequired} help_text_url={help_text_url} renderer={this}/>
                 )
                 break;
             case 'date':
                 _elements.push(
-                    <DateField name={c.name} label={c.label} value={val} id={id} comment_value={comment_val}  handleChange={this.handleFileChange} readonly={readonly} help_text={help_text} help_text_assessor={help_text_assessor} isRequired={c.isRequired} help_text_url={help_text_url} help_text_assessor_url={help_text_assessor_url}/>
+                    <DateField name={c.name} label={c.label} value={val} id={id} comment_value={comment_val}  handleChange={this.handleFileChange} readonly={readonly} help_text={help_text} isRequired={c.isRequired} help_text_url={help_text_url} renderer={this}/>
                 )
                 break;
             default:
@@ -332,13 +313,14 @@ module.exports = {
         return this.tabs_list;
     },
     status_data : {},
-    store_status_data(readonly,commentData,can_user_edit,docs_url, applicationId){
+    store_status_data(readonly, commentData, can_user_edit, docs_url, applicationId, application){
         this.status_data = {
             'readonly': readonly,
             'commentData': commentData,
             'can_user_edit': can_user_edit,
             'docs_url': docs_url,
             'applicationId': applicationId,
+            'application': application,
         }
     },
     getVisibility(h,c,readonly){
@@ -348,5 +330,20 @@ module.exports = {
         }
         _status.editable = readonly ? false : true;
         return _status;
-    }
+    },
+    canViewComments: function() {
+        return this.userHasRole('licensing_officer');
+    },
+    userHasRole: function(role, activity_id) {
+        if(this.status_data.application === undefined || this.status_data.application === null) {
+            return false;
+        }
+        const user_roles = this.status_data.application.user_roles;
+        if(user_roles === undefined || user_roles === null) {
+            return false;
+        }
+        return this.status_data.application.user_roles.filter(
+            role_record => role_record.role == role && (!activity_id || activity_id == role_record.activity_id)
+        ).length;
+    },
 }

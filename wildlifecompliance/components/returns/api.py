@@ -15,11 +15,13 @@ from wildlifecompliance.components.licences.models import (
 )
 from wildlifecompliance.components.returns.models import (
     Return,
+    ReturnType,
 )
 from wildlifecompliance.components.returns.serializers import (
     ReturnSerializer,
     ReturnActionSerializer,
-    ReturnCommsSerializer
+    ReturnCommsSerializer,
+    ReturnTypeSerializer,
 )
 
 
@@ -35,7 +37,9 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             user_orgs = [
                 org.id for org in user.wildlifecompliance_organisations.all()]
             user_licences = [wildlifelicence.id for wildlifelicence in WildlifeLicence.objects.filter(
-                Q(org_applicant_id__in=user_orgs) | Q(proxy_applicant=user) | Q(submitter=user))]
+                Q(current_application__org_applicant_id__in=user_orgs) |
+                Q(current_application__proxy_applicant=user) |
+                Q(current_application__submitter=user))]
             return Return.objects.filter(Q(licence_id__in=user_licences))
         return Return.objects.none()
 
@@ -44,15 +48,15 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         # Filter by org
         org_id = request.GET.get('org_id', None)
         if org_id:
-            queryset = queryset.filter(org_applicant_id=org_id)
+            queryset = queryset.filter(current_application__org_applicant_id=org_id)
         # Filter by proxy_applicant
         proxy_applicant_id = request.GET.get('proxy_applicant_id', None)
         if proxy_applicant_id:
-            queryset = queryset.filter(proxy_applicant_id=proxy_applicant_id)
+            queryset = queryset.filter(current_application__proxy_applicant_id=proxy_applicant_id)
         # Filter by submitter
         submitter_id = request.GET.get('submitter_id', None)
         if submitter_id:
-            queryset = queryset.filter(submitter_id=submitter_id)
+            queryset = queryset.filter(current_application__submitter_id=submitter_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -147,12 +151,19 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
     def sheet_details(self, request, *args, **kwargs):
         return_id = self.request.query_params.get('return_id')
         instance = Return.objects.get(id=return_id)
-        return Response(instance.sheet.data)
+        return Response(instance.sheet.table)
 
     @detail_route(methods=['POST', ])
     def save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            if instance.has_sheet:
+                try:
+                    species = request.data.get('species_id').encode('utf-8')
+                    data = eval(request.data.get('species_data').encode('utf-8'))
+                    instance.sheet.set_activity(species, data)
+                except AttributeError:
+                    pass
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -228,3 +239,18 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+class ReturnTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ReturnTypeSerializer
+    queryset = ReturnType.objects.none()
+
+    def get_queryset(self):
+        if is_internal(self.request):
+            return ReturnType.objects.all()
+        return ReturnType.objects.none()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

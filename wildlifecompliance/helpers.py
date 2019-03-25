@@ -37,7 +37,7 @@ def is_email_auth_backend(request):
 
 def is_wildlifecompliance_admin(request):
     return request.user.is_authenticated() and is_model_backend(request) and in_dbca_domain(
-        request) and ((belongs_to(request.user, 'Wildlife Compliance Admin')) or request.user.is_superuser)
+        request) and (request.user.has_perm('wildlifecompliance.system_administrator') or request.user.is_superuser)
 
 
 def in_dbca_domain(request):
