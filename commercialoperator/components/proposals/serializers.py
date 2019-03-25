@@ -21,7 +21,9 @@ from commercialoperator.components.proposals.models import (
                                     ProposalTrail,
                                     ProposalParkAccess,
                                     ProposalTrailSection,
-                                    ProposalTrailSectionActivity
+                                    ProposalTrailSectionActivity,
+                                    ProposalParkZoneActivity,
+                                    ProposalParkZone
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
@@ -75,10 +77,27 @@ class ProposalParkAccessSerializer(serializers.ModelSerializer):
         model = ProposalParkAccess
         fields = '__all__'
 
+class ProposalParkZoneActivitySerializer(serializers.ModelSerializer):
+    #activities=ProposalTrailSectionActivitySerializer(many=True)
+    class Meta:
+        model = ProposalParkZoneActivity
+        fields = ('activity',)
+        #fields = '__all__'
+
+class ProposalParkZoneSerializer(serializers.ModelSerializer):
+    # trail=TrailSerializer()
+    # sections=ProposalTrailSectionSerializer()
+    park_activities=ProposalParkZoneActivitySerializer(many=True)
+    class Meta:
+        model = ProposalParkZone
+        fields = ('zone','park_activities')
+        #fields = '__all__'
+
 class ProposalParkSerializer(serializers.ModelSerializer):
     park=ParkSerializer()
     land_activities=ProposalParkActivitySerializer(many=True)
-    marine_activities=ProposalParkActivitySerializer(many=True)
+    #marine_activities=ProposalParkActivitySerializer(many=True)
+    zones=ProposalParkZoneSerializer(many=True)
     access_types=ProposalParkAccessSerializer(many=True)
     class Meta:
         model = ProposalPark

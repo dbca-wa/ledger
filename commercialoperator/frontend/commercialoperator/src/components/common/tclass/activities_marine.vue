@@ -300,7 +300,46 @@ from '@/utils/hooks'
 
             vm.selected_activities = vm.find_recurring(activity_list)
             vm.selected_parks=park_list
-        }
+        },
+        store_parks2: function(parks){
+          let vm=this;
+          var all_activities=[] //to store all activities for all zones so can find recurring onees to display selected_activities
+          for (var i = 0; i < parks.length; i++) {
+              var current_park=parks[i].park.id
+              var current_activities=[]
+              var current_zones=[]
+              var park_list=[]
+              for (var j = 0; j < parks[i].zones.length; j++) {
+                var park_activities=[];
+                for (var k = 0; k < parks[i].zones[j].park_activities.length; k++) {
+                  park_activities.push(parks[i].zones[j].park_activities[k].activity);
+                }
+                var data_zone={
+                  'zone': parks[i].zones[j].zone,
+                  'activities': park_activities
+                }
+                current_activities.push(data_zone)
+                all_activities.push({'key': park_activities})
+                //current_zones.push(parks[i].zones[j].zone)
+              }
+               
+               var data={
+                'park': current_park,
+                'activities': current_activities 
+               }
+               vm.marine_parks_activities.push(data)
+               
+            }
+            
+          for (var i=0; i<parks.length; i++)
+            { 
+              
+              park_list.push({'park':parks[i].park.id, 'zones':parks[i].park.zone_ids})
+            }
+          vm.selected_parks=park_list
+          //console.log(park_list)
+          vm.selected_activities = vm.find_recurring(all_activities)
+        },
         },
         mounted: function(){
             let vm = this;
@@ -311,7 +350,7 @@ from '@/utils/hooks'
                    console.log(err);
             });
             vm.fetchParks(); 
-            //vm.store_parks(vm.proposal.marine_parks);
+            vm.store_parks2(vm.proposal.marine_parks);
         }
     }
 </script>
