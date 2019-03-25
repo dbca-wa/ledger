@@ -29,8 +29,7 @@ from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.helpers import is_customer, is_internal
-from wildlifecompliance.components.call_email.models import CallEmail
-
+from wildlifecompliance.components.call_email.models import CallEmail, Classification
 from wildlifecompliance.components.call_email.serializers import CallEmailSerializer, ClassificationSerializer
 
 
@@ -60,3 +59,55 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    # @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def call_email_save(self, request, *args, **kwargs):
+        # import ipdb; ipdb.set_trace()
+        try:
+            app_data = self.request.data
+            print(app_data)
+            if app_data.get('create_type') != 'call_email':
+                raise serializers.ValidationError('ERROR: Not type call_email')
+            else:
+                print(type(self))
+                print(app_data.get('status'))
+                print(app_data.get('classification'))
+                print(app_data.get('number'))
+                print(app_data.get('caller'))
+                print(app_data.get('assigned_to'))
+                # CallEmail.objects.create(status=app_data.get('status'), 
+                        # classification=(Classification.objects.filter(name=app_data.get('classification'))[0]),
+                        # number=app_data.get('number'),
+                        # caller=app_data.get('caller'),
+                        # assigned_to=app_data.get('assigned_to')
+                        #)
+        
+        except Exception as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e))
+
+    def create(self, request, *args, **kwargs):
+        print(request.data)
+        req_data = {
+                "status": request.data.get('status'),
+                "classification": {
+                    "name": request.data.get('classification')
+                    },
+                "lodgement_date": None,
+                "number": request.data.get('number'),
+                "caller": request.data.get('caller'),
+                "assigned_to": request.data.get('assigned_to')
+                }
+        print(req_data)
+        serializer = self.get_serializer(data=req_data)
+        serializer.is_valid(raise_exception=True)
+        print(serializer.is_valid())
+        print("serializer" + serializer)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        serializer.save()

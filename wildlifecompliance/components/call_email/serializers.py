@@ -17,7 +17,7 @@ class ClassificationSerializer(serializers.ModelSerializer):
 
 class CallEmailSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source='get_status_display')
-    classification = ClassificationSerializer(read_only=True)
+    classification = ClassificationSerializer()
     lodgement_date = serializers.CharField(
         source='lodged_on')
     
