@@ -240,6 +240,10 @@
             <div class="small-12 medium-9 large-6 columns">
                 <div class="alert alert-warning" style='text-align: center' role="alert" v-if="admissions_key" id="admissions_link"> <strong style='font-size: 16px;' ></span><a :href='"/admissions/" + admissions_key + "/"'>Click here for paying admission fees</a></strong><br><span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> (Only if you do not book a mooring) <span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> </div>
                 <div id="map"></div>
+                <div style='width: 100%' align='right'>
+	                <img id='satellite-toggle' class='map-toggle-white'  type='button'  @click="toggleMap('satellite');" src='./assets/img/satellite_icon.png'  >
+                        <img id='map-toggle' class='map-toggle-black'  type='button'  @click="toggleMap('map');" src='./assets/img/map_icon.png'  >
+		</div>
                 <div id="mapPopup" class="mapPopup" v-cloak>
                     <a href="#" id="mapPopupClose" class="mapPopupClose"></a>
                     <div id="mapPopupContent">
@@ -600,6 +604,35 @@
     .resultList {
         padding: 0;
     }
+
+    .map-toggle-black {
+       width: 80px;
+       height: 80px;
+       background-color: #FFFFFF;
+       color: black;
+       position: relative;
+       right: 10px;
+       top: -90px;
+       z-index: 300;
+       border: 2px solid #FFFFFF;
+       cursor: pointer;
+    border-radius: 2px;
+    box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
+    }
+    .map-toggle-white {
+       width: 80px;
+       height: 80px;
+       background-color: #FFFFFF;
+       color: black;
+       position: relative;
+       right: 10px;
+       top: -90px;
+       z-index: 300;
+       border: 2px solid #000000;
+       cursor: pointer;
+    border-radius: 2px;
+    box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
+    }
 }
 
 /* hacks to make awesomeplete play nice with F6 */
@@ -616,6 +649,7 @@ div.awesomplete > input {
     height: 2em;
     width: 2em;
 }
+
 
 </style>
 
@@ -1167,6 +1201,33 @@ export default {
                 }
                 return layerRemoved;
         },
+        toggleMap: function(current_selection) {
+	   var vm = this;
+           var map = this.olmap;
+           map.getLayers().forEach(function (layer) {
+             var name = layer.get('name');
+             if (name != undefined) {
+                var visible = layer.getVisible();
+                if (visible == false) {
+                    layer.setVisible(true);
+		}
+                if (visible == true) {
+                    layer.setVisible(false);
+                }
+
+             }
+   
+           });
+                if (current_selection == 'satellite') {
+                  $('#satellite-toggle').hide();
+                  $('#map-toggle').show();
+                } else {
+                  $('#satellite-toggle').show();
+                  $('#map-toggle').hide();
+                }
+
+
+	},
         updateFilter: function() {
             var vm = this;
             // make a lookup table of campground features to filter on
@@ -1494,7 +1555,7 @@ export default {
                     src: pin_type 
                 })),
             });
-            console.log("SET buildMarkerBookable");
+            // console.log("SET buildMarkerBookable");
             iconFeature.setStyle(iconStyle);
 
             var vectorSource = new ol.source.Vector({
@@ -1535,7 +1596,7 @@ export default {
 
 	         }))
 	    });
-            console.log("SET buildMarkerNotBookable");
+            // console.log("SET buildMarkerNotBookable");
 	    iconFeature.setStyle(iconStyle);
 	
 	    var vectorSource = new ol.source.Vector({
@@ -1591,7 +1652,7 @@ export default {
                         //          })
                         })
               });
-              console.log("SET buildMarkerGroup");
+              // console.log("SET buildMarkerGroup");
               iconFeature.setStyle(iconStyle);
 
               var vectorSource = new ol.source.Vector({
@@ -1820,7 +1881,8 @@ export default {
             source: new ol.source.WMTS({
                 url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                 format: 'image/png',
-                layer: 'public:mapbox-streets',
+        //        layer: 'public:mapbox-streets',
+                layer: 'public:mapbox-satellite',
                 matrixSet: this.matrixSet,
                 projection: this.projection,
                 tileGrid: tileGrid
@@ -2136,7 +2198,9 @@ export default {
         });
 
         this.streets = new ol.layer.Tile({
+            name: 'street',
             canDelete: "no",
+            visible: true,
             source: new ol.source.WMTS({
                 url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                 format: 'image/png',
@@ -2147,7 +2211,25 @@ export default {
             })
         });
 
+
+
+        this.satellite = new ol.layer.Tile({
+            name: 'satellite',
+            canDelete: "no",
+            visible: false,
+            source: new ol.source.WMTS({
+                url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
+                format: 'image/png',
+                layer: 'public:mapbox-satellite',
+                matrixSet: this.matrixSet,
+                projection: this.projection,
+                tileGrid: tileGrid
+            })
+        });
+
+
         this.tenure = new ol.layer.Tile({
+            name: 'tenure',
             canDelete: "no",
             opacity: 0.6,
             source: new ol.source.WMTS({
@@ -2339,6 +2421,7 @@ export default {
             }),
             layers: [
                 this.streets,
+                this.satellite,
                 this.tenure,
                 this.grounds,
                 this.posLayer
@@ -2346,6 +2429,7 @@ export default {
             overlays: [this.popup]
         });
 
+        $('#map-toggle').hide();
         // spawn geolocation tracker
         this.geolocation = new ol.Geolocation({
             tracking: true,

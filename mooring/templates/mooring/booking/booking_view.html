@@ -49,14 +49,10 @@
                     <b>Payment status:</b>
                 </div>
                 <div class="col-sm-8">
-                    {% if booking.status == 'Over Paid' %}
-                        Paid
-                    {% else %}
-                        {{ booking.status }}
-                    {% endif %} 
+                    {{ booking.invoice_status }}
                 </div>
             </div><div class="row"><div class="col-sm-12" style="margin-top: 1em">
-                {% if booking.status == 'Paid' or booking.status == 'Over Paid' %}
+                {% if booking.invoice_status == 'paid' or booking.invoice_status == 'over_paid' %}
                     {% if request.user == booking.customer or request.user.is_staff or request.session.ps_last_booking == booking.id %}
                         <a href="{% url 'get_confirmation' booking.id %}" class="btn btn-info btn-lg" target="_blank" >Confirmation</a>
                         {% if request.user.is_authenticated %}
