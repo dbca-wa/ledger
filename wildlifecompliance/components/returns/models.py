@@ -12,22 +12,26 @@ from wildlifecompliance.components.returns.email import send_external_submit_ema
 
 class ReturnType(models.Model):
     """
-    A Type to identify the method used to facilitate Return.
+    A definition to identify the format used to facilitate Return.
     """
     RETURN_TYPE_CHOICES = (('sheet', 'Sheet'),
                            ('question', 'Question'),
                            ('data', 'Data'))
 
-    Name = models.TextField(null=True, blank=True, max_length=200)
+    Name = models.CharField(null=True, blank=True, max_length=100)
+    description = models.TextField(null=True, blank=True, max_length=256)
     data_descriptor = JSONField()
-    return_type = models.CharField(
-        'Type',
+    data_format = models.CharField(
+        'Data format',
         max_length=30,
         choices=RETURN_TYPE_CHOICES,
         default=RETURN_TYPE_CHOICES[0][0])
+    replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    version = models.SmallIntegerField(default=1, blank=False, null=False)
 
     class Meta:
         app_label = 'wildlifecompliance'
+        unique_together = ('Name', 'version')
 
     @property
     def resources(self):
@@ -42,6 +46,9 @@ class ReturnType(models.Model):
     def get_schema_by_name(self, name):
         resource = self.get_resource_by_name(name)
         return resource.get('schema', {}) if resource else None
+
+    def __str__(self):
+        return '{} - v{}'.format(self.Name, self.version)
 
 
 class Return(models.Model):
@@ -123,12 +130,14 @@ class Return(models.Model):
         return self.return_type.data_descriptor.get('resources', [])
 
     @property
-    def type(self):
-        return self.return_type.Name
+    def format(self):
+        return self.return_type.data_format
 
     @property
     def table(self):
         tables = []
+        if self.format == 'sheet':
+            return tables
         for resource in self.return_type.resources:
             resource_name = resource.get('name')
             schema = Schema(resource.get('schema'))
@@ -141,7 +150,7 @@ class Return(models.Model):
                 }
                 if f.is_species:
                     header["species"] = f.species_type
-                    headers.append(header)
+                headers.append(header)
             table = {
                'name': resource_name,
                'title': resource.get('title', resource.get('name')),
@@ -180,7 +189,7 @@ class Return(models.Model):
         Property defining if the Return is Question based.
         :return: Boolean
         """
-        return True if self.return_type.Name == 'question' else False
+        return True if self.format == 'question' else False
 
     @property
     def has_data(self):
@@ -188,7 +197,7 @@ class Return(models.Model):
         Property defining if the Return is Data based.
         :return: Boolean
         """
-        return True if self.return_type.Name == 'data' else False
+        return True if self.format == 'data' else False
 
     @property
     def has_sheet(self):
@@ -196,7 +205,7 @@ class Return(models.Model):
         Property defining if the Return is Running Sheet based.
         :return: Boolean
         """
-        return True if self.return_type.Name == 'sheet' else False
+        return True if self.format == 'sheet' else False
 
     def log_user_action(self, action, request):
         return ReturnUserAction.log_action(self, action, request.user)
@@ -235,6 +244,9 @@ class Return(models.Model):
                     self.id), request)
             send_return_accept_email_notification(self, request)
 
+    def __str__(self):
+        return self.lodgement_number
+
 
 class ReturnData(object):
     """
@@ -244,7 +256,7 @@ class ReturnData(object):
         self._return = a_return
 
     def __str__(self):
-        return 'Return-Data-{0}'.format(self._return.id)
+        return self._return.lodgement_number
 
 
 class ReturnQuestion(object):
@@ -255,7 +267,7 @@ class ReturnQuestion(object):
         self._return = a_return
 
     def __str__(self):
-        return 'Return-Question-{0}'.format(self._return.id)
+        return self._return.lodgement_number
 
 
 class ReturnSheet(object):
@@ -275,16 +287,15 @@ class ReturnSheet(object):
     _NO_ACTIVITY = {"echo": 1, "totalRecords": "0", "totalDisplayRecords": "0", "data": []}
 
     _ACTIVITY_TYPES = {
-                    "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false"},
-                    "SA02": {"label": "In through import", "auto": "false", "licence": "false", "pay": "false"},
-                    "SA03": {"label": "In through birth", "auto": "false", "licence": "false", "pay": "false"},
-                    "SA04": {"label": "In through transfer", "auto": "true", "licence": "false", "pay": "false"},
-                    "SA05": {"label": "Out through export", "auto": "false", "licence": "false", "pay": "false"},
-                    "SA06": {"label": "Out through death", "auto": "false", "licence": "false", "pay": "false"},
-                    "SA07": {"label": "Out through transfer other", "auto": "false", "licence": "true", "pay": "true"},
-                    "SA08": {"label": "Out through transfer dealer", "auto": "false", "licence": "true", "pay": "false"},
-                    "": {"label": "", "auto": "false", "licence": "false", "pay": "false"}
-                      }
+        "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false"},
+        "SA02": {"label": "In through import", "auto": "false", "licence": "false", "pay": "false"},
+        "SA03": {"label": "In through birth", "auto": "false", "licence": "false", "pay": "false"},
+        "SA04": {"label": "In through transfer", "auto": "true", "licence": "false", "pay": "false"},
+        "SA05": {"label": "Out through export", "auto": "false", "licence": "false", "pay": "false"},
+        "SA06": {"label": "Out through death", "auto": "false", "licence": "false", "pay": "false"},
+        "SA07": {"label": "Out through transfer other", "auto": "false", "licence": "true", "pay": "true"},
+        "SA08": {"label": "Out through transfer dealer", "auto": "false", "licence": "true", "pay": "false"},
+        "": {"label": "", "auto": "false", "licence": "false", "pay": "false"}}
 
     _MOCK_LICENCE_SPECIES = ['S000001', 'S000002', 'S000003', 'S000004']
 
@@ -473,7 +484,7 @@ class ReturnSheet(object):
         return None
 
     def __str__(self):
-        return 'Return-Sheet-{0}'.format(self._return.id)
+        return self._return.lodgement_number
 
 
 class ReturnTable(RevisionedMixin):
