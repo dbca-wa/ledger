@@ -266,6 +266,10 @@ class Trail(models.Model):
     def section_ids(self):
         return [i.id for i in self.sections.all()]
 
+    @property
+    def allowed_activities_ids(self):
+        return [i.id for i in self.allowed_activities.all()]
+
 @python_2_unicode_compatible
 class Section(models.Model):
     name = models.CharField(max_length=200, blank=True)

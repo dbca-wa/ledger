@@ -22,6 +22,18 @@
                                     </div>
                                   </div>
                                 </div>
+                                <div class="form-group">
+                                <div class="row">
+                                    <div class="form-horizontal col-sm-9">
+                                        
+                                        <label class="control-label pull-left"  for="Name">Point of access</label>
+                                    </div>
+                                    <div class="form-horizontal col-sm-9">
+                                        <input class="form-control" name="access_point" ref="access_point" v-model="selected_zone.access_point" type="text">
+                                    </div>
+                                </div>
+                            </div>
+
                             </form> 
                         </div>
                     </form>
@@ -99,11 +111,13 @@ export default {
                         
                         var data={
                             'zone':vm.park.zones[j].id,
-                            'activities':vm.park.zones[j].new_activities
+                            'activities':vm.park.zones[j].new_activities,
+                            'access_point': vm.park.zones[j].access_point
                         }
                         new_activities.push(data)
                     
                 }
+                console.log(new_activities);
                 vm.$emit('refreshSelectionFromResponse',vm.park.id, new_activities);              
             vm.close(); 
         },
