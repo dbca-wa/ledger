@@ -125,7 +125,7 @@ export default {
                         //vm.$emit('refreshFromResponse',response);
                         Vue.http.get(`/api/proposal/${vm.proposal_id}/internal_proposal.json`).then((response)=>
                         {
-                            vm.$emit('refreshFromResponse',response);
+                            vm.$emit('refreshFromResponse',response, vm.documents);
                             
                         },(error)=>{
                             console.log(error);

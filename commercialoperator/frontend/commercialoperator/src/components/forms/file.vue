@@ -50,6 +50,7 @@
 
         </div>
         <Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value" :required="isRequired"/> 
+		<input type="text" name="document_list" :value="documents" style="display:none;">
     </div>
 </template>
 
@@ -182,6 +183,7 @@ export default {
                 .then(res=>{
                     vm.documents = res.body;
                     //console.log(vm.documents);
+					vm.$emit('refreshFromResponse',res);
                     vm.show_spinner = false;
                 });
 
@@ -229,6 +231,7 @@ export default {
             formData.append('input_name', vm.name);
             formData.append('filename', e.target.files[0].name);
             formData.append('_file', vm.uploadFile(e));
+            formData.append('document_list', vm.documents);
             formData.append('csrfmiddlewaretoken', vm.csrf_token);
 
             vm.$http.post(vm.proposal_document_action, formData)

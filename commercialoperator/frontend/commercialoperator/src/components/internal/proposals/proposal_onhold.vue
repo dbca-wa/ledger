@@ -37,8 +37,8 @@
                             <div class="row">
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
-                                        <FileField :proposal_id="proposal_id" isRepeatable="true" name="on_hold_file" label="Add Document" id="id_file"/>
                                         <TextArea :proposal_id="proposal_id" :readonly="readonly" name="on_hold_comments" label="Comments" id="id_comments" />
+                                        <FileField :proposal_id="proposal_id" isRepeatable="true" name="on_hold_file" label="Add Document" id="id_file" @refreshFromResponse="refreshFromResponse"/>
                                     </div>
                                 </div>
                             </div>
@@ -100,6 +100,15 @@ export default {
         }
     },
     methods:{
+        refreshFromResponse:function(response){
+            let vm = this;
+            vm.document_list = helpers.copyObject(response.body);
+            vm.document_res = helpers.copyObject(response);
+            //vm.$nextTick(() => {
+            //    vm.initialiseAssignedOfficerSelect(true);
+            //    vm.updateAssignedOfficerSelect();
+            //});
+        },
 
         readFile: function() {
             let vm = this;
@@ -128,7 +137,9 @@ export default {
                 onhold: 'True',
                 file_input_name: 'on_hold_file',
                 proposal_id: vm.proposal_id,
-                comments: form.elements['on_hold_comments'].value // getting the value from the text-area.vue field
+                onhold_comment: form.elements['on_hold_comments'].value, // getting the value from the text-area.vue field
+                document_list: JSON.stringify(vm.document_list),
+                document_list2: JSON.stringify(vm.document_res),
             }
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal_id+'/on_hold'),data,{
                 emulateJSON: true
