@@ -4,7 +4,7 @@
         <h3>Application: {{ application.lodgement_number }}</h3>
         <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
-            <div class="row" v-if="canSeeSubmission">
+            <div class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                        Submission 
@@ -63,7 +63,7 @@
                                 </div>
                             </div>
 
-                            <template v-if="application.processing_status.id == 'with_assessor_conditions' || application.processing_status.id == 'with_approver' || isFinalised">
+                            <template v-if="isFinalised">
                                 <div>
                                     <div class="col-sm-12">
                                         <strong>Application</strong><br/>
@@ -75,7 +75,7 @@
                                     </div>
                                 </div>
                             </template>
-                            <template v-if="application.processing_status.id == 'with_approver' || isFinalised">
+                            <template v-if="isFinalised">
                                 <div class="col-sm-12">
                                     <strong>Conditions</strong><br/>
                                     <a class="actionBtn" v-if="!showingConditions" @click.prevent="toggleConditions()">Show Conditions</a>
@@ -128,7 +128,7 @@
                                             <strong>Action</strong><br/>
                                         </div>
                                     </div>
-                                    <div v-if="isSendingToAssessor || isOfficerConditions || isFinalViewConditions || showingConditions || isofficerfinalisation"class="row">
+                                    <div v-if="!isFinalised && (isSendingToAssessor || isOfficerConditions || isFinalViewConditions || showingConditions || isofficerfinalisation)"class="row">
                                         <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back to Application</button><br/>
                                         </div>
@@ -162,7 +162,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row" style="margin-bottom:50px;">
+                    <div v-if="!isFinalised" class="row" style="margin-bottom:50px;">
                         <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                             <div class="navbar-inner">
                                 <div class="container">
@@ -862,9 +862,6 @@ export default {
                 return false;
             }
             return this.application && this.application.processing_status.id == 'under_review' && !this.isFinalised && !this.application.can_user_edit && this.application.user_in_licence_officers ? true : false;
-        },
-        canSeeSubmission: function(){
-            return this.application && (this.application.processing_status.id != 'with_assessor_conditions' && this.application.processing_status.id != 'with_approver' && !this.isFinalised)
         }
     },
     methods: {
