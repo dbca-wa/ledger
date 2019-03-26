@@ -802,7 +802,7 @@ export default {
             return this.hasActivityStatus('with_officer_conditions', 1, 'licensing_officer');
         },
         canCompleteAssessment: function(){
-            if(!this.userHasRole('assessor')) {
+            if(!this.userHasRole('assessor', this.selected_activity_tab_id)) {
                 return false;
             }
             return this.selected_activity_tab_id && this.selectedActivity.processing_status.id == 'with_assessor' ? true : false;
