@@ -2181,6 +2181,7 @@ def create_admissions_booking(request, *args, **kwargs):
 
     admissionsBooking.customer = customer
     admissionsBooking.totalCost = total
+    admissionsBooking.created_by = request.user
     admissionsBooking.save()
     admissionsLine.cost = total
     admissionsLine.save()
@@ -3068,7 +3069,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'num_infant' : guests['infants'],
                 'num_mooring' : guests['mooring'],
             }
-            
+
             data = utils.update_booking(request,instance,booking_details)
             serializer = BookingSerializer(data)
 
@@ -3101,6 +3102,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 value = itm[1]
                 detail[key] = value
             request.POST['details'] = detail
+ 
         serializer = self.get_serializer(booking, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()

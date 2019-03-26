@@ -993,6 +993,7 @@ class MakeBookingsView(TemplateView):
         if booking.customer is None:
             booking.customer = customer
         booking.cost_total = total
+        booking.created_by =  request.user
         booking.save()
 
 
