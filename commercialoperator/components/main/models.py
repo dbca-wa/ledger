@@ -284,6 +284,18 @@ class Section(models.Model):
         return self.name
 
 @python_2_unicode_compatible
+class RequiredDocument(models.Model):
+    question = models.TextField(blank=False)
+    activity = models.ForeignKey(Activity, blank=True)
+    park= models.ForeignKey(Park, blank=True)
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.id
+
+@python_2_unicode_compatible
 class ApplicationType(models.Model):
     name = models.CharField(max_length=64, unique=True)
     order = models.PositiveSmallIntegerField(default=0)

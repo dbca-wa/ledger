@@ -90,7 +90,7 @@ class ProposalParkZoneSerializer(serializers.ModelSerializer):
     park_activities=ProposalParkZoneActivitySerializer(many=True)
     class Meta:
         model = ProposalParkZone
-        fields = ('zone','park_activities')
+        fields = ('zone','access_point','park_activities')
         #fields = '__all__'
 
 class ProposalParkSerializer(serializers.ModelSerializer):

@@ -268,7 +268,7 @@ from '@/utils/hooks'
             let vm=this;
             //inserting a temporary variables checked and new_activities to store and display selected activities for each zone.
             for(var l=0; l<park.zones.length; l++){
-              //park.zones[l].checked=false;
+              console.log(park)
               park.zones[l].new_activities=[];
             }
 
@@ -278,7 +278,8 @@ from '@/utils/hooks'
                   for(var k=0; k<park.zones.length; k++){
                     if (park.zones[k].id==vm.marine_parks_activities[i].activities[j].zone){
                       //park.zones[k].checked=true;
-                      park.zones[k].new_activities=vm.marine_parks_activities[i].activities[j].activities
+                      park.zones[k].new_activities=vm.marine_parks_activities[i].activities[j].activities;
+                      park.zones[k].access_point=vm.marine_parks_activities[i].activities[j].access_point
                     }
                   }
                 } 
@@ -325,9 +326,11 @@ from '@/utils/hooks'
                 for (var k = 0; k < parks[i].zones[j].park_activities.length; k++) {
                   park_activities.push(parks[i].zones[j].park_activities[k].activity);
                 }
+
                 var data_zone={
                   'zone': parks[i].zones[j].zone,
-                  'activities': park_activities
+                  'activities': park_activities,
+                  'access_point': parks[i].zones[j].access_point
                 }
                 current_activities.push(data_zone)
                 all_activities.push({'key': park_activities})
