@@ -330,7 +330,7 @@ def _create_licence(licence_buffer, licence, application):
         # applicant details
         delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         if application.applicant_type == application.APPLICANT_TYPE_ORGANISATION:
-            address = application.org_applicant.postal_address
+            address = application.org_applicant.address
             pass
         elif application.applicant_type == application.APPLICANT_TYPE_PROXY:
             address = application.proxy_applicant.residential_address
