@@ -183,7 +183,7 @@
                     </div>
                     <div class="tab-content">
                         <div v-for="activity in getVisibleConditionsFor('licensing_officer', 'with_officer_conditions', selected_activity_tab_id)" :id="`${activity.id}`" class="tab-pane fade active in">
-                            <OfficerConditions :application="application" :licence_activity_tab="activity.id" :final_view_conditions="false" :key="`officer_condition_${selected_activity_tab_id}`"/>
+                            <OfficerConditions :application="application" :licence_activity_tab="`${activity.id}`" :final_view_conditions="false" :key="`officer_condition_${selected_activity_tab_id}`"/>
                         </div>
                     </div>
                 </template>
