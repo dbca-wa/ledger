@@ -157,15 +157,13 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
     def save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-
             if instance.has_sheet:
-                for species in instance.sheet.get_species_list():
-                    try:
-                        data = request.data.get(species).encode('utf-8')
-                        instance.sheet.set_table(species, data)
-                    except AttributeError:
-                        pass
-
+                try:
+                    species = request.data.get('species_id').encode('utf-8')
+                    data = eval(request.data.get('species_data').encode('utf-8'))
+                    instance.sheet.set_activity(species, data)
+                except AttributeError:
+                    pass
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
