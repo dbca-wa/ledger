@@ -2181,6 +2181,7 @@ def create_admissions_booking(request, *args, **kwargs):
 
     admissionsBooking.customer = customer
     admissionsBooking.totalCost = total
+    admissionsBooking.created_by = request.user
     admissionsBooking.save()
     admissionsLine.cost = total
     admissionsLine.save()
@@ -3068,7 +3069,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'num_infant' : guests['infants'],
                 'num_mooring' : guests['mooring'],
             }
-            
+
             data = utils.update_booking(request,instance,booking_details)
             serializer = BookingSerializer(data)
 
@@ -3101,6 +3102,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 value = itm[1]
                 detail[key] = value
             request.POST['details'] = detail
+ 
         serializer = self.get_serializer(booking, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -3893,6 +3895,30 @@ class GetProfile(views.APIView):
         data['is_payment_officer'] = is_payment_officer(user)
         data['groups'] = groups_text
         return JsonResponse(data)
+
+
+class GetProfileAdmin(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        # Check if the user has any address and set to residential address
+        if request.user.is_staff:
+            user = EmailUser.objects.get(email=request.GET.get('email_address'))
+            serializer  = UserSerializer(user)
+            data = serializer.data
+            groups = MooringAreaGroup.objects.filter(members__in=[user,])
+            groups_text = []
+            for group in groups:
+                groups_text.append(group.name)
+            data['is_inventory'] = is_inventory(user)
+            data['is_admin'] = is_admin(user)
+            data['is_payment_officer'] = is_payment_officer(user)
+            data['groups'] = groups_text
+            return JsonResponse(data)
+        else:
+            data['status'] = 'permission denied'
+            return JsonResponse(data)
 
 
 class UpdateProfilePersonal(views.APIView):

@@ -39,6 +39,7 @@
                   <th>Linked Admission</th>
 		  <th>Total</th>
                   <th>Booking Date</th>
+                  <th>Booked By</th>
                   <th>Invoices#</th>
                   <th>Ledger Payment</th>
 		</tr>
@@ -53,6 +54,8 @@
                       <td>{% if bh.booking.admission_payment %}<A HREF='/api/get_admissions_confirmation/{{ bh.booking.admission_payment.id }}'>AD{{ bh.booking.admission_payment.id }}{% endif %}</A></td>
                       <td style='color: {% if bh.booking.cost_total > 0 %}red{% elif  bh.booking.cost_total < 0 %}green{% endif %}'  >${{ bh.booking.cost_total }}</td>
                       <td>{{ bh.booking.created }}</td>
+                      <td>{{ bh.booking.created_by }}</td>
+
                       <td>{% for bi in bh.invoices %}
                             <A href='/mooring/payments/invoice-pdf/{{ bi.invoice_reference }}'><i style="color:red;" class="fa fa-file-pdf-o"></i>&nbsp;{{ bi.invoice_reference }}</A><BR>
  

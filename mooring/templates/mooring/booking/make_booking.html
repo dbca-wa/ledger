@@ -1076,8 +1076,35 @@
                 });
             }
             vm.calculateTotal();
-            console.log("FEE CHANGE");
-	    console.log(vm.booking_change_fees);
+            // console.log("FEE CHANGE");
+	    // console.log(vm.booking_change_fees);
+
+            $( "#id_email" ).change(function() {
+                var email = this.value;
+                $.ajax({
+                    url: "/api/profile-admin?email_address="+email,
+                    dataType: 'json',
+                    data: data,
+                    async: true,
+                    method: "GET",
+                    success: function(data, stat, xhr){
+                        $('#id_confirm_email').val(data['email']);
+                        $('#id_first_name').val(data['first_name']);
+                        $('#id_last_name').val(data['last_name']);
+                        if (data['mobile_number'] > 5) {
+				$('#id_phone').val(data['mobile_number']);
+			} else {
+ 				$('#id_phone').val(data['phone_number']);
+			}
+                        if (data['residential_address'] != null) {
+				$('#id_postcode').val(data['residential_address']['postcode']);
+                                $('#id_country').val(data['residential_address']['country']);
+                                
+			}
+                        console.log(data);
+                    }
+                });
+            });
         }
     });
 </script>
