@@ -519,17 +519,21 @@ class Application(RevisionedMixin):
 
     @property
     def licence_type_name(self):
-        first_activity = self.licence_purposes.first()
-        activity_category = self.licence_category_name
-        try:
-            activity = first_activity.licence_activity.short_name
-        except AttributeError:
-            activity = ''
-        purpose_list = ', '.join(self.licence_purposes.all().values_list('short_name', flat=True))
-        return ' {activity_category}{activity}{purpose_list}'.format(
-            activity_category="{} - ".format(activity_category) if activity_category else "",
-            activity=activity,
-            purpose_list=" ({})".format(purpose_list) if purpose_list else ''
+        from wildlifecompliance.components.licences.models import LicenceActivity
+        licence_category = self.licence_category_name
+        licence_activity_purposes = []
+        activity_id_list = self.licence_purposes.all().order_by('licence_activity_id').values_list('licence_activity_id', flat=True).distinct()
+        for activity_id in activity_id_list:
+            try:
+                activity_short_name = LicenceActivity.objects.get(id=activity_id).short_name
+            except AttributeError:
+                activity_short_name = ''
+            purpose_list = ', '.join(self.licence_purposes.filter(licence_activity_id=activity_id).values_list('short_name', flat=True))
+            licence_activity_purposes.append('{} ({})'.format(activity_short_name, purpose_list))
+        licence_activity_purposes_string = ', '.join(licence_activity_purposes)
+        return ' {licence_category}{activities_purposes}'.format(
+            licence_category="{} - ".format(licence_category) if licence_category else "",
+            activities_purposes="{}".format(licence_activity_purposes_string) if licence_activity_purposes_string else ''
         )
 
     @property
