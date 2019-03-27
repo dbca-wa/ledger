@@ -3897,6 +3897,36 @@ class GetProfile(views.APIView):
         return JsonResponse(data)
 
 
+class GetProfileAdmin(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        # Check if the user has any address and set to residential address
+        if request.user.is_staff:
+            print "USER"
+            user = EmailUser.objects.get(email=request.GET.get('email_address'))
+            print user
+            #user =
+            # if not user.residential_address:
+            #     user.residential_address = user.profile_addresses.first() if user.profile_addresses.all() else None
+            #     user.save()
+            serializer  = UserSerializer(user)
+            data = serializer.data
+            groups = MooringAreaGroup.objects.filter(members__in=[user,])
+            groups_text = []
+            for group in groups:
+                groups_text.append(group.name)
+            data['is_inventory'] = is_inventory(user)
+            data['is_admin'] = is_admin(user)
+            data['is_payment_officer'] = is_payment_officer(user)
+            data['groups'] = groups_text
+            return JsonResponse(data)
+        else:
+            data['status'] = 'permission denied'
+            return JsonResponse(data)
+
+
 class UpdateProfilePersonal(views.APIView):
     renderer_classes = [JSONRenderer,]
     permission_classes = [IsAuthenticated]
