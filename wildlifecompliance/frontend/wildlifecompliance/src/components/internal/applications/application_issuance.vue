@@ -168,6 +168,7 @@ import {
     helpers
 }
 from '@/utils/hooks'
+import { mapGetters } from 'vuex'
 
 export default {
     name: 'InternalApplicationIssuance',
@@ -197,16 +198,14 @@ export default {
     watch:{
     },
     computed:{
+        ...mapGetters([
+            'licenceActivities',
+        ]),
         canIssueOrDecline: function() {
             return this.licence.id_check && this.licence.character_check && this.visibleLicenceActivities.length;
         },
         visibleLicenceActivities: function() {
-            const finalisingActivities = this.application.licence_type_data.activity.filter(
-                activity => ['with_officer_finalisation'].includes(activity.processing_status.id)
-            ).map(activity => activity.id);
-            return this.licence.activity.filter(
-                activity => finalisingActivities.includes(activity.id) && this.userHasRole('issuing_officer', activity.id)
-            );
+            return this.licenceActivities('with_officer_finalisation', 'issuing_officer');
         },
         isIdCheckAccepted: function(){
             return this.application.id_check_status.id == 'accepted';

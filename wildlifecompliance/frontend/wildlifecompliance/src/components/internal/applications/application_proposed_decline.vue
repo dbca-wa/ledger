@@ -52,6 +52,7 @@
 import modal from '@vue-utils/bootstrap-modal.vue'
 import alert from '@vue-utils/alert.vue'
 import {helpers,api_endpoints} from "@/utils/hooks.js"
+import { mapGetters } from 'vuex'
 export default {
     name:'ProposedDecline',
     components:{
@@ -59,22 +60,6 @@ export default {
         alert
     },
     props:{
-            application_id:{
-                type:Number,
-                required: true
-            },
-            processing_status:{
-                type:Object,
-                required: true
-            },
-            application_licence_type:{
-                type:Object,
-                required:true
-            },
-            application: {
-                type: Object,
-                required: true
-            }
     },
     data:function () {
         let vm = this;
@@ -96,6 +81,12 @@ export default {
         }
     },
     computed: {
+        ...mapGetters([
+            'application_id',
+            'licence_type_data',
+            'hasRole',
+            'licenceActivities',
+        ]),
         showError: function() {
             var vm = this;
             return vm.errors;
@@ -104,10 +95,7 @@ export default {
             return 'Proposed Decline';
         },
         visibleLicenceActivities: function() {
-            return this.application.licence_type_data.activity.filter(
-                activity => ['with_officer_conditions'].includes(activity.processing_status.id)
-                    && activity.name && this.userHasRole('licensing_officer', activity.id)
-            )
+            return this.licenceActivities('with_officer_conditions', 'licensing_officer');
         },
     },
     methods:{
@@ -137,7 +125,7 @@ export default {
             let propose_decline = JSON.parse(JSON.stringify(vm.propose_decline));
             vm.decliningApplication = true;
             if (propose_decline.activity.length > 0){
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application_id+'/proposed_decline'),JSON.stringify(propose_decline),{
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,this.application_id+'/proposed_decline'),JSON.stringify(propose_decline),{
                         emulateJSON:true,
                     }).then((response)=>{
                         swal(
@@ -194,9 +182,7 @@ export default {
             let vm = this;
         },
         userHasRole: function(role, activity_id) {
-            return this.application.user_roles.filter(
-                role_record => role_record.role == role && (!activity_id || activity_id == role_record.activity_id)
-            ).length;
+            return this.hasRole(role, activity_id);
         },
    },
    mounted:function () {

@@ -8,6 +8,7 @@ import bs from 'bootstrap'
 import helpers from '@/utils/helpers'
 import hooks from './packages'
 import api_endpoints from './api'
+import store from './store'
 require( '../node_modules/bootstrap/dist/css/bootstrap.css' );
 //require('../node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css')
 require( '../node_modules/font-awesome/css/font-awesome.min.css' )
@@ -43,6 +44,7 @@ Vue.filter('toCurrency', function(value) {
 Vue.prototype.current_tab = '';
 window.vue = new Vue( {
     el: '#app',
+    store,
     router,
     template: '<App/>',
     components: {
