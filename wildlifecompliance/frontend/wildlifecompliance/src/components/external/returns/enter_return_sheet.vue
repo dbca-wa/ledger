@@ -121,8 +121,9 @@ export default {
                 data: null
             }],
         },
-        fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
-                          'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
+        fullSpeciesList: {'': ''},
+        //fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
+        //                  'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
         returnTab: 'returnTab'+vm._uid,
         form: null,
         isModalOpen: false,
@@ -196,7 +197,6 @@ export default {
   },
   methods: {
     save: function(e) {
-      console.log('save func')
       let vm = this;
       vm.form=document.forms.enter_return_sheet;
       let data = new FormData(vm.form);
@@ -222,7 +222,6 @@ export default {
                     });
     },
     addSpecies: function(e) {
-      console.log('AddSpecies function')
       let vm = this;
       vm.form=document.forms.enter_return_sheet;
       let data = new FormData(vm.form);
@@ -276,7 +275,6 @@ export default {
     },
   },
   beforeRouteEnter: function(to, from, next) {
-    console.log('BEFORE-ROUTE func()')
     Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
         next(vm => {
            vm.returns = res.body;
@@ -291,7 +289,6 @@ export default {
     });
   },
   mounted: function(){
-     console.log('MOUNTED func')
      let vm = this;
      vm.form = document.forms.enter_return_sheet;
 

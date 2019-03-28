@@ -139,46 +139,23 @@ export default {
   },
   methods: {
     save: function(e) {
-      console.log('SAVE func()')
       let vm = this;
       vm.form=document.forms.enter_return
       let data = new FormData(vm.form);
-      console.log(data)
-      console.log(JSON.stringify(data))
-      // console.log('printing table name')
-      // console.log(vm.returns.table[0].name)
-      // data.returns_name=vm.returns.table[0].name
-      // data.id=vm.returns.id
-      // data.application=vm.returns.application
-      // data.table=vm.returns.table
-
-      // $('.returns').each((i,d) => {
-      //   console.log( $(d).data('species'))
-
-      // })
-
-       // vm.$http.post('/api/returns.json',JSON.stringify(returns),{
-      console.log('TEST')
-      console.log(vm.returns.spreadsheet)
       if (vm.returns.spreadsheet == 'no') {
-        console.log('not entered spreadsheet')
-        vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/update_details'),data,{
-		emulateJSON:true,
-	    }).then((response)=>{
-		swal(
-		     'Sent',
-		     'successful returns',
-		     'success'
-		);
-
-	    },(error)=>{
-		console.log(error);
-		swal(
-		     'error',
-		     'Enter data in correct format',
-		     'error'
-		);
-	    });
+          vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/update_details'),data,{
+      		  emulateJSON:true,
+	        }).then((response)=>{
+		        swal( 'Sent',
+		              'successful returns',
+		              'success'
+		        );
+	        },(error)=>{
+		        swal( 'error',
+		              'Enter data in correct format',
+		              'error'
+          	);
+	        });
       }
       if (vm.returns.spreadsheet == 'yes') {
         data.append('spreadsheet', vm.spreadsheet)
@@ -208,17 +185,14 @@ export default {
         _file = input.files[0];
       }
       vm.spreadsheet = _file;
-      console.log(vm.spreadsheet)
     },
     addRow: function(e) {
-      console.log('ADD ROW')
       let vm = this;
       let dataObj = Object.assign({}, vm.returns.table[0].data[0]);
       for(let key in dataObj) { dataObj[key] = '' };
       vm.returns.table[0].data.push(dataObj);
     },
     buildRow: function(e) {
-      console.log('BUILD ROW')
       let vm = this;
       let dataObj = vm.returns.table[0].data[0];
       let dataHdr = vm.returns.table[0].headers[0];
@@ -231,29 +205,13 @@ export default {
         LATITUDE: ''
       };
       Object.assign(vm.returns.table[0].data[0], data);
-      console.log(vm.returns.table[0].data[0]);
     },
     submit: function(e) {
-      console.log('SUBMIT func()')
       let vm = this;
       vm.form=document.forms.enter_return
       let data = new FormData(vm.form);
-      // console.log('printing table name')
-      // console.log(vm.returns.table[0].name)
-      // data.returns_name=vm.returns.table[0].name
-      // data.id=vm.returns.id
-      // data.application=vm.returns.application
-      // data.table=vm.returns.table
 
-      // $('.returns').each((i,d) => {
-      //   console.log( $(d).data('species'))
-
-      // })
-
-      
-
-       // vm.$http.post('/api/returns.json',JSON.stringify(returns),{
-        vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/update_details'),data,{
+      vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/update_details'),data,{
                         emulateJSON:true,
                     }).then((response)=>{
                         swal(
@@ -273,12 +231,18 @@ export default {
     },
   },
   beforeRouteEnter: function(to, from, next) {
-    console.log('BEFORE-ROUTE func()')
-    console.log(to.params)
+
      Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
         next(vm => {
            vm.returns = res.body;
            console.log(vm.returns)
+           vm.returns.nil = 'yes'
+           vm.returns.nil_return = true
+           if (vm.returns.table[0]) {
+             vm.returns.nil = 'no'
+             vm.returns.nil_return = false
+             vm.returns.spreadsheet = 'no'
+           }
         //   vm.buildRow()
         // TODO: set return button if requires payment.
         // if (vm.returns.requires_pay)
@@ -290,12 +254,8 @@ export default {
      });
    },
    mounted: function(){
-       console.log('MOUNTED func()')
         let vm = this;
         vm.form = document.forms.enter_return;
-        console.log("from mounted")
-        console.log(vm.form)
-            
     },
 
 }

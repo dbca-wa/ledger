@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from django.db import models, transaction
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
+from django.core.exceptions import FieldError
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from wildlifecompliance.components.returns.utils_schema import Schema
 from wildlifecompliance.components.applications.models import ApplicationCondition, Application
@@ -12,22 +13,26 @@ from wildlifecompliance.components.returns.email import send_external_submit_ema
 
 class ReturnType(models.Model):
     """
-    A Type to identify the method used to facilitate Return.
+    A definition to identify the format used to facilitate Return.
     """
     RETURN_TYPE_CHOICES = (('sheet', 'Sheet'),
                            ('question', 'Question'),
                            ('data', 'Data'))
 
-    Name = models.TextField(null=True, blank=True, max_length=200)
+    Name = models.CharField(null=True, blank=True, max_length=100)
+    description = models.TextField(null=True, blank=True, max_length=256)
     data_descriptor = JSONField()
-    return_type = models.CharField(
-        'Type',
+    data_format = models.CharField(
+        'Data format',
         max_length=30,
         choices=RETURN_TYPE_CHOICES,
         default=RETURN_TYPE_CHOICES[0][0])
+    replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    version = models.SmallIntegerField(default=1, blank=False, null=False)
 
     class Meta:
         app_label = 'wildlifecompliance'
+        unique_together = ('Name', 'version')
 
     @property
     def resources(self):
@@ -43,10 +48,13 @@ class ReturnType(models.Model):
         resource = self.get_resource_by_name(name)
         return resource.get('schema', {}) if resource else None
 
+    def __str__(self):
+        return '{} - v{}'.format(self.Name, self.version)
+
 
 class Return(models.Model):
     """
-    A number of requirements relating to a Licence condition.
+    A number of requirements relating to a Licence condition recorded during the Licence period.
     """
     PROCESSING_STATUS_CHOICES = (('due', 'Due'),
                                  ('overdue', 'Overdue'),
@@ -123,12 +131,14 @@ class Return(models.Model):
         return self.return_type.data_descriptor.get('resources', [])
 
     @property
-    def type(self):
-        return self.return_type.Name
+    def format(self):
+        return self.return_type.data_format
 
     @property
     def table(self):
         tables = []
+        if self.format == 'sheet':
+            return tables
         for resource in self.return_type.resources:
             resource_name = resource.get('name')
             schema = Schema(resource.get('schema'))
@@ -141,7 +151,7 @@ class Return(models.Model):
                 }
                 if f.is_species:
                     header["species"] = f.species_type
-                    headers.append(header)
+                headers.append(header)
             table = {
                'name': resource_name,
                'title': resource.get('title', resource.get('name')),
@@ -170,9 +180,25 @@ class Return(models.Model):
     def sheet(self):
         """
         A Running sheet of Return data.
-        :return: ReturnSheet with activity data for species.
+        :return: ReturnSheet with activity data for Licence species.
         """
         return ReturnSheet(self) if self.has_sheet else None
+
+    @property
+    def data(self):
+        """
+        Return data.
+        :return: Details of activities relating to Licence species.
+        """
+        return ReturnData(self) if self.has_data else None
+
+    @property
+    def question(self):
+        """
+        Questionnaire of Return data.
+        :return: Questionnaire on activities relating to Licence species.
+        """
+        return ReturnQuestion(self) if self.has_question else None
 
     @property
     def has_question(self):
@@ -180,7 +206,7 @@ class Return(models.Model):
         Property defining if the Return is Question based.
         :return: Boolean
         """
-        return True if self.return_type.Name == 'question' else False
+        return True if self.format == 'question' else False
 
     @property
     def has_data(self):
@@ -188,7 +214,7 @@ class Return(models.Model):
         Property defining if the Return is Data based.
         :return: Boolean
         """
-        return True if self.return_type.Name == 'data' else False
+        return True if self.format == 'data' else False
 
     @property
     def has_sheet(self):
@@ -196,10 +222,7 @@ class Return(models.Model):
         Property defining if the Return is Running Sheet based.
         :return: Boolean
         """
-        return True if self.return_type.Name == 'sheet' else False
-
-    def log_user_action(self, action, request):
-        return ReturnUserAction.log_action(self, action, request.user)
+        return True if self.format == 'sheet' else False
 
     def set_submitted(self, request):
         with transaction.atomic():
@@ -235,6 +258,36 @@ class Return(models.Model):
                     self.id), request)
             send_return_accept_email_notification(self, request)
 
+    def store(self, request):
+        """
+        Save the current state of the Return.
+        :param request:
+        :return:
+        """
+        pass
+
+    def submit(self, request):
+        """
+        Submit Return to Curator.
+        :param request:
+        :return:
+        """
+        pass
+
+    def amend(self, request):
+        """
+        Request amendment for Return.
+        :param request:
+        :return:
+        """
+        pass
+
+    def log_user_action(self, action, request):
+        return ReturnUserAction.log_action(self, action, request.user)
+
+    def __str__(self):
+        return self.lodgement_number
+
 
 class ReturnData(object):
     """
@@ -243,8 +296,98 @@ class ReturnData(object):
     def __init__(self, a_return):
         self._return = a_return
 
+    @property
+    def table(self):
+        """
+        Data Table of record information for Species.
+        :return: formatted data.
+        """
+        return self._return.table()
+
+    def store(self, request):
+        """
+        Save the current state of this Return Data.
+        :param request:
+        :return:
+        """
+        for key in request.POST.keys():
+            if key == "nilYes":
+                self._return.nil_return = True
+                self._return.comments = request.data.get('nilReason')
+                self._return.save()
+            if key == "nilNo":
+                returns_tables = request.data.get('table_name')
+                if self._is_post_data_valid(returns_tables.encode('utf-8'), request.POST):
+                    self._create_return_data_from_post_data(returns_tables.encode('utf-8'), request.POST)
+                else:
+                    raise FieldError('Enter data in correct format.')
+
+    def _is_post_data_valid(self, tables_info, post_data):
+        """
+        Validates table data against the schema,
+        :param tables_info:
+        :param post_data:
+        :return:
+        """
+        table_rows = self._get_table_rows_from_post(tables_info, post_data)
+        if len(table_rows) == 0:
+            return False
+        schema = Schema(self._return.return_type.get_schema_by_name(tables_info))
+        if not schema.is_all_valid(table_rows):
+            return False
+        return True
+
+    def _get_table_rows_from_post(self, table_name, post_data):
+        """
+        Build row of data.
+        :param table_name:
+        :param post_data:
+        :return:
+        """
+        table_namespace = table_name + '::'
+        by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(
+            key)) for key in post_data.keys() if key.startswith(table_namespace)])
+        # by_column is of format {'col_header':[row1_val, row2_val,...],...}
+        num_rows = len(
+            list(
+                by_column.values())[0]) if len(
+            by_column.values()) > 0 else 0
+        rows = []
+        for row_num in range(num_rows):
+            row_data = {}
+            for key, value in by_column.items():
+                row_data[key] = value[row_num]
+            # filter empty rows.
+            is_empty = True
+            for value in row_data.values():
+                if len(value.strip()) > 0:
+                    is_empty = False
+                    break
+            if not is_empty:
+                rows.append(row_data)
+        return rows
+
+    def _create_return_data_from_post_data(self, tables_info, post_data):
+        """
+        Writes to db.
+        :param tables_info:
+        :param post_data:
+        :return:
+        """
+        rows = self._get_table_rows_from_post(tables_info, post_data)
+        if rows:
+            return_table = ReturnTable.objects.get_or_create(
+                name=tables_info, ret=self._return)[0]
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in rows]
+            ReturnRow.objects.bulk_create(return_rows)
+
     def __str__(self):
-        return 'Return-Data-{0}'.format(self._return.id)
+        return self._return.lodgement_number
 
 
 class ReturnQuestion(object):
@@ -254,8 +397,24 @@ class ReturnQuestion(object):
     def __init__(self, a_return):
         self._return = a_return
 
+    @property
+    def table(self):
+        """
+        Table of questions for Species. Defaults to a Species on the Return if exists.
+        :return: formatted data.
+        """
+        return self._return.table
+
+    def store(self, request):
+        """
+        Save the current state of the Return.
+        :param request:
+        :return:
+        """
+        pass
+
     def __str__(self):
-        return 'Return-Question-{0}'.format(self._return.id)
+        return self._return.lodgement_number
 
 
 class ReturnSheet(object):
@@ -275,24 +434,20 @@ class ReturnSheet(object):
     _NO_ACTIVITY = {"echo": 1, "totalRecords": "0", "totalDisplayRecords": "0", "data": []}
 
     _ACTIVITY_TYPES = {
-                    "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false"},
-                    "SA02": {"label": "In through import", "auto": "false", "licence": "false", "pay": "false"},
-                    "SA03": {"label": "In through birth", "auto": "false", "licence": "false", "pay": "false"},
-                    "SA04": {"label": "In through transfer", "auto": "true", "licence": "false", "pay": "false"},
-                    "SA05": {"label": "Out through export", "auto": "false", "licence": "false", "pay": "false"},
-                    "SA06": {"label": "Out through death", "auto": "false", "licence": "false", "pay": "false"},
-                    "SA07": {"label": "Out through transfer other", "auto": "false", "licence": "true", "pay": "true"},
-                    "SA08": {"label": "Out through transfer dealer", "auto": "false", "licence": "true", "pay": "false"},
-                    "": {"label": "", "auto": "false", "licence": "false", "pay": "false"}
-                      }
-
-    _MOCK_LICENCE_SPECIES = ['S000001', 'S000002', 'S000003', 'S000004']
+        "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false"},
+        "SA02": {"label": "In through import", "auto": "false", "licence": "false", "pay": "false"},
+        "SA03": {"label": "In through birth", "auto": "false", "licence": "false", "pay": "false"},
+        "SA04": {"label": "In through transfer", "auto": "true", "licence": "false", "pay": "false"},
+        "SA05": {"label": "Out through export", "auto": "false", "licence": "false", "pay": "false"},
+        "SA06": {"label": "Out through death", "auto": "false", "licence": "false", "pay": "false"},
+        "SA07": {"label": "Out through transfer other", "auto": "false", "licence": "true", "pay": "true"},
+        "SA08": {"label": "Out through transfer dealer", "auto": "false", "licence": "true", "pay": "false"},
+        "": {"label": "", "auto": "false", "licence": "false", "pay": "false"}}
 
     def __init__(self, a_return):
         self._return = a_return
         self._return.return_type.data_descriptor = self._SHEET_SCHEMA
         self._species_list = []
-        self._licence_species_list = []
         self._table = {'data': None}
         # build list of currently added Species.
         self._species = self._DEFAULT_SPECIES
@@ -300,7 +455,7 @@ class ReturnSheet(object):
             self._species_list.append(_species.name)
             self._species = _species.name
         # build list of Species available on Licence.
-        self._licence_species_list = self._MOCK_LICENCE_SPECIES
+        self._licence_species_list = []
 
     def _get_table_rows(self, _data):
         """
@@ -472,8 +627,21 @@ class ReturnSheet(object):
         """
         return None
 
+    def store(self, request):
+        """
+        Save the current state of this Return Sheet.
+        :param request:
+        :return:
+        """
+        try:
+            species = request.data.get('species_id').encode('utf-8')
+            data = eval(request.data.get('species_data').encode('utf-8'))
+            self.set_activity(species, data)
+        except AttributeError:
+            pass
+
     def __str__(self):
-        return 'Return-Sheet-{0}'.format(self._return.id)
+        return self._return.lodgement_number
 
 
 class ReturnTable(RevisionedMixin):

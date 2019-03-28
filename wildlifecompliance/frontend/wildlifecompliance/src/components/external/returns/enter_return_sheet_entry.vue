@@ -107,8 +107,9 @@ export default {
             isPayable: false,
             isSubmitable: false,
             activityList: {'null': {'label': null}},
-            fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
-                              'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
+            fullSpeciesList: {'':''}
+        //    fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
+        //                      'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
         }
     },
     computed: {
@@ -124,7 +125,6 @@ export default {
     },
     methods:{
         update:function () {
-            console.log('update function')
             var vm = this;
 
             if (vm.isAddEntry) {
@@ -155,11 +155,9 @@ export default {
             vm.close();
         },
         cancel:function () {
-            console.log('cancel function')
             this.close()
         },
         close:function () {
-            console.log('close function')
             var vm = this;
             vm.isChangeEntry = false;
             vm.isAddEntry = false;
@@ -170,7 +168,6 @@ export default {
         }
     },
     mounted:function () {
-        console.log('modal Mounted');
         let vm = this;
     }
 }
