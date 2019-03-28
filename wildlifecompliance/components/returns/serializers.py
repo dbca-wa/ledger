@@ -48,7 +48,7 @@ class ReturnSerializer(serializers.ModelSerializer):
             'table',
             'condition',
             'text',
-            'type',
+            'format',
             'licence_species_list',
             'sheet_activity_list',
             'sheet_species_list',
@@ -104,7 +104,7 @@ class ReturnTypeSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'resources',
-            'return_type',
+            'data_format',
         )
 
 

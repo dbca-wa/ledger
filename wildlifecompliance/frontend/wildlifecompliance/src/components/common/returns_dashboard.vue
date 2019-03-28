@@ -137,9 +137,9 @@ export default {
                             let links = '';
 
                             links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;
-                            if (full.type == 'sheet') {
+                            if (full.format == 'sheet') {
                               links +=  `<a href='/external/return/sheet/${full.id}'>Continue</a><br/>`;
-                            } else if (full.type == 'question') {
+                            } else if (full.format == 'question') {
                               links +=  `<a href='/external/return/question/${full.id}'>Continue</a><br/>`;
                             } else {
                               links +=  `<a href='/external/return/${full.id}'>Continue</a><br/>`;
