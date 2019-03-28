@@ -1,47 +1,54 @@
 <template>
     <div class="container" id="internalCallEmailDash">
-        <div class="row">
-
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label for="">Call/Email status</label>
-                    <select class="form-control" v-model="filterCall">
-                        <option value="All">All</option>
-                        <option v-for="c in callChoices" :value="c">{{c}}</option>
-                    </select>
+        <form class="form-horizontal" name="createForm" method="get">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="">Call/Email status</label>
+                        <select class="form-control" v-model="filterCall">
+                            <option value="All">All</option>
+                            <option v-for="c in callChoices" :value="c">{{ c }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="">Call/Email classification</label>
+                        <select class="form-control" v-model="filterClassification">
+                            <option value="All">All</option>
+                            <option v-for="i in classificationChoices" :value="i">{{ i }}</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label for="">Call/Email classification</label>
-                    <select class="form-control" v-model="filterClassification">
-                        <option value="All">All</option>
-                        <option v-for="i in classificationChoices" :key="i.id">{{ i.name }}</option>
-                    </select>
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="">Lodged From</label>
+                    <div class="input-group date" ref="lodgementDateFromPicker">
+                        <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedFrom">
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="">Lodged To</label>
+                    <div class="input-group date" ref="lodgementDateToPicker">
+                        <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedTo">
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <button @click.prevent="createCallEmailUrl"
+                        class="btn btn-primary pull-right">New Call/Email</button>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-md-3">
-                <label for="">Lodged From</label>
-                <div class="input-group date" ref="lodgementDateFromPicker">
-                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedFrom">
-                    <span class="input-group-addon">
-                        <span class="glyphicon glyphicon-calendar"></span>
-                    </span>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <label for="">Lodged To</label>
-                <div class="input-group date" ref="lodgementDateToPicker">
-                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedTo">
-                    <span class="input-group-addon">
-                        <span class="glyphicon glyphicon-calendar"></span>
-                    </span>
-                </div>
-            </div>
-        </div>
+        </form>
+                
         <p></p>
+        
         <div class="row">
             <div class="col-lg-12">
                 <datatable ref="call_email_table" id="call-email-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders" />
@@ -125,6 +132,8 @@
 
                     initComplete: function () {
                         var callColumn = vm.$refs.call_email_table.vmDataTable.columns(0);
+                        //vm.bbVar = callColumn;
+                        //console.log(vm.bbVar);
                         callColumn.data().unique().sort().each(function (d, j) {
                             let call_choices = [];
                             $.each(d, (index, a) => {
@@ -132,15 +141,19 @@
                                 '';
                             })
                             vm.callChoices = call_choices;
+                            //console.log(vm.classificationChoices);
                         });
                         var classificationColumn = vm.$refs.call_email_table.vmDataTable.columns(1);
+                        //vm.bbVar = classificationColumn.data().eq(2);
+                        //console.log(vm.bbVar);
                         classificationColumn.data().unique().sort().each(function (d, j) {
                             let classification_choices = [];
                             $.each(d, (index, a) => {
-                                a != null && classification_choices.indexOf(a) < 0 ?
-                                    classification_choices.push(a) : '';
+                                a['name'] != null && classification_choices.indexOf(a['name']) < 0 ?
+                                    classification_choices.push(a['name']) : '';
                             })
                             vm.classificationChoices = classification_choices;
+                            //console.log(vm.classificationChoices);
                         });
                     }
 
@@ -170,7 +183,7 @@
             filterClassification: function () {
                 let vm = this;
                 if (vm.filterClassification != 'All') {
-                    vm.$refs.call_email_table.vmDataTable.columns(1).search(vm.filterClassification).draw();
+                    vm.$refs.call_email_table.vmDataTable.columns(1).search(vm.filterClassification, false).draw();
                 } else {
                     vm.$refs.call_email_table.vmDataTable.columns(1).search('').draw();
                 }
@@ -201,9 +214,17 @@
         computed: {
             isLoading: function () {
                 return this.loading.length == 0;
-            }
+            },
+            
         },
         methods: {
+            createCallEmailUrl: function () {
+                //return `<a href="/api/call_email/create_call_email"/>`;
+                this.$router.push({
+                    //name: 'external-proposals-dash'
+                    name: 'internal-create-call-email' // defined in ../src/components/internal/routes/index.js
+                });
+            },
             addEventListeners: function () {
                 let vm = this;
                 // Initialise Application Date Filters

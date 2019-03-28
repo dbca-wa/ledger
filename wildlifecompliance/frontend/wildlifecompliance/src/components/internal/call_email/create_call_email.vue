@@ -25,7 +25,7 @@
                             <div class="col-sm-12">
                                 <div class="row">
                                     <label class="col-sm-4">Lodgment Date</label>
-                                    <input type="text" name="lodgement_date" v-model="lodgement_date">
+                                    <input type="date" name="lodgement_date" v-model="lodgement_date">
                                 </div>
                             </div>
                             -->
@@ -48,7 +48,7 @@
                                 </div>
                             </div>
                             <div class="col-sm-12">
-                                <button v-if="!savingCallEmail" @click.prevent="save"
+                                <button v-if="!savingCallEmail" @click.prevent="createCallEmail"
                                     class="btn btn-primary pull-right">BB
                                     Save</button>
                                 <button v-if="!savingCallEmail" @click.prevent="save_exit"
@@ -109,10 +109,17 @@
                 //return (this.call_email_id) ? `/api/call_email/${this.call_email_id}/draft.json` : '';
                 //return (this.callEmailId) ? `/api/call_email/${this.callEmailIid}/call_email_save.json` : '';
                 //return (`/api/call_email/${this.callEmailId}/call_email_save.json`);
-                return (`/api/call_email.json`);
+                
+                //return (`/api/call_email.json`);
             },
         },
+        ajax: {
+                "url": helpers.add_endpoint_json(api_endpoints.call_email, 'datatable_list'),
+                "dataSrc": '',
+        },
         created() {
+            console.log(this.$route.params.id);
+            console.log(this.callEmailId);
             this.callEmailId = this.$route.params.id;
         },
         methods: {
@@ -124,21 +131,22 @@
                     this.savingCallEmail = false;
                 }, (error) => {});
             },
-            save: function (e) {
+            createCallEmail: function (e) {
                 let vm = this;
                 let formData = new FormData(vm.form);
                 vm.callEmailId = 66;
                 formData.append('additional_key_example', 'some_val') // example of additonal info sent to server
                 //console.log(formData);
-                console.log(vm.call_email_form_url);
+                //console.log(api_endpoints.call_email);
                 //console.log(vm.data.classification);
-                vm.$http.post(vm.call_email_form_url, formData).then(res => {
+                vm.$http.post('/api/call_email/', formData).then(
+                    res => {
                     swal(
                         'Saved',
                         'Your Call/Email has been saved',
                         'success'
                     );
-                }, err => {});
+                    }, err => {});
             },
             save_exit: function (e) {
                 let vm = this;

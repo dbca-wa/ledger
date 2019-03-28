@@ -27,7 +27,9 @@ class Classification(models.Model):
         app_label = 'wildlifecompliance'
 
     def __str__(self):
-        return '{}'.format(self.name)
+        #return '{}'.format(self.name)
+        # return self.get_name_display()
+        return self.name
 
 
 class CallEmail(models.Model):
@@ -45,7 +47,11 @@ class CallEmail(models.Model):
         max_length=40,
         choices=STATUS_CHOICES,
         default=STATUS_CHOICES[0][0])
-    classification = models.ForeignKey(Classification, related_name='calls')
+    classification = models.ForeignKey(
+            Classification, 
+            # default=1,
+            # related_name='calls'
+            )
     schema = JSONField(default=list)
     lodged_on = models.DateField(auto_now_add=True)
     number = models.CharField(max_length=50)
@@ -59,7 +65,8 @@ class CallEmail(models.Model):
         verbose_name_plural = 'Calls/Emails'
 
     def __str__(self):
-        return self.status
+        #return self.status
+        return '{}'.format(self.status)
 
 
 
