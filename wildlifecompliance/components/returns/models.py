@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from django.db import models, transaction
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
+from django.core.exceptions import FieldError
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from wildlifecompliance.components.returns.utils_schema import Schema
 from wildlifecompliance.components.applications.models import ApplicationCondition, Application
@@ -53,7 +54,7 @@ class ReturnType(models.Model):
 
 class Return(models.Model):
     """
-    A number of requirements relating to a Licence condition.
+    A number of requirements relating to a Licence condition recorded during the Licence period.
     """
     PROCESSING_STATUS_CHOICES = (('due', 'Due'),
                                  ('overdue', 'Overdue'),
@@ -179,9 +180,25 @@ class Return(models.Model):
     def sheet(self):
         """
         A Running sheet of Return data.
-        :return: ReturnSheet with activity data for species.
+        :return: ReturnSheet with activity data for Licence species.
         """
         return ReturnSheet(self) if self.has_sheet else None
+
+    @property
+    def data(self):
+        """
+        Return data.
+        :return: Details of activities relating to Licence species.
+        """
+        return ReturnData(self) if self.has_data else None
+
+    @property
+    def question(self):
+        """
+        Questionnaire of Return data.
+        :return: Questionnaire on activities relating to Licence species.
+        """
+        return ReturnQuestion(self) if self.has_question else None
 
     @property
     def has_question(self):
@@ -206,9 +223,6 @@ class Return(models.Model):
         :return: Boolean
         """
         return True if self.format == 'sheet' else False
-
-    def log_user_action(self, action, request):
-        return ReturnUserAction.log_action(self, action, request.user)
 
     def set_submitted(self, request):
         with transaction.atomic():
@@ -244,6 +258,33 @@ class Return(models.Model):
                     self.id), request)
             send_return_accept_email_notification(self, request)
 
+    def store(self, request):
+        """
+        Save the current state of the Return.
+        :param request:
+        :return:
+        """
+        pass
+
+    def submit(self, request):
+        """
+        Submit Return to Curator.
+        :param request:
+        :return:
+        """
+        pass
+
+    def amend(self, request):
+        """
+        Request amendment for Return.
+        :param request:
+        :return:
+        """
+        pass
+
+    def log_user_action(self, action, request):
+        return ReturnUserAction.log_action(self, action, request.user)
+
     def __str__(self):
         return self.lodgement_number
 
@@ -255,6 +296,96 @@ class ReturnData(object):
     def __init__(self, a_return):
         self._return = a_return
 
+    @property
+    def table(self):
+        """
+        Data Table of record information for Species.
+        :return: formatted data.
+        """
+        return self._return.table()
+
+    def store(self, request):
+        """
+        Save the current state of this Return Data.
+        :param request:
+        :return:
+        """
+        for key in request.POST.keys():
+            if key == "nilYes":
+                self._return.nil_return = True
+                self._return.comments = request.data.get('nilReason')
+                self._return.save()
+            if key == "nilNo":
+                returns_tables = request.data.get('table_name')
+                if self._is_post_data_valid(returns_tables.encode('utf-8'), request.POST):
+                    self._create_return_data_from_post_data(returns_tables.encode('utf-8'), request.POST)
+                else:
+                    raise FieldError('Enter data in correct format.')
+
+    def _is_post_data_valid(self, tables_info, post_data):
+        """
+        Validates table data against the schema,
+        :param tables_info:
+        :param post_data:
+        :return:
+        """
+        table_rows = self._get_table_rows_from_post(tables_info, post_data)
+        if len(table_rows) == 0:
+            return False
+        schema = Schema(self._return.return_type.get_schema_by_name(tables_info))
+        if not schema.is_all_valid(table_rows):
+            return False
+        return True
+
+    def _get_table_rows_from_post(self, table_name, post_data):
+        """
+        Build row of data.
+        :param table_name:
+        :param post_data:
+        :return:
+        """
+        table_namespace = table_name + '::'
+        by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(
+            key)) for key in post_data.keys() if key.startswith(table_namespace)])
+        # by_column is of format {'col_header':[row1_val, row2_val,...],...}
+        num_rows = len(
+            list(
+                by_column.values())[0]) if len(
+            by_column.values()) > 0 else 0
+        rows = []
+        for row_num in range(num_rows):
+            row_data = {}
+            for key, value in by_column.items():
+                row_data[key] = value[row_num]
+            # filter empty rows.
+            is_empty = True
+            for value in row_data.values():
+                if len(value.strip()) > 0:
+                    is_empty = False
+                    break
+            if not is_empty:
+                rows.append(row_data)
+        return rows
+
+    def _create_return_data_from_post_data(self, tables_info, post_data):
+        """
+        Writes to db.
+        :param tables_info:
+        :param post_data:
+        :return:
+        """
+        rows = self._get_table_rows_from_post(tables_info, post_data)
+        if rows:
+            return_table = ReturnTable.objects.get_or_create(
+                name=tables_info, ret=self._return)[0]
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in rows]
+            ReturnRow.objects.bulk_create(return_rows)
+
     def __str__(self):
         return self._return.lodgement_number
 
@@ -265,6 +396,22 @@ class ReturnQuestion(object):
     """
     def __init__(self, a_return):
         self._return = a_return
+
+    @property
+    def table(self):
+        """
+        Table of questions for Species. Defaults to a Species on the Return if exists.
+        :return: formatted data.
+        """
+        return self._return.table
+
+    def store(self, request):
+        """
+        Save the current state of the Return.
+        :param request:
+        :return:
+        """
+        pass
 
     def __str__(self):
         return self._return.lodgement_number
@@ -297,13 +444,10 @@ class ReturnSheet(object):
         "SA08": {"label": "Out through transfer dealer", "auto": "false", "licence": "true", "pay": "false"},
         "": {"label": "", "auto": "false", "licence": "false", "pay": "false"}}
 
-    _MOCK_LICENCE_SPECIES = ['S000001', 'S000002', 'S000003', 'S000004']
-
     def __init__(self, a_return):
         self._return = a_return
         self._return.return_type.data_descriptor = self._SHEET_SCHEMA
         self._species_list = []
-        self._licence_species_list = []
         self._table = {'data': None}
         # build list of currently added Species.
         self._species = self._DEFAULT_SPECIES
@@ -311,7 +455,7 @@ class ReturnSheet(object):
             self._species_list.append(_species.name)
             self._species = _species.name
         # build list of Species available on Licence.
-        self._licence_species_list = self._MOCK_LICENCE_SPECIES
+        self._licence_species_list = []
 
     def _get_table_rows(self, _data):
         """
@@ -482,6 +626,19 @@ class ReturnSheet(object):
         :return:
         """
         return None
+
+    def store(self, request):
+        """
+        Save the current state of this Return Sheet.
+        :param request:
+        :return:
+        """
+        try:
+            species = request.data.get('species_id').encode('utf-8')
+            data = eval(request.data.get('species_data').encode('utf-8'))
+            self.set_activity(species, data)
+        except AttributeError:
+            pass
 
     def __str__(self):
         return self._return.lodgement_number
