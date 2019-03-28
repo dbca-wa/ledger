@@ -286,14 +286,14 @@ class Section(models.Model):
 @python_2_unicode_compatible
 class RequiredDocument(models.Model):
     question = models.TextField(blank=False)
-    activity = models.ForeignKey(Activity, blank=True)
-    park= models.ForeignKey(Park, blank=True)
+    activity = models.ForeignKey(Activity,null=True, blank=True)
+    park= models.ForeignKey(Park,null=True, blank=True)
 
     class Meta:
         app_label = 'commercialoperator'
 
     def __str__(self):
-        return self.id
+        return self.question
 
 @python_2_unicode_compatible
 class ApplicationType(models.Model):

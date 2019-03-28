@@ -2,7 +2,7 @@ from django.contrib import admin
 from ledger.accounts.models import EmailUser
 from commercialoperator.components.proposals import models
 from commercialoperator.components.proposals import forms
-from commercialoperator.components.main.models import ActivityMatrix, SystemMaintenance, ApplicationType, Park, Trail, ActivityType, ActivityCategory, Activity, AccessType, Section, Zone
+from commercialoperator.components.main.models import ActivityMatrix, SystemMaintenance, ApplicationType, Park, Trail, ActivityType, ActivityCategory, Activity, AccessType, Section, Zone,RequiredDocument
 #from commercialoperator.components.main.models import Activity, SubActivityLevel1, SubActivityLevel2, SubCategory
 from reversion.admin import VersionAdmin
 from django.conf.urls import url
@@ -137,6 +137,12 @@ class VehicleAdmin(admin.ModelAdmin):
 class VesselAdmin(admin.ModelAdmin):
     list_display = ['nominated_vessel','spv_no', 'hire_rego', 'craft_no', 'size', 'proposal']
     ordering = ('nominated_vessel',)
+
+@admin.register(RequiredDocument)
+class RequiredDocumentAdmin(admin.ModelAdmin):
+    list_display = ['park', 'activity', 'question']
+    #filter_horizontal = ('allowed_activities',)
+    #ordering = ('name',)
 
 # @admin.register(ActivityType)
 # class ActivityTypeAdmin(admin.ModelAdmin):
