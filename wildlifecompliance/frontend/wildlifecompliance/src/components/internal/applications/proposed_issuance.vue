@@ -95,10 +95,6 @@ export default {
         alert
     },
     props:{
-        processing_status: {
-            type: Object,
-            required: true
-        }
     },
     data:function () {
         let vm = this;
@@ -129,6 +125,7 @@ export default {
     },
     computed: {
         ...mapGetters([
+            'application',
             'application_id',
             'licence_type_data',
             'hasRole',
