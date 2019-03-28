@@ -1,10 +1,10 @@
 <template lang="html">
-    <div v-if="application" class="container" id="internalApplication">
+    <div v-if="isApplicationLoaded" class="container" id="internalApplication">
             <div class="row">
         <h3>Application: {{ application.lodgement_number }}</h3>
         <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
-            <div class="row" v-if="canSeeSubmission">
+            <div class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                        Submission 
@@ -42,7 +42,7 @@
                             <div class="col-sm-12">
                                 <strong>Status</strong><br/>
                                 {{ application.processing_status.name }}<br/>
-                                <div class ="col-sm-12" v-for="item in application.licence_type_data">
+                                <div class ="col-sm-12" v-for="item in licence_type_data">
                                     
                                     <div v-for="item1 in item">
                                         <div v-if="item1.name">
@@ -63,7 +63,7 @@
                                 </div>
                             </div>
 
-                            <template v-if="application.processing_status.id == 'with_assessor_conditions' || application.processing_status.id == 'with_approver' || isFinalised">
+                            <template v-if="isFinalised">
                                 <div>
                                     <div class="col-sm-12">
                                         <strong>Application</strong><br/>
@@ -75,7 +75,7 @@
                                     </div>
                                 </div>
                             </template>
-                            <template v-if="application.processing_status.id == 'with_approver' || isFinalised">
+                            <template v-if="isFinalised">
                                 <div class="col-sm-12">
                                     <strong>Conditions</strong><br/>
                                     <a class="actionBtn" v-if="!showingConditions" @click.prevent="toggleConditions()">Show Conditions</a>
@@ -128,7 +128,7 @@
                                             <strong>Action</strong><br/>
                                         </div>
                                     </div>
-                                    <div v-if="isSendingToAssessor || isOfficerConditions || isFinalViewConditions || showingConditions || isofficerfinalisation"class="row">
+                                    <div v-if="!isFinalised && (isSendingToAssessor || isOfficerConditions || isFinalViewConditions || showingConditions || isofficerfinalisation)"class="row">
                                         <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back to Application</button><br/>
                                         </div>
@@ -162,7 +162,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row" style="margin-bottom:50px;">
+                    <div v-if="!isFinalised" class="row" style="margin-bottom:50px;">
                         <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                             <div class="navbar-inner">
                                 <div class="container">
@@ -183,7 +183,7 @@
                     </div>
                     <div class="tab-content">
                         <div v-for="activity in getVisibleConditionsFor('licensing_officer', 'with_officer_conditions', selected_activity_tab_id)" :id="`${activity.id}`" class="tab-pane fade active in">
-                            <OfficerConditions :application="application" :licence_activity_tab="activity.id" :final_view_conditions="false" :key="`officer_condition_${selected_activity_tab_id}`"/>
+                            <OfficerConditions :application="application" :licence_activity_tab="`${activity.id}`" :final_view_conditions="false" :key="`officer_condition_${selected_activity_tab_id}`"/>
                         </div>
                     </div>
                 </template>
@@ -202,14 +202,14 @@
                 <template v-if="isSendingToAssessor && !showingConditions">
                     <div>
                         <ul id="tabs-assessor" class="nav nav-tabs">
-                            <li v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && (item1.processing_status.id=='with_officer' || item1.processing_status.id=='with_officer_conditions' || item1.processing_status.id=='with_assessor')" :class="setAssessorTab(index)" @click.prevent="clearSendToAssessorForm()">
+                            <li v-for="(item1,index) in sendToAssessorActivities" :class="setAssessorTab(index)" @click.prevent="clearSendToAssessorForm()">
                                 <a v-if="isActivityVisible(item1.id)" data-toggle="tab" :data-target="`#${item1.id}`">{{item1.name}}</a>
                             </li>
                         </ul>
                     </div>
                         
                     <div class="tab-content">
-                        <div v-for="(item1,index) in application.licence_type_data.activity" v-if="item1.name && (item1.processing_status.id=='with_officer' || item1.processing_status.id=='with_officer_conditions' || item1.processing_status.id=='with_assessor')" :id="`${item1.id}`" :class="setAssessorTabContent(index)">
+                        <div v-for="(item1,index) in sendToAssessorActivities" :id="`${item1.id}`" :class="setAssessorTabContent(index)">
                             <div>
                                 <div class="panel panel-default">
                                     <div class="panel-heading">
@@ -620,10 +620,10 @@
         </div>
         </div>
         </div>
-        <ProposedDecline ref="proposed_decline" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse" :application="application"></ProposedDecline>
-        <AmendmentRequest ref="amendment_request" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse"></AmendmentRequest>
-        <SendToAssessor ref="send_to_assessor" :application_id="application.id" @refreshFromResponse="refreshFromResponse"></SendToAssessor>
-        <ProposedLicence ref="proposed_licence" :processing_status="application.processing_status" :application_id="application.id" :application_licence_type="application.licence_type_data" @refreshFromResponse="refreshFromResponse" :application="application"></ProposedLicence>
+        <ProposedDecline ref="proposed_decline" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
+        <AmendmentRequest ref="amendment_request" @refreshFromResponse="refreshFromResponse"></AmendmentRequest>
+        <SendToAssessor ref="send_to_assessor" @refreshFromResponse="refreshFromResponse"></SendToAssessor>
+        <ProposedLicence ref="proposed_licence" @refreshFromResponse="refreshFromResponse"></ProposedLicence>
 
     </div>
 </div>
@@ -631,6 +631,7 @@
 <script>
 import Application from '../../form.vue';
 import Vue from 'vue';
+import { mapActions, mapGetters } from 'vuex'
 import ProposedDecline from './application_proposed_decline.vue';
 import AmendmentRequest from './amendment_request.vue';
 import SendToAssessor from './application_send_assessor.vue';
@@ -664,8 +665,6 @@ export default {
             isSendingToAssessor: false,
             assessorGroup:{},
             "selectedAssessor":{},
-            "application": null,
-            "original_application": null,
             "loading": [],
             selected_activity_tab_id:null,
             selected_activity_tab_name:null,
@@ -747,6 +746,20 @@ export default {
     watch: {
     },
     computed: {
+        ...mapGetters([
+            'application',
+            'original_application',
+            'licence_type_data',
+            'hasRole',
+            'visibleConditionsFor',
+            'licenceActivities',
+        ]),
+        sendToAssessorActivities: function() {
+            return this.licenceActivities(['with_officer', 'with_officer_conditions', 'with_assessor'], 'licensing_officer');
+        },
+        isApplicationLoaded: function() {
+            return Object.keys(this.application).length && this.licence_type_data != null;
+        },
         applicationDetailsVisible: function() {
             return !this.isSendingToAssessor && !this.showingConditions && !this.isofficerfinalisation && !this.isFinalised && !this.isOfficerConditions && !this.isFinalViewConditions;
         },
@@ -754,7 +767,7 @@ export default {
             return this.application.processing_status.id == 'draft';
         },
         selectedActivity: function(){
-            var activities_list = this.application.licence_type_data.activity
+            var activities_list = this.licence_type_data.activity
             for(let activity of activities_list){
                 if(activity.id == this.selected_activity_tab_id){
                     return activity;
@@ -763,7 +776,7 @@ export default {
             return null;
         },
         canIssueDecline: function(){
-            var activities_list = this.application.licence_type_data.activity;
+            var activities_list = this.licence_type_data.activity;
             for(let activity of activities_list){
                 if(activity.processing_status.id == 'with_officer_finalisation' &&
                     this.userHasRole('issuing_officer', activity.id)){
@@ -773,7 +786,7 @@ export default {
             return false;
         },
         canRequestAmendment: function(){
-            var activities_list = this.application.licence_type_data.activity
+            var activities_list = this.licence_type_data.activity
             for(let activity of activities_list){
                 if(activity.processing_status.id == 'with_officer' &&
                     this.userHasRole('licensing_officer', activity.id)){
@@ -802,7 +815,7 @@ export default {
             return this.hasActivityStatus('with_officer_conditions', 1, 'licensing_officer');
         },
         canCompleteAssessment: function(){
-            if(!this.userHasRole('assessor')) {
+            if(!this.userHasRole('assessor', this.selected_activity_tab_id)) {
                 return false;
             }
             return this.selected_activity_tab_id && this.selectedActivity.processing_status.id == 'with_assessor' ? true : false;
@@ -811,13 +824,7 @@ export default {
             return this.application!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.application.org_applicant.id+'/contacts') : '';
         },
         applicantType: function(){
-            if (this.application.org_applicant){
-                return 'org';
-            } else if (this.application.proxy_applicant){
-                return 'proxy';
-            } else {
-                return 'submitter';
-            }
+            return this.$store.getters.applicant_type;
         },
         isLoading: function() {
           return this.loading.length > 0
@@ -832,14 +839,14 @@ export default {
             return this.hasActivityStatus([
                 'declined',
                 'accepted'
-            ], this.application.licence_type_data.activity.length);
+            ], this.licence_type_data.activity.length);
         },
         isPartiallyFinalised: function(){
             const final_statuses = [
                 'declined',
                 'accepted'
             ];
-            const activity_count = this.application.licence_type_data.activity.length;
+            const activity_count = this.licence_type_data.activity.length;
             return this.hasActivityStatus(final_statuses) && !this.hasActivityStatus(final_statuses, activity_count);            
         },
         isIdCheckAccepted: function(){
@@ -862,12 +869,17 @@ export default {
                 return false;
             }
             return this.application && this.application.processing_status.id == 'under_review' && !this.isFinalised && !this.application.can_user_edit && this.application.user_in_licence_officers ? true : false;
-        },
-        canSeeSubmission: function(){
-            return this.application && (this.application.processing_status.id != 'with_assessor_conditions' && this.application.processing_status.id != 'with_approver' && !this.isFinalised)
         }
     },
     methods: {
+        ...mapActions({
+            load: 'loadApplication',
+            revert: 'revertApplication',
+        }),
+        ...mapActions([
+            'setOriginalApplication',
+            'setApplication',
+        ]),
         eventListeners: function(){
             let vm = this;
             $("[data-target!=''][data-target]").off("click").on("click", function (e) {
@@ -951,15 +963,10 @@ export default {
             }
         },
         userHasRole: function(role, activity_id) {
-            return this.application.user_roles.filter(
-                role_record => role_record.role == role && (!activity_id || activity_id == role_record.activity_id)
-            ).length;
+            return this.hasRole(role, activity_id);
         },
         getVisibleConditionsFor: function(for_role, processing_status, tab_id) {
-            return this.application.licence_type_data.activity.filter(activity =>
-                activity.name && activity.processing_status.id == processing_status && this.userHasRole(for_role, activity.id) &&
-                (!tab_id || tab_id == activity.id)
-            );
+            return this.visibleConditionsFor(for_role, processing_status, tab_id);
         },
         initFirstTab: function(force){
             if(this.selected_activity_tab_id && !force) {
@@ -1024,7 +1031,7 @@ export default {
             if(typeof(status_list) !== 'object') {
                 status_list = [status_list];
             }
-            const activities_list = this.application.licence_type_data.activity;
+            const activities_list = this.licence_type_data.activity;
             return activities_list.filter(activity =>
                 status_list.includes(activity.processing_status.id)
                 && (required_role === null || this.userHasRole(required_role, activity.id))
@@ -1065,7 +1072,7 @@ export default {
                 if (result.value) {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/accept_id_check')))
                     .then((response) => {
-                        vm.application = response.body;
+                        vm.setApplication(response.body);
                     }, (error) => {
                         console.log(error);
                     });
@@ -1085,7 +1092,7 @@ export default {
                 if (result.value) {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/reset_id_check')))
                     .then((response) => {
-                        vm.application = response.body;
+                        vm.setApplication(response.body);
                     }, (error) => {
                         console.log(error);
                     });
@@ -1105,7 +1112,7 @@ export default {
                 if (result.value) {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/request_id_check')))
                     .then((response) => {
-                        vm.application = response.body;
+                        vm.setApplication(response.body);
                     }, (error) => {
                         console.log(error);
                     });
@@ -1125,7 +1132,7 @@ export default {
                 if (result.value) {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/accept_character_check')))
                     .then((response) => {
-                        vm.application = response.body;
+                        vm.setApplication(response.body);
                     }, (error) => {
                         console.log(error);
                     });
@@ -1274,7 +1281,7 @@ export default {
             let data = new FormData();
 
             data.selected_assessment_tab=vm.selected_activity_tab_id;
-            data.application_id=vm.application_id
+            data.application_id=vm.application_id;
             
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/complete_assessment')),JSON.stringify(data),{emulateJSON:true})
             .then((response) => {
@@ -1284,8 +1291,7 @@ export default {
                              'success'
                         );
 
-                vm.application = response.body;
-                vm.refreshFromResponse(response)
+                vm.refreshFromResponse(response);
                 vm.showingApplication = true;
                 vm.isSendingToAssessor=false;
                 vm.showingConditions=false;
@@ -1296,13 +1302,7 @@ export default {
                      'success'
                 )
             }, (error) => {
-                vm.application = helpers.copyObject(vm.original_application)
-                if (vm.applicantType == 'org') {
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                };
-                if (vm.applicantType == 'proxy') {
-                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
-                };
+                vm.revert();
                 vm.updateAssignedOfficerSelect();
                 swal(
                     'Application Error',
@@ -1315,23 +1315,10 @@ export default {
             let vm = this;
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/assign_to_me')))
             .then((response) => {
-                vm.application = response.body;
-                vm.original_application = helpers.copyObject(response.body);
-                if (vm.applicantType == 'org') {
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                };
-                if (vm.applicantType == 'proxy') {
-                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
-                };
+                this.refreshFromResponse(response);
                 vm.updateAssignedOfficerSelect();
             }, (error) => {
-                vm.application = helpers.copyObject(vm.original_application)
-                if (vm.applicantType == 'org') {
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                };
-                if (vm.applicantType == 'proxy') {
-                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
-                };
+                vm.revert();
                 vm.updateAssignedOfficerSelect();
                 swal(
                     'Application Error',
@@ -1341,18 +1328,11 @@ export default {
             });
         },
         refreshFromResponse:function(response){
-            let vm = this;
-            vm.original_application = helpers.copyObject(response.body);
-            vm.application = helpers.copyObject(response.body);
-            if (vm.applicantType == 'org') {
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-            };
-            if (vm.applicantType == 'proxy') {
-                vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
-            };
-            vm.$nextTick(() => {
-                vm.initialiseAssignedOfficerSelect(true);
-                vm.updateAssignedOfficerSelect();
+            this.setOriginalApplication(response.body);
+            this.setApplication(response.body);
+            this.$nextTick(() => {
+                this.initialiseAssignedOfficerSelect(true);
+                this.updateAssignedOfficerSelect();
             });
         },
         assignOfficer: function(){
@@ -1365,24 +1345,11 @@ export default {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/assign_officer')),JSON.stringify(data),{
                     emulateJSON:true
                 }).then((response) => {
-                    vm.application = response.body;
-                    vm.original_application = helpers.copyObject(response.body);
-                    if (vm.applicantType == 'org') {
-                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                    };
-                    if (vm.applicantType == 'proxy') {
-                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
-                    };
-                    vm.updateAssignedOfficerSelect();
+                    this.refreshFromResponse(response);
+                    this.updateAssignedOfficerSelect();
                 }, (error) => {
-                    vm.application = helpers.copyObject(vm.original_application)
-                    if (vm.applicantType == 'org') {
-                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                    };
-                    if (vm.applicantType == 'proxy') {
-                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
-                    };
-                    vm.updateAssignedOfficerSelect();
+                    this.revert();
+                    this.updateAssignedOfficerSelect();
                     swal(
                         'Application Error',
                         helpers.apiVueResourceError(error),
@@ -1393,24 +1360,11 @@ export default {
             else{
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/unassign_officer')))
                 .then((response) => {
-                    vm.application = response.body;
-                    vm.original_application = helpers.copyObject(response.body);
-                    if (vm.applicantType == 'org') {
-                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                    };
-                    if (vm.applicantType == 'proxy') {
-                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
-                    };
-                    vm.updateAssignedOfficerSelect();
+                    this.refreshFromResponse(response);
+                    this.updateAssignedOfficerSelect();
                 }, (error) => {
-                    vm.application = helpers.copyObject(vm.original_application)
-                    if (vm.applicantType == 'org') {
-                        vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                    };
-                    if (vm.applicantType == 'proxy') {
-                        vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
-                    };
-                    vm.updateAssignedOfficerSelect();
+                    this.revert();
+                    this.updateAssignedOfficerSelect();
                     swal(
                         'Application Error',
                         helpers.apiVueResourceError(error),
@@ -1429,22 +1383,9 @@ export default {
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/update_activity_status')),JSON.stringify(data),{
                 emulateJSON:true,
             }).then((response) => {
-                vm.application = response.body;
-                vm.original_application = helpers.copyObject(response.body);
-                if (vm.applicantType == 'org') {
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                };
-                if (vm.applicantType == 'proxy') {
-                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
-                };
+                this.refreshFromResponse(response);
             }, (error) => {
-                vm.application = helpers.copyObject(vm.original_application)
-                if (vm.applicantType == 'org') {
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                };
-                if (vm.applicantType == 'proxy') {
-                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
-                };
+                this.revert();
                 swal(
                     'Application Error',
                     helpers.apiVueResourceError(error),
@@ -1497,19 +1438,21 @@ export default {
                 vm.initialisedSelects = true;
             }
         },
-    },
-    mounted: function() {
-        let vm = this;
-        vm.$nextTick(function () {
-            for (var i=0;i<vm.application.licence_type_data.activity.length;i++) {
-                var activity_id = vm.application.licence_type_data.activity[i].id
-                vm.assessors_options[activity_id] = {
+        initialiseAssessmentOptions: function() {
+            if(!this.isApplicationLoaded) {
+                return;
+            }
+
+            for (let activity of this.licence_type_data.activity) {
+                //Check for permissions
+                
+                this.assessors_options[activity.id] = {
                      language: {
                         processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                     },
                     responsive: true,
                     ajax: {
-                        "url": helpers.add_endpoint_join(api_endpoints.applications,vm.$route.params.application_id+'/assessment_details/?licence_activity='+activity_id),
+                        "url": helpers.add_endpoint_join(api_endpoints.applications,this.$route.params.application_id+'/assessment_details/?licence_activity='+activity.id),
                         "dataSrc": ''
                     },
                     columns: [
@@ -1533,7 +1476,10 @@ export default {
                     processing: true
                 }
             }
-
+        }
+    },
+    mounted: function() {
+        this.$nextTick(function () {
         });
     },
     updated: function(){
@@ -1555,39 +1501,18 @@ export default {
         });
     },
     beforeRouteEnter: function(to, from, next) {
-
-        Vue.http.get(`/api/application/${to.params.application_id}/internal_application.json`).then(res => {
-            next(vm => {
-            vm.application = res.body;
-            vm.original_application = helpers.copyObject(res.body);
-            if (vm.applicantType == 'org') {
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-            };
-            if (vm.applicantType == 'proxy') {
-                vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
-            };
+        next(vm => {
+            vm.load({ url: `/api/application/${to.params.application_id}/internal_application.json` }).then(() => {
+                vm.initialiseAssessmentOptions();
             });
-        },
-        err => {
-            console.log(err);
         });
     },
     beforeRouteUpdate: function(to, from, next) {
-          Vue.http.get(`/api/application/${to.params.application_id}.json`).then(res => {
-              next(vm => {
-                vm.application = res.body;
-                vm.original_application = helpers.copyObject(res.body);
-                if (vm.applicantType == 'org') {
-                    vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                };
-                if (vm.applicantType == 'proxy') {
-                    vm.application.proxy_applicant.address = vm.application.proxy_applicant.address != null ? vm.application.proxy_applicant.address : {};
-                };
-              });
-            },
-            err => {
-              console.log(err);
+        next(vm => {
+            vm.load({ url: `/api/application/${to.params.application_id}.json` }).then(() => {
+                vm.initialiseAssessmentOptions();
             });
+        });
     }
 }
 

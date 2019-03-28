@@ -8,7 +8,6 @@ from rest_framework.decorators import detail_route, list_route, renderer_classes
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from wildlifecompliance.helpers import is_customer, is_internal
-from wildlifecompliance.components.returns.utils import _is_post_data_valid,_create_return_data_from_post_data
 from wildlifecompliance.components.returns.utils import SpreadSheet
 from wildlifecompliance.components.licences.models import (
     WildlifeLicence
@@ -72,25 +71,8 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
     def update_details(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-
-            if 'save_continue' in request.POST:
-                for key in request.POST.keys():
-                    if key == "nilYes":
-                        instance.nil_return = True
-                        instance.comments = self.request.data.get('nilReason')
-                        instance.save()
-                if key == "nilNo":
-                    returns_tables = self.request.data.get('table_name')
-                    if _is_post_data_valid(
-                            instance,
-                            returns_tables.encode('utf-8'),
-                            request.POST):
-                        print('True')
-                        _create_return_data_from_post_data(
-                            instance, returns_tables.encode('utf-8'), request.POST)
-                    else:
-                        return Response(
-                            {'error': 'Enter data in correct format.'}, status=status.HTTP_404_NOT_FOUND)
+            if instance.has_data:
+                instance.data.store(request)
             instance.set_submitted(request)
             instance.submitter = request.user
             instance.save()
@@ -157,13 +139,16 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
     def save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+
+            if instance.has_data:
+                instance.data.store(request)
+
             if instance.has_sheet:
-                try:
-                    species = request.data.get('species_id').encode('utf-8')
-                    data = eval(request.data.get('species_data').encode('utf-8'))
-                    instance.sheet.set_activity(species, data)
-                except AttributeError:
-                    pass
+                instance.sheet.store(request)
+
+            instance.set_submitted(request)
+            instance.submitter = request.user
+            instance.save()
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
