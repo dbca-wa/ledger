@@ -57,7 +57,6 @@ export default {
                 assessor_group:null,
                 application: this.$store.getters.application_id,
                 licence_activity:null,
-                test_field: 1
             },
             assessor_group:null,
             assessingApplication:false,
