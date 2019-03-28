@@ -202,14 +202,14 @@
                 <template v-if="isSendingToAssessor && !showingConditions">
                     <div>
                         <ul id="tabs-assessor" class="nav nav-tabs">
-                            <li v-for="(item1,index) in licence_type_data.activity" v-if="item1.name && (item1.processing_status.id=='with_officer' || item1.processing_status.id=='with_officer_conditions' || item1.processing_status.id=='with_assessor')" :class="setAssessorTab(index)" @click.prevent="clearSendToAssessorForm()">
+                            <li v-for="(item1,index) in sendToAssessorActivities" :class="setAssessorTab(index)" @click.prevent="clearSendToAssessorForm()">
                                 <a v-if="isActivityVisible(item1.id)" data-toggle="tab" :data-target="`#${item1.id}`">{{item1.name}}</a>
                             </li>
                         </ul>
                     </div>
                         
                     <div class="tab-content">
-                        <div v-for="(item1,index) in licence_type_data.activity" v-if="item1.name && (item1.processing_status.id=='with_officer' || item1.processing_status.id=='with_officer_conditions' || item1.processing_status.id=='with_assessor')" :id="`${item1.id}`" :class="setAssessorTabContent(index)">
+                        <div v-for="(item1,index) in sendToAssessorActivities" :id="`${item1.id}`" :class="setAssessorTabContent(index)">
                             <div>
                                 <div class="panel panel-default">
                                     <div class="panel-heading">
@@ -752,7 +752,11 @@ export default {
             'licence_type_data',
             'hasRole',
             'visibleConditionsFor',
+            'licenceActivities',
         ]),
+        sendToAssessorActivities: function() {
+            return this.licenceActivities(['with_officer', 'with_officer_conditions', 'with_assessor'], 'licensing_officer');
+        },
         isApplicationLoaded: function() {
             return Object.keys(this.application).length && this.licence_type_data != null;
         },
@@ -1326,9 +1330,9 @@ export default {
         refreshFromResponse:function(response){
             this.setOriginalApplication(response.body);
             this.setApplication(response.body);
-            vm.$nextTick(() => {
-                vm.initialiseAssignedOfficerSelect(true);
-                vm.updateAssignedOfficerSelect();
+            this.$nextTick(() => {
+                this.initialiseAssignedOfficerSelect(true);
+                this.updateAssignedOfficerSelect();
             });
         },
         assignOfficer: function(){
