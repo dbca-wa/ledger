@@ -72,11 +72,9 @@ import {
 }
 from '@/utils/hooks'
 import datatable from '@vue-utils/datatable.vue'
+import { mapGetters } from 'vuex'
 export default {
     name: 'InternalApplicationConditions',
-    props: {
-        application: Object
-    },
     data: function() {
         let vm = this;
         return {
@@ -89,30 +87,16 @@ export default {
     components:{
     },
     computed:{
-        isFinalised: function(){
-            return this.hasActivityStatus([
-                'declined',
-                'accepted'
-            ], this.application.licence_type_data.activity.length);
-        },
-        isPartiallyFinalised: function(){
-            const final_statuses = [
-                'declined',
-                'accepted'
-            ];
-            const activity_count = this.application.licence_type_data.activity.length;
-            return this.hasActivityStatus(final_statuses) && !this.hasActivityStatus(final_statuses, activity_count);            
-        },
+        ...mapGetters([
+            'application',
+            'checkActivityStatus',
+            'isPartiallyFinalised',
+            'isFinalised',
+        ]),
     },
     methods: {
-        hasActivityStatus: function(status_list, status_count=1) {
-            if(typeof(status_list) !== 'object') {
-                status_list = [status_list];
-            }
-            const activities_list = this.application.licence_type_data.activity;
-            return activities_list.filter(activity =>
-                status_list.includes(activity.processing_status.id)
-            ).length >= status_count;
+        hasActivityStatus: function(status_list, status_count=1, required_role=null) {
+            return this.checkActivityStatus(status_list, status_count, required_role);
         },
         getLicencesForActivity: function(activity_id) {
             return this.application.licences.filter(licence => 
