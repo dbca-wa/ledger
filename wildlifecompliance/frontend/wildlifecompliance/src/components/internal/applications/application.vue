@@ -144,7 +144,7 @@
         <div class="col-md-8">
             <div class="row">
                 <template v-if="isFinalised || isPartiallyFinalised">
-                    <LicenceScreen :application="application"/>
+                    <LicenceScreen/>
                 </template>
                 <template v-if="canIssueDecline">
                     <IssueLicence :application="application" :licence_activity_tab="selected_activity_tab_id"/>
@@ -753,6 +753,9 @@ export default {
             'hasRole',
             'visibleConditionsFor',
             'licenceActivities',
+            'checkActivityStatus',
+            'isPartiallyFinalised',
+            'isFinalised',
         ]),
         sendToAssessorActivities: function() {
             return this.licenceActivities(['with_officer', 'with_officer_conditions', 'with_assessor'], 'licensing_officer');
@@ -834,20 +837,6 @@ export default {
         },
         application_form_url: function() {
           return (this.application) ? `/api/application/${this.application.id}/application_officer_save.json` : '';
-        },
-        isFinalised: function(){
-            return this.hasActivityStatus([
-                'declined',
-                'accepted'
-            ], this.licence_type_data.activity.length);
-        },
-        isPartiallyFinalised: function(){
-            const final_statuses = [
-                'declined',
-                'accepted'
-            ];
-            const activity_count = this.licence_type_data.activity.length;
-            return this.hasActivityStatus(final_statuses) && !this.hasActivityStatus(final_statuses, activity_count);            
         },
         isIdCheckAccepted: function(){
             return this.application.id_check_status.id == 'accepted';
@@ -1028,14 +1017,7 @@ export default {
             this.selectedAssessor={};
         },
         hasActivityStatus: function(status_list, status_count=1, required_role=null) {
-            if(typeof(status_list) !== 'object') {
-                status_list = [status_list];
-            }
-            const activities_list = this.licence_type_data.activity;
-            return activities_list.filter(activity =>
-                status_list.includes(activity.processing_status.id)
-                && (required_role === null || this.userHasRole(required_role, activity.id))
-            ).length >= status_count;
+            return this.checkActivityStatus(status_list, status_count, required_role);
         },
         setAssessorTab(_index){
             return _index === 0 ? 'active' : '';

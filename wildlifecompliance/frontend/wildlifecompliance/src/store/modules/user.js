@@ -13,7 +13,7 @@ export const userStore = {
                 (!tab_id || tab_id == activity.id)
             );
         },
-        licenceActivities: (state, getters, rootState, rootGetters) => function(activity_status, for_user_role) {
+        licenceActivities: (state, getters, rootState, rootGetters) => (activity_status, for_user_role) => {
             return rootGetters.licence_type_data.activity.filter(
                 activity => (activity_status.constructor === Array ? activity_status : [activity_status]).includes(activity.processing_status.id)
                     && activity.name && getters.hasRole(for_user_role, activity.id)
