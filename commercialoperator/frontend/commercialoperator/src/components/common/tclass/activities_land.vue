@@ -67,13 +67,18 @@
             </div>
 
             <div>{{selected_parks}}</div>
-            <div>{{selected_parks_activities}}</div>
-            
-            
+            <div>{{selected_parks_activities}}</div>             
 <!--           </form>
 
  -->      </div> 
-          <div class="borderDecoration">
+          <div class="borderDecoration col-sm-12">
+              <div  v-for="rd in required_documents_list">
+                <div v-if="rd.can_view">
+                  <label>{{rd.question}}</label>
+                </div>
+              </div>
+          </div>
+          <div class="borderDecoration col-sm-12">
               <VehicleTable :url="vehicles_url" :proposal="proposal"></VehicleTable>
           </div>
         </div>
@@ -89,7 +94,8 @@
         </div>
 
         <div class="panel-body collapse in" :id="tBody">
-          <div class="row">
+          <div>
+            <div class="borderDecoration col-sm-12">
             <form class="form-horizontal col-sm-12" name="trails_form" method="post">
               <label class="control-label"> Select the required activities for trails</label>
             </form>
@@ -118,6 +124,7 @@
               </form>
             </div>
           </div>
+          </div>
         </div>
       </div>
       <div>{{selected_trails}}</div>
@@ -140,6 +147,7 @@ import Vue from 'vue'
 import VehicleTable from '@/components/common/vehicle_table.vue'
 import editParkActivities from './edit_park_activities.vue'
 import editTrailActivities from './edit_trail_activities.vue'
+import VehicleTable from '@/components/forms/form.vue'
 import {
   api_endpoints,
   helpers
@@ -159,6 +167,7 @@ export default {
                 accessTypes:null,
                 api_regions:null,
                 trails:null,
+                required_documents_list: null,
                 selected_parks:[],
                 selected_parks_before:[],
                 selected_access:[],
@@ -282,6 +291,7 @@ export default {
               }
             }
           }
+          vm.checkRequiredDocuements(vm.selected_parks_activities)
         },
         selected_access: function(){
           let vm=this;
@@ -325,6 +335,7 @@ export default {
         },
         selected_parks_activities: function(){
             let vm=this;
+            vm.checkRequiredDocuements(vm.selected_parks_activities)
             if (vm.proposal){
               vm.proposal.selected_parks_activities=vm.selected_parks_activities;
             }
@@ -486,6 +497,55 @@ export default {
             console.log(error);
             })
           },
+          fetchRequiredDocumentList: function(){
+            let vm = this;
+            vm.$http.get('/api/required_documents.json').then((response) => {
+            vm.required_documents_list = response.body;
+            for(var l=0; l<vm.required_documents_list.length; l++){
+              vm.required_documents_list[l].can_view=false;
+              vm.checkRequiredDocuements(vm.selected_parks_activities)
+              console.log('park',vm.selected_parks_activities)
+            }
+            },(error) => {
+            console.log(error);
+            })
+
+          },
+          checkRequiredDocuements: function(selected_parks_activities){
+            let vm=this;
+            //Check if the combination of selected park and activities require a document to be attahced
+            if(vm.required_documents_list){
+            for(var l=0; l<vm.required_documents_list.length; l++){
+              vm.required_documents_list[l].can_view=false;
+            }
+
+            for(var i=0; i<selected_parks_activities.length; i++){
+              for(var j=0; j<vm.required_documents_list.length; j++){
+                if(vm.required_documents_list[j].park!=null){
+                  if(vm.required_documents_list[j].activity==null){
+                    if(vm.required_documents_list[j].park== selected_parks_activities[i].park){
+                      vm.required_documents_list[j].can_view=true;
+                    }
+                  }
+                  else{
+                    for(var k=0; k<selected_parks_activities[j].activities.length; k++){
+                      if(vm.required_documents_list[j].activity== selected_parks_activities[i].activities[k]){
+                      vm.required_documents_list[j].can_view=true;
+                      }
+                    }
+                  }
+                }
+                else if(vm.required_documents_list[j].activity!=null){
+                  for(var k=0; k<selected_parks_activities[i].activities.length; k++){
+                      if(vm.required_documents_list[j].activity== selected_parks_activities[i].activities[k]){
+                        vm.required_documents_list[j].can_view=true;
+                      }
+                  }
+                }
+              }
+            }
+          }
+          },
           edit_activities: function(p_id, p_name){
             let vm=this;
             for (var j=0; j<vm.selected_parks_activities.length; j++){
@@ -531,6 +591,7 @@ export default {
                 vm.selected_parks_activities[j].access= park_access;
               }
             }
+            vm.checkRequiredDocuements(vm.selected_parks_activities)
           },
           refreshTrailFromResponse: function(trail_id, new_activities){
               let vm=this;
@@ -688,6 +749,7 @@ export default {
 
         mounted: function() {
             let vm = this;
+            vm.fetchRequiredDocumentList();
             Vue.http.get('/api/access_types.json').then((res) => {
                       vm.accessTypes=res.body;                 
                 },
@@ -702,6 +764,7 @@ export default {
                   }); 
             vm.fetchRegions(); 
             vm.fetchTrails();
+            //vm.fetchRequiredDocumentList();
 
             for (var i = 0; i < vm.proposal.land_parks.length; i++) {
               var current_park=vm.proposal.land_parks[i].park.id
@@ -736,6 +799,7 @@ export default {
             vm.selected_parks=park_list
 
             vm.store_trails(vm.proposal.trails);
+
 
             // for (var i = 0; i < vm.proposal.trails.length; i++) {
             //   this.selected_trails.push(vm.proposal.trails[i].trail.id);
