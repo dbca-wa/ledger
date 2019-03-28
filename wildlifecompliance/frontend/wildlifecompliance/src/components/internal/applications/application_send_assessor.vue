@@ -46,9 +46,6 @@ export default {
         alert
     },
     props:{
-            application_id:{
-                type:Number,
-            },
     },
     data:function () {
         let vm = this;
@@ -58,8 +55,9 @@ export default {
             assessment: {
                 assessor_group_name:null,
                 assessor_group:null,
-                application:vm.application_id,
-                licence_activity:null
+                application: this.$store.getters.application_id,
+                licence_activity:null,
+                test_field: 1
             },
             assessor_group:null,
             assessingApplication:false,
