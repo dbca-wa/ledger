@@ -87,6 +87,7 @@
 import modal from '@vue-utils/bootstrap-modal.vue'
 import alert from '@vue-utils/alert.vue'
 import {helpers,api_endpoints} from "@/utils/hooks.js"
+import { mapGetters } from 'vuex'
 export default {
     name:'Proposed-Licence',
     components:{
@@ -94,22 +95,6 @@ export default {
         alert
     },
     props:{
-        application_id: {
-            type: Number,
-            required: true
-        },
-        processing_status: {
-            type: Object,
-            required: true
-        },
-        application_licence_type:{
-            type:Object,
-            required:true
-        },
-        application: {
-            type: Object,
-            required: true
-        }
     },
     data:function () {
         let vm = this;
@@ -139,19 +124,23 @@ export default {
         }
     },
     computed: {
+        ...mapGetters([
+            'application',
+            'application_id',
+            'licence_type_data',
+            'hasRole',
+            'licenceActivities',
+        ]),
         showError: function() {
             var vm = this;
             return vm.errors;
         },
         title: function(){
         // TODO: check what this is doing and what this.processing_status is referring to
-            return this.processing_status.id == 'with_approver' ? 'Issue Licence' : 'Propose to issue licence';
+            return this.application.processing_status.id == 'with_approver' ? 'Issue Licence' : 'Propose to issue licence';
         },
         visibleLicenceActivities: function() {
-            return this.application.licence_type_data.activity.filter(
-                activity => ['with_officer_conditions'].includes(activity.processing_status.id)
-                    && activity.name && this.userHasRole('licensing_officer', activity.id)
-            )
+            return this.licenceActivities('with_officer_conditions', 'licensing_officer');
         },
     },
     methods:{
@@ -268,11 +257,6 @@ export default {
                     vm.propose_issue.start_date = "";
                 }
              });
-        },
-        userHasRole: function(role, activity_id) {
-            return this.application.user_roles.filter(
-                role_record => role_record.role == role && (!activity_id || activity_id == role_record.activity_id)
-            ).length;
         },
    },
    mounted:function () {
