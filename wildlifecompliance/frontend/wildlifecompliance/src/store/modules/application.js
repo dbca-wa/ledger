@@ -26,7 +26,31 @@ export const applicationStore = {
                 return 'proxy';
             }
             return 'submitter';
-        }
+        },
+        checkActivityStatus: (state, getters, rootState, rootGetters) => (status_list, status_count=1, required_role=null) => {
+            if(status_list.constructor !== Array) {
+                status_list = [status_list];
+            }
+            const activities_list = getters.licence_type_data.activity;
+            return activities_list.filter(activity =>
+                status_list.includes(activity.processing_status.id)
+                && (required_role === null || rootGetters.hasRole(required_role, activity.id))
+            ).length >= status_count;
+        },
+        isFinalised: (state, getters) => {
+            return getters.checkActivityStatus([
+                'declined',
+                'accepted'
+            ], getters.licence_type_data.activity.length);
+        },
+        isPartiallyFinalised: (state, getters) => {
+            const final_statuses = [
+                'declined',
+                'accepted'
+            ];
+            const activity_count = getters.licence_type_data.activity.length;
+            return getters.checkActivityStatus(final_statuses) && !getters.checkActivityStatus(final_statuses, activity_count);
+        },
     },
     mutations: {
         [UPDATE_APPLICATION] (state, application) {
