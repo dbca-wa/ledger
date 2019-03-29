@@ -7,6 +7,8 @@ import UserDashTable from '../users/dashboard.vue'
 import User from '../users/manage.vue'
 import Application from '../applications/application.vue'
 import LicenceDashTable from '../licences/dashboard.vue'
+import CallEmailTableDash from '../call_email/call_email_dashboard.vue'
+import CreateCallEmail from '../call_email/create_call_email.vue'
 import ReturnDashTable from '../returns/dashboard.vue'
 import Returns from '../returns/access.vue'
 
@@ -29,6 +31,27 @@ export default
             path: 'licences',
             component: LicenceDashTable,
             name:"internal-licences-dash"
+        },
+        {
+            path: 'call_email',
+            component: {
+                render(c)
+                {
+                    return c('router-view')
+                }
+            },
+            children: [
+                {
+                    path: '/',
+                    component: CallEmailTableDash,
+                    name:"internal-call-email-dash"
+                },
+                {
+                    path: 'create_call_email',
+                    component: CreateCallEmail,
+                    name:"internal-create-call-email"
+                },
+            ]
         },
         {
             path: 'returns',
