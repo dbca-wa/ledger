@@ -1,78 +1,64 @@
 <template id="application_conditions">
     <div>
-        
         <template v-if="isFinalised">
-            <div v-for="item in application.licence_type_data">
+            <div>
                 <ul class="nav nav-tabs" id="conditiontabs">
-                    <li v-for="(item1,index) in item">
-                        <a v-if="item1.processing_status.id=='accepted'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
-                            
-                                <span class="glyphicon glyphicon-ok"></span>
+                    <li v-for="(activity, index) in application.licence_type_data.activity" v-bind:key="`licence_finalised_tabs_${index}`">
+                        <a v-if="activity.processing_status.id=='accepted'" data-toggle="tab" :href="`#finalised_licence_${activity.id}`">{{activity.name}}
+                            <span class="glyphicon glyphicon-ok"></span>
                         </a>
-                        <a v-if="item1.processing_status.id=='declined'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
-                            
-                                <span class="glyphicon glyphicon-remove"></span>
+                        <a v-if="activity.processing_status.id=='declined'" data-toggle="tab" :href="`#finalised_licence_${activity.id}`">{{activity.name}}
+                            <span class="glyphicon glyphicon-remove"></span>
                         </a>
-
-
                     </li>
                 </ul>
-    
-            </div>   
-            <div  class="tab-content">
-                <div v-for="item in application.licence_type_data">
-                    <div v-for="(item1,index) in item" v-if="item1.processing_status.id=='accepted'" :id="`${item1.id}`" class="tab-pane fade active in"> 
-                        The licence has been issued and has been emailed to {{application.submitter.first_name}} {{application.submitter.last_name}} {{isFinalised}}
-                        <div v-for="licence in application.licences" v-if="licence.licence_activity_id == item1.id">
+            </div>
+            <div class="tab-content">
+                <div v-for="(activity, index) in application.licence_type_data.activity" v-bind:key="`licence_finalised_row_${index}`" :id="`finalised_licence_${activity.id}`" class="tab-pane fade">
+                    <div v-if="activity.processing_status.id=='accepted'"> 
+                        {{activity.name}} licence has been issued and has been emailed to {{application.submitter.first_name}} {{application.submitter.last_name}}
+                        <div v-for="(licence, licence_idx) in getLicencesForActivity(activity.id)"  v-bind:key="`licence_object_${licence_idx}`">
                             Expiry Date: {{licence.expiry_date}}
                         </div>
                     </div>
-                    <div v-for="(item1,index) in item" v-if="item1.processing_status.id=='declined'" :id="`${item1.id}`" class="tab-pane fade active in"> 
-                        The licence has been declined and has been emailed to {{application.submitter.first_name}} {{application.submitter.last_name}} 
+                    <div v-if="activity.processing_status.id=='declined'"> 
+                        {{activity.name}} licence has been declined and has been emailed to {{application.submitter.first_name}} {{application.submitter.last_name}} 
                     </div>
                 </div>
             </div>
         </template>
-        <template v-if="isPartiallyFinalised">
-            <div v-for="item in application.licence_type_data">
+       <template v-if="isPartiallyFinalised">
+            <div>
                 <ul class="nav nav-tabs" >
-                    <li v-for="(item1,index) in item">
-                        <a v-if="item1.processing_status.id=='accepted'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
-                            
-                                <span class="glyphicon glyphicon-ok"></span>
+                    <li v-for="(activity, index) in application.licence_type_data.activity" v-bind:key="`licence_partially_finalised_tabs_${index}`">
+                       <a v-if="activity.processing_status.id=='accepted'" data-toggle="tab" :href="`#partially_finalised_licence_${activity.id}`">{{activity.name}}
+                            <span class="glyphicon glyphicon-ok"></span>
                         </a>
-
-                        <a v-if="item1.processing_status.id=='declined'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
-                            
-                                <span class="glyphicon glyphicon-remove"></span>
+                        <a v-if="activity.processing_status.id=='declined'" data-toggle="tab" :href="`#partially_finalised_licence_${activity.id}`">{{activity.name}}
+                            <span class="glyphicon glyphicon-remove"></span>
                         </a>
-                        <a v-if="item1.processing_status.id=='with_assessor'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
-                            
-                                <span class="glyphicon glyphicon-remove"></span>
+                        <a v-if="activity.processing_status.id=='with_assessor'" data-toggle="tab" :href="`#partially_finalised_licence_${activity.id}`">{{activity.name}}
+                            <span class="glyphicon glyphicon-remove"></span>
                         </a>
-                        <a v-if="item1.processing_status.id=='with_officer_conditions'" data-toggle="tab" :href="`#${item1.id}`">{{item1.name}}
-                            
-                                <span class="glyphicon glyphicon-remove"></span>
+                        <a v-if="activity.processing_status.id=='with_officer_conditions'" data-toggle="tab" :href="`#partially_finalised_licence_${activity.id}`">{{activity.name}}
+                            <span class="glyphicon glyphicon-remove"></span>
                         </a>
-
-
                     </li>
                 </ul>
-    
-            </div>   
-            <div  class="tab-content">
-                <div v-for="item in application.licence_type_data">
-                    <div v-for="(item1,index) in item" v-if="item1.processing_status.id=='accepted'" :id="`${item1.id}`" class="tab-pane fade active in"> 
-                        The licence has been issued and has been emailed to {{application.submitter.first_name}} {{application.submitter.last_name}} 
+            </div>
+            <div class="tab-content">
+                <div v-for="(activity, index) in application.licence_type_data.activity" v-bind:key="`licence_partially_finalised_row_${index}`" :id="`partially_finalised_licence_${activity.id}`" class="tab-pane fade">
+                    <div v-if="activity.processing_status.id=='accepted'"> 
+                        {{activity.name}} licence has been issued and emailed to {{application.submitter.first_name}} {{application.submitter.last_name}} 
                     </div>
-                    <div v-for="(item1,index) in item" v-if="item1.processing_status.id=='declined'" :id="`${item1.id}`" class="tab-pane fade active in"> 
-                        The licence has been declined and has been emailed to {{application.submitter.first_name}} {{application.submitter.last_name}} 
+                    <div v-if="activity.processing_status.id=='declined'"> 
+                        {{activity.name}} licence has been declined and emailed to {{application.submitter.first_name}} {{application.submitter.last_name}} 
                     </div>
-                    <div v-for="(item1,index) in item" v-if="item1.processing_status.id=='with_assessor'" :id="`${item1.id}`" class="tab-pane fade active in"> 
-                        The licensed activity cannot be issued as this licensed activity is still with assessord for assessment. 
+                    <div v-if="activity.processing_status.id=='with_assessor'"> 
+                        {{activity.name}} licensed activity cannot be issued as this licensed activity is still with assessors for assessment.
                     </div>
-                    <div v-for="(item1,index) in item" v-if="item1.processing_status.id=='with_officer_conditions'" :id="`${item1.id}`" class="tab-pane fade active in"> 
-                        The licensed activity cannot be issued as the conditions have not been finalised yet. 
+                    <div v-if="activity.processing_status.id=='with_officer_conditions'"> 
+                        {{activity.name}} licensed activity cannot be issued as the conditions have not been finalised yet. 
                     </div>
                 </div>
             </div>
@@ -86,12 +72,9 @@ import {
 }
 from '@/utils/hooks'
 import datatable from '@vue-utils/datatable.vue'
-import ConditionDetail from './application_add_condition.vue'
+import { mapGetters } from 'vuex'
 export default {
     name: 'InternalApplicationConditions',
-    props: {
-        application: Object
-    },
     data: function() {
         let vm = this;
         return {
@@ -104,42 +87,22 @@ export default {
     components:{
     },
     computed:{
-        isFinalised: function(){
-            let vm=this;
-            var flag=0;
-            for(var i=0, len=vm.application.licence_type_data.activity.length; i<len; i++){
-                if(vm.application.licence_type_data.activity[i].processing_status.id == 'declined' || vm.application.licence_type_data.activity[i].processing_status.id == 'accepted' ){
-                    flag=flag+1;
-                }
-
-            }
-            if(flag>0 && flag==len){
-                return true;
-            }
-            else{
-                return false;
-            }
-            
-        },
-        isPartiallyFinalised: function(){
-            let vm=this;
-            var flag=0;
-            for(var i=0, len=vm.application.licence_type_data.activity.length; i<len; i++){
-                if(vm.application.licence_type_data.activity[i].processing_status.id == 'declined' || vm.application.licence_type_data.activity[i].processing_status.id == 'accepted' ){
-                    flag=flag+1;
-                }
-
-            }
-            if(flag>0 && flag!=len){
-                return true;
-            }
-            else{
-                return false;
-            }
-            
-        },
+        ...mapGetters([
+            'application',
+            'checkActivityStatus',
+            'isPartiallyFinalised',
+            'isFinalised',
+        ]),
     },
-    methods:{
+    methods: {
+        hasActivityStatus: function(status_list, status_count=1, required_role=null) {
+            return this.checkActivityStatus(status_list, status_count, required_role);
+        },
+        getLicencesForActivity: function(activity_id) {
+            return this.application.licences.filter(licence => 
+                licence.licence_activity_id == activity_id
+            );
+        },
         addCondition(){
             this.$refs.condition_detail.isModalOpen = true;
         },
@@ -166,7 +129,6 @@ export default {
         },
     },
     mounted: function(){
-        let vm = this;
     }
 }
 </script>

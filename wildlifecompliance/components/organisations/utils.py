@@ -9,7 +9,7 @@ def can_manage_org(organisation, user):
         return True
     except UserDelegation.DoesNotExist:
         pass
-    if user.is_superuser:
+    if user.has_perm('wildlifecompliance.system_administrator'):
         return True
     return user.has_perm('wildlifecompliance.organisation_access_request')
 

@@ -10,22 +10,6 @@ from ledger.payments.models import Invoice
 from wildlifecompliance.exceptions import BindApplicationException
 
 
-def retrieve_department_users():
-    try:
-        res = requests.get(
-            '{}/api/users/fast/?compact'.format(
-                settings.EXT_USER_API_ROOT_URL), auth=(
-                settings.LEDGER_USER, settings.LEDGER_PASS))
-        res.raise_for_status()
-        cache.set(
-            'department_users',
-            json.loads(
-                res.content).get('objects'),
-            10800)
-    except BaseException:
-        raise
-
-
 def get_department_user(email):
     try:
         res = requests.get(
@@ -178,4 +162,9 @@ def bind_application_to_invoice(request, application, invoice_ref):
 
 
 def get_choice_value(key, choices):
-    return [choice[1] for choice in choices if choice[0] == key][0]
+    try:
+        return [choice[1] for choice in choices if choice[0] == key][0]
+    except IndexError:
+        logger = logging.getLogger(__name__)
+        logger.error("Key %s does not exist in choices: %s" % (key, choices))
+        raise

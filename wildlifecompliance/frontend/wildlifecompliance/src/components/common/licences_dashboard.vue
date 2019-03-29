@@ -16,7 +16,7 @@
                                 <label for="">Licence Type</label>
                                 <select class="form-control" v-model="filterLicenceType">
                                     <option value="All">All</option>
-                                    <option v-for="l in licence_licenceTypes" :value="l">{{l}}</option>
+                                    <option v-for="l in licence_types" :value="l">{{l}}</option>
                                 </select>
                             </div>
                         </div>
@@ -29,7 +29,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <!--<div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Category</label>
                                 <select class="form-control" v-model="filterCategory">
@@ -46,7 +46,7 @@
                                     <option v-for="cs in licence_categoryStatus" :value="cs">{{cs}}</option>
                                 </select>
                             </div>
-                        </div>
+                        </div>-->
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
@@ -100,13 +100,11 @@ export default {
             },
             licence_status:[],
             licence_activityTitles : [],
-            licence_regions: [],
             licence_submitters: [],
-            licence_licenceTypes: [],
-            licence_status: [],
+            licence_types: [],
             licence_categories: [],
             licence_categoryStatus: [],
-            licence_headers:["Number","Licence Type","Licence Holder","Status","Issue Date","Licence","Action"],
+            licence_headers: ["Number", "Licence Type", "Licence Holder", "Status", "Issue Date", "Licence","Action"],
             licence_options:{
                 order: [
                     [0, 'desc']
@@ -122,10 +120,10 @@ export default {
                 columns: [
                     {data: "id"},
                     {data: "current_application.licence_type_data.name"},
-                    {data: "applicant"},
-                    {data: "status"},
+                    {data: "current_application.applicant"},
+                    {data: "current_application.processing_status.name"},
                     {
-                        data: "issue_date",
+                        data: "last_issue_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         }
@@ -145,31 +143,17 @@ export default {
                 ],
                 processing: true,
                 initComplete: function () {
-                    // Grab Regions from the data in the table
-                    var regionColumn = vm.$refs.licence_datatable.vmDataTable.columns(1);
-                    regionColumn.data().unique().sort().each( function ( d, j ) {
-                        let regionTitles = [];
-                        $.each(d,(index,a) => {
-                            // Split region string to array
-                            if (a != null){
-                                $.each(a.split(','),(i,r) => {
-                                    r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
-                                });
-                            }
-                        })
-                        vm.licence_regions = regionTitles;
-                    });
                     // Grab Activity from the data in the table
-                    var titleColumn = vm.$refs.licence_datatable.vmDataTable.columns(2);
+                    var titleColumn = vm.$refs.licence_datatable.vmDataTable.columns(vm.getColumnIndex('licence type'));
                     titleColumn.data().unique().sort().each( function ( d, j ) {
                         let activityTitles = [];
                         $.each(d,(index,a) => {
                             a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
                         })
-                        vm.licence_activityTitles = activityTitles;
+                        vm.licence_types = activityTitles;
                     });
                     // Grab Status from the data in the table
-                    var statusColumn = vm.$refs.licence_datatable.vmDataTable.columns(5);
+                    var statusColumn = vm.$refs.licence_datatable.vmDataTable.columns(vm.getColumnIndex('status'));
                     statusColumn.data().unique().sort().each( function ( d, j ) {
                         let statusTitles = [];
                         $.each(d,(index,a) => {
@@ -188,8 +172,10 @@ export default {
     },
     watch:{
         filterLicenceType: function(){
+            this.filterByColumn('licence type', this.filterLicenceType);
         },
         filterLicenceStatus: function(){
+            this.filterByColumn('status', this.filterLicenceStatus);
         },
         filterCategory: function(){
         },
@@ -308,7 +294,19 @@ export default {
             //         }
             //     }
             // );
-        }
+        },
+        getColumnIndex: function(column_name) {
+            return this.licence_headers.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
+        },
+        filterByColumn: function(column, filterAttribute) {
+            const column_idx = this.getColumnIndex(column);
+            const filterValue = typeof(filterAttribute) == 'string' ? filterAttribute : filterAttribute.name;
+            if (filterValue!= 'All') {
+                this.$refs.licence_datatable.vmDataTable.columns(column_idx).search('^' + filterValue +'$', true, false).draw();
+            } else {
+                this.$refs.licence_datatable.vmDataTable.columns(column_idx).search('').draw();
+            }
+        },
     },
     mounted: function(){
         let vm = this;

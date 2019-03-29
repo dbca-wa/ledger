@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import os
 import zlib
 
+from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.contrib.postgres.fields import JSONField
 from django.db import models, IntegrityError, transaction
@@ -22,7 +23,7 @@ from social_django.models import UserSocialAuth
 from datetime import datetime, date
 
 from ledger.accounts.signals import name_changed, post_clean
-from ledger.accounts.utils import get_department_user_compact, in_dbca_domain
+from ledger.accounts.utils import get_department_user_compact, in_dbca_domain, get_app_label
 from ledger.address.models import UserAddress, Country
 
 
@@ -337,20 +338,32 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     dummy_email_suffix_len = len(dummy_email_suffix)
 
     def has_wildlifelicenceactivity_perm(self, permission_codename, licence_activity_id):
-        return self.groups.filter(
-            permissions__codename=permission_codename,
-            activitypermissiongroup__licence_activities__id=licence_activity_id
-        ).count()
+        app_label = get_app_label()
+        group_queryset = self.groups.filter(
+            permissions__codename__in=permission_codename if isinstance(
+                permission_codename, (list, models.query.QuerySet)
+            ) else [permission_codename],
+            activitypermissiongroup__licence_activities__id__in=licence_activity_id if isinstance(
+                licence_activity_id, (list, models.query.QuerySet)
+            ) else [licence_activity_id]
+        )
+        if app_label:
+            group_queryset = group_queryset.filter(permissions__content_type__app_label=app_label)
+        return group_queryset.count()
 
     def get_wildlifelicence_permission_group(self, permission_codename, activity_id=None, first=True):
+        app_label = get_app_label()
         qs = self.groups.filter(
             permissions__codename=permission_codename
         )
         if activity_id is not None:
-            if type(activity_id) == list:
-                qs.filter(licence_activities__id__in=activity_id)
-            else:
-                qs.filter(licence_activities__id=activity_id)
+            qs = qs.filter(
+                activitypermissiongroup__licence_activities__id__in=activity_id if isinstance(
+                    activity_id, (list, models.query.QuerySet)
+                ) else [activity_id]
+            )
+        if app_label:
+            qs = qs.filter(permissions__content_type__app_label=app_label)
         return qs.first() if first else qs
 
     @property

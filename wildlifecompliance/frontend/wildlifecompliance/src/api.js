@@ -11,7 +11,6 @@ module.exports = {
     emailidentities: '/api/emailidentities/',
     profiles: '/api/profiles/',
     my_profiles: '/api/my_profiles/',
-    department_users: '/api/department_users/',
     assessment:'/api/assessment/',
     amendment:'/api/amendment/',
     is_new_user: '/api/is_new_user/',
@@ -20,8 +19,10 @@ module.exports = {
     application_type:"/api/application_type/",
     applications:"/api/application/",
     licences:"/api/licences/",
+    call_email:"/api/call_email/",
     returns:"/api/returns/",
     application_standard_conditions:"/api/application_standard_conditions/",
+    return_types:"/api/return_types/",
     application_conditions:"/api/application_conditions/",
     discard_application:function (id) {
       return `/api/application/${id}/`;

@@ -126,6 +126,20 @@ class SaveAssessmentSerializer(serializers.ModelSerializer):
             'text',
             'licence_activity')
 
+    def validate(self, data):
+        licence_activity = data.get('licence_activity')
+        assessor_group = data.get('assessor_group')
+        if not licence_activity:
+            raise serializers.ValidationError("No licence activity supplied!")
+
+        group_match = ActivityPermissionGroup.get_groups_for_activities(
+            licence_activity, 'assessor').filter(id=assessor_group.id).first()
+        if not group_match:
+            raise serializers.ValidationError("Invalid group (ID: %s) selected to assess activity ID: %s" % (
+                assessor_group, licence_activity))
+
+        return data
+
 
 class AmendmentRequestSerializer(serializers.ModelSerializer):
     reason = CustomChoiceField()
@@ -163,7 +177,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     activities = serializers.SerializerMethodField()
     processed = serializers.SerializerMethodField()
     id_check_status = CustomChoiceField(read_only=True)
-    processing_status = CustomChoiceField(read_only=True)
+    processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
 
     class Meta:
         model = Application
@@ -204,7 +218,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'payment_status',
             'assigned_officer',
             'can_be_processed',
-            'licence_category',
             'pdf_licence',
             'activities',
             'processed'
@@ -231,8 +244,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         return obj.licence_activity_names
 
     def get_activities(self, obj):
-        application_activities = ApplicationSelectedActivity.objects.filter(application_id=obj.id)
-        return ApplicationSelectedActivitySerializer(application_activities, many=True).data
+        return ApplicationSelectedActivitySerializer(obj.selected_activities, many=True).data
 
     def get_amendment_requests(self, obj):
         amendment_request_data = []
@@ -248,11 +260,18 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         return amendment_request_data
 
     def get_can_be_processed(self, obj):
-        return obj.processing_status == 'under_review'
+        return obj.activities.exclude(processing_status__in=[
+            ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT,
+            ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
+            ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
+        ]).exists()
 
     def get_processed(self, obj):
         """ check if any activities have been processed (i.e. licence issued)"""
-        return True if obj.activities.filter(processing_status__in=['accepted', 'declined']).first() else False
+        return True if obj.activities.filter(processing_status__in=[
+            ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
+            ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
+        ]).first() else False
 
     def get_can_current_user_edit(self, obj):
         result = False
@@ -276,7 +295,7 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(read_only=True)
     proxy_applicant = EmailUserSerializer()
-    processing_status = CustomChoiceField(read_only=True)
+    processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
     customer_status = CustomChoiceField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
@@ -317,7 +336,7 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(read_only=True)
     proxy_applicant = EmailUserSerializer()
-    processing_status = CustomChoiceField(read_only=True)
+    processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
     customer_status = CustomChoiceField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
@@ -344,7 +363,7 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
 
 class ApplicationSerializer(BaseApplicationSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
-    processing_status = CustomChoiceField(read_only=True)
+    processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
     review_status = CustomChoiceField(read_only=True)
     customer_status = CustomChoiceField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
@@ -392,7 +411,6 @@ class CreateExternalApplicationSerializer(serializers.ModelSerializer):
 
 
 class SaveApplicationSerializer(BaseApplicationSerializer):
-    assessor_data = serializers.JSONField(required=False)
 
     assigned_officer = serializers.CharField(
         source='assigned_officer.get_full_name',
@@ -405,11 +423,9 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
         fields = (
             'id',
             'data',
-            'assessor_data',
             'comment_data',
             'schema',
             'customer_status',
-            'processing_status',
             'review_status',
             'org_applicant',
             'proxy_applicant',
@@ -421,7 +437,6 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
             'readonly',
             'can_user_edit',
             'can_user_view',
-            # 'licence_category',
             'licence_type_data',
             'licence_type_name',
             'licence_category',
@@ -459,13 +474,12 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     applicant = serializers.CharField(read_only=True)
     org_applicant = OrganisationSerializer()
     proxy_applicant = EmailUserAppViewSerializer()
-    processing_status = CustomChoiceField(read_only=True)
+    processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
     review_status = CustomChoiceField(read_only=True)
     customer_status = CustomChoiceField(read_only=True)
     character_check_status = CustomChoiceField(read_only=True)
     submitter = EmailUserAppViewSerializer()
     applicationdeclineddetails = ApplicationDeclinedDetailsSerializer()
-    assessor_data = serializers.SerializerMethodField()
     licences = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
     can_be_processed = serializers.SerializerMethodField(read_only=True)
@@ -473,6 +487,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     processed = serializers.SerializerMethodField()
     licence_officers = EmailUserAppViewSerializer(many=True)
     user_in_licence_officers = serializers.SerializerMethodField(read_only=True)
+    user_roles = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Application
@@ -499,7 +514,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'can_user_edit',
             'can_user_view',
             'documents_url',
-            'assessor_data',
             'comment_data',
             'licences',
             'applicationdeclineddetails',
@@ -513,49 +527,74 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'processed',
             'licence_officers',
             'user_in_licence_officers',
+            'user_roles',
         )
         read_only_fields = ('documents', 'conditions')
 
     def get_activities(self, obj):
+        user = self.context['request'].user
+        if user is None:
+            return []
         application_activities = ApplicationSelectedActivity.objects.filter(application_id=obj.id)
+
+        """
+        # Uncomment to filter out activities that the internal user cannot assess / process (to hide activity tabs on the UI).
+        if not user.has_perm('wildlifecompliance.system_administrator'):
+            for activity in application_activities:
+                if not user.has_wildlifelicenceactivity_perm([
+                    'assessor',
+                    'licensing_officer',
+                    'issuing_officer',
+                ], activity.licence_activity_id):
+                    application_activities = application_activities.exclude(licence_activity_id=activity.licence_activity_id)
+        """
+
         return ApplicationSelectedActivitySerializer(application_activities, many=True).data
 
     def get_readonly(self, obj):
         return True
 
-    def get_assessor_data(self, obj):
-        return obj.assessor_data
-
     def get_licences(self, obj):
         licence_data = []
-        qs = obj.licences
+        active_licences = obj.get_licences_by_status(ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT)
 
-        if qs.exists():
-            qs = qs.filter(status='current')
-            for item in obj.licences:
-                # print(item)
-                # print(item.status)
-                print(item.licence_activity_id)
-                # print(item.parent_licence)
-
-                # amendment_request_data.append({"licence_activity":str(item.licence_activity),"id":item.licence_activity.id})
+        for licence in active_licences:
+            for activity in licence.current_activities:
                 licence_data.append(
                     {
                         "licence_activity": str(
-                            item.licence_activity),
-                        "licence_activity_id": item.licence_activity_id,
-                        "start_date": item.start_date,
-                        "expiry_date": item.expiry_date})
+                            activity.licence_activity),
+                        "licence_activity_id": activity.licence_activity_id,
+                        "start_date": activity.start_date,
+                        "expiry_date": activity.expiry_date})
         return licence_data
 
     def get_processed(self, obj):
         """ check if any activities have been processed """
-        return True if obj.activities.filter(processing_status__in=['accepted', 'declined']).first() else False
+        return True if obj.activities.filter(processing_status__in=[
+            ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
+            ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED
+        ]).first() else False
 
     def get_user_in_licence_officers(self, obj):
         if self.context['request'].user and self.context['request'].user in obj.licence_officers:
             return True
         return False
+
+    def get_user_roles(self, obj):
+        try:
+            user = self.context['request'].user
+        except (KeyError, AttributeError):
+            return []
+
+        available_roles = ['assessor', 'licensing_officer', 'issuing_officer', 'return_curator']
+        is_administrator = user.has_perm('wildlifecompliance.system_administrator')
+        roles = []
+        for activity in obj.selected_activities.all():
+            for role in available_roles:
+                if is_administrator or user.has_wildlifelicenceactivity_perm(role, activity.licence_activity_id):
+                    roles.append({'activity_id': activity.licence_activity_id, 'role': role})
+        return roles
 
 
 class ApplicationUserActionSerializer(serializers.ModelSerializer):
@@ -602,7 +641,8 @@ class ApplicationConditionSerializer(serializers.ModelSerializer):
             'recurrence_schedule',
             'recurrence_pattern',
             'condition',
-            'licence_activity')
+            'licence_activity',
+            'return_type',)
         readonly_fields = ('order', 'condition')
 
 
@@ -645,7 +685,7 @@ class DTAssessmentSerializer(serializers.ModelSerializer):
         source='application.lodgement_date')
     applicant = serializers.CharField(source='application.applicant')
     application_category = serializers.CharField(
-        source='application.licence_type_name')
+        source='application.licence_category_name')
 
     class Meta:
         model = Assessment

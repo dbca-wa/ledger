@@ -111,27 +111,20 @@ export default {
   },
   methods: {
     save: function(e) {
-      console.log('SAVE func()')
       let vm = this;
       vm.form=document.forms.enter_return
       let data = new FormData(vm.form);
-      console.log(data)
-      console.log(JSON.stringify(data))
     },
     submit: function(e) {
-      console.log('SUBMIT func()')
       let vm = this;
       vm.form=document.forms.enter_return_question
     },
     init: function() {
-      console.log('INIT FUNC')
-
       // TODO: set return button for payment.
       // returnBtn = return.requires_payment ? 'Pay and Submit' : 'Submit'
 
     },
     addEventListeners: function(){
-      console.log('addEventListeners')
       let vm = this;
       // Initialise Application Date Filters
       //$(vm.$refs.answerDatePicker).data('date') = '27/02/2019';
@@ -158,7 +151,6 @@ export default {
      Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
         next(vm => {
            vm.returns = res.body;
-           console.log(vm);
         // TODO: set return button if requires payment.
         // if (vm.returns.requires_pay)
         //   returnBtn = 'Pay and Submit'
@@ -167,15 +159,11 @@ export default {
      }, err => {
         console.log(err);
      });
-   },
-   mounted: function(){
-       console.log('MOUNTED func()')
-        let vm = this;
-        vm.form = document.forms.enter_return_question;
-        console.log("from mounted")
-        console.log(vm.form)
-        vm.addEventListeners();
-   },
-
+  },
+  mounted: function(){
+     let vm = this;
+     vm.form = document.forms.enter_return_question;
+     vm.addEventListeners();
+  },
 }
 </script>

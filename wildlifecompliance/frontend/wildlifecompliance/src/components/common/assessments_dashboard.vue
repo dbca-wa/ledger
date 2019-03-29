@@ -16,7 +16,7 @@
                                 <label for="">Licence Type</label>
                                 <select class="form-control" v-model="filterApplicationLicenceType">
                                     <option value="All">All</option>
-                                    <option v-for="lt in application_licence_types" :value="lt">{{lt}}</option>
+                                    <option v-for="lt in application_licence_types" :value="lt" v-bind:key="`licence_type_${lt}`">{{lt}}</option>
                                 </select>
                             </div>
                         </div>
@@ -25,7 +25,7 @@
                                 <label for="">Status</label>
                                 <select class="form-control" v-model="filterApplicationStatus">
                                     <option value="All">All</option>
-                                    <option v-for="s in application_status" :value="s">{{s}}</option>
+                                    <option v-for="s in application_status" :value="s" v-bind:key="`status_${s.id}`">{{s.name}}</option>
                                 </select>
                             </div>
                         </div>
@@ -83,7 +83,6 @@ export default {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'application-datatable-'+vm._uid,
             // Filters for Applications
-            filterApplicationRegion: [],
             filterApplicationLicenceType: 'All',
             filterApplicationStatus: 'All',
             filterApplicationLodgedFrom: '',
@@ -150,7 +149,7 @@ export default {
                     {
                         data: "status",
                         mRender:function (data,type,full) {
-                            return data != '' && data != null ? `${data}` : '';
+                            return data.name ? `${data.name}` : '';
                         }
                     },
                     {
@@ -169,31 +168,17 @@ export default {
                 ],
                 processing: true,
                 initComplete: function () {
-                    // Grab Regions from the data in the table
-                    var regionColumn = vm.$refs.application_datatable.vmDataTable.columns(1);
-                    regionColumn.data().unique().sort().each( function ( d, j ) {
-                        let regionTitles = [];
-                        $.each(d,(index,a) => {
-                            // Split region string to array
-                            if (a != null){
-                                $.each(a.split(','),(i,r) => {
-                                    r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
-                                });
-                            }
-                        })
-                        vm.application_regions = regionTitles;
-                    });
                     // Grab Activity from the data in the table
-                    var titleColumn = vm.$refs.application_datatable.vmDataTable.columns(2);
+                    var titleColumn = vm.$refs.application_datatable.vmDataTable.columns(vm.getColumnIndex('licence category'));
                     titleColumn.data().unique().sort().each( function ( d, j ) {
                         let activityTitles = [];
                         $.each(d,(index,a) => {
-                            a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
+                            a != null && activityTitles.indexOf(a) < 0 && a.length ? activityTitles.push(a): '';
                         })
-                        vm.application_activityTitles = activityTitles;
+                        vm.application_licence_types = activityTitles;
                     });
                     // Grab submitters from the data in the table
-                    var submittersColumn = vm.$refs.application_datatable.vmDataTable.columns(3);
+                    var submittersColumn = vm.$refs.application_datatable.vmDataTable.columns(vm.getColumnIndex('submitter'));
                     submittersColumn.data().unique().sort().each( function ( d, j ) {
                         var submitters = [];
                         $.each(d,(index,s) => {
@@ -207,11 +192,11 @@ export default {
                         vm.application_submitters = submitters;
                     });
                     // Grab Status from the data in the table
-                    var statusColumn = vm.$refs.application_datatable.vmDataTable.columns(5);
+                    var statusColumn = vm.$refs.application_datatable.vmDataTable.columns(vm.getColumnIndex('status'));
                     statusColumn.data().unique().sort().each( function ( d, j ) {
                         let statusTitles = [];
                         $.each(d,(index,a) => {
-                            a != null && statusTitles.indexOf(a) < 0 ? statusTitles.push(a): '';
+                            a != null && !statusTitles.filter(status => status.id == a.id ).length ? statusTitles.push(a): '';
                         })
                         vm.application_status = statusTitles;
                     });
@@ -232,15 +217,7 @@ export default {
             }
         },
         filterApplicationStatus: function() {
-            let vm = this;
-            if (vm.filterApplicationStatus!= 'All') {
-                vm.$refs.application_datatable.vmDataTable.columns(5).search(vm.filterApplicationStatus).draw();
-            } else {
-                vm.$refs.application_datatable.vmDataTable.columns(5).search('').draw();
-            }
-        },
-        filterApplicationRegion: function(){
-            this.$refs.application_datatable.vmDataTable.draw();
+            this.filterByColumn('status', this.filterApplicationStatus);
         },
         filterApplicationSubmitter: function(){
             this.$refs.application_datatable.vmDataTable.draw();
@@ -250,7 +227,10 @@ export default {
         },
         filterApplicationLodgedTo: function(){
             this.$refs.application_datatable.vmDataTable.draw();
-        }
+        },
+        filterApplicationLicenceType: function(){
+            this.filterByColumn('licence category', this.filterApplicationLicenceType);
+        },
     },
     computed: {
     },
@@ -284,44 +264,10 @@ export default {
                 var id = $(this).attr('data-discard-application');
                 vm.discardApplication(id);
             });
-            // Initialise select2 for region
-            $(vm.$refs.filterRegion).select2({
-                "theme": "bootstrap",
-                allowClear: true,
-                placeholder:"Select Region"
-            }).
-            on("select2:select",function (e) {
-                var selected = $(e.currentTarget);
-                vm.filterApplicationRegion = selected.val();
-            }).
-            on("select2:unselect",function (e) {
-                var selected = $(e.currentTarget);
-                vm.filterApplicationRegion = selected.val();
-            });
         },
         initialiseSearch:function(){
-            this.regionSearch();
             this.submitterSearch();
             this.dateSearch();
-        },
-        regionSearch:function(){
-            let vm = this;
-            vm.$refs.application_datatable.table.dataTableExt.afnFiltering.push(
-                function(settings,data,dataIndex,original){
-                    let found = false;
-                    let filtered_regions = vm.filterApplicationRegion;
-                    if (filtered_regions.length == 0){ return true; } 
-                    let regions = original.region != '' && original.region != null ? original.region.split(','): [];
-                    $.each(regions,(i,r) => {
-                        if (filtered_regions.indexOf(r) != -1){
-                            found = true;
-                            return false;
-                        }
-                    });
-                    if  (found) { return true; }
-                    return false;
-                }
-            );
         },
         submitterSearch:function(){
             let vm = this;
@@ -367,7 +313,19 @@ export default {
                     }
                 }
             );
-        }
+        },
+        getColumnIndex: function(column_name) {
+            return this.application_headers.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
+        },
+        filterByColumn: function(column, filterAttribute) {
+            const column_idx = this.getColumnIndex(column);
+            const filterValue = typeof(filterAttribute) == 'string' ? filterAttribute : filterAttribute.name;
+            if (filterValue!= 'All') {
+                this.$refs.application_datatable.vmDataTable.columns(column_idx).search('^' + filterValue +'$', true, false).draw();
+            } else {
+                this.$refs.application_datatable.vmDataTable.columns(column_idx).search('').draw();
+            }
+        },
     },
     mounted: function(){
         let vm = this;

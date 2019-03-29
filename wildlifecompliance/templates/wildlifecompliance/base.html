@@ -63,7 +63,7 @@
                                 <ul class="nav navbar-nav">
                                     {% block left_menu_items %}
                                         {% if is_internal_login %}
-                                            <li><a href="/internal/phone_email">Phone/Email</a></li>
+                                            <li><a href="/internal/call_email">Call/Email</a></li>
                                             <li><a href="/internal/licences">Licences</a></li>
                                             <!--
                                             <li><a href="/internal/licences">Licences</a></li>
@@ -102,11 +102,7 @@
                                             <ul class="dropdown-menu">
                                                 {% if is_wildlifecompliance_admin_login %}
                                                     <li><a href="{% url 'admin:index' %}">Admin</a></li>
-                                                {% endif %}
-                                                {% if request.user.is_superuser %}
                                                     <li><a href="{% url 'mgt-commands' %}">Management Commands</a></li>
-                                                {% endif %}
-                                                {% if request.user.is_superuser or is_wildlifecompliance_admin_login %}
                                                     <li role="separator" class="divider"></li>
                                                 {% endif %}
                                                 <li><a href="{% url 'manage-account' %}">Manage Account</a></li>
