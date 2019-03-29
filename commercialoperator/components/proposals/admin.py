@@ -164,3 +164,17 @@ class ReferralRecipientGroupAdmin(admin.ModelAdmin):
     #def has_delete_permission(self, request, obj=None):
     #    return False 
 
+@admin.register(models.QAOfficerGroup)
+class QAOfficerGroupAdmin(admin.ModelAdmin):
+    filter_horizontal = ('members',)
+    list_display = ['name']
+    exclude = ('site',)
+    actions = None
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "members":
+            #kwargs["queryset"] = EmailUser.objects.filter(email__icontains='@dbca.wa.gov.au')
+            kwargs["queryset"] = EmailUser.objects.filter(is_staff=True)
+        return super(QAOfficerGroupAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+
+

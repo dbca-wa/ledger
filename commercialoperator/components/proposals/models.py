@@ -84,9 +84,6 @@ class TaggedProposalAssessorGroupActivities(TaggedItemBase):
 
 class ProposalAssessorGroup(models.Model):
     name = models.CharField(max_length=255)
-    #members = models.ManyToManyField(EmailUser,blank=True)
-    #regions = TaggableManager(verbose_name="Regions",help_text="A comma-separated list of regions.",through=TaggedProposalAssessorGroupRegions,related_name = "+",blank=True)
-    #activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.",through=TaggedProposalAssessorGroupActivities,related_name = "+",blank=True)
     members = models.ManyToManyField(EmailUser)
     region = models.ForeignKey(Region, null=True, blank=True)
     default = models.BooleanField(default=False)
@@ -275,6 +272,7 @@ class Proposal(RevisionedMixin):
     PROCESSING_STATUS_DRAFT = 'draft'
     PROCESSING_STATUS_WITH_ASSESSOR = 'with_assessor'
     PROCESSING_STATUS_ONHOLD = 'on_hold'
+    PROCESSING_STATUS_WITH_QA_OFFICER = 'with_qa_officer'
     PROCESSING_STATUS_WITH_REFERRAL = 'with_referral'
     PROCESSING_STATUS_WITH_ASSESSOR_REQUIREMENTS = 'with_assessor_requirements'
     PROCESSING_STATUS_WITH_APPROVER = 'with_approver'
@@ -292,6 +290,7 @@ class Proposal(RevisionedMixin):
                                  (PROCESSING_STATUS_DRAFT, 'Draft'),
                                  (PROCESSING_STATUS_WITH_ASSESSOR, 'With Assessor'),
                                  (PROCESSING_STATUS_ONHOLD, 'On Hold'),
+                                 (PROCESSING_STATUS_WITH_QA_OFFICER, 'With QA Officer'),
                                  (PROCESSING_STATUS_WITH_REFERRAL, 'With Referral'),
                                  (PROCESSING_STATUS_WITH_ASSESSOR_REQUIREMENTS, 'With Assessor (Requirements)'),
                                  (PROCESSING_STATUS_WITH_APPROVER, 'With Approver'),
@@ -1667,6 +1666,52 @@ class ReferralRecipientGroup(models.Model):
         app_label = 'commercialoperator'
         verbose_name_plural = "Referral recipient group"
 
+class QAOfficerGroup(models.Model):
+    #site = models.OneToOneField(Site, default='1')
+    name = models.CharField(max_length=30, unique=True)
+    members = models.ManyToManyField(EmailUser)
+    default = models.BooleanField(default=False)
+
+    def __str__(self):
+        return 'QA Officer Group'
+
+    @property
+    def all_members(self):
+        all_members = []
+        all_members.extend(self.members.all())
+        member_ids = [m.id for m in self.members.all()]
+        #all_members.extend(EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True).exclude(id__in=member_ids))
+        return all_members
+
+    @property
+    def filtered_members(self):
+        return self.members.all()
+
+    @property
+    def members_list(self):
+            return list(self.members.all().values_list('email', flat=True))
+
+    class Meta:
+        app_label = 'commercialoperator'
+        verbose_name_plural = "QA Officer group"
+
+
+    def clean(self):
+        try:
+            default = QAOfficerGroup.objects.get(default=True)
+        except ProposalAssessorGroup.DoesNotExist:
+            default = None
+
+        if default and self.default:
+            raise ValidationError('There can only be one default proposal QA Officer group')
+
+    @property
+    def current_proposals(self):
+        assessable_states = ['with_qa_officer']
+        return Proposal.objects.filter(processing_status__in=assessable_states)
+
+
+#
 #class ReferralRequestUserAction(UserAction):
 #    ACTION_LODGE_REQUEST = "Lodge request {}"
 #    ACTION_ASSIGN_TO = "Assign to {}"
@@ -2079,5 +2124,7 @@ reversion.register(Assessment)
 reversion.register(Referral)
 reversion.register(HelpPage)
 reversion.register(ApplicationType)
+reversion.register(ReferralRecipientGroup)
+reversion.register(QAOfficerGroup)
 
 
