@@ -263,11 +263,6 @@ class Application(RevisionedMixin):
         blank=True,
         null=True,
         related_name='wildlifecompliance_applications_assigned')
-    # processing_status = models.CharField(
-    #     'Processing Status',
-    #     max_length=30,
-    #     choices=PROCESSING_STATUS_CHOICES,
-    #     default=PROCESSING_STATUS_DRAFT)
     id_check_status = models.CharField(
         'Identification Check Status',
         max_length=30,
@@ -1219,40 +1214,47 @@ class ApplicationRequest(models.Model):
 
 
 class ReturnRequest(ApplicationRequest):
+    RETURN_REQUEST_REASON_OUTSTANDING = 'outstanding'
+    RETURN_REQUEST_REASON_OTHER = 'other'
     REASON_CHOICES = (
-        ('outstanding', 'There are currently outstanding returns for the previous licence'),
-        ('other', 'Other')
+        (RETURN_REQUEST_REASON_OUTSTANDING, 'There are currently outstanding returns for the previous licence'),
+        (RETURN_REQUEST_REASON_OTHER, 'Other')
     )
     reason = models.CharField(
         'Reason',
         max_length=30,
         choices=REASON_CHOICES,
-        default=REASON_CHOICES[0][0])
+        default=RETURN_REQUEST_REASON_OUTSTANDING)
 
     class Meta:
         app_label = 'wildlifecompliance'
 
 
 class AmendmentRequest(ApplicationRequest):
+    AMENDMENT_REQUEST_STATUS_REQUESTED = 'requested'
+    AMENDMENT_REQUEST_STATUS_AMENDED = 'amended'
     STATUS_CHOICES = (
-        ('requested', 'Requested'),
-        ('amended', 'Amended')
+        (AMENDMENT_REQUEST_STATUS_REQUESTED, 'Requested'),
+        (AMENDMENT_REQUEST_STATUS_AMENDED, 'Amended')
     )
+    AMENDMENT_REQUEST_REASON_INSUFFICIENT_DETAIL = 'insufficient_detail'
+    AMENDMENT_REQUEST_REASON_MISSING_INFO = 'missing_information'
+    AMENDMENT_REQUEST_REASON_OTHER = 'other'
     REASON_CHOICES = (
-        ('insufficient_detail', 'The information provided was insufficient'),
-        ('missing_information', 'There was missing information'),
-        ('other', 'Other')
+        (AMENDMENT_REQUEST_REASON_INSUFFICIENT_DETAIL, 'The information provided was insufficient'),
+        (AMENDMENT_REQUEST_REASON_MISSING_INFO, 'There was missing information'),
+        (AMENDMENT_REQUEST_REASON_OTHER, 'Other')
     )
     status = models.CharField(
         'Status',
         max_length=30,
         choices=STATUS_CHOICES,
-        default=STATUS_CHOICES[0][0])
+        default=AMENDMENT_REQUEST_STATUS_REQUESTED)
     reason = models.CharField(
         'Reason',
         max_length=30,
         choices=REASON_CHOICES,
-        default=REASON_CHOICES[0][0])
+        default=AMENDMENT_REQUEST_REASON_INSUFFICIENT_DETAIL)
     licence_activity = models.ForeignKey(
         'wildlifecompliance.LicenceActivity', null=True)
 
@@ -1374,32 +1376,32 @@ class Assessment(ApplicationRequest):
                 raise
 
 
-class ApplicationDeclinedDetails(models.Model):
-    STATUS_CHOICES = (
-        ('default', 'Default'),
-        ('propose_decline', 'Propose Decline'),
-        ('declined', 'Declined'),
-        ('propose_issue', 'Propose Issue'),
-        ('issued', 'Issued')
-    )
-    status = models.CharField(
-        'Status',
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default=STATUS_CHOICES[0][0])
-    application = models.OneToOneField(Application)
-    officer = models.ForeignKey(EmailUser, null=False)
-    reason = models.TextField(blank=True)
-    cc_email = models.TextField(null=True)
-    activity = JSONField(blank=True, null=True)
-    licence_activity = models.ForeignKey(
-        'wildlifecompliance.LicenceActivity', null=True)
-    proposed_start_date = models.DateField(null=True, blank=True)
-    proposed_end_date = models.DateField(null=True, blank=True)
-    is_activity_renewable = models.BooleanField(default=False)
-
-    class Meta:
-        app_label = 'wildlifecompliance'
+# class ApplicationDeclinedDetails(models.Model):
+#     STATUS_CHOICES = (
+#         ('default', 'Default'),
+#         ('propose_decline', 'Propose Decline'),
+#         ('declined', 'Declined'),
+#         ('propose_issue', 'Propose Issue'),
+#         ('issued', 'Issued')
+#     )
+#     status = models.CharField(
+#         'Status',
+#         max_length=20,
+#         choices=STATUS_CHOICES,
+#         default=STATUS_CHOICES[0][0])
+#     application = models.OneToOneField(Application)
+#     officer = models.ForeignKey(EmailUser, null=False)
+#     reason = models.TextField(blank=True)
+#     cc_email = models.TextField(null=True)
+#     activity = JSONField(blank=True, null=True)
+#     licence_activity = models.ForeignKey(
+#         'wildlifecompliance.LicenceActivity', null=True)
+#     proposed_start_date = models.DateField(null=True, blank=True)
+#     proposed_end_date = models.DateField(null=True, blank=True)
+#     is_activity_renewable = models.BooleanField(default=False)
+#
+#     class Meta:
+#         app_label = 'wildlifecompliance'
 
 
 class ApplicationSelectedActivity(models.Model):
@@ -1524,7 +1526,14 @@ class DefaultCondition(OrderedModel):
 
 
 class ApplicationCondition(OrderedModel):
-    RECURRENCE_PATTERNS = [(1, 'Weekly'), (2, 'Monthly'), (3, 'Yearly')]
+    APPLICATION_CONDITION_RECURRENCE_WEEKLY = 1
+    APPLICATION_CONDITION_RECURRENCE_MONTHLY = 2
+    APPLICATION_CONDITION_RECURRENCE_YEARLY = 3
+    RECURRENCE_PATTERNS = (
+        (APPLICATION_CONDITION_RECURRENCE_WEEKLY, 'Weekly'),
+        (APPLICATION_CONDITION_RECURRENCE_MONTHLY, 'Monthly'),
+        (APPLICATION_CONDITION_RECURRENCE_YEARLY, 'Yearly')
+    )
     standard_condition = models.ForeignKey(
         ApplicationStandardCondition, null=True, blank=True)
     free_condition = models.TextField(null=True, blank=True)
@@ -1536,7 +1545,8 @@ class ApplicationCondition(OrderedModel):
     due_date = models.DateField(null=True, blank=True)
     recurrence = models.BooleanField(default=False)
     recurrence_pattern = models.SmallIntegerField(
-        choices=RECURRENCE_PATTERNS, default=1)
+        choices=RECURRENCE_PATTERNS,
+        default=APPLICATION_CONDITION_RECURRENCE_WEEKLY)
     recurrence_schedule = models.IntegerField(null=True, blank=True)
     licence_activity = models.ForeignKey(
         'wildlifecompliance.LicenceActivity', null=True)

@@ -364,7 +364,7 @@ def send_organisation_address_updated_email_notification(
     }
 
     for org_contact in OrganisationContact.objects.filter(
-            user_role='organisation_admin', organisation=wc_organisation):
+            user_role=OrganisationContact.ORG_CONTACT_ROLE_ADMIN, organisation=wc_organisation):
         msg = email.send(org_contact.email, context=context)
         sender = request.user if request else settings.DEFAULT_FROM_EMAIL
 

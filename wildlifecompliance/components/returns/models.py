@@ -15,9 +15,14 @@ class ReturnType(models.Model):
     """
     A definition to identify the format used to facilitate Return.
     """
-    RETURN_TYPE_CHOICES = (('sheet', 'Sheet'),
-                           ('question', 'Question'),
-                           ('data', 'Data'))
+    RETURN_TYPE_SHEET = 'sheet'
+    RETURN_TYPE_QUESTION = 'question'
+    RETURN_TYPE_DATA = 'data'
+    RETURN_TYPE_CHOICES = (
+        (RETURN_TYPE_SHEET, 'Sheet'),
+        (RETURN_TYPE_QUESTION, 'Question'),
+        (RETURN_TYPE_DATA, 'Data')
+    )
 
     Name = models.CharField(null=True, blank=True, max_length=100)
     description = models.TextField(null=True, blank=True, max_length=256)
@@ -26,7 +31,7 @@ class ReturnType(models.Model):
         'Data format',
         max_length=30,
         choices=RETURN_TYPE_CHOICES,
-        default=RETURN_TYPE_CHOICES[0][0])
+        default=RETURN_TYPE_SHEET)
     replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
     version = models.SmallIntegerField(default=1, blank=False, null=False)
 
@@ -56,21 +61,34 @@ class Return(models.Model):
     """
     A number of requirements relating to a Licence condition recorded during the Licence period.
     """
-    PROCESSING_STATUS_CHOICES = (('due', 'Due'),
-                                 ('overdue', 'Overdue'),
-                                 ('draft', 'Draft'),
-                                 ('future', 'Future'),
-                                 ('with_curator', 'With Curator'),
-                                 ('accepted', 'Accepted'),
-                                 )
-    CUSTOMER_STATUS_CHOICES = (('due', 'Due'),
-                               ('overdue', 'Overdue'),
-                               ('draft', 'Draft'),
-                               ('future', 'Future'),
-                               ('under_review', 'Under Review'),
-                               ('accepted', 'Accepted'),
-
-                               )
+    RETURN_PROCESSING_STATUS_DUE = 'due'
+    RETURN_PROCESSING_STATUS_OVERDUE = 'overdue'
+    RETURN_PROCESSING_STATUS_DRAFT = 'draft'
+    RETURN_PROCESSING_STATUS_FUTURE = 'future'
+    RETURN_PROCESSING_STATUS_WITH_CURATOR = 'with_curator'
+    RETURN_PROCESSING_STATUS_ACCEPTED = 'accepted'
+    PROCESSING_STATUS_CHOICES = (
+        (RETURN_PROCESSING_STATUS_DUE, 'Due'),
+        (RETURN_PROCESSING_STATUS_OVERDUE, 'Overdue'),
+        (RETURN_PROCESSING_STATUS_DRAFT, 'Draft'),
+        (RETURN_PROCESSING_STATUS_FUTURE, 'Future'),
+        (RETURN_PROCESSING_STATUS_WITH_CURATOR, 'With Curator'),
+        (RETURN_PROCESSING_STATUS_ACCEPTED, 'Accepted'),
+    )
+    RETURN_CUSTOMER_STATUS_DUE = 'due'
+    RETURN_CUSTOMER_STATUS_OVERDUE = 'overdue'
+    RETURN_CUSTOMER_STATUS_DRAFT = 'draft'
+    RETURN_CUSTOMER_STATUS_FUTURE = 'future'
+    RETURN_CUSTOMER_STATUS_UNDER_REVIEW = 'under_review'
+    RETURN_CUSTOMER_STATUS_ACCEPTED = 'accepted'
+    CUSTOMER_STATUS_CHOICES = (
+        (RETURN_CUSTOMER_STATUS_DUE, 'Due'),
+        (RETURN_CUSTOMER_STATUS_OVERDUE, 'Overdue'),
+        (RETURN_CUSTOMER_STATUS_DRAFT, 'Draft'),
+        (RETURN_CUSTOMER_STATUS_FUTURE, 'Future'),
+        (RETURN_CUSTOMER_STATUS_UNDER_REVIEW, 'Under Review'),
+        (RETURN_CUSTOMER_STATUS_ACCEPTED, 'Accepted'),
+    )
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     application = models.ForeignKey(Application, related_name='returns')
     licence = models.ForeignKey(
@@ -79,11 +97,13 @@ class Return(models.Model):
     due_date = models.DateField()
     text = models.TextField(blank=True)
     processing_status = models.CharField(
-        choices=PROCESSING_STATUS_CHOICES, max_length=20)
+        choices=PROCESSING_STATUS_CHOICES,
+        max_length=20,
+        default=RETURN_PROCESSING_STATUS_FUTURE)
     customer_status = models.CharField(
         choices=CUSTOMER_STATUS_CHOICES,
         max_length=20,
-        default=CUSTOMER_STATUS_CHOICES[1][0])
+        default=RETURN_CUSTOMER_STATUS_FUTURE)
     assigned_to = models.ForeignKey(
         EmailUser,
         related_name='wildlifecompliance_return_assignments',
@@ -227,9 +247,9 @@ class Return(models.Model):
     def set_submitted(self, request):
         with transaction.atomic():
             try:
-                if self.processing_status == 'future' or 'due':
-                    self.customer_status = "under_review"
-                    self.processing_status = "with_curator"
+                if self.processing_status == Return.RETURN_PROCESSING_STATUS_FUTURE or Return.RETURN_PROCESSING_STATUS_DUE:
+                    self.customer_status = Return.RETURN_CUSTOMER_STATUS_UNDER_REVIEW
+                    self.processing_status = Return.RETURN_PROCESSING_STATUS_WITH_CURATOR
                     self.submitter = request.user
                     self.save()
 
@@ -250,8 +270,8 @@ class Return(models.Model):
 
     def accept(self, request):
         with transaction.atomic():
-            self.processing_status = 'accepted'
-            self.customer_status = 'accepted'
+            self.processing_status = Return.RETURN_PROCESSING_STATUS_ACCEPTED
+            self.customer_status = Return.RETURN_CUSTOMER_STATUS_ACCEPTED
             self.save()
             self.log_user_action(
                 ReturnUserAction.ACTION_ACCEPT_REQUEST.format(

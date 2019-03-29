@@ -6,7 +6,7 @@ from wildlifecompliance.components.applications.models import (
     ApplicationLogEntry,
     ApplicationCondition,
     ApplicationStandardCondition,
-    ApplicationDeclinedDetails,
+    # ApplicationDeclinedDetails,
     Assessment,
     ActivityPermissionGroup,
     AmendmentRequest,
@@ -464,10 +464,10 @@ class ApplicantSerializer(serializers.ModelSerializer):
         )
 
 
-class ApplicationDeclinedDetailsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ApplicationDeclinedDetails
-        fields = '__all__'
+# class ApplicationDeclinedDetailsSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = ApplicationDeclinedDetails
+#         fields = '__all__'
 
 
 class InternalApplicationSerializer(BaseApplicationSerializer):
@@ -479,7 +479,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     customer_status = CustomChoiceField(read_only=True)
     character_check_status = CustomChoiceField(read_only=True)
     submitter = EmailUserAppViewSerializer()
-    applicationdeclineddetails = ApplicationDeclinedDetailsSerializer()
+    # applicationdeclineddetails = ApplicationDeclinedDetailsSerializer()
     licences = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
     can_be_processed = serializers.SerializerMethodField(read_only=True)
@@ -516,7 +516,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'documents_url',
             'comment_data',
             'licences',
-            'applicationdeclineddetails',
+            # 'applicationdeclineddetails',
             'permit',
             'payment_status',
             'assigned_officer',
