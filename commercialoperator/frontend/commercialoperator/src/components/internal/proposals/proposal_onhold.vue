@@ -11,7 +11,7 @@
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
                                         <TextArea :proposal_id="proposal_id" :readonly="readonly" name="on_hold_comments" label="Comments" id="id_comments" />
-                                        <FileField :proposal_id="proposal_id" isRepeatable="true" name="on_hold_file" label="Add Document" id="id_file" @refreshFromResponse="refreshFromResponse"/>
+                                        <FileField :document_url="document_url" :proposal_id="proposal_id" isRepeatable="true" name="on_hold_file" label="Add Document" id="id_file" @refreshFromResponse="refreshFromResponse"/>
                                     </div>
                                 </div>
                             </div>
@@ -69,7 +69,11 @@ export default {
         showError: function() {
             var vm = this;
             return vm.errors;
+        },
+        document_url: function() {
+            return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_onhold_document/` : '';
         }
+
     },
     methods:{
         refreshFromResponse:function(document_list){
@@ -94,7 +98,7 @@ export default {
                 file_input_name: 'on_hold_file',
                 proposal: vm.proposal_id,
                 text: form.elements['on_hold_comments'].value, // getting the value from the text-area.vue field
-                document_list: JSON.stringify(vm.document_list),
+                //document_list: JSON.stringify(vm.document_list),
             }
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal_id+'/on_hold'),data,{
                 emulateJSON: true
@@ -155,7 +159,7 @@ export default {
    },
    mounted:function () {
        let vm =this;
-       vm.form = document.forms.amendForm;
+       vm.form = document.forms.onholdForm;
        vm.addFormValidations();
        this.$nextTick(()=>{  
             vm.eventListerners();

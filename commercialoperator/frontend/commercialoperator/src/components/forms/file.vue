@@ -98,7 +98,7 @@ export default {
         },
         isRepeatable:Boolean,
         readonly:Boolean,
-        docsUrl: String,
+        document_url: String,
     },
     components: {Comment, HelpText},
     data:function(){
@@ -123,6 +123,16 @@ export default {
             return helpers.getCookie('csrftoken')
         },
         proposal_document_action: function() {
+            if (this.proposal_id) {
+                if (this.document_url) {
+                    return this.document_url;
+                } else {
+                    return `/api/proposal/${this.proposal_id}/process_document/`;
+                }
+                
+            } else {
+                return '';
+            }
           return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_document/` : '';
         }
     },
@@ -236,7 +246,6 @@ export default {
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
-					//vm.$emit('refreshFromResponse',res);
                 },err=>{
                 });
 
@@ -254,7 +263,6 @@ export default {
     mounted:function () {
         let vm = this;
         vm.documents = vm.get_documents();
-		vm.$emit('refreshFromResponse', vm.documents);
         if (vm.value) {
             //vm.files = (Array.isArray(vm.value))? vm.value : [vm.value];
             if (Array.isArray(vm.value)) {

@@ -34,6 +34,9 @@ logger = logging.getLogger(__name__)
 def update_proposal_doc_filename(instance, filename):
     return 'proposals/{}/documents/{}'.format(instance.proposal.id,filename)
 
+def update_onhold_doc_filename(instance, filename):
+    return 'proposals/{}/on_hold/{}'.format(instance.proposal.id,filename)
+
 def update_referral_doc_filename(instance, filename):
     return 'proposals/{}/referral/{}/documents/{}'.format(instance.referral.proposal.id,instance.referral.id,filename)
 
@@ -188,6 +191,21 @@ class ProposalDocument(Document):
     _file = models.FileField(upload_to=update_proposal_doc_filename)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+
+    def delete(self):
+        if self.can_delete:
+            return super(ProposalDocument, self).delete()
+        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+class OnHoldDocument(Document):
+    proposal = models.ForeignKey('Proposal',related_name='onhold_documents')
+    _file = models.FileField(upload_to=update_onhold_doc_filename)
+    input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+    visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
 
     def delete(self):
         if self.can_delete:
@@ -948,13 +966,6 @@ class Proposal(RevisionedMixin):
                 if not (self.processing_status == 'with_assessor' or self.processing_status == 'with_referral'):
                     raise ValidationError('You cannot put on hold if it is not with assessor or with referral')
 
-                #comment = request.data.get('onhold_comment')
-                # TODO add file to ProposalOnHold object (and add to action log, maybe?)
-                #ProposalOnHold.objects.update_or_create(
-                #    proposal = self,
-                #    #defaults={'officer': request.user, 'comment': comment, 'document': details.get('cc_email',None)}
-                #    defaults={'officer': request.user, 'comment': comment}
-                #)
                 self.prev_processing_status = self.processing_status
                 self.processing_status = self.PROCESSING_STATUS_ONHOLD
                 self.save()
@@ -975,7 +986,6 @@ class Proposal(RevisionedMixin):
                 if self.processing_status != 'on_hold':
                     raise ValidationError('You cannot remove on hold if it is not currently on hold')
 
-                #comment = request.data.get('onhold_comment')
                 self.processing_status = self.prev_processing_status
                 self.prev_processing_status = self.PROCESSING_STATUS_ONHOLD
                 self.save()
