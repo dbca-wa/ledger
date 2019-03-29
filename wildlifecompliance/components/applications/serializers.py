@@ -528,7 +528,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             return []
         application_activities = ApplicationSelectedActivity.objects.filter(
             application_id=obj.id
-        ).exclude(processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED)
+        )
 
         """
         # Uncomment to filter out activities that the internal user cannot assess / process (to hide activity tabs on the UI).

@@ -61,7 +61,10 @@ from '@/utils/hooks'
 
             },
             isActivityVisible: function(activity_id) {
-                return this.isApplicationActivityVisible(activity_id, ['issued', 'declined'], ['discarded']);
+                return this.isApplicationActivityVisible(activity_id,
+                    ['issued', 'declined'],  // Hide by decision
+                    //['discarded']  // Hide by processing_status
+                );
             },
         },
         created: function () {
