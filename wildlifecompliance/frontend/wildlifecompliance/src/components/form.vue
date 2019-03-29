@@ -21,10 +21,10 @@ from '@/utils/hooks'
     import Renderer from '@/utils/renderer'
     import bs from 'bootstrap'
     import { isApplicationActivityVisible } from "@/utils/helpers.js";
+    import '@/scss/forms/form.scss';
     require('../../node_modules/bootstrap/dist/css/bootstrap.css');
     require('../../node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css');
     require('../../node_modules/font-awesome/css/font-awesome.min.css');
-    import '@/scss/forms/form.scss'
     const easing = require('easing');
     export default {
         props:{
