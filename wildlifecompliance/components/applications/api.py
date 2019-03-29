@@ -50,7 +50,6 @@ from wildlifecompliance.components.applications.serializers import (
     ActivityPermissionGroupSerializer,
     SaveAssessmentSerializer,
     AmendmentRequestSerializer,
-    ExternalAmendmentRequestSerializer,
     ApplicationProposedIssueSerializer,
     DTAssessmentSerializer,
     SearchKeywordSerializer,
@@ -260,24 +259,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             qs = instance.assessments
             serializer = AssessmentSerializer(qs, many=True)
             print(qs)
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['GET', ])
-    def amendment_request(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            qs = instance.amendment_requests
-            qs = qs.filter(status='requested')
-            serializer = ExternalAmendmentRequestSerializer(qs, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -761,18 +742,36 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     def destroy(self, request, *args, **kwargs):
-        try:
-            http_status = status.HTTP_200_OK
-            instance = self.get_object()
-            # TODO: replace discard functionality due to processing_status property method change
-            serializer = SaveApplicationSerializer(
-                instance, {'processing_status': 'discarded'}, partial=True)
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-            return Response(serializer.data, status=http_status)
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+        http_status = status.HTTP_200_OK
+        instance = self.get_object()
+        if instance.processing_status != Application.PROCESSING_STATUS_DRAFT:
+            raise serializers.ValidationError(
+                'You cannot discard a submitted application!')
+
+        instance.activities.filter(
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT
+        ).update(
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED
+        )
+
+        return Response({'processing_status': ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED
+                         }, status=http_status)
+
+    @detail_route(methods=['DELETE', ])
+    def discard_activity(self, request, *args, **kwargs):
+        http_status = status.HTTP_200_OK
+        activity_id = request.data.get('activity_id')
+        instance = self.get_object()
+
+        activity = instance.activities.get(
+            licence_activity_id=activity_id,
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT
+        )
+        activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED
+        activity.save()
+
+        return Response({'processing_status': activity.processing_status}, status=http_status)
+
 
     @detail_route(methods=['GET', ])
     def assessment_details(self, request, *args, **kwargs):

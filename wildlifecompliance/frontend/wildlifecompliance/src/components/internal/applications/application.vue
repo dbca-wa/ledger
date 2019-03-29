@@ -756,12 +756,10 @@ export default {
             'checkActivityStatus',
             'isPartiallyFinalised',
             'isFinalised',
+            'isApplicationLoaded',
         ]),
         sendToAssessorActivities: function() {
             return this.licenceActivities(['with_officer', 'with_officer_conditions', 'with_assessor'], 'licensing_officer');
-        },
-        isApplicationLoaded: function() {
-            return Object.keys(this.application).length && this.licence_type_data != null;
         },
         applicationDetailsVisible: function() {
             return !this.isSendingToAssessor && !this.showingConditions && !this.isofficerfinalisation && !this.isFinalised && !this.isOfficerConditions && !this.isFinalViewConditions;

@@ -1,11 +1,11 @@
 <style lang="css" scoped>
-    .section{
+    .section {
         text-transform: capitalize;
     }
-    .list-group{
+    .list-group {
         margin-bottom: 0;
     }
-    .fixed-top{
+    .fixed-top {
         position: fixed;
         top:56px;
     }
@@ -22,8 +22,9 @@ from '@/utils/hooks'
     import bs from 'bootstrap'
     import { isApplicationActivityVisible } from "@/utils/helpers.js";
     require('../../node_modules/bootstrap/dist/css/bootstrap.css');
-    require('../../node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css')
-    require('../../node_modules/font-awesome/css/font-awesome.min.css')
+    require('../../node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css');
+    require('../../node_modules/font-awesome/css/font-awesome.min.css');
+    import '@/scss/forms/form.scss'
     const easing = require('easing');
     export default {
         props:{
@@ -43,7 +44,6 @@ from '@/utils/hooks'
         data: function () {
             return{
                 values:null,
-                amendment_request_id:[]
             }
         },
         methods:{
@@ -63,26 +63,15 @@ from '@/utils/hooks'
             this.mapDataToApplication();
         },
         mounted: function () {
-
-            this.amendment_request_id=this.application.amendment_requests;
-
             var tabs=Renderer.tabs_list;
-            // tabs.map(tsec => {
-            //         $('#tabs-section').append(`<li><a data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
-            //     });
-            // console.log(tabs)
-            if(this.application.has_amendment){
-                console.log("from inside if")
 
+            if(this.application.has_amendment){
                 tabs.map(tsec => {
                     if(!this.isActivityVisible(tsec.id)) {
                         return;
                     }
-                    if(this.amendment_request_id.indexOf(tsec.id) < 0){
-                        // $('#tabs-section').append(`<li><a class="nav-link disabled" data-toggle="tab" href='#'>${tsec.label}</a></li>`);
-                    }
-                    else{
-                        $('#tabs-section').append(`<li><a class="nav-link" data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
+                    if(this.application.amendment_requests.find(request => request.licence_activity.id == tsec.id)) {
+                        $('#tabs-section').append(`<li><a class="nav-link amendment-highlight" data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
                     }
                     
                 });

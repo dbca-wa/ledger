@@ -15,10 +15,12 @@ export const applicationStore = {
     getters: {
         application: state => state.application,
         original_application: state => state.original_application,
+        amendment_requests: state => state.application.amendment_requests,
         application_id: state => state.application.id,
         licence_type_data: state => state.application.licence_type_data,
         org_address: state => state.application.org_applicant != null && state.application.org_applicant.address != null ? state.application.org_applicant.address : {},
         proxy_address: state => state.application.proxy_applicant != null && state.application.proxy_applicant.address != null ? state.application.proxy_applicant.address : {},
+        application_readonly: state => state.application.readonly,
         applicant_type: state => {
             if (state.application.org_applicant){
                 return 'org';
@@ -51,13 +53,14 @@ export const applicationStore = {
             const activity_count = getters.licence_type_data.activity.length;
             return getters.checkActivityStatus(final_statuses) && !getters.checkActivityStatus(final_statuses, activity_count);
         },
+        isApplicationLoaded: state => Object.keys(state.application).length && state.application.licence_type_data != null,
     },
     mutations: {
         [UPDATE_APPLICATION] (state, application) {
-            state.application = application;
+            Vue.set(state, 'application', {...application});
         },
         [UPDATE_ORIGINAL_APPLICATION] (state, application) {
-            state.application = application;
+            Vue.set(state, 'original_application', {...application});
         },
         [UPDATE_ORG_APPLICANT] (state, { key, value }) {
             if(state.application.org_applicant == null) {
@@ -104,6 +107,6 @@ export const applicationStore = {
         setApplication({ dispatch, commit }, application) {
             commit(UPDATE_APPLICATION, application);
             dispatch('refreshAddresses');
-        }
+        },
     }
 }

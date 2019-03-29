@@ -2,7 +2,7 @@
     <div class="container" >
         <form :action="application_form_url" method="post" name="new_application" enctype="multipart/form-data">
           <div v-if="!application_readonly">
-          <div v-if="hasAmendmentRequest" class="row" style="color:red;">
+          <div v-if="amendment_requests" class="row" style="color:red;">
                 <div class="col-lg-12 pull-right">
                   <div class="panel panel-default">
                     <div class="panel-heading">
@@ -13,7 +13,7 @@
                         </h3>
                       </div>
                       <div class="panel-body collapse in" :id="pBody">
-                        <div v-for="a in amendment_request">
+                        <div v-for="a in amendment_requests">
                           <p>Activity: {{a.licence_activity.name}}</p>
                           <p>Reason: {{a.reason.name}}</p>
                           <p>Details: <p v-for="t in splitText(a.text)">{{t}}</p></p>  
@@ -33,7 +33,7 @@
                 </ul>
             </div>
 
-              <Application v-if="application" :application="application">
+              <Application v-if="isApplicationLoaded" :application="application">
             
             
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
@@ -76,6 +76,7 @@
 <script>
 import Application from '../form.vue'
 import Vue from 'vue'
+import { mapActions, mapGetters } from 'vuex'
 import {
   api_endpoints,
   helpers
@@ -84,13 +85,7 @@ from '@/utils/hooks'
 export default {
   data: function() {
     return {
-      "application": null,
-      "loading": [],
       form: null,
-      hasAmendmentRequest: false,
-      amendment_request: [],
-      amendment_request_id:[],
-      application_readonly: true,
       selected_activity_tab_id: null,
       selected_activity_tab_name: null,
       pBody: 'pBody',
@@ -102,9 +97,12 @@ export default {
     Application
   },
   computed: {
-    isLoading: function() {
-      return this.loading.length > 0
-    },
+    ...mapGetters([
+        'application',
+        'application_readonly',
+        'amendment_requests',
+        'isApplicationLoaded',
+    ]),
     csrf_token: function() {
       return helpers.getCookie('csrftoken')
     },
@@ -116,6 +114,12 @@ export default {
     },
   },
   methods: {
+    ...mapActions({
+      load: 'loadApplication',
+    }),
+    ...mapActions([
+        'setApplication',
+    ]),
     eventListeners: function(){
         let vm = this;
         $("ul#tabs-section").on("click", function (e) {
@@ -151,21 +155,6 @@ export default {
       },err=>{
 
       });
-    },
-    setAmendmentData: function(amendment_request){
-      let vm= this;
-      vm.amendment_request = amendment_request;
-      for(var i=0,_len=vm.amendment_request.length;i<_len;i++){
-        vm.amendment_request_id.push(vm.amendment_request[i].licence_activity.id)
-      }
-
-      if (amendment_request.length > 0){
-        vm.hasAmendmentRequest = true;
-      }
-        
-    },
-    setdata: function(readonly){
-      this.application_readonly = readonly;
     },
     splitText: function(aText){
       let newText = '';
@@ -203,7 +192,7 @@ export default {
             if (result.value) {
                 let formData = new FormData(vm.form);
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
-                    vm.application = res.body;
+                    this.setApplication(res.body);
                     
                     if (vm.requiresCheckout) {
                         vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
@@ -239,49 +228,21 @@ export default {
         },(error) => {
         });
     },
-    fetchAmendmentRequest: function(){
-      let vm= this
-      Vue.http.get(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/amendment_request')).then((res) => {
-          vm.setAmendmentData(res.body);
-      },err=>{
-      });
-    },
   },
   mounted: function() {
-    let vm = this;
-    vm.form = document.forms.new_application;
+    this.form = document.forms.new_application;
   },
   beforeRouteEnter: function(to, from, next) {
-    if (to.params.application_id) {
-      let vm= this;
-      Vue.http.get(`/api/application/${to.params.application_id}.json`).then(res => {
-          next(vm => {
-            vm.loading.push('fetching application')
-            vm.application = res.body;
-            vm.loading.splice('fetching application', 1);
-            vm.setdata(vm.application.readonly);
-
-            vm.fetchAmendmentRequest();
+    next(vm => {
+      if (to.params.application_id) {
+        vm.load({ url: `/api/application/${to.params.application_id}.json` }).then(() => {
             vm.application_customer_status_onload = vm.application.customer_status;
-          });
-        },
-        err => {
-          console.log(err);
         });
-      
-    }
-    else {
-      Vue.http.post('/api/application.json').then(res => {
-          next(vm => {
-            vm.loading.push('fetching application')
-            vm.application = res.body;
-            vm.loading.splice('fetching application', 1);
-          });
-        },
-        err => {
-          console.log(err);
-        });
-    }
+      }
+      else {
+        vm.load({ url: '/api/application.json' });
+      }
+    });
   },
   updated: function(){
     let vm = this;

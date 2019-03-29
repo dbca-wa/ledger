@@ -375,18 +375,9 @@ class ApplicationSerializer(BaseApplicationSerializer):
         return obj.can_user_view
 
     def get_amendment_requests(self, obj):
-        amendment_request_data = []
-        qs = obj.amendment_requests
-        qs = qs.filter(status='requested')
-        if qs.exists():
-            for item in obj.amendment_requests:
-                print("printing from serializer")
-                print(item.id)
-                print(str(item.licence_activity.name))
-                print(item.licence_activity.id)
-                # amendment_request_data.append({"licence_activity":str(item.licence_activity),"id":item.licence_activity.id})
-                amendment_request_data.append(item.licence_activity.id)
-        return amendment_request_data
+        return ExternalAmendmentRequestSerializer(
+            obj.amendment_requests.filter(status='requested'), many=True
+        ).data
 
 
 class CreateExternalApplicationSerializer(serializers.ModelSerializer):
