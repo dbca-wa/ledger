@@ -761,18 +761,19 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     def destroy(self, request, *args, **kwargs):
-        try:
-            http_status = status.HTTP_200_OK
-            instance = self.get_object()
-            # TODO: replace discard functionality due to processing_status property method change
-            serializer = SaveApplicationSerializer(
-                instance, {'processing_status': 'discarded'}, partial=True)
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-            return Response(serializer.data, status=http_status)
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+        pass
+    #     try:
+    #         http_status = status.HTTP_200_OK
+    #         instance = self.get_object()
+    #         # TODO: replace discard functionality due to processing_status property method change
+    #         serializer = SaveApplicationSerializer(
+    #             instance, {'processing_status': 'discarded'}, partial=True)
+    #         serializer.is_valid(raise_exception=True)
+    #         self.perform_update(serializer)
+    #         return Response(serializer.data, status=http_status)
+    #     except Exception as e:
+    #         print(traceback.print_exc())
+    #         raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET', ])
     def assessment_details(self, request, *args, **kwargs):

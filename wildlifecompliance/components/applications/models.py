@@ -422,7 +422,7 @@ class Application(RevisionedMixin):
         2- or if the application has been pushed back to the user
         TODO: need to confirm regarding (2) here related to ApplicationSelectedActivity
         """
-        return self.customer_status == Application.PROCESSING_STATUS_DRAFT\
+        return self.customer_status == Application.CUSTOMER_STATUS_DRAFT\
             or self.processing_status == Application.PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE
 
     @property
@@ -431,7 +431,7 @@ class Application(RevisionedMixin):
         An application can be deleted only if it is a draft and it hasn't been lodged yet
         :return:
         """
-        return self.customer_status == Application.PROCESSING_STATUS_DRAFT and not self.lodgement_number
+        return self.customer_status == Application.CUSTOMER_STATUS_DRAFT and not self.lodgement_number
 
     @property
     def payment_status(self):
@@ -679,7 +679,7 @@ class Application(RevisionedMixin):
                     'You can\'t edit this application at this moment')
 
     def accept_id_check(self, request):
-        self.id_check_status = 'accepted'
+        self.id_check_status = Application.ID_CHECK_STATUS_ACCEPTED
         self.save()
         # Create a log entry for the application
         self.log_user_action(
@@ -701,7 +701,7 @@ class Application(RevisionedMixin):
                     self.id), request)
 
     def reset_id_check(self, request):
-        self.id_check_status = 'not_checked'
+        self.id_check_status = Application.ID_CHECK_STATUS_NOT_CHECKED
         self.save()
         # Create a log entry for the application
         self.log_user_action(
@@ -723,7 +723,7 @@ class Application(RevisionedMixin):
                     self.id), request)
 
     def request_id_check(self, request):
-        self.id_check_status = 'awaiting_update'
+        self.id_check_status = Application.ID_CHECK_STATUS_AWAITING_UPDATE
         self.save()
         # Create a log entry for the application
         self.log_user_action(
@@ -745,7 +745,7 @@ class Application(RevisionedMixin):
                     self.id), request)
 
     def accept_character_check(self, request):
-        self.character_check_status = 'accepted'
+        self.character_check_status = Application.CHARACTER_CHECK_STATUS_ACCEPTED
         self.save()
         # Create a log entry for the application
         self.log_user_action(
@@ -1117,7 +1117,7 @@ class Application(RevisionedMixin):
                         Return.objects.create(
                             application=self,
                             due_date=current_date,
-                            processing_status='future',
+                            processing_status=Return.RETURN_PROCESSING_STATUS_FUTURE,
                             licence=licence,
                             condition=req,
                             return_type=req.return_type,
@@ -1146,7 +1146,7 @@ class Application(RevisionedMixin):
                                     Return.objects.create(
                                         application=self,
                                         due_date=current_date,
-                                        processing_status='future',
+                                        processing_status=Return.RETURN_PROCESSING_STATUS_FUTURE,
                                         licence=licence,
                                         condition=req,
                                         return_type=req.return_type
@@ -1685,7 +1685,7 @@ def search_reference(reference_number):
     application_list = Application.objects.all().computed_exclude(processing_status__in=[
         Application.PROCESSING_STATUS_DISCARDED])
     licence_list = WildlifeLicence.objects.all().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
-    returns_list = Return.objects.all().exclude(processing_status__in=['future'])
+    returns_list = Return.objects.all().exclude(processing_status__in=[Return.RETURN_PROCESSING_STATUS_FUTURE])
     record = {}
     try:
         result = application_list.get(lodgement_number=reference_number)
