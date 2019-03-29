@@ -183,7 +183,6 @@ export default {
                 .then(res=>{
                     vm.documents = res.body;
                     //console.log(vm.documents);
-					vm.$emit('refreshFromResponse',res);
                     vm.show_spinner = false;
                 });
 
@@ -231,12 +230,13 @@ export default {
             formData.append('input_name', vm.name);
             formData.append('filename', e.target.files[0].name);
             formData.append('_file', vm.uploadFile(e));
-            formData.append('document_list', vm.documents);
+            formData.append('document_list', vm.get_documents());
             formData.append('csrfmiddlewaretoken', vm.csrf_token);
 
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
+					//vm.$emit('refreshFromResponse',res);
                 },err=>{
                 });
 
@@ -254,6 +254,7 @@ export default {
     mounted:function () {
         let vm = this;
         vm.documents = vm.get_documents();
+		vm.$emit('refreshFromResponse', vm.documents);
         if (vm.value) {
             //vm.files = (Array.isArray(vm.value))? vm.value : [vm.value];
             if (Array.isArray(vm.value)) {

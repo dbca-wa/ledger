@@ -192,7 +192,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="putOnHold()">Put On-hold</button>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="onHold()">Put On-hold</button>
                                         </div>
                                     </div>
                                 </template>
@@ -253,7 +253,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="removeOnHold()">Remove On-hold</button>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="onHold()">Remove On-hold</button>
                                         </div>
                                     </div>
                                 </template>
@@ -489,7 +489,7 @@ export default {
                         data:'email'
                     },
                   ],
-                  processing: true
+                  processing: true,
             },
             contacts_table: null,
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
@@ -613,38 +613,10 @@ export default {
             
             this.$refs.amendment_request.isModalOpen = true;
         },
-        putOnHold: function(){
+        onHold: function(){
             this.save_wo();
             this.$refs.on_hold.isModalOpen = true;
         },
-        removeOnHold: function(){
-            let vm = this;
-            this.save_wo();
-
-            let data = new FormData(vm.form);
-            data.append('onhold', false)
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/on_hold'),data,{
-                emulateJSON:true
-            }).then(res=>{
-                swal(
-                    'On Hold Removed',
-                    'Proposal processing status has been changed',
-                    'success'
-                )
-
-                vm.proposal = res.body;
-                vm.$emit('refreshFromResponse',res);
-                vm.$router.push({ path: '/internal' }); //Navigate to dashboard after completing the referral
-            },err=>{
-                swal(
-                    'Submit Error',
-                    helpers.apiVueResourceError(err),
-                    'error'
-                )
-            });
-        },
-
-
         save: function(e) {
           let vm = this;
           let formData = new FormData(vm.form);

@@ -948,16 +948,15 @@ class Proposal(RevisionedMixin):
                 if not (self.processing_status == 'with_assessor' or self.processing_status == 'with_referral'):
                     raise ValidationError('You cannot put on hold if it is not with assessor or with referral')
 
-                comment = request.data.get('onhold_comment')
+                #comment = request.data.get('onhold_comment')
                 # TODO add file to ProposalOnHold object (and add to action log, maybe?)
-                ProposalOnHold.objects.update_or_create(
-                    proposal = self,
-                    #defaults={'officer': request.user, 'comment': comment, 'document': details.get('cc_email',None)}
-                    defaults={'officer': request.user, 'comment': comment}
-                )
+                #ProposalOnHold.objects.update_or_create(
+                #    proposal = self,
+                #    #defaults={'officer': request.user, 'comment': comment, 'document': details.get('cc_email',None)}
+                #    defaults={'officer': request.user, 'comment': comment}
+                #)
                 self.prev_processing_status = self.processing_status
                 self.processing_status = self.PROCESSING_STATUS_ONHOLD
-                #self.add_onhold_document(request)
                 self.save()
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_PUT_ONHOLD.format(self.id),request)
@@ -965,37 +964,6 @@ class Proposal(RevisionedMixin):
                 self.applicant.log_user_action(ProposalUserAction.ACTION_PUT_ONHOLD.format(self.id),request)
 
                 #send_approver_decline_email_notification(reason, request, self)
-            except:
-                raise
-
-    def add_onhold_document(self, request):
-        with transaction.atomic():
-            try:
-                documents = request.data['document_ids']
-                #import ipdb; ipdb.set_trace()
-                if documents != 'null':
-                    try:
-                        onhold_documents = self.documents.filter(input_name='on_hold_file')
-                    except ProposalDocument.DoesNotExist:
-                        document = self.referral_documents.get_or_create(input_name=str(referral_document), name=str(referral_document))[0]
-                    document.name = str(referral_document)
-                    # commenting out below tow lines - we want to retain all past attachments - reversion can use them
-                    #if document._file and os.path.isfile(document._file.path):
-                    #    os.remove(document._file.path)
-                    document._file = referral_document
-                    document.save()
-                    d=ReferralDocument.objects.get(id=document.id)
-                    self.referral_document = d
-                    comment = 'Referral Document Added: {}'.format(document.name)
-                else:
-                    self.referral_document = None
-                    comment = 'Referral Document Deleted: {}'.format(request.data['referral_document_name'])
-                #self.save()
-                self.save(version_comment=comment) # to allow revision to be added to reversion history
-                self.proposal.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
-                # Create a log entry for the organisation
-                self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
-                return self
             except:
                 raise
 

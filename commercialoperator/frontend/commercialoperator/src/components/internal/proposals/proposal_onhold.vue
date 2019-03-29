@@ -7,33 +7,6 @@
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
 
-                            <!--
-                            <div class="row">
-                                <div class="col-sm-offset-2 col-sm-8">
-                                    <div class="form-group">
-                                        <label class="control-label pull-left"  for="Name">Attach Document</label>
-										<div>
-											<span v-if="!uploadedFile" class="btn btn-info btn-file pull-left">
-											    Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
-                                            </span>
-                                            <span v-else class="pull-left" style="margin-left:10px;margin-top:10px;">
-                                                {{uploadedFileName()}}
-                                            </span>
-										</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-sm-offset-2 col-sm-8">
-                                    <div class="form-group">
-                                        <label class="control-label pull-left"  for="onhold_comment">Comment</label>
-                                        <textarea class="form-control" name="onhold_comment" v-model="onhold_comment" required="true"></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                            -->
-
                             <div class="row">
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
@@ -88,7 +61,6 @@ export default {
             errors: false,
             errorString: '',
             validation_form: null,
-            onhold_comment: null,
             on_hold_file: 'on_hold_file',
             on_hold_comments: 'on_hold_comments',
         }
@@ -100,58 +72,48 @@ export default {
         }
     },
     methods:{
-        refreshFromResponse:function(response){
+        refreshFromResponse:function(document_list){
+            let vm = this;
+            vm.document_list = helpers.copyObject(document_list);
+        },
+        _refreshFromResponse:function(response){
             let vm = this;
             vm.document_list = helpers.copyObject(response.body);
-            vm.document_res = helpers.copyObject(response);
             //vm.$nextTick(() => {
             //    vm.initialiseAssignedOfficerSelect(true);
             //    vm.updateAssignedOfficerSelect();
             //});
         },
 
-        readFile: function() {
-            let vm = this;
-            let _file = null;
-            var input = $(vm.$refs.uploadedFile)[0];
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-                reader.readAsDataURL(input.files[0]); 
-                reader.onload = function(e) {
-                    _file = e.target.result;
-                };
-                _file = input.files[0];
-            }
-            vm.uploadedFile = _file;
-            //vm.save()
-        },
-        removeFile: function(){
-            let vm = this;
-            vm.uploadedFile = null;
-            vm.save()
-        },
         save: function(){
             let vm = this;
+            var is_onhold = vm.processing_status == 'On Hold'? true: false;
             var form = document.forms.onholdForm;
             var data = {
-                onhold: 'True',
+                onhold: is_onhold ? 'False': 'True', // since wee need to do the reverse
                 file_input_name: 'on_hold_file',
-                proposal_id: vm.proposal_id,
-                onhold_comment: form.elements['on_hold_comments'].value, // getting the value from the text-area.vue field
+                proposal: vm.proposal_id,
+                text: form.elements['on_hold_comments'].value, // getting the value from the text-area.vue field
                 document_list: JSON.stringify(vm.document_list),
-                document_list2: JSON.stringify(vm.document_res),
             }
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal_id+'/on_hold'),data,{
                 emulateJSON: true
             }).then(res=>{
-                swal(
-                    'Put Proposal On-hold',
-                    'Proposal On-hold',
-                    'success'
-                );
+                if(!is_onhold){
+                    swal(
+                        'Put Proposal On-hold',
+                        'Proposal On-hold',
+                        'success'
+                    );
+                } else {
+                    swal(
+                        'Proposal On-hold Remove',
+                        'Proposal On-hold Removed',
+                        'success'
+                    );
+                }
 
                 vm.proposal = res.body;
-                vm.$emit('refreshFromResponse',res);
                 vm.$router.push({ path: '/internal' }); //Navigate to dashboard after completing the referral
 
                 },err=>{
@@ -162,45 +124,6 @@ export default {
                 )
             });
         },
-
-        _save: function(){
-            let vm = this;
-                let data = new FormData(vm.form);
-                data.append('onhold', true)
-                data.append('onhold_document', vm.uploadedFile)
-                data.append('onhold_comment', vm.onhold_comment)
-                //if (vm.proposal.approval_level_document) {
-                //    data.append('referral_document_name', vm.proposal.referral_document[0])
-                //}
-                //vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,vm.referral_id+'/complete'),data,{
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal_id+'/on_hold'),data,{
-                //vm.$http.post(api_endpoints.proposals+'/on_hold',data,{
-                emulateJSON:true
-            }).then(res=>{
-                swal(
-                    'Put Proposal On-hold',
-                    'Proposal On-hold',
-                    'success'
-                );
-
-                vm.proposal = res.body;
-                vm.$emit('refreshFromResponse',res);
-                vm.$router.push({ path: '/internal' }); //Navigate to dashboard after completing the referral
-
-                },err=>{
-                swal(
-                    'Submit Error',
-                    helpers.apiVueResourceError(err),
-                    'error'
-                )
-            });
-        },
-        uploadedFileName: function() {
-            return this.uploadedFile != null ? this.uploadedFile.name: '';
-        },
-
-
-
         ok:function () {
             let vm =this;
             if($(vm.form).valid()){
@@ -222,110 +145,17 @@ export default {
             this.errors = false;
             $(this.$refs.reason).val(null).trigger('change');
             $('.has-error').removeClass('has-error');
-            
+
             this.validation_form.resetForm();
         },
-        fetchAmendmentChoices: function(){
-            let vm = this;
-            vm.$http.get('/api/amendment_request_reason_choices.json').then((response) => {
-                vm.reason_choices = response.body;
-                
-            },(error) => {
-                console.log(error);
-            } );
-        },
-        sendData:function(){
-            let vm = this;
-            vm.errors = false;
-            let amendment = JSON.parse(JSON.stringify(vm.amendment));
-            vm.$http.post('/api/amendment_request.json',JSON.stringify(amendment),{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        //vm.$parent.loading.splice('processing contact',1);
-                        swal(
-                             'Sent',
-                             'An email has been sent to applicant with the request to amend this Proposal',
-                             'success'
-                        );
-                        vm.amendingProposal = true;
-                        vm.close();
-                        //vm.$emit('refreshFromResponse',response);
-                        Vue.http.get(`/api/proposal/${vm.proposal_id}/internal_proposal.json`).then((response)=>
-                        {
-                            vm.$emit('refreshFromResponse',response);
-                            
-                        },(error)=>{
-                            console.log(error);
-                        });
-                        vm.$router.push({ path: '/internal' }); //Navigate to dashboard after creating Amendment request
-                     
-                    },(error)=>{
-                        console.log(error);
-                        vm.errors = true;
-                        vm.errorString = helpers.apiVueResourceError(error);
-                        vm.amendingProposal = true;
-                        
-                    });
-                
-
-        },
         addFormValidations: function() {
-            let vm = this;
-            vm.validation_form = $(vm.form).validate({
-                rules: {
-                    reason: "required"
-                    
-                     
-                },
-                messages: {              
-                    reason: "field is required",
-                                         
-                },
-                showErrors: function(errorMap, errorList) {
-                    $.each(this.validElements(), function(index, element) {
-                        var $element = $(element);
-                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
-                    });
-                    // destroy tooltips on valid elements
-                    $("." + this.settings.validClass).tooltip("destroy");
-                    // add or update tooltips
-                    for (var i = 0; i < errorList.length; i++) {
-                        var error = errorList[i];
-                        $(error.element)
-                            .tooltip({
-                                trigger: "focus"
-                            })
-                            .attr("data-original-title", error.message)
-                            .parents('.form-group').addClass('has-error');
-                    }
-                }
-            });
-       },
-       eventListerners:function () {
-            let vm = this;
-            
-            // Intialise select2
-            $(vm.$refs.reason).select2({
-                "theme": "bootstrap",
-                allowClear: true,
-                placeholder:"Select Reason"
-            }).
-            on("select2:select",function (e) {
-                var selected = $(e.currentTarget);
-                vm.amendment.reason = selected.val();
-                vm.amendment.reason_id = selected.val();
-            }).
-            on("select2:unselect",function (e) {
-                var selected = $(e.currentTarget);
-                vm.amendment.reason = selected.val();
-                vm.amendment.reason_id = selected.val();
-            });
-       }
+        },
+        eventListerners:function () {
+        }
    },
    mounted:function () {
        let vm =this;
        vm.form = document.forms.amendForm;
-       vm.fetchAmendmentChoices();
        vm.addFormValidations();
        this.$nextTick(()=>{  
             vm.eventListerners();

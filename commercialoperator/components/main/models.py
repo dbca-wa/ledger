@@ -80,7 +80,7 @@ class Park(models.Model):
     name = models.CharField(max_length=200, unique=True)
     code = models.CharField(max_length=10, blank=True)
     #proposal = models.ForeignKey(Proposal, related_name='parks')
-    
+
 
     class Meta:
         ordering = ['name']
@@ -94,7 +94,7 @@ class Park(models.Model):
 class Trail(models.Model):
     name = models.CharField(max_length=200, unique=True)
     code = models.CharField(max_length=10, blank=True)
-    
+
 
     class Meta:
         ordering = ['name']
@@ -218,7 +218,7 @@ class UserAction(models.Model):
 
 
 class CommunicationsLogEntry(models.Model):
-    TYPE_CHOICES = [('email', 'Email'), ('phone', 'Phone Call'), ('mail', 'Mail'), ('person', 'In Person')]
+    TYPE_CHOICES = [('email', 'Email'), ('phone', 'Phone Call'), ('mail', 'Mail'), ('person', 'In Person'), ('onhold', 'On Hold'), ('onhold_remove', 'Remove On Hold')]
     DEFAULT_TYPE = TYPE_CHOICES[0][0]
 
     #to = models.CharField(max_length=200, blank=True, verbose_name="To")
@@ -247,7 +247,7 @@ class Document(models.Model):
                             verbose_name='name', help_text='')
     description = models.TextField(blank=True,
                                    verbose_name='description', help_text='')
-    uploaded_date = models.DateTimeField(auto_now_add=True) 
+    uploaded_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         app_label = 'commercialoperator'

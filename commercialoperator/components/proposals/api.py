@@ -2,6 +2,7 @@ import traceback
 import os
 import base64
 import geojson
+import json
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
@@ -909,7 +910,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST',])
-    def on_hold(self, request, *args, **kwargs):
+    def _on_hold(self, request, *args, **kwargs):
         try:
             import ipdb; ipdb.set_trace()
             instance = self.get_object()
@@ -933,6 +934,53 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def on_hold(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                #import ipdb; ipdb.set_trace()
+                instance = self.get_object()
+                is_onhold =  eval(request.data.get('onhold'))
+                data = {}
+                #if request.data.get('onhold') == 'true':
+                if is_onhold:
+                    data['type'] = u'onhold'
+                    instance.on_hold(request)
+                else:
+                    data['type'] = u'onhold_remove'
+                    instance.on_hold_remove(request)
+
+                data['proposal'] = u'{}'.format(instance.id)
+                data['staff'] = u'{}'.format(request.user.id)
+                data['text'] = request.user.get_full_name() + u': {}'.format(request.data['text'])
+                data['subject'] = request.user.get_full_name() + u': {}'.format(request.data['text'])
+                serializer = ProposalLogEntrySerializer(data=data)
+                serializer.is_valid(raise_exception=True)
+                comms = serializer.save()
+
+                # Save the files
+                import ipdb; ipdb.set_trace()
+                documents = json.loads(request.data['document_list'])
+                for f in documents:
+                    document = comms.documents.create()
+                    document.name = f['name']
+                    document._file = f['file'].strip('/media')
+                    document.input_name = f['input_name']
+                    document.can_delete = True
+                    document.save()
+                # End Save Documents
+
+                return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['post'])
     def assesor_send_referral(self, request, *args, **kwargs):
