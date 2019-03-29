@@ -20,18 +20,16 @@
 from '@/utils/hooks'
     import Renderer from '@/utils/renderer'
     import bs from 'bootstrap'
-    import { isApplicationActivityVisible } from "@/utils/helpers.js";
+    import { splitText } from "@/utils/helpers.js";
+    import { mapGetters } from 'vuex'
     import '@/scss/forms/form.scss';
+    import AmendmentRequestDetails from '@/components/forms/amendment_request_details.vue';
     require('../../node_modules/bootstrap/dist/css/bootstrap.css');
     require('../../node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css');
     require('../../node_modules/font-awesome/css/font-awesome.min.css');
     const easing = require('easing');
     export default {
         props:{
-            application:{
-                type: Object,
-                required:true
-            },
             withSectionsSelector:{
                 type: Boolean,
                 default: true
@@ -46,7 +44,16 @@ from '@/utils/hooks'
                 values:null,
             }
         },
+        computed: {
+            ...mapGetters([
+                'application',
+                'application_readonly',
+                'amendment_requests',
+                'isApplicationActivityVisible',
+            ]),
+        },
         methods:{
+            splitText: splitText,
             mapDataToApplication:function () {
                 if (this.application.data) {
                     this.values = this.application.data[0]
@@ -54,7 +61,7 @@ from '@/utils/hooks'
 
             },
             isActivityVisible: function(activity_id) {
-                return isApplicationActivityVisible(
+                return this.isApplicationActivityVisible(
                     this.application, activity_id, ['issued', 'declined']);
             },
         },
@@ -206,7 +213,10 @@ from '@/utils/hooks'
                                     if(!this.isActivityVisible(d.id)) {
                                         return;
                                     }
-                                    return Renderer.renderChildren(h,d,vm.values,vm.application.readonly)
+                                    return [
+                                        <AmendmentRequestDetails activity_id={d.id} />,
+                                        ...Renderer.renderChildren(h,d,vm.values,vm.application.readonly),
+                                    ];
                                 })}
                                 { this.$slots.default }
                             </div>

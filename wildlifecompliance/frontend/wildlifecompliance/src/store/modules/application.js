@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import { 
+import {
     UPDATE_APPLICATION,
     UPDATE_ORIGINAL_APPLICATION,
     UPDATE_ORG_APPLICANT,
@@ -54,6 +54,15 @@ export const applicationStore = {
             return getters.checkActivityStatus(final_statuses) && !getters.checkActivityStatus(final_statuses, activity_count);
         },
         isApplicationLoaded: state => Object.keys(state.application).length && state.application.licence_type_data != null,
+        isApplicationActivityVisible: (state, getters, rootState, rootGetters) => (application, activity_id, exclude_statuses) => {
+            if(!state.application.activities) {
+                return 0;
+            }
+            return state.application.activities.filter(
+              activity => activity.licence_activity == activity_id &&
+                (!exclude_statuses || !exclude_statuses.includes(activity.decision_action))
+            ).length;
+          },
     },
     mutations: {
         [UPDATE_APPLICATION] (state, application) {

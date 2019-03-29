@@ -1,29 +1,6 @@
 <template lang="html">
     <div class="container" >
         <form :action="application_form_url" method="post" name="new_application" enctype="multipart/form-data">
-          <div v-if="!application_readonly">
-          <div v-if="amendment_requests" class="row" style="color:red;">
-                <div class="col-lg-12 pull-right">
-                  <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title" style="color:red;">An amendment has been requested for this Application
-                          <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
-                                <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                          </a>
-                        </h3>
-                      </div>
-                      <div class="panel-body collapse in" :id="pBody">
-                        <div v-for="a in amendment_requests">
-                          <p>Activity: {{a.licence_activity.name}}</p>
-                          <p>Reason: {{a.reason.name}}</p>
-                          <p>Details: <p v-for="t in splitText(a.text)">{{t}}</p></p>  
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
             <div id="error" v-if="missing_fields.length > 0" style="margin: 10px; padding: 5px; color: red; border:1px solid red;">
                 <b>Please answer the following mandatory question(s):</b>
                 <ul>
@@ -33,7 +10,7 @@
                 </ul>
             </div>
 
-              <Application v-if="isApplicationLoaded" :application="application">
+              <Application v-if="isApplicationLoaded">
             
             
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
@@ -81,20 +58,17 @@ import {
   api_endpoints,
   helpers
 }
-from '@/utils/hooks'
+from '@/utils/hooks';
 export default {
   data: function() {
     return {
       form: null,
-      selected_activity_tab_id: null,
-      selected_activity_tab_name: null,
-      pBody: 'pBody',
       application_customer_status_onload: {},
  	  missing_fields: [],
     }
   },
   components: {
-    Application
+    Application,
   },
   computed: {
     ...mapGetters([
@@ -119,12 +93,16 @@ export default {
     }),
     ...mapActions([
         'setApplication',
+        'setActivityTabId',
     ]),
     eventListeners: function(){
         let vm = this;
         $("ul#tabs-section").on("click", function (e) {
-            vm.selected_activity_tab_id = e.target.href.split('#')[1];
-            vm.selected_activity_tab_name = e.target.innerText;
+          if(!e.target.href) {
+            return;
+          }
+          const tab_id = e.target.href.split('#')[1];
+          vm.setActivityTabId(tab_id);
         });
         $('#tabs-section li:first-child a').click();
     },
@@ -155,11 +133,6 @@ export default {
       },err=>{
 
       });
-    },
-    splitText: function(aText){
-      let newText = '';
-      newText = aText.split("\n");
-      return newText;
     },
     highlight_missing_fields: function(){
         for (const missing_field of this.missing_fields) {
