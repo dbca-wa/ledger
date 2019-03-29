@@ -263,11 +263,6 @@ class Application(RevisionedMixin):
         blank=True,
         null=True,
         related_name='wildlifecompliance_applications_assigned')
-    # processing_status = models.CharField(
-    #     'Processing Status',
-    #     max_length=30,
-    #     choices=PROCESSING_STATUS_CHOICES,
-    #     default=PROCESSING_STATUS_DRAFT)
     id_check_status = models.CharField(
         'Identification Check Status',
         max_length=30,
@@ -374,6 +369,9 @@ class Application(RevisionedMixin):
         # not yet submitted
         if activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT) == len(activity_statuses):
             return self.PROCESSING_STATUS_DRAFT
+        # application discarded
+        elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED) == len(activity_statuses):
+            return self.PROCESSING_STATUS_DISCARDED
         # amendment request sent to user and outstanding
         elif self.amendment_requests.filter(status='requested').count() > 0:
             return self.PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE
@@ -387,8 +385,6 @@ class Application(RevisionedMixin):
         # all activities declined
         elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED) == len(activity_statuses):
             return self.PROCESSING_STATUS_DECLINED
-        # user discarded application
-        #     return PROCESSING_STATUS_DISCARDED
         else:
             return self.PROCESSING_STATUS_UNDER_REVIEW
 
@@ -936,7 +932,7 @@ class Application(RevisionedMixin):
     @property
     def activities(self):
         """ returns a queryset of activities attached to application (shortcut to ApplicationSelectedActivity related_name). """
-        return self.selected_activities
+        return self.selected_activities.exclude(processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED)
 
     def get_licences_by_status(self, status):
         return self.licences.filter(current_application__selected_activities__activity_status=status).distinct()
@@ -1443,6 +1439,7 @@ class ApplicationSelectedActivity(models.Model):
     PROCESSING_STATUS_OFFICER_FINALISATION = 'with_officer_finalisation'
     PROCESSING_STATUS_ACCEPTED = 'accepted'
     PROCESSING_STATUS_DECLINED = 'declined'
+    PROCESSING_STATUS_DISCARDED = 'discarded'
     PROCESSING_STATUS_CHOICES = (
         (PROCESSING_STATUS_DRAFT, 'Draft'),
         (PROCESSING_STATUS_WITH_OFFICER, 'With Officer'),
@@ -1451,6 +1448,7 @@ class ApplicationSelectedActivity(models.Model):
         (PROCESSING_STATUS_OFFICER_FINALISATION, 'With Officer-Finalisation'),
         (PROCESSING_STATUS_ACCEPTED, 'Accepted'),
         (PROCESSING_STATUS_DECLINED, 'Declined'),
+        (PROCESSING_STATUS_DISCARDED, 'Discarded'),
     )
     proposed_action = models.CharField(
         'Action',
@@ -1586,7 +1584,7 @@ class ApplicationUserAction(UserAction):
     ACTION_CREATE_CONDITION_ = "Create condition {}"
     ACTION_ISSUE_LICENCE_ = "Issue Licence for activity {}"
     ACTION_DECLINE_LICENCE_ = "Decline Licence for activity {}"
-    ACTION_DISCARD_application = "Discard application {}"
+    ACTION_DISCARD_APPLICATION = "Discard application {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"
