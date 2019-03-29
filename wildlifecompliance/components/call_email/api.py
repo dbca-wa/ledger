@@ -75,8 +75,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         try:
             request_classification_str = request.data.get(
                         'classification')
-            print(request_classification_str)
-            print(request_classification_str.capitalize())
             request_classification_obj = Classification.objects.get(
                     name=request_classification_str.capitalize())
             data = {
@@ -86,7 +84,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     'caller': request.data.get('caller'),
                     'assigned_to': request.data.get('assigned_to'),
                     }
-            print(data)
             serializer = CreateCallEmailSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             if serializer.is_valid():
