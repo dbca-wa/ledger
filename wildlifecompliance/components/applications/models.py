@@ -369,6 +369,9 @@ class Application(RevisionedMixin):
         # not yet submitted
         if activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT) == len(activity_statuses):
             return self.PROCESSING_STATUS_DRAFT
+        # application discarded
+        elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED) == len(activity_statuses):
+            return self.PROCESSING_STATUS_DISCARDED
         # amendment request sent to user and outstanding
         elif self.amendment_requests.filter(status='requested').count() > 0:
             return self.PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE
@@ -382,8 +385,6 @@ class Application(RevisionedMixin):
         # all activities declined
         elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED) == len(activity_statuses):
             return self.PROCESSING_STATUS_DECLINED
-        elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED) == len(activity_statuses):
-            return self.PROCESSING_STATUS_DISCARDED
         else:
             return self.PROCESSING_STATUS_UNDER_REVIEW
 
@@ -931,7 +932,7 @@ class Application(RevisionedMixin):
     @property
     def activities(self):
         """ returns a queryset of activities attached to application (shortcut to ApplicationSelectedActivity related_name). """
-        return self.selected_activities
+        return self.selected_activities.exclude(processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED)
 
     def get_licences_by_status(self, status):
         return self.licences.filter(current_application__selected_activities__activity_status=status).distinct()

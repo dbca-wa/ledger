@@ -244,7 +244,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         return obj.licence_activity_names
 
     def get_activities(self, obj):
-        return ApplicationSelectedActivitySerializer(obj.selected_activities, many=True).data
+        return ApplicationSelectedActivitySerializer(obj.activities, many=True).data
 
     def get_amendment_requests(self, obj):
         amendment_request_data = []
@@ -526,7 +526,9 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
         user = self.context['request'].user
         if user is None:
             return []
-        application_activities = ApplicationSelectedActivity.objects.filter(application_id=obj.id)
+        application_activities = ApplicationSelectedActivity.objects.filter(
+            application_id=obj.id
+        ).exclude(processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED)
 
         """
         # Uncomment to filter out activities that the internal user cannot assess / process (to hide activity tabs on the UI).

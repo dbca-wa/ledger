@@ -665,7 +665,6 @@ export default {
             assessorGroup:{},
             "selectedAssessor":{},
             "loading": [],
-            selected_activity_tab_name:null,
             form: null,
             // activity_data:[],
             contacts_table_initialised: false,
@@ -749,6 +748,7 @@ export default {
             'original_application',
             'licence_type_data',
             'selected_activity_tab_id',
+            'selected_activity_tab_name',
             'hasRole',
             'visibleConditionsFor',
             'licenceActivities',
@@ -866,15 +866,15 @@ export default {
         ...mapActions([
             'setOriginalApplication',
             'setApplication',
-            'setActivityTabId',
+            'setActivityTab',
         ]),
         eventListeners: function(){
             let vm = this;
             $("[data-target!=''][data-target]").off("click").on("click", function (e) {
-                vm.selected_activity_tab_name = $(this).text();
-                vm.setActivityTabId(
-                    parseInt($(this).data('target').replace('#', ''), 10)
-                );
+                vm.setActivityTab({
+                    id: parseInt($(this).data('target').replace('#', ''), 10),
+                    name: $(this).text()
+                });
             });
             this.initFirstTab();
             // Listeners for Send to Assessor datatable actions

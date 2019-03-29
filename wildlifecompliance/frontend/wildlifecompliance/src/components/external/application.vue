@@ -25,6 +25,7 @@
                                         <strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong>
                                         <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
                                     </span>
+                                    <input type="button" @click.prevent="discardActivity" class="btn btn-danger" value="Discard Activity"/>
                                     <input type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
                                     <input v-if="!requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
@@ -75,10 +76,15 @@ export default {
         'application',
         'application_readonly',
         'amendment_requests',
+        'selected_activity_tab_id',
+        'selected_activity_tab_name',
         'isApplicationLoaded',
     ]),
     csrf_token: function() {
       return helpers.getCookie('csrftoken')
+    },
+    activity_discard_url: function() {
+      return (this.application) ? `/api/application/${this.application.id}/discard_activity/` : '';
     },
     application_form_url: function() {
       return (this.application) ? `/api/application/${this.application.id}/draft.json` : '';
@@ -93,7 +99,7 @@ export default {
     }),
     ...mapActions([
         'setApplication',
-        'setActivityTabId',
+        'setActivityTab',
     ]),
     eventListeners: function(){
         let vm = this;
@@ -102,9 +108,48 @@ export default {
             return;
           }
           const tab_id = e.target.href.split('#')[1];
-          vm.setActivityTabId(tab_id);
+          vm.setActivityTab({id: tab_id, name: e.target.innerHTML});
         });
         $('#tabs-section li:first-child a').click();
+    },
+    discardActivity: function(e) {
+      let swal_title = 'Discard Selected Activity';
+      let swal_html = `Are you sure you want to discard activity: ${this.selected_activity_tab_name}?`;
+      swal({
+          title: swal_title,
+          html: swal_html,
+          type: "question",
+          showCancelButton: true,
+          confirmButtonText: 'Discard',
+          confirmButtonColor: '#d9534f',
+      }).then((result) => {
+        this.$http.delete(this.activity_discard_url, {params: {'activity_id': this.selected_activity_tab_id}}).then(res=>{
+            swal(
+              'Activity Discarded',
+              `${this.selected_activity_tab_name} has been discarded from this application.`,
+              'success'
+            );
+
+            // No activities left? Redirect out of the application screen.
+            if(res.body.processing_status === 'discarded') {
+              this.$router.push({
+                  name:"external-applications-dash",
+              });
+            }
+            else {
+              this.load({ url: `/api/application/${this.application.id}.json` }).then(() => {
+                window.location.reload(true);  //TODO: Remove this once the activity headers / tabs are fully reactive
+              });
+            }
+        },err=>{
+          swal(
+            'Error',
+            helpers.apiVueResourceError(err),
+            'error'
+          )
+        });
+      },(error) => {
+      });
     },
     saveExit: function(e) {
       let vm = this;

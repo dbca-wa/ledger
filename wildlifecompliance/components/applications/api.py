@@ -760,17 +760,21 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['DELETE', ])
     def discard_activity(self, request, *args, **kwargs):
         http_status = status.HTTP_200_OK
-        activity_id = request.data.get('activity_id')
+        activity_id = request.GET.get('activity_id')
         instance = self.get_object()
 
-        activity = instance.activities.get(
-            licence_activity_id=activity_id,
-            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT
-        )
+        try:
+            activity = instance.activities.get(
+                licence_activity_id=activity_id,
+                processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT
+            )
+        except ApplicationSelectedActivity.DoesNotExist:
+            raise serializers.ValidationError("This activity cannot be discarded at this time.")
+
         activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED
         activity.save()
 
-        return Response({'processing_status': activity.processing_status}, status=http_status)
+        return Response({'processing_status': instance.processing_status}, status=http_status)
 
 
     @detail_route(methods=['GET', ])
