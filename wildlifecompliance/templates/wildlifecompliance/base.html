@@ -102,11 +102,7 @@
                                             <ul class="dropdown-menu">
                                                 {% if is_wildlifecompliance_admin_login %}
                                                     <li><a href="{% url 'admin:index' %}">Admin</a></li>
-                                                {% endif %}
-                                                {% if request.user.is_superuser %}
                                                     <li><a href="{% url 'mgt-commands' %}">Management Commands</a></li>
-                                                {% endif %}
-                                                {% if request.user.is_superuser or is_wildlifecompliance_admin_login %}
                                                     <li role="separator" class="divider"></li>
                                                 {% endif %}
                                                 <li><a href="{% url 'manage-account' %}">Manage Account</a></li>

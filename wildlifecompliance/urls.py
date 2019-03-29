@@ -36,6 +36,7 @@ router.register(r'licences_class', licence_api.LicenceCategoryViewSet)
 router.register(r'licence_available_purposes',
                 licence_api.UserAvailableWildlifeLicencePurposesViewSet)
 router.register(r'returns', return_api.ReturnViewSet)
+router.register(r'return_types', return_api.ReturnTypeViewSet)
 router.register(r'application_conditions',
                 application_api.ApplicationConditionViewSet)
 router.register(r'application_standard_conditions',
@@ -58,9 +59,6 @@ api_patterns = [url(r'^api/profile/$',
                 url(r'^api/user_profile_completed/$',
                     users_api.UserProfileCompleted.as_view(),
                     name='get-user-profile-completed'),
-                url(r'^api/department_users/$',
-                    users_api.DepartmentUserList.as_view(),
-                    name='department-users-list'),
                 url(r'^api/amendment_request_reason_choices',
                     application_api.AmendmentRequestReasonChoicesView.as_view(),
                     name='amendment_request_reason_choices'),

@@ -583,7 +583,8 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET', ])
     def get_pending_requests(self, request, *args, **kwargs):
         try:
-            qs = self.get_queryset().filter(requester=request.user, status='with_assessor')
+            qs = self.get_queryset().filter(requester=request.user,
+                                            status=OrganisationRequest.ORG_REQUEST_STATUS_WITH_ASSESSOR)
             serializer = OrganisationRequestDTSerializer(qs, many=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -828,14 +829,14 @@ class OrganisationAccessGroupMembers(views.APIView):
         members = []
         if is_internal(request):
             groups = ActivityPermissionGroup.objects.filter(
-                permissions__codename='organisation_access_request'
+                permissions__codename__in=[
+                    'organisation_access_request',
+                    'system_administrator'
+                ]
             )
             for group in groups:
                 for member in group.members:
                     members.append({'name': member.get_full_name(), 'id': member.id})
-            for member in EmailUser.objects.filter(
-                    is_superuser=True, is_staff=True, is_active=True):
-                members.append({'name': member.get_full_name(), 'id': member.id})
         return Response(members)
 
 
