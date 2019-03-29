@@ -18,7 +18,7 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section, Zone
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
@@ -33,6 +33,9 @@ logger = logging.getLogger(__name__)
 
 def update_proposal_doc_filename(instance, filename):
     return 'proposals/{}/documents/{}'.format(instance.proposal.id,filename)
+
+def update_proposal_required_doc_filename(instance, filename):
+    return 'proposals/{}/required_documents/{}/{}'.format(instance.proposal.id,instance.required_doc.id,filename)
 
 def update_proposal_comms_log_filename(instance, filename):
     return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
@@ -189,6 +192,22 @@ class ProposalDocument(Document):
     def delete(self):
         if self.can_delete:
             return super(ProposalDocument, self).delete()
+        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+#Documents on Activities(land)and Activities(Marine) tab for T-Class related to required document questions
+class ProposalRequiredDocument(Document):
+    proposal = models.ForeignKey('Proposal',related_name='required_documents')
+    _file = models.FileField(upload_to=update_proposal_required_doc_filename)
+    input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+    required_doc = models.ForeignKey('RequiredDocument',related_name='proposals')
+
+    def delete(self):
+        if self.can_delete:
+            return super(ProposalRequiredDocument, self).delete()
         logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
 
     class Meta:

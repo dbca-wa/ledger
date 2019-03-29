@@ -75,6 +75,7 @@
               <div  v-for="rd in required_documents_list">
                 <div v-if="rd.can_view">
                   <label>{{rd.question}}</label>
+                  <FileField :proposal_id="proposal.id" isRepeatable="true" name="required_documents" :required_doc_id="rd.id" label="Add Document" id="id_file"></FileField>
                 </div>
               </div>
           </div>
@@ -147,7 +148,7 @@ import Vue from 'vue'
 import VehicleTable from '@/components/common/vehicle_table.vue'
 import editParkActivities from './edit_park_activities.vue'
 import editTrailActivities from './edit_trail_activities.vue'
-import VehicleTable from '@/components/forms/form.vue'
+import FileField from './required_docs.vue'
 import {
   api_endpoints,
   helpers
@@ -193,6 +194,7 @@ export default {
           VehicleTable,
           editParkActivities,
           editTrailActivities,
+          FileField,
         },
         watch:{
           selected_regions: function(val){
