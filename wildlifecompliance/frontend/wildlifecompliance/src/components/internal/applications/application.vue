@@ -983,7 +983,7 @@ export default {
             this.$refs.proposed_decline.isModalOpen = true;
         },
         isActivityVisible: function(activity_id) {
-            return this.isApplicationActivityVisible(this.application, activity_id);
+            return this.isApplicationActivityVisible(activity_id);
         },
         isAssessorRelevant(assessor, activity_id) {
             if(!activity_id) {

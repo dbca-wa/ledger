@@ -54,13 +54,14 @@ export const applicationStore = {
             return getters.checkActivityStatus(final_statuses) && !getters.checkActivityStatus(final_statuses, activity_count);
         },
         isApplicationLoaded: state => Object.keys(state.application).length && state.application.licence_type_data != null,
-        isApplicationActivityVisible: (state, getters, rootState, rootGetters) => (application, activity_id, exclude_statuses) => {
+        isApplicationActivityVisible: (state, getters, rootState, rootGetters) => (activity_id, exclude_statuses, exclude_processing_statuses) => {
             if(!state.application.activities) {
                 return 0;
             }
             return state.application.activities.filter(
               activity => activity.licence_activity == activity_id &&
-                (!exclude_statuses || !exclude_statuses.includes(activity.decision_action))
+                (!exclude_statuses || !exclude_statuses.includes(activity.decision_action)) &&
+                (!exclude_processing_statuses || !exclude_processing_statuses.includes(activity.processing_status))
             ).length;
           },
     },

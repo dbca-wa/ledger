@@ -25,7 +25,7 @@
                                         <strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong>
                                         <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
                                     </span>
-                                    <input type="button" @click.prevent="discardActivity" class="btn btn-danger" value="Discard Activity"/>
+                                    <input v-if="canDiscardActivity" type="button" @click.prevent="discardActivity" class="btn btn-danger" value="Discard Activity"/>
                                     <input type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
                                     <input v-if="!requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
@@ -92,6 +92,12 @@ export default {
     requiresCheckout: function() {
         return this.application.application_fee > 0 && this.application_customer_status_onload.id == 'draft'
     },
+    canDiscardActivity: function() {
+      return this.application.activities.find(
+              activity => activity.licence_activity == this.selected_activity_tab_id &&
+              activity.processing_status == 'draft'
+            );
+    }
   },
   methods: {
     ...mapActions({
