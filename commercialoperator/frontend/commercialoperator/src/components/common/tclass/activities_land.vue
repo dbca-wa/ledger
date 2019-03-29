@@ -75,7 +75,7 @@
               <div  v-for="rd in required_documents_list">
                 <div v-if="rd.can_view">
                   <label>{{rd.question}}</label>
-                  <FileField :proposal_id="proposal.id" isRepeatable="true" name="required_documents" :required_doc_id="rd.id" label="Add Document" id="id_file"></FileField>
+                  <FileField :proposal_id="proposal.id" isRepeatable="true" :name="'proposal'+proposal.id+'req_doc'+rd.id" :required_doc_id="rd.id" label="Add Document" :id="'proposal'+proposal.id+'req_doc'+rd.id"></FileField>
                 </div>
               </div>
           </div>
@@ -530,7 +530,7 @@ export default {
                     }
                   }
                   else{
-                    for(var k=0; k<selected_parks_activities[j].activities.length; k++){
+                    for(var k=0; k<selected_parks_activities[i].activities.length; k++){
                       if(vm.required_documents_list[j].activity== selected_parks_activities[i].activities[k]){
                       vm.required_documents_list[j].can_view=true;
                       }

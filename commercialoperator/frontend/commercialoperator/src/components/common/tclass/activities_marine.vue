@@ -41,6 +41,14 @@
                         <div class="row"></div>
                         <div class="row"></div>
                         <div class="row"></div>
+                        <div class="borderDecoration col-sm-12">
+                          <div  v-for="rd in required_documents_list">
+                            <div v-if="rd.can_view">
+                              <label>{{rd.question}}</label>
+                              <FileField :proposal_id="proposal.id" isRepeatable="true" :name="'proposal'+proposal.id+'req_doc'+rd.id" :required_doc_id="rd.id" label="Add Document" :id="'proposal'+proposal.id+'req_doc'+rd.id"></FileField>
+                            </div>
+                          </div>
+                        </div>
                         <div class="form-horizontal col-sm-12 borderDecoration">
                             <label class="control-label">You have selected vessel access for one or more parks. Provide details of each vessel you plan to use.</label>
                             <VesselTable :url="vessels_url" :proposal="proposal"></VesselTable>
@@ -62,6 +70,7 @@
 import Vue from 'vue' 
 import VesselTable from '@/components/common/vessel_table.vue' 
 import editMarineParkActivities from './edit_marine_park_activities.vue'
+import FileField from './required_docs.vue'
 import {
   api_endpoints,
   helpers
@@ -87,11 +96,13 @@ from '@/utils/hooks'
                 selected_parks:[],
                 selected_parks_before:[],
                 marine_parks_activities:[],
+                required_documents_list: null,
             }
         },
         components: {
           VesselTable,
           editMarineParkActivities,
+          FileField,
         },
         watch: {
         selected_parks: function() {
@@ -219,9 +230,11 @@ from '@/utils/hooks'
               }
             }
           }
+          vm.checkRequiredDocuements(vm.marine_parks_activities)
         },
         marine_parks_activities: function(){
             let vm=this;
+            vm.checkRequiredDocuements(vm.marine_parks_activities)
             if (vm.proposal){
               vm.proposal.marine_parks_activities=vm.marine_parks_activities;
             }
@@ -236,6 +249,59 @@ from '@/utils/hooks'
             },(error) => {
             console.log(error);
             })
+          },
+          checkRequiredDocuements: function(marine_parks_activities){
+            let vm=this;
+            //Check if the combination of selected park and activities require a document to be attahced
+            if(vm.required_documents_list){
+            for(var l=0; l<vm.required_documents_list.length; l++){
+              vm.required_documents_list[l].can_view=false;
+            }
+
+            for(var i=0; i<marine_parks_activities.length; i++){
+              for(var j=0; j<vm.required_documents_list.length; j++){
+                if(vm.required_documents_list[j].park!=null){
+                  if(vm.required_documents_list[j].activity==null){
+                    if(vm.required_documents_list[j].park== marine_parks_activities[i].park){
+                      vm.required_documents_list[j].can_view=true;
+                    }
+                  }
+                  else{
+                    for(var k=0; k<marine_parks_activities[i].activities.length; k++){
+                      for(var l=0; l<marine_parks_activities[i].activities[k].activities.length; l++){
+                        if(vm.required_documents_list[j].activity== marine_parks_activities[i].activities[k].activities[l]){
+                        vm.required_documents_list[j].can_view=true;
+                        }
+                      }                     
+                    }
+                  }
+                }
+                else if(vm.required_documents_list[j].activity!=null){
+                  for(var k=0; k<marine_parks_activities[i].activities.length; k++){
+                      for(var l=0; l<marine_parks_activities[i].activities[k].activities.length; l++){
+                        if(vm.required_documents_list[j].activity== marine_parks_activities[i].activities[k].activities[l]){
+                        vm.required_documents_list[j].can_view=true;
+                        }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          },
+          fetchRequiredDocumentList: function(){
+            let vm = this;
+            vm.$http.get('/api/required_documents.json').then((response) => {
+            vm.required_documents_list = response.body;
+            for(var l=0; l<vm.required_documents_list.length; l++){
+              vm.required_documents_list[l].can_view=false;
+              vm.checkRequiredDocuements(vm.marine_parks_activities)
+              console.log('park',vm.selected_parks_activities)
+            }
+            },(error) => {
+            console.log(error);
+            })
+
           },
           clickCategory: function(e, c){
             let vm=this;
@@ -296,6 +362,7 @@ from '@/utils/hooks'
                 vm.marine_parks_activities[j].activities= new_activities;
               }
             }
+            vm.checkRequiredDocuements(vm.marine_parks_activities)
           },
           find_recurring: function(array){
             var common=new Map();
@@ -363,7 +430,8 @@ from '@/utils/hooks'
             err => { 
                    console.log(err);
             });
-            vm.fetchParks(); 
+            vm.fetchParks();
+            vm.fetchRequiredDocumentList();
             vm.store_parks2(vm.proposal.marine_parks);
         }
     }
