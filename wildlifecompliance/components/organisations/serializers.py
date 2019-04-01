@@ -43,7 +43,8 @@ class OrganisationCheckSerializer(serializers.Serializer):
             .exclude(
                 status__in=(
                     OrganisationRequest.ORG_REQUEST_STATUS_DECLINED,
-                    OrganisationRequest.ORG_REQUEST_STATUS_APPROVED))
+                    OrganisationRequest.ORG_REQUEST_STATUS_APPROVED)
+        )
         if requests.exists():
             raise serializers.ValidationError(
                 'A request has been submitted and is Pending Approval.')

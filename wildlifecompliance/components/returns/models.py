@@ -247,11 +247,12 @@ class Return(models.Model):
     def set_submitted(self, request):
         with transaction.atomic():
             try:
-                if self.processing_status == Return.RETURN_PROCESSING_STATUS_FUTURE or Return.RETURN_PROCESSING_STATUS_DUE:
-                    self.customer_status = Return.RETURN_CUSTOMER_STATUS_UNDER_REVIEW
-                    self.processing_status = Return.RETURN_PROCESSING_STATUS_WITH_CURATOR
-                    self.submitter = request.user
-                    self.save()
+                if self.processing_status == Return.RETURN_PROCESSING_STATUS_FUTURE\
+                        or Return.RETURN_PROCESSING_STATUS_DUE:
+                            self.customer_status = Return.RETURN_CUSTOMER_STATUS_UNDER_REVIEW
+                            self.processing_status = Return.RETURN_PROCESSING_STATUS_WITH_CURATOR
+                            self.submitter = request.user
+                            self.save()
 
                 # code for amendment returns is still to be added, so
                 # lodgement_date is set outside if statement

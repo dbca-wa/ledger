@@ -390,7 +390,7 @@ class Application(RevisionedMixin):
     @property
     def has_amendment(self):
         qs = self.amendment_requests
-        qs = qs.filter(status='requested')
+        qs = qs.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED)
         if qs.exists():
             return True
         else:
@@ -435,6 +435,7 @@ class Application(RevisionedMixin):
 
     @property
     def payment_status(self):
+        # TODO: needs more work, underpaid/overpaid statuses to be added, refactor to key/name like processing_status
         if self.application_fee == 0:
             return 'payment_not_required'
         else:
@@ -607,10 +608,10 @@ class Application(RevisionedMixin):
                 # else if the new application is submitted change the status of
                 # all the activities
                 if (self.amendment_requests):
-                    qs = self.amendment_requests.filter(status="requested")
+                    qs = self.amendment_requests.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED)
                     if (qs):
                         for q in qs:
-                            q.status = 'amended'
+                            q.status = AmendmentRequest.AMENDMENT_REQUEST_STATUS_AMENDED
                             self.set_activity_processing_status(
                                 q.licence_activity.id, ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER)
                             q.save()
@@ -1105,53 +1106,55 @@ class Application(RevisionedMixin):
             licence_expiry, "%Y-%m-%d").date()
         today = timezone.now().date()
         timedelta = datetime.timedelta
-        for req in self.conditions.all():
+        for condition in self.conditions.all():
             try:
-                if req.due_date and req.due_date >= today:
-                    current_date = req.due_date
+                if condition.due_date and condition.due_date >= today:
+                    current_date = condition.due_date
                     # create a first Return
                     try:
                         Return.objects.get(
-                            condition=req, due_date=current_date)
+                            condition=condition, due_date=current_date)
                     except Return.DoesNotExist:
                         Return.objects.create(
                             application=self,
                             due_date=current_date,
                             processing_status=Return.RETURN_PROCESSING_STATUS_FUTURE,
                             licence=licence,
-                            condition=req,
-                            return_type=req.return_type,
+                            condition=condition,
+                            return_type=condition.return_type,
                             submitter=request.user
                         )
                         # compliance.log_user_action(ComplianceUserAction.ACTION_CREATE.format(compliance.id),request)
-                    if req.recurrence:
+                    if condition.recurrence:
                         while current_date < licence_expiry:
-                            for x in range(req.recurrence_schedule):
+                            for x in range(condition.recurrence_schedule):
                                 # Weekly
-                                if req.recurrence_pattern == 1:
-                                    current_date += timedelta(weeks=1)
+                                if condition.recurrence_pattern == ApplicationCondition\
+                                        .APPLICATION_CONDITION_RECURRENCE_WEEKLY:
+                                            current_date += timedelta(weeks=1)
                             # Monthly
-                                elif req.recurrence_pattern == 2:
-                                    current_date += timedelta(weeks=4)
-                                    pass
+                                elif condition.recurrence_pattern == ApplicationCondition\
+                                        .APPLICATION_CONDITION_RECURRENCE_MONTHLY:
+                                            current_date += timedelta(weeks=4)
+                                            pass
                             # Yearly
-                                elif req.recurrence_pattern == 3:
-                                    current_date += timedelta(days=365)
+                                elif condition.recurrence_pattern == ApplicationCondition\
+                                        .APPLICATION_CONDITION_RECURRENCE_YEARLY:
+                                            current_date += timedelta(days=365)
                             # Create the Return
                             if current_date <= licence_expiry:
                                 try:
                                     Return.objects.get(
-                                        condition=req, due_date=current_date)
+                                        condition=condition, due_date=current_date)
                                 except Return.DoesNotExist:
                                     Return.objects.create(
                                         application=self,
                                         due_date=current_date,
                                         processing_status=Return.RETURN_PROCESSING_STATUS_FUTURE,
                                         licence=licence,
-                                        condition=req,
-                                        return_type=req.return_type
+                                        condition=condition,
+                                        return_type=condition.return_type
                                     )
-                                    # compliance.log_user_action(ComplianceUserAction.ACTION_CREATE.format(compliance.id),request)
             except BaseException:
                 raise
 
@@ -1350,7 +1353,7 @@ class Assessment(ApplicationRequest):
     def recall_assessment(self, request):
         with transaction.atomic():
             try:
-                self.status = "recalled"
+                self.status = Assessment.STATUS_RECALLED
                 self.application.set_activity_processing_status(
                     self.licence_activity_id, ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER)
                 self.save()
@@ -1374,34 +1377,6 @@ class Assessment(ApplicationRequest):
                         self.assessor_group), request)
             except BaseException:
                 raise
-
-
-# class ApplicationDeclinedDetails(models.Model):
-#     STATUS_CHOICES = (
-#         ('default', 'Default'),
-#         ('propose_decline', 'Propose Decline'),
-#         ('declined', 'Declined'),
-#         ('propose_issue', 'Propose Issue'),
-#         ('issued', 'Issued')
-#     )
-#     status = models.CharField(
-#         'Status',
-#         max_length=20,
-#         choices=STATUS_CHOICES,
-#         default=STATUS_CHOICES[0][0])
-#     application = models.OneToOneField(Application)
-#     officer = models.ForeignKey(EmailUser, null=False)
-#     reason = models.TextField(blank=True)
-#     cc_email = models.TextField(null=True)
-#     activity = JSONField(blank=True, null=True)
-#     licence_activity = models.ForeignKey(
-#         'wildlifecompliance.LicenceActivity', null=True)
-#     proposed_start_date = models.DateField(null=True, blank=True)
-#     proposed_end_date = models.DateField(null=True, blank=True)
-#     is_activity_renewable = models.BooleanField(default=False)
-#
-#     class Meta:
-#         app_label = 'wildlifecompliance'
 
 
 class ApplicationSelectedActivity(models.Model):
@@ -1526,9 +1501,9 @@ class DefaultCondition(OrderedModel):
 
 
 class ApplicationCondition(OrderedModel):
-    APPLICATION_CONDITION_RECURRENCE_WEEKLY = 1
-    APPLICATION_CONDITION_RECURRENCE_MONTHLY = 2
-    APPLICATION_CONDITION_RECURRENCE_YEARLY = 3
+    APPLICATION_CONDITION_RECURRENCE_WEEKLY = 'weekly'
+    APPLICATION_CONDITION_RECURRENCE_MONTHLY = 'monthly'
+    APPLICATION_CONDITION_RECURRENCE_YEARLY = 'yearly'
     RECURRENCE_PATTERNS = (
         (APPLICATION_CONDITION_RECURRENCE_WEEKLY, 'Weekly'),
         (APPLICATION_CONDITION_RECURRENCE_MONTHLY, 'Monthly'),
@@ -1544,7 +1519,8 @@ class ApplicationCondition(OrderedModel):
     application = models.ForeignKey(Application, related_name='conditions')
     due_date = models.DateField(null=True, blank=True)
     recurrence = models.BooleanField(default=False)
-    recurrence_pattern = models.SmallIntegerField(
+    recurrence_pattern = models.CharField(
+        max_length=20,
         choices=RECURRENCE_PATTERNS,
         default=APPLICATION_CONDITION_RECURRENCE_WEEKLY)
     recurrence_schedule = models.IntegerField(null=True, blank=True)

@@ -276,7 +276,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             qs = instance.amendment_requests
-            qs = qs.filter(status='requested')
+            qs = qs.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED)
             serializer = ExternalAmendmentRequestSerializer(qs, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -790,6 +790,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @detail_route(permission_classes=[], methods=['GET'])
     def application_checkout_status(self, request, *args, **kwargs):
+        # TODO: may need to re-build this function for Wildlife Licensing (code taken from Parkstay) if required
         try:
             # instance = self.get_object()
             response = {

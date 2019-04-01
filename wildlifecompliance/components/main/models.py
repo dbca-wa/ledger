@@ -44,18 +44,18 @@ class CommunicationsLogEntry(models.Model):
     COMMUNICATIONS_LOG_TYPE_EMAIL = 'email'
     COMMUNICATIONS_LOG_TYPE_PHONE = 'phone'
     COMMUNICATIONS_LOG_TYPE_MAIL = 'mail'
-    COMMUNICATIONS_LOG_TYPE_EMAIL = 'person'
+    COMMUNICATIONS_LOG_TYPE_PERSON = 'person'
     TYPE_CHOICES = (
         (COMMUNICATIONS_LOG_TYPE_EMAIL, 'Email'),
         (COMMUNICATIONS_LOG_TYPE_PHONE, 'Phone Call'),
         (COMMUNICATIONS_LOG_TYPE_MAIL, 'Mail'),
-        (COMMUNICATIONS_LOG_TYPE_EMAIL, 'In Person')
+        (COMMUNICATIONS_LOG_TYPE_PERSON, 'In Person')
     )
 
     to = models.TextField(blank=True, verbose_name="To")
     fromm = models.CharField(max_length=200, blank=True, verbose_name="From")
     cc = models.TextField(blank=True, verbose_name="cc")
-    type = models.CharField(
+    log_type = models.CharField(
         max_length=20,
         choices=TYPE_CHOICES,
         default=COMMUNICATIONS_LOG_TYPE_EMAIL)
