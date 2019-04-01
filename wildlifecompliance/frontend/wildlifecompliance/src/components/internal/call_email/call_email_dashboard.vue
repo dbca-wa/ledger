@@ -173,17 +173,25 @@
         watch: {
             filterCall: function () {
                 let vm = this;
-
+                let re = /\\/ + /\(/
+                let regexSearch = '^' + vm.filterCall
+                                    .replace(/\(/g, '\\(')
+                                    .replace(/\)/g, '\\)') 
+                                    + '$';
                 if (vm.filterCall != 'All') {
-                    vm.$refs.call_email_table.vmDataTable.columns(0).search(vm.filterCall, false).draw();
+                    vm.$refs.call_email_table.vmDataTable.columns(0).search(regexSearch, true, false).draw();
                 } else {
                     vm.$refs.call_email_table.vmDataTable.columns(0).search('').draw();
                 }
             },
             filterClassification: function () {
                 let vm = this;
+                let regexSearch = '^' + vm.filterClassification
+                                    .replace(/\(/g, '\\(')
+                                    .replace(/\)/g, '\\)') 
+                                    + '$';
                 if (vm.filterClassification != 'All') {
-                    vm.$refs.call_email_table.vmDataTable.columns(1).search(vm.filterClassification, false).draw();
+                    vm.$refs.call_email_table.vmDataTable.columns(1).search(regexSearch, true, false).draw();
                 } else {
                     vm.$refs.call_email_table.vmDataTable.columns(1).search('').draw();
                 }
