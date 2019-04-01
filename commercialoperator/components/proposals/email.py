@@ -10,6 +10,17 @@ from commercialoperator.components.emails.emails import TemplateEmailBase
 logger = logging.getLogger(__name__)
 
 SYSTEM_NAME = settings.SYSTEM_NAME_SHORT + ' Automated Message'
+
+class QAOfficerSendNotificationEmail(TemplateEmailBase):
+    subject = 'A proposal has been sent to you for QA.'
+    html_template = 'commercialoperator/emails/proposals/send_qaofficer_notification.html'
+    txt_template = 'commercialoperator/emails/proposals/send_qaofficer_notification.txt'
+
+class QAOfficerCompleteNotificationEmail(TemplateEmailBase):
+    subject = 'A QA for a proposal has been completed.'
+    html_template = 'commercialoperator/emails/proposals/send_qaofficer_complete_notification.html'
+    txt_template = 'commercialoperator/emails/proposals/send_qaofficer_complete_notification.txt'
+
 class ReferralSendNotificationEmail(TemplateEmailBase):
     subject = 'A referral for a proposal has been sent to you.'
     html_template = 'commercialoperator/emails/proposals/send_referral_notification.html'
@@ -59,6 +70,43 @@ class ApproverSendBackNotificationEmail(TemplateEmailBase):
     subject = 'A Proposal has been sent back by approver.'
     html_template = 'commercialoperator/emails/proposals/send_approver_sendback_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_approver_sendback_notification.txt'
+
+def send_qaofficer_email_notification(proposal, recipients, request, reminder=False):
+    email = QAOfficerSendNotificationEmail()
+    url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+
+    #import ipdb; ipdb.set_trace()
+    context = {
+        'proposal': proposal,
+        'url': url,
+        'reminder':reminder,
+        'completed_by': request.user.get_full_name(),
+        'comments': request.data['text']
+    }
+
+    msg = email.send(recipients, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+
+def send_qaofficer_complete_email_notification(proposal, recipients, request, reminder=False):
+    email = QAOfficerCompleteNotificationEmail()
+    url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+
+    text = proposal.comms_logs.filter(type__icontains='qaofficer').last().text
+    context = {
+        #'completed_by': text.split(':')[0],
+        'proposal': proposal,
+        'url': url,
+        'completed_by': request.user.get_full_name(),
+        'comments': request.data['text']
+    }
+
+    msg = email.send(recipients, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+
 
 def send_referral_email_notification(referral,recipients,request,reminder=False):
     email = ReferralSendNotificationEmail()

@@ -1068,18 +1068,18 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def with_qaofficer(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
-                #import ipdb; ipdb.set_trace()
+                import ipdb; ipdb.set_trace()
                 instance = self.get_object()
                 is_with_qaofficer =  eval(request.data.get('with_qaofficer'))
                 data = {}
-                if is_onhold:
+                if is_with_qaofficer:
                     #data['type'] = u'onhold'
                     data['type'] = u'with_qaofficer'
                     instance.with_qaofficer(request)
                 else:
                     #data['type'] = u'onhold_remove'
-                    data['type'] = u'with_qaofficer_remove'
-                    instance.with_qaofficer_remove(request)
+                    data['type'] = u'with_qaofficer_completed'
+                    instance.with_qaofficer_completed(request)
 
                 data['proposal'] = u'{}'.format(instance.id)
                 data['staff'] = u'{}'.format(request.user.id)

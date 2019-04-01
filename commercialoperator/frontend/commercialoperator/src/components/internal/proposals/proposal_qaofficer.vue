@@ -11,7 +11,7 @@
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
                                         <TextArea :proposal_id="proposal_id" :readonly="readonly" name="_comments" label="Comments" id="id_comments" />
-                                        <FileField :document_url="document_url" :proposal_id="proposal_id" isRepeatable="true" name="_file" label="Add Document" id="id_file" @refreshFromResponse="refreshFromResponse"/>
+                                        <FileField :document_url="document_url" :proposal_id="proposal_id" isRepeatable="true" name="qaofficer_file" label="Add Document" id="id_file" @refreshFromResponse="refreshFromResponse"/>
                                     </div>
                                 </div>
                             </div>
@@ -92,31 +92,27 @@ export default {
 
         save: function(){
             let vm = this;
-            //var is_onhold = vm.processing_status == 'On Hold'? true: false;
             var is_with_qaofficer = vm.processing_status == 'With QA Officer'? true: false;
-            var form = document.forms.onholdForm;
+            var form = document.forms.withqaForm;
             var data = {
-                //onhold: is_onhold ? 'False': 'True', // since wee need to do the reverse
                 with_qaofficer: is_with_qaofficer ? 'False': 'True', // since wee need to do the reverse
-                file_input_name: '_file',
+                file_input_name: 'qaofficer_file',
                 proposal: vm.proposal_id,
                 text: form.elements['_comments'].value, // getting the value from the text-area.vue field
-                //document_list: JSON.stringify(vm.document_list),
             }
-            //vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal_id+'/on_hold'),data,{
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal_id+'/with_qaofficer'),data,{
                 emulateJSON: true
             }).then(res=>{
-                if(!is_onhold){
+                if(!is_with_qaofficer){
                     swal(
                         'Send Proposal to QA Officer',
-                        'Proposal to QA Officer',
+                        'Send Proposal to QA Officer',
                         'success'
                     );
                 } else {
                     swal(
-                        'Proposal QA Officer Assessment',
-                        'Proposal QA Officer Assessment',
+                        'Proposal QA Officer Assessment Completed',
+                        'Proposal QA Officer Assessment Completed',
                         'success'
                     );
                 }

@@ -22,7 +22,7 @@ from commercialoperator.components.main.models import CommunicationsLogEntry, Us
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
-from commercialoperator.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification, send_proposal_approver_sendback_email_notification
+from commercialoperator.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification, send_proposal_approver_sendback_email_notification, send_qaofficer_email_notification, send_qaofficer_complete_email_notification
 import copy
 import subprocess
 from django.db.models import Q
@@ -36,6 +36,9 @@ def update_proposal_doc_filename(instance, filename):
 
 def update_onhold_doc_filename(instance, filename):
     return 'proposals/{}/on_hold/{}'.format(instance.proposal.id,filename)
+
+def update_qaofficer_doc_filename(instance, filename):
+    return 'proposals/{}/qaofficer/{}'.format(instance.proposal.id,filename)
 
 def update_referral_doc_filename(instance, filename):
     return 'proposals/{}/referral/{}/documents/{}'.format(instance.referral.proposal.id,instance.referral.id,filename)
@@ -211,6 +214,22 @@ class OnHoldDocument(Document):
 
     class Meta:
         app_label = 'commercialoperator'
+
+class QAOfficerDocument(Document):
+    proposal = models.ForeignKey('Proposal',related_name='qaofficer_documents')
+    _file = models.FileField(upload_to=update_qaofficer_doc_filename)
+    input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+    visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
+
+    def delete(self):
+        if self.can_delete:
+            return super(QAOfficerDocument, self).delete()
+        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+
+    class Meta:
+        app_label = 'commercialoperator'
+
 
 class ReferralDocument(Document):
     referral = models.ForeignKey('Referral',related_name='referral_documents')
@@ -435,6 +454,12 @@ class Proposal(RevisionedMixin):
     def reference(self):
         return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
 
+    def qa_officers(self, name=None):
+        if not name:
+            return QAOfficerGroup.objects.get(default=True).members.all().values_list('email', flat=True)
+        else:
+            return QAOfficerGroup.objects.get(name=name).members.all().values_list('email', flat=True)
+
     @property
     def get_history(self):
         """ Return the prev proposal versions """
@@ -614,7 +639,8 @@ class Proposal(RevisionedMixin):
 
 
     def can_assess(self,user):
-        if self.processing_status == 'on_hold' or self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':
+        #if self.processing_status == 'on_hold' or self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':
+        if self.processing_status in ['on_hold', 'with_qa_officer', 'with_assessor', 'with_referral', 'with_assessor_requirements']:
             return self.__assessor_group() in user.proposalassessorgroup_set.all()
         elif self.processing_status == 'with_approver':
             return self.__approver_group() in user.proposalapprovergroup_set.all()
@@ -994,6 +1020,51 @@ class Proposal(RevisionedMixin):
                 self.applicant.log_user_action(ProposalUserAction.ACTION_REMOVE_ONHOLD.format(self.id),request)
 
                 #send_approver_decline_email_notification(reason, request, self)
+            except:
+                raise
+
+    def with_qaofficer(self,request):
+        with transaction.atomic():
+            try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if not (self.processing_status == 'with_assessor' or self.processing_status == 'with_referral'):
+                    raise ValidationError('You cannot send to QA Officer if it is not with assessor or with referral')
+
+                self.prev_processing_status = self.processing_status
+                self.processing_status = self.PROCESSING_STATUS_WITH_QA_OFFICER
+                self.save()
+                # Log proposal action
+                self.log_user_action(ProposalUserAction.ACTION_WITH_QA_OFFICER.format(self.id),request)
+                # Log entry for organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_WITH_QA_OFFICER.format(self.id),request)
+
+                #send_approver_decline_email_notification(reason, request, self)
+                recipients = self.qa_officers()
+                send_qaofficer_email_notification(self, recipients, request)
+
+            except:
+                raise
+
+    def with_qaofficer_completed(self,request):
+        with transaction.atomic():
+            try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if self.processing_status != 'with_qa_officer':
+                    raise ValidationError('You cannot Complete QA Officer Assessment if processing status not currently With Assessor')
+
+                self.processing_status = self.prev_processing_status
+                self.prev_processing_status = self.PROCESSING_STATUS_WITH_QA_OFFICER
+                self.save()
+                # Log proposal action
+                self.log_user_action(ProposalUserAction.ACTION_QA_OFFICER_COMPLETED.format(self.id),request)
+                # Log entry for organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_QA_OFFICER_COMPLETED.format(self.id),request)
+
+                #send_approver_decline_email_notification(reason, request, self)
+                recipients = self.qa_officers()
+                send_qaofficer_complete_email_notification(self, recipients, request)
             except:
                 raise
 
@@ -1621,6 +1692,8 @@ class ProposalUserAction(UserAction):
     ACTION_EDIT_VESSEL= "Edit Vessel {}"
     ACTION_PUT_ONHOLD = "Put Proposal On-hold {}"
     ACTION_REMOVE_ONHOLD = "Remove Proposal On-hold {}"
+    ACTION_WITH_QA_OFFICER = "Send Proposal QA Officer {}"
+    ACTION_QA_OFFICER_COMPLETED = "QA Officer Assessment Completed {}"
 
 
     class Meta:

@@ -446,6 +446,7 @@ import ProposalTClass from '@/components/form_tclass.vue'
 import ProposalFilming from '@/components/form_filming.vue'
 import ProposalEvent from '@/components/form_event.vue'
 import OnHold from './proposal_onhold.vue'
+import WithQAOfficer from './proposal_qaofficer.vue'
 import {
     api_endpoints,
     helpers
@@ -533,6 +534,7 @@ export default {
         ProposalFilming,
         ProposalEvent,
         OnHold,
+        WithQAOfficer,
     },
     filters: {
         formatDate: function(data){

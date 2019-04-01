@@ -145,7 +145,6 @@ export default {
         handleChange:function (e) {
             let vm = this;
 
-            vm.show_spinner = true;
             if (vm.isRepeatable) {
                 let  el = $(e.target).attr('data-que');
                 let avail = $('input[name='+e.target.name+']');
@@ -172,7 +171,6 @@ export default {
                 vm.save_document(e);
             }
 
-            vm.show_spinner = false;
         },
 
         /*
@@ -192,8 +190,6 @@ export default {
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
-                    //console.log(vm.documents);
-                    vm.show_spinner = false;
                 });
 
         },
@@ -233,6 +229,7 @@ export default {
 
         save_document: function(e) {
             let vm = this; 
+            vm.show_spinner = true;
 
             var formData = new FormData();
             formData.append('action', 'save');
@@ -246,6 +243,7 @@ export default {
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
+                    vm.show_spinner = false;
                 },err=>{
                 });
 
