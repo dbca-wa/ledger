@@ -1068,7 +1068,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def with_qaofficer(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
-                import ipdb; ipdb.set_trace()
+                #import ipdb; ipdb.set_trace()
                 instance = self.get_object()
                 is_with_qaofficer =  eval(request.data.get('with_qaofficer'))
                 data = {}

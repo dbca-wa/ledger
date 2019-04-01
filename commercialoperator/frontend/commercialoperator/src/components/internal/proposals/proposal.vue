@@ -271,7 +271,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="withQAOfficer()">Complete QA Assessment</button>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit && proposal.is_qa_officer" @click.prevent="withQAOfficer()">Complete QA Assessment</button>
                                         </div>
                                     </div>
                                 </template>

@@ -106,6 +106,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     trails=ProposalTrailSerializer(many=True)
 
     get_history = serializers.ReadOnlyField()
+    is_qa_officer = serializers.SerializerMethodField()
 
 #    def __init__(self, *args, **kwargs):
 #        import ipdb; ipdb.set_trace()
@@ -152,6 +153,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'can_officer_process',
                 'allowed_assessors',
                 'proposal_type',
+                'is_qa_officer',
 
                 # tab field models
                 'applicant_details',
@@ -179,6 +181,10 @@ class BaseProposalSerializer(serializers.ModelSerializer):
 
     def get_proposal_type(self,obj):
         return obj.get_proposal_type_display()
+
+    def get_is_qa_officer(self,obj):
+        request = self.context['request']
+        return request.user.email in obj.qa_officers()
 
 
 
