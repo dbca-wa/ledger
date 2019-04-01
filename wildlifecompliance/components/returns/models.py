@@ -248,7 +248,7 @@ class Return(models.Model):
         with transaction.atomic():
             try:
                 if self.processing_status == Return.RETURN_PROCESSING_STATUS_FUTURE\
-                        or Return.RETURN_PROCESSING_STATUS_DUE:
+                        or self.processing_status == Return.RETURN_PROCESSING_STATUS_DUE:
                             self.customer_status = Return.RETURN_CUSTOMER_STATUS_UNDER_REVIEW
                             self.processing_status = Return.RETURN_PROCESSING_STATUS_WITH_CURATOR
                             self.submitter = request.user
