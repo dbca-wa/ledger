@@ -364,12 +364,13 @@ def send_organisation_address_updated_email_notification(
     }
 
     for org_contact in OrganisationContact.objects.filter(
-            user_role='organisation_admin', organisation=wc_organisation):
-        msg = email.send(org_contact.email, context=context)
-        sender = request.user if request else settings.DEFAULT_FROM_EMAIL
-
-        # TODO change this to log an entry for organisation audit records instead of organisation request
-        # _log_org_request_email(msg, request, sender=sender)
+            user_role=OrganisationContact.ORG_CONTACT_ROLE_ADMIN,
+            organisation=wc_organisation):
+                msg = email.send(org_contact.email, context=context)
+                sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+                # TODO: make this work again if required, unsure who/when it was disabled
+                # _log_org_request_email(msg, request, sender=sender)
+    # TODO change this to log an entry for organisation audit records instead of organisation request
     # _log_org_email(msg, organisation, org_request.requester, sender=sender)
 
 

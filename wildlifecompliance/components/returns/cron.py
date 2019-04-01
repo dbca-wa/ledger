@@ -20,7 +20,8 @@ class CheckDueReturnsCronJob(CronJobBase):
         for ret in Return.objects.filter(
             due_date=due_date,
             processing_status__in=[
-                'draft',
-                'future']):
-            ret.customer_status = 'due'
-            ret.save
+                Return.RETURN_PROCESSING_STATUS_DRAFT,
+                Return.RETURN_PROCESSING_STATUS_FUTURE
+            ]):
+                ret.customer_status = Return.RETURN_CUSTOMER_STATUS_DUE
+                ret.save()

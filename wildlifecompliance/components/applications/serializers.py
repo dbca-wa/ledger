@@ -6,7 +6,6 @@ from wildlifecompliance.components.applications.models import (
     ApplicationLogEntry,
     ApplicationCondition,
     ApplicationStandardCondition,
-    ApplicationDeclinedDetails,
     Assessment,
     ActivityPermissionGroup,
     AmendmentRequest,
@@ -376,7 +375,7 @@ class ApplicationSerializer(BaseApplicationSerializer):
 
     def get_amendment_requests(self, obj):
         return ExternalAmendmentRequestSerializer(
-            obj.amendment_requests.filter(status='requested'), many=True
+            obj.amendment_requests.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED), many=True
         ).data
 
 
@@ -455,12 +454,6 @@ class ApplicantSerializer(serializers.ModelSerializer):
         )
 
 
-class ApplicationDeclinedDetailsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ApplicationDeclinedDetails
-        fields = '__all__'
-
-
 class InternalApplicationSerializer(BaseApplicationSerializer):
     applicant = serializers.CharField(read_only=True)
     org_applicant = OrganisationSerializer()
@@ -470,7 +463,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     customer_status = CustomChoiceField(read_only=True)
     character_check_status = CustomChoiceField(read_only=True)
     submitter = EmailUserAppViewSerializer()
-    applicationdeclineddetails = ApplicationDeclinedDetailsSerializer()
     licences = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
     can_be_processed = serializers.SerializerMethodField(read_only=True)
@@ -507,7 +499,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'documents_url',
             'comment_data',
             'licences',
-            'applicationdeclineddetails',
             'permit',
             'payment_status',
             'assigned_officer',

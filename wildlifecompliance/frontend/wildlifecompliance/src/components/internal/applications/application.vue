@@ -979,7 +979,7 @@ export default {
             return s.replace(/[,;]/g, '\n');
         },
         proposedDecline: function(){
-            this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
+//            this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
         },
         isActivityVisible: function(activity_id) {

@@ -24,7 +24,7 @@ class EmailUserSerializer(serializers.ModelSerializer):
 class ReturnSerializer(serializers.ModelSerializer):
     # activity = serializers.CharField(source='application.activity')
     processing_status = serializers.CharField(
-        source='get_processing_status_display')
+        source='get_processing_status_display') # TODO: check if this should be changed to use CustomChoice
     submitter = EmailUserSerializer()
     table = serializers.SerializerMethodField()
     licence_species_list = serializers.SerializerMethodField()

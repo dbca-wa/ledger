@@ -391,7 +391,7 @@ class Application(RevisionedMixin):
     @property
     def has_amendment(self):
         qs = self.amendment_requests
-        qs = qs.filter(status='requested')
+        qs = qs.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED)
         if qs.exists():
             return True
         else:
@@ -423,7 +423,7 @@ class Application(RevisionedMixin):
         2- or if the application has been pushed back to the user
         TODO: need to confirm regarding (2) here related to ApplicationSelectedActivity
         """
-        return self.customer_status == Application.PROCESSING_STATUS_DRAFT\
+        return self.customer_status == Application.CUSTOMER_STATUS_DRAFT\
             or self.processing_status == Application.PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE
 
     @property
@@ -432,10 +432,11 @@ class Application(RevisionedMixin):
         An application can be deleted only if it is a draft and it hasn't been lodged yet
         :return:
         """
-        return self.customer_status == Application.PROCESSING_STATUS_DRAFT and not self.lodgement_number
+        return self.customer_status == Application.CUSTOMER_STATUS_DRAFT and not self.lodgement_number
 
     @property
     def payment_status(self):
+        # TODO: needs more work, underpaid/overpaid statuses to be added, refactor to key/name like processing_status
         if self.application_fee == 0:
             return 'payment_not_required'
         else:
@@ -608,10 +609,10 @@ class Application(RevisionedMixin):
                 # else if the new application is submitted change the status of
                 # all the activities
                 if (self.amendment_requests):
-                    qs = self.amendment_requests.filter(status="requested")
+                    qs = self.amendment_requests.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED)
                     if (qs):
                         for q in qs:
-                            q.status = 'amended'
+                            q.status = AmendmentRequest.AMENDMENT_REQUEST_STATUS_AMENDED
                             self.set_activity_processing_status(
                                 q.licence_activity.id, ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER)
                             q.save()
@@ -680,7 +681,7 @@ class Application(RevisionedMixin):
                     'You can\'t edit this application at this moment')
 
     def accept_id_check(self, request):
-        self.id_check_status = 'accepted'
+        self.id_check_status = Application.ID_CHECK_STATUS_ACCEPTED
         self.save()
         # Create a log entry for the application
         self.log_user_action(
@@ -702,7 +703,7 @@ class Application(RevisionedMixin):
                     self.id), request)
 
     def reset_id_check(self, request):
-        self.id_check_status = 'not_checked'
+        self.id_check_status = Application.ID_CHECK_STATUS_NOT_CHECKED
         self.save()
         # Create a log entry for the application
         self.log_user_action(
@@ -724,7 +725,7 @@ class Application(RevisionedMixin):
                     self.id), request)
 
     def request_id_check(self, request):
-        self.id_check_status = 'awaiting_update'
+        self.id_check_status = Application.ID_CHECK_STATUS_AWAITING_UPDATE
         self.save()
         # Create a log entry for the application
         self.log_user_action(
@@ -746,7 +747,7 @@ class Application(RevisionedMixin):
                     self.id), request)
 
     def accept_character_check(self, request):
-        self.character_check_status = 'accepted'
+        self.character_check_status = Application.CHARACTER_CHECK_STATUS_ACCEPTED
         self.save()
         # Create a log entry for the application
         self.log_user_action(
@@ -1106,53 +1107,55 @@ class Application(RevisionedMixin):
             licence_expiry, "%Y-%m-%d").date()
         today = timezone.now().date()
         timedelta = datetime.timedelta
-        for req in self.conditions.all():
+        for condition in self.conditions.all():
             try:
-                if req.due_date and req.due_date >= today:
-                    current_date = req.due_date
+                if condition.due_date and condition.due_date >= today:
+                    current_date = condition.due_date
                     # create a first Return
                     try:
                         Return.objects.get(
-                            condition=req, due_date=current_date)
+                            condition=condition, due_date=current_date)
                     except Return.DoesNotExist:
                         Return.objects.create(
                             application=self,
                             due_date=current_date,
-                            processing_status='future',
+                            processing_status=Return.RETURN_PROCESSING_STATUS_FUTURE,
                             licence=licence,
-                            condition=req,
-                            return_type=req.return_type,
+                            condition=condition,
+                            return_type=condition.return_type,
                             submitter=request.user
                         )
                         # compliance.log_user_action(ComplianceUserAction.ACTION_CREATE.format(compliance.id),request)
-                    if req.recurrence:
+                    if condition.recurrence:
                         while current_date < licence_expiry:
-                            for x in range(req.recurrence_schedule):
+                            for x in range(condition.recurrence_schedule):
                                 # Weekly
-                                if req.recurrence_pattern == 1:
-                                    current_date += timedelta(weeks=1)
+                                if condition.recurrence_pattern == ApplicationCondition\
+                                        .APPLICATION_CONDITION_RECURRENCE_WEEKLY:
+                                            current_date += timedelta(weeks=1)
                             # Monthly
-                                elif req.recurrence_pattern == 2:
-                                    current_date += timedelta(weeks=4)
-                                    pass
+                                elif condition.recurrence_pattern == ApplicationCondition\
+                                        .APPLICATION_CONDITION_RECURRENCE_MONTHLY:
+                                            current_date += timedelta(weeks=4)
+                                            pass
                             # Yearly
-                                elif req.recurrence_pattern == 3:
-                                    current_date += timedelta(days=365)
+                                elif condition.recurrence_pattern == ApplicationCondition\
+                                        .APPLICATION_CONDITION_RECURRENCE_YEARLY:
+                                            current_date += timedelta(days=365)
                             # Create the Return
                             if current_date <= licence_expiry:
                                 try:
                                     Return.objects.get(
-                                        condition=req, due_date=current_date)
+                                        condition=condition, due_date=current_date)
                                 except Return.DoesNotExist:
                                     Return.objects.create(
                                         application=self,
                                         due_date=current_date,
-                                        processing_status='future',
+                                        processing_status=Return.RETURN_PROCESSING_STATUS_FUTURE,
                                         licence=licence,
-                                        condition=req,
-                                        return_type=req.return_type
+                                        condition=condition,
+                                        return_type=condition.return_type
                                     )
-                                    # compliance.log_user_action(ComplianceUserAction.ACTION_CREATE.format(compliance.id),request)
             except BaseException:
                 raise
 
@@ -1215,40 +1218,47 @@ class ApplicationRequest(models.Model):
 
 
 class ReturnRequest(ApplicationRequest):
+    RETURN_REQUEST_REASON_OUTSTANDING = 'outstanding'
+    RETURN_REQUEST_REASON_OTHER = 'other'
     REASON_CHOICES = (
-        ('outstanding', 'There are currently outstanding returns for the previous licence'),
-        ('other', 'Other')
+        (RETURN_REQUEST_REASON_OUTSTANDING, 'There are currently outstanding returns for the previous licence'),
+        (RETURN_REQUEST_REASON_OTHER, 'Other')
     )
     reason = models.CharField(
         'Reason',
         max_length=30,
         choices=REASON_CHOICES,
-        default=REASON_CHOICES[0][0])
+        default=RETURN_REQUEST_REASON_OUTSTANDING)
 
     class Meta:
         app_label = 'wildlifecompliance'
 
 
 class AmendmentRequest(ApplicationRequest):
+    AMENDMENT_REQUEST_STATUS_REQUESTED = 'requested'
+    AMENDMENT_REQUEST_STATUS_AMENDED = 'amended'
     STATUS_CHOICES = (
-        ('requested', 'Requested'),
-        ('amended', 'Amended')
+        (AMENDMENT_REQUEST_STATUS_REQUESTED, 'Requested'),
+        (AMENDMENT_REQUEST_STATUS_AMENDED, 'Amended')
     )
+    AMENDMENT_REQUEST_REASON_INSUFFICIENT_DETAIL = 'insufficient_detail'
+    AMENDMENT_REQUEST_REASON_MISSING_INFO = 'missing_information'
+    AMENDMENT_REQUEST_REASON_OTHER = 'other'
     REASON_CHOICES = (
-        ('insufficient_detail', 'The information provided was insufficient'),
-        ('missing_information', 'There was missing information'),
-        ('other', 'Other')
+        (AMENDMENT_REQUEST_REASON_INSUFFICIENT_DETAIL, 'The information provided was insufficient'),
+        (AMENDMENT_REQUEST_REASON_MISSING_INFO, 'There was missing information'),
+        (AMENDMENT_REQUEST_REASON_OTHER, 'Other')
     )
     status = models.CharField(
         'Status',
         max_length=30,
         choices=STATUS_CHOICES,
-        default=STATUS_CHOICES[0][0])
+        default=AMENDMENT_REQUEST_STATUS_REQUESTED)
     reason = models.CharField(
         'Reason',
         max_length=30,
         choices=REASON_CHOICES,
-        default=REASON_CHOICES[0][0])
+        default=AMENDMENT_REQUEST_REASON_INSUFFICIENT_DETAIL)
     licence_activity = models.ForeignKey(
         'wildlifecompliance.LicenceActivity', null=True)
 
@@ -1344,7 +1354,7 @@ class Assessment(ApplicationRequest):
     def recall_assessment(self, request):
         with transaction.atomic():
             try:
-                self.status = "recalled"
+                self.status = Assessment.STATUS_RECALLED
                 self.application.set_activity_processing_status(
                     self.licence_activity_id, ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER)
                 self.save()
@@ -1368,34 +1378,6 @@ class Assessment(ApplicationRequest):
                         self.assessor_group), request)
             except BaseException:
                 raise
-
-
-class ApplicationDeclinedDetails(models.Model):
-    STATUS_CHOICES = (
-        ('default', 'Default'),
-        ('propose_decline', 'Propose Decline'),
-        ('declined', 'Declined'),
-        ('propose_issue', 'Propose Issue'),
-        ('issued', 'Issued')
-    )
-    status = models.CharField(
-        'Status',
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default=STATUS_CHOICES[0][0])
-    application = models.OneToOneField(Application)
-    officer = models.ForeignKey(EmailUser, null=False)
-    reason = models.TextField(blank=True)
-    cc_email = models.TextField(null=True)
-    activity = JSONField(blank=True, null=True)
-    licence_activity = models.ForeignKey(
-        'wildlifecompliance.LicenceActivity', null=True)
-    proposed_start_date = models.DateField(null=True, blank=True)
-    proposed_end_date = models.DateField(null=True, blank=True)
-    is_activity_renewable = models.BooleanField(default=False)
-
-    class Meta:
-        app_label = 'wildlifecompliance'
 
 
 class ApplicationSelectedActivity(models.Model):
@@ -1522,7 +1504,14 @@ class DefaultCondition(OrderedModel):
 
 
 class ApplicationCondition(OrderedModel):
-    RECURRENCE_PATTERNS = [(1, 'Weekly'), (2, 'Monthly'), (3, 'Yearly')]
+    APPLICATION_CONDITION_RECURRENCE_WEEKLY = 'weekly'
+    APPLICATION_CONDITION_RECURRENCE_MONTHLY = 'monthly'
+    APPLICATION_CONDITION_RECURRENCE_YEARLY = 'yearly'
+    RECURRENCE_PATTERNS = (
+        (APPLICATION_CONDITION_RECURRENCE_WEEKLY, 'Weekly'),
+        (APPLICATION_CONDITION_RECURRENCE_MONTHLY, 'Monthly'),
+        (APPLICATION_CONDITION_RECURRENCE_YEARLY, 'Yearly')
+    )
     standard_condition = models.ForeignKey(
         ApplicationStandardCondition, null=True, blank=True)
     free_condition = models.TextField(null=True, blank=True)
@@ -1533,8 +1522,10 @@ class ApplicationCondition(OrderedModel):
     application = models.ForeignKey(Application, related_name='conditions')
     due_date = models.DateField(null=True, blank=True)
     recurrence = models.BooleanField(default=False)
-    recurrence_pattern = models.SmallIntegerField(
-        choices=RECURRENCE_PATTERNS, default=1)
+    recurrence_pattern = models.CharField(
+        max_length=20,
+        choices=RECURRENCE_PATTERNS,
+        default=APPLICATION_CONDITION_RECURRENCE_WEEKLY)
     recurrence_schedule = models.IntegerField(null=True, blank=True)
     licence_activity = models.ForeignKey(
         'wildlifecompliance.LicenceActivity', null=True)
@@ -1673,7 +1664,7 @@ def search_reference(reference_number):
     application_list = Application.objects.all().computed_exclude(processing_status__in=[
         Application.PROCESSING_STATUS_DISCARDED])
     licence_list = WildlifeLicence.objects.all().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
-    returns_list = Return.objects.all().exclude(processing_status__in=['future'])
+    returns_list = Return.objects.all().exclude(processing_status__in=[Return.RETURN_PROCESSING_STATUS_FUTURE])
     record = {}
     try:
         result = application_list.get(lodgement_number=reference_number)
