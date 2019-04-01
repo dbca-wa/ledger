@@ -1,0 +1,9 @@
+.amendment-highlight {
+    color: #ff0000 !important;
+
+    &:after {
+        font-family: "FontAwesome";
+        content: "\f06a";
+        margin-left: 5px;
+    }
+}
