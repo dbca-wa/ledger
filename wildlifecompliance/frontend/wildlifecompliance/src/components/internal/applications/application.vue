@@ -591,7 +591,7 @@
                     <div class="col-md-12">
                         <div class="row">
                             <form :action="application_form_url" method="post" name="new_application" enctype="multipart/form-data">
-                                <Application form_width="inherit" :withSectionsSelector="false" v-if="application" :application="application">
+                                <Application form_width="inherit" :withSectionsSelector="false" v-if="isApplicationLoaded">
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                                     <input type='hidden' name="application_id" :value="1" />
@@ -648,7 +648,6 @@ import {
     helpers
 }
 from '@/utils/hooks';
-import { isApplicationActivityVisible } from "@/utils/helpers.js";
 export default {
     name: 'InternalApplication',
     data: function() {
@@ -666,8 +665,6 @@ export default {
             assessorGroup:{},
             "selectedAssessor":{},
             "loading": [],
-            selected_activity_tab_id:null,
-            selected_activity_tab_name:null,
             form: null,
             // activity_data:[],
             contacts_table_initialised: false,
@@ -750,18 +747,19 @@ export default {
             'application',
             'original_application',
             'licence_type_data',
+            'selected_activity_tab_id',
+            'selected_activity_tab_name',
             'hasRole',
             'visibleConditionsFor',
             'licenceActivities',
             'checkActivityStatus',
             'isPartiallyFinalised',
             'isFinalised',
+            'isApplicationLoaded',
+            'isApplicationActivityVisible',
         ]),
         sendToAssessorActivities: function() {
             return this.licenceActivities(['with_officer', 'with_officer_conditions', 'with_assessor'], 'licensing_officer');
-        },
-        isApplicationLoaded: function() {
-            return Object.keys(this.application).length && this.licence_type_data != null;
         },
         applicationDetailsVisible: function() {
             return !this.isSendingToAssessor && !this.showingConditions && !this.isofficerfinalisation && !this.isFinalised && !this.isOfficerConditions && !this.isFinalViewConditions;
@@ -868,12 +866,15 @@ export default {
         ...mapActions([
             'setOriginalApplication',
             'setApplication',
+            'setActivityTab',
         ]),
         eventListeners: function(){
             let vm = this;
             $("[data-target!=''][data-target]").off("click").on("click", function (e) {
-                vm.selected_activity_tab_id = parseInt($(this).data('target').replace('#', ''), 10);
-                vm.selected_activity_tab_name = $(this).text();
+                vm.setActivityTab({
+                    id: parseInt($(this).data('target').replace('#', ''), 10),
+                    name: $(this).text()
+                });
             });
             this.initFirstTab();
             // Listeners for Send to Assessor datatable actions
@@ -978,11 +979,11 @@ export default {
             return s.replace(/[,;]/g, '\n');
         },
         proposedDecline: function(){
-            this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
+//            this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
         },
         isActivityVisible: function(activity_id) {
-            return isApplicationActivityVisible(this.application, activity_id);
+            return this.isApplicationActivityVisible(activity_id);
         },
         isAssessorRelevant(assessor, activity_id) {
             if(!activity_id) {

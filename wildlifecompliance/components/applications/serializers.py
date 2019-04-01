@@ -6,7 +6,6 @@ from wildlifecompliance.components.applications.models import (
     ApplicationLogEntry,
     ApplicationCondition,
     ApplicationStandardCondition,
-    ApplicationDeclinedDetails,
     Assessment,
     ActivityPermissionGroup,
     AmendmentRequest,
@@ -244,7 +243,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         return obj.licence_activity_names
 
     def get_activities(self, obj):
-        return ApplicationSelectedActivitySerializer(obj.selected_activities, many=True).data
+        return ApplicationSelectedActivitySerializer(obj.activities, many=True).data
 
     def get_amendment_requests(self, obj):
         amendment_request_data = []
@@ -375,18 +374,9 @@ class ApplicationSerializer(BaseApplicationSerializer):
         return obj.can_user_view
 
     def get_amendment_requests(self, obj):
-        amendment_request_data = []
-        qs = obj.amendment_requests
-        qs = qs.filter(status='requested')
-        if qs.exists():
-            for item in obj.amendment_requests:
-                print("printing from serializer")
-                print(item.id)
-                print(str(item.licence_activity.name))
-                print(item.licence_activity.id)
-                # amendment_request_data.append({"licence_activity":str(item.licence_activity),"id":item.licence_activity.id})
-                amendment_request_data.append(item.licence_activity.id)
-        return amendment_request_data
+        return ExternalAmendmentRequestSerializer(
+            obj.amendment_requests.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED), many=True
+        ).data
 
 
 class CreateExternalApplicationSerializer(serializers.ModelSerializer):
@@ -464,12 +454,6 @@ class ApplicantSerializer(serializers.ModelSerializer):
         )
 
 
-class ApplicationDeclinedDetailsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ApplicationDeclinedDetails
-        fields = '__all__'
-
-
 class InternalApplicationSerializer(BaseApplicationSerializer):
     applicant = serializers.CharField(read_only=True)
     org_applicant = OrganisationSerializer()
@@ -479,7 +463,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     customer_status = CustomChoiceField(read_only=True)
     character_check_status = CustomChoiceField(read_only=True)
     submitter = EmailUserAppViewSerializer()
-    applicationdeclineddetails = ApplicationDeclinedDetailsSerializer()
     licences = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
     can_be_processed = serializers.SerializerMethodField(read_only=True)
@@ -516,7 +499,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'documents_url',
             'comment_data',
             'licences',
-            'applicationdeclineddetails',
             'permit',
             'payment_status',
             'assigned_officer',
@@ -535,7 +517,9 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
         user = self.context['request'].user
         if user is None:
             return []
-        application_activities = ApplicationSelectedActivity.objects.filter(application_id=obj.id)
+        application_activities = ApplicationSelectedActivity.objects.filter(
+            application_id=obj.id
+        )
 
         """
         # Uncomment to filter out activities that the internal user cannot assess / process (to hide activity tabs on the UI).
