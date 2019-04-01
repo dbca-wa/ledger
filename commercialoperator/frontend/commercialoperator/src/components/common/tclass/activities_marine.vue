@@ -87,6 +87,7 @@ from '@/utils/hooks'
         data:function () {
             let vm = this;
             return{
+                pBody: 'pBody'+vm._uid,
                 values:null,
                 vessels_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/vessels'),
                 marine_parks:[],

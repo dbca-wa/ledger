@@ -2,7 +2,7 @@ import re
 from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
-from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrail, ProposalTrailSectionActivity, ProposalTrailSection, ProposalParkZone, ProposalParkZoneActivity
+from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrail, ProposalTrailSectionActivity, ProposalTrailSection, ProposalParkZone, ProposalParkZoneActivity, ProposalOtherDetails
 from commercialoperator.components.proposals.serializers import SaveProposalSerializer, SaveProposalParkSerializer, SaveProposalTrailSerializer
 from commercialoperator.components.main.models import Activity, Park, AccessType, Trail, Section, Zone
 import traceback
@@ -637,9 +637,12 @@ def save_proponent_data(instance,request,viewset,select_parks_activities,select_
             #import ipdb; ipdb.set_trace()
             # s=request.data.get('selected')
             # print type(s)
+            # other_details=ProposalOtherDetails.objects.get_or_create(proposal=instance)
+            # instance.save()
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
+            #import ipdb; ipdb.set_trace()
             if select_parks_activities:
                 try:
                     save_park_activity_data(instance, select_parks_activities)                        

@@ -5,7 +5,7 @@
             
 
             <!-- using num_files to determine if files have been uploaded for this question/label (used in commercialoperator/frontend/commercialoperator/src/components/external/proposal.vue) -->
-            <label :id="id" :num_files="num_documents()">{{label}}</label>
+            <label v-if="label" :id="id" :num_files="num_documents()">{{label}}</label>
             <div v-if="files">
                 <div v-for="v in documents">
                 <!-- <div v-for="v in files"> -->

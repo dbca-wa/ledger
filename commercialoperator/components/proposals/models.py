@@ -234,7 +234,46 @@ class ProposalActivitiesMarine(models.Model):
     class Meta:
         app_label = 'commercialoperator'
 
+class ProposalOtherDetails(models.Model):
+    #activities_land = models.CharField(max_length=24, blank=True, default='')
+    ACCREDITATION_TYPE_CHOICES = (
+        ('no', 'No'),
+        ('atap', 'ATAP'),
+        ('eco_certification', 'Eco Certification'),
+        ('narta', 'NARTA'),
+    )
+    # LICENSE_PERIOD_CHOICES=(
+    #     ('2_months','2 months'),
+    #     ('1_year','1 Year'),
+    #     ('3_year', '3 Years'),
+    #     ('5_year', '5 Years'),
+    #     ('7_year', '7 Years'),
+    #     ('10_year', '10 Years'),
+    # )
+    LICENCE_PERIOD_CHOICES=(
+        ('2_months','2 months'),
+        ('1_year','1 Year'),
+        ('3_year', '3 Years'),
+        ('5_year', '5 Years'),
+        ('7_year', '7 Years'),
+        ('10_year', '10 Years'),
+    )
+    accreditation_type = models.CharField('Accreditation', max_length=40, choices=ACCREDITATION_TYPE_CHOICES,
+                                       default=ACCREDITATION_TYPE_CHOICES[0][0])
+    accreditation_expiry= models.DateTimeField(blank=True, null=True)
+    #preferred_license_period=models.CharField('Preferred license period', max_length=40, choices=LICENSE_PERIOD_CHOICES,default=LICENSE_PERIOD_CHOICES[0][0])
+    preferred_licence_period=models.CharField('Preferred licence period', max_length=40, choices=LICENCE_PERIOD_CHOICES,default=LICENCE_PERIOD_CHOICES[0][0])
+    nominated_start_date= models.DateTimeField(blank=True, null=True)
+    insurance_expiry= models.DateTimeField(blank=True, null=True)
+    other_comments=models.TextField(blank=True)
+    #if credit facilities for payment of fees is required
+    credit_fees=models.BooleanField(default=False)
+    #if credit/ cash payment docket books are required
+    credit_docket_books=models.BooleanField(default=False)
 
+
+    class Meta:
+        app_label = 'commercialoperator'
 
 class Proposal(RevisionedMixin):
 #class Proposal(models.Model):
@@ -382,7 +421,7 @@ class Proposal(RevisionedMixin):
     # T Class
     activities_land = models.OneToOneField(ProposalActivitiesLand, blank=True, null=True) #, related_name='activities_land')
     activities_marine = models.OneToOneField(ProposalActivitiesMarine, blank=True, null=True) #, related_name='activities_marine')
-    #other_details = models.OneToOneField(ProposalOtherDetails, blank=True, null=True)
+    other_details = models.OneToOneField(ProposalOtherDetails, blank=True, null=True, related_name='proposal')
     #online_training = models.OneToOneField(ProposalOnlineTraining, blank=True, null=True)
 
     # Filming

@@ -164,6 +164,8 @@ export default {
         data:function () {
           let vm = this;
             return{
+                pBody: 'pBody'+vm._uid,
+                tBody: 'lBody'+vm._uid,
                 values:null,
                 accessTypes:null,
                 api_regions:null,

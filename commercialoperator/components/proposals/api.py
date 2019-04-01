@@ -43,7 +43,7 @@ from commercialoperator.components.proposals.models import (
     AmendmentReason,
     Vehicle,
     Vessel,
-
+    ProposalOtherDetails,
 )
 from commercialoperator.components.proposals.serializers import (
     SendReferralSerializer,
@@ -992,7 +992,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             parks=[]
             import json
             sc=json.loads(schema)
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             select_parks_activities=sc['selected_parks_activities']
             select_trails_activities=sc['selected_trails_activities']
             marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
@@ -1440,6 +1440,27 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
+class AccreditationTypeView(views.APIView):
+
+    renderer_classes = [JSONRenderer,]
+    def get(self,request, format=None):
+        choices_list = []
+        choices = ProposalOtherDetails.ACCREDITATION_TYPE_CHOICES
+        if choices:
+            for c in choices:
+                choices_list.append({'key': c[0],'value': c[1]})
+        return Response(choices_list)
+
+class LicencePeriodChoicesView(views.APIView):
+
+    renderer_classes = [JSONRenderer,]
+    def get(self,request, format=None):
+        choices_list = []
+        choices = ProposalOtherDetails.LICENCE_PERIOD_CHOICES
+        if choices:
+            for c in choices:
+                choices_list.append({'key': c[0],'value': c[1]})
+        return Response(choices_list)
 
 
 class AmendmentRequestReasonChoicesView(views.APIView):

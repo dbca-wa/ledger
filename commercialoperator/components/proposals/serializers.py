@@ -23,7 +23,8 @@ from commercialoperator.components.proposals.models import (
                                     ProposalTrailSection,
                                     ProposalTrailSectionActivity,
                                     ProposalParkZoneActivity,
-                                    ProposalParkZone
+                                    ProposalParkZone, 
+                                    ProposalOtherDetails,
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
@@ -140,6 +141,12 @@ class SaveProposalTrailSerializer(serializers.ModelSerializer):
         model = ProposalTrail
         fields = '__all__'
 
+class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
+    #park=ParkSerializer()
+    class Meta:
+        model = ProposalOtherDetails
+        fields = '__all__'
+
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
@@ -152,6 +159,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     land_parks=ProposalParkSerializer(many=True)
     marine_parks=ProposalParkSerializer(many=True)
     trails=ProposalTrailSerializer(many=True)
+    other_details=ProposalOtherDetailsSerializer(required=False)
 
     get_history = serializers.ReadOnlyField()
 
@@ -203,6 +211,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
 
                 # tab field models
                 'applicant_details',
+                'other_details',
                 'activities_land',
                 'activities_marine',
                 'land_parks',
@@ -374,6 +383,7 @@ class ProposalSerializer(BaseProposalSerializer):
 class SaveProposalSerializer(BaseProposalSerializer):
     assessor_data = serializers.JSONField(required=False)
     #applicant_details = ProposalApplicantDetailsSerializer(required=False)
+    other_details= ProposalOtherDetailsSerializer(read_only=True)
 
     class Meta:
         model = Proposal
@@ -412,8 +422,9 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'applicant_details',
                 #'activities_land',
                 #'activities_marine',
+                'other_details',
                 )
-        read_only_fields=('documents','requirements')
+        read_only_fields=('documents','requirements',)
 
 
 
