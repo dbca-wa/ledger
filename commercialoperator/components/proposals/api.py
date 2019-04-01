@@ -452,6 +452,54 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
+    def process_qaofficer_document(self, request, *args, **kwargs):
+        try:
+            #import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            action = request.POST.get('action')
+            section = request.POST.get('input_name')
+            if action == 'list' and 'input_name' in request.POST:
+                pass
+
+            elif action == 'delete' and 'document_id' in request.POST:
+                document_id = request.POST.get('document_id')
+                document = instance.qaofficer_documents.get(id=document_id)
+
+                document.visible = False
+                document.save()
+                instance.save(version_comment='QA Officer File Hidden: {}'.format(document.name)) # to allow revision to be added to reversion history
+
+            elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
+                proposal_id = request.POST.get('proposal_id')
+                filename = request.POST.get('filename')
+                _file = request.POST.get('_file')
+                if not _file:
+                    _file = request.FILES.get('_file')
+
+                document = instance.qaofficer_documents.get_or_create(input_name=section, name=filename)[0]
+                path = default_storage.save('proposals/{}/qaofficer/{}'.format(proposal_id, filename), ContentFile(_file.read()))
+
+                document._file = path
+                document.save()
+                instance.save(version_comment='QA Officer File Added: {}'.format(filename)) # to allow revision to be added to reversion history
+                #instance.current_proposal.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
+
+            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete) for d in instance.qaofficer_documents.filter(input_name=section, visible=True) if d._file] )
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 #    def list(self, request, *args, **kwargs):
 #        #import ipdb; ipdb.set_trace()
@@ -1014,6 +1062,55 @@ class ProposalViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def with_qaofficer(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                #import ipdb; ipdb.set_trace()
+                instance = self.get_object()
+                is_with_qaofficer =  eval(request.data.get('with_qaofficer'))
+                data = {}
+                if is_onhold:
+                    #data['type'] = u'onhold'
+                    data['type'] = u'with_qaofficer'
+                    instance.with_qaofficer(request)
+                else:
+                    #data['type'] = u'onhold_remove'
+                    data['type'] = u'with_qaofficer_remove'
+                    instance.with_qaofficer_remove(request)
+
+                data['proposal'] = u'{}'.format(instance.id)
+                data['staff'] = u'{}'.format(request.user.id)
+                data['text'] = request.user.get_full_name() + u': {}'.format(request.data['text'])
+                data['subject'] = request.user.get_full_name() + u': {}'.format(request.data['text'])
+                serializer = ProposalLogEntrySerializer(data=data)
+                serializer.is_valid(raise_exception=True)
+                comms = serializer.save()
+
+                # Save the files
+                documents_qs = instance.qaofficer_documents.filter(input_name='qaofficer_file', visible=True)
+                for f in documents_qs:
+                    document = comms.documents.create()
+                    document.name = f.name
+                    document._file = f._file #.strip('/media')
+                    document.input_name = f.input_name
+                    document.can_delete = True
+                    document.save()
+                # End Save Documents
+
+                return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
     @detail_route(methods=['post'])
     def assesor_send_referral(self, request, *args, **kwargs):

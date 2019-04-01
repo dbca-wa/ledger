@@ -427,6 +427,7 @@
         <AmendmentRequest ref="amendment_request" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></AmendmentRequest>
         <ProposedApproval ref="proposed_approval" :processing_status="proposal.processing_status" :proposal_id="proposal.id" :proposal_type='proposal.proposal_type' :isApprovalLevelDocument="isApprovalLevelDocument" @refreshFromResponse="refreshFromResponse"/>
         <OnHold ref="on_hold" :processing_status="proposal.processing_status" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></OnHold>
+        <WithQAOfficer ref="with_qa_officer" :processing_status="proposal.processing_status" :proposal_id="proposal.id"></WithQAOfficer>
     </div>
 </template>
 <script>
@@ -634,6 +635,10 @@ export default {
         onHold: function(){
             this.save_wo();
             this.$refs.on_hold.isModalOpen = true;
+        },
+        withQAOfficer: function(){
+            this.save_wo();
+            this.$refs.with_qa_officer.isModalOpen = true;
         },
         save: function(e) {
           let vm = this;
