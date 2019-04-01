@@ -173,11 +173,7 @@
         watch: {
             filterCall: function () {
                 let vm = this;
-                let re = /\\/ + /\(/
-                let regexSearch = '^' + vm.filterCall
-                                    .replace(/\(/g, '\\(')
-                                    .replace(/\)/g, '\\)') 
-                                    + '$';
+                let regexSearch = helpers.datatableExactStringMatch(vm.filterCall);
                 if (vm.filterCall != 'All') {
                     vm.$refs.call_email_table.vmDataTable.columns(0).search(regexSearch, true, false).draw();
                 } else {
@@ -186,10 +182,7 @@
             },
             filterClassification: function () {
                 let vm = this;
-                let regexSearch = '^' + vm.filterClassification
-                                    .replace(/\(/g, '\\(')
-                                    .replace(/\)/g, '\\)') 
-                                    + '$';
+                let regexSearch = helpers.datatableExactStringMatch(vm.filterClassification);
                 if (vm.filterClassification != 'All') {
                     vm.$refs.call_email_table.vmDataTable.columns(1).search(regexSearch, true, false).draw();
                 } else {
