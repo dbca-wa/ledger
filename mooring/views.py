@@ -288,11 +288,15 @@ class CancelBookingView(TemplateView):
         invoice.voided = True
         invoice.save()
         booking.booking_type = 4
+        booking.cancelation_time = datetime.now() 
+        booking.canceled_by = request.user
         booking.save()
         emails.send_booking_cancellation_email_customer(booking, context_processor)
 
         if booking.admission_payment:
             booking_admission.booking_type = 4
+            booking_admission.cancelation_time = datetime.now()
+            booking_admission.canceled_by = request.user
             booking_admission.save()
         
         return HttpResponseRedirect(reverse('public_booking_cancelled', args=(booking.id,)))
@@ -367,6 +371,8 @@ class CancelAdmissionsBookingView(TemplateView):
         invoice.voided = True
         invoice.save()
         booking.booking_type = 4
+        booking.cancelation_time = datetime.now()
+        booking.canceled_by = request.user
         booking.save()
         return HttpResponseRedirect(reverse('public_admission_booking_cancelled', args=(booking.id,)))
 
@@ -805,7 +811,11 @@ class MakeBookingsView(TemplateView):
         # update the booking object with information from the form
         if not booking.details:
             booking.details = {}
-   
+
+        booking.details['num_adult'] = int(request.POST.get('num_adults')) if request.POST.get('num_adults') else 0
+        booking.details['num_child'] = int(request.POST.get('num_children')) if request.POST.get('num_children') else 0
+        booking.details['num_infant'] = int(request.POST.get('num_infants')) if request.POST.get('num_infants') else 0
+
         if booking.old_booking is None:
             booking.details['first_name'] = form.cleaned_data.get('first_name')
             booking.details['last_name'] = form.cleaned_data.get('last_name')
@@ -2015,6 +2025,8 @@ class AdmissionsBookingSuccessView(TemplateView):
                     logger.info('{} finished temporary booking {}, creating new AdmissionBookingInvoice with reference {}'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id, invoice_ref))
                     # FIXME: replace with server side notify_url callback
                     admissionsInvoice = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=booking, invoice_reference=invoice_ref)
+                    if request.user.__class__.__name__ == 'EmailUser':
+                        booking.created_by = request.user
 
                     # set booking to be permanent fixture
                     booking.booking_type = 1  # internet booking
@@ -2130,11 +2142,17 @@ class BookingSuccessView(TemplateView):
                     if booking.old_booking:
                         old_booking = Booking.objects.get(id=booking.old_booking.id)
                         old_booking.booking_type = 4
+                        old_booking.cancelation_time = datetime.now()
+                        old_booking.canceled_by = request.user
+
                         old_booking.save()
                         booking_items = MooringsiteBooking.objects.filter(booking=old_booking)
                         # Find admissions booking for old booking
                         if old_booking.admission_payment:
                             old_booking.admission_payment.booking_type = 4
+                            old_booking.admission_payment.cancelation_time = datetime.now()
+                            old_booking.admission_payment.canceled_by = request.user
+
                             old_booking.admission_payment.save()
                         for bi in booking_items:
                             bi.booking_type = 4
@@ -2253,6 +2271,8 @@ class BookingSuccessView(TemplateView):
                         # ad_booking.save()
                     if booking.admission_payment:
                          ad_booking = AdmissionsBooking.objects.get(pk=booking.admission_payment.pk)
+                         if request.user.__class__.__name__ == 'EmailUser':
+                              ad_booking.created_by = request.user
                          ad_booking.booking_type=1
                          ad_booking.save()
                          ad_invoice = AdmissionsBookingInvoice.objects.create(admissions_booking=ad_booking, invoice_reference=invoice_ref)
