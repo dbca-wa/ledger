@@ -78,6 +78,7 @@ export default {
         'selected_activity_tab_id',
         'selected_activity_tab_name',
         'isApplicationLoaded',
+        'unfinishedActivities',
     ]),
     csrf_token: function() {
       return helpers.getCookie('csrftoken')
@@ -104,6 +105,7 @@ export default {
     }),
     ...mapActions([
         'setApplication',
+        'setActivityTab',
     ]),
     eventListeners: function(){
         let vm = this;
@@ -135,7 +137,8 @@ export default {
             }
             else {
               this.load({ url: `/api/application/${this.application.id}.json` }).then(() => {
-                window.location.reload(true);  //TODO: Remove this once the activity headers / tabs are fully reactive
+                const newTab = this.unfinishedActivities[0];
+                this.setActivityTab({id: newTab.id, name: newTab.label});
               });
             }
         },err=>{

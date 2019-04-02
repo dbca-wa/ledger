@@ -66,44 +66,53 @@ export default {
     ...mapGetters([
         'application',
         'selected_activity_tab_id',
-        'visibleActivities',
+        'unfinishedActivities',
     ]),
     listVisibleActivities: function() {
-        return this.visibleActivities(
-            ['issued', 'declined'],  // Hide by decision
-            //['discarded']  // Hide by processing_status
-        ).filter(activity => !this.application.has_amendment ||
-            this.application.amendment_requests.find(
-                request => request.licence_activity.id == activity.id
-            )
-        );
+        return this.unfinishedActivities;
     },
     applicationData: function() {
         return this.application.data ? this.application.data[0] : null;
     }
   },
   methods: {
-      ...mapActions([
-          'setRendererTabs',
-          'setActivityTab',
-      ]),
-      selectTab: function(component) {
-          this.setActivityTab({id: component.id, name: component.label});
-      }
+        ...mapActions([
+            'setRendererTabs',
+            'setRendererSections',
+            'setActivityTab',
+         ]),
+        selectTab: function(component) {
+            this.setActivityTab({id: component.id, name: component.label});
+        },
+        initRendererTabs: function() {
+            let tabs_list = [];
+            for(let component of this.listVisibleActivities.filter(
+                activity => activity.type == 'tab')) {
+                    if(!this.selected_activity_tab_id) {
+                        this.selectTab(component);
+                    }
+                    tabs_list.push({name: component.name,
+                                    label: component.label,
+                                    id: component.id
+                                    });
+            }
+            this.setRendererTabs(tabs_list);
+        },
+        initRendererSections: function() {
+            let sections_list = [];
+            for(let component of this.listVisibleActivities.filter(
+                activity => activity.type == 'section')) {
+                    tabs_list.push({name: component.name,
+                                    label: component.label,
+                                    id: component.id
+                                    });
+            }
+            this.setRendererSections(sections_list);
+        },
   },
   mounted: function() {
-      let tabs_list = [];
-      for(let component of this.listVisibleActivities.filter(
-          activity => activity.type == 'tab')) {
-            if(!this.selected_activity_tab_id) {
-                this.selectTab(component);
-            }
-            tabs_list.push({name: component.name,
-                            label: component.label,
-                            id: component.id
-                            });
-      }
-      this.setRendererTabs(tabs_list);
+      this.initRendererTabs();
+      this.initRendererSections();
   }
 }
 </script>
