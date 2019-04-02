@@ -11,6 +11,11 @@
     }
 </style>
 
+<template lang="html">
+    <RendererForm/>
+</template>
+
+
 <script>
     import Vue from 'vue'
     import {
@@ -24,11 +29,15 @@ from '@/utils/hooks'
     import { mapGetters } from 'vuex'
     import '@/scss/forms/form.scss';
     import AmendmentRequestDetails from '@/components/forms/amendment_request_details.vue';
+    import RendererForm from '@/components/common/renderer.vue';
     require('../../node_modules/bootstrap/dist/css/bootstrap.css');
     require('../../node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css');
     require('../../node_modules/font-awesome/css/font-awesome.min.css');
     const easing = require('easing');
     export default {
+        components: {
+            RendererForm,
+        },
         props:{
             withSectionsSelector:{
                 type: Boolean,
@@ -73,7 +82,7 @@ from '@/utils/hooks'
         },
         mounted: function () {
             var tabs=Renderer.tabs_list;
-
+            /*
             if(this.application.has_amendment){
                 tabs.map(tsec => {
                     if(!this.isActivityVisible(tsec.id)) {
@@ -98,7 +107,8 @@ from '@/utils/hooks'
             // Initialise by setting all first tabs.
             $('#tabs-section li:first-child a').click();
             $('#tabs-main li:first-child a').click();
-
+            */
+            /*
             if (this.withSectionsSelector){
                 var _tabid = 0;
                 var _settab = '';
@@ -170,9 +180,11 @@ from '@/utils/hooks'
                 });
 
             }
+            */
 
 
         },
+        /*
        render(h) {
             let vm =this;
             Renderer.tabs_list = [];
@@ -266,6 +278,6 @@ from '@/utils/hooks'
                 }
 
             }
-        }
+       }*/
     }
 </script>

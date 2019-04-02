@@ -33,8 +33,6 @@ module.exports = {
 
         // Visibility
         var visibility = this.getVisibility(h,c,is_readonly)
-        if (!visibility.visible){ return "" }
-
         // Editablility
         readonly = !visibility.editable;
 
@@ -191,7 +189,6 @@ module.exports = {
                             )
                         })}
                     </FormSection>
-
                 )
                 break;
             case 'tab':
@@ -330,9 +327,6 @@ module.exports = {
         }
         _status.editable = readonly ? false : true;
         return _status;
-    },
-    canViewComments: function() {
-        return this.userHasRole('licensing_officer');
     },
     userHasRole: function(role, activity_id) {
         if(this.status_data.application === undefined || this.status_data.application === null) {

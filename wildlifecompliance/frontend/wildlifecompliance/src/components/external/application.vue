@@ -105,17 +105,9 @@ export default {
     }),
     ...mapActions([
         'setApplication',
-        'setActivityTab',
     ]),
     eventListeners: function(){
         let vm = this;
-        $("ul#tabs-section").on("click", function (e) {
-          if(!e.target.href) {
-            return;
-          }
-          const tab_id = e.target.href.split('#')[1];
-          vm.setActivityTab({id: tab_id, name: e.target.innerHTML});
-        });
         $('#tabs-section li:first-child a').click();
     },
     discardActivity: function(e) {
