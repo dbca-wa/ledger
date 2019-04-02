@@ -2,14 +2,17 @@ import Vue from 'vue';
 import {
     UPDATE_SELECTED_TAB_ID,
     UPDATE_SELECTED_TAB_NAME,
+    UPDATE_CURRENT_USER,
 } from '@/store/mutation-types';
 
 export const userStore = {
     state: {
         selected_activity_tab_id: 0,
         selected_activity_tab_name: '',
+        current_user: {},
     },
     getters: {
+        current_user: state => state.current_user,
         selected_activity_tab_id: state => state.selected_activity_tab_id,
         selected_activity_tab_name: state => state.selected_activity_tab_name,
         hasRole: (state, getters, rootState, rootGetters) => (role, activity_id) => {
@@ -37,11 +40,29 @@ export const userStore = {
         [UPDATE_SELECTED_TAB_NAME] (state, tab_name) {
             state.selected_activity_tab_name = tab_name;
         },
+        [UPDATE_CURRENT_USER] (state, user) {
+            state.current_user = user;
+        },
     },
     actions: {
         setActivityTab({ commit }, { id, name }) {
             commit(UPDATE_SELECTED_TAB_ID, id);
             commit(UPDATE_SELECTED_TAB_NAME, name);
+        },
+        loadCurrentUser({ dispatch, commit }, { url }) {
+            return new Promise((resolve, reject) => {
+                Vue.http.get(url).then(res => {
+                    dispatch('setCurrentUser', res.body);
+                    resolve();
+                },
+                err => {
+                    console.log(err);
+                    reject();
+                });
+            })
+        },
+        setCurrentUser({ dispatch, commit }, user) {
+            commit(UPDATE_CURRENT_USER, user);
         },
     }
 }
