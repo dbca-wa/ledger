@@ -979,6 +979,7 @@ export default {
             return s.replace(/[,;]/g, '\n');
         },
         proposedDecline: function(){
+            this.save_wo();
 //            this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
         },
@@ -1029,12 +1030,13 @@ export default {
         proposedLicence: function(){
             var activity_name=[]
             var selectedTabTitle = $("#tabs-section li.active");
-
+            this.save_wo();
             this.$refs.proposed_licence.propose_issue.licence_activity_id=this.selected_activity_tab_id;
             this.$refs.proposed_licence.propose_issue.licence_activity_name=selectedTabTitle.text();
             this.$refs.proposed_licence.isModalOpen = true;
         },
         toggleIssue:function(){
+            this.save();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1159,6 +1161,7 @@ export default {
         },
         togglesendtoAssessor:function(){
             let vm=this;
+            vm.save_wo();
             $('#tabs-main li').removeClass('active');
             vm.isSendingToAssessor = !vm.isSendingToAssessor;
             vm.showingApplication = false;
@@ -1231,6 +1234,7 @@ export default {
             );
         },
         toggleOfficerConditions:function(){
+            vm.save_wo();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1243,6 +1247,7 @@ export default {
 
         },
         toggleFinalViewConditions:function(){
+            this.save_wo();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
