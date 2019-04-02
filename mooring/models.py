@@ -1812,6 +1812,8 @@ class AdmissionsBooking(models.Model):
     warningReferenceNo = models.CharField(max_length=200, blank=True)
     totalCost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='created_by_admissions')
+    canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='canceled_bookings_admissions')
+    cancelation_time = models.DateTimeField(null=True,blank=True)
     created = models.DateTimeField(default=timezone.now)
     location = models.ForeignKey(AdmissionsLocation, blank=True, null=True)    
 
