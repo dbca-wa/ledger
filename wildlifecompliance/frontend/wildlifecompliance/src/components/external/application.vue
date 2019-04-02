@@ -16,7 +16,7 @@
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                 <input type='hidden' name="application_id" :value="1" />
-                <div v-if="!application.readonly" class="row" style="margin-bottom:50px;">
+                <div v-if="!application.readonly && userCanSubmit" class="row" style="margin-bottom:50px;">
                     <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                         <div class="navbar-inner">
                             <div class="container">
@@ -36,7 +36,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div v-else class="row" style="margin-bottom:50px;">
                     <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                         <div class="navbar-inner">
@@ -99,6 +98,9 @@ export default {
               activity => activity.licence_activity == this.selected_activity_tab_id &&
               activity.processing_status == 'draft'
             );
+    },
+    userCanSubmit: function() {
+      return this.application.can_current_user_edit
     }
   },
   methods: {
