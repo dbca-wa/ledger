@@ -12,7 +12,10 @@
 </style>
 
 <template lang="html">
-    <RendererForm/>
+    <div>
+        <RendererForm/>
+        <slot></slot>
+    </div>
 </template>
 
 
@@ -82,32 +85,6 @@ from '@/utils/hooks'
         },
         mounted: function () {
             var tabs=Renderer.tabs_list;
-            /*
-            if(this.application.has_amendment){
-                tabs.map(tsec => {
-                    if(!this.isActivityVisible(tsec.id)) {
-                        return;
-                    }
-                    if(this.application.amendment_requests.find(request => request.licence_activity.id == tsec.id)) {
-                        $('#tabs-section').append(`<li><a class="nav-link amendment-highlight" data-toggle="tab" href='#${tsec.id}'>${tsec.label}</a></li>`);
-                    }
-                    
-                });
-
-            }
-            else{
-                tabs.map(tsec => {
-                    if(!this.isActivityVisible(tsec.id)) {
-                        return;
-                    }
-                    $('#tabs-section').append(`<li><a data-toggle="tab" data-target='#${tsec.id}'>${tsec.label}</a></li>`);
-                });
-
-            }
-            // Initialise by setting all first tabs.
-            $('#tabs-section li:first-child a').click();
-            $('#tabs-main li:first-child a').click();
-            */
             /*
             if (this.withSectionsSelector){
                 var _tabid = 0;

@@ -41,9 +41,9 @@ export const rendererStore = {
         setRendererTabs({ commit }, tabs) {
             commit(UPDATE_RENDERER_TABS, tabs);
         },
-        toggleVisibleComponent({ commit, getters }, component_id) {
+        toggleVisibleComponent({ commit, getters }, { component_id, visible }) {
             commit(UPDATE_VISIBLE_COMPONENT,
-                {key: component_id, value: !getters.isComponentVisible(component_id)});
+                {key: component_id, value: visible});
         }
     }
 }

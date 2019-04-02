@@ -12,7 +12,6 @@
 
               <Application v-if="isApplicationLoaded">
             
-            
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                 <input type='hidden' name="application_id" :value="1" />

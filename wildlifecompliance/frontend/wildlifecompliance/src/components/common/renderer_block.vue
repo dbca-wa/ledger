@@ -236,7 +236,6 @@ import { strToBool } from "@/utils/helpers.js";
 
 import FormSection from '@/components/forms/section.vue'
 import Group from '@/components/forms/group.vue'
-import Group2 from '@/components/forms/group2.vue'
 import Radio from '@/components/forms/radio.vue'
 import Conditions from '@/components/forms/conditions.vue'
 import SelectConditions from '@/components/forms/select-conditions.vue'
@@ -311,7 +310,8 @@ const RendererBlock = {
         if(this.json_data == null || this.json_data[this.component.name] == null) {
             return null;
         }
-        return this.json_data[this.component.name]; 
+        return this.json_data[this.component.name].constructor === Array ?
+            this.json_data[this.component.name][0] : this.json_data[this.component.name];
     },
     comment_value: function() {
         if(this.comment_data == null || this.comment_data[this.component.name] == null) {
@@ -347,8 +347,15 @@ const RendererBlock = {
     handleComponentChange: function(component) {
         return (e) => {
             for(let condition in component.conditions) {
-                this.toggleVisibleComponent(`cons_${component.name}_${condition}`);
+                this.toggleVisibleComponent({
+                    'component_id': `cons_${component.name}_${condition}`,
+                    'visible': false
+                });
             }
+            this.toggleVisibleComponent({
+                'component_id': `cons_${e.target.name}_${e.target.value}`,
+                'visible': e.target.checked
+            });
         }
     },
   },
