@@ -256,7 +256,7 @@ class OrganisationRequestDTSerializer(OrganisationRequestSerializer):
     def get_user_can_process_org_access_requests(self, obj):
         if self.context['request'].user and self.context['request'].\
                 user.has_perm('wildlifecompliance.organisation_access_request'):
-            return True
+                    return True
         return False
 
 

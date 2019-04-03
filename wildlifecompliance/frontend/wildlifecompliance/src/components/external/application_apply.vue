@@ -62,7 +62,7 @@ export default {
         "application": null,
         agent: {},
         behalf_of: '',
-        profile: {
+        current_user: {
             wildlifecompliance_organisations: []
         },
         licence_select:null,
@@ -78,12 +78,12 @@ export default {
       return this.loading.length > 0
     },
     hasOrgs: function() {
-        return this.profile.wildlifecompliance_organisations && this.profile.wildlifecompliance_organisations.length > 0 ? true: false;
+        return this.current_user.wildlifecompliance_organisations && this.current_user.wildlifecompliance_organisations.length > 0 ? true: false;
     },
     org: function() {
         let vm = this;
         if (vm.behalf_of != '' || vm.behalf_of != 'other'){
-            return vm.profile.wildlifecompliance_organisations.find(org => parseInt(org.id) === parseInt(vm.behalf_of)).name;
+            return vm.current_user.wildlifecompliance_organisations.find(org => parseInt(org.id) === parseInt(vm.behalf_of)).name;
         }
         return '';
     }
@@ -116,12 +116,12 @@ export default {
   },
   beforeRouteEnter: function(to, from, next) {
     let initialisers = [
-        utils.fetchProfile(),
+        utils.fetchCurrentUser(),
         //utils.fetchApplication(to.params.application_id)
     ]
     next(vm => {
         Promise.all(initialisers).then(data => {
-            vm.profile = data[0];
+            vm.current_user = data[0];
             //vm.application = data[1];
         })
     })

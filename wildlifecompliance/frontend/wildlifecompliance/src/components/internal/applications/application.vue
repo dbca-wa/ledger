@@ -1499,7 +1499,7 @@ export default {
             vm.load({ url: `/api/application/${to.params.application_id}/internal_application.json` }).then(() => {
                 vm.initialiseAssessmentOptions();
             });
-            vm.loadCurrentUser({ url: `/api/profile` });
+            vm.loadCurrentUser({ url: `/api/my_user_details` });
         });
     },
     beforeRouteUpdate: function(to, from, next) {

@@ -19,7 +19,7 @@
                                         <input type="radio"  name="behalf_of_org" v-model="yourself" value="yourself"> On behalf of yourself
                                         </label>
                                     </div>
-                                    <div v-for="org in profile.wildlifecompliance_organisations" class="radio">
+                                    <div v-for="org in current_user.wildlifecompliance_organisations" class="radio">
                                         <label v-if ="!org.is_consultant">
                                           <input type="radio"  name="behalf_of_org" v-model="org_applicant"  :value="org.id"> On behalf of {{org.name}}
                                         </label>
@@ -58,7 +58,7 @@ export default {
         yourself: '',
         organisations:null,
 
-        profile: {
+        current_user: {
             wildlifecompliance_organisations: []
         },
         "loading": [],
@@ -76,7 +76,7 @@ export default {
         let vm = this;
         console.log('from org function',vm.org_applicant)
         if (vm.org_applicant != '' || vm.org_applicant != 'submitter'){
-            return vm.profile.wildlifecompliance_organisations.find(org => parseInt(org.id) === parseInt(vm.org_applicant)).name;
+            return vm.current_user.wildlifecompliance_organisations.find(org => parseInt(org.id) === parseInt(vm.org_applicant)).name;
         }
         return '';
         
@@ -96,7 +96,7 @@ export default {
                   });
         console.log('from organisation submit - licence_select: ',vm.licence_select);
         console.log('from organisation submit - org id: ',vm.org_applicant);
-        console.log('From organisation submit - submitter id: ',vm.profile.id);
+        console.log('From organisation submit - submitter id: ',vm.current_user.id);
         console.log('org applicant - ', window.v_org_applicant);
     },
     
@@ -120,11 +120,11 @@ export default {
   },
   beforeRouteEnter:function(to,from,next){
         let initialisers = [
-            utils.fetchProfile(),
+            utils.fetchCurrentUser(),
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
-                vm.profile = data[0];
+                vm.current_user = data[0];
             });
         });
     },
