@@ -138,7 +138,14 @@ export default {
             else {
               this.load({ url: `/api/application/${this.application.id}.json` }).then(() => {
                 const newTab = this.unfinishedActivities[0];
-                this.setActivityTab({id: newTab.id, name: newTab.label});
+                if(newTab == null) {
+                  this.$router.push({
+                    name:"external-applications-dash",
+                  });
+                }
+                else {
+                  this.setActivityTab({id: newTab.id, name: newTab.label});
+                }
               });
             }
         },err=>{
