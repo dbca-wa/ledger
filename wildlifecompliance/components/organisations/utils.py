@@ -9,7 +9,7 @@ def can_manage_org(organisation, user):
         return True
     except UserDelegation.DoesNotExist:
         pass
-    if user.is_superuser:
+    if user.has_perm('wildlifecompliance.system_administrator'):
         return True
     return user.has_perm('wildlifecompliance.organisation_access_request')
 
@@ -21,8 +21,8 @@ def is_last_admin(organisation, user):
     try:
         _admin_contacts = OrganisationContact.objects.filter(
             organisation_id=organisation,
-            user_status='active',
-            user_role='organisation_admin')
+            user_status=OrganisationContact.ORG_CONTACT_STATUS_ACTIVE,
+            user_role=OrganisationContact.ORG_CONTACT_ROLE_ADMIN)
         _is_admin = _admin_contacts.filter(email=user.email).exists()
         if _is_admin and _admin_contacts.count() < 2:
             _last_admin = True
@@ -53,7 +53,7 @@ def can_relink(organisation, user):
         _can_relink = OrganisationContact.objects.filter(
             organisation_id=organisation.id,
             email=user.email,
-            user_status='unlinked').exists()
+            user_status=OrganisationContact.ORG_CONTACT_STATUS_UNLINKED).exists()
     except OrganisationContact.DoesNotExist:
         _can_relink = False
     return _can_relink
@@ -65,8 +65,13 @@ def can_approve(organisation, user):
     _can_approve = False
     try:
         _can_approve = OrganisationContact.objects.filter(
-            organisation_id=organisation.id, email=user.email, user_status__in=(
-                'declined', 'pending')).exists()
+            organisation_id=organisation.id,
+            email=user.email,
+            user_status__in=(
+                OrganisationContact.ORG_CONTACT_STATUS_DECLINED,
+                OrganisationContact.ORG_CONTACT_STATUS_PENDING
+            )
+        ).exists()
     except OrganisationContact.DoesNotExist:
         _can_approve = False
     return _can_approve
@@ -91,7 +96,10 @@ def get_officer_email_list(organisation):
     # Organisation.
     emails = set()
     applications = Application.objects.filter(org_applicant=organisation.id)\
-        .exclude(customer_status__in=('accepted', 'declined'))
+        .exclude(customer_status__in=(
+            Application.CUSTOMER_STATUS_ACCEPTED,
+            Application.CUSTOMER_STATUS_DECLINED)
+        )
     for application in applications:
         # Officer assigned to the application
         if application.is_assigned:

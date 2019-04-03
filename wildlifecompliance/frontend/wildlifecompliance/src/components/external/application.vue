@@ -1,29 +1,6 @@
 <template lang="html">
     <div class="container" >
         <form :action="application_form_url" method="post" name="new_application" enctype="multipart/form-data">
-          <div v-if="!application_readonly">
-          <div v-if="hasAmendmentRequest" class="row" style="color:red;">
-                <div class="col-lg-12 pull-right">
-                  <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title" style="color:red;">An amendment has been requested for this Application
-                          <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
-                                <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                          </a>
-                        </h3>
-                      </div>
-                      <div class="panel-body collapse in" :id="pBody">
-                        <div v-for="a in amendment_request">
-                          <p>Activity: {{a.licence_activity.name}}</p>
-                          <p>Reason: {{a.reason.name}}</p>
-                          <p>Details: <p v-for="t in splitText(a.text)">{{t}}</p></p>  
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
             <div id="error" v-if="missing_fields.length > 0" style="margin: 10px; padding: 5px; color: red; border:1px solid red;">
                 <b>Please answer the following mandatory question(s):</b>
                 <ul>
@@ -33,7 +10,7 @@
                 </ul>
             </div>
 
-              <Application v-if="application" :application="application">
+              <Application v-if="isApplicationLoaded">
             
             
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
@@ -48,10 +25,12 @@
                                         <strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong>
                                         <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
                                     </span>
-                                    <input type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
-                                    <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                    <input v-if="!requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                                    <input v-if="!isProcessing && canDiscardActivity" type="button" @click.prevent="discardActivity" class="btn btn-danger" value="Discard Activity"/>
+                                    <input v-if="!isProcessing" type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
+                                    <input v-if="!isProcessing" type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
+                                    <input v-if="!isProcessing && !requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
                                     <input v-if="requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
+                                    <button v-if="isProcessing" disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Processing</button>
                                 </p>
                             </div>
                         </div>
@@ -76,70 +55,38 @@
 <script>
 import Application from '../form.vue'
 import Vue from 'vue'
+import { mapActions, mapGetters } from 'vuex'
 import {
   api_endpoints,
   helpers
 }
-from '@/utils/hooks'
+from '@/utils/hooks';
 export default {
   data: function() {
     return {
-      "application": null,
-      "loading": [],
       form: null,
-      hasAmendmentRequest: false,
-      amendment_request: [],
-      amendment_request_id:[],
-      application_readonly: true,
-      pBody: 'pBody',
+      isProcessing: false,
       application_customer_status_onload: {},
  	  missing_fields: [],
-      //current_tab_id: null,
-      //current_tab: '',
-      //previous_tab: '',
     }
   },
   components: {
-    Application
-  },
-  /*
-  watch: {
-    // whenever current_tab changes, this function will run
-    currentTab: function () {
-        // The on tab shown event
-        $('.nav-tabs a').on('shown.bs.tab', function (e) {
-            alert('Tab has changed');
-            //vm.current_tab = e.target;
-            //vm.previous_tab = e.relatedTarget;
-            vm.current_tab_id = parseInt(e.target.href.split('#')[1]);
-        });        
-    }
-  },
-  */
-    watch: {
-        // whenever current_tab changes, this function will run
-        //tabID: function () {
-        //current_tab: function () {
-        tab_changed: function () {
-            let vm = this;
-            // The on tab shown event
-            $('.nav-tabs a').on('shown.bs.tab', function (e) {
-                console.log('Tab has changed: ***' );
-                vm.currentTab = $("ul#tabs-section li.active")[0].textContent;
-                console.log('Tab has changed: ' + vm.currentTab + ' - ' + vm.tabID);
-            });
-        }    
-    },
-
-  created: function () {
-    this.debouncedTabChange = _.debounce(this.get_current_tab, 500)
+    Application,
   },
   computed: {
-    isLoading: function() {
-      return this.loading.length > 0
-    },
+    ...mapGetters([
+        'application',
+        'application_readonly',
+        'amendment_requests',
+        'selected_activity_tab_id',
+        'selected_activity_tab_name',
+        'isApplicationLoaded',
+    ]),
     csrf_token: function() {
       return helpers.getCookie('csrftoken')
+    },
+    activity_discard_url: function() {
+      return (this.application) ? `/api/application/${this.application.id}/discard_activity/` : '';
     },
     application_form_url: function() {
       return (this.application) ? `/api/application/${this.application.id}/draft.json` : '';
@@ -147,74 +94,116 @@ export default {
     requiresCheckout: function() {
         return this.application.application_fee > 0 && this.application_customer_status_onload.id == 'draft'
     },
-    tab_changed: function() {
-      return this.current_tab;
-    },
+    canDiscardActivity: function() {
+      return this.application.activities.find(
+              activity => activity.licence_activity == this.selected_activity_tab_id &&
+              activity.processing_status == 'draft'
+            );
+    }
   },
   methods: {
-    getSelectedTab: function(obj) {
-        alert('Selected Tab Event');
+    ...mapActions({
+      load: 'loadApplication',
+    }),
+    ...mapActions([
+        'setApplication',
+        'setActivityTab',
+    ]),
+    eventListeners: function(){
+        let vm = this;
+        $("ul#tabs-section").on("click", function (e) {
+          if(!e.target.href) {
+            return;
+          }
+          const tab_id = e.target.href.split('#')[1];
+          vm.setActivityTab({id: tab_id, name: e.target.innerHTML});
+        });
+        $('#tabs-section li:first-child a').click();
     },
-    get_current_tab: function() {
-        /*
-        vm.previous_tab = vm.current_tab
-        vm.current_tab = $("ul#tabs-section li.active")[0].textContent
-        return vm.current_tab;
-        */
-        return $("ul#tabs-section li.active")[0].textContent
+    discardActivity: function(e) {
+      let swal_title = 'Discard Selected Activity';
+      let swal_html = `Are you sure you want to discard activity: ${this.selected_activity_tab_name}?`;
+      swal({
+          title: swal_title,
+          html: swal_html,
+          type: "question",
+          showCancelButton: true,
+          confirmButtonText: 'Discard',
+          confirmButtonColor: '#d9534f',
+      }).then((result) => {
+        this.$http.delete(this.activity_discard_url, {params: {'activity_id': this.selected_activity_tab_id}}).then(res=>{
+            swal(
+              'Activity Discarded',
+              `${this.selected_activity_tab_name} has been discarded from this application.`,
+              'success'
+            );
+
+            // No activities left? Redirect out of the application screen.
+            if(res.body.processing_status === 'discarded') {
+              this.$router.push({
+                  name:"external-applications-dash",
+              });
+            }
+            else {
+              this.load({ url: `/api/application/${this.application.id}.json` }).then(() => {
+                window.location.reload(true);  //TODO: Remove this once the activity headers / tabs are fully reactive
+              });
+            }
+        },err=>{
+          swal(
+            'Error',
+            helpers.apiVueResourceError(err),
+            'error'
+          )
+        });
+      },(error) => {
+      });
     },
     saveExit: function(e) {
       let vm = this;
+      this.isProcessing = true;
       let formData = new FormData(vm.form);
-      console.log(formData)
       vm.$http.post(vm.application_form_url,formData).then(res=>{
           swal(
             'Saved',
             'Your application has been saved',
             'success'
           ).then((result) => {
+            this.isProcessing = false;
             window.location.href = "/";
           });
       },err=>{
-
+        swal(
+            'Error',
+            'There was an error saving your application',
+            'error'
+        ).then((result) => {
+            this.isProcessing = false;
+        })
       });
     },
     save: function(e) {
       let vm = this;
+      this.isProcessing = true;
       let formData = new FormData(vm.form);
       vm.$http.post(vm.application_form_url,formData).then(res=>{
           swal(
             'Saved',
             'Your application has been saved',
             'success'
-          )
+          ).then((result) => {
+            this.isProcessing = false;
+          });
       },err=>{
-
+        swal(
+            'Error',
+            'There was an error saving your application',
+            'error'
+        ).then((result) => {
+            this.isProcessing = false;
+        })
       });
     },
-    setAmendmentData: function(amendment_request){
-      let vm= this;
-      vm.amendment_request = amendment_request;
-      for(var i=0,_len=vm.amendment_request.length;i<_len;i++){
-        vm.amendment_request_id.push(vm.amendment_request[i].licence_activity.id)
-      }
-
-      if (amendment_request.length > 0){
-        vm.hasAmendmentRequest = true;
-      }
-        
-    },
-    setdata: function(readonly){
-      console.log('from setdata')
-      this.application_readonly = readonly;
-    },
-    splitText: function(aText){
-      let newText = '';
-      newText = aText.split("\n");
-      return newText;
-    },
-
-
     highlight_missing_fields: function(){
         for (const missing_field of this.missing_fields) {
             $("#id_" + missing_field.name).css("color", 'red');
@@ -227,9 +216,8 @@ export default {
     },
     submit: function(){
         let vm = this;
-        console.log('SUBMIT VM FORM and CHECKOUT');
+        this.isProcessing = true;
         let formData = new FormData(vm.form);
-
         let swal_title = 'Submit Application'
         let swal_html = 'Are you sure you want to submit this application?'
         if (vm.requiresCheckout) {
@@ -248,99 +236,80 @@ export default {
             if (result.value) {
                 let formData = new FormData(vm.form);
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
-                    vm.application = res.body;
+                    this.setApplication(res.body);
                     
                     if (vm.requiresCheckout) {
                         vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
+                            this.isProcessing = false;
                             window.location.href = "/ledger/checkout/checkout/payment-details/";
                         },err=>{
                             swal(
                                 'Submit Error',
                                 helpers.apiVueResourceError(err),
                                 'error'
-                            )
+                            ).then((result) => {
+                                this.isProcessing = false;
+                            })
                         });
                     } else {
+                        this.isProcessing = false;
                         vm.$router.push({
                             name: 'submit_application',
                             params: { application: vm.application}
                         });
                     }
                 },err=>{
-                    console.log("Error details: ", err);
+                    console.log(err);
                     if(err.body.missing) {
                       this.missing_fields = err.body.missing;
                       this.highlight_missing_fields();
+                      this.isProcessing = false;
                     }
                     else {
                       swal(
                           'Submit Error',
                           helpers.apiVueResourceError(err),
                           'error'
-                      )
+                      ).then((result) => {
+                          this.isProcessing = false;
+                      })
                     }
                 });
+            } else {
+                this.isProcessing = false;
             }
         },(error) => {
+            swal(
+                'Error',
+                'There was an error submitting your application',
+                'error'
+            ).then((result) => {
+                this.isProcessing = false;
+            })
         });
     },
-    fetchAmendmentRequest: function(){
-      let vm= this
-      console.log("before fetch")
-      Vue.http.get(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/amendment_request')).then((res) => {
-                // console.log("AMENDMENT REQUEST")
-                  console.log("inside fetch amendment request")
-                  vm.setAmendmentData(res.body);
-              },err=>{
-                      
-                  });
-
-    },
-
   },
-  
   mounted: function() {
-    let vm = this;
-    //vm.current_tab = vm.get_current_tab();
-    vm.form = document.forms.new_application;
-
+    this.form = document.forms.new_application;
   },
-
   beforeRouteEnter: function(to, from, next) {
-    if (to.params.application_id) {
-      let vm= this;
-         
-
-         console.log("before fetch application")
-      Vue.http.get(`/api/application/${to.params.application_id}.json`).then(res => {
-          next(vm => {
-            vm.loading.push('fetching application')
-            vm.application = res.body;
-            vm.loading.splice('fetching application', 1);
-            vm.setdata(vm.application.readonly);
-
-            vm.fetchAmendmentRequest();
+    next(vm => {
+      if (to.params.application_id) {
+        vm.load({ url: `/api/application/${to.params.application_id}.json` }).then(() => {
             vm.application_customer_status_onload = vm.application.customer_status;
-          });
-        },
-        err => {
-          console.log(err);
         });
-      
-    }
-    else {
-      Vue.http.post('/api/application.json').then(res => {
-          next(vm => {
-            vm.loading.push('fetching application')
-            vm.application = res.body;
-            vm.loading.splice('fetching application', 1);
-          });
-        },
-        err => {
-          console.log(err);
-        });
-    }
-  }
+      }
+      else {
+        vm.load({ url: '/api/application.json' });
+      }
+    });
+  },
+  updated: function(){
+    let vm = this;
+    this.$nextTick(() => {
+        vm.eventListeners();
+    });
+  },
 }
 </script>
 

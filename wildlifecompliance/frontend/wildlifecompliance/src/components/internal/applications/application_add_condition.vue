@@ -29,6 +29,20 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="form-group" v-if="!condition.standard">
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <label class="control-label pull-left"  for="Name">Return Type</label>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <div style="width:70% !important">
+                                            <select class="form-control" ref="return_types_select" name="return_type" v-model="condition.return_type">
+                                                <option v-for="r in return_types" :value="r.id">{{r.return_type.name}}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-sm-3">
@@ -62,9 +76,9 @@
                                                 <label class="control-label pull-left"  for="Name">Recurrence pattern</label>
                                             </div>
                                             <div class="col-sm-9">
-                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="1" v-model="condition.recurrence_pattern">Weekly</label>
-                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="2" v-model="condition.recurrence_pattern">Monthly</label>
-                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="3" v-model="condition.recurrence_pattern">Yearly</label>
+                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="weekly" v-model="condition.recurrence_pattern">Weekly</label>
+                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="monthly" v-model="condition.recurrence_pattern">Monthly</label>
+                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="yearly" v-model="condition.recurrence_pattern">Yearly</label>
                                             </div>
                                         </div>
                                     </div>
@@ -74,9 +88,9 @@
                                                 <label class="control-label"  for="Name">
                                                     <strong class="pull-left">Recur every</strong> 
                                                     <input class="pull-left" style="width:10%; margin-left:10px;" type="number" name="schedule" v-model="condition.recurrence_schedule"/> 
-                                                    <strong v-if="condition.recurrence_pattern == '1'" class="pull-left" style="margin-left:10px;">week(s)</strong>
-                                                    <strong v-else-if="condition.recurrence_pattern == '2'" class="pull-left" style="margin-left:10px;">month(s)</strong>
-                                                    <strong v-else-if="condition.recurrence_pattern == '3'" class="pull-left" style="margin-left:10px;">year(s)</strong>
+                                                    <strong v-if="condition.recurrence_pattern == 'weekly'" class="pull-left" style="margin-left:10px;">week(s)</strong>
+                                                    <strong v-else-if="condition.recurrence_pattern == 'monthly'" class="pull-left" style="margin-left:10px;">month(s)</strong>
+                                                    <strong v-else-if="condition.recurrence_pattern == 'yearly'" class="pull-left" style="margin-left:10px;">year(s)</strong>
                                                 </label>
                                             </div>
                                         </div>
@@ -136,10 +150,11 @@ export default {
                 due_date: '',
                 standard: true,
                 recurrence: false,
-                recurrence_pattern: '1',
+                recurrence_pattern: 'weekly',
                 application: vm.application_id,
                 licence_activity:null
             },
+            return_types: [],
             addingCondition: false,
             updatingCondition: false,
             validation_form: null,
@@ -186,7 +201,7 @@ export default {
                 due_date: '',
                 standard: true,
                 recurrence: false,
-                recurrence_pattern: '1',
+                recurrence_pattern: 'weekly',
                 application: vm.application_id
             }
         },
@@ -206,7 +221,7 @@ export default {
                 standard: true,
                 recurrence: false,
                 due_date: '',
-                recurrence_pattern: '1',
+                recurrence_pattern: 'weekly',
                 application: this.application_id
             };
             this.errors = false;
@@ -223,10 +238,17 @@ export default {
                 console.log(error);
             } );
         },
+        fetchReturnTypes() {
+            this.$http.get(api_endpoints.return_types).then((response) => {
+                this.return_types = response.body;
+            },(error) => {
+                console.log(error);
+            })
+        },
         sendData:function(){
             let vm = this;
             vm.errors = false;
-            vm.condition.licence_activity=vm.licence_activity_tab
+            vm.condition.licence_activity=vm.licence_activity_tab;
             let condition = JSON.parse(JSON.stringify(vm.condition));
             if (condition.standard){
                 condition.free_condition = '';
@@ -361,6 +383,7 @@ export default {
         let vm =this;
         vm.form = document.forms.conditionForm;
         vm.addFormValidations();
+        vm.fetchReturnTypes();
         this.$nextTick(()=>{
             vm.eventListeners();
         });

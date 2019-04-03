@@ -125,5 +125,10 @@ module.exports = {
     },
     strToBool(val) {
       return (`${val}`.toLowerCase() === 'true');
-    } 
+    },
+    splitText: function(aText){
+      let newText = '';
+      newText = aText.split("\n");
+      return newText;
+    },
 };

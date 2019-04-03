@@ -8,7 +8,6 @@ from django.db.models import Max
 from ledger.accounts.models import EmailUser
 from ledger.licence.models import LicenceType
 from wildlifecompliance.components.organisations.models import Organisation
-from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document
 
@@ -62,22 +61,8 @@ class LicencePurpose(models.Model):
         # Use filter -> first() in case of records with duplicate names (e.g. "Bioprospecting licence")
         return LicencePurpose.objects.filter(name=activity_name).first()
 
-# class WildlifeLicenceDescriptor(models.Model):
-#     name = models.CharField(max_length = 100)
-
 
 class LicenceActivity(models.Model):
-    LICENCE_ACTIVITY_STATUS_CHOICES = (
-        ('current', 'Current'),
-        ('expired', 'Expired'),
-        ('cancelled', 'Cancelled'),
-        ('surrendered', 'Surrendered'),
-        ('suspended', 'Suspended')
-    )
-    licence_activity_status = models.CharField(
-        max_length=40,
-        choices=LICENCE_ACTIVITY_STATUS_CHOICES,
-        default=LICENCE_ACTIVITY_STATUS_CHOICES[0][0])
     name = models.CharField(max_length=100)
     licence_category = models.ForeignKey(
         'LicenceCategory',
@@ -114,18 +99,6 @@ class LicenceActivity(models.Model):
 
 # #LicenceType
 class LicenceCategory(LicenceType):
-    LICENCE_CATEGORY_STATUS_CHOICES = (
-        ('current', 'Current'),
-        ('expired', 'Expired'),
-        ('cancelled', 'Cancelled'),
-        ('surrendered', 'Surrendered'),
-        ('suspended', 'Suspended')
-    )
-    licence_category_status = models.CharField(
-        max_length=40,
-        choices=LICENCE_CATEGORY_STATUS_CHOICES,
-        default=LICENCE_CATEGORY_STATUS_CHOICES[0][0])
-    # name = models.CharField(max_length = 100)
     activity = models.ManyToManyField(
         LicenceActivity,
         blank=True,
@@ -177,84 +150,27 @@ class DefaultPurpose(models.Model):
 
 
 class WildlifeLicence(models.Model):
-    STATUS_CHOICES = (
-        ('current', 'Current'),
-        ('expired', 'Expired'),
-        ('cancelled', 'Cancelled'),
-        ('surrendered', 'Surrendered'),
-        ('suspended', 'Suspended')
-    )
-    status = models.CharField(max_length=40, choices=STATUS_CHOICES,
-                              default=STATUS_CHOICES[0][0])
-    parent_licence = models.ForeignKey(
-        'self',
-        blank=True,
-        null=True,
-        related_name='children_licence')
     licence_document = models.ForeignKey(
         LicenceDocument,
         blank=True,
         null=True,
         related_name='licence_document')
-    cover_letter_document = models.ForeignKey(
-        LicenceDocument,
-        blank=True,
-        null=True,
-        related_name='cover_letter_document')
     replaced_by = models.ForeignKey('self', blank=True, null=True)
-    current_application = models.ForeignKey(Application, related_name='+')
-    activity = models.CharField(max_length=255, blank=True, null=True)
-    region = models.CharField(max_length=255, blank=True, null=True)
-    tenure = models.CharField(max_length=255, blank=True, null=True)
-    title = models.CharField(max_length=255, blank=True, null=True)
-    renewal_sent = models.BooleanField(default=False)
-    issue_date = models.DateField(blank=True, null=True)
-    original_issue_date = models.DateField(auto_now_add=True)
-    start_date = models.DateField(blank=True, null=True)
-    expiry_date = models.DateField(blank=True, null=True)
-    surrender_details = JSONField(blank=True, null=True)
-    suspension_details = JSONField(blank=True, null=True)
-    # applicant = models.ForeignKey(Organisation,on_delete=models.PROTECT, related_name='wildlifecompliance_licences')
-
-    org_applicant = models.ForeignKey(
-        Organisation,
-        blank=True,
-        null=True,
-        related_name='wildlifecompliance_org_applicant')
-    proxy_applicant = models.ForeignKey(
-        EmailUser,
-        blank=True,
-        null=True,
-        related_name='wildlifecompliance_proxy_applicant')
-    submitter = models.ForeignKey(
-        EmailUser,
-        blank=True,
-        null=True,
-        related_name='wildlifecompliance_submitter')
-
     extracted_fields = JSONField(blank=True, null=True)
-    licence_activity = models.ForeignKey(
-        'LicenceActivity', null=True)
-    licence_type = models.ForeignKey('LicencePurpose', null=True)
-
     licence_number = models.CharField(max_length=64, blank=True, null=True)
     licence_sequence = models.IntegerField(blank=True, default=1)
     licence_category = models.ForeignKey(LicenceCategory)
-    # licence_sequence = models.IntegerField(blank=True, unique=True, default=seq_idx)
-
-    # licence_activity = models.ForeignKey(LicenceActivity)
-    # licence_descriptor = models.ForeignKey(WildlifeLicenceDescriptor)
+    current_application = models.ForeignKey('wildlifecompliance.Application')
 
     class Meta:
         unique_together = (
             ('licence_number',
              'licence_sequence',
-             'licence_category',
-             'licence_type'))
+             'licence_category'))
         app_label = 'wildlifecompliance'
 
     def __str__(self):
-        return '{} {}-{} {}'.format(self.licence_type, self.licence_number, self.licence_sequence, self.licence_type.code)
+        return '{} {}-{}'.format(self.licence_category, self.licence_number, self.licence_sequence)
 
     def save(self, *args, **kwargs):
         super(WildlifeLicence, self).save(*args, **kwargs)
@@ -263,6 +179,18 @@ class WildlifeLicence(models.Model):
                 self.next_licence_number_id)
             # self.licence_number = 'L{0:06d}'.format(self.pk)
             self.save()
+
+    def get_activities_by_status(self, status):
+        from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
+        return ApplicationSelectedActivity.objects.filter(
+            application_id=self.current_application_id,
+            activity_status=status
+        )
+
+    @property
+    def current_activities(self):
+        from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
+        return self.get_activities_by_status(ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT)
 
     @property
     def next_licence_number_id(self):
@@ -273,6 +201,9 @@ class WildlifeLicence(models.Model):
         else:
             return int(licence_number_max.split('L')[1]) + 1
 
+    @property
+    def activities(self):
+        return self.current_application.activities
 
 #    def seq_idx():
 #        no = WildlifeLicence.objects.get().aggregate(Max(order))

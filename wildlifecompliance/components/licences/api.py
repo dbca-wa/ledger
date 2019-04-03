@@ -52,7 +52,10 @@ class LicenceViewSet(viewsets.ModelViewSet):
             user_orgs = [
                 org.id for org in user.wildlifecompliance_organisations.all()]
             return WildlifeLicence.objects.filter(
-                Q(org_applicant_id__in=user_orgs) | Q(proxy_applicant=user) | Q(submitter=user))
+                Q(current_application__org_applicant_id__in=user_orgs) |
+                Q(current_application__proxy_applicant=user) |
+                Q(current_application__submitter=user)
+            )
         return WildlifeLicence.objects.none()
 
     def list(self, request, *args, **kwargs):
@@ -60,15 +63,15 @@ class LicenceViewSet(viewsets.ModelViewSet):
         # Filter by org
         org_id = request.GET.get('org_id', None)
         if org_id:
-            queryset = queryset.filter(org_applicant_id=org_id)
+            queryset = queryset.filter(current_application__org_applicant_id=org_id)
         # Filter by proxy_applicant
         proxy_applicant_id = request.GET.get('proxy_applicant_id', None)
         if proxy_applicant_id:
-            queryset = queryset.filter(proxy_applicant_id=proxy_applicant_id)
+            queryset = queryset.filter(current_application__proxy_applicant_id=proxy_applicant_id)
         # Filter by submitter
         submitter_id = request.GET.get('submitter_id', None)
         if submitter_id:
-            queryset = queryset.filter(submitter_id=submitter_id)
+            queryset = queryset.filter(current_application__submitter_id=submitter_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -77,16 +80,15 @@ class LicenceViewSet(viewsets.ModelViewSet):
         user_orgs = [
             org.id for org in request.user.wildlifecompliance_organisations.all()]
         qs = []
-        #qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Application.PROCESSING_STATUS_CHOICES[13][0])))
-        qs.extend(list(self.get_queryset().filter(submitter=request.user)))
+        qs.extend(list(self.get_queryset().filter(current_application__submitter=request.user)))
         qs.extend(
             list(
                 self.get_queryset().filter(
-                    proxy_applicant=request.user)))
+                    current_application__proxy_applicant=request.user)))
         qs.extend(
             list(
                 self.get_queryset().filter(
-                    org_applicant_id__in=user_orgs)))
+                    current_application__org_applicant_id__in=user_orgs)))
         queryset = list(set(qs))
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)

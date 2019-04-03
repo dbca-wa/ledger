@@ -120,7 +120,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def contacts_exclude(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            qs = instance.contacts.exclude(user_status='draft')
+            qs = instance.contacts.exclude(user_status=OrganisationContact.ORG_CONTACT_STATUS_DRAFT)
             serializer = OrganisationContactSerializer(qs, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -583,7 +583,8 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET', ])
     def get_pending_requests(self, request, *args, **kwargs):
         try:
-            qs = self.get_queryset().filter(requester=request.user, status='with_assessor')
+            qs = self.get_queryset().filter(requester=request.user,
+                                            status=OrganisationRequest.ORG_REQUEST_STATUS_WITH_ASSESSOR)
             serializer = OrganisationRequestDTSerializer(qs, many=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -600,7 +601,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     def get_amendment_requested_requests(self, request, *args, **kwargs):
         try:
             qs = self.get_queryset().filter(
-                requester=request.user, status='amendment_requested')
+                requester=request.user, status=OrganisationRequest.ORG_REQUEST_STATUS_AMENDMENT_REQUESTED)
             serializer = OrganisationRequestDTSerializer(qs, many=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -795,7 +796,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.validated_data['requester'] = request.user
-            if request.data['role'] == 'consultant':
+            if request.data['role'] == OrganisationRequest.ORG_REQUEST_ROLE_CONSULTANT:
                 # Check if consultant can be relinked to org.
                 data = Organisation.existance(request.data['abn'])
                 data.update([('user', request.user.id)])
@@ -828,14 +829,14 @@ class OrganisationAccessGroupMembers(views.APIView):
         members = []
         if is_internal(request):
             groups = ActivityPermissionGroup.objects.filter(
-                permissions__codename='organisation_access_request'
+                permissions__codename__in=[
+                    'organisation_access_request',
+                    'system_administrator'
+                ]
             )
             for group in groups:
                 for member in group.members:
                     members.append({'name': member.get_full_name(), 'id': member.id})
-            for member in EmailUser.objects.filter(
-                    is_superuser=True, is_staff=True, is_active=True):
-                members.append({'name': member.get_full_name(), 'id': member.id})
         return Response(members)
 
 

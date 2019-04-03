@@ -8,6 +8,7 @@ import bs from 'bootstrap'
 import helpers from '@/utils/helpers'
 import hooks from './packages'
 import api_endpoints from './api'
+import store from './store'
 require( '../node_modules/bootstrap/dist/css/bootstrap.css' );
 //require('../node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css')
 require( '../node_modules/font-awesome/css/font-awesome.min.css' )
@@ -15,14 +16,6 @@ require( '../node_modules/font-awesome/css/font-awesome.min.css' )
 //Vue.config.devtools = true;
 Vue.config.productionTip = false
 Vue.use( resource );
-
-Vue.mixin({
-  data: function() {
-    return {
-      globalVar:'global',
-    }
-  }
-});
 
 // Add CSRF Token to every request
 Vue.http.interceptors.push( function ( request, next ) {
@@ -51,56 +44,12 @@ Vue.filter('toCurrency', function(value) {
 Vue.prototype.current_tab = '';
 window.vue = new Vue( {
     el: '#app',
+    store,
     router,
     template: '<App/>',
-    data: function() {
-      return {
-        currentTab: null,
-        tabID: null,
-      }
-    },
     components: {
         App
     },
-    computed: {
-    },
-    created:function() {
-        this.globalVar = "It's will change global var";
-    },
-    methods:{
-        setSelectedTabId: function(target) {
-            let vm = this;
-            /*
-            var tab_id = target.href.split('#')[1];
-            vm.tabID = target.href.split('#')[1];
-            this.$children[0].$children[0].$children[0].$children[0].$children[0].selected_activity_tab_id = parseInt(tab_id);
-            return parseInt(tab_id);
-            */
-            //vm.tabID = parseInt(target.href.split('#')[1]);
-            //this.current_tab = $("ul#tabs-section li.active")[0].textContent;
-            this.$children[0].$children[0].$children[0].$children[0].$children[0].selected_activity_tab_id = vm.tabID;
-            return vm.tabID;
-        },
-        /*
-        getSelectedTabName: function() {
-            return $("ul#tabs-section li.active")[0].textContent;
-        },
-        */
-    },
-    /*
-    watch: {
-        // whenever current_tab changes, this function will run
-        tabID: function () {
-            let vm = this;
-            // The on tab shown event
-            $('.nav-tabs a').on('shown.bs.tab', function (e) {
-                vm.currentTab = $("ul#tabs-section li.active")[0].textContent;
-                console.log('Tab has changed: ' + vm.currentTab + ' - ' + vm.tabID);
-            });
-        }    
-    },
-    */
-
 })
 
 Vue.config.devtools = true

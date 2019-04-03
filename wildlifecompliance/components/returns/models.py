@@ -1,8 +1,8 @@
-
 from __future__ import unicode_literals
 from django.db import models, transaction
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
+from django.core.exceptions import FieldError
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from wildlifecompliance.components.returns.utils_schema import Schema
 from wildlifecompliance.components.applications.models import ApplicationCondition, Application
@@ -13,17 +13,31 @@ from wildlifecompliance.components.returns.email import send_external_submit_ema
 
 class ReturnType(models.Model):
     """
-    A Type to identify the method used to facilitate Return.
+    A definition to identify the format used to facilitate Return.
     """
-    RETURN_TYPE_CHOICES = (('sheet', 'Sheet'),
-                           ('question', 'Question'),
-                           ('data', 'Data'))
+    RETURN_TYPE_SHEET = 'sheet'
+    RETURN_TYPE_QUESTION = 'question'
+    RETURN_TYPE_DATA = 'data'
+    RETURN_TYPE_CHOICES = (
+        (RETURN_TYPE_SHEET, 'Sheet'),
+        (RETURN_TYPE_QUESTION, 'Question'),
+        (RETURN_TYPE_DATA, 'Data')
+    )
 
-    Name = models.TextField(null=True, blank=True, max_length=200)
+    Name = models.CharField(null=True, blank=True, max_length=100)
+    description = models.TextField(null=True, blank=True, max_length=256)
     data_descriptor = JSONField()
+    data_format = models.CharField(
+        'Data format',
+        max_length=30,
+        choices=RETURN_TYPE_CHOICES,
+        default=RETURN_TYPE_SHEET)
+    replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    version = models.SmallIntegerField(default=1, blank=False, null=False)
 
     class Meta:
         app_label = 'wildlifecompliance'
+        unique_together = ('Name', 'version')
 
     @property
     def resources(self):
@@ -39,26 +53,42 @@ class ReturnType(models.Model):
         resource = self.get_resource_by_name(name)
         return resource.get('schema', {}) if resource else None
 
+    def __str__(self):
+        return '{} - v{}'.format(self.Name, self.version)
+
 
 class Return(models.Model):
     """
-    A number of requirements relating to a Licence condition.
+    A number of requirements relating to a Licence condition recorded during the Licence period.
     """
-    PROCESSING_STATUS_CHOICES = (('due', 'Due'),
-                                 ('overdue', 'Overdue'),
-                                 ('draft', 'Draft'),
-                                 ('future', 'Future'),
-                                 ('with_curator', 'With Curator'),
-                                 ('accepted', 'Accepted'),
-                                 )
-    CUSTOMER_STATUS_CHOICES = (('due', 'Due'),
-                               ('overdue', 'Overdue'),
-                               ('draft', 'Draft'),
-                               ('future', 'Future'),
-                               ('under_review', 'Under Review'),
-                               ('accepted', 'Accepted'),
-
-                               )
+    RETURN_PROCESSING_STATUS_DUE = 'due'
+    RETURN_PROCESSING_STATUS_OVERDUE = 'overdue'
+    RETURN_PROCESSING_STATUS_DRAFT = 'draft'
+    RETURN_PROCESSING_STATUS_FUTURE = 'future'
+    RETURN_PROCESSING_STATUS_WITH_CURATOR = 'with_curator'
+    RETURN_PROCESSING_STATUS_ACCEPTED = 'accepted'
+    PROCESSING_STATUS_CHOICES = (
+        (RETURN_PROCESSING_STATUS_DUE, 'Due'),
+        (RETURN_PROCESSING_STATUS_OVERDUE, 'Overdue'),
+        (RETURN_PROCESSING_STATUS_DRAFT, 'Draft'),
+        (RETURN_PROCESSING_STATUS_FUTURE, 'Future'),
+        (RETURN_PROCESSING_STATUS_WITH_CURATOR, 'With Curator'),
+        (RETURN_PROCESSING_STATUS_ACCEPTED, 'Accepted'),
+    )
+    RETURN_CUSTOMER_STATUS_DUE = 'due'
+    RETURN_CUSTOMER_STATUS_OVERDUE = 'overdue'
+    RETURN_CUSTOMER_STATUS_DRAFT = 'draft'
+    RETURN_CUSTOMER_STATUS_FUTURE = 'future'
+    RETURN_CUSTOMER_STATUS_UNDER_REVIEW = 'under_review'
+    RETURN_CUSTOMER_STATUS_ACCEPTED = 'accepted'
+    CUSTOMER_STATUS_CHOICES = (
+        (RETURN_CUSTOMER_STATUS_DUE, 'Due'),
+        (RETURN_CUSTOMER_STATUS_OVERDUE, 'Overdue'),
+        (RETURN_CUSTOMER_STATUS_DRAFT, 'Draft'),
+        (RETURN_CUSTOMER_STATUS_FUTURE, 'Future'),
+        (RETURN_CUSTOMER_STATUS_UNDER_REVIEW, 'Under Review'),
+        (RETURN_CUSTOMER_STATUS_ACCEPTED, 'Accepted'),
+    )
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     application = models.ForeignKey(Application, related_name='returns')
     licence = models.ForeignKey(
@@ -67,11 +97,13 @@ class Return(models.Model):
     due_date = models.DateField()
     text = models.TextField(blank=True)
     processing_status = models.CharField(
-        choices=PROCESSING_STATUS_CHOICES, max_length=20)
+        choices=PROCESSING_STATUS_CHOICES,
+        max_length=20,
+        default=RETURN_PROCESSING_STATUS_FUTURE)
     customer_status = models.CharField(
         choices=CUSTOMER_STATUS_CHOICES,
         max_length=20,
-        default=CUSTOMER_STATUS_CHOICES[1][0])
+        default=RETURN_CUSTOMER_STATUS_FUTURE)
     assigned_to = models.ForeignKey(
         EmailUser,
         related_name='wildlifecompliance_return_assignments',
@@ -119,12 +151,14 @@ class Return(models.Model):
         return self.return_type.data_descriptor.get('resources', [])
 
     @property
-    def type(self):
-        return self.return_type.Name
+    def format(self):
+        return self.return_type.data_format
 
     @property
     def table(self):
         tables = []
+        if self.format == 'sheet':
+            return tables
         for resource in self.return_type.resources:
             resource_name = resource.get('name')
             schema = Schema(resource.get('schema'))
@@ -139,10 +173,10 @@ class Return(models.Model):
                     header["species"] = f.species_type
                 headers.append(header)
             table = {
-                'name': resource_name,
-                'title': resource.get('title', resource.get('name')),
-                'headers': headers,
-                'data': None
+               'name': resource_name,
+               'title': resource.get('title', resource.get('name')),
+               'headers': headers,
+               'data': None
             }
             try:
                 return_table = self.returntable_set.get(name=resource_name)
@@ -166,45 +200,59 @@ class Return(models.Model):
     def sheet(self):
         """
         A Running sheet of Return data.
-        :return: ReturnSheet with activity data for species.
+        :return: ReturnSheet with activity data for Licence species.
         """
-        return ReturnSheet(self) if self.is_sheet else None
+        return ReturnSheet(self) if self.has_sheet else None
 
     @property
-    def is_question(self):
+    def data(self):
+        """
+        Return data.
+        :return: Details of activities relating to Licence species.
+        """
+        return ReturnData(self) if self.has_data else None
+
+    @property
+    def question(self):
+        """
+        Questionnaire of Return data.
+        :return: Questionnaire on activities relating to Licence species.
+        """
+        return ReturnQuestion(self) if self.has_question else None
+
+    @property
+    def has_question(self):
         """
         Property defining if the Return is Question based.
         :return: Boolean
         """
-        return True if self.return_type.Name == 'question' else False
+        return True if self.format == 'question' else False
 
     @property
-    def is_data(self):
+    def has_data(self):
         """
         Property defining if the Return is Data based.
         :return: Boolean
         """
-        return True if self.return_type.Name == 'data' else False
+        return True if self.format == 'data' else False
 
     @property
-    def is_sheet(self):
+    def has_sheet(self):
         """
         Property defining if the Return is Running Sheet based.
         :return: Boolean
         """
-        return True if self.return_type.Name == 'sheet' else False
-
-    def log_user_action(self, action, request):
-        return ReturnUserAction.log_action(self, action, request.user)
+        return True if self.format == 'sheet' else False
 
     def set_submitted(self, request):
         with transaction.atomic():
             try:
-                if self.processing_status == 'future' or 'due':
-                    self.customer_status = "under_review"
-                    self.processing_status = "with_curator"
-                    self.submitter = request.user
-                    self.save()
+                if self.processing_status == Return.RETURN_PROCESSING_STATUS_FUTURE\
+                        or self.processing_status == Return.RETURN_PROCESSING_STATUS_DUE:
+                            self.customer_status = Return.RETURN_CUSTOMER_STATUS_UNDER_REVIEW
+                            self.processing_status = Return.RETURN_PROCESSING_STATUS_WITH_CURATOR
+                            self.submitter = request.user
+                            self.save()
 
                 # code for amendment returns is still to be added, so
                 # lodgement_date is set outside if statement
@@ -223,46 +271,100 @@ class Return(models.Model):
 
     def accept(self, request):
         with transaction.atomic():
-            self.processing_status = 'accepted'
-            self.customer_status = 'accepted'
+            self.processing_status = Return.RETURN_PROCESSING_STATUS_ACCEPTED
+            self.customer_status = Return.RETURN_CUSTOMER_STATUS_ACCEPTED
             self.save()
             self.log_user_action(
                 ReturnUserAction.ACTION_ACCEPT_REQUEST.format(
                     self.id), request)
             send_return_accept_email_notification(self, request)
 
+    def store(self, request):
+        """
+        Save the current state of the Return.
+        :param request:
+        :return:
+        """
+        pass
 
-class ReturnSheet(object):
+    def submit(self, request):
+        """
+        Submit Return to Curator.
+        :param request:
+        :return:
+        """
+        pass
+
+    def amend(self, request):
+        """
+        Request amendment for Return.
+        :param request:
+        :return:
+        """
+        pass
+
+    def log_user_action(self, action, request):
+        return ReturnUserAction.log_action(self, action, request.user)
+
+    def __str__(self):
+        return self.lodgement_number
+
+
+class ReturnData(object):
     """
-    A Running Sheet of requirements supporting licence conditions.
+    Informational data of requirements supporting licence condition.
     """
-
-    _SHEET_SCHEMA = {"name": "sheet", "title": "Running Sheet of Return Data", "resources": [{"name":
-                     "SpecieID", "path": "", "title": "Return Data for Specie", "schema": {"fields": [{"name":
-                     "date", "type": "date", "format": "fmt:%d/%m/%Y", "constraints": {"required": True}}, {"name":
-                     "activity", "type": "string", "constraints": {"required": True}}, {"name": "qty", "type":
-                     "number", "constraints": {"required": True}}, {"name": "total", "type": "number",
-                     "constraints": {"required": True}}, {"name": "licence", "type": "string"}, {"name": "comment",
-                     "type": "string"}]}}]}
-
-    _NO_ACTIVITY = {"echo": 1, "totalRecords": "0", "totalDisplayRecords": "0", "data": []}
-
-    _ACTIVITY_TYPES = {"SA01": "Stock", "SA02": "In through Import", "SA03": "In through birth",
-                       "SA04": "In through transfer", "SA05": "Out through export", "SA06": "Out through death",
-                       "SA07": "Out through transfer other", "SA08": "Out through transfer dealer", '': None}
-
-    _MOCK_TABLE = {'name': 'speciesId', 'data': [{'date': '2019/01/23', 'activity': 'SA01', 'qty': '5', 'total': '5',
-                  'comment': 'Initial Stock Taking', 'licence': ''}, {'date': '2019/01/31', 'activity': 'SA03',
-                  'qty': '3', 'total': '8', 'comment': 'Birth of three new species', 'licence': ''}]}
-
-    _MOCK_SPECIES = ['Cherax tenuimanus', 'Bunderia']
-
     def __init__(self, a_return):
         self._return = a_return
-        self._return.return_type.data_descriptor = self._SHEET_SCHEMA
-        self._species = []
 
-    def _get_table_rows(self, table_name, post_data):
+    @property
+    def table(self):
+        """
+        Data Table of record information for Species.
+        :return: formatted data.
+        """
+        return self._return.table()
+
+    def store(self, request):
+        """
+        Save the current state of this Return Data.
+        :param request:
+        :return:
+        """
+        for key in request.POST.keys():
+            if key == "nilYes":
+                self._return.nil_return = True
+                self._return.comments = request.data.get('nilReason')
+                self._return.save()
+            if key == "nilNo":
+                returns_tables = request.data.get('table_name')
+                if self._is_post_data_valid(returns_tables.encode('utf-8'), request.POST):
+                    self._create_return_data_from_post_data(returns_tables.encode('utf-8'), request.POST)
+                else:
+                    raise FieldError('Enter data in correct format.')
+
+    def _is_post_data_valid(self, tables_info, post_data):
+        """
+        Validates table data against the schema,
+        :param tables_info:
+        :param post_data:
+        :return:
+        """
+        table_rows = self._get_table_rows_from_post(tables_info, post_data)
+        if len(table_rows) == 0:
+            return False
+        schema = Schema(self._return.return_type.get_schema_by_name(tables_info))
+        if not schema.is_all_valid(table_rows):
+            return False
+        return True
+
+    def _get_table_rows_from_post(self, table_name, post_data):
+        """
+        Build row of data.
+        :param table_name:
+        :param post_data:
+        :return:
+        """
         table_namespace = table_name + '::'
         by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(
             key)) for key in post_data.keys() if key.startswith(table_namespace)])
@@ -271,7 +373,7 @@ class ReturnSheet(object):
             list(
                 by_column.values())[0]) if len(
             by_column.values()) > 0 else 0
-        self._rows = []
+        rows = []
         for row_num in range(num_rows):
             row_data = {}
             for key, value in by_column.items():
@@ -283,13 +385,147 @@ class ReturnSheet(object):
                     is_empty = False
                     break
             if not is_empty:
+                rows.append(row_data)
+        return rows
+
+    def _create_return_data_from_post_data(self, tables_info, post_data):
+        """
+        Writes to db.
+        :param tables_info:
+        :param post_data:
+        :return:
+        """
+        rows = self._get_table_rows_from_post(tables_info, post_data)
+        if rows:
+            return_table = ReturnTable.objects.get_or_create(
+                name=tables_info, ret=self._return)[0]
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in rows]
+            ReturnRow.objects.bulk_create(return_rows)
+
+    def __str__(self):
+        return self._return.lodgement_number
+
+
+class ReturnQuestion(object):
+    """
+    Informational question of requirements supporting licence condition.
+    """
+    def __init__(self, a_return):
+        self._return = a_return
+
+    @property
+    def table(self):
+        """
+        Table of questions for Species. Defaults to a Species on the Return if exists.
+        :return: formatted data.
+        """
+        return self._return.table
+
+    def store(self, request):
+        """
+        Save the current state of the Return.
+        :param request:
+        :return:
+        """
+        pass
+
+    def __str__(self):
+        return self._return.lodgement_number
+
+
+class ReturnSheet(object):
+    """
+    Informational Running Sheet of Species requirements supporting licence condition.
+    """
+    _DEFAULT_SPECIES = '0000000'
+
+    _SHEET_SCHEMA = {"name": "sheet", "title": "Running Sheet of Return Data", "resources": [{"name":
+                     "SpecieID", "path": "", "title": "Return Data for Specie", "schema": {"fields": [{"name":
+                     "date", "type": "date", "format": "fmt:%d/%m/%Y", "constraints": {"required": True}}, {"name":
+                     "activity", "type": "string", "constraints": {"required": True}}, {"name": "qty", "type":
+                     "number", "constraints": {"required": True}}, {"name": "total", "type": "number",
+                     "constraints": {"required": True}}, {"name": "licence", "type": "string"}, {"name": "comment",
+                     "type": "string"}, {"name": "transfer", "type": "boolean"}]}}]}
+
+    _NO_ACTIVITY = {"echo": 1, "totalRecords": "0", "totalDisplayRecords": "0", "data": []}
+
+    _ACTIVITY_TYPES = {
+        "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false"},
+        "SA02": {"label": "In through import", "auto": "false", "licence": "false", "pay": "false"},
+        "SA03": {"label": "In through birth", "auto": "false", "licence": "false", "pay": "false"},
+        "SA04": {"label": "In through transfer", "auto": "true", "licence": "false", "pay": "false"},
+        "SA05": {"label": "Out through export", "auto": "false", "licence": "false", "pay": "false"},
+        "SA06": {"label": "Out through death", "auto": "false", "licence": "false", "pay": "false"},
+        "SA07": {"label": "Out through transfer other", "auto": "false", "licence": "true", "pay": "true"},
+        "SA08": {"label": "Out through transfer dealer", "auto": "false", "licence": "true", "pay": "false"},
+        "": {"label": "", "auto": "false", "licence": "false", "pay": "false"}}
+
+    def __init__(self, a_return):
+        self._return = a_return
+        self._return.return_type.data_descriptor = self._SHEET_SCHEMA
+        self._species_list = []
+        self._table = {'data': None}
+        # build list of currently added Species.
+        self._species = self._DEFAULT_SPECIES
+        for _species in ReturnTable.objects.filter(ret=a_return):
+            self._species_list.append(_species.name)
+            self._species = _species.name
+        # build list of Species available on Licence.
+        self._licence_species_list = []
+
+    def _get_table_rows(self, _data):
+        """
+        Gets the formatted row of data from Species data
+        :param _data:
+        :return: by_column is of format {'col_header':[row1_val, row2_val,...],...}
+        """
+        by_column = dict([])
+        key_values = []
+        num_rows = 0
+        if isinstance(_data, tuple):
+            for key in _data[0].keys():
+                for cnt in range(_data.__len__()):
+                    key_values.append(_data[cnt][key])
+                by_column[key] = key_values
+                key_values = []
+            num_rows = len(list(by_column.values())[0]) if len(by_column.values()) > 0 else 0
+        else:
+            for key in _data.keys():
+                by_column[key] = _data[key]
+            num_rows = num_rows + 1
+
+        self._rows = []
+        for row_num in range(num_rows):
+            row_data = {}
+            for key, value in by_column.items():
+                row_data[key] = value[row_num]
+            # filter empty rows.
+            is_empty = True
+            for value in row_data.values():
+                if len(value[row_num].strip()) > 0:
+                    is_empty = False
+                    break
+            if not is_empty:
+                row_data['rowId'] = str(row_num)
                 self._rows.append(row_data)
 
-    def _create_return_data(self, ret, tables_info, post_data):
-        self._get_table_rows(tables_info, post_data)
+    def _create_return_data(self, ret, _species_id, _data):
+        """
+        Saves row of data to db.
+        :param ret:
+        :param _species_id:
+        :param _data:
+        :return:
+        """
+        self._get_table_rows(_data)
         if self._rows:
             return_table = ReturnTable.objects.get_or_create(
-                name=tables_info, ret=ret)[0]
+                name=_species_id, ret=ret)[0]
             # delete any existing rows as they will all be recreated
             return_table.returnrow_set.all().delete()
             return_rows = [
@@ -299,51 +535,134 @@ class ReturnSheet(object):
             ReturnRow.objects.bulk_create(return_rows)
 
     @property
-    def data(self):
-        return self.table['data']
-
-    @property
     def table(self):
         """
-        Method to return Running Sheet data for table format. Overrides method from Return model object.
+        Running Sheet Table of data for Species. Defaults to a Species on the Return if exists.
+        :return: formatted data.
+        """
+        return self.get_activity(self._species)['data']
+
+    @property
+    def species(self):
+        """
+        Species type associated with this Running Sheet of Activities.
+        :return:
+        """
+        return self._species
+
+    @property
+    def species_list(self):
+        """
+        List of Species available with Running Sheet of Activities.
+        :return: List of Species.
+        """
+        return self._species_list
+
+    @property
+    def licence_species_list(self):
+        """
+        List of Species applicable for Running Sheet Return Licence.
+        :return: List of Species.
+        """
+        return self._licence_species_list
+
+    @property
+    def activity_list(self):
+        """
+        List of stock movement activities applicable for Running Sheet.
+        :return: List of Activities applicable for Running Sheet.
+        """
+        return self._ACTIVITY_TYPES
+
+    def get_activity(self, _species_id):
+        """
+        Get Running Sheet activity for the movement of Species stock.
         :return: formatted data {'name': 'speciesId', 'data': [{'date': '2019/01/23', 'activity': 'SA01', ..., }]}
         """
-        _table = {'data': None}
         _row = {}
         _result = []
+        self._species = _species_id
         for resource in self._return.return_type.resources:
-            _resource_name = resource.get('name')
+            _resource_name = _species_id
             _schema = Schema(resource.get('schema'))
             try:
                 _return_table = self._return.returntable_set.get(name=_resource_name)
                 rows = [_return_row.data for _return_row in _return_table.returnrow_set.all()]
                 _validated_rows = _schema.rows_validator(rows)
-                _table['data'] = _validated_rows
+                self._table['data'] = rows
+                self._table['echo'] = 1
+                self._table['totalRecords'] = str(rows.__len__())
+                self._table['totalDisplayRecords'] = str(rows.__len__())
             except ReturnTable.DoesNotExist:
-                _table = self._NO_ACTIVITY
-        #_table = self._MOCK_TABLE
+                self._table = self._NO_ACTIVITY
 
-        return _table
+        return self._table
 
-    def get_activity_list(self):
+    def set_activity(self, _species_id, _data):
         """
-        Method to return the full list of activity types available for all Species.
-        :return: List of Activity Types.
+        Sets Running Sheet Activity for the movement of Species stock.
+        :param _species_id:
+        :param _data:
+        :return:
         """
-        return self._ACTIVITY_TYPES
+        self._create_return_data(self._return, _species_id, _data)
+        self.set_species(_species_id)
 
-    def get_species_list(self):
+    def set_species(self, _species):
+        """
+        Sets the species for the current Running Sheet.
+        :param _species:
+        :return:
+        """
+        self._species = _species
+        self._species_list.add(_species)
 
-        _species = self._species
-        #_species = self._MOCK_SPECIES
+    def get_species(self):
+        """
+        Gets the species for the current Running Sheet.
+        :return:
+        """
+        return self._species
 
-        return _species
+    def is_valid_licence(self, _licence_no):
+        """
+        Method to check if licence is current.
+        :param _licence_no:
+        :return: boolean
+        """
+        return False
 
-    def is_valid(self):
-        pass
+    def send_transfer_notification(self, _license_no):
+        """
+        send email notification for transfer of stock to receiving license holder.
+        :param _license_no:
+        :return: boolean
+        """
+        return False
+
+    def get_licensee_contact(self, _license_no):
+        """
+        Gets a valid License holder contact details.
+        :param _license_no:
+        :return:
+        """
+        return None
+
+    def store(self, request):
+        """
+        Save the current state of this Return Sheet.
+        :param request:
+        :return:
+        """
+        try:
+            species = request.data.get('species_id').encode('utf-8')
+            data = eval(request.data.get('species_data').encode('utf-8'))
+            self.set_activity(species, data)
+        except AttributeError:
+            pass
 
     def __str__(self):
-        return 'return-sheet-{0}'.format(self._return.id)
+        return self._return.lodgement_number
 
 
 class ReturnTable(RevisionedMixin):
