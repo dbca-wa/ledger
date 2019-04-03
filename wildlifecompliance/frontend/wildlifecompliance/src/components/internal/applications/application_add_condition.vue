@@ -76,9 +76,9 @@
                                                 <label class="control-label pull-left"  for="Name">Recurrence pattern</label>
                                             </div>
                                             <div class="col-sm-9">
-                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="1" v-model="condition.recurrence_pattern">Weekly</label>
-                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="2" v-model="condition.recurrence_pattern">Monthly</label>
-                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="3" v-model="condition.recurrence_pattern">Yearly</label>
+                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="weekly" v-model="condition.recurrence_pattern">Weekly</label>
+                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="monthly" v-model="condition.recurrence_pattern">Monthly</label>
+                                                <label class="radio-inline control-label"><input type="radio" name="recurrenceSchedule" value="yearly" v-model="condition.recurrence_pattern">Yearly</label>
                                             </div>
                                         </div>
                                     </div>
@@ -88,9 +88,9 @@
                                                 <label class="control-label"  for="Name">
                                                     <strong class="pull-left">Recur every</strong> 
                                                     <input class="pull-left" style="width:10%; margin-left:10px;" type="number" name="schedule" v-model="condition.recurrence_schedule"/> 
-                                                    <strong v-if="condition.recurrence_pattern == '1'" class="pull-left" style="margin-left:10px;">week(s)</strong>
-                                                    <strong v-else-if="condition.recurrence_pattern == '2'" class="pull-left" style="margin-left:10px;">month(s)</strong>
-                                                    <strong v-else-if="condition.recurrence_pattern == '3'" class="pull-left" style="margin-left:10px;">year(s)</strong>
+                                                    <strong v-if="condition.recurrence_pattern == 'weekly'" class="pull-left" style="margin-left:10px;">week(s)</strong>
+                                                    <strong v-else-if="condition.recurrence_pattern == 'monthly'" class="pull-left" style="margin-left:10px;">month(s)</strong>
+                                                    <strong v-else-if="condition.recurrence_pattern == 'yearly'" class="pull-left" style="margin-left:10px;">year(s)</strong>
                                                 </label>
                                             </div>
                                         </div>
@@ -150,7 +150,7 @@ export default {
                 due_date: '',
                 standard: true,
                 recurrence: false,
-                recurrence_pattern: '1',
+                recurrence_pattern: 'weekly',
                 application: vm.application_id,
                 licence_activity:null
             },
@@ -201,7 +201,7 @@ export default {
                 due_date: '',
                 standard: true,
                 recurrence: false,
-                recurrence_pattern: '1',
+                recurrence_pattern: 'weekly',
                 application: vm.application_id
             }
         },
@@ -221,7 +221,7 @@ export default {
                 standard: true,
                 recurrence: false,
                 due_date: '',
-                recurrence_pattern: '1',
+                recurrence_pattern: 'weekly',
                 application: this.application_id
             };
             this.errors = false;

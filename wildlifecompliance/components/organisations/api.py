@@ -120,7 +120,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def contacts_exclude(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            qs = instance.contacts.exclude(user_status='draft')
+            qs = instance.contacts.exclude(user_status=OrganisationContact.ORG_CONTACT_STATUS_DRAFT)
             serializer = OrganisationContactSerializer(qs, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -601,7 +601,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     def get_amendment_requested_requests(self, request, *args, **kwargs):
         try:
             qs = self.get_queryset().filter(
-                requester=request.user, status='amendment_requested')
+                requester=request.user, status=OrganisationRequest.ORG_REQUEST_STATUS_AMENDMENT_REQUESTED)
             serializer = OrganisationRequestDTSerializer(qs, many=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -796,7 +796,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.validated_data['requester'] = request.user
-            if request.data['role'] == 'consultant':
+            if request.data['role'] == OrganisationRequest.ORG_REQUEST_ROLE_CONSULTANT:
                 # Check if consultant can be relinked to org.
                 data = Organisation.existance(request.data['abn'])
                 data.update([('user', request.user.id)])

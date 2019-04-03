@@ -78,7 +78,15 @@ module.exports = {
       {
         test: /datatables\.net.*/,
         loader: 'imports-loader?define=>false,jquery=>jquery,$=>jquery'
-      }  
+      },
+      {
+        test: /\.scss$/,
+        use: [
+          'vue-style-loader',
+          'css-loader',
+          'sass-loader'
+        ]
+      }
     ]
   },
   plugins:[

@@ -16,7 +16,7 @@ class CommunicationLogEntrySerializer(serializers.ModelSerializer):
             'to',
             'fromm',
             'cc',
-            'type',
+            'log_type',
             'reference',
             'subject'
             'text',

@@ -41,28 +41,32 @@ class UserAction(models.Model):
 
 
 class CommunicationsLogEntry(models.Model):
-    TYPE_CHOICES = [('email', 'Email'), ('phone', 'Phone Call'),
-                    ('main', 'Mail'), ('person', 'In Person')]
-    DEFAULT_TYPE = TYPE_CHOICES[0][0]
+    COMMUNICATIONS_LOG_TYPE_EMAIL = 'email'
+    COMMUNICATIONS_LOG_TYPE_PHONE = 'phone'
+    COMMUNICATIONS_LOG_TYPE_MAIL = 'mail'
+    COMMUNICATIONS_LOG_TYPE_PERSON = 'person'
+    TYPE_CHOICES = (
+        (COMMUNICATIONS_LOG_TYPE_EMAIL, 'Email'),
+        (COMMUNICATIONS_LOG_TYPE_PHONE, 'Phone Call'),
+        (COMMUNICATIONS_LOG_TYPE_MAIL, 'Mail'),
+        (COMMUNICATIONS_LOG_TYPE_PERSON, 'In Person')
+    )
 
     to = models.TextField(blank=True, verbose_name="To")
     fromm = models.CharField(max_length=200, blank=True, verbose_name="From")
     cc = models.TextField(blank=True, verbose_name="cc")
-
-    type = models.CharField(
+    log_type = models.CharField(
         max_length=20,
         choices=TYPE_CHOICES,
-        default=DEFAULT_TYPE)
+        default=COMMUNICATIONS_LOG_TYPE_EMAIL)
     reference = models.CharField(max_length=100, blank=True)
     subject = models.CharField(
         max_length=200,
         blank=True,
         verbose_name="Subject / Description")
     text = models.TextField(blank=True)
-
     customer = models.ForeignKey(EmailUser, null=True, related_name='+')
     staff = models.ForeignKey(EmailUser, null=True, related_name='+')
-
     created = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 
     class Meta:

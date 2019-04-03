@@ -123,7 +123,7 @@ export default {
                     },
                     {
                         title: 'Type',
-                        data: 'type'
+                        data: 'log_type'
                     },
                     {
                         title: 'Reference',
