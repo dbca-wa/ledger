@@ -1,6 +1,6 @@
 <template lang="html">
     <span>
-        <div v-if="component.type == 'tab'">
+        <div v-if="component.type === 'tab'">
             <renderer-block v-for="(subcomponent, index) in component.children"
                 :component="subcomponent"
                 :json_data="value"
@@ -8,7 +8,7 @@
                 />
         </div>
 
-        <FormSection v-if="component.type == 'section'"
+        <FormSection v-if="component.type === 'section'"
             :label="component.label" :Index="component.name" :id="component.name">
                 <renderer-block v-for="(subcomponent, index) in component.children"
                     :component="subcomponent"
@@ -17,7 +17,7 @@
                     />
         </FormSection>
 
-        <Group v-if="component.type == 'group'"
+        <Group v-if="component.type === 'group'"
             :label="component.label"
             :name="component.name"
             :id="element_id()"
@@ -31,7 +31,7 @@
                     />
         </Group>
 
-        <TextField v-if="component.type == 'text'"
+        <TextField v-if="component.type === 'text'"
             type="text"
             :name="component.name"
             :value="value"
@@ -43,7 +43,7 @@
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
-        <TextField v-if="component.type == 'number'"
+        <TextField v-if="component.type === 'number'"
             type="number"
             :name="component.name"
             :value="value"
@@ -57,7 +57,7 @@
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
-        <TextField v-if="component.type == 'email'"
+        <TextField v-if="component.type === 'email'"
             type="email"
             :name="component.name"
             :value="value"
@@ -69,7 +69,7 @@
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
-        <div v-if="component.type == 'select'">
+        <div v-if="component.type === 'select'">
             <SelectBlock
                 :readonly="is_readonly"
                 :name="component.name"
@@ -93,7 +93,7 @@
                     :isRequired="component.isRequired"/>
         </div>
 
-        <SelectBlock v-if="component.type == 'multi-select'"
+        <SelectBlock v-if="component.type === 'multi-select'"
             :name="component.name"
             :label="component.label"
             :value="value"
@@ -107,7 +107,7 @@
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
-        <TextAreaBlock v-if="component.type == 'text_area' || component.type == 'text-area'"
+        <TextAreaBlock v-if="component.type === 'text_area' || component.type === 'text-area'"
             :readonly="is_readonly"
             :name="component.name"
             :value="value"
@@ -118,7 +118,7 @@
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
-        <Table v-if="component.type == 'table'"
+        <Table v-if="component.type === 'table'"
             :headers="component.headers"
             :readonly="is_readonly"
             :name="component.name"
@@ -130,11 +130,11 @@
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
-        <Label v-if="component.type == 'label'"
+        <Label v-if="component.type === 'label'"
             :value="component.label"
             :id="element_id()"/>
 
-        <div class="form-group" v-if="component.type == 'radiobuttons'">
+        <div class="form-group" v-if="component.type === 'radiobuttons'">
             <label :id="element_id()" class="inline">{{component.label}}</label>
                 <HelpText :help_text="help_text"/>
                 <HelpTextUrl :help_text_url="help_text_url"/>
@@ -163,7 +163,7 @@
                     :readonly="is_readonly"/>
         </div>
 
-        <div class="form-group" v-if="component.type == 'checkbox'">
+        <div class="form-group" v-if="component.type === 'checkbox'">
             <Checkbox
                 :group="component.group"
                 :name="component.name"
@@ -184,7 +184,7 @@
                 :isRequired="component.isRequired"/>
         </div>
 
-        <div class="form-group" v-if="component.type == 'declaration'">
+        <div class="form-group" v-if="component.type === 'declaration'">
             <label>{{component.label}}</label>
             <Checkbox
                 :name="component.name"
@@ -199,7 +199,7 @@
                 :data="value"/>
         </div>
 
-        <File v-if="component.type == 'file'"
+        <File v-if="component.type === 'file'"
             :name="component.name"
             :label="component.label"
             :value="value"
@@ -213,7 +213,7 @@
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
-        <DateField v-if="component.type == 'date'"
+        <DateField v-if="component.type === 'date'"
             :name="component.name"
             :label="component.label"
             :value="value"
