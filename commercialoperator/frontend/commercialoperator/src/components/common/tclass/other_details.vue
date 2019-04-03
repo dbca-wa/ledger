@@ -41,7 +41,7 @@
                                             <label class="control-label pull-left"  for="Name">Accreditation certificates</label>
                                         </div>
                                         <div class="col-sm-9">
-                                            <FileField :proposal_id="proposal.id" isRepeatable="false" name="accreditation_certificate" required_doc_id="1" :id="'proposal'+proposal.id"></FileField>
+                                            <FileField :proposal_id="proposal.id" isRepeatable="false" name="accreditation_certificate" :id="'proposal'+proposal.id"></FileField>
                                         </div>
                                     </div>
                                 </div>
@@ -156,7 +156,7 @@
                                     </label>
                                 </div>
                                 <div class="col-sm-3">
-                                    <FileField :proposal_id="proposal.id" isRepeatable="false" name="currency_certificate" required_doc_id="1" :id="'proposal'+proposal.id"></FileField>
+                                    <FileField :proposal_id="proposal.id" isRepeatable="false" name="currency_certificate" :id="'proposal'+proposal.id"></FileField>
                                 </div>
                                 <div class="col-sm-3">
                                     <label class="control-label pull-left"  for="Name">Expiry Date
@@ -202,7 +202,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <FileField :proposal_id="proposal.id" isRepeatable="true" name="other_details" required_doc_id="1" :id="'proposal'+proposal.id"></FileField>
+                                    <FileField :proposal_id="proposal.id" isRepeatable="true" name="other_details" :id="'proposal'+proposal.id"></FileField>
                                 </div>                                
                             </div>
                        </div> 
@@ -278,7 +278,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <FileField :proposal_id="proposal.id" isRepeatable="false" name="deed_poll" required_doc_id="1" :id="'proposal'+proposal.id"></FileField>
+                                    <FileField :proposal_id="proposal.id" isRepeatable="false" name="deed_poll" :id="'proposal'+proposal.id"></FileField>
                                 </div>                                
                             </div>
                        </div> 
@@ -293,7 +293,8 @@
 
 <script>
 import Vue from 'vue' 
-import FileField from './required_docs.vue'
+//import FileField from './required_docs.vue'
+import FileField from '@/components/forms/filefield.vue'
 import {
   api_endpoints,
   helpers

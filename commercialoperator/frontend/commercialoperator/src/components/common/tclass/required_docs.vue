@@ -139,6 +139,7 @@ export default {
                     }
                 }
                 $(e.target).css({ 'display': 'none'});
+                $(e.target.parentElement).css({ 'display': 'none'});//to hide <span> element btn-link
 
             } else {
                 vm.files = [];
