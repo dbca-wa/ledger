@@ -61,7 +61,7 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
 
     @list_route(methods=['GET', ])
     def user_list(self, request, *args, **kwargs):
-        qs = self.get_queryset().exclude(processing_status='future')
+        qs = self.get_queryset().exclude(processing_status=Return.RETURN_PROCESSING_STATUS_FUTURE)
 
         serializer = ReturnSerializer(qs, many=True)
         return Response(serializer.data)

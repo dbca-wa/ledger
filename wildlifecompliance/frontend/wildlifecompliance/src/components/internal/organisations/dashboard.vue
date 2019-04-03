@@ -15,7 +15,7 @@
                 <label for="">Applicant</label>
                 <select class="form-control" v-model="filterApplicant">
                     <option value="All">All</option>
-                    <option v-for="a  in applicantChoices" :value="a">{{a}}</option>
+                    <option v-for="a in applicantChoices" :value="a">{{a}}</option>
                 </select>
             </div>
         </div>

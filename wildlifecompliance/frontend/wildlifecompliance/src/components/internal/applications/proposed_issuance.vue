@@ -136,7 +136,7 @@ export default {
             return vm.errors;
         },
         title: function(){
-        // TODO: check what this is doing and what this.processing_status is referring to
+        // TODO: application processing_status doesnt have a "with approver" status (disturbance legacy), need to fix
             return this.application.processing_status.id == 'with_approver' ? 'Issue Licence' : 'Propose to issue licence';
         },
         visibleLicenceActivities: function() {

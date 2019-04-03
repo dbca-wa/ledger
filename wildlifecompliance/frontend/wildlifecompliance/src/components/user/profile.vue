@@ -427,7 +427,6 @@ export default {
             uploadedFile: null,
             uploadedID: null,
             updatingPersonal: false,
-            updatingPersonal: false,
             updatingAddress: false,
             updatingContact: false,
             role:null,

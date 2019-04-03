@@ -84,7 +84,7 @@ class Organisation(models.Model):
                 fax_number=user.fax_number,
                 email=user.email,
                 user_role=role,
-                user_status='pending',
+                user_status=OrganisationContact.ORG_CONTACT_STATUS_PENDING,
                 is_admin=admin_flag
 
             )
@@ -551,19 +551,22 @@ class OrganisationContact(models.Model):
     ORG_CONTACT_STATUS_DECLINED = 'declined'
     ORG_CONTACT_STATUS_UNLINKED = 'unlinked'
     ORG_CONTACT_STATUS_SUSPENDED = 'suspended'
-    USER_STATUS_CHOICES = ((ORG_CONTACT_STATUS_DRAFT, 'Draft'),
-                           (ORG_CONTACT_STATUS_PENDING, 'Pending'),
-                           (ORG_CONTACT_STATUS_ACTIVE, 'Active'),
-                           (ORG_CONTACT_STATUS_DECLINED, 'Declined'),
-                           (ORG_CONTACT_STATUS_UNLINKED, 'Unlinked'),
-                           (ORG_CONTACT_STATUS_SUSPENDED, 'Suspended'))
+    USER_STATUS_CHOICES = (
+        (ORG_CONTACT_STATUS_DRAFT, 'Draft'),
+        (ORG_CONTACT_STATUS_PENDING, 'Pending'),
+        (ORG_CONTACT_STATUS_ACTIVE, 'Active'),
+        (ORG_CONTACT_STATUS_DECLINED, 'Declined'),
+        (ORG_CONTACT_STATUS_UNLINKED, 'Unlinked'),
+        (ORG_CONTACT_STATUS_SUSPENDED, 'Suspended')
+    )
     ORG_CONTACT_ROLE_ADMIN = 'organisation_admin'
     ORG_CONTACT_ROLE_USER = 'organisation_user'
     ORG_CONTACT_ROLE_CONSULTANT = 'consultant'
-    USER_ROLE_CHOICES = ((ORG_CONTACT_ROLE_ADMIN, 'Organisation Admin'),
-                         (ORG_CONTACT_ROLE_USER, 'Organisation User'),
-                         (ORG_CONTACT_ROLE_CONSULTANT, 'Consultant')
-                         )
+    USER_ROLE_CHOICES = (
+        (ORG_CONTACT_ROLE_ADMIN, 'Organisation Admin'),
+        (ORG_CONTACT_ROLE_USER, 'Organisation User'),
+        (ORG_CONTACT_ROLE_CONSULTANT, 'Consultant')
+    )
     user_status = models.CharField(
         'Status',
         max_length=40,
