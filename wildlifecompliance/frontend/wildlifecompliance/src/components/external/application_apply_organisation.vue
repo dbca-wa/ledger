@@ -74,13 +74,10 @@ export default {
     },
     org: function() {
         let vm = this;
-        console.log('from org function',vm.org_applicant)
         if (vm.org_applicant != '' || vm.org_applicant != 'submitter'){
             return vm.current_user.wildlifecompliance_organisations.find(org => parseInt(org.id) === parseInt(vm.org_applicant)).name;
         }
         return '';
-        
-        
     }
   },
   methods: {
@@ -94,10 +91,6 @@ export default {
                         org_select:vm.org_applicant
                       }
                   });
-        console.log('from organisation submit - licence_select: ',vm.licence_select);
-        console.log('from organisation submit - org id: ',vm.org_applicant);
-        console.log('From organisation submit - submitter id: ',vm.current_user.id);
-        console.log('org applicant - ', window.v_org_applicant);
     },
     
     fetchOrgContact:function (){
@@ -106,7 +99,6 @@ export default {
                 vm.orgRequest_pending = response.body;
                 vm.loading.splice('fetching pending organisation requests ',1);
             },(response)=>{
-                console.log(response);
                 vm.loading.splice('fetching pending organisation requests',1);
             });
         },
@@ -115,8 +107,6 @@ export default {
   mounted: function() {
     let vm = this;
     vm.form = document.forms.new_application;
-    console.log(vm.licence_select);
-
   },
   beforeRouteEnter:function(to,from,next){
         let initialisers = [

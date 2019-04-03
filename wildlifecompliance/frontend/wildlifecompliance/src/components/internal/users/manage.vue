@@ -321,7 +321,6 @@ export default {
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
-                console.log(data[0]);
                 vm.user = data[0];
                 vm.user.residential_address = vm.user.residential_address != null ? vm.user.residential_address : {};
             });
