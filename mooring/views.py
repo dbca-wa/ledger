@@ -2393,9 +2393,6 @@ class ViewBookingView(LoginRequiredMixin, TemplateView):
 #             booking = Booking.objects.get(customer=request.user, booking_type__in=(0, 1), is_canceled=False, pk=booking_id)
              booking = Booking.objects.get(pk=booking_id)
              booking_lines = MooringsiteBooking.objects.filter(booking=booking)
-             print ("BOO LINE") 
-             print booking_lines
-             print ("BOO KINE END")
 
              for ob in booking_lines:
                   from_dt = datetime.strptime(ob.from_dt.strftime('%Y-%m-%d'),'%Y-%m-%d')
