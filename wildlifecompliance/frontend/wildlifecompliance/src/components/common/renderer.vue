@@ -4,7 +4,7 @@
             <h3>Application {{application.id}}: {{application.licence_type_short_name}}</h3>
         </div>
         <div v-if="withSectionsSelector" class="col-md-3 sections-dropdown">
-            <affix class="sections-menu" relative-element-selector="#tabs" style="width: 249px">
+            <affix class="sections-menu" relative-element-selector="#tabs">
                 <div class="panel panel-default fixed">
                 <div class="panel-heading">
                     <div class="dropdown">

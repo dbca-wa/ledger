@@ -1,6 +1,7 @@
 $amendment-color: #ff0000;
 $section-text-color: #000000;
 $tablet-screen-size: 991px;
+$sections-menu-width: 249px;
 
 .amendment-highlight {
     color: $amendment-color !important;
@@ -10,6 +11,10 @@ $tablet-screen-size: 991px;
         content: "\f06a";
         margin-left: 5px;
     }
+}
+
+.sections-menu {
+    width: $sections-menu-width;
 }
 
 .sections-dropdown {
