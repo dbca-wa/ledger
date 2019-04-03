@@ -66,7 +66,7 @@
         helpers
     }
     from '@/utils/hooks'
-    import { mapState, mapGetters, mapActions } from 'vuex'
+    
     export default {
         name: 'CallEmailTableDash',
         data() {
@@ -126,16 +126,7 @@
                         },
                         {
                             mRender: function (data, type, full) {
-                                //return `<a href="http://www.google.com">link</a>`
-                                //let url = api_endpoints.call_email + '2' + '/view_call/'
-                                //return `<a href="` + url + `">link</a>`
-                                
-                                //return `<div class="col-sm-12"><button @click.prevent="viewCallEmail"
-                                //class="btn btn-primary pull-right">View Call/Email</button></div>`
-                                //console.log(this.$route.params.call_email_id);
-                                //this.loadCallEmail(full.id);
                                 return `<a href="/internal/call_email/${full.id}">View</a>`
-                                //this.$router.push({ path: '/internal' });
                             }
                         }
                     ],
@@ -229,16 +220,6 @@
             
         },
         methods: {
-            ...mapActions([
-                'loadCallEmail',
-            ]),
-            viewCallEmail: function() {
-                let url = helpers.add_endpoint_json(api_endpoints.call_email,('{3}/view'));
-                console.log(url);
-                this.$http.get(url);
-                //vm.$route. r.push({
-                //name: 'internal-call_emails-dash' 
-            },
             
             createCallEmailUrl: function () {
                 //return `<a href="/api/call_email/create_call_email"/>`;
