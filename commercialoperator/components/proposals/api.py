@@ -279,6 +279,26 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         return self.paginator.get_paginated_response(serializer.data)
 
     @list_route(methods=['GET',])
+    def qaofficer_internal(self, request, *args, **kwargs):
+        """
+        Used by the internal dashboard
+
+        http://localhost:8499/api/proposal_paginated/referrals_internal/?format=datatables&draw=1&length=2
+        """
+        #import ipdb; ipdb.set_trace()
+        self.serializer_class = ReferralSerializer
+        #qs = Referral.objects.filter(referral=request.user) if is_internal(self.request) else Referral.objects.none()
+        qs = Referral.objects.filter(referral_group__in=request.user.referralrecipientgroup_set.all()) if is_internal(self.request) else Referral.objects.none()
+        #qs = self.filter_queryset(self.request, qs, self)
+        qs = self.filter_queryset(qs)
+
+        self.paginator.page_size = qs.count()
+        result_page = self.paginator.paginate_queryset(qs, request)
+        serializer = DTReferralSerializer(result_page, context={'request':request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
+
+
+    @list_route(methods=['GET',])
     def proposals_external(self, request, *args, **kwargs):
         """
         Used by the external dashboard

@@ -35,6 +35,7 @@ module.exports = {
     compliances_paginated_external: "/api/compliance_paginated/compliances_external/?format=datatables",
     proposals_paginated_internal:   "/api/proposal_paginated/proposals_internal/?format=datatables",
     referrals_paginated_internal:   "/api/proposal_paginated/referrals_internal/?format=datatables",
+    qaofficer_paginated_internal:   "/api/proposal_paginated/qaofficer_internal/?format=datatables",
     //filter_list:                    "/api/proposal_paginated/filter_list.json",
     filter_list:                    "/api/proposal/filter_list.json",
     filter_list_approvals:          "/api/approvals/filter_list.json",

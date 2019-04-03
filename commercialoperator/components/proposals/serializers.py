@@ -154,6 +154,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'allowed_assessors',
                 'proposal_type',
                 'is_qa_officer',
+                'qaofficer_referral',
 
                 # tab field models
                 'applicant_details',

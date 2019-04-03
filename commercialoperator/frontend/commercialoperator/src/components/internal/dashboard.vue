@@ -7,6 +7,7 @@
 <script>
 import ProposalDashTable from '@common-utils/proposals_dashboard.vue'
 import ReferralDashTable from '@common-utils/referrals_dashboard.vue'
+import QAOfficerDashTable from '@common-utils/qaofficer_dashboard.vue'
 import {
   api_endpoints,
   helpers
@@ -23,6 +24,7 @@ export default {
             //proposals_url: api_endpoints.list_proposals,
             proposals_url: api_endpoints.proposals_paginated_internal,
             referrals_url: api_endpoints.referrals_paginated_internal,
+            qaofficer_url: api_endpoints.qaofficer_paginated_internal,
         }
     
     },
@@ -30,6 +32,7 @@ export default {
     components: {
         ProposalDashTable,
         ReferralDashTable
+        QAOfficerDashTable
     },
     computed: {
     },
