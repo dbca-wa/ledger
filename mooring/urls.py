@@ -53,6 +53,7 @@ router.register(r'registeredVessels', api.RegisteredVesselsViewSet)
 
 api_patterns = [
     url(r'^api/profile$',api.GetProfile.as_view(), name='get-profile'),
+    url(r'^api/profile-admin$',api.GetProfileAdmin.as_view(), name='get-profile-admin'),
     url(r'^api/profile/update_personal$',api.UpdateProfilePersonal.as_view(), name='update-profile-personal'),
     url(r'^api/profile/update_contact$',api.UpdateProfileContact.as_view(), name='update-profile-contact'),
     url(r'^api/profile/update_address$',api.UpdateProfileAddress.as_view(), name='update-profile-address'),

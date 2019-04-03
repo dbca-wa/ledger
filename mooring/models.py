@@ -571,6 +571,7 @@ class BookingPeriodOption(models.Model):
     all_day = models.BooleanField(default=True)
     change_group = models.ForeignKey('ChangeGroup',null=True,blank=True)
     cancel_group = models.ForeignKey('CancelGroup',null=True,blank=True)
+    caption = models.TextField(blank=True,null=True, max_length=255)
     created = models.DateTimeField(auto_now_add=True)
     #mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
 
@@ -1208,6 +1209,7 @@ class Booking(models.Model):
     cancelation_time = models.DateTimeField(null=True,blank=True)
     confirmation_sent = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='created_by_booking')
     canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='canceled_bookings')
     old_booking = models.ForeignKey('Booking', null=True, blank=True)
     admission_payment = models.ForeignKey('AdmissionsBooking', null=True, blank=True)
@@ -1809,6 +1811,9 @@ class AdmissionsBooking(models.Model):
     noOfInfants = models.IntegerField()
     warningReferenceNo = models.CharField(max_length=200, blank=True)
     totalCost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='created_by_admissions')
+    canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='canceled_bookings_admissions')
+    cancelation_time = models.DateTimeField(null=True,blank=True)
     created = models.DateTimeField(default=timezone.now)
     location = models.ForeignKey(AdmissionsLocation, blank=True, null=True)    
 
@@ -1843,6 +1848,12 @@ class AdmissionsBooking(models.Model):
             return False
         else:
             return True
+
+    @property
+    def active_invoice(self):
+        active_invoices = Invoice.objects.filter(reference__in=[x.invoice_reference for x in self.invoices.all()]).order_by('-created')
+        return active_invoices[0] if active_invoices else None
+
 
 class AdmissionsLine(models.Model):
     arrivalDate = models.DateField()

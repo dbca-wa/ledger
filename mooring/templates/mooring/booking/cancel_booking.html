@@ -51,9 +51,9 @@ Booking information below and refund or fees to pay in order to cancel booking. 
 
       </table>
       {% if booking_total < 0 %}  
-       <h2>Refund Total : {{ booking_total_positive }} </h2>
+       <h2>Refund Total : ${{ booking_total_positive }} </h2>
       {% else %}
-        <h2>Total to Pay  : {{ booking_total }} </h2>
+        <h2>Total to Pay  : ${{ booking_total }} </h2>
       {% endif %}
  
 </div>
