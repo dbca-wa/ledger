@@ -1850,6 +1850,11 @@ class AdmissionsBooking(models.Model):
             return True
 
     @property
+    def admissions_line(self):
+        lines = AdmissionsLine.objects.filter(admissionsBooking=self)
+        return lines
+
+    @property
     def active_invoice(self):
         active_invoices = Invoice.objects.filter(reference__in=[x.invoice_reference for x in self.invoices.all()]).order_by('-created')
         return active_invoices[0] if active_invoices else None
