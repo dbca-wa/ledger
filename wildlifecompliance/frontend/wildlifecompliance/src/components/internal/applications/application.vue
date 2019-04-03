@@ -1325,7 +1325,7 @@ export default {
             this.setOriginalApplication(response.body);
             this.setApplication(response.body);
             this.$nextTick(() => {
-                this.initialiseAssignedOfficerSelect(true);
+                this.initialiseAssignedOfficerSelect(reinit=true);
                 this.updateAssignedOfficerSelect();
             });
         },
