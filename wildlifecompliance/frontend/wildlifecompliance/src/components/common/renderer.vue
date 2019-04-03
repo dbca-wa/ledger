@@ -1,11 +1,10 @@
 <template lang="html">
     <div>
-        <div>
-            <div class="col-lg-12" >
-                <h3>Application {{application.id}}: {{application.licence_type_short_name}}</h3>
-            </div>
-            <div class="col-md-3 sections-dropdown">
-                <affix class="sections-menu" relative-element-selector="#tabs" style="width: 249px">
+        <div v-if="withSectionsSelector" class="col-lg-12" >
+            <h3>Application {{application.id}}: {{application.licence_type_short_name}}</h3>
+        </div>
+        <div v-if="withSectionsSelector" class="col-md-3 sections-dropdown">
+            <affix class="sections-menu" relative-element-selector="#tabs" style="width: 249px">
                 <div class="panel panel-default fixed">
                 <div class="panel-heading">
                     <div class="dropdown">
@@ -40,27 +39,26 @@
                 <div class="panel-body" style="padding:0">
                 </div>
                 </div>
-                </affix>
-            </div>
-            <div class="col-md-9" id="tabs">
-                <ul class="nav nav-tabs" id="tabs-section" data-tabs="tabs">
-                    <li v-for="(activity, index) in listVisibleActivities">
-                        <a :class="{'nav-link amendment-highlight': application.has_amendment}"
-                            data-toggle="tab" v-on:click="selectTab(activity)">{{activity.label}}</a>
-                    </li>
-                </ul>
-                <div class="tab-content">
-                    <div v-for="(activity, index) in listVisibleActivities">
-                        <AmendmentRequestDetails :activity_id="activity.id" />
-                        <renderer-block
-                            :component="activity"
-                            :json_data="applicationData"
-                            v-if="activity.id == selected_activity_tab_id"
-                            v-bind:key="`renderer_block_${index}`"
-                            />
-                    </div>
-                    {{ this.$slots.default }}
+            </affix>
+        </div>
+        <div :class="`${form_width ? form_width : 'col-md-9'}`" id="tabs">
+            <ul class="nav nav-tabs" id="tabs-section" data-tabs="tabs">
+                <li v-for="(activity, index) in listVisibleActivities">
+                    <a :class="{'nav-link amendment-highlight': application.has_amendment}"
+                        data-toggle="tab" v-on:click="selectTab(activity)">{{activity.label}}</a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div v-for="(activity, index) in listVisibleActivities">
+                    <AmendmentRequestDetails :activity_id="activity.id" />
+                    <renderer-block
+                        :component="activity"
+                        :json_data="applicationData"
+                        v-if="activity.id == selected_activity_tab_id"
+                        v-bind:key="`renderer_block_${index}`"
+                        />
                 </div>
+                {{ this.$slots.default }}
             </div>
         </div>
     </div>
@@ -85,6 +83,14 @@ export default {
     }
   },
   props:{
+    withSectionsSelector:{
+        type: Boolean,
+        default: true
+    },
+    form_width: {
+        type: String,
+        default: 'col-md-9'
+    }
   },
   computed: {
     ...mapGetters([
