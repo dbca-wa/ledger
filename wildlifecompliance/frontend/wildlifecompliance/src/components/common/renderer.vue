@@ -149,7 +149,7 @@ export default {
     },
     sectionClick: function(component) {
         if(this.section_tab_id == component.id) {
-            this.section_tab_id = 0;
+            this.section_tab_id = 0;  // Collapse the expanded panel upon double click.
         }
         else {
             this.section_tab_id = component.id;
