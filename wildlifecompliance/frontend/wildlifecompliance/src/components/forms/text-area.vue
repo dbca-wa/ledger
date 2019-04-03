@@ -30,7 +30,7 @@ import HelpText from './help_text.vue';
 import HelpTextUrl from './help_text_url.vue';
 import { mapGetters } from 'vuex';
 export default {
-    props:["name", "value", "id", "isRequired", "help_text", "label", "readonly", "comment_value", "help_text_url", "renderer"],
+    props:["name", "value", "id", "isRequired", "help_text", "label", "readonly", "comment_value", "help_text_url"],
     components: {Comment, HelpText, HelpTextUrl},
     data(){
         let vm = this;

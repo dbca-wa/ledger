@@ -16,7 +16,7 @@
     import { mapGetters } from 'vuex';
     export default {
         name: 'conditions',
-        props: ["conditions","renderer","name","data","readonly"],
+        props: ["conditions","name","data","readonly"],
         computed: {
             ...mapGetters([
                 'isComponentVisible',
