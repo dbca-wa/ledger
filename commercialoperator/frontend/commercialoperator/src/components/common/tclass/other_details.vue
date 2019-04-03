@@ -15,13 +15,13 @@
                         <label class="control-label">Are you currently accredited?</label>
                         <ul class="list-inline"  >
                             <li v-for="c in accreditation_choices" class="form-check list-inline-item">
-                                <input  class="form-check-input" ref="Checkbox" type="checkbox" v-model="accreditation_type" :value="c.key" data-parsley-required />
+                                <input  class="form-check-input" ref="Checkbox" type="checkbox" v-model="proposal.other_details.accreditation_type" :value="c.key" data-parsley-required />
                                         {{ c.value }}
                             </li>
                         </ul>
-                        <div v-if="accreditation_type">
+                        <div v-if="proposal.other_details.accreditation_type">
                             <fieldset class="scheduler-border">
-                                <legend class="scheduler-border">{{accreditation_type}}</legend>
+                                <legend class="scheduler-border">{{proposal.other_details.accreditation_type}}</legend>
                                 <div class="form-group">
                                     <div class="row">
                                         <div class="col-sm-3">
@@ -29,7 +29,7 @@
                                         </div>
                                         <div class="col-sm-9">
                                             <div class="input-group date" ref="expiry_date" style="width: 70%;">
-                                                <input type="text" class="form-control" name="expiry_date" placeholder="DD/MM/YYYY">
+                                                <input type="text" class="form-control" v-model="proposal.other_details.accreditation_expiry" name="expiry_date" placeholder="DD/MM/YYYY">
                                                 <span class="input-group-addon">
                                                     <span class="glyphicon glyphicon-calendar"></span>
                                                 </span>
@@ -71,7 +71,7 @@
                                     <label class="control-label pull-left"  for="Name">Preferred licence period</label>
                                 </div>
                                 <div class="col-sm-9">
-                                    <select class="form-control">
+                                    <select class="form-control" v-model="proposal.other_details.preferred_licence_period">
                                         <option v-for="l in licence_period_choices" :value="z">{{l.value}}</option>
                                     </select>
                                 </div>
@@ -82,7 +82,7 @@
                                 </div>
                                 <div class="col-sm-9">
                                     <div class="input-group date" ref="nominated_start_date" style="width: 70%;">
-                                        <input type="text" class="form-control" name="nominated_start_date" placeholder="DD/MM/YYYY">
+                                        <input type="text" class="form-control" v-model="proposal.other_details.nominated_start_date" name="nominated_start_date" placeholder="DD/MM/YYYY">
                                         <span class="input-group-addon">
                                             <span class="glyphicon glyphicon-calendar"></span>
                                         </span>
@@ -164,7 +164,7 @@
                                 </div>
                                 <div class="col-sm-3">
                                     <div class="input-group date" ref="expiry_date" style="width: 70%;">
-                                        <input type="text" class="form-control" name="expiry_date" placeholder="DD/MM/YYYY">
+                                        <input type="text" class="form-control" name="expiry_date" placeholder="DD/MM/YYYY" v-model="proposal.other_details.insurance_expiry">
                                             <span class="input-group-addon">
                                                 <span class="glyphicon glyphicon-calendar"></span>
                                             </span>
@@ -197,7 +197,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <textarea class="form-control"></textarea>
+                                    <textarea class="form-control" v-model="proposal.other_details.other_comments"></textarea>
                                 </div>                                
                             </div>
                             <div class="row">
@@ -229,12 +229,12 @@
                             </div>
                             <div class="col-sm-3">
                                 <label>
-                                    <input type="radio" value="true"/>Yes
+                                    <input type="radio" value="true" v-model="proposal.other_details.credit_fees"/>Yes
                                 </label>
                             </div>
                             <div class="col-sm-3">
                                 <label>
-                                    <input type="radio" value="false"/>No
+                                    <input type="radio" value="false" v-model="proposal.other_details.credit_fees"/>No
                                 </label>
                             </div>
                         </div>
@@ -244,12 +244,12 @@
                             </div>
                             <div class="col-sm-3">
                                 <label>
-                                    <input type="radio" value="true"/>Yes
+                                    <input type="radio" v-model="proposal.other_details.credit_docket_books" value="true"/>Yes
                                 </label>
                             </div>
                             <div class="col-sm-3">
                                 <label>
-                                    <input type="radio" value="false"/>No
+                                    <input type="radio" v-model="proposal.other_details.credit_docket_books" value="false"/>No
                                 </label>
                             </div>
                         </div>

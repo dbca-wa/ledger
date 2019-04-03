@@ -616,7 +616,7 @@ def save_park_zone_activity_data(instance,marine_parks_activities):
         except:
             raise
 
-def save_proponent_data(instance,request,viewset,select_parks_activities,select_trails_activities, marine_parks_activities):
+def save_proponent_data(instance,request,viewset,other_details_data, select_parks_activities,select_trails_activities, marine_parks_activities):
     with transaction.atomic():
         try:
 #            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
@@ -632,12 +632,14 @@ def save_proponent_data(instance,request,viewset,select_parks_activities,select_
 #                'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
 #                'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
 #            }
-            data = {}
+            data = {
+            'other_details': other_details_data
+            }
 
             #import ipdb; ipdb.set_trace()
             # s=request.data.get('selected')
             # print type(s)
-            # other_details=ProposalOtherDetails.objects.get_or_create(proposal=instance)
+            other_details=ProposalOtherDetails.objects.update_or_create(proposal=instance)
             # instance.save()
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)

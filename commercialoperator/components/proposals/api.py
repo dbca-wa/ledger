@@ -70,6 +70,8 @@ from commercialoperator.components.proposals.serializers import (
     SaveVehicleSerializer,
     VehicleSerializer,
     VesselSerializer,
+    ProposalOtherDetailsSerializer,
+    SaveProposalOtherDetailsSerializer,
 )
 from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.approvals.serializers import ApprovalSerializer
@@ -993,12 +995,17 @@ class ProposalViewSet(viewsets.ModelViewSet):
             import json
             sc=json.loads(schema)
             #import ipdb; ipdb.set_trace()
+            other_details_data=sc['other_details']
+            serializer = ProposalOtherDetailsSerializer(instance.other_details,data=other_details_data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            print other_details_data
             select_parks_activities=sc['selected_parks_activities']
             select_trails_activities=sc['selected_trails_activities']
             marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
             print marine_parks_activities
             #trails=list(sc['trails'])
-            save_proponent_data(instance,request,self,select_parks_activities, select_trails_activities, marine_parks_activities)
+            save_proponent_data(instance,request,self,other_details_data, select_parks_activities, select_trails_activities, marine_parks_activities)
             # if parks:
             #     instance.save_parks(request,parks)
             return redirect(reverse('external'))
@@ -1127,6 +1134,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 'district': district,
                 'activity': activity,
                 'approval_level': approval_level,
+                #'other_details': {},
                 #'tenure': tenure,
                 'data': [
                     {
@@ -1147,7 +1155,17 @@ class ProposalViewSet(viewsets.ModelViewSet):
             serializer = SaveProposalSerializer(data=data)
             #import ipdb; ipdb.set_trace()
             serializer.is_valid(raise_exception=True)
-            serializer.save()
+            #serializer.save()
+            instance=serializer.save()
+            #Create ProposalOtherDetails instance for T Class licence
+            if application_name=='T Class':
+                other_details_data={
+                'proposal': instance.id
+                }
+                serializer=SaveProposalOtherDetailsSerializer(data=other_details_data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+            serializer = SaveProposalSerializer(instance)
             return Response(serializer.data)
         except Exception as e:
             print(traceback.print_exc())
