@@ -49,16 +49,8 @@
                             </div>
                             <div class="col-sm-12">
                                 <button v-if="!savingCallEmail" @click.prevent="createCallEmail"
-                                    class="btn btn-primary pull-right">BB
-                                    Save</button>
-                                <button v-if="!savingCallEmail" @click.prevent="save_exit"
-                                    class="btn btn-primary pull-right">Save and
-                                    Return</button>
-                                <button v-if="!savingCallEmail" @click.prevent="save_wo_confirm"
-                                    class="btn btn-primary pull-right">Save
-                                    and Continue</button>
-                                <button v-else disabled class="pull-right btn btn-primary"><i
-                                        class="fa fa-spin fa-spinner"></i>&nbsp;Saving</button>
+                                    class="btn btn-primary pull-right">Save</button>
+                                
                             </div>
                         </form>
                     </div>
