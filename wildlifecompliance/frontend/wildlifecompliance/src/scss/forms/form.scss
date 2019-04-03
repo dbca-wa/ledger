@@ -1,9 +1,36 @@
+$amendment-color: #ff0000;
+$section-text-color: #000000;
+$tablet-screen-size: 991px;
+
 .amendment-highlight {
-    color: #ff0000 !important;
+    color: $amendment-color !important;
 
     &:after {
         font-family: "FontAwesome";
         content: "\f06a";
         margin-left: 5px;
+    }
+}
+
+.sections-dropdown {
+
+    @media only screen and (max-width: $tablet-screen-size) {
+        display: none;
+    }
+
+    a {
+        color: $section-text-color;
+        cursor: pointer;
+    }
+    
+    .section-list {
+        a {
+            padding-right: 10px;
+        }
+    }
+
+    .dropdown-panel {
+        max-height: calc(100vh - 150px);
+        overflow-y: auto;
     }
 }

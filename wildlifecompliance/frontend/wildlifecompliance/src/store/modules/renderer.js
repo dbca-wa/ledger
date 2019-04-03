@@ -8,12 +8,11 @@ import {
 export const rendererStore = {
     state: {
         tabs: [],
-        sections: [],
+        sections: {},
         visible_components: []
     },
     getters: {
         renderer_tabs: state => state.tabs,
-        renderer_sections: state => state.sections,
         visibleActivities: (state, getters, rootState, rootGetters) => (
             hide_decisions, hide_processing_statuses) => {
             return rootGetters.application.schema.filter(
@@ -41,13 +40,16 @@ export const rendererStore = {
         isComponentVisible: (state) => (key) => {
             return state.visible_components[key] ? true : false;
         },
+        sectionsForTab: (state) => (tab_id) => {
+            return state.sections[tab_id] ? state.sections[tab_id] : [];
+        },
     },
     mutations: {
         [UPDATE_RENDERER_TABS] (state, tabs) {
-            state.tabs = tabs;
+            Vue.set(state, 'tabs', tabs);
         },
         [UPDATE_RENDERER_SECTIONS] (state, sections) {
-            state.sections = sections;
+            Vue.set(state, 'sections', {...sections});
         },
         [UPDATE_VISIBLE_COMPONENT] (state, { key, value }) {
             Vue.set(state.visible_components, key, value);
