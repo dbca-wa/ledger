@@ -41,7 +41,7 @@ export const userStore = {
             state.selected_activity_tab_name = tab_name;
         },
         [UPDATE_CURRENT_USER] (state, user) {
-            state.current_user = user;
+            Vue.set(state, 'user', {...user});
         },
     },
     actions: {
