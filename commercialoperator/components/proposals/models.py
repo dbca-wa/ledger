@@ -1317,11 +1317,15 @@ class ProposalOtherDetails(models.Model):
     )
     accreditation_type = models.CharField('Accreditation', max_length=40, choices=ACCREDITATION_TYPE_CHOICES,
                                        default=ACCREDITATION_TYPE_CHOICES[0][0])
-    accreditation_expiry= models.DateTimeField(blank=True, null=True)
+    #accreditation_expiry= models.DateTimeField(blank=True, null=True)
+    accreditation_expiry= models.DateField(blank=True, null=True)
+
     #preferred_license_period=models.CharField('Preferred license period', max_length=40, choices=LICENSE_PERIOD_CHOICES,default=LICENSE_PERIOD_CHOICES[0][0])
     preferred_licence_period=models.CharField('Preferred licence period', max_length=40, choices=LICENCE_PERIOD_CHOICES,default=LICENCE_PERIOD_CHOICES[0][0])
-    nominated_start_date= models.DateTimeField(blank=True, null=True)
-    insurance_expiry= models.DateTimeField(blank=True, null=True)
+    #nominated_start_date= models.DateTimeField(blank=True, null=True)
+    #insurance_expiry= models.DateTimeField(blank=True, null=True)
+    nominated_start_date= models.DateField(blank=True, null=True)
+    insurance_expiry= models.DateField(blank=True, null=True)
     other_comments=models.TextField(blank=True)
     #if credit facilities for payment of fees is required
     credit_fees=models.BooleanField(default=False)

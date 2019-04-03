@@ -15,21 +15,21 @@
                         <label class="control-label">Are you currently accredited?</label>
                         <ul class="list-inline"  >
                             <li v-for="c in accreditation_choices" class="form-check list-inline-item">
-                                <input  class="form-check-input" ref="Checkbox" type="checkbox" v-model="proposal.other_details.accreditation_type" :value="c.key" data-parsley-required />
+                                <input  class="form-check-input" ref="Checkbox" type="radio" v-model="accreditation_type" :value="c" data-parsley-required />
                                         {{ c.value }}
                             </li>
                         </ul>
                         <div v-if="proposal.other_details.accreditation_type">
                             <fieldset class="scheduler-border">
-                                <legend class="scheduler-border">{{proposal.other_details.accreditation_type}}</legend>
+                                <legend class="scheduler-border">{{accreditation_type.value}}</legend>
                                 <div class="form-group">
                                     <div class="row">
                                         <div class="col-sm-3">
-                                            <label class="control-label pull-left"  for="Name">Expiry Date</label>
+                                            <label class="control-label pull-right"  for="Name">Expiry Date</label>
                                         </div>
                                         <div class="col-sm-9">
-                                            <div class="input-group date" ref="expiry_date" style="width: 70%;">
-                                                <input type="text" class="form-control" v-model="proposal.other_details.accreditation_expiry" name="expiry_date" placeholder="DD/MM/YYYY">
+                                            <div class="input-group date" ref="accreditation_expiry" style="width: 70%;">
+                                                <input type="text" class="form-control" v-model="proposal.other_details.accreditation_expiry" name="accreditation_expiry" placeholder="DD/MM/YYYY">
                                                 <span class="input-group-addon">
                                                     <span class="glyphicon glyphicon-calendar"></span>
                                                 </span>
@@ -70,9 +70,9 @@
                                 <div class="col-sm-3">
                                     <label class="control-label pull-left"  for="Name">Preferred licence period</label>
                                 </div>
-                                <div class="col-sm-9">
-                                    <select class="form-control" v-model="proposal.other_details.preferred_licence_period">
-                                        <option v-for="l in licence_period_choices" :value="z">{{l.value}}</option>
+                                <div class="col-sm-9" style="margin-bottom: 5px">
+                                    <select class="form-control" v-model="proposal.other_details.preferred_licence_period" ref="preferred_licence_period">
+                                        <option v-for="l in licence_period_choices" :value="l.key">{{l.value}}</option>
                                     </select>
                                 </div>
                             </div>
@@ -163,8 +163,8 @@
                                     </label>
                                 </div>
                                 <div class="col-sm-3">
-                                    <div class="input-group date" ref="expiry_date" style="width: 70%;">
-                                        <input type="text" class="form-control" name="expiry_date" placeholder="DD/MM/YYYY" v-model="proposal.other_details.insurance_expiry">
+                                    <div class="input-group date" ref="insurance_expiry" style="width: 70%;">
+                                        <input type="text" class="form-control" name="insurance_expiry" placeholder="DD/MM/YYYY" v-model="proposal.other_details.insurance_expiry">
                                             <span class="input-group-addon">
                                                 <span class="glyphicon glyphicon-calendar"></span>
                                             </span>
@@ -180,7 +180,7 @@
     <div class="col-sm-12">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Other Detials <small></small>
+                <h3 class="panel-title">Other Details <small></small>
                 <a class="panelClicker" :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                 </a>
@@ -332,11 +332,27 @@ export default {
         components: {
           FileField,
         },
+        computed: {
+            
+        },
+        watch:{
+            accreditation_type: function(){
+                this.proposal.other_details.accreditation_type=this.accreditation_type.key;
+            },
+        },
         methods:{
             fetchAccreditationChoices: function(){
                 let vm = this;
                 vm.$http.get('/api/accreditation_choices.json').then((response) => {
                     vm.accreditation_choices = response.body;
+                    if(vm.proposal.other_details.accreditation_type
+                        ){
+                        for(var i=0; i<vm.accreditation_choices.length; i++){
+                            if(vm.accreditation_choices[i].key==vm.proposal.other_details.accreditation_type){
+                                vm.accreditation_type=vm.accreditation_choices[i]
+                            }
+                        }
+                    }
                     
                 },(error) => {
                     console.log(error);
@@ -351,11 +367,68 @@ export default {
                     console.log(error);
                 } );
             },
+            eventListeners:function (){
+                let vm=this;
+                $(vm.$refs.accreditation_expiry).datetimepicker(vm.datepickerOptions);
+                $(vm.$refs.accreditation_expiry).on('dp.change', function(e){
+                    if ($(vm.$refs.accreditation_expiry).data('DateTimePicker').date()) {
+                        
+
+                        vm.proposal.other_details.accreditation_expiry =  e.date.format('DD/MM/YYYY');
+                    }
+                    else if ($(vm.$refs.accreditation_expiry).data('date') === "") {
+                        vm.proposal.other_details.accreditation_expiry = "";
+                    }
+                 });
+                //Nominated start date listener
+                $(vm.$refs.nominated_start_date).datetimepicker(vm.datepickerOptions);
+                $(vm.$refs.nominated_start_date).on('dp.change', function(e){
+                    if ($(vm.$refs.nominated_start_date).data('DateTimePicker').date()) {
+                        
+
+                        vm.proposal.other_details.nominated_start_date =  e.date.format('DD/MM/YYYY');
+                    }
+                    else if ($(vm.$refs.nominated_start_date).data('date') === "") {
+                        vm.proposal.other_details.nominated_start_date = "";
+                    }
+                 });
+                //Insurance expiry date listener
+                $(vm.$refs.insurance_expiry).datetimepicker(vm.datepickerOptions);
+                $(vm.$refs.insurance_expiry).on('dp.change', function(e){
+                    if ($(vm.$refs.insurance_expiry).data('DateTimePicker').date()) {
+                        
+
+                        vm.proposal.other_details.insurance_expiry =  e.date.format('DD/MM/YYYY');
+                    }
+                    else if ($(vm.$refs.insurance_expiry).data('date') === "") {
+                        vm.proposal.other_details.insurance_expiry = "";
+                    }
+                 });
+                // Intialise select2
+                $(vm.$refs.preferred_licence_period).select2({
+                    "theme": "bootstrap",
+                    allowClear: true,
+                    placeholder:"Select preferred licence period"
+                }).
+                on("select2:select",function (e) {
+                    var selected = $(e.currentTarget);
+                    vm.proposal.other_details.preferred_licence_period = selected.val();
+                    vm.proposal.other_details.preferred_licence_period_id = selected.val();
+                }).
+                on("select2:unselect",function (e) {
+                    var selected = $(e.currentTarget);
+                    vm.proposal.other_details.preferred_licence_period = selected.val();
+                    vm.proposal.other_details.preferred_licence_period_id = selected.val();
+                });
+            },
         },
         mounted: function(){
             let vm = this;
             vm.fetchAccreditationChoices();
             vm.fetchLicencePeriodChoices();
+            this.$nextTick(()=>{
+                vm.eventListeners();
+            });
         }
     }
 </script>

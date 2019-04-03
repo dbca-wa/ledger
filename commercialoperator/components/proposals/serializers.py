@@ -143,6 +143,11 @@ class SaveProposalTrailSerializer(serializers.ModelSerializer):
 
 class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
     #park=ParkSerializer()
+    #accreditation_type= serializers.SerializerMethodField()
+    accreditation_expiry = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
+    nominated_start_date = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
+    insurance_expiry = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
+
     class Meta:
         model = ProposalOtherDetails
         #fields = '__all__'
@@ -156,6 +161,8 @@ class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
                 'credit_fees',
                 'credit_docket_books',
                 )
+    # def get_accreditation_type(self,obj):
+    #     return obj.get_accreditation_type_display()
 
 class SaveProposalOtherDetailsSerializer(serializers.ModelSerializer):
     #park=ParkSerializer()
