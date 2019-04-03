@@ -219,7 +219,6 @@ export default {
     submit: function(){
         let vm = this;
         this.isProcessing = true;
-        let formData = new FormData(vm.form);
         let swal_title = 'Submit Application'
         let swal_html = 'Are you sure you want to submit this application?'
         if (vm.requiresCheckout) {
@@ -239,7 +238,6 @@ export default {
                 let formData = new FormData(vm.form);
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     this.setApplication(res.body);
-                    
                     if (vm.requiresCheckout) {
                         vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
                             this.isProcessing = false;

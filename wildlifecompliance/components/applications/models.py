@@ -598,7 +598,6 @@ class Application(RevisionedMixin):
         with transaction.atomic():
             if self.can_user_edit:
                 # Save the data first
-                print("inside can_user_edit")
                 parser = SchemaParser(draft=False)
                 parser.save_application_user_data(self, request, viewset)
                 # self.processing_status = Application.PROCESSING_STATUS_UNDER_REVIEW
