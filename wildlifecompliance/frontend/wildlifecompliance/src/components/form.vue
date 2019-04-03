@@ -16,7 +16,6 @@
   helpers
 }
 from '@/utils/hooks'
-    import Renderer from '@/utils/renderer'
     import bs from 'bootstrap'
     import { splitText } from "@/utils/helpers.js";
     import { mapGetters } from 'vuex'
