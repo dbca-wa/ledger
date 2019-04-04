@@ -118,7 +118,8 @@
                                             <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleFinalViewConditions()">View Final Conditions</button>
                                         </div>
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
+                                            <button v-if="!userIsAssignedOfficer" style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
+                                            <button v-else disabled style="width:80%;" class="btn btn-success top-buffer-s">Issue/Decline</button>
                                         </div>
                                     </div>
                                 </template>
@@ -757,6 +758,7 @@ export default {
             'isFinalised',
             'isApplicationLoaded',
             'isApplicationActivityVisible',
+            'current_user',
         ]),
         sendToAssessorActivities: function() {
             return this.licenceActivities(['with_officer', 'with_officer_conditions', 'with_assessor'], 'licensing_officer');
@@ -856,6 +858,9 @@ export default {
                 return false;
             }
             return this.application && this.application.processing_status.id == 'under_review' && !this.isFinalised && !this.application.can_user_edit && this.application.user_in_licence_officers ? true : false;
+        },
+        userIsAssignedOfficer: function(){
+            return this.current_user.id == this.application.assigned_officer;
         }
     },
     methods: {
@@ -867,6 +872,7 @@ export default {
             'setOriginalApplication',
             'setApplication',
             'setActivityTab',
+            'loadCurrentUser',
         ]),
         eventListeners: function(){
             let vm = this;
@@ -979,7 +985,8 @@ export default {
             return s.replace(/[,;]/g, '\n');
         },
         proposedDecline: function(){
-            this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
+            this.save_wo();
+//            this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
         },
         isActivityVisible: function(activity_id) {
@@ -1029,12 +1036,13 @@ export default {
         proposedLicence: function(){
             var activity_name=[]
             var selectedTabTitle = $("#tabs-section li.active");
-
+            this.save_wo();
             this.$refs.proposed_licence.propose_issue.licence_activity_id=this.selected_activity_tab_id;
             this.$refs.proposed_licence.propose_issue.licence_activity_name=selectedTabTitle.text();
             this.$refs.proposed_licence.isModalOpen = true;
         },
         toggleIssue:function(){
+            this.save();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1159,6 +1167,7 @@ export default {
         },
         togglesendtoAssessor:function(){
             let vm=this;
+            vm.save_wo();
             $('#tabs-main li').removeClass('active');
             vm.isSendingToAssessor = !vm.isSendingToAssessor;
             vm.showingApplication = false;
@@ -1231,6 +1240,7 @@ export default {
             );
         },
         toggleOfficerConditions:function(){
+            vm.save_wo();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1243,6 +1253,7 @@ export default {
 
         },
         toggleFinalViewConditions:function(){
+            this.save_wo();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1314,7 +1325,7 @@ export default {
             this.setOriginalApplication(response.body);
             this.setApplication(response.body);
             this.$nextTick(() => {
-                this.initialiseAssignedOfficerSelect(true);
+                this.initialiseAssignedOfficerSelect(reinit=true);
                 this.updateAssignedOfficerSelect();
             });
         },
@@ -1488,6 +1499,7 @@ export default {
             vm.load({ url: `/api/application/${to.params.application_id}/internal_application.json` }).then(() => {
                 vm.initialiseAssessmentOptions();
             });
+            vm.loadCurrentUser({ url: `/api/my_user_details` });
         });
     },
     beforeRouteUpdate: function(to, from, next) {

@@ -183,6 +183,7 @@ export default {
         },
     },
     computed: {
+        // TODO: this status function needs checking
         status: function(){
             //return this.is_external ? this.external_status : this.internal_status;
             return [];

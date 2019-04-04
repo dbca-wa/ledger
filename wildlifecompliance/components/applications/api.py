@@ -776,7 +776,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
         return Response({'processing_status': instance.processing_status}, status=http_status)
 
-
     @detail_route(methods=['GET', ])
     def assessment_details(self, request, *args, **kwargs):
         # queryset = self.get_queryset()
@@ -792,6 +791,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @detail_route(permission_classes=[], methods=['GET'])
     def application_checkout_status(self, request, *args, **kwargs):
+        # TODO: may need to re-build this function for Wildlife Licensing (code taken from Parkstay) if required
         try:
             # instance = self.get_object()
             response = {

@@ -37,18 +37,19 @@ from wildlifecompliance.components.users.serializers import (
     PersonalSerializer,
     ContactSerializer,
     EmailIdentitySerializer,
-    EmailUserActionSerializer
+    EmailUserActionSerializer,
+    MyUserDetailsSerializer
 )
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
 )
 
 
-class GetProfile(views.APIView):
+class GetMyUserDetails(views.APIView):
     renderer_classes = [JSONRenderer, ]
 
     def get(self, request, format=None):
-        serializer = UserSerializer(request.user, context={'request': request})
+        serializer = MyUserDetailsSerializer(request.user, context={'request': request})
         return Response(serializer.data)
 
 
@@ -328,7 +329,9 @@ class UserViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = OrganisationRequestDTSerializer(
                 instance.organisationrequest_set.filter(
-                    status=OrganisationRequest.ORG_REQUEST_STATUS_WITH_ASSESSOR), many=True)
+                    status=OrganisationRequest.ORG_REQUEST_STATUS_WITH_ASSESSOR),
+                many=True,
+                context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
