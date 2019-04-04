@@ -74,9 +74,15 @@ class ApplicationIdUpdateRequestEmail(TemplateEmailBase):
     txt_template = 'wildlifecompliance/emails/send_id_update_request_notification.txt'
 
 
-def send_assessment_reminder_email(select_group, assessment, request=None):
-    application = assessment.application
+class ApplicationIdUpdatedEmail(TemplateEmailBase):
+    subject = 'An user has updated their identification'
+    html_template = 'wildlifecompliance/emails/send_id_updated_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_id_updated_notification.txt'
 
+
+def send_assessment_reminder_email(select_group, assessment, request=None):
+    # An email reminding assessors of a pending assessment request
+    application = assessment.application
     email = ApplicationAssessmentReminderEmail()
     url = request.build_absolute_uri(
         reverse(
@@ -93,7 +99,7 @@ def send_assessment_reminder_email(select_group, assessment, request=None):
 
 
 def send_assessment_email_notification(select_group, assessment, request):
-
+    # An email notifying assessors of a new assessment request
     application = assessment.application
     text = assessment.text
     email = ApplicationAssessmentRequestedEmail()
@@ -189,7 +195,7 @@ def send_application_submit_email_notification(
 
 def send_amendment_submit_email_notification(
         group_email, application, request):
-    # An email to internal users notifying about new application is submitted
+    # An email to internal users notifying about application amendment being submitted
     email = AmendmentSubmitNotificationEmail()
     url = request.build_absolute_uri(
         reverse(
@@ -208,7 +214,7 @@ def send_amendment_submit_email_notification(
 
 
 def send_application_amendment_notification(amendment, application, request):
-    # An email to internal users notifying about new application is submitted
+    # An email to submitter notifying about amendment request for an application
     email = ApplicationAmendmentRequestNotificationEmail()
     reason = amendment.get_reason_display()
     url = request.build_absolute_uri(
@@ -234,7 +240,7 @@ def send_application_issue_notification(
         start_date,
         application,
         request):
-    # An email to internal users notifying about new application is submitted
+    # An email to internal users notifying about an application activity being issued
     email = ApplicationIssueNotificationEmail()
 
     url = request.build_absolute_uri(
@@ -258,7 +264,7 @@ def send_application_issue_notification(
 
 def send_application_decline_notification(
         activity_name, application, request):
-    # An email to internal users notifying about new application is submitted
+    # An email to submitter users notifying about an application activity being declined
     email = ApplicationDeclineNotificationEmail()
 
     url = request.build_absolute_uri(
@@ -279,7 +285,7 @@ def send_application_decline_notification(
 
 
 def send_id_update_request_notification(application, request):
-    # An email to internal users notifying about new application is submitted
+    # An email to submitter requesting an update to the user identification
     email = ApplicationIdUpdateRequestEmail()
 
     url = request.build_absolute_uri(
@@ -295,6 +301,28 @@ def send_id_update_request_notification(application, request):
 
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, application, sender=sender)
+
+
+def send_id_updated_notification(user, applications, assigned_officers, request):
+    # An email to internal users notifying about a user identification being updated
+    email = ApplicationIdUpdatedEmail()
+    url = request.build_absolute_uri(
+        reverse(
+            'wc_home') # TODO: this should be the user page
+    )
+    context = {
+        'user': '{first_name} {surname}'.format(
+            first_name=user.first_name,
+            surname=user.surname),
+        'url': url,
+        'applications': applications
+    }
+
+    msg = email.send(assigned_officers, context=context)
+
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    for application in applications:
+        _log_application_email(msg, application, sender=sender)
 
 
 def _log_application_email(email_message, application, sender=None):

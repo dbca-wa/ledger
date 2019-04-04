@@ -25,6 +25,8 @@ from django.core.cache import cache
 from ledger.accounts.models import EmailUser, Address, Profile, EmailIdentity, EmailUserAction, query_emailuser_by_args
 from ledger.address.models import Country
 from datetime import datetime, timedelta, date
+from wildlifecompliance.components.applications.models import Application
+from wildlifecompliance.components.applications.email import send_id_updated_notification
 from wildlifecompliance.components.organisations.models import (
     OrganisationRequest,
 )
@@ -43,7 +45,6 @@ from wildlifecompliance.components.users.serializers import (
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
 )
-
 
 class GetMyUserDetails(views.APIView):
     renderer_classes = [JSONRenderer, ]
@@ -311,6 +312,17 @@ class UserViewSet(viewsets.ModelViewSet):
                             instance.last_name,
                             instance.email)),
                     request)
+                # For any applications that have requested ID update, email the assigned officer
+                applications = instance.wildlifecompliance_applications.filter(
+                    submitter=instance,
+                    id_check_status=Application.ID_CHECK_STATUS_AWAITING_UPDATE)\
+                    .distinct('assigned_officer')
+                assigned_officers = [application.assigned_officer
+                                     for application
+                                     in applications
+                                     if application.assigned_officer]
+                if len(assigned_officers) > 0:
+                    send_id_updated_notification(instance, assigned_officers, applications, request)
             serializer = UserSerializer(instance, partial=True)
             return Response(serializer.data)
         except serializers.ValidationError:
