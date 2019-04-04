@@ -30,7 +30,7 @@ export const rendererStore = {
         unfinishedActivities: (state, getters, rootState, rootGetters) => {
             return getters.visibleActivities(
                 ['issued', 'declined'],  // Hide by decision
-                //['discarded']  // Hide by processing_status
+                ['discarded']  // Hide by processing_status
             ).filter(activity => !rootGetters.application.has_amendment ||
                 rootGetters.application.amendment_requests.find(
                     request => request.licence_activity.id == activity.id
