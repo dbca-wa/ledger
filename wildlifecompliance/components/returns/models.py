@@ -303,6 +303,14 @@ class Return(models.Model):
         """
         pass
 
+    def discard(self, request):
+        """
+        Discard a Return.
+        :param request:
+        :return:
+        """
+        pass
+
     def log_user_action(self, action, request):
         return ReturnUserAction.log_action(self, action, request.user)
 
@@ -615,7 +623,7 @@ class ReturnSheet(object):
         :return:
         """
         self._species = _species
-        self._species_list.add(_species)
+        #self._species_list.add(_species)
 
     def get_species(self):
         """
