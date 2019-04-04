@@ -3,16 +3,15 @@ import api from './api'
 import {helpers} from '@/utils/hooks' 
 
 export default {
-    fetchProfile: function (){
+    fetchCurrentUser: function (){
         return new Promise ((resolve,reject) => {
-            Vue.http.get(api.profile).then((response) => {
+            Vue.http.get(api.my_user_details).then((response) => {
                 resolve(response.body);
             },
             (error) => {
                 reject(error);
             });
         });
-
     },
     fetchApplication: function(id){
         return new Promise ((resolve,reject) => {
@@ -33,7 +32,6 @@ export default {
                 reject(error);
             });
         });
-
     },
     fetchOrganisations: function(id){
         return new Promise ((resolve,reject) => {

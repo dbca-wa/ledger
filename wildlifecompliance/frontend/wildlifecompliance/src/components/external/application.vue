@@ -15,7 +15,7 @@
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                 <input type='hidden' name="application_id" :value="1" />
-                <div v-if="!application.readonly" class="row" style="margin-bottom:50px;">
+                <div v-if="!application.readonly && userCanSubmit" class="row" style="margin-bottom:50px;">
                     <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                         <div class="navbar-inner">
                             <div class="container">
@@ -24,17 +24,17 @@
                                         <strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong>
                                         <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
                                     </span>
-                                    <input v-if="canDiscardActivity" type="button" @click.prevent="discardActivity" class="btn btn-danger" value="Discard Activity"/>
-                                    <input type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
-                                    <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                    <input v-if="!requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                                    <input v-if="!isProcessing && canDiscardActivity" type="button" @click.prevent="discardActivity" class="btn btn-danger" value="Discard Activity"/>
+                                    <input v-if="!isProcessing" type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
+                                    <input v-if="!isProcessing" type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
+                                    <input v-if="!isProcessing && !requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
                                     <input v-if="requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
+                                    <button v-if="isProcessing" disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Processing</button>
                                 </p>
                             </div>
                         </div>
                     </div>
                 </div>
-
                 <div v-else class="row" style="margin-bottom:50px;">
                     <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                         <div class="navbar-inner">
@@ -63,6 +63,7 @@ export default {
   data: function() {
     return {
       form: null,
+      isProcessing: false,
       application_customer_status_onload: {},
  	  missing_fields: [],
     }
@@ -96,6 +97,9 @@ export default {
               activity => activity.licence_activity == this.selected_activity_tab_id &&
               activity.processing_status == 'draft'
             );
+    },
+    userCanSubmit: function() {
+      return this.application.can_current_user_edit
     }
   },
   methods: {
@@ -159,6 +163,7 @@ export default {
     },
     saveExit: function(e) {
       let vm = this;
+      this.isProcessing = true;
       let formData = new FormData(vm.form);
       vm.$http.post(vm.application_form_url,formData).then(res=>{
           swal(
@@ -166,23 +171,39 @@ export default {
             'Your application has been saved',
             'success'
           ).then((result) => {
+            this.isProcessing = false;
             window.location.href = "/";
           });
       },err=>{
-
+        swal(
+            'Error',
+            'There was an error saving your application',
+            'error'
+        ).then((result) => {
+            this.isProcessing = false;
+        })
       });
     },
     save: function(e) {
       let vm = this;
+      this.isProcessing = true;
       let formData = new FormData(vm.form);
       vm.$http.post(vm.application_form_url,formData).then(res=>{
           swal(
             'Saved',
             'Your application has been saved',
             'success'
-          )
+          ).then((result) => {
+            this.isProcessing = false;
+          });
       },err=>{
-
+        swal(
+            'Error',
+            'There was an error saving your application',
+            'error'
+        ).then((result) => {
+            this.isProcessing = false;
+        })
       });
     },
     highlight_missing_fields: function(){
@@ -197,7 +218,7 @@ export default {
     },
     submit: function(){
         let vm = this;
-        let formData = new FormData(vm.form);
+        this.isProcessing = true;
         let swal_title = 'Submit Application'
         let swal_html = 'Are you sure you want to submit this application?'
         if (vm.requiresCheckout) {
@@ -217,18 +238,21 @@ export default {
                 let formData = new FormData(vm.form);
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     this.setApplication(res.body);
-                    
                     if (vm.requiresCheckout) {
                         vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
+                            this.isProcessing = false;
                             window.location.href = "/ledger/checkout/checkout/payment-details/";
                         },err=>{
                             swal(
                                 'Submit Error',
                                 helpers.apiVueResourceError(err),
                                 'error'
-                            )
+                            ).then((result) => {
+                                this.isProcessing = false;
+                            })
                         });
                     } else {
+                        this.isProcessing = false;
                         vm.$router.push({
                             name: 'submit_application',
                             params: { application: vm.application}
@@ -239,17 +263,29 @@ export default {
                     if(err.body.missing) {
                       this.missing_fields = err.body.missing;
                       this.highlight_missing_fields();
+                      this.isProcessing = false;
                     }
                     else {
                       swal(
                           'Submit Error',
                           helpers.apiVueResourceError(err),
                           'error'
-                      )
+                      ).then((result) => {
+                          this.isProcessing = false;
+                      })
                     }
                 });
+            } else {
+                this.isProcessing = false;
             }
         },(error) => {
+            swal(
+                'Error',
+                'There was an error submitting your application',
+                'error'
+            ).then((result) => {
+                this.isProcessing = false;
+            })
         });
     },
   },
