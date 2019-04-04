@@ -877,6 +877,8 @@ export default {
     methods: {
         searchRego: function(){
             let vm = this;
+            vm.vesselRego = vm.vesselRego.replace(/ /g, "");
+            
             var reg = vm.vesselRego;
             var data = {
                 'rego': reg
