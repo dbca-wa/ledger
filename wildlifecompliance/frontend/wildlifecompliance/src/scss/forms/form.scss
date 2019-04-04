@@ -31,7 +31,7 @@ $sections-menu-width: 249px;
     .section-list {
         .menu-row {
             text-transform: capitalize;
-            padding-left: 30px;
+            padding-left: 20px;
             padding-top: 4px;
             padding-bottom: 4px;
             cursor: pointer;
@@ -60,4 +60,8 @@ $sections-menu-width: 249px;
         max-height: calc(100vh - 150px);
         overflow-y: auto;
     }
+}
+
+.nav-tabs {
+    cursor: pointer;
 }
