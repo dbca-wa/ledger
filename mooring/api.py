@@ -2615,16 +2615,20 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
         recordsFiltered = None
         res = None
         canceled = request.GET.get('canceled','False')
-        bt = [0,1]
-        if canceled == str('True'):
-           bt = [0,1,4]
+        #bt = [0,1]
+        #if canceled == str('True'):
+        #   bt = [0,1,4]
+        bt = [0,1,4]
+        recordsTotal = 0
+        data = []
+        data_temp = None
         try:
-            data = AdmissionsBooking.objects.filter(booking_type__in=bt).order_by('-pk')
+            data_temp = AdmissionsBooking.objects.filter(booking_type__in=bt).order_by('-pk')
             groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
             # If groups then we need to filter data by groups.
             if groups.count() > 0:
                 filtered_ids = []
-                for rec in data:
+                for rec in data_temp:
                     bookings = Booking.objects.filter(admission_payment=rec)
                     if bookings.count() > 0:
                         booking = bookings[0]
@@ -2639,39 +2643,95 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
                                 in_group = True
                                 break
                         if in_group:
-                            filtered_ids.append(rec.id)
+                            #filtered_ids.append(rec.id)
+                            pass
+                            if canceled == str('True'):
+                               if rec.booking_type == 4:
+                                  data.append(rec)
+                            else:
+                                if rec.booking_type == 0 or rec.booking_type == 1:
+                                  data.append(rec)
+                            recordsTotal = recordsTotal  + 1
                     else:
                         ad_line = AdmissionsLine.objects.filter(admissionsBooking=rec).first()
                         if ad_line:
                             if ad_line.location.mooring_group in groups:
-                                filtered_ids.append(rec.id)
+                                if canceled == str('True'):
+                                   if rec.booking_type == 4:
+                                      data.append(rec)
+                                else:
+                                   if rec.booking_type == 0 or rec.booking_type == 1:
+                                      data.append(rec)
+ 
+                                recordsTotal = recordsTotal  + 1
+                                #data.append(rec)
+                                pass
+                                #filtered_ids.append(rec.id)
 
-                data = AdmissionsBooking.objects.filter(pk__in=filtered_ids).order_by('-pk')
+                #data = AdmissionsBooking.objects.filter(pk__in=filtered_ids).order_by('-pk')
             else:
                 return Response("Error no group")
 
             
-            recordsTotal = len(data)
+#            recordsTotal = len(data)
+#            recordsTotal = AdmissionsBooking.objects.filter(booking_type__in=[0,1,4],`
             search = request.GET.get('search[value]') if request.GET.get('search[value]') else None
             start = request.GET.get('start') if request.GET.get('start') else 0
             length = request.GET.get('length') if request.GET.get('length') else len(data)
             date_from = datetime.strptime(request.GET.get('arrival'),'%d/%m/%Y').date() if request.GET.get('arrival') else None
             date_to = datetime.strptime(request.GET.get('departure'),'%d/%m/%Y').date() if request.GET.get('departure') else None
             data2 = []
+            data_temp = []
             if search:
-                if(search.upper().startswith('AD')):
-                    try:
-                        int(search[2:])
-                        search = search[2:]
-                    except:
-                        pass
-                data = data.filter(Q(warningReferenceNo__icontains=search) | Q(vesselRegNo__icontains=search) | Q(customer__first_name__icontains=search) | Q(customer__last_name__icontains=search) | Q(id__icontains=search))
-            if (date_from and date_to):
-                data = data.distinct().filter(admissionsline__arrivalDate__gte=date_from, admissionsline__arrivalDate__lte=date_to)
+                #if(search.upper().startswith('AD')):
+                #    try:
+                #        int(search[2:])
+                #        search = search[2:]
+                #    except:
+                #        pass
+                for row in data:
+                     if row.warningReferenceNo.lower().find(search.lower()) >= 0 or row.customer.first_name.lower().find(search.lower()) >= 0 or row.customer.first_name.lower().find(search.lower()) >= 0 or row.vesselRegNo.lower().find(search.lower()) >= 0 or str(row.id) == search:
+                          data_temp.append(row)
+                     data = data_temp
+                #data = data.filter(Q(warningReferenceNo__icontains=search) | Q(vesselRegNo__icontains=search) | Q(customer__first_name__icontains=search) | Q(customer__last_name__icontains=search) | Q(id__icontains=search))
+            if date_from and date_to:
+                data_temp = []
+                for row in data:
+                      date_match = False
+                      for row_line in row.admissions_line:
+                          if row_line.arrivalDate >= date_from and row_line.arrivalDate <= date_to:
+                               date_match = True
+
+                      if date_match is True:
+                           data_temp.append(row)
+                data = data_temp
+#                data = data.distinct().filter(admissionsline__arrivalDate__gte=date_from, admissionsline__arrivalDate__lte=date_to)
             elif(date_from):
-                data = data.distinct().filter(admissionsline__arrivalDate__gte=date_from)
+                data_temp = []
+                for row in data:
+                      date_match = False
+                      for row_line in row.admissions_line:
+                          if row_line.arrivalDate >= date_from:
+                               date_match = True
+
+                      if date_match is True:
+                           data_temp.append(row)
+                data = data_temp
+
+            #    data = data.distinct().filter(admissionsline__arrivalDate__gte=date_from)
             elif(date_to):
-                data = data.distinct().filter(admissionsline__arrivalDate__lte=date_to)
+                data_temp = []
+                for row in data:
+                      date_match = False
+                      for row_line in row.admissions_line:
+                          if row_line.arrivalDate <= date_to:
+                               date_match = True
+
+                      if date_match is True:
+                           data_temp.append(row)
+                data = data_temp
+
+            #    data = data.distinct().filter(admissionsline__arrivalDate__lte=date_to)
             recordsFiltered = int(len(data))
             data = data[int(start):int(length)+int(start)]
             serializer = AdmissionsBookingSerializer(data,many=True)
@@ -2800,10 +2860,10 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sql += ' and mooring_booking.booking_type = 4 '
                 sqlCount += ' and mooring_booking.booking_type = 4 '
             else:
-#                sql += ' and (mooring_booking.booking_type != 3 and mooring_booking.booking_type != 4 )'
-#                sqlCount += ' and (mooring_booking.booking_type != 3 and mooring_booking.booking_type != 4) '
-                sql += ' and (mooring_booking.booking_type != 3)'
-                sqlCount += ' and (mooring_booking.booking_type != 3) '
+                sql += ' and (mooring_booking.booking_type =0 or mooring_booking.booking_type =1 or mooring_booking.booking_type =2)'
+                sqlCount += ' and (mooring_booking.booking_type =0 or mooring_booking.booking_type =1 or mooring_booking.booking_type =2) '
+
+
 
       #         sql += ' and mooring_booking.is_canceled = %(canceled)s'
 #               sqlCount += ' and mooring_booking.is_canceled = %(canceled)s'
@@ -2840,7 +2900,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
             cursor = connection.cursor()
             #cursor.execute("Select count(*) from mooring_booking ")
-            cursor.execute("select count(*)  from mooring_booking left join mooring_mooringsitebooking on mooring_booking.id = mooring_mooringsitebooking.booking_id left join mooring_mooringsite on  mooring_mooringsitebooking.campsite_id = mooring_mooringsite.id left join mooring_mooringareagroup_moorings on mooring_mooringsite.mooringarea_id = mooring_mooringareagroup_moorings.mooringarea_id where ("+sql_group+")")
+            cursor.execute("select count(distinct(mooring_booking.id))  from mooring_booking left join mooring_mooringsitebooking on mooring_booking.id = mooring_mooringsitebooking.booking_id left join mooring_mooringsite on  mooring_mooringsitebooking.campsite_id = mooring_mooringsite.id left join mooring_mooringareagroup_moorings on mooring_mooringsite.mooringarea_id = mooring_mooringareagroup_moorings.mooringarea_id where ("+sql_group+") and (mooring_booking.booking_type =0 or mooring_booking.booking_type =1 or mooring_booking.booking_type =2 or mooring_booking.booking_type =4)")
             recordsTotal = cursor.fetchone()[0]
             cursor.execute(sqlCount, sqlParams)
             recordsFiltered = cursor.fetchone()[0]

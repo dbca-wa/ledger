@@ -616,8 +616,8 @@
        z-index: 300;
        border: 2px solid #FFFFFF;
        cursor: pointer;
-    border-radius: 2px;
-    box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
+       border-radius: 2px;
+       box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
     }
     .map-toggle-white {
        width: 80px;
@@ -630,8 +630,8 @@
        z-index: 300;
        border: 2px solid #000000;
        cursor: pointer;
-    border-radius: 2px;
-    box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
+       border-radius: 2px;
+       box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
     }
 }
 
@@ -838,16 +838,20 @@ export default {
             cache: false,
             get: function() {
                 if (this.vesselSize % 1 != 0){
-                    this.vesselSize = Math.ceil(this.vesselSize);
+                    this.vesselSize = parseFloat(this.vesselSize);
+//                    this.vesselSize = Math.ceil(this.vesselSize);
                 }
                 if (this.vesselDraft % 1 != 0){
-                    this.vesselDraft = Math.ceil(this.vesselDraft);
+                    this.vesselDraft = parseFloat(this.vesselDraft);
+//                    this.vesselDraft = Math.ceil(this.vesselDraft);
                 }
                 if (this.vesselBeam % 1 != 0){
-                    this.vesselBeam = Math.ceil(this.vesselBeam);
+                    this.vesselBeam = parseFloat(this.vesselBeam);
+//                    this.vesselBeam = Math.ceil(this.vesselBeam);
                 }
                 if (this.vesselWeight % 1 != 0){
-                    this.vesselWeight = Math.ceil(this.vesselWeight);
+                    this.vesselWeight = parseFloat(this.vesselWeight);
+//                    this.vesselWeight = Math.ceil(this.vesselWeight);
                 }
                 var params = {
                     'num_adult': this.numAdults,
@@ -1697,11 +1701,11 @@ export default {
                 vm.ongoing_booking = response.current_booking.ongoing_booking[0];
                 vm.numAdults = parseInt(response.current_booking.details[0].num_adults) > 0 ? parseInt(response.current_booking.details[0].num_adults) : 2;
                 vm.numChildren = parseInt(response.current_booking.details[0].num_children) > 0 ? parseInt(response.current_booking.details[0].num_children) : 0;
-                vm.numInfants =  parseInt(response.current_booking.details[0].num_infants) > 0 ? parseInt(response.current_booking.details[0].num_infants) : 0;
-                vm.vesselSize = parseInt(response.current_booking.details[0].vessel_size) > 0 ? parseInt(response.current_booking.details[0].vessel_size) : 0;
-                vm.vesselDraft = parseInt(response.current_booking.details[0].vessel_draft) > 0 ? parseInt(response.current_booking.details[0].vessel_draft) : 0;
-                vm.vesselBeam = parseInt(response.current_booking.details[0].vessel_beam) > 0 ? parseInt(response.current_booking.details[0].vessel_beam) : 0;
-                vm.vesselWeight = parseInt(response.current_booking.details[0].vessel_weight) > 0 ? parseInt(response.current_booking.details[0].vessel_weight) : 0;
+                vm.numInfants =  parseInt(response.current_booking.details[0].num_infants) > 0 ? parseFloat(response.current_booking.details[0].num_infants) : 0;
+                vm.vesselSize = parseFloat(response.current_booking.details[0].vessel_size) > 0 ? parseFloat(response.current_booking.details[0].vessel_size) : 0;
+                vm.vesselDraft = parseFloat(response.current_booking.details[0].vessel_draft) > 0 ? parseFloat(response.current_booking.details[0].vessel_draft) : 0;
+                vm.vesselBeam = parseFloat(response.current_booking.details[0].vessel_beam) > 0 ? parseFloat(response.current_booking.details[0].vessel_beam) : 0;
+                vm.vesselWeight = parseFloat(response.current_booking.details[0].vessel_weight) > 0 ? parseFloat(response.current_booking.details[0].vessel_weight) : 0;
                 vm.vesselRego = response.current_booking.details[0].vessel_rego ? response.current_booking.details[0].vessel_rego : "";
             }
         });
