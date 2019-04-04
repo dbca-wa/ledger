@@ -12,11 +12,10 @@
 
               <Application v-if="isApplicationLoaded">
             
-            
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                 <input type='hidden' name="application_id" :value="1" />
-                <div v-if="!application.readonly" class="row" style="margin-bottom:50px;">
+                <div v-if="!application.readonly && userCanSubmit" class="row" style="margin-bottom:50px;">
                     <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                         <div class="navbar-inner">
                             <div class="container">
@@ -36,7 +35,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div v-else class="row" style="margin-bottom:50px;">
                     <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                         <div class="navbar-inner">
@@ -77,10 +75,10 @@ export default {
     ...mapGetters([
         'application',
         'application_readonly',
-        'amendment_requests',
         'selected_activity_tab_id',
         'selected_activity_tab_name',
         'isApplicationLoaded',
+        'unfinishedActivities',
     ]),
     csrf_token: function() {
       return helpers.getCookie('csrftoken')
@@ -99,6 +97,9 @@ export default {
               activity => activity.licence_activity == this.selected_activity_tab_id &&
               activity.processing_status == 'draft'
             );
+    },
+    userCanSubmit: function() {
+      return this.application.can_current_user_edit
     }
   },
   methods: {
@@ -111,13 +112,6 @@ export default {
     ]),
     eventListeners: function(){
         let vm = this;
-        $("ul#tabs-section").on("click", function (e) {
-          if(!e.target.href) {
-            return;
-          }
-          const tab_id = e.target.href.split('#')[1];
-          vm.setActivityTab({id: tab_id, name: e.target.innerHTML});
-        });
         $('#tabs-section li:first-child a').click();
     },
     discardActivity: function(e) {
@@ -146,7 +140,15 @@ export default {
             }
             else {
               this.load({ url: `/api/application/${this.application.id}.json` }).then(() => {
-                window.location.reload(true);  //TODO: Remove this once the activity headers / tabs are fully reactive
+                const newTab = this.unfinishedActivities[0];
+                if(newTab == null) {
+                  this.$router.push({
+                    name:"external-applications-dash",
+                  });
+                }
+                else {
+                  this.setActivityTab({id: newTab.id, name: newTab.label});
+                }
               });
             }
         },err=>{
@@ -217,7 +219,6 @@ export default {
     submit: function(){
         let vm = this;
         this.isProcessing = true;
-        let formData = new FormData(vm.form);
         let swal_title = 'Submit Application'
         let swal_html = 'Are you sure you want to submit this application?'
         if (vm.requiresCheckout) {
@@ -237,7 +238,6 @@ export default {
                 let formData = new FormData(vm.form);
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
                     this.setApplication(res.body);
-                    
                     if (vm.requiresCheckout) {
                         vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
                             this.isProcessing = false;

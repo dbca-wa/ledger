@@ -10,10 +10,9 @@
                 <HelpTextUrl :help_text_url="help_text_url" />
             </template>
 
-
-            <template v-if="renderer.canViewComments()">
+            <template v-if="canViewComments">
                 <template v-if="!showingComment">
-                    <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
+                    <a v-if="comment_value" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
                 </template>
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
@@ -30,11 +29,12 @@
 </template>
 
 <script>
-import Comment from './comment.vue'
-import HelpText from './help_text.vue'
-import HelpTextUrl from './help_text_url.vue'
+import Comment from './comment.vue';
+import HelpText from './help_text.vue';
+import HelpTextUrl from './help_text_url.vue';
+import { mapGetters } from 'vuex';
 export default {
-    props:["type","name","id", "comment_value","value","isRequired","help_text","label","readonly", "help_text_url", "min", "max", "renderer"],
+    props:["type","name","id", "comment_value","value","isRequired","help_text","label","readonly", "help_text_url", "min", "max"],
     components: {Comment, HelpText, HelpTextUrl},
     data(){
         let vm = this;
@@ -48,6 +48,9 @@ export default {
         }
     },
     computed: {
+        ...mapGetters([
+            'canViewComments',
+        ]),
     }
 }
 </script>

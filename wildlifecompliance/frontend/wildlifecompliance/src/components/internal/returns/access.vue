@@ -112,7 +112,6 @@
         let vm = this;
         return {
             loading: [],
-            profile:{},
             returns: {},
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
             members: [],
@@ -285,7 +284,6 @@ export default {
     let vm = this;
     return {
         loading: [],
-        profile:{},
         returns: {},
         DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
         members: [],
