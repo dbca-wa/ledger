@@ -10,7 +10,7 @@
                 <HelpTextUrl :help_text_url="help_text_url" />
             </template>
 
-            <template v-if="renderer.canViewComments()">
+            <template v-if="canViewComments">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
@@ -67,9 +67,10 @@
 </template>
 
 <script>
-import Comment from './comment.vue'
-import HelpText from './help_text.vue'
-import HelpTextUrl from './help_text_url.vue'
+import Comment from './comment.vue';
+import HelpText from './help_text.vue';
+import HelpTextUrl from './help_text_url.vue';
+import { mapGetters } from 'vuex';
 export default {
     props:{
         headers: String,  // Input received as String, later converted to JSON within data() below
@@ -80,10 +81,6 @@ export default {
         comment_value: String,
         help_text: String,
         help_text_url: String,
-        renderer: {
-            type: Object,
-            required: true
-        },
         value:{
             default:function () {
                 return null;
@@ -198,6 +195,9 @@ export default {
     },
 
     computed:{
+        ...mapGetters([
+            'canViewComments',
+        ]),
     },
 
 
