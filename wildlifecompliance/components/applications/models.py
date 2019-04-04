@@ -26,7 +26,8 @@ from wildlifecompliance.components.applications.email import (
     send_assessment_reminder_email,
     send_amendment_submit_email_notification,
     send_application_issue_notification,
-    send_application_decline_notification
+    send_application_decline_notification,
+    send_id_update_request_notification
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
@@ -739,6 +740,8 @@ class Application(RevisionedMixin):
             self.submitter.log_user_action(
                 ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(
                     self.id), request)
+        # send email
+        send_id_update_request_notification(self, request)
 
     def accept_character_check(self, request):
         self.character_check_status = Application.CHARACTER_CHECK_STATUS_ACCEPTED

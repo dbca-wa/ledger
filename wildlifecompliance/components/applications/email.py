@@ -68,6 +68,12 @@ class ApplicationAssessmentReminderEmail(TemplateEmailBase):
     txt_template = 'wildlifecompliance/emails/send_application_assessment_remind_notification.txt'
 
 
+class ApplicationIdUpdateRequestEmail(TemplateEmailBase):
+    subject = 'An update for your user identification has been requested'
+    html_template = 'wildlifecompliance/emails/send_id_update_request_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_id_update_request_notification.txt'
+
+
 def send_assessment_reminder_email(select_group, assessment, request=None):
     application = assessment.application
 
@@ -246,7 +252,6 @@ def send_application_issue_notification(
 
     msg = email.send(application.submitter.email, context=context)
 
-    # msg = email.send(application.submitter.email, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, application, sender=sender)
 
@@ -269,7 +274,25 @@ def send_application_decline_notification(
 
     msg = email.send(application.submitter.email, context=context)
 
-    # msg = email.send(application.submitter.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_application_email(msg, application, sender=sender)
+
+
+def send_id_update_request_notification(application, request):
+    # An email to internal users notifying about new application is submitted
+    email = ApplicationIdUpdateRequestEmail()
+
+    url = request.build_absolute_uri(
+        reverse(
+            'manage-account')
+    )
+    context = {
+        'application': application,
+        'url': url
+    }
+
+    msg = email.send(application.submitter.email, context=context)
+
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, application, sender=sender)
 
