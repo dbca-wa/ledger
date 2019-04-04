@@ -756,6 +756,7 @@ def admission_lineitems(lines):
 
 
 def calculate_price_booking_cancellation(booking):
+    current_date_time = datetime.strptime(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
     nowtime =  datetime.today()
     nowtimec = datetime.strptime(nowtime.strftime('%Y-%m-%d'),'%Y-%m-%d')
 
@@ -792,10 +793,15 @@ def calculate_price_booking_cancellation(booking):
                  cancel_fee_amount = cancel_policy.amount
                  # Fixed Pricing
              description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
-                  #change_fees['amount'] = str(refund_amount)
-             cancellation_fees.append({'additional_fees': 'true', 'description': 'Cancel Fee - '+description,'amount': cancel_fee_amount})
-             cancellation_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount)})
+
+             if datetime.strptime(ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S') < current_date_time:
+                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Past Booking - '+description,'amount': ob.amount})
+             else:
+                 #change_fees['amount'] = str(refund_amount)
+                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Cancel Fee - '+description,'amount': cancel_fee_amount})
+                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount)})
          else:
+
              print ("NO CANCELATION POLICY")
 
          #else:

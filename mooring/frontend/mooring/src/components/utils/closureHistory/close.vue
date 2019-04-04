@@ -176,7 +176,7 @@ module.exports = {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                var check = this.statusHistory.closure_reason
+                                var check = vm.statusHistory.closure_reason
                                 for (var i = 0; i < vm.reasons.length; i++){
                                     if (vm.reasons[i].id == check){
                                         return vm.reasons[i].detailRequired;
