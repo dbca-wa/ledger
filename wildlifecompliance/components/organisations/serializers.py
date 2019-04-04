@@ -36,12 +36,15 @@ class OrganisationCheckSerializer(serializers.Serializer):
 
     def validate(self, data):
         # Check no admin request pending approval.
-        requests = OrganisationRequest.objects.filter(
-            abn=data['abn'],
-            role='employee') .exclude(
-            status__in=(
-                'declined',
-                'approved'))
+        requests = OrganisationRequest.objects.\
+            filter(
+                abn=data['abn'],
+                role=OrganisationRequest.ORG_REQUEST_ROLE_EMPLOYEE)\
+            .exclude(
+                status__in=(
+                    OrganisationRequest.ORG_REQUEST_STATUS_DECLINED,
+                    OrganisationRequest.ORG_REQUEST_STATUS_APPROVED)
+        )
         if requests.exists():
             raise serializers.ValidationError(
                 'A request has been submitted and is Pending Approval.')
@@ -134,15 +137,18 @@ class OrganisationCheckExistSerializer(serializers.Serializer):
                     'Please contact {} to Approve your request.' .format(
                         data['first_five']))
         # Check no consultant request is pending approval for an ABN
-        if OrganisationRequest.objects.filter(
-            abn=data['abn'],
-            requester=user,
-            role='consultant') .exclude(
-            status__in=(
-                'declined',
-                'approved')).exists():
-            raise serializers.ValidationError(
-                'A request has been submitted and is Pending Approval.')
+        if OrganisationRequest.objects.\
+            filter(
+                abn=data['abn'],
+                requester=user,
+                role=OrganisationRequest.ORG_REQUEST_ROLE_CONSULTANT)\
+            .exclude(
+                status__in=(
+                    OrganisationRequest.ORG_REQUEST_STATUS_DECLINED,
+                    OrganisationRequest.ORG_REQUEST_STATUS_APPROVED))\
+            .exists():
+                raise serializers.ValidationError(
+                    'A request has been submitted and is Pending Approval.')
         return data
 
 
@@ -250,7 +256,7 @@ class OrganisationRequestDTSerializer(OrganisationRequestSerializer):
     def get_user_can_process_org_access_requests(self, obj):
         if self.context['request'].user and self.context['request'].\
                 user.has_perm('wildlifecompliance.organisation_access_request'):
-            return True
+                    return True
         return False
 
 

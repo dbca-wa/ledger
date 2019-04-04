@@ -395,6 +395,7 @@ class SpecialFieldsSearch(object):
 
 
 def get_activity_schema(activity_ids):
+    from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
     schema_activity = []
     schema_tab = []
 
@@ -424,7 +425,7 @@ def get_activity_schema(activity_ids):
                            "id": activity.id,
                            "label": activity.name,
                            "name": activity.name,
-                           "status": "Draft",
+                           "status": ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT,
                            "children": schema_activity
                            })
     return schema_tab

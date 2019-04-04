@@ -69,8 +69,7 @@ def is_internal(request):
 
 def is_officer(request):
     licence_officer_groups = [group.name for group in ActivityPermissionGroup.objects.filter(
-            permissions__codename__in=['read_only',
-                                       'organisation_access_request',
+            permissions__codename__in=['organisation_access_request',
                                        'licensing_officer',
                                        'issuing_officer',
                                        'assessor',
@@ -82,8 +81,7 @@ def is_officer(request):
 
 def get_all_officers():
     licence_officer_groups = ActivityPermissionGroup.objects.filter(
-            permissions__codename__in=['read_only',
-                                       'organisation_access_request',
+            permissions__codename__in=['organisation_access_request',
                                        'licensing_officer',
                                        'issuing_officer',
                                        'assessor',

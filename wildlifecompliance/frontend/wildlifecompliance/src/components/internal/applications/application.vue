@@ -118,7 +118,8 @@
                                             <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleFinalViewConditions()">View Final Conditions</button>
                                         </div>
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
+                                            <button v-if="!userIsAssignedOfficer" style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
+                                            <button v-else disabled style="width:80%;" class="btn btn-success top-buffer-s">Issue/Decline</button>
                                         </div>
                                     </div>
                                 </template>
@@ -591,7 +592,7 @@
                     <div class="col-md-12">
                         <div class="row">
                             <form :action="application_form_url" method="post" name="new_application" enctype="multipart/form-data">
-                                <Application form_width="inherit" :withSectionsSelector="false" v-if="application" :application="application">
+                                <Application form_width="inherit" :withSectionsSelector="false" v-if="isApplicationLoaded">
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                                     <input type='hidden' name="application_id" :value="1" />
@@ -648,7 +649,6 @@ import {
     helpers
 }
 from '@/utils/hooks';
-import { isApplicationActivityVisible } from "@/utils/helpers.js";
 export default {
     name: 'InternalApplication',
     data: function() {
@@ -666,8 +666,6 @@ export default {
             assessorGroup:{},
             "selectedAssessor":{},
             "loading": [],
-            selected_activity_tab_id:null,
-            selected_activity_tab_name:null,
             form: null,
             // activity_data:[],
             contacts_table_initialised: false,
@@ -750,18 +748,20 @@ export default {
             'application',
             'original_application',
             'licence_type_data',
+            'selected_activity_tab_id',
+            'selected_activity_tab_name',
             'hasRole',
             'visibleConditionsFor',
             'licenceActivities',
             'checkActivityStatus',
             'isPartiallyFinalised',
             'isFinalised',
+            'isApplicationLoaded',
+            'isApplicationActivityVisible',
+            'current_user',
         ]),
         sendToAssessorActivities: function() {
             return this.licenceActivities(['with_officer', 'with_officer_conditions', 'with_assessor'], 'licensing_officer');
-        },
-        isApplicationLoaded: function() {
-            return Object.keys(this.application).length && this.licence_type_data != null;
         },
         applicationDetailsVisible: function() {
             return !this.isSendingToAssessor && !this.showingConditions && !this.isofficerfinalisation && !this.isFinalised && !this.isOfficerConditions && !this.isFinalViewConditions;
@@ -858,6 +858,9 @@ export default {
                 return false;
             }
             return this.application && this.application.processing_status.id == 'under_review' && !this.isFinalised && !this.application.can_user_edit && this.application.user_in_licence_officers ? true : false;
+        },
+        userIsAssignedOfficer: function(){
+            return this.current_user.id == this.application.assigned_officer;
         }
     },
     methods: {
@@ -868,12 +871,16 @@ export default {
         ...mapActions([
             'setOriginalApplication',
             'setApplication',
+            'setActivityTab',
+            'loadCurrentUser',
         ]),
         eventListeners: function(){
             let vm = this;
             $("[data-target!=''][data-target]").off("click").on("click", function (e) {
-                vm.selected_activity_tab_id = parseInt($(this).data('target').replace('#', ''), 10);
-                vm.selected_activity_tab_name = $(this).text();
+                vm.setActivityTab({
+                    id: parseInt($(this).data('target').replace('#', ''), 10),
+                    name: $(this).text()
+                });
             });
             this.initFirstTab();
             // Listeners for Send to Assessor datatable actions
@@ -978,11 +985,12 @@ export default {
             return s.replace(/[,;]/g, '\n');
         },
         proposedDecline: function(){
-            this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
+            this.save_wo();
+//            this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
         },
         isActivityVisible: function(activity_id) {
-            return isApplicationActivityVisible(this.application, activity_id);
+            return this.isApplicationActivityVisible(activity_id);
         },
         isAssessorRelevant(assessor, activity_id) {
             if(!activity_id) {
@@ -1028,12 +1036,13 @@ export default {
         proposedLicence: function(){
             var activity_name=[]
             var selectedTabTitle = $("#tabs-section li.active");
-
+            this.save_wo();
             this.$refs.proposed_licence.propose_issue.licence_activity_id=this.selected_activity_tab_id;
             this.$refs.proposed_licence.propose_issue.licence_activity_name=selectedTabTitle.text();
             this.$refs.proposed_licence.isModalOpen = true;
         },
         toggleIssue:function(){
+            this.save();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1158,6 +1167,7 @@ export default {
         },
         togglesendtoAssessor:function(){
             let vm=this;
+            vm.save_wo();
             $('#tabs-main li').removeClass('active');
             vm.isSendingToAssessor = !vm.isSendingToAssessor;
             vm.showingApplication = false;
@@ -1230,6 +1240,7 @@ export default {
             );
         },
         toggleOfficerConditions:function(){
+            vm.save_wo();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1242,6 +1253,7 @@ export default {
 
         },
         toggleFinalViewConditions:function(){
+            this.save_wo();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1313,7 +1325,7 @@ export default {
             this.setOriginalApplication(response.body);
             this.setApplication(response.body);
             this.$nextTick(() => {
-                this.initialiseAssignedOfficerSelect(true);
+                this.initialiseAssignedOfficerSelect(reinit=true);
                 this.updateAssignedOfficerSelect();
             });
         },
@@ -1487,6 +1499,7 @@ export default {
             vm.load({ url: `/api/application/${to.params.application_id}/internal_application.json` }).then(() => {
                 vm.initialiseAssessmentOptions();
             });
+            vm.loadCurrentUser({ url: `/api/my_user_details` });
         });
     },
     beforeRouteUpdate: function(to, from, next) {

@@ -3,6 +3,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import { applicationStore } from './modules/application'
 import { userStore } from './modules/user'
+import { rendererStore } from './modules/renderer';
 import { callemailStore } from './modules/call_email'
 
 Vue.use(Vuex);
@@ -14,6 +15,7 @@ export default new Vuex.Store({
 	modules: {
 		appStore: applicationStore,
 		userStore: userStore,
+		rendererStore: rendererStore,
 		callemailStore: callemailStore,
 	}
 })

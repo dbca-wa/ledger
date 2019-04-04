@@ -157,6 +157,8 @@ export default {
                     if (vm.is_external){
                         if (full.can_current_user_edit) {
                             links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
+                        }
+                        if(vm.canDiscardApplication(full)) {
                             links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
                         }
                     }
@@ -212,7 +214,9 @@ export default {
                     else{
                         if (full.can_current_user_edit) {
                             links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
-                            links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
+                            if(vm.canDiscardApplication(full)) {
+                                links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
+                            }
                         }
                         else if (full.can_user_view) {
                             links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
@@ -382,9 +386,12 @@ export default {
         },
         is_external: function(){
             return this.level == 'external';
-        }
+        },
     },
     methods:{
+        canDiscardApplication: function(application) {
+            return application.processing_status.id === 'draft';
+        },
         discardApplication:function (application_id) {
             let vm = this;
             swal({
@@ -405,7 +412,11 @@ export default {
                         )
                         vm.visibleDatatable.vmDataTable.ajax.reload();
                     }, (error) => {
-                        console.log(error);
+                        swal(
+                            'Discard Error',
+                            helpers.apiVueResourceError(error),
+                            'error'
+                        )
                     });
                 }
             },(error) => {

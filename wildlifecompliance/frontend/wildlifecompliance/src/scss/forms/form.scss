@@ -1,0 +1,42 @@
+$amendment-color: #ff0000;
+$section-text-color: #000000;
+$tablet-screen-size: 991px;
+$sections-menu-width: 249px;
+
+.amendment-highlight {
+    color: $amendment-color !important;
+
+    &:after {
+        font-family: "FontAwesome";
+        content: "\f06a";
+        margin-left: 5px;
+    }
+}
+
+.sections-menu {
+    width: $sections-menu-width;
+}
+
+.sections-dropdown {
+
+    @media only screen and (max-width: $tablet-screen-size) {
+        display: none;
+    }
+
+    a {
+        color: $section-text-color;
+        cursor: pointer;
+    }
+    
+    .section-list {
+        a {
+            padding-right: 10px;
+            text-transform: capitalize;
+        }
+    }
+
+    .dropdown-panel {
+        max-height: calc(100vh - 150px);
+        overflow-y: auto;
+    }
+}
