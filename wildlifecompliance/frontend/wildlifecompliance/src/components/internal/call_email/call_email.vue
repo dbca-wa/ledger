@@ -18,7 +18,14 @@
                             <div class="col-sm-12">
                                 <div class="row">
                                     <label class="col-sm-4">Classification</label>
-                                    <input type="text" name="classification" v-model="call_email.classification.name" value="Complaint">
+                                    <!--
+
+                                    <input type="text" :value="call_email.classification.name"
+                                    
+                                    @change="updateClassification">
+                                    -->
+                                    <input type="text" name="classification" v-model="call_email.classification.name">                                    
+                                    
                                 </div>
                             </div>
                             <!--
@@ -32,19 +39,23 @@
                             <div class="col-sm-12">
                                 <div class="row">
                                     <label class="col-sm-4">Number</label>
-                                    <input type="text" name="number" v-model="call_email.number" value="CM67">
+                                    <!--
+                                    <input type="text" name="number" :value="call_email.number">
+
+                                    -->
+                                    <input type="text" name="number" v-model="call_email.number">                                    
                                 </div>
                             </div>
                             <div class="col-sm-12">
                                 <div class="row">
                                     <label class="col-sm-4">Caller</label>
-                                    <input type="text" name="caller" v-model="call_email.caller" value="Shayne">
+                                    <input type="text" name="caller" v-model="call_email.caller">
                                 </div>
                             </div>
                             <div class="col-sm-12">
                                 <div class="row">
                                     <label class="col-sm-4">Assigned To</label>
-                                    <input type="text" name="assigned_to" v-model="call_email.assigned_to" value="Brendan">
+                                    <input type="text" name="assigned_to" v-model="call_email.assigned_to">
                                 </div>
                             </div>
                             <div class="col-sm-12">
@@ -68,15 +79,19 @@
     }
     from '@/utils/hooks'
     import utils from '@/components/external/utils'
-    import { mapState, mapGetters, mapActions } from 'vuex'
-    //import { createNamespacedHelpers } from 'vuex'
-    //const { mapState, mapGetters, mapActions } = createNamespacedHelpers('callemailStore')
+    //import { mapState, mapGetters, mapActions, mapMutations } from 'vuex'
+    //import { mapFields } from 'vuex-map-fields'
+    import { createNamespacedHelpers } from 'vuex'
+    const { mapState, mapGetters, mapActions } = createNamespacedHelpers('callemailStore')
     export default {
+        name: 'ViewCallEmail',
         data: function () {
             let vm = this;
             console.log(this);
             return {
                         pBody: 'pBody' + vm._uid,
+                        //form: null,
+                        loading: [],
                         /*
                         call_email: function() {
                         console.log("computed");
@@ -105,23 +120,58 @@
         
         components: {
         },
-        computed:
-            {
-            
+        computed: {
+            /*
+            ...mapState({
+                call_email: state.callemailStore 
+            }
+            ),
+            */
             ...mapGetters({
                 call_email: 'getCallEmail',
 
             }),
+            /*
+            ...mapFields({
+                callemail_classification_name: "call_email.classification['name']",
+                callemail_number: 'call_email.number',
+                callemail_caller: 'call_email.caller',
+                callemail_assigned_to: 'call_email.assigned_to',
+
+            }),
+            */
+            isLoading: function () {
+                return this.loading.length > 0
+            },
+            
+            
+            //call_email: this.$store.call_email
         },
         methods: {
             ...mapActions({
                 load: 'loadCallEmail',
             }),
+            /*
+            ...mapMutations([
+                'updateCallEmail',
+                'updateClassification',
+                'updateNumber',
+                'updateCaller',
+                'updateAssignedTo',
+            ]),
+            
+            updateClassification (e) {
+                this.$store.commit('updateClassification', e.target.value)
+                console.log("classification")
+                console.log(this.call_email.classification)
+            },
+            */
             createCallEmail: function (e) {
-                let vm = this;
-                let formData = new FormData(vm.form);
+                let formData = new FormData(this.form);
+                
                 formData.append('additional_key_example', 'some_val') // example of additonal info sent to server
-                vm.$http.post('/api/call_email/', formData).then(
+                console.log(this);
+                this.$http.post('/api/call_email/', formData).then(
                     res => {
                     swal(
                         'Saved',
@@ -129,12 +179,18 @@
                         'success'
                     );
                     }, err => {});
-                vm.$router.push({
-                    name: 'internal-call_emails-dash'
+                /*
+                this.$router.push({
+                    name: 'internal-call-email-dash'
                 });
+                */    
             },
         },
-        
+        /*
+        watch: {
+
+        }
+        */
         beforeRouteEnter: function (to, from, next) {
             console.log("before route enter");
             let initialisers = [
@@ -148,8 +204,12 @@
         },
         
         mounted: function () {
-            let vm = this;
-            vm.form = document.forms.createForm;
+            //this.form = document.forms.createForm;
+            
+            this.$nextTick( function() {
+            this.form = document.forms.createForm;
+            })
+            
         },
 
 
