@@ -29,9 +29,30 @@ $sections-menu-width: 249px;
     }
     
     .section-list {
-        a {
-            padding-right: 10px;
+        .menu-row {
             text-transform: capitalize;
+            padding-left: 30px;
+            padding-top: 4px;
+            padding-bottom: 4px;
+            cursor: pointer;
+
+            &:hover, :focus {
+                color: #262626;
+                text-decoration: none;
+                background-color: #f5f5f5;
+            }
+            div {
+                display: grid;
+                grid-template-columns: 10px auto;
+                grid-column-gap: 5px;
+            }
+            i {
+                font-size: 6px;
+                margin-top: 6px;
+            }
+            span {
+                padding-right: 5px;
+            }
         }
     }
 

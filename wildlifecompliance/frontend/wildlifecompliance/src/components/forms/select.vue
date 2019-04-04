@@ -155,9 +155,9 @@ export default {
 </script>
 
 <style lang="css">
-.select2-container {
-  width: 100% !important;
-}
+    .select2-container {
+    width: 240px !important;
+    }
 
 input {
     box-shadow:none;
