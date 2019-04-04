@@ -74,7 +74,6 @@ export default {
     ...mapGetters([
         'application',
         'application_readonly',
-        'amendment_requests',
         'selected_activity_tab_id',
         'selected_activity_tab_name',
         'isApplicationLoaded',

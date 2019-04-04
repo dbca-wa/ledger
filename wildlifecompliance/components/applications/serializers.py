@@ -376,7 +376,8 @@ class ApplicationSerializer(BaseApplicationSerializer):
 
     def get_amendment_requests(self, obj):
         return ExternalAmendmentRequestSerializer(
-            obj.amendment_requests.filter(status='requested'), many=True
+            obj.active_amendment_requests.filter(status='requested'),
+            many=True
         ).data
 
 
