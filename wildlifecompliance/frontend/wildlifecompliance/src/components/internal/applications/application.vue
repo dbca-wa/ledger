@@ -245,8 +245,8 @@
                 <template v-if="applicationDetailsVisible">
                     <div>
                     <ul class="nav nav-tabs" id="tabs-main">
-                        <li><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
-                        <li><a data-toggle="tab" :href="'#'+applicationTab">Application</a></li>
+                        <li><a ref="applicantTab" data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
+                        <li><a ref="applicationTab" data-toggle="tab" :href="'#'+applicationTab">Application</a></li>
                     </ul>
                     <div class="tab-content">
                     <div :id="applicantTab" class="tab-pane fade in active">
@@ -1145,7 +1145,7 @@ export default {
             var activity_id=[];
 
             $('.deficiency').each((i,d) => {
-                values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n`: '';
+                values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
             });
 
             activity_id.push(vm.selected_activity_tab_id);
@@ -1426,10 +1426,10 @@ export default {
             });
         },
         initialiseSelects: function(){
-            let vm = this;
-            if (!vm.initialisedSelects){
-                vm.initialiseAssignedOfficerSelect();
-                vm.initialisedSelects = true;
+            if (!this.initialisedSelects){
+                this.initialiseAssignedOfficerSelect();
+                this.initialisedSelects = true;
+                this.initMainTab();
             }
         },
         initialiseAssessmentOptions: function() {
@@ -1470,11 +1470,16 @@ export default {
                     processing: true
                 }
             }
+        },
+        initMainTab: function() {
+            if(!this.$refs.applicantTab) {
+                return;
+            }
+            this.$refs.applicantTab.click();
+            this.initFirstTab(true);
         }
     },
     mounted: function() {
-        this.$nextTick(function () {
-        });
     },
     updated: function(){
         let vm = this;

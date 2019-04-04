@@ -21,15 +21,17 @@
                                                 }`"
                                             />
                                         </a>
-                                        <ul class='dropdown-menu-right section-list' id='section-submenu' >
-                                            <li v-for="(section, section_idx) in getSections(tab.id)">
-                                                <a class='page-scroll section'
-                                                    v-on:click="selectTab(tab)"
-                                                    v-scroll-to="`#${section.name}`">
-                                                    {{section.label}}
-                                                </a>
-                                            </li>
-                                        </ul>
+                                        <div class='dropdown-menu-right section-list' id='section-submenu' >
+                                            <div v-for="(section, section_idx) in getSections(tab.id)"
+                                                v-on:click="selectTab(tab)"
+                                                v-scroll-to="`#${section.name}`"
+                                                class="menu-row">
+                                                    <div>
+                                                        <i class="fa fa-circle"></i>
+                                                        <span>{{section.label}}</span>
+                                                    </div>
+                                            </div>
+                                        </div>
                                     </li>
                                 </ul>
                             </li>

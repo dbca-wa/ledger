@@ -1065,18 +1065,22 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             # print(request.data)
             amend_data = self.request.data
             reason = amend_data.pop('reason')
-            application = amend_data.pop('application')
+            application_id = amend_data.pop('application')
             text = amend_data.pop('text')
             activity_id = amend_data.pop('activity_id')
-            print(type(application))
-            print(application)
             for item in activity_id:
                 data = {
-                    'application': application,
+                    'application': application_id,
                     'reason': reason,
                     'text': text,
                     'licence_activity': item
                 }
+
+                application = Application.objects.get(id=application_id)
+                selected_activity = application.get_selected_activity(item)
+                if selected_activity.processing_status == ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED:
+                    raise serializers.ValidationError('Selected activity has been discarded by the customer!')
+
                 serializer = self.get_serializer(data=data)
                 serializer.is_valid(raise_exception=True)
                 instance = serializer.save()
