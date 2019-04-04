@@ -390,12 +390,7 @@ class Application(RevisionedMixin):
 
     @property
     def has_amendment(self):
-        qs = self.amendment_requests
-        qs = qs.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED)
-        if qs.exists():
-            return True
-        else:
-            return False
+        return self.active_amendment_requests.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED).exists()
 
     @property
     def is_assigned(self):
@@ -598,7 +593,6 @@ class Application(RevisionedMixin):
         with transaction.atomic():
             if self.can_user_edit:
                 # Save the data first
-                print("inside can_user_edit")
                 parser = SchemaParser(draft=False)
                 parser.save_application_user_data(self, request, viewset)
                 # self.processing_status = Application.PROCESSING_STATUS_UNDER_REVIEW
@@ -915,6 +909,11 @@ class Application(RevisionedMixin):
     @property
     def amendment_requests(self):
         return AmendmentRequest.objects.filter(application=self)
+
+    @property
+    def active_amendment_requests(self):
+        activity_ids = self.activities.values_list('licence_activity_id', flat=True)
+        return self.amendment_requests.filter(licence_activity_id__in=activity_ids)
 
     @property
     def assessments(self):

@@ -276,7 +276,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         result = False
         is_proxy_applicant = False
         is_in_org_applicant = False
-        is_officer = helpers.is_officer(self.context['request'])
+        is_app_licence_officer = self.context['request'].user in obj.licence_officers
         is_submitter = obj.submitter == self.context['request'].user
         if obj.proxy_applicant:
             is_proxy_applicant = obj.proxy_applicant == self.context['request'].user
@@ -285,8 +285,11 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 org.id for org in self.context['request'].user.wildlifecompliance_organisations.all()]
             is_in_org_applicant = obj.org_applicant_id in user_orgs
         if obj.can_user_edit and (
-                is_officer or is_submitter or is_proxy_applicant or is_in_org_applicant):
-            result = True
+            is_app_licence_officer
+            or is_submitter
+            or is_proxy_applicant
+            or is_in_org_applicant):
+                result = True
         return result
 
 
@@ -375,7 +378,8 @@ class ApplicationSerializer(BaseApplicationSerializer):
 
     def get_amendment_requests(self, obj):
         return ExternalAmendmentRequestSerializer(
-            obj.amendment_requests.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED), many=True
+            obj.active_amendment_requests.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED),
+            many=True
         ).data
 
 
