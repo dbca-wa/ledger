@@ -12,7 +12,6 @@
 
               <Application v-if="isApplicationLoaded">
             
-            
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                 <input type='hidden' name="application_id" :value="1" />
@@ -76,10 +75,10 @@ export default {
     ...mapGetters([
         'application',
         'application_readonly',
-        'amendment_requests',
         'selected_activity_tab_id',
         'selected_activity_tab_name',
         'isApplicationLoaded',
+        'unfinishedActivities',
     ]),
     csrf_token: function() {
       return helpers.getCookie('csrftoken')
@@ -113,13 +112,6 @@ export default {
     ]),
     eventListeners: function(){
         let vm = this;
-        $("ul#tabs-section").on("click", function (e) {
-          if(!e.target.href) {
-            return;
-          }
-          const tab_id = e.target.href.split('#')[1];
-          vm.setActivityTab({id: tab_id, name: e.target.innerHTML});
-        });
         $('#tabs-section li:first-child a').click();
     },
     discardActivity: function(e) {
@@ -148,7 +140,15 @@ export default {
             }
             else {
               this.load({ url: `/api/application/${this.application.id}.json` }).then(() => {
-                window.location.reload(true);  //TODO: Remove this once the activity headers / tabs are fully reactive
+                const newTab = this.unfinishedActivities[0];
+                if(newTab == null) {
+                  this.$router.push({
+                    name:"external-applications-dash",
+                  });
+                }
+                else {
+                  this.setActivityTab({id: newTab.id, name: newTab.label});
+                }
               });
             }
         },err=>{

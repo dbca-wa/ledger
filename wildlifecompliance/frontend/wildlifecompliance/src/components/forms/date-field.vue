@@ -11,7 +11,7 @@
                 <HelpTextUrl :help_text_url="help_text_url" />
             </template>
 
-            <template v-if="renderer.canViewComments()">
+            <template v-if="canViewComments">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
@@ -30,14 +30,15 @@
 </template>
 
 <script>
-import moment from 'moment'
-import datetimepicker from 'datetimepicker'
-import Comment from './comment.vue'
-import HelpText from './help_text.vue'
-import HelpTextUrl from './help_text_url.vue'
+import moment from 'moment';
+import datetimepicker from 'datetimepicker';
+import Comment from './comment.vue';
+import HelpText from './help_text.vue';
+import HelpTextUrl from './help_text_url.vue';
+import { mapGetters } from 'vuex';
 export default {
     props: ["name", "label", "id", "readonly", "help_text", "value", "conditions", "handleChange",
-            "comment_value", "isRequired", "help_text_url", "renderer"],
+            "comment_value", "isRequired", "help_text_url"],
     data(){
         return {
             showingComment: false
@@ -45,6 +46,9 @@ export default {
     },
     components: {Comment, HelpText, HelpTextUrl},
     computed: {
+        ...mapGetters([
+            'canViewComments',
+        ]),
         isChecked: function() {
         //TODO return value from database
         return false;

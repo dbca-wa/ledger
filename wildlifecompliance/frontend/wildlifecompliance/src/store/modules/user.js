@@ -16,6 +16,9 @@ export const userStore = {
         selected_activity_tab_id: state => state.selected_activity_tab_id,
         selected_activity_tab_name: state => state.selected_activity_tab_name,
         hasRole: (state, getters, rootState, rootGetters) => (role, activity_id) => {
+            if(rootGetters.application.user_roles == null) {
+                return false;
+            }
             return rootGetters.application.user_roles.find(
                 role_record => role_record.role == role && (!activity_id || activity_id == role_record.activity_id)
             );
@@ -31,6 +34,9 @@ export const userStore = {
                 activity => (activity_status.constructor === Array ? activity_status : [activity_status]).includes(activity.processing_status.id)
                     && activity.name && getters.hasRole(for_user_role, activity.id)
             )
+        },
+        canViewComments: (state, getters) => {
+            return getters.hasRole('licensing_officer');
         },
     },
     mutations: {

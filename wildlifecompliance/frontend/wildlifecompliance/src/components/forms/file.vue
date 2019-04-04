@@ -10,7 +10,7 @@
                 <HelpTextUrl :help_text_url="help_text_url" />
             </template>
 
-            <template v-if="renderer.canViewComments()">
+            <template v-if="canViewComments">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
@@ -47,9 +47,10 @@ import {
   api_endpoints,
   helpers
 }
-from '@/utils/hooks'
-import Comment from './comment.vue'
-import HelpText from './help_text.vue'
+from '@/utils/hooks';
+import Comment from './comment.vue';
+import HelpText from './help_text.vue';
+import { mapGetters } from 'vuex';
 export default {
     props:{
         application_id: null,
@@ -63,10 +64,6 @@ export default {
             default:function () {
                 return null;
             }
-        },
-        renderer: {
-            type: Object,
-            required: true
         },
         fileTypes:{
             default:function () {
@@ -97,14 +94,10 @@ export default {
             help_text_url:'',
         }
     },
-
-    //computed: {
-    //    csrf_token: function() {
-    //        return helpers.getCookie('csrftoken')
-    //    }
-    //},
-
     computed: {
+        ...mapGetters([
+            'canViewComments',
+        ]),
         csrf_token: function() {
             return helpers.getCookie('csrftoken')
         },
