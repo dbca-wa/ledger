@@ -522,12 +522,12 @@ export default {
                                 invoices += "<a href='/mooring/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
                             });
                             var invoice = "/ledger/payments/invoice/payment?" + search;
-                            if(full.payment_visible){
+                            if (full.payment_visible) {
                                 var invoice_link= (full.invoice_ref)?"<a href='"+invoice+"' target='_blank' class='text-primary'>View Payment</a><br/>":"";
                                 column += invoice_link;
                             }
                             console.log(full.part_booking);
-                            if (full.in_future && !full.part_booking){
+                            if (full.in_future && !full.part_booking) {
                                 if (full.booking_type == 0 || full.booking_type == 1 || full.booking_type == 2) { 
                                     var cancel_booking = "<a href='/cancel-admissions-booking/"+full.id+"' class='text-primary'> Cancel</a><br/>";
                                     column += cancel_booking;
