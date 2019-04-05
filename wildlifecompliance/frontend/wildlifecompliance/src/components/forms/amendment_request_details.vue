@@ -12,9 +12,10 @@
                     </div>
                     <div class="panel-body collapse in" :id="'pBody'">
                     <div v-for="a in visibleRequests">
-                        <p>Activity: {{a.licence_activity.name}}</p>
-                        <p>Reason: {{a.reason.name}}</p>
-                        <p>Details: <p v-for="t in splitText(a.text)">{{t}}</p></p>  
+                        <p><b>Activity:</b> {{a.licence_activity.name}}</p>
+                        <p><b>Reason:</b> {{a.reason.name}}</p>
+                        <p><b>Details:</b>
+                            <div v-for="t in splitText(a.text)">{{t}}<br></div></p> 
                     </div>
                 </div>
                 </div>
@@ -56,7 +57,7 @@ export default {
     }
   },
   methods: {
-    splitText: splitText,
+    splitText: splitText
   },
 }
 </script>
