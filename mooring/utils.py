@@ -337,7 +337,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
     booking_period_option = None
     today = date.today()
     nowtime =  datetime.today() 
-
+    mooring_date_selected = {} 
     if ongoing_booking:
        booking_id = ongoing_booking.id
        #booking_period_option = ongoing_booking.booking_period_option
@@ -375,6 +375,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
         
         for i in range(duration):
             date_rotate_forward = start_date+timedelta(days=i)
+            mooring_date_selected[date_rotate_forward] = 'notselected'
             mooring_rate = None
             if MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward).count() > 0:
                 mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward).order_by('-date_start')[0]
@@ -451,6 +452,8 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
 
         for i in range(duration):
             date_rotate_forward = start_date+timedelta(days=i)
+            #if date_rotate_forward not in mooring_date_selected:
+            #         mooring_date_selected[date_rotate_forward] = 'notselected'
 #        mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite).order_by('-date_start')[0]
 #        if mooring_rate:
             mooring_rate = None
@@ -481,6 +484,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                                     if bp.id == b.booking_period_option.id:
                                         results[b.campsite.id][date_rotate_forward][1][bp.id] = 'selected'
                                         results[b.campsite.id][date_rotate_forward][2][bp.id] = b.id
+                                        mooring_date_selected[date_rotate_forward] = 'selected'
                                 pass
                     if to_dt.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'):
                         if to_dt.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
@@ -491,6 +495,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                                     if bp.id == b.booking_period_option.id:
                                         results[b.campsite.id][date_rotate_forward][1][bp.id] = 'selected'
                                         results[b.campsite.id][date_rotate_forward][2][bp.id] = b.id
+                                        mooring_date_selected[date_rotate_forward] = 'selected'
                                 pass
                     if from_dt.strftime('%Y-%m-%d %H:%M:%S') <= start_dt.strftime('%Y-%m-%d %H:%M:%S') and to_dt.strftime('%Y-%m-%d %H:%M:%S') >= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
                         if date_rotate_forward in results[b.campsite.id]:
@@ -500,9 +505,20 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                                 if bp.id == b.booking_period_option.id:
                                    results[b.campsite.id][date_rotate_forward][1][bp.id] = 'selected'
                                    results[b.campsite.id][date_rotate_forward][2][bp.id] = b.id
+                                   mooring_date_selected[date_rotate_forward] = 'selected'
                             pass
 
 
+
+    # prevent other mooring from being selected for same day preventing mooring lockouts
+    for ma in results: 
+        for ma_dt in results[ma]:
+            if mooring_date_selected[ma_dt] == 'selected':
+               for bp in results[ma][ma_dt][1]:
+                    if results[ma][ma_dt][1][bp] == 'open':
+                         pass
+                         results[ma][ma_dt][1][bp] = 'closed' 
+                 
     mooring_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.mooringarea.pk == cg[0]] for cg in campsites_qs.distinct('mooringarea').values_list('mooringarea')}
     today = date.today()
 
