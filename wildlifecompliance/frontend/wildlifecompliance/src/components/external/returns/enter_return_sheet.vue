@@ -8,7 +8,7 @@
         <!-- List of applicable species available for Return -->
         <label>Species on Return:</label>
         <div v-for="species in returns.sheet_species_list">
-          <a href='/external/return/sheet/5' ><h5>{{fullSpeciesList[species]}}</h5></a>
+          <a :species_id="species" :href="'/external/return/sheet/'+returns.id+'/'+species"><h5>{{fullSpeciesList[species]}}</h5></a>
         </div>
       </div>
       <!-- div class="col-md-1" div -->
@@ -107,7 +107,7 @@ export default {
   props: {
      url:{
         type: String,
-        required: true
+        required: false
      }
   },
   data() {
@@ -126,6 +126,7 @@ export default {
         //                  'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
         returnTab: 'returnTab'+vm._uid,
         form: null,
+        selectedSpecies: 'selectedSpecies',
         isModalOpen: false,
         returnBtn: 'Submit',
         isNewSpecies: false,
@@ -143,7 +144,8 @@ export default {
                 dataSrc: '',
                 type: 'GET',
                 data: function(_data) {
-                  _data.return_id = vm.$refs.return_datatable._uid
+                  _data.return_id = window.location.href.split("/")[6]
+                  _data.species_id = window.location.href.split("/")[7]
                   return _data;
                 },
             },
@@ -247,7 +249,6 @@ export default {
     },
     addSheetRow: function () {
       let vm = this;
-      console.log(Object.keys(vm.returns.sheet_activity_list)[0])
       vm.$refs.sheet_entry.isAddEntry = true;
       vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable;
       vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
@@ -280,7 +281,7 @@ export default {
            vm.returns = res.body;
            vm.sheetTitle = 'Please Add Species Type';
            vm.newSpecies = vm.returns.sheet_species
-           if (vm.returns.sheet_species != '0000000') {
+           if (vm.returns.sheet_species !== '0000000') {
               vm.sheetTitle = vm.fullSpeciesList[vm.returns.sheet_species]
            };
         });
@@ -294,7 +295,6 @@ export default {
 
      // Row Actions
      vm.$refs.return_datatable.vmDataTable.on('click','.edit-row', function(e) {
-        console.log('entered edit-row')
         e.preventDefault();
         vm.$refs.sheet_entry.isChangeEntry = true;
         vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
@@ -309,13 +309,20 @@ export default {
         vm.$refs.sheet_entry.isModalOpen = true;
      });
      vm.$refs.return_datatable.vmDataTable.on('click','.accept-decline-transfer', function(e) {
-        console.log('entered accept-decline-transfer')
         e.preventDefault();
         vm.$refs.sheet_entry.isChangeEntry = true;
         vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
         vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
         vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
         vm.$refs.sheet_entry.isModalOpen = false;
+     });
+     $('form').on('click', '.change-species', function(e) {
+        // FIXME: cannot get ajax call working with change of parameters.
+        e.preventDefault();
+        vm.$refs.return_datatable.vmDataTable.clear().draw()
+        // Reload the data for new species type
+        vm.$refs.return_datatable.vmDataTable.ajax.url = helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
+        vm.$refs.return_datatable.vmDataTable.ajax.reload()
      });
   },
 };
