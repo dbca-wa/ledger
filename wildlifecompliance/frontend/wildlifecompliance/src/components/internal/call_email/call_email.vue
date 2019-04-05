@@ -68,56 +68,56 @@
                 </div>
             </div>
         </div>
-                    <div>
-                    <!--    
-                <CallEmail form_width="inherit" :withSectionsSelector="false" >
-                    
-                    <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-                    <input type='hidden' name="schema" :value="JSON.stringify(application)" />
-                    <input type='hidden' name="application_id" :value="1" />
-                    <input type='hidden' id="selected_activity_tab_id" v-model="selected_activity_tab_id" />
-                    -->
-                    <input type="text" name="classification" v-model="call_email.classification.name">              
-                    <input type="text" name="number" v-model="call_email.number">                                   
-                    <input type="text" name="caller" v-model="call_email.caller">                              
-                    <input type="text" name="assigned_to" v-model="call_email.assigned_to">
-                    <div class="row" style="margin-bottom:50px;">
-                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
-                            <div class="navbar-inner">
-                                <div class="container">
-                                    <p class="pull-right" style="margin-top:5px;">
-                                        <button class="btn btn-primary" @click.prevent="returnToOfficerConditions()">Return to Officer - Conditions</button>
-                                        <button class="btn btn-info" @click.prevent="toggleConditions()">Assess</button>
-                                        <button class="btn btn-primary" @click.prevent="save()">Save Changes</button>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
+    <!--
+     <Application form_width="inherit" :withSectionsSelector="false" v-if="isApplicationLoaded">
+                                    <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
+                                    <input type='hidden' name="schema" :value="JSON.stringify(application)" />
+                                    <input type='hidden' name="application_id" :value="1" />
+                                    <input type='hidden' id="selected_activity_tab_id" v-model="selected_activity_tab_id" />
+                                    <div class="row" style="margin-bottom:50px;">
+                                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                                            <div class="navbar-inner">
+                                                <div class="container">
+                                                    <p class="pull-right" style="margin-top:5px;">
+                                                        <button v-if="canReturnToConditions" class="btn btn-primary" @click.prevent="returnToOfficerConditions()">Return to Officer - Conditions</button>
+                                                        <button v-if="canCompleteAssessment" class="btn btn-info" @click.prevent="toggleConditions()">Assess</button>
+                                                        <button v-if="!applicationIsDraft && canRequestAmendment" class="btn btn-primary" @click.prevent="save()">Save Changes</button>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Application>
+            -->
+            <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
             <CallEmail form_width="inherit" :withSectionsSelector="false" >
                 
-                <renderer-block
-                        :component="CallEmail"
-                        :json_data="call_email"
-                        v-bind:key="`renderer_block_${call_email.id}`"
-                    
-                        />
-                <input type="text" name="classification" v-model="call_email.classification.name">              
-                    <input type="text" name="number" v-model="call_email.number">                                   
-                    <input type="text" name="caller" v-model="call_email.caller">                              
-                    <input type="text" name="assigned_to" v-model="call_email.assigned_to">
+                                    <input type='hidden' name="schema" :value="JSON.stringify(call_email)" />
+                                    <div class="row" style="margin-bottom:50px;">
+                                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                                            <div class="navbar-inner">
+                                                <div class="container">
+                                                    <p class="pull-right" style="margin-top:5px;">
+                                                        <button class="btn btn-primary" @click.prevent="returnToOfficerConditions()">Return to Officer - Conditions</button>
+                                                        <button class="btn btn-info" @click.prevent="toggleConditions()">Assess</button>
+                                                        <button class="btn btn-primary" @click.prevent="save()">Save Changes</button>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
 
 
-                </CallEmail>
+            </CallEmail>
                 
             </div>   
-    </CallEmail>
     </div>
 </template>
 <script>
     import CallEmail from '../../../components/compliance_form.vue'
     import Vue from 'vue'
-    
+    import CommsLogs from '@common-utils/comms_logs.vue'
     import {
         api_endpoints,
         helpers
@@ -137,6 +137,9 @@
                         pBody: 'pBody' + vm._uid,
                         //form: null,
                         loading: [],
+                        comms_url: 'www.google.com',
+                        comms_add_url: 'www.google.com',
+                        logs_url: 'www.google.com',
                         /*
                         call_email: function() {
                         console.log("computed");
@@ -164,7 +167,8 @@
         },
         
         components: {
-            CallEmail
+            CallEmail,
+            CommsLogs
         },
         computed: {
             /*

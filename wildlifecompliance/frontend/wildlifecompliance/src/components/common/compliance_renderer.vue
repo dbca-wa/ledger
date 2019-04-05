@@ -46,17 +46,12 @@
             </affix>
         </div>
         <div :class="`${form_width ? form_width : 'col-md-9'}`" id="tabs">
-            <ul class="nav nav-tabs" id="tabs-section" data-tabs="tabs">
-                <li v-for="(activity, index) in listVisibleActivities">
-                    <a :class="{'nav-link amendment-highlight': application.has_amendment}"
-                        data-toggle="tab" v-on:click="selectTab(activity)">{{activity.label}}</a>
-                </li>
-            </ul>
+            
             <!--
             <div class="tab-content">
                 <div v-for="(activity, index) in listVisibleActivities">
                     <AmendmentRequestDetails :activity_id="activity.id" />
-                    <renderer-block
+                    <compliance-renderer-block
                         :component="activity"
                         :json_data="applicationData"
                         v-if="activity.id == selected_activity_tab_id"
@@ -80,7 +75,7 @@ import { mapActions, mapGetters } from 'vuex';
 import '@/scss/forms/form.scss';
 
 export default {
-  name: 'renderer-form',
+  name: 'compliance-renderer-form',
   components: {
       //AmendmentRequestDetails,
       //CallEmail
@@ -131,6 +126,7 @@ export default {
     getSections: function(tab_id) {
         return tab_id == this.section_tab_id ? this.sectionsForTab(tab_id) : [];
     },
+    /*
     initRendererTabs: function() {
         let tabs_list = [];
         for(let component of this.listVisibleActivities.filter(
@@ -159,6 +155,7 @@ export default {
         }
         this.setRendererSections(sections);
     },
+    */
     sectionClick: function(component) {
         if(this.section_tab_id == component.id) {
             this.section_tab_id = 0;  // Collapse the expanded panel upon double click.
@@ -169,8 +166,8 @@ export default {
     },
   },
   mounted: function() {
-      this.initRendererTabs();
-      this.initRendererSections();
+      //this.initRendererTabs();
+      //this.initRendererSections();
   },
 }
 </script>
