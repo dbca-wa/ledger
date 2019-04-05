@@ -75,7 +75,7 @@ class ApplicationIdUpdateRequestEmail(TemplateEmailBase):
 
 
 class ApplicationIdUpdatedEmail(TemplateEmailBase):
-    subject = 'An user has updated their identification'
+    subject = 'A user has updated their identification'
     html_template = 'wildlifecompliance/emails/send_id_updated_notification.html'
     txt_template = 'wildlifecompliance/emails/send_id_updated_notification.txt'
 
@@ -310,14 +310,14 @@ def send_id_updated_notification(user, applications, assigned_officers, request)
         reverse(
             'wc_home') # TODO: this should be the user page
     )
+    applications_list_string = ', '.join([str(application.id) for application in applications])
     context = {
-        'user': '{first_name} {surname}'.format(
+        'user': '{first_name} {last_name}'.format(
             first_name=user.first_name,
-            surname=user.surname),
+            last_name=user.last_name),
         'url': url,
-        'applications': applications
+        'applications': applications_list_string
     }
-
     msg = email.send(assigned_officers, context=context)
 
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL

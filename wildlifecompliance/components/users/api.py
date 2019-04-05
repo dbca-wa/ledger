@@ -316,13 +316,15 @@ class UserViewSet(viewsets.ModelViewSet):
                 applications = instance.wildlifecompliance_applications.filter(
                     submitter=instance,
                     id_check_status=Application.ID_CHECK_STATUS_AWAITING_UPDATE)\
-                    .distinct('assigned_officer')
-                assigned_officers = [application.assigned_officer
+                    .order_by('id')
+                assigned_officers = [application.assigned_officer.email
                                      for application
                                      in applications
                                      if application.assigned_officer]
+                # remove duplicate email addresses from assigned_officers list
+                assigned_officers = list(dict.fromkeys(assigned_officers))
                 if len(assigned_officers) > 0:
-                    send_id_updated_notification(instance, assigned_officers, applications, request)
+                    send_id_updated_notification(instance, applications, assigned_officers, request)
             serializer = UserSerializer(instance, partial=True)
             return Response(serializer.data)
         except serializers.ValidationError:
