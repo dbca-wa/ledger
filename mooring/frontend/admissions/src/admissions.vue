@@ -499,8 +499,9 @@ export default {
                 }
             }
         },
-        validateVesselReg: function(){
+        validateVesselReg: function() {
             let vm = this;
+            vm.vesselReg = vm.vesselReg.replace(/ /g, ""); 
             var reg = vm.vesselReg;
             var data = {
                 'rego': reg
