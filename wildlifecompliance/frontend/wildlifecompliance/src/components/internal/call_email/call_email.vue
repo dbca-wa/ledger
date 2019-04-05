@@ -1,5 +1,6 @@
 <template lang="html">
     <div class="container">
+
         <div class="row">
             <div class="col-sm-12">
                 <div class="panel panel-default">
@@ -67,10 +68,54 @@
                 </div>
             </div>
         </div>
+                    <div>
+                    <!--    
+                <CallEmail form_width="inherit" :withSectionsSelector="false" >
+                    
+                    <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
+                    <input type='hidden' name="schema" :value="JSON.stringify(application)" />
+                    <input type='hidden' name="application_id" :value="1" />
+                    <input type='hidden' id="selected_activity_tab_id" v-model="selected_activity_tab_id" />
+                    -->
+                    <input type="text" name="classification" v-model="call_email.classification.name">              
+                    <input type="text" name="number" v-model="call_email.number">                                   
+                    <input type="text" name="caller" v-model="call_email.caller">                              
+                    <input type="text" name="assigned_to" v-model="call_email.assigned_to">
+                    <div class="row" style="margin-bottom:50px;">
+                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                            <div class="navbar-inner">
+                                <div class="container">
+                                    <p class="pull-right" style="margin-top:5px;">
+                                        <button class="btn btn-primary" @click.prevent="returnToOfficerConditions()">Return to Officer - Conditions</button>
+                                        <button class="btn btn-info" @click.prevent="toggleConditions()">Assess</button>
+                                        <button class="btn btn-primary" @click.prevent="save()">Save Changes</button>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            <CallEmail form_width="inherit" :withSectionsSelector="false" >
+                
+                <renderer-block
+                        :component="CallEmail"
+                        :json_data="call_email"
+                        v-bind:key="`renderer_block_${call_email.id}`"
+                    
+                        />
+                <input type="text" name="classification" v-model="call_email.classification.name">              
+                    <input type="text" name="number" v-model="call_email.number">                                   
+                    <input type="text" name="caller" v-model="call_email.caller">                              
+                    <input type="text" name="assigned_to" v-model="call_email.assigned_to">
+
+
+                </CallEmail>
+                
+            </div>   
+    </CallEmail>
     </div>
 </template>
 <script>
-    import Application from '../../form.vue'
+    import CallEmail from '../../../components/compliance_form.vue'
     import Vue from 'vue'
     
     import {
@@ -119,6 +164,7 @@
         },
         
         components: {
+            CallEmail
         },
         computed: {
             /*
@@ -127,10 +173,10 @@
             }
             ),
             */
-            ...mapGetters({
-                call_email: 'getCallEmail',
+            ...mapGetters([
+                'call_email',
 
-            }),
+            ]),
             /*
             ...mapFields({
                 callemail_classification_name: "call_email.classification['name']",
