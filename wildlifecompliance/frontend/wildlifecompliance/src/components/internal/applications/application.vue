@@ -184,7 +184,7 @@
                     </div>
                     <div class="tab-content">
                         <div v-for="activity in getVisibleConditionsFor('licensing_officer', 'with_officer_conditions', selected_activity_tab_id)" :id="`${activity.id}`" class="tab-pane fade active in">
-                            <OfficerConditions :application="application" :licence_activity_tab="`${activity.id}`" :final_view_conditions="false" :key="`officer_condition_${selected_activity_tab_id}`"/>
+                            <OfficerConditions :application="application" :licence_activity_tab="activity.id" :final_view_conditions="false" :key="`officer_condition_${selected_activity_tab_id}`"/>
                         </div>
                     </div>
                 </template>
@@ -245,8 +245,8 @@
                 <template v-if="applicationDetailsVisible">
                     <div>
                     <ul class="nav nav-tabs" id="tabs-main">
-                        <li><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
-                        <li><a data-toggle="tab" :href="'#'+applicationTab">Application</a></li>
+                        <li><a ref="applicantTab" data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
+                        <li><a ref="applicationTab" data-toggle="tab" :href="'#'+applicationTab">Application</a></li>
                     </ul>
                     <div class="tab-content">
                     <div :id="applicantTab" class="tab-pane fade in active">
@@ -1042,7 +1042,7 @@ export default {
             this.$refs.proposed_licence.isModalOpen = true;
         },
         toggleIssue:function(){
-            this.save();
+            this.save_wo();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1145,7 +1145,7 @@ export default {
             var activity_id=[];
 
             $('.deficiency').each((i,d) => {
-                values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n`: '';
+                values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
             });
 
             activity_id.push(vm.selected_activity_tab_id);
@@ -1240,7 +1240,7 @@ export default {
             );
         },
         toggleOfficerConditions:function(){
-            vm.save_wo();
+            this.save_wo();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1325,7 +1325,7 @@ export default {
             this.setOriginalApplication(response.body);
             this.setApplication(response.body);
             this.$nextTick(() => {
-                this.initialiseAssignedOfficerSelect(reinit=true);
+                this.initialiseAssignedOfficerSelect(true);
                 this.updateAssignedOfficerSelect();
             });
         },
@@ -1399,7 +1399,7 @@ export default {
                 console.log(error);
             });
         },
-        initialiseAssignedOfficerSelect:function(reinit=false){
+        initialiseAssignedOfficerSelect: function(reinit=false){
             let vm = this;
             if (reinit){
                 $(vm.$refs.assigned_officer).data('select2') ? $(vm.$refs.assigned_officer).select2('destroy'): '';
@@ -1426,10 +1426,10 @@ export default {
             });
         },
         initialiseSelects: function(){
-            let vm = this;
-            if (!vm.initialisedSelects){
-                vm.initialiseAssignedOfficerSelect();
-                vm.initialisedSelects = true;
+            if (!this.initialisedSelects){
+                this.initialiseAssignedOfficerSelect();
+                this.initialisedSelects = true;
+                this.initMainTab();
             }
         },
         initialiseAssessmentOptions: function() {
@@ -1470,11 +1470,16 @@ export default {
                     processing: true
                 }
             }
+        },
+        initMainTab: function() {
+            if(!this.$refs.applicantTab) {
+                return;
+            }
+            this.$refs.applicantTab.click();
+            this.initFirstTab(true);
         }
     },
     mounted: function() {
-        this.$nextTick(function () {
-        });
     },
     updated: function(){
         let vm = this;

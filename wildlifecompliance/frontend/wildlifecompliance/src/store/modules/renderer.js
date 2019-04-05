@@ -14,23 +14,24 @@ export const rendererStore = {
     getters: {
         renderer_tabs: state => state.tabs,
         visibleActivities: (state, getters, rootState, rootGetters) => (
-            hide_decisions, hide_processing_statuses) => {
+            hide_decisions, hide_processing_statuses, for_user_role) => {
             return rootGetters.application.schema.filter(
                 activity => getters.isActivityVisible(
-                    activity.id, hide_decisions, hide_processing_statuses)
+                    activity.id, hide_decisions, hide_processing_statuses, for_user_role)
             );
         },
         isActivityVisible: (state, getters, rootState, rootGetters) => (
-            activity_id, hide_decisions, hide_processing_statuses) => {
+            activity_id, hide_decisions, hide_processing_statuses, for_user_role) => {
             return rootGetters.isApplicationActivityVisible(activity_id,
                 hide_decisions,
-                hide_processing_statuses
+                hide_processing_statuses,
+                for_user_role
             );
         },
         unfinishedActivities: (state, getters, rootState, rootGetters) => {
             return getters.visibleActivities(
                 ['issued', 'declined'],  // Hide by decision
-                //['discarded']  // Hide by processing_status
+                ['discarded']  // Hide by processing_status
             ).filter(activity => !rootGetters.application.has_amendment ||
                 rootGetters.application.amendment_requests.find(
                     request => request.licence_activity.id == activity.id
