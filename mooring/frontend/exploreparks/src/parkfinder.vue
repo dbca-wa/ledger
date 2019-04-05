@@ -51,19 +51,19 @@
                 </div>
                 <div class="row">
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Registration  <input v-on:blur="searchRego()" v-model="vesselRego" id="vesselRego" name="vessel_rego" type="text" placeholder="REGO134" style="text-transform:uppercase" /></label>
+                    <label>Vessel Registration  <input v-on:blur="searchRego()" v-model="vesselRego" id="vesselRego" name="vessel_rego" type="text" placeholder="REGO134" style="text-transform:uppercase" :disabled="current_booking.length > 0" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Size (Meters) <input v-model="vesselSize" id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
+                    <label>Vessel Size (Meters) <input v-model="vesselSize" id="vesselSize" name="vessel_size" type="number" placeholder="35" :disabled="current_booking.length > 0" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Draft (Meters) <input v-model="vesselDraft" id="vesselDraft" name="vessel_draft" type="number" placeholder="10" /></label>
+                    <label>Vessel Draft (Meters) <input v-model="vesselDraft" id="vesselDraft" name="vessel_draft" type="number" placeholder="10" :disabled="current_booking.length > 0" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Beams (Meters)  <input v-model="vesselBeam" id="vesselBeam" name="vessel_beams" type="number" placeholder="3" /></label>
+                    <label>Vessel Beams (Meters)  <input v-model="vesselBeam" id="vesselBeam" name="vessel_beams" type="number" placeholder="3" :disabled="current_booking.length > 0" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Weight (Tons)  <input v-model="vesselWeight" id="vesselWeight" name="vessel_weight" type="number" placeholder="2" /></label>
+                    <label>Vessel Weight (Tons)  <input v-model="vesselWeight" id="vesselWeight" name="vessel_weight" type="number" placeholder="2" :disabled="current_booking.length > 0" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns" >
                         <label>
