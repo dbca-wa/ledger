@@ -46,7 +46,7 @@ router.register(r'vehicles', proposal_api.VehicleViewSet)
 router.register(r'land_activities', main_api.LandActivitiesViewSet)
 router.register(r'marine_activities', main_api.MarineActivitiesViewSet)
 router.register(r'required_documents', main_api.RequiredDocumentViewSet)
-
+router.register(r'questions', main_api.QuestionViewSet)
 
 api_patterns = [
     url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),

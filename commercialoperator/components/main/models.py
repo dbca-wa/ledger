@@ -339,6 +339,33 @@ class Tenure(models.Model):
     def __str__(self):
         return '{}: {}'.format(self.name, self.application_type)
 
+@python_2_unicode_compatible
+class Question(models.Model):
+    CORRECT_ANSWER_CHOICES = (
+        ('answer_one', 'Answer one'), ('answer_two', 'Answer two'), ('answer_three', 'Answer three'),
+        ('answer_four', 'Answer four'))
+    question_text = models.TextField(blank=False)
+    answer_one = models.CharField(max_length=200, blank=True)
+    answer_two = models.CharField(max_length=200, blank=True)
+    answer_three = models.CharField(max_length=200, blank=True)
+    answer_four = models.CharField(max_length=200, blank=True)
+    #answer_five = models.CharField(max_length=200, blank=True)
+    correct_answer = models.CharField('Correct Answer', max_length=40, choices=CORRECT_ANSWER_CHOICES,
+                                       default=CORRECT_ANSWER_CHOICES[0][0])
+    
+
+
+    class Meta:
+        #ordering = ['name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.question_text
+
+    @property
+    def correct_answer_value(self):
+        return getattr(self, self.correct_answer)
+
 
 @python_2_unicode_compatible
 class UserAction(models.Model):
