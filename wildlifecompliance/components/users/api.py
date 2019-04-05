@@ -312,11 +312,14 @@ class UserViewSet(viewsets.ModelViewSet):
                             instance.last_name,
                             instance.email)),
                     request)
-                # For any applications that have requested ID update, email the assigned officer
+                # For any of the submitter's applications that have requested ID update,
+                # email the assigned officer
                 applications = instance.wildlifecompliance_applications.filter(
                     submitter=instance,
-                    id_check_status=Application.ID_CHECK_STATUS_AWAITING_UPDATE)\
-                    .order_by('id')
+                    id_check_status=Application.ID_CHECK_STATUS_AWAITING_UPDATE,
+                    org_applicant=None,
+                    proxy_applicant=None
+                ).order_by('id')
                 assigned_officers = [application.assigned_officer.email
                                      for application
                                      in applications

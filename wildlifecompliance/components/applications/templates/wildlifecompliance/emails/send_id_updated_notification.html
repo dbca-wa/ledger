@@ -1,8 +1,8 @@
 {%  extends 'wildlifecompliance/emails/base_email.html' %}
 
 {% block content %}
-    <p>A user has updated their identification.</p>
-    <p>This request relates to the following applications from which the user had been requested an amended ID to be uploaded:</p>
+    <p>A user or organisation has updated their identification.</p>
+    <p>This request relates to the following applications from which there was a request for an amended ID to be uploaded:</p>
     <p><strong>Application : {{ applications }}</strong></p>
     <p><strong>Link: <a href="{{url}}">{{url}}</a></strong></p>
     <p>Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.</p>
