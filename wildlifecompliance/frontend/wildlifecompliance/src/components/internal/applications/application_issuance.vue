@@ -15,20 +15,20 @@
                                         <div class="form-group">
                                             <div class="row">
                                                 <div class="col-sm-3">
-                                                    <input type="radio"  id="issue" name="licence_category" v-model="licence.activity[index].final_status"  value="issued" > Issue
+                                                    <input type="radio"  id="issue" name="licence_category" v-model="getActivity(index).final_status"  value="issued" > Issue
                                                 </div>
                                                 <div class="col-sm-3">
-                                                    <input type="radio"  id="decline" name="licence_category" v-model="licence.activity[index].final_status"  value="declined" > Decline
+                                                    <input type="radio"  id="decline" name="licence_category" v-model="getActivity(index).final_status"  value="declined" > Decline
                                                 </div>
                                             </div>
-                                            <div class="row" v-if="licence.activity[index].final_status == 'issued'">
+                                            <div class="row" v-if="finalStatus(index) === 'issued'">
                                                 <div class="col-sm-3">
                                                     
                                                     <label class="control-label pull-left">Proposed Start Date</label>
                                                 </div>
                                                 <div class="col-sm-9">
                                                     <div class="input-group date" ref="start_date" style="width: 70%;">
-                                                        <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY" v-model="licence.activity[index].start_date">
+                                                        <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY" v-model="getActivity(index).start_date">
                                                         <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
                                                         </span>
@@ -36,7 +36,7 @@
                                                 </div>
 
                                             </div>
-                                            <div class="row" v-if="licence.activity[index].final_status == 'issued'">
+                                            <div class="row" v-if="finalStatus(index) === 'issued'">
                                                 <div class="col-sm-3">
                                                     <label class="control-label pull-left">Proposed Expiry Date</label>
                                                 </div>
@@ -104,7 +104,7 @@
                     </div>
 
 
-                    <div class="row">
+                    <div class="row" v-if="licence.activity.some(activity => activity.final_status === 'issued')">
                         <div class="panel panel-default">
                             <div class="panel-heading">
                                 <h3 class="panel-title">Issue
@@ -200,12 +200,16 @@ export default {
     computed:{
         ...mapGetters([
             'licenceActivities',
+            'filterActivityList',
         ]),
         canIssueOrDecline: function() {
             return this.licence.id_check && this.licence.character_check && this.visibleLicenceActivities.length;
         },
         visibleLicenceActivities: function() {
-            return this.licenceActivities('with_officer_finalisation', 'issuing_officer');
+            return this.filterActivityList({
+                activity_list: this.licenceActivities('with_officer_finalisation', 'issuing_officer'),
+                exclude_processing_statuses: ['discarded']
+            });
         },
         isIdCheckAccepted: function(){
             return this.application.id_check_status.id == 'accepted';
@@ -219,6 +223,11 @@ export default {
         isCharacterNotChecked: function(){
             return this.application.character_check_status.id == 'not_checked';
         },
+        finalStatus: function() {
+            return (index) => {
+                return this.getActivity(index).final_status;
+            }
+        }
     },
     methods:{
         ok: function () {
@@ -241,9 +250,12 @@ export default {
                         )
                     });
         },
+        getActivity: function(index) {
+            return this.licence.activity[index] ? this.licence.activity[index] : {};
+        },
         initialiseLicenceDetails() {
             let vm=this;
-            var final_status=null
+            var final_status=null;
             for(var i=0, len=vm.proposed_licence.length; i<len; i++){
                 if (vm.proposed_licence[i].proposed_action.id =='propose_issue'){
                     final_status="issued"

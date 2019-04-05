@@ -37,7 +37,7 @@
                                     <div class="col-sm-9">
                                         <div style="width:70% !important">
                                             <select class="form-control" ref="return_types_select" name="return_type" v-model="condition.return_type">
-                                                <option v-for="r in return_types" :value="r.id">{{r.return_type.name}}</option>
+                                                <option v-for="r in return_types" :value="r.id">{{r.data_format.name}}</option>
                                             </select>
                                         </div>
                                     </div>
