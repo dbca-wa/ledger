@@ -373,7 +373,7 @@ class Application(RevisionedMixin):
         elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED) == len(activity_statuses):
             return self.PROCESSING_STATUS_DISCARDED
         # amendment request sent to user and outstanding
-        elif self.amendment_requests.filter(status='requested').count() > 0:
+        elif self.active_amendment_requests.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED).count() > 0:
             return self.PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE
         # all activities approved
         elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED) == len(activity_statuses):
