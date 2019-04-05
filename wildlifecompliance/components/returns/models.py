@@ -510,8 +510,11 @@ class ReturnSheet(object):
         self._rows = []
         for row_num in range(num_rows):
             row_data = {}
-            for key, value in by_column.items():
-                row_data[key] = value[row_num]
+            if num_rows > 1:
+                for key, value in by_column.items():
+                    row_data[key] = value[row_num]
+            else:
+                row_data = by_column
             # filter empty rows.
             is_empty = True
             for value in row_data.values():
