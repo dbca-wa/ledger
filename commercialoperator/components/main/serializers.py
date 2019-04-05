@@ -139,5 +139,5 @@ class TrailSerializer(serializers.ModelSerializer):
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ('id', 'question_text', 'answer_one', 'answer_two', 'answer_three', 'answer_four', 'correct_answer_value')
+        fields = ('id', 'question_text', 'answer_one', 'answer_two', 'answer_three', 'answer_four','correct_answer', 'correct_answer_value')
 
