@@ -184,7 +184,7 @@
                     </div>
                     <div class="tab-content">
                         <div v-for="activity in getVisibleConditionsFor('licensing_officer', 'with_officer_conditions', selected_activity_tab_id)" :id="`${activity.id}`" class="tab-pane fade active in">
-                            <OfficerConditions :application="application" :licence_activity_tab="`${activity.id}`" :final_view_conditions="false" :key="`officer_condition_${selected_activity_tab_id}`"/>
+                            <OfficerConditions :application="application" :licence_activity_tab="activity.id" :final_view_conditions="false" :key="`officer_condition_${selected_activity_tab_id}`"/>
                         </div>
                     </div>
                 </template>
@@ -1042,7 +1042,7 @@ export default {
             this.$refs.proposed_licence.isModalOpen = true;
         },
         toggleIssue:function(){
-            this.save();
+            this.save_wo();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1240,7 +1240,7 @@ export default {
             );
         },
         toggleOfficerConditions:function(){
-            vm.save_wo();
+            this.save_wo();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1325,7 +1325,7 @@ export default {
             this.setOriginalApplication(response.body);
             this.setApplication(response.body);
             this.$nextTick(() => {
-                this.initialiseAssignedOfficerSelect(reinit=true);
+                this.initialiseAssignedOfficerSelect(true);
                 this.updateAssignedOfficerSelect();
             });
         },
@@ -1399,7 +1399,7 @@ export default {
                 console.log(error);
             });
         },
-        initialiseAssignedOfficerSelect:function(reinit=false){
+        initialiseAssignedOfficerSelect: function(reinit=false){
             let vm = this;
             if (reinit){
                 $(vm.$refs.assigned_officer).data('select2') ? $(vm.$refs.assigned_officer).select2('destroy'): '';

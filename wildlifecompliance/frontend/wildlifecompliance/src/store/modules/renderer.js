@@ -14,17 +14,18 @@ export const rendererStore = {
     getters: {
         renderer_tabs: state => state.tabs,
         visibleActivities: (state, getters, rootState, rootGetters) => (
-            hide_decisions, hide_processing_statuses) => {
+            hide_decisions, hide_processing_statuses, for_user_role) => {
             return rootGetters.application.schema.filter(
                 activity => getters.isActivityVisible(
-                    activity.id, hide_decisions, hide_processing_statuses)
+                    activity.id, hide_decisions, hide_processing_statuses, for_user_role)
             );
         },
         isActivityVisible: (state, getters, rootState, rootGetters) => (
-            activity_id, hide_decisions, hide_processing_statuses) => {
+            activity_id, hide_decisions, hide_processing_statuses, for_user_role) => {
             return rootGetters.isApplicationActivityVisible(activity_id,
                 hide_decisions,
-                hide_processing_statuses
+                hide_processing_statuses,
+                for_user_role
             );
         },
         unfinishedActivities: (state, getters, rootState, rootGetters) => {
