@@ -2,14 +2,19 @@ import Vue from 'vue';
 import {
     UPDATE_RENDERER_TABS,
     UPDATE_RENDERER_SECTIONS,
-    UPDATE_VISIBLE_COMPONENT
+    UPDATE_VISIBLE_COMPONENT,
+    TOGGLE_FINALISED_TABS,
 } from '@/store/mutation-types';
 
 export const rendererStore = {
     state: {
         tabs: [],
         sections: {},
-        visible_components: []
+        visible_components: [],
+        visibility: {
+            'exclude_decisions': ['issued', 'declined'],
+            'exclude_processing_status': ['discarded']
+        }
     },
     getters: {
         renderer_tabs: state => state.tabs,
@@ -30,8 +35,8 @@ export const rendererStore = {
         },
         unfinishedActivities: (state, getters, rootState, rootGetters) => {
             return getters.visibleActivities(
-                ['issued', 'declined'],  // Hide by decision
-                ['discarded']  // Hide by processing_status
+                state.visibility.exclude_decisions, // Hide by decision
+                state.visibility.exclude_processing_status  // Hide by processing_status
             ).filter(activity => !rootGetters.application.has_amendment ||
                 rootGetters.application.amendment_requests.find(
                     request => request.licence_activity.id == activity.id
@@ -55,6 +60,9 @@ export const rendererStore = {
         [UPDATE_VISIBLE_COMPONENT] (state, { key, value }) {
             Vue.set(state.visible_components, key, value);
         },
+        [TOGGLE_FINALISED_TABS] (state, visible) {
+            Vue.set(state.visibility, 'exclude_decisions', visible ? [] : ['issued', 'declined']);
+        },
     },
     actions: {
         setRendererTabs({ commit }, tabs) {
@@ -66,6 +74,9 @@ export const rendererStore = {
         toggleVisibleComponent({ commit, getters }, { component_id, visible }) {
             commit(UPDATE_VISIBLE_COMPONENT,
                 {key: component_id, value: visible});
+        },
+        toggleFinalisedTabs({ commit }, visible) {
+            commit(TOGGLE_FINALISED_TABS, visible);
         }
     }
 }
