@@ -375,6 +375,7 @@ class Proposal(RevisionedMixin):
 
     # common
     applicant_details = models.OneToOneField(ProposalApplicantDetails, blank=True, null=True) #, related_name='applicant_details')
+    training_completed = models.BooleanField(default=False)
     #payment = models.OneToOneField(ProposalPayment, blank=True, null=True)
     #confirmation = models.OneToOneField(ProposalConfirmation, blank=True, null=True)
 

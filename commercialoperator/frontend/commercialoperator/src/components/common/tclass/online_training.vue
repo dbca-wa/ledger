@@ -10,7 +10,10 @@
                     </h3>
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
-                    <div class="" >                        
+                    <div v-if="proposal.training_completed">
+                        <label>Your online training has been completed. Please proceed to pay and submit the appication.</label>
+                    </div>
+                    <div >                        
                         <div class="form-horizontal col-sm-12 borderDecoration">
                             <div class="row">
                                 <alert v-if="showError" type="danger" style="color: red"><strong>{{errorString}}</strong></alert>
@@ -58,7 +61,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <input type="button" @click.prevent="checkAnswers" class="btn btn-primary pull-right" value="Check Answers" />
+                                    <input type="button" v-if="!proposal.training_completed"@click.prevent="checkAnswers" class="btn btn-primary pull-right" value="Check Answers" />
                                 </div>                                
                             </div>
                         </div>
@@ -151,6 +154,10 @@
                     else{
                         vm.showResult=true;
                         vm.showAnswer=true;
+                        //all_correct=true;
+                    }
+                    if(all_correct=true){
+                        vm.proposal.training_completed=true;
                     }
                     vm.attempt++;
                 }

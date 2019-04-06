@@ -250,7 +250,8 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'activities_marine',
                 'land_parks',
                 'marine_parks',
-                'trails'
+                'trails',
+                'training_completed'
                 )
         read_only_fields=('documents',)
 
