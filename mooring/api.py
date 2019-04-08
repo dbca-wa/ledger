@@ -2948,11 +2948,6 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['firstname'] = booking.details.get('first_name','')
                 bk['lastname'] = booking.details.get('last_name','')
                 bk['admissions'] = { 'id' :booking.admission_payment.id, 'amount': booking.admission_payment.totalCost } if booking.admission_payment else None
-#                bk['booking_phone_number'] = booking.details['phone']
-                print "PHONE"
-                print booking.details
-                #booking_details = json.loads(booking.details)
-                #print booking.details.phone
 
                 bk['booking_phone_number'] = ''
                 if "phone" in booking.details: 
