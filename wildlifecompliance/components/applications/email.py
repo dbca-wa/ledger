@@ -304,11 +304,10 @@ def send_id_update_request_notification(application, request):
 
 
 def send_id_updated_notification(user, applications, assigned_officers, request):
-    # An email to internal users notifying about a user/organisation identification being updated
+    # An email to internal users notifying about a user identification being updated
     email = ApplicationIdUpdatedEmail()
     url = request.build_absolute_uri(
-        reverse(
-            'wc_home') # TODO: this should be the user page
+        '/internal/users/{}'.format(user.id)
     )
     applications_list_string = ', '.join([str(application.id) for application in applications])
     context = {

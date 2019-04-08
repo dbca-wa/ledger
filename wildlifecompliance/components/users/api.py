@@ -46,6 +46,7 @@ from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
 )
 
+
 class GetMyUserDetails(views.APIView):
     renderer_classes = [JSONRenderer, ]
 
@@ -319,6 +320,9 @@ class UserViewSet(viewsets.ModelViewSet):
                     id_check_status=Application.ID_CHECK_STATUS_AWAITING_UPDATE,
                     org_applicant=None,
                     proxy_applicant=None
+                ).exclude(customer_status__in=(
+                    Application.CUSTOMER_STATUS_ACCEPTED,
+                    Application.CUSTOMER_STATUS_DECLINED)
                 ).order_by('id')
                 assigned_officers = [application.assigned_officer.email
                                      for application

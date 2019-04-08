@@ -1,7 +1,7 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-    Identification details for the following organisation you are assigned to has been uploaded.
+    Identification details for the following organisation has been uploaded.
 
     Organisation: {{ organisation.name }}
 
@@ -10,5 +10,9 @@
     Address: {{ organisation.address.line1 }}, {{ organisation.address.locality }},
         {{ organisation.address.state }}, {{ organisation.address.postcode}},
         {{ organisation.address.country.name}}
+
+    This request relates to the following applications from which the user had been requested an amended ID to be uploaded:
+
+    Application : {{ applications }}
     
 {%  endblock %}
