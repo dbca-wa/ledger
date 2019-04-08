@@ -17,6 +17,7 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.payments.invoice.models import Invoice
 
 from wildlifecompliance.components.organisations.models import Organisation
+from wildlifecompliance.components.organisations.emails import send_org_id_update_request_notification
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
 from wildlifecompliance.components.applications.email import (
     send_application_submitter_email_notification,
@@ -26,7 +27,8 @@ from wildlifecompliance.components.applications.email import (
     send_assessment_reminder_email,
     send_amendment_submit_email_notification,
     send_application_issue_notification,
-    send_application_decline_notification
+    send_application_decline_notification,
+    send_id_update_request_notification
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
@@ -725,20 +727,27 @@ class Application(RevisionedMixin):
         self.log_user_action(
             ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(
                 self.id), request)
-        # Create a log entry for the applicant (submitter, organisation or
-        # proxy)
+        # Create a log entry for the applicant (submitter or organisation only)
         if self.org_applicant:
             self.org_applicant.log_user_action(
                 ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(
                     self.id), request)
         elif self.proxy_applicant:
-            self.proxy_applicant.log_user_action(
-                ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(
-                    self.id), request)
+            # do nothing if proxy_applicant
+            pass
         else:
             self.submitter.log_user_action(
                 ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(
                     self.id), request)
+        # send email to submitter or org_applicant admins
+        if self.org_applicant:
+            send_org_id_update_request_notification(self, request)
+        elif self.proxy_applicant:
+            # do nothing if proxy_applicant
+            pass
+        else:
+            # send to submitter
+            send_id_update_request_notification(self, request)
 
     def accept_character_check(self, request):
         self.character_check_status = Application.CHARACTER_CHECK_STATUS_ACCEPTED

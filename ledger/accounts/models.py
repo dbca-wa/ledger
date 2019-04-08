@@ -285,6 +285,9 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     objects = EmailUserManager()
     USERNAME_FIELD = 'email'
 
+    dummy_email_suffix = ".s058@ledger.dpaw.wa.gov.au"
+    dummy_email_suffix_len = len(dummy_email_suffix)
+
     def __str__(self):
         if self.is_dummy_user:
             if self.organisation:
@@ -333,9 +336,6 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             document.save()
             self.identification = document
             self.save()
-
-    dummy_email_suffix = ".s058@ledger.dpaw.wa.gov.au"
-    dummy_email_suffix_len = len(dummy_email_suffix)
 
     def has_wildlifelicenceactivity_perm(self, permission_codename, licence_activity_id):
         app_label = get_app_label()

@@ -558,7 +558,7 @@
                                         <button v-if="isIdCheckRequested" disabled class="btn btn-light">Awaiting Update</button>
                                     </div>
                                     <div class="col-sm-4">
-                                        <button v-if="isIdNotChecked" class="btn btn-primary" @click.prevent="updateIdRequest()">Request Update</button>
+                                        <button v-if="isIdNotChecked" :disabled="application.proxy_applicant" class="btn btn-primary" @click.prevent="updateIdRequest()">Request Update</button>
                                         <button v-if="isIdCheckUpdated" disabled class="btn btn-light">Request updated</button>
                                         <button v-if="isIdCheckAccepted || isIdCheckRequested"  class="btn btn-primary" @click.prevent="resetIdRequest()">Reset</button>
                                     </div>
