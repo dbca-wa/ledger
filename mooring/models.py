@@ -217,10 +217,10 @@ class MooringArea(models.Model):
     max_advance_booking = models.IntegerField(default=180)
     oracle_code = models.CharField(max_length=50,null=True,blank=True)
     mooring_map = models.FileField(upload_to=update_mooring_map_filename,null=True,blank=True)
-    vessel_size_limit = models.IntegerField(default=0)
-    vessel_draft_limit = models.IntegerField(default=0)
-    vessel_beam_limit = models.IntegerField(default=0)
-    vessel_weight_limit = models.IntegerField(default=0)
+    vessel_size_limit = models.FloatField(default=0)
+    vessel_draft_limit = models.FloatField(default=0)
+    vessel_beam_limit = models.FloatField(default=0)
+    vessel_weight_limit = models.FloatField(default=0)
     mooring_physical_type = models.SmallIntegerField(choices=MOORING_PHYSICAL_TYPE_CHOICES, default=0)
     mooring_class = models.CharField(choices=MOORING_CLASS_CHOICES, default=0, max_length=20)
 
@@ -1848,6 +1848,11 @@ class AdmissionsBooking(models.Model):
             return False
         else:
             return True
+
+    @property
+    def admissions_line(self):
+        lines = AdmissionsLine.objects.filter(admissionsBooking=self)
+        return lines
 
     @property
     def active_invoice(self):

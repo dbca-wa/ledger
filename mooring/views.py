@@ -907,7 +907,6 @@ class MakeBookingsView(TemplateView):
            if booking.old_booking.admission_payment:
                booking_change_fees = utils.calculate_price_admissions_changecancel(booking.old_booking.admission_payment, booking_change_fees)
            lines = utils.price_or_lineitems_extras(request,booking,booking_change_fees,lines) 
-        
         if 'non_online_booking' in booking.details:
             if booking.details['non_online_booking'] is True:
                 groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
@@ -921,6 +920,10 @@ class MakeBookingsView(TemplateView):
                         booking_line = utils.nononline_booking_lineitems(oracle_code_non_online, request)
                         for line in booking_line:
                             lines.append(line)
+                else:
+                      form.add_error(None, 'ERROR: Not assigned a mooring group or you are part of more than one mooring group.  We can not determine which non online booking fee to calculate from when are you are linked to more than one group or zero mooring groups.')
+                      return self.render_page(request, booking, form, vehicles, show_errors=True)
+
         from_earliest = None
         to_latest = None
         if mooring_booking:

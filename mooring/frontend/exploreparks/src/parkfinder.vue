@@ -51,19 +51,19 @@
                 </div>
                 <div class="row">
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Registration  <input v-on:blur="searchRego()" v-model="vesselRego" id="vesselRego" name="vessel_rego" type="text" placeholder="REGO134" style="text-transform:uppercase" /></label>
+                    <label>Vessel Registration  <input v-on:blur="searchRego()" v-model="vesselRego" id="vesselRego" name="vessel_rego" type="text" placeholder="REGO134" style="text-transform:uppercase" :disabled="current_booking.length > 0" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Size (Meters) <input v-model="vesselSize" id="vesselSize" name="vessel_size" type="number" placeholder="35" /></label>
+                    <label>Vessel Size (Meters) <input v-model="vesselSize" id="vesselSize" name="vessel_size" type="number" placeholder="35" :disabled="current_booking.length > 0" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Draft (Meters) <input v-model="vesselDraft" id="vesselDraft" name="vessel_draft" type="number" placeholder="10" /></label>
+                    <label>Vessel Draft (Meters) <input v-model="vesselDraft" id="vesselDraft" name="vessel_draft" type="number" placeholder="10" :disabled="current_booking.length > 0" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Beams (Meters)  <input v-model="vesselBeam" id="vesselBeam" name="vessel_beams" type="number" placeholder="3" /></label>
+                    <label>Vessel Beams (Meters)  <input v-model="vesselBeam" id="vesselBeam" name="vessel_beams" type="number" placeholder="3" :disabled="current_booking.length > 0" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Weight (Tons)  <input v-model="vesselWeight" id="vesselWeight" name="vessel_weight" type="number" placeholder="2" /></label>
+                    <label>Vessel Weight (Tons)  <input v-model="vesselWeight" id="vesselWeight" name="vessel_weight" type="number" placeholder="2" :disabled="current_booking.length > 0" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns" >
                         <label>
@@ -238,7 +238,7 @@
             </div>
 <!-- here -->
             <div class="small-12 medium-9 large-6 columns">
-                <div class="alert alert-warning" style='text-align: center' role="alert" v-if="admissions_key" id="admissions_link"> <strong style='font-size: 16px;' ></span><a :href='"/admissions/" + admissions_key + "/"'>Click here for paying admission fees</a></strong><br><span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> (Only if you do not book a mooring) <span aria-hidden="true" class="glyphicon glyphicon-tree-deciduous"></span> </div>
+                <div class="alert alert-warning" style='text-align: center' role="alert" v-if="admissions_key" id="admissions_link"> <strong style='font-size: 16px;' ></span><a :href='"/admissions/" + admissions_key + "/"'>Click here for paying admission fees only</a></strong><br></div>
                 <div id="map"></div>
                 <div style='width: 100%' align='right'>
 	                <img id='satellite-toggle' class='map-toggle-white'  type='button'  @click="toggleMap('satellite');" src='./assets/img/satellite_icon.png'  >
@@ -616,8 +616,8 @@
        z-index: 300;
        border: 2px solid #FFFFFF;
        cursor: pointer;
-    border-radius: 2px;
-    box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
+       border-radius: 2px;
+       box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
     }
     .map-toggle-white {
        width: 80px;
@@ -630,8 +630,8 @@
        z-index: 300;
        border: 2px solid #000000;
        cursor: pointer;
-    border-radius: 2px;
-    box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
+       border-radius: 2px;
+       box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
     }
 }
 
@@ -838,16 +838,20 @@ export default {
             cache: false,
             get: function() {
                 if (this.vesselSize % 1 != 0){
-                    this.vesselSize = Math.ceil(this.vesselSize);
+                    this.vesselSize = parseFloat(this.vesselSize);
+//                    this.vesselSize = Math.ceil(this.vesselSize);
                 }
                 if (this.vesselDraft % 1 != 0){
-                    this.vesselDraft = Math.ceil(this.vesselDraft);
+                    this.vesselDraft = parseFloat(this.vesselDraft);
+//                    this.vesselDraft = Math.ceil(this.vesselDraft);
                 }
                 if (this.vesselBeam % 1 != 0){
-                    this.vesselBeam = Math.ceil(this.vesselBeam);
+                    this.vesselBeam = parseFloat(this.vesselBeam);
+//                    this.vesselBeam = Math.ceil(this.vesselBeam);
                 }
                 if (this.vesselWeight % 1 != 0){
-                    this.vesselWeight = Math.ceil(this.vesselWeight);
+                    this.vesselWeight = parseFloat(this.vesselWeight);
+//                    this.vesselWeight = Math.ceil(this.vesselWeight);
                 }
                 var params = {
                     'num_adult': this.numAdults,
@@ -873,6 +877,8 @@ export default {
     methods: {
         searchRego: function(){
             let vm = this;
+            vm.vesselRego = vm.vesselRego.replace(/ /g, "");
+            
             var reg = vm.vesselRego;
             var data = {
                 'rego': reg
@@ -1697,11 +1703,11 @@ export default {
                 vm.ongoing_booking = response.current_booking.ongoing_booking[0];
                 vm.numAdults = parseInt(response.current_booking.details[0].num_adults) > 0 ? parseInt(response.current_booking.details[0].num_adults) : 2;
                 vm.numChildren = parseInt(response.current_booking.details[0].num_children) > 0 ? parseInt(response.current_booking.details[0].num_children) : 0;
-                vm.numInfants =  parseInt(response.current_booking.details[0].num_infants) > 0 ? parseInt(response.current_booking.details[0].num_infants) : 0;
-                vm.vesselSize = parseInt(response.current_booking.details[0].vessel_size) > 0 ? parseInt(response.current_booking.details[0].vessel_size) : 0;
-                vm.vesselDraft = parseInt(response.current_booking.details[0].vessel_draft) > 0 ? parseInt(response.current_booking.details[0].vessel_draft) : 0;
-                vm.vesselBeam = parseInt(response.current_booking.details[0].vessel_beam) > 0 ? parseInt(response.current_booking.details[0].vessel_beam) : 0;
-                vm.vesselWeight = parseInt(response.current_booking.details[0].vessel_weight) > 0 ? parseInt(response.current_booking.details[0].vessel_weight) : 0;
+                vm.numInfants =  parseInt(response.current_booking.details[0].num_infants) > 0 ? parseFloat(response.current_booking.details[0].num_infants) : 0;
+                vm.vesselSize = parseFloat(response.current_booking.details[0].vessel_size) > 0 ? parseFloat(response.current_booking.details[0].vessel_size) : 0;
+                vm.vesselDraft = parseFloat(response.current_booking.details[0].vessel_draft) > 0 ? parseFloat(response.current_booking.details[0].vessel_draft) : 0;
+                vm.vesselBeam = parseFloat(response.current_booking.details[0].vessel_beam) > 0 ? parseFloat(response.current_booking.details[0].vessel_beam) : 0;
+                vm.vesselWeight = parseFloat(response.current_booking.details[0].vessel_weight) > 0 ? parseFloat(response.current_booking.details[0].vessel_weight) : 0;
                 vm.vesselRego = response.current_booking.details[0].vessel_rego ? response.current_booking.details[0].vessel_rego : "";
             }
         });

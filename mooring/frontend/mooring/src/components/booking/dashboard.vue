@@ -268,7 +268,10 @@ export default {
                             var max_length = 25;
                             var short_name = (name.length > max_length) ? name.substring(0,max_length-1)+'...' : name;
                             var popover =  (name.length > max_length) ? "class=\"name_popover\"":"";
-                            var column = '<td ><div '+popover+' tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__">'+short_name+'</div></td>';
+                            var column = '<td ><div '+popover+' tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__">'+short_name+'</div>';
+
+                            column += '<BR>'+ full.booking_phone_number;
+                            column += '</td>';
                             column.replace(/__SHNAME__/g, short_name);
                             return column.replace(/__NAME__/g, name);
 
@@ -522,12 +525,12 @@ export default {
                                 invoices += "<a href='/mooring/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
                             });
                             var invoice = "/ledger/payments/invoice/payment?" + search;
-                            if(full.payment_visible){
+                            if (full.payment_visible) {
                                 var invoice_link= (full.invoice_ref)?"<a href='"+invoice+"' target='_blank' class='text-primary'>View Payment</a><br/>":"";
                                 column += invoice_link;
                             }
                             console.log(full.part_booking);
-                            if (full.in_future && !full.part_booking){
+                            if (full.in_future && !full.part_booking) {
                                 if (full.booking_type == 0 || full.booking_type == 1 || full.booking_type == 2) { 
                                     var cancel_booking = "<a href='/cancel-admissions-booking/"+full.id+"' class='text-primary'> Cancel</a><br/>";
                                     column += cancel_booking;
