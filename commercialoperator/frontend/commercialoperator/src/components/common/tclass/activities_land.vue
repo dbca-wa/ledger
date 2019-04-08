@@ -37,7 +37,8 @@
             </div>
           </form>
           <!-- <form> -->
-            <div class="form-horizontal col-sm-12">
+
+            <!-- testing start <div class="form-horizontal col-sm-12">
               <label class="control-label">Select Parks</label>
               <div class="form-check">
                   <input  class="form-check-input" @click="clickSelectAll" ref="Checkbox" type="checkbox" data-parsley-required  />
@@ -46,15 +47,15 @@
               <div class="" v-for="r in api_regions">
                 <div class="form-check">
                   <input @click="clickRegion($event, r)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" data-parsley-required />
-                  {{ r.name }}
+                  {{ r.name }} -->
                   <!-- <a data-toggle="collapse" :href="'#'+r.id" role="button" aria-expanded="true" aria controls="r.id" ><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
-                </div>
+                <!-- </div>
                 <div class="col-sm-12" v-for="d in r.districts" :id="r.id">
                   <div class="form-check ">
                     <input @click="clickDistrict($event, d)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" data-parsley-required />
-                    {{ d.name }}
+                    {{ d.name }} -->
                    <!--  <a data-toggle="collapse" :href="'#'+d.id+r.id" role="button" aria-expanded="true" aria controls="d.id+r.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
-                  </div>
+                  <!-- </div>
                   <div class="" v-for="p in d.land_parks">
                     <div class="form-check col-sm-12">
                       <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" :id="'park'+p.id" data-parsley-required />
@@ -64,6 +65,37 @@
                   </div>
                 </div>
               </div>
+            </div> testing end--> 
+
+            <div class="form-horizontal col-sm-12">
+              <label class="control-label">Select Parks</label>
+              <div class="form-check">
+                  <input  class="form-check-input" @click="clickSelectAll" ref="Checkbox" type="checkbox" data-parsley-required  />
+                  Select all parks from all regions
+              </div>
+              <div class="list-group list-group-root well">
+              <div class="" v-for="r in api_regions">
+                <div class="form-check col-sm-12 list-group-item" style="">
+                  <input @click="clickRegion($event, r)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" data-parsley-required />
+                  {{ r.name }}
+                  <a data-toggle="collapse" :href="'#'+'r'+r.id" role="button" aria-expanded="true" aria controls="r.id" ><span class="glyphicon glyphicon-chevron-up pull-right "></span></a>
+                </div>
+                <div class="col-sm-12 list-group collapse" v-for="d in r.districts" :id="'r'+r.id">
+                  <div class="form-check list-group-item" style="padding-left: 30px;">
+                    <input @click="clickDistrict($event, d)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" data-parsley-required />
+                    {{ d.name }}
+                   <a data-toggle="collapse" :href="'#'+'d'+d.id" role="button" aria-expanded="true" aria controls="d.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> 
+                  </div>
+                  <div class="list-group collapse" v-for="p in d.land_parks" :id="'d'+d.id">
+                    <div class="form-check col-sm-12 list-group-item" style="padding-left: 45px;">
+                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" :id="'park'+p.id" data-parsley-required />
+                    {{ p.name }}
+                      <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
             </div>
 
             <div>{{selected_parks}}</div>
@@ -810,13 +842,20 @@ export default {
             // } 
 
             
-            //check why this is not working
+            
             $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
+              console.log(this);
             var chev = $( this ).children()[ 0 ];
             window.setTimeout( function () {
                 $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
             }, 100 );
             }); 
+
+            //check why this is not working for list items
+            $('.list-group-item').on('click', function() {
+
+              $('.glyphicon', this).toggleClass('glyphicon-chevron-up').toggleClass('glyphicon-chevron-down');
+            });
         }
     }
 </script>
@@ -827,6 +866,43 @@ export default {
     border-radius: 5px;
     padding: 5px;
     margin-top: 5px;
+}
+.just-padding {
+    padding: 15px;
+}
+
+.list-group {
+  padding: 0;
+}
+
+.list-group.list-group-root {
+    padding: 0;
+    overflow: hidden;
+}
+
+.list-group.list-group-root .list-group {
+    margin-bottom: 0;
+}
+
+.list-group.list-group-root .list-group-item {
+    border-radius: 0;
+    border-width: 1px 0 0 0;
+}
+
+.list-group.list-group-root > .list-group-item:first-child {
+    border-top-width: 0;
+}
+
+.list-group.list-group-root > .list-group > .list-group-item {
+    padding-left: 30px;
+}
+
+.list-group.list-group-root > .list-group > .list-group > .list-group-item {
+    padding-left: 45px;
+}
+
+.list-group-item .glyphicon {
+    margin-right: 5px;
 }
 </style>
 
