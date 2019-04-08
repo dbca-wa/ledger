@@ -116,29 +116,37 @@
                             <div class="panel-body panel-collapse collapse in" :id="panelBody">
                                 <div class="row">
                                     <div class="col-sm-3">
-                                        
                                         <label class="control-label pull-left"  for="details">ID Check</label>
                                     </div>
-
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="details" style="width: 70%;">
                                             <button v-if="isIdCheckAccepted" disabled class="btn btn-light">Accepted</button>
-                                            <label v-if="isIdNotChecked">Has not been accepted. Override to Issue: </label><input v-if="isIdNotChecked" type="checkbox" v-model="licence.id_check" >
-                                            
+                                            <label v-if="isIdNotChecked">Has not been accepted. Override to Issue: </label>&nbsp;
+                                            <input v-if="isIdNotChecked" type="checkbox" v-model="licence.id_check" />
                                         </div>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-sm-3">
-                                        
                                         <label class="control-label pull-left"  for="details">Character Check</label>
                                     </div>
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="cc_email" style="width: 70%;">
                                             <button v-if="isCharacterCheckAccepted" disabled class="btn btn-light">Accepted</button>
-                                            <label v-if="isCharacterNotChecked">Has not been accepted. Override to Issue: </label><input v-if="isCharacterNotChecked" type="checkbox" v-model="licence.character_check" >
-                                            
-                                            
+                                            <label v-if="isCharacterNotChecked">Has not been accepted. Override to Issue: </label>&nbsp;
+                                            <input v-if="isCharacterNotChecked" type="checkbox" v-model="licence.character_check" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <label class="control-label pull-left"  for="details">Return Check</label>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <div class="input-group date" ref="cc_email" style="width: 70%;">
+                                            <button v-if="isReturnCheckAccepted" disabled class="btn btn-light">Accepted</button>
+                                            <label v-if="isReturnNotChecked">Has not been accepted. Override to Issue: </label>&nbsp;
+                                            <input v-if="isReturnNotChecked" type="checkbox" v-model="licence.return_check" />
                                         </div>
                                     </div>
                                 </div>
@@ -186,6 +194,7 @@ export default {
                 activity:[],
                 id_check:false,
                 character_check:false,
+                return_check:false,
                 current_application: vm.application.id,
                 },
             datepickerOptions:{
@@ -203,7 +212,8 @@ export default {
             'filterActivityList',
         ]),
         canIssueOrDecline: function() {
-            return this.licence.id_check && this.licence.character_check && this.visibleLicenceActivities.length;
+            return this.licence.id_check && this.licence.character_check &&
+                this.licence.return_check && this.visibleLicenceActivities.length;
         },
         visibleLicenceActivities: function() {
             return this.filterActivityList({
@@ -222,6 +232,12 @@ export default {
         },
         isCharacterNotChecked: function(){
             return this.application.character_check_status.id == 'not_checked';
+        },
+        isReturnCheckAccepted: function(){
+            return this.application.return_check_status.id == 'accepted';
+        },
+        isReturnNotChecked: function(){
+            return this.application.return_check_status.id == 'not_checked';
         },
         finalStatus: function() {
             return (index) => {
@@ -286,6 +302,12 @@ export default {
             }
             if(vm.application.character_check_status.id == 'not_checked'){
                 vm.licence.character_check=false;
+            }
+            if(vm.application.return_check_status.id == 'accepted'){
+                vm.licence.return_check=true;
+            }
+            if(vm.application.return_check_status.id == 'not_checked'){
+                vm.licence.return_check=false;
             }
         },
         
