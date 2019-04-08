@@ -10,8 +10,8 @@
                     </h3>
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
-                    <div v-if="proposal.training_completed">
-                        <label>Your online training has been completed. Please proceed to pay and submit the appication.</label>
+                    <div v-if="proposal.training_completed" class="form-horizontal col-sm-12">
+                        <label style="color: green">Your online training has been completed. Please proceed to pay and submit the appication.</label>
                     </div>
                     <div >                        
                         <div class="form-horizontal col-sm-12 borderDecoration">
@@ -28,19 +28,19 @@
                                         <label class="control-label">{{q.question_text}}</label></li>
                                         <ul class="list-inline col-sm-6">
                                             <li class="list-inline-item" v-if="q.answer_one">
-                                                <input  class="form-check-input" v-model="q.selected" ref="Checkbox" type="radio" :id="answer_one+q.id":value="answer_one" data-parsley-required />
+                                                <input  class="form-check-input" v-model="q.selected" ref="Checkbox" type="radio" :name="'option'+q.id" :id="answer_one+q.id":value="answer_one" data-parsley-required />
                                                 {{ q.answer_one }}
                                             </li>
                                             <li class="list-inline-item" v-if="q.answer_two">
-                                                <input  class="form-check-input" v-model="q.selected" ref="Checkbox" type="radio" :id="answer_two+q.id" :value="answer_two" data-parsley-required />
+                                                <input  class="form-check-input" v-model="q.selected" ref="Checkbox" type="radio" :name="'option'+q.id" :id="answer_two+q.id" :value="answer_two" data-parsley-required />
                                                 {{q.answer_two}}
                                             </li>
                                             <li class="list-inline-item" v-if="q.answer_three">
-                                                <input  class="form-check-input" ref="Checkbox" v-model="q.selected" type="radio" :value="answer_three" :id="answer_three+q.id"data-parsley-required />
+                                                <input  class="form-check-input" ref="Checkbox" v-model="q.selected" type="radio" :value="answer_three" :name="'option'+q.id" :id="answer_three+q.id"data-parsley-required />
                                                 {{q.answer_three}}
                                             </li>
                                             <li class="list-inline-item" v-if="q.answer_four">
-                                                <input  class="form-check-input" ref="Checkbox" v-model="q.selected" type="radio" :value="answer_four" :id="answer_four+q.id" data-parsley-required />
+                                                <input  class="form-check-input" ref="Checkbox" v-model="q.selected" type="radio" :value="answer_four" :name="'option'+q.id" :id="answer_four+q.id" data-parsley-required />
                                                 {{q.answer_four}}
                                             </li>
                                             <li class="list-inline" v-if="showResult && q.is_correct">
@@ -156,7 +156,7 @@
                         vm.showAnswer=true;
                         //all_correct=true;
                     }
-                    if(all_correct=true){
+                    if(all_correct==true){
                         vm.proposal.training_completed=true;
                     }
                     vm.attempt++;
