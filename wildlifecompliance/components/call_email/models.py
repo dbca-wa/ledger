@@ -60,6 +60,78 @@ class Location(models.Model):
         return '{}'.format(self.status)
 
 
+class SpeciesType(models.Model):
+    TYPE_CHOICES = (
+            ('bird', 'Bird'),
+            ('mammal', 'Mammal'),
+            ('snake', 'Snake'),
+            ('reptile', 'Reptile'),
+            ('amphibian', 'Amphibian'),
+            ('non-wildlife', 'Non-Wildlife'),
+            ('other', 'Other'),
+            )
+
+    species_type = models.CharField(
+            max_length=50, 
+            choices=TYPE_CHOICES,
+            default='bird'
+            )
+
+    class Meta:
+        app_label='wildlifecompliance'
+
+
+class Species(models.Model):
+    species_type = models.ForeignKey(
+            SpeciesType,
+            null=True
+            )
+    name = models.CharField(max_length=100, blank=True)
+
+    class Meta:
+        app_label='wildlifecompliance'
+
+
+class Referrer(models.Model):
+    name = models.CharField(max_length=50, blank=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+class Report(models.Model):
+    AGE_CHOICES = (
+            ('baby', 'Baby'),
+            ('juvenile', 'Juvenile'),
+            ('adult', 'Adult')
+            )
+    
+    species_type = models.ForeignKey(
+            SpeciesType,
+            null=True
+            )
+    species = models.ForeignKey(
+            Species,
+            null=True
+            )
+    report_type = models.CharField(max_length=100, blank=True)
+    schema = JSONField(default=list)
+    age = models.CharField(
+            max_length=20, 
+            choices=AGE_CHOICES, 
+            default='baby'
+            )
+    details = models.CharField(max_length=500, blank=True)
+    referred_to = models.ForeignKey(
+            Referrer,
+            null=True
+            )
+    advice_given = models.BooleanField(default=False)
+    advice_details = models.CharField(max_length=500, blank=True)
+
+    class Meta:
+        app_label='wildlifecompliance'
+
+
 class CallEmail(models.Model):
     STATUS_CHOICES = (
         ('draft', 'Draft'),
@@ -92,6 +164,14 @@ class CallEmail(models.Model):
     assigned_to = models.CharField(max_length=100)
     anonymous_call = models.BooleanField(default=False)
     caller_wishes_to_remain_anonymous = models.BooleanField(default=False)
+    occurrence_date_from = models.DateField(null=True)
+    occurrence_time_from = models.TimeField(null=True)
+    occurrence_date_to = models.DateField(null=True)
+    occurrence_time_to = models.TimeField(null=True)
+    report = models.ForeignKey(
+            Report,
+            null=True
+            )
 
     class Meta:
         app_label = 'wildlifecompliance'

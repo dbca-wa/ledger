@@ -253,7 +253,7 @@ import HelpTextUrl from '@/components/forms/help_text_url.vue'
 import CommentRadioCheckBox from '@/components/forms/comment_icon_checkbox_radio.vue'
 import Table from '@/components/forms/table.vue'
 
-const RendererBlock = {
+const ComplianceRendererBlock = {
   name: 'compliance-renderer-block',
   components: {
       FormSection,

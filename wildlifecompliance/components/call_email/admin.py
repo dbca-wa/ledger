@@ -8,5 +8,19 @@ from wildlifecompliance.components.call_email import models
 class ClassificationAdmin(admin.ModelAdmin):
     pass
 
+@admin.register(models.Location)
+class LocationAdmin(admin.ModelAdmin):
+    pass
 
+@admin.register(models.SpeciesType)
+class SpeciesTypeAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(models.Referrer)
+class ReferrerAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(models.Report)
+class ReportAdmin(admin.ModelAdmin):
+    pass
 

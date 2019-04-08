@@ -1,7 +1,7 @@
 <template lang="html">
     
     <div>
-        
+        <h3>compliance renderer</h3>
         <div v-if="withSectionsSelector" class="col-lg-12" >
         <!--
             <h3>Application {{application.id}}: {{application.licence_type_short_name}}</h3>
@@ -46,21 +46,36 @@
             </affix>
         </div>
         <div :class="`${form_width ? form_width : 'col-md-9'}`" id="tabs">
-            
-            <!--
+            <ul class="nav nav-tabs" id="tabs-section" data-tabs="tabs">
+                <li v-for="(call, index) in ['99', '2']">
+                    <!--
+                    <a :class="{'nav-link amendment-highlight': application.has_amendment}"
+                        data-toggle="tab" v-on:click="selectTab(activity)">{{activity.label}}</a>
+                    -->
+                </li>
+            </ul>
             <div class="tab-content">
+                <!--
                 <div v-for="(activity, index) in listVisibleActivities">
                     <AmendmentRequestDetails :activity_id="activity.id" />
-                    <compliance-renderer-block
-                        :component="activity"
-                        :json_data="applicationData"
+
                         v-if="activity.id == selected_activity_tab_id"
+                    
+                    -->
+
+                    <h3>compliance renderer block</h3>
+                    <div v-for="(call, index) in ['99', '2']">
+                        <compliance-renderer-block
+                        :component="call"
+                        :json_data="callEmailData"
                         v-bind:key="`renderer_block_${index}`"
                         />
-                </div>
+                    </div>
+                
                 {{ this.$slots.default }}
+                
             </div>
-            -->
+            
         </div>
     </div>
  
@@ -69,7 +84,25 @@
 
 <script>
 import Vue from 'vue';
-import { mapActions, mapGetters } from 'vuex';
+import { mapState, mapActions, mapGetters } from 'vuex';
+//import ComplianceRendererBlock from './compliance_renderer_block'
+//import { createNamespacedHelpers } from 'vuex'
+
+/*
+import { createNameSpacedHelpers } from '../../store/index.js'
+const { 
+    "renderermapState": mapState, 
+    "renderermapGetters": mapGetters, 
+    "renderermapActions": mapActions 
+    } = createNameSpacedHelpers('complianceRendererStore')
+const { 
+    "callemailmapState": mapState, 
+    "callemailmapGetters": mapGetters, 
+    "callemailmapActions": mapActions 
+    } = createNameSpacedHelpers('callemailStore')
+*/
+//const { mapState, mapGetters, mapActions } = createNamespacedHelpers('callemailStore')
+
 //import CallEmail from '../../components/internal/call_email/call_email.vue'
 //import AmendmentRequestDetails from '@/components/forms/amendment_request_details.vue';
 import '@/scss/forms/form.scss';
@@ -77,10 +110,13 @@ import '@/scss/forms/form.scss';
 export default {
   name: 'compliance-renderer-form',
   components: {
+      //ComplianceRendererBlock
       //AmendmentRequestDetails,
       //CallEmail
   },
   data: function() {
+    console.log("data");
+    console.log(this.call_email);
     return {
         section_tab_id: 0,
     }
@@ -96,14 +132,28 @@ export default {
     }
   },
   computed: {
-    ...mapGetters([
-        //'call_email',
+    /*
+    ...callemailmapGetters([
+        'call_email',
+        //'application',
+        //'selected_activity_tab_id',
+    ]),
+    ...renderermapGetters([
         //'application',
         //'selected_activity_tab_id',
         'renderer_tabs',
         //'unfinishedActivities',
         'sectionsForTab',
     ]),
+    */
+   ...mapGetters({
+       call_email: 'callemailStore/call_email',
+       renderer_tabs: 'complianceRendererStore/renderer_tabs',
+       sectionsForTab: 'complianceRendererStore/sectionsForTab',
+   }),
+    callEmailData: function() {
+        return this.call_email.data ? this.call_email.data[0] : null;
+    }
     /*
     listVisibleActivities: function() {
         return this.unfinishedActivities;
@@ -114,11 +164,11 @@ export default {
     */
   },
   methods: {
-    ...mapActions([
-        'setRendererTabs',
-        'setRendererSections',
+    ...mapActions({
+        setRendererTabs: 'complianceRendererStore/setRendererTabs',
+        setRendererSections: 'complianceRendererStore/setRendererSections',
         //'setActivityTab',
-    ]),
+    }),
     selectTab: function(component) {
         this.section_tab_id = component.id;
         this.setActivityTab({id: component.id, name: component.label});
@@ -126,9 +176,14 @@ export default {
     getSections: function(tab_id) {
         return tab_id == this.section_tab_id ? this.sectionsForTab(tab_id) : [];
     },
-    /*
+    
     initRendererTabs: function() {
         let tabs_list = [];
+        tabs_list.push({name: "call_email",
+                                label: "call_email",
+                                id: "this one"
+                                });
+        /*
         for(let component of this.listVisibleActivities.filter(
             activity => activity.type == 'tab')) {
                 if(!this.selected_activity_tab_id) {
@@ -139,10 +194,12 @@ export default {
                                 id: component.id
                                 });
         }
+        */
         this.setRendererTabs(tabs_list);
     },
     initRendererSections: function() {
         let sections = {};
+        /*
         for(let component of this.listVisibleActivities.filter(
             activity => activity.type == 'tab' && activity.children)) {
                 sections[component.id] = [];
@@ -152,10 +209,15 @@ export default {
                         label: section.label
                     });
                 }
-        }
+                */
+        sections[component.id].push({
+                        name: section.name,
+                        label: section.label
+                    });
+        
         this.setRendererSections(sections);
     },
-    */
+    
     sectionClick: function(component) {
         if(this.section_tab_id == component.id) {
             this.section_tab_id = 0;  // Collapse the expanded panel upon double click.

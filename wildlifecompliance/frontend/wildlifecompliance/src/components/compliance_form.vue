@@ -1,6 +1,5 @@
 <template lang="html">
     <div>
-        <h3>compliance form</h3>
         <ComplianceRendererForm
             :withSectionsSelector="withSectionsSelector"
             :form_width="form_width"
