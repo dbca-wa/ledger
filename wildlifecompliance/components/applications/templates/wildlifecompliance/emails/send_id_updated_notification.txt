@@ -2,7 +2,7 @@
 {% block content %}
     A user has updated their identification.
 
-    This request relates to the following applications from which the user had been requested an amended ID to be uploaded:
+    This relates to the following applications from which the user had been requested an amended ID to be uploaded:
 
     Application : {{ applications }}
 
