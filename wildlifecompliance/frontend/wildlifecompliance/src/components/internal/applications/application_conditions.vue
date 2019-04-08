@@ -23,7 +23,7 @@
                                                        <input class="pull-left" placeholder="DD/MM/YYYY"/> 
                                                        <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
-                                                        </span>
+                                                       </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -32,7 +32,15 @@
                                                     <label class="control-label pull-left">Inspection Report</label>
                                                 </div>
                                                 <div class="col-sm-9">
-                                                       <a href="">Attach File</a>
+                                                    <button @click.prevent="uploadInspectionReport()" style="margin-bottom:10px;" class="btn btn-primary">Attach Report</button>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-3">
+                                                    <label class="control-label pull-left">Comments</label>
+                                                </div>
+                                                <div class="col-sm-9">
+                                                    <textarea v-model="assessmentComments" />
                                                 </div>
                                             </div>
                                         </div>
@@ -61,7 +69,7 @@
                             </div>
                         </div>
                     </div>
-                    <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions" :licence_activity_tab="licence_activity_tab"/>
+                    <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions" :licence_activity_tab="selected_activity_tab_id"/>
                 </div>
 
             
@@ -74,15 +82,15 @@ import {
 from '@/utils/hooks'
 import datatable from '@vue-utils/datatable.vue'
 import ConditionDetail from './application_add_condition.vue'
+import { mapGetters } from 'vuex'
 export default {
     name: 'InternalApplicationConditions',
     props: {
-        application: Object,
-        licence_activity_tab:Number
     },
     data: function() {
         let vm = this;
         return {
+            assessmentComments: "",
             panelBody: "application-conditions-"+vm._uid,
             conditions: [],
             condition_headers:["Condition","Due Date","Recurrence","Action","Order"],
@@ -93,7 +101,7 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/conditions/?licence_activity='+vm.licence_activity_tab),
+                    "url": helpers.add_endpoint_join(api_endpoints.applications,this.$store.getters.application.id+'/conditions/?licence_activity='+this.$store.getters.selected_activity_tab_id),
                     "dataSrc": ''
                 },
                 order: [],
@@ -168,10 +176,14 @@ export default {
         ConditionDetail
     },
     computed:{
+        ...mapGetters([
+            'application',
+            'selected_activity_tab_id',
+        ]),
     },
     methods:{
         addCondition(){
-            this.$refs.condition_detail.licence_activity=this.licence_activity_tab;
+            this.$refs.condition_detail.licence_activity=this.selected_activity_tab_id;
             this.$refs.condition_detail.isModalOpen = true;
         },
         removeCondition(_id){
