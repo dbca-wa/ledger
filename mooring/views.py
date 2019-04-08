@@ -907,8 +907,6 @@ class MakeBookingsView(TemplateView):
            if booking.old_booking.admission_payment:
                booking_change_fees = utils.calculate_price_admissions_changecancel(booking.old_booking.admission_payment, booking_change_fees)
            lines = utils.price_or_lineitems_extras(request,booking,booking_change_fees,lines) 
-        print "NON ONLINE"
-        print booking.details['non_online_booking'] 
         if 'non_online_booking' in booking.details:
             if booking.details['non_online_booking'] is True:
                 groups = MooringAreaGroup.objects.filter(members__in=[request.user,])
