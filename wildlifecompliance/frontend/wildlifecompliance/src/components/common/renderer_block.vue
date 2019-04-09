@@ -43,14 +43,26 @@
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
+        <TextField v-if="component.type === 'string'"
+            type="string"
+            :name="component.name"
+            :value="value"
+            :id="element_id()"
+            :comment_value="comment_value"
+            :label="component.label"
+            :help_text="help_text"
+            :readonly="is_readonly"
+            :isRequired="component.isRequired"
+            :help_text_url="help_text_url"/>
+
         <TextField v-if="component.type === 'number'"
             type="number"
             :name="component.name"
             :value="value"
-            :id="id"
+            :id="element_id()"
             :min="component.min"
             :max="component.max"
-            :comment_value="comment_val"
+            :comment_value="comment_value"
             :label="component.label"
             :help_text="help_text"
             :readonly="is_readonly"
