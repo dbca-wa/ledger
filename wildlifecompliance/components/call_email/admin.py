@@ -16,6 +16,10 @@ class LocationAdmin(admin.ModelAdmin):
 class SpeciesTypeAdmin(admin.ModelAdmin):
     pass
 
+@admin.register(models.Species)
+class SpeciesAdmin(admin.ModelAdmin):
+    pass
+
 @admin.register(models.Referrer)
 class ReferrerAdmin(admin.ModelAdmin):
     pass
@@ -24,3 +28,6 @@ class ReferrerAdmin(admin.ModelAdmin):
 class ReportAdmin(admin.ModelAdmin):
     pass
 
+@admin.register(models.CallEmail)
+class CallEmailAdmin(admin.ModelAdmin):
+    pass

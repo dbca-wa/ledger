@@ -46,10 +46,13 @@ class CallEmailSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'status',
+            'location',
             'classification',
+            'schema',
             'lodgement_date',
             'number',
             'caller',
             'assigned_to',
+            'report'
         )
         read_only_fields = ('id', )

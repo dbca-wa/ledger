@@ -30,7 +30,7 @@ class Classification(models.Model):
     def __str__(self):
         #return '{}'.format(self.name)
         # return self.get_name_display()
-        return self.name
+        return self.get_name_display()
 
 
 class Location(models.Model):
@@ -45,8 +45,8 @@ class Location(models.Model):
             ('ACT', 'Australian Capital Territory')
             )
 
-    latitude = models.DecimalField(max_digits=10, decimal_places=2)
-    longitude = models.DecimalField(max_digits=10, decimal_places=2)
+    latitude = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     street = models.CharField(max_length=100)
     town_suburb = models.CharField(max_length=100)
     state = models.CharField(max_length=50, choices=STATE_CHOICES, default='WA')
@@ -56,8 +56,8 @@ class Location(models.Model):
     class Meta:
         app_label='wildlifecompliance'
 
-    def __str__(self):
-        return '{}'.format(self.status)
+    #def __str__(self):
+       # return '{}'.format(self.)
 
 
 class SpeciesType(models.Model):
@@ -80,6 +80,9 @@ class SpeciesType(models.Model):
     class Meta:
         app_label='wildlifecompliance'
 
+    def __str__(self):
+        return self.get_species_type_display()
+
 
 class Species(models.Model):
     species_type = models.ForeignKey(
@@ -91,12 +94,19 @@ class Species(models.Model):
     class Meta:
         app_label='wildlifecompliance'
 
+    def __str__(self):
+        return self.name
+
 
 class Referrer(models.Model):
     name = models.CharField(max_length=50, blank=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
+
+    def __str__(self):
+        return self.name
+
 
 class Report(models.Model):
     AGE_CHOICES = (
@@ -114,7 +124,7 @@ class Report(models.Model):
             null=True
             )
     report_type = models.CharField(max_length=100, blank=True)
-    schema = JSONField(default=list)
+    schema = JSONField()
     age = models.CharField(
             max_length=20, 
             choices=AGE_CHOICES, 
@@ -130,6 +140,9 @@ class Report(models.Model):
 
     class Meta:
         app_label='wildlifecompliance'
+
+    #def __str__(self):
+     #   return '{}'.format(self)
 
 
 class CallEmail(models.Model):

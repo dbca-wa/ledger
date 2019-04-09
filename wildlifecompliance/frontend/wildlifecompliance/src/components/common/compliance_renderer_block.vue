@@ -289,7 +289,7 @@ const ComplianceRendererBlock = {
     ...mapGetters([
         //'application',
         //'application_id',
-        'call_email',
+        //'call_email',
         'isComponentVisible',
     ]),
     /*

@@ -46,34 +46,40 @@
             </affix>
         </div>
         <div :class="`${form_width ? form_width : 'col-md-9'}`" id="tabs">
+<!--
             <ul class="nav nav-tabs" id="tabs-section" data-tabs="tabs">
                 <li v-for="(call, index) in ['99', '2']">
-                    <!--
                     <a :class="{'nav-link amendment-highlight': application.has_amendment}"
                         data-toggle="tab" v-on:click="selectTab(activity)">{{activity.label}}</a>
-                    -->
                 </li>
+            
             </ul>
+-->
+
             <div class="tab-content">
                 <!--
-                <div v-for="(activity, index) in listVisibleActivities">
-                    <AmendmentRequestDetails :activity_id="activity.id" />
-
+                <div v-for="(data, index) in callEmailData">
+                -->
+                    <!--
                         v-if="activity.id == selected_activity_tab_id"
-                    
+                    v-bind:key="`renderer_block_${index}`"
                     -->
 
                     <h3>compliance renderer block</h3>
-                    <div v-for="(call, index) in ['99', '2']">
+                    
+                    <div v-for="(col, index) in call_email.schema">
+                        <h3>{{ call_email.schema }}</h3>
+                        
                         <compliance-renderer-block
-                        :component="call"
-                        :json_data="callEmailData"
-                        v-bind:key="`renderer_block_${index}`"
+                        :component="call_email"
+                        :json_data="call_email.schema"
+                        
                         />
+                    
                     </div>
-                
+                <!--
                 {{ this.$slots.default }}
-                
+                -->
             </div>
             
         </div>
@@ -171,7 +177,7 @@ export default {
     }),
     selectTab: function(component) {
         this.section_tab_id = component.id;
-        this.setActivityTab({id: component.id, name: component.label});
+        //this.setActivityTab({id: component.id, name: component.label});
     },
     getSections: function(tab_id) {
         return tab_id == this.section_tab_id ? this.sectionsForTab(tab_id) : [];
@@ -179,9 +185,9 @@ export default {
     
     initRendererTabs: function() {
         let tabs_list = [];
-        tabs_list.push({name: "call_email",
-                                label: "call_email",
-                                id: "this one"
+        tabs_list.push({name: "tab_name",
+                                label: "tab_label",
+                                id: "tab_id"
                                 });
         /*
         for(let component of this.listVisibleActivities.filter(
@@ -228,8 +234,8 @@ export default {
     },
   },
   mounted: function() {
-      //this.initRendererTabs();
-      //this.initRendererSections();
+      this.initRendererTabs();
+      this.initRendererSections();
   },
 }
 </script>
