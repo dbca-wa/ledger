@@ -159,7 +159,7 @@
                     <div class="tab-content">
                         <div v-for="activity in getVisibleConditionsFor('assessor', 'with_assessor', selected_activity_tab_id)">
                             <div :id="`${activity.id}`" class="tab-pane fade in">
-                                <Conditions :application="application" :licence_activity_tab="selected_activity_tab_id" :key="`assessor_condition_${selected_activity_tab_id}`"/>
+                                <Conditions :key="`assessor_condition_${selected_activity_tab_id}`"/>
                             </div>
                         </div>
                     </div>

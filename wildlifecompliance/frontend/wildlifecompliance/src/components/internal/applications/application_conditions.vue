@@ -19,9 +19,9 @@
                                                     <label class="control-label pull-left">Inspection Date</label>
                                                 </div>
                                                 <div class="col-sm-9">
-                                                    <div class="input-group date" style="width: 70%;">
-                                                       <input class="pull-left" placeholder="DD/MM/YYYY"/> 
-                                                       <span class="input-group-addon">
+                                                    <div class="input-group date" ref="inspection_date" style="width: 30%;">
+                                                        <input type="text" class="form-control" name="inspection_date" placeholder="DD/MM/YYYY" v-model="inspectionDate">
+                                                        <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
                                                         </span>
                                                     </div>
@@ -31,8 +31,23 @@
                                                 <div class="col-sm-3">
                                                     <label class="control-label pull-left">Inspection Report</label>
                                                 </div>
+                                                <div class="col-sm-9" style="margin-bottom:10px; margin-top:10px;">
+                                                    <div style="margin-bottom: 10px;">{{uploadedInspectionReportFileName}}</div>
+                                                    <span class="btn btn-primary btn-file"> Select Inspection Report to Upload <input type="file" ref="uploadedInspectionReport" @change="readFileInspectionReport()"/></span>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-3">
+                                                    <label class="control-label pull-left">Comments</label>
+                                                </div>
                                                 <div class="col-sm-9">
-                                                       <a href="">Attach File</a>
+                                                    <textarea v-model="assessmentComments" style="width: 100%; max-width: 100%;" />
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button v-if="!savingAssessment" @click.prevent="saveAssessment()" style="margin-top:10px" class="btn btn-primary pull-right">Save Assessment</button>
+                                                    <button v-else disabled class="btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Saving</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -61,7 +76,7 @@
                             </div>
                         </div>
                     </div>
-                    <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions" :licence_activity_tab="licence_activity_tab"/>
+                    <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions" :licence_activity_tab="selected_activity_tab_id"/>
                 </div>
 
             
@@ -74,15 +89,24 @@ import {
 from '@/utils/hooks'
 import datatable from '@vue-utils/datatable.vue'
 import ConditionDetail from './application_add_condition.vue'
+import { mapGetters } from 'vuex'
 export default {
     name: 'InternalApplicationConditions',
     props: {
-        application: Object,
-        licence_activity_tab:Number
     },
     data: function() {
         let vm = this;
         return {
+            assessmentComments: "",
+            inspectionDate: "",
+            datepickerInitialised: false,
+            savingAssessment: false,
+            uploadedInspectionReport: null,
+            datepickerOptions:{
+                format: 'DD/MM/YYYY',
+                showClear:true,
+                allowInputToggle:true
+            },
             panelBody: "application-conditions-"+vm._uid,
             conditions: [],
             condition_headers:["Condition","Due Date","Recurrence","Action","Order"],
@@ -93,7 +117,7 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/conditions/?licence_activity='+vm.licence_activity_tab),
+                    "url": helpers.add_endpoint_join(api_endpoints.applications,this.$store.getters.application.id+'/conditions/?licence_activity='+this.$store.getters.selected_activity_tab_id),
                     "dataSrc": ''
                 },
                 order: [],
@@ -168,10 +192,17 @@ export default {
         ConditionDetail
     },
     computed:{
+        ...mapGetters([
+            'application',
+            'selected_activity_tab_id',
+        ]),
+        uploadedInspectionReportFileName: function() {
+            return this.uploadedInspectionReport != null ? this.uploadedInspectionReport.name: '';
+        },
     },
     methods:{
         addCondition(){
-            this.$refs.condition_detail.licence_activity=this.licence_activity_tab;
+            this.$refs.condition_detail.licence_activity=this.selected_activity_tab_id;
             this.$refs.condition_detail.isModalOpen = true;
         },
         removeCondition(_id){
@@ -270,13 +301,50 @@ export default {
             table.row(index).data(data2);
             table.row(index + order).data(data1);
             table.page(0).draw(false);
-        }
+        },
+        //Initialise Date Picker
+        initDatePicker: function() {
+            if(this.datepickerInitialised || this.$refs === undefined) {
+                return;
+            }
+            const inspection_date = this.$refs.inspection_date;
+
+            const inspectionDate = new Date(this.inspectionDate);
+
+            $(inspection_date).datetimepicker(this.datepickerOptions);
+            $(inspection_date).data('DateTimePicker').date(inspectionDate);
+            $(inspection_date).off('dp.change').on('dp.change', (e) => {
+                const selected_inspection_date = $(inspection_date).data('DateTimePicker').date().format('YYYY-MM-DD');
+                if (selected_inspection_date && selected_inspection_date != this.inspectionDate) {
+                    this.inspectionDate = selected_inspection_date;
+                }
+            });
+            this.datepickerInitialised = true;
+        },
+        readFileInspectionReport: function() {
+            let _file = null;
+            var input = $(this.$refs.uploadedInspectionReport)[0];
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.readAsDataURL(input.files[0]);
+                reader.onload = function(e) {
+                    _file = e.target.result;
+                };
+                _file = input.files[0];
+            }
+            this.uploadedInspectionReport = _file;
+        },
     },
     mounted: function(){
         let vm = this;
         this.fetchConditions();
         vm.$nextTick(() => {
             this.eventListeners();
+        });
+    },
+    updated: function() {
+        this.$nextTick(() => {
+            this.initDatePicker();
         });
     }
 }
