@@ -72,10 +72,10 @@
     import DateField from '@/components/forms/date-field.vue'
     import Checkbox from '@/components/forms/checkbox.vue'
     import Radio from '@/components/forms/radio.vue'
-    import Table from '@/components/forms/table.vue'
+    import TableBlock from '@/components/forms/table.vue'
     export default {
         props:["readonly", "activity", "application", "id"],
-        components: {TextField, TextArea, DateField, Checkbox, Radio, Table},
+        components: {TextField, TextArea, DateField, Checkbox, Radio, TableBlock},
         data:function () {
             let vm = this;
             vm.editable_elements = [];
