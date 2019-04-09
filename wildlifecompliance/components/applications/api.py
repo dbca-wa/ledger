@@ -49,6 +49,7 @@ from wildlifecompliance.components.applications.serializers import (
     AssessmentSerializer,
     ActivityPermissionGroupSerializer,
     SaveAssessmentSerializer,
+    SimpleSaveAssessmentSerializer,
     AmendmentRequestSerializer,
     ApplicationProposedIssueSerializer,
     DTAssessmentSerializer,
@@ -1022,14 +1023,7 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     def update_assessment(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            data = {
-                'id': self.request.data.get('id'),
-                'licence_activity': self.request.data.get('licence_activity'),
-                'comment': self.request.data.get('comment'),
-                'inspection_date': self.request.data.get('inspection_date'),
-                'assessor_group': self.request.data.get('assessor_group').get('id'),
-            }
-            serializer = SaveAssessmentSerializer(instance, data=data, partial=True)
+            serializer = SimpleSaveAssessmentSerializer(instance, data=self.request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
             return Response(serializer.data)

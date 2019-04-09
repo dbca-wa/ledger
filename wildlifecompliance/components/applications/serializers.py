@@ -104,6 +104,7 @@ class ActivityPermissionGroupSerializer(serializers.ModelSerializer):
 class AssessmentSerializer(serializers.ModelSerializer):
     assessor_group = ActivityPermissionGroupSerializer(read_only=True)
     status = CustomChoiceField(read_only=True)
+    inspection_report = serializers.FileField()
 
     class Meta:
         model = Assessment
@@ -115,8 +116,20 @@ class AssessmentSerializer(serializers.ModelSerializer):
             'status',
             'licence_activity',
             'comment',
-            'inspection_date'
+            'inspection_date',
+            'inspection_report'
         )
+
+
+class SimpleSaveAssessmentSerializer(serializers.ModelSerializer):
+    inspection_report = serializers.FileField()
+
+    class Meta:
+        model = Assessment
+        fields = (
+            'comment',
+            'inspection_date',
+            'inspection_report')
 
 
 class SaveAssessmentSerializer(serializers.ModelSerializer):
@@ -126,9 +139,7 @@ class SaveAssessmentSerializer(serializers.ModelSerializer):
             'assessor_group',
             'application',
             'text',
-            'licence_activity',
-            'comment',
-            'inspection_date')
+            'licence_activity')
 
     def validate(self, data):
         licence_activity = data.get('licence_activity')

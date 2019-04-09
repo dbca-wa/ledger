@@ -11,7 +11,7 @@
                                 </h3>
                             </div>
                             <div class="panel-body panel-collapse collapse in" :id="panelBody">
-                                <form class="form-horizontal" action="index.html" method="put">
+                                <form class="form-horizontal" name="assessment_form" method="put">
                                     <div class="col-sm-12">
                                         <div class="form-group">
                                             <div class="row">
@@ -32,7 +32,8 @@
                                                     <label class="control-label pull-left">Inspection Report</label>
                                                 </div>
                                                 <div class="col-sm-9" style="margin-bottom:10px; margin-top:10px;">
-                                                    <div style="margin-bottom: 10px;">{{ inspection_report_file_name }}</div>
+                                                    <div v-if="assessment.inspection_report && !inspection_report_file_name" style="margin-bottom: 10px;"><a :href="assessment.inspection_report" target="_blank">Download</a></div>
+                                                    <div v-if="inspection_report_file_name" style="margin-bottom: 10px;">{{ inspection_report_file_name }}</div>
                                                     <span class="btn btn-primary btn-file"> Select Inspection Report to Upload <input type="file" ref="inspection_report" @change="readFileInspectionReport()"/></span>
                                                 </div>
                                             </div>
@@ -41,7 +42,7 @@
                                                     <label class="control-label pull-left">Comments</label>
                                                 </div>
                                                 <div class="col-sm-9">
-                                                    <textarea v-model="assessment.comment" style="width: 100%; max-width: 100%;" />
+                                                    <textarea class="form-control" v-model="assessment.comment" style="width: 100%; max-width: 100%;" />
                                                 </div>
                                             </div>
                                             <div class="row">
@@ -103,6 +104,7 @@ export default {
                 inspection_date: "",
                 uploadedInspectionReport: null,
             },
+            form: null,
             datepickerInitialised: false,
             savingAssessment: false,
             datepickerOptions:{
@@ -238,13 +240,38 @@ export default {
             })
         },
         fetchAssessment(){
-            console.log('fetch assessment');
             this.$http.get(helpers.add_endpoint_join(api_endpoints.assessment,'get_latest_for_application_activity/?application_id='+
                 this.application.id + '&activity_id=' + this.selected_activity_tab_id)).then((response) => {
                     this.assessment = response.body
             },(error) => {
                 console.log(error);
             })
+        },
+        saveAssessment: function(e) {
+            this.savingAssessment = true;
+            let formData = new FormData(this.form);
+            formData.append('comment', this.assessment.comment);
+            formData.append('inspection_report', this.assessment.inspection_report);
+            this.$http.put(helpers.add_endpoint_json(api_endpoints.assessment,this.assessment.id+'/update_assessment'),formData,{
+                    emulateJSON:true
+                }).then(res=>{
+                swal(
+                    'Save Assessment',
+                    'Your assessment has been saved.',
+                    'success'
+                ).then((result) => {
+                    this.savingAssessment = false;
+                    this.fetchAssessment();
+                });
+            },err=>{
+                swal(
+                    'Error',
+                    'There was an error saving your assessment',
+                    'error'
+                ).then((result) => {
+                    this.savingAssessment = false;
+                })
+            });
         },
         editCondition(_id){
             let vm = this;
@@ -345,37 +372,13 @@ export default {
             }
             this.assessment.inspection_report = _file;
         },
-        saveAssessment: function(e) {
-            this.savingAssessment = true;
-            let formData = new FormData(this.form);
-            console.log(JSON.stringify(this.assessment));
-            this.$http.put(helpers.add_endpoint_json(api_endpoints.assessment,this.assessment.id+'/update_assessment'),JSON.stringify(this.assessment),{
-                emulateJSON:true
-            }).then(res=>{
-                swal(
-                    'Save Assessment',
-                    'Your assessment has been saved.',
-                    'success'
-                ).then((result) => {
-                    this.savingAssessment = false;
-                });
-            },err=>{
-                swal(
-                    'Error',
-                    'There was an error saving your assessment',
-                    'error'
-                ).then((result) => {
-                    this.savingAssessment = false;
-                })
-            });
-        },
     },
     mounted: function(){
-        let vm = this;
         this.fetchConditions();
         this.fetchAssessment();
-        vm.$nextTick(() => {
+        this.$nextTick(() => {
             this.eventListeners();
+            this.form = document.forms.assessment_form;
         });
     },
     updated: function() {
