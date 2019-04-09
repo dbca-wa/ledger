@@ -120,9 +120,10 @@
                                     </div>
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="details" style="width: 70%;">
-                                            <button v-if="isIdCheckAccepted" disabled class="btn btn-light">Accepted</button>
-                                            <label v-if="isIdNotChecked">Has not been accepted. Override to Issue: </label>&nbsp;
-                                            <input v-if="isIdNotChecked" type="checkbox" v-model="licence.id_check" />
+                                            <button v-if="isIdCheckAccepted" disabled class="btn btn-success">Accepted</button>
+                                            <label v-if="isIdCheckAwaitingUpdate">Awaiting update. Override to Issue: &nbsp;</label>
+                                            <label v-if="isIdNotChecked">Has not been accepted. Override to Issue: &nbsp;</label>
+                                            <input v-if="isIdNotChecked || isIdCheckAwaitingUpdate" type="checkbox" v-model="licence.id_check" />
                                         </div>
                                     </div>
                                 </div>
@@ -132,8 +133,8 @@
                                     </div>
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="cc_email" style="width: 70%;">
-                                            <button v-if="isCharacterCheckAccepted" disabled class="btn btn-light">Accepted</button>
-                                            <label v-if="isCharacterNotChecked">Has not been accepted. Override to Issue: </label>&nbsp;
+                                            <button v-if="isCharacterCheckAccepted" disabled class="btn btn-success">Accepted</button>
+                                            <label v-if="isCharacterNotChecked">Has not been accepted. Override to Issue: &nbsp;</label>
                                             <input v-if="isCharacterNotChecked" type="checkbox" v-model="licence.character_check" />
                                         </div>
                                     </div>
@@ -144,9 +145,10 @@
                                     </div>
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="cc_email" style="width: 70%;">
-                                            <button v-if="isReturnCheckAccepted" disabled class="btn btn-light">Accepted</button>
-                                            <label v-if="isReturnNotChecked">Has not been accepted. Override to Issue: </label>&nbsp;
-                                            <input v-if="isReturnNotChecked" type="checkbox" v-model="licence.return_check" />
+                                            <button v-if="isReturnCheckAccepted" disabled class="btn btn-success">Accepted</button>
+                                            <label v-if="isReturnCheckAwaitingReturns">Awaiting return. Override to Issue: &nbsp;</label>
+                                            <label v-if="isReturnNotChecked">Has not been accepted. Override to Issue: &nbsp;</label>
+                                            <input v-if="isReturnNotChecked || isReturnCheckAwaitingReturns" type="checkbox" v-model="licence.return_check" />
                                         </div>
                                     </div>
                                 </div>
@@ -223,8 +225,12 @@ export default {
         isIdCheckAccepted: function(){
             return this.application.id_check_status.id == 'accepted';
         },
+        isIdCheckAwaitingUpdate: function(){
+            return this.application.id_check_status.id == 'awaiting_update';
+        },
         isIdNotChecked: function(){
-            return this.application.id_check_status.id == 'not_checked';
+            return this.application.id_check_status.id == 'not_checked'
+                || this.application.id_check_status.id == 'updated' ;
         },
         isCharacterCheckAccepted: function(){
             return this.application.character_check_status.id == 'accepted';
@@ -235,8 +241,12 @@ export default {
         isReturnCheckAccepted: function(){
             return this.application.return_check_status.id == 'accepted';
         },
+        isIdReturnCheckAwaitingReturns: function(){
+            return this.application.return_check_status.id == 'awaiting_returns';
+        },
         isReturnNotChecked: function(){
-            return this.application.return_check_status.id == 'not_checked';
+            return this.application.return_check_status.id == 'not_checked'
+                || this.application.return_check_status.id == 'updated' ;
         },
         finalStatus: function() {
             return (id) => {
