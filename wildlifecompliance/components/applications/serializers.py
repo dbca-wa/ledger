@@ -113,7 +113,10 @@ class AssessmentSerializer(serializers.ModelSerializer):
             'assessor_group',
             'date_last_reminded',
             'status',
-            'licence_activity')
+            'licence_activity',
+            'comment',
+            'inspection_date'
+        )
 
 
 class SaveAssessmentSerializer(serializers.ModelSerializer):
@@ -123,7 +126,9 @@ class SaveAssessmentSerializer(serializers.ModelSerializer):
             'assessor_group',
             'application',
             'text',
-            'licence_activity')
+            'licence_activity',
+            'comment',
+            'inspection_date')
 
     def validate(self, data):
         licence_activity = data.get('licence_activity')

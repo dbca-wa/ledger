@@ -1317,6 +1317,7 @@ class Assessment(ApplicationRequest):
         'wildlifecompliance.LicenceActivity', null=True)
     comment = models.TextField(blank=True)
     purpose = models.TextField(blank=True)
+    inspection_date = models.DateField(null=True, blank=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
