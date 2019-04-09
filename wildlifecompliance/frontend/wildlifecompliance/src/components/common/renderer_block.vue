@@ -118,7 +118,7 @@
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
-        <Table v-if="component.type === 'table'"
+        <TableBlock v-if="component.type === 'table'"
             :headers="component.headers"
             :readonly="is_readonly"
             :name="component.name"
@@ -130,7 +130,7 @@
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
-        <Label v-if="component.type === 'label'"
+        <LabelBlock v-if="component.type === 'label'"
             :value="component.label"
             :id="element_id()"/>
 
@@ -246,12 +246,12 @@ import SelectBlock from '@/components/forms/select.vue'
 import DateField from '@/components/forms/date-field.vue'
 import TextField from '@/components/forms/text.vue'
 import TextAreaBlock from '@/components/forms/text-area.vue'
-import Label from '@/components/forms/label.vue'
+import LabelBlock from '@/components/forms/label.vue'
 import AssessorText from '@/components/forms/readonly_text.vue'
 import HelpText from '@/components/forms/help_text.vue'
 import HelpTextUrl from '@/components/forms/help_text_url.vue'
 import CommentRadioCheckBox from '@/components/forms/comment_icon_checkbox_radio.vue'
-import Table from '@/components/forms/table.vue'
+import TableBlock from '@/components/forms/table.vue'
 
 const RendererBlock = {
   name: 'renderer-block',
@@ -270,6 +270,8 @@ const RendererBlock = {
       File,
       DateField,
       TextAreaBlock,
+      LabelBlock,
+      TableBlock,
   },
   data: function() {
     return {
