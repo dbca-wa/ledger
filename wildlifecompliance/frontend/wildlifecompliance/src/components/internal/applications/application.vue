@@ -67,8 +67,8 @@
                                 <div>
                                     <div class="col-sm-12">
                                         <strong>Application</strong><br/>
-                                        <a class="actionBtn" v-if="!showingApplication" @click.prevent="toggleApplication()">Show Application</a>
-                                        <a class="actionBtn" v-else @click.prevent="toggleApplication()">Hide Application</a>
+                                        <a class="actionBtn" v-if="!showingApplication || !this.unfinishedActivities.length" @click.prevent="toggleApplication({show: true, showFinalised: true})">Show Application</a>
+                                        <a class="actionBtn" v-else @click.prevent="toggleApplication({show: false})">Hide Application</a>
                                     </div>
                                     <div class="col-sm-12">
                                         <div class="separator"></div>
@@ -131,7 +131,7 @@
                                     </div>
                                     <div v-if="!isFinalised && (isSendingToAssessor || isOfficerConditions || isFinalViewConditions || showingConditions || isofficerfinalisation)"class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back to Application</button><br/>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication({show: true})">Back to Application</button><br/>
                                         </div>
                                     </div>
                                 </template>
@@ -147,7 +147,7 @@
                 <template v-if="isFinalised || isPartiallyFinalised">
                     <LicenceScreen/>
                 </template>
-                <template v-if="canIssueDecline">
+                <template v-if="canIssueDecline && isofficerfinalisation">
                     <IssueLicence :application="application" :licence_activity_tab="selected_activity_tab_id"/>
                 </template>
                 <template v-if="showingConditions">
@@ -758,13 +758,14 @@ export default {
             'isFinalised',
             'isApplicationLoaded',
             'isApplicationActivityVisible',
+            'unfinishedActivities',
             'current_user',
         ]),
         sendToAssessorActivities: function() {
             return this.licenceActivities(['with_officer', 'with_officer_conditions', 'with_assessor'], 'licensing_officer');
         },
         applicationDetailsVisible: function() {
-            return !this.isSendingToAssessor && !this.showingConditions && !this.isofficerfinalisation && !this.isFinalised && !this.isOfficerConditions && !this.isFinalViewConditions;
+            return !this.isSendingToAssessor && !this.showingConditions && !this.isofficerfinalisation && this.unfinishedActivities.length && !this.isOfficerConditions && !this.isFinalViewConditions;
         },
         applicationIsDraft: function(){
             return this.application.processing_status.id == 'draft';
@@ -873,6 +874,7 @@ export default {
             'setApplication',
             'setActivityTab',
             'loadCurrentUser',
+            'toggleFinalisedTabs',
         ]),
         eventListeners: function(){
             let vm = this;
@@ -1195,28 +1197,33 @@ export default {
             },err=>{
             });
         },
-        toggleApplication:function(){
-            let vm = this;
-            this.showingApplication = !this.showingApplication;
+        toggleApplication: function({show=false, showFinalised=false}){
+
+            this.showingApplication = show;
             if(this.isSendingToAssessor){
-                this.isSendingToAssessor=!this.isSendingToAssessor
+                this.isSendingToAssessor = !show;
             }
             if(this.showingConditions){
-                this.showingConditions=!this.showingConditions
+                this.showingConditions = !show;
             }
             if(this.isOfficerConditions){
-                this.isOfficerConditions=!this.isOfficerConditions
+                this.isOfficerConditions = !show;
             }
             if(this.isFinalViewConditions){
-                this.isFinalViewConditions=!this.isFinalViewConditions
+                this.isFinalViewConditions = !show;
             }
             if(this.isofficerfinalisation){
-                this.isofficerfinalisation=!this.isofficerfinalisation
+                this.isofficerfinalisation = !show;
             }
-            setTimeout(function(){
-                $('#tabs-main li a')[1].click();
-                vm.initFirstTab(true);
+            this.toggleFinalisedTabs(showFinalised);
+            setTimeout(() => {
+                const firstTab = $('#tabs-main li a')[1];
+                if(firstTab != null) {
+                    firstTab.click();
+                }
+                this.initFirstTab(true);
             }, 50);
+            !showFinalised && this.load({ url: `/api/application/${this.application.id}/internal_application.json` });
         },
         toggleConditions:function(){
             this.showingConditions = true;
