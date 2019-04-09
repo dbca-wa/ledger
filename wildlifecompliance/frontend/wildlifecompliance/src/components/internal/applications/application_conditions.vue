@@ -19,11 +19,11 @@
                                                     <label class="control-label pull-left">Inspection Date</label>
                                                 </div>
                                                 <div class="col-sm-9">
-                                                    <div class="input-group date" style="width: 70%;">
-                                                       <input class="pull-left" placeholder="DD/MM/YYYY"/> 
-                                                       <span class="input-group-addon">
+                                                    <div class="input-group date" ref="inspection_date" style="width: 70%;">
+                                                        <input type="text" class="form-control" name="inspection_date" placeholder="DD/MM/YYYY" v-model="inspectionDate">
+                                                        <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
-                                                       </span>
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -91,6 +91,13 @@ export default {
         let vm = this;
         return {
             assessmentComments: "",
+            inspectionDate: "",
+            datepickerInitialised: false,
+            datepickerOptions:{
+                format: 'DD/MM/YYYY',
+                showClear:true,
+                allowInputToggle:true
+            },
             panelBody: "application-conditions-"+vm._uid,
             conditions: [],
             condition_headers:["Condition","Due Date","Recurrence","Action","Order"],
@@ -282,6 +289,30 @@ export default {
             table.row(index).data(data2);
             table.row(index + order).data(data1);
             table.page(0).draw(false);
+        },
+        //Initialise Date Picker
+        initDatePicker: function() {
+            console.log('dater picker init start');
+            if(this.datepickerInitialised || this.$refs === undefined) {
+                console.log('dater picker abrupt end');
+                return;
+            }
+            console.log('dater picker loop start');
+            const inspection_date = this.$refs.inspection_date;
+
+            const inspectionDate = new Date(this.inspection_date);
+
+            $(inspection_date).datetimepicker(this.datepickerOptions);
+            $(inspection_date).data('DateTimePicker').date(inspectionDate);
+            $(inspection_date).off('dp.change').on('dp.change', (e) => {
+                const selected_inspection_date = $(inspection_date).data('DateTimePicker').date().format('YYYY-MM-DD');
+                if (selected_inspection_date && selected_inspection_date != this.inspection_date) {
+                    this.inspection_date = selected_inspection_date;
+                }
+            });
+            console.log('dater picker loop end');
+            console.log('dater picker initialised');
+            this.datepickerInitialised = true;
         }
     },
     mounted: function(){
@@ -289,6 +320,12 @@ export default {
         this.fetchConditions();
         vm.$nextTick(() => {
             this.eventListeners();
+        });
+    },
+    updated: function() {
+        this.$nextTick(() => {
+            console.log('updated, init date picker');
+            this.initDatePicker();
         });
     }
 }
