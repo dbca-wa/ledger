@@ -148,7 +148,7 @@
                                             <button v-if="isReturnCheckAccepted" disabled class="btn btn-success">Accepted</button>
                                             <label v-if="isReturnCheckAwaitingReturns">Awaiting return. Override to Issue: &nbsp;</label>
                                             <label v-if="isReturnNotChecked">Has not been accepted. Override to Issue: &nbsp;</label>
-                                            <input v-if="isReturnNotChecked || isReturnCheckAwaitingRetrusn" type="checkbox" v-model="licence.return_check" />
+                                            <input v-if="isReturnNotChecked || isReturnCheckAwaitingReturns" type="checkbox" v-model="licence.return_check" />
                                         </div>
                                     </div>
                                 </div>
