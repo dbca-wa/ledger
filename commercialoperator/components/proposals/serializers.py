@@ -25,6 +25,7 @@ from commercialoperator.components.proposals.models import (
                                     ProposalParkZoneActivity,
                                     ProposalParkZone, 
                                     ProposalOtherDetails,
+                                    ProposalAccreditation
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
@@ -141,19 +142,34 @@ class SaveProposalTrailSerializer(serializers.ModelSerializer):
         model = ProposalTrail
         fields = '__all__'
 
+class ProposalAccreditationSerializer(serializers.ModelSerializer):
+    accreditation_type= serializers.SerializerMethodField()
+    accreditation_expiry = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
+    
+    class Meta:
+        model = ProposalAccreditation
+        #fields = '__all__'
+        fields=('id',
+                'accreditation_type',
+                'accreditation_expiry',
+                'comments'
+                )
+
 class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
     #park=ParkSerializer()
     #accreditation_type= serializers.SerializerMethodField()
-    accreditation_expiry = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
+    #accreditation_expiry = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
     nominated_start_date = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
     insurance_expiry = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
+    accreditations = ProposalAccreditationSerializer(many=True)
 
     class Meta:
         model = ProposalOtherDetails
         #fields = '__all__'
         fields=(
-                'accreditation_type',
-                'accreditation_expiry',
+                #'accreditation_type',
+                #'accreditation_expiry',
+                'accreditations',
                 'preferred_licence_period',
                 'nominated_start_date',
                 'insurance_expiry',

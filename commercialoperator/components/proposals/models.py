@@ -1294,12 +1294,12 @@ class ProposalLogEntry(CommunicationsLogEntry):
 
 class ProposalOtherDetails(models.Model):
     #activities_land = models.CharField(max_length=24, blank=True, default='')
-    ACCREDITATION_TYPE_CHOICES = (
-        ('no', 'No'),
-        ('atap', 'ATAP'),
-        ('eco_certification', 'Eco Certification'),
-        ('narta', 'NARTA'),
-    )
+    # ACCREDITATION_TYPE_CHOICES = (
+    #     ('no', 'No'),
+    #     ('atap', 'ATAP'),
+    #     ('eco_certification', 'Eco Certification'),
+    #     ('narta', 'NARTA'),
+    # )
     # LICENSE_PERIOD_CHOICES=(
     #     ('2_months','2 months'),
     #     ('1_year','1 Year'),
@@ -1316,10 +1316,10 @@ class ProposalOtherDetails(models.Model):
         ('7_year', '7 Years'),
         ('10_year', '10 Years'),
     )
-    accreditation_type = models.CharField('Accreditation', max_length=40, choices=ACCREDITATION_TYPE_CHOICES,
-                                       default=ACCREDITATION_TYPE_CHOICES[0][0])
+    #accreditation_type = models.CharField('Accreditation', max_length=40, choices=ACCREDITATION_TYPE_CHOICES,
+    #                                   default=ACCREDITATION_TYPE_CHOICES[0][0])
     #accreditation_expiry= models.DateTimeField(blank=True, null=True)
-    accreditation_expiry= models.DateField(blank=True, null=True)
+    #accreditation_expiry= models.DateField(blank=True, null=True)
 
     #preferred_license_period=models.CharField('Preferred license period', max_length=40, choices=LICENSE_PERIOD_CHOICES,default=LICENSE_PERIOD_CHOICES[0][0])
     preferred_licence_period=models.CharField('Preferred licence period', max_length=40, choices=LICENCE_PERIOD_CHOICES,default=LICENCE_PERIOD_CHOICES[0][0])
@@ -1336,6 +1336,25 @@ class ProposalOtherDetails(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
+
+class ProposalAccreditation(models.Model):
+    #activities_land = models.CharField(max_length=24, blank=True, default='')
+    ACCREDITATION_TYPE_CHOICES = (
+        ('no', 'No'),
+        ('atap', 'ATAP'),
+        ('eco_certification', 'Eco Certification'),
+        ('narta', 'NARTA'),
+    )
+    
+    accreditation_type = models.CharField('Accreditation', max_length=40, choices=ACCREDITATION_TYPE_CHOICES,
+                                       default=ACCREDITATION_TYPE_CHOICES[0][0])
+    accreditation_expiry= models.DateField(blank=True, null=True)
+    comments=models.TextField(blank=True)
+    proposal_other_details = models.ForeignKey(ProposalOtherDetails, related_name='accreditations', null=True)
+
+    class Meta:
+        app_label = 'commercialoperator'
+
 
 
 class ProposalPark(models.Model):

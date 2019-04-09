@@ -148,6 +148,7 @@ export default {
     save_wo_confirm: function(e) {
       let vm = this;
       let formData = new FormData(vm.form);
+      formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
       vm.$http.post(vm.proposal_form_url,formData);
     },
 
@@ -346,6 +347,10 @@ export default {
           next(vm => {
             vm.loading.push('fetching proposal')
             vm.proposal = res.body;
+            //used in activities_land for T Class licence
+            // vm.proposal.selected_trails_activities=[];
+            // vm.proposal.selected_parks_activities=[];
+            // vm.proposal.marine_parks_activities=[];
             vm.loading.splice('fetching proposal', 1);
             vm.setdata(vm.proposal.readonly);
           

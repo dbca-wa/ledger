@@ -44,6 +44,7 @@ from commercialoperator.components.proposals.models import (
     Vehicle,
     Vessel,
     ProposalOtherDetails,
+    ProposalAccreditation
 )
 from commercialoperator.components.proposals.serializers import (
     SendReferralSerializer,
@@ -999,7 +1000,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             serializer = ProposalOtherDetailsSerializer(instance.other_details,data=other_details_data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            print other_details_data
+            #print other_details_data
             select_parks_activities=sc['selected_parks_activities']
             select_trails_activities=sc['selected_trails_activities']
             marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
@@ -1136,7 +1137,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 'approval_level': approval_level,
                 #'other_details': {},
                 #'tenure': tenure,
-                'data': [
+                'data': [                                           
                     {
                         u'regionActivitySection': [{
                             'Region': Region.objects.get(id=region).name if region else None,
@@ -1463,7 +1464,8 @@ class AccreditationTypeView(views.APIView):
     renderer_classes = [JSONRenderer,]
     def get(self,request, format=None):
         choices_list = []
-        choices = ProposalOtherDetails.ACCREDITATION_TYPE_CHOICES
+        #choices = ProposalOtherDetails.ACCREDITATION_TYPE_CHOICES
+        choices=ProposalAccreditation.ACCREDITATION_TYPE_CHOICES
         if choices:
             for c in choices:
                 choices_list.append({'key': c[0],'value': c[1]})
