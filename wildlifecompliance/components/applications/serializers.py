@@ -162,6 +162,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     licence_type_short_name = serializers.ReadOnlyField()
     documents_url = serializers.SerializerMethodField()
     character_check_status = CustomChoiceField(read_only=True)
+    return_check_status = CustomChoiceField(read_only=True)
     application_fee = serializers.DecimalField(
         max_digits=8, decimal_places=2, coerce_to_string=False)
     licence_fee = serializers.DecimalField(
@@ -208,6 +209,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'documents_url',
             'id_check_status',
             'character_check_status',
+            'return_check_status',
             'application_fee',
             'licence_fee',
             'category_name',
@@ -466,6 +468,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     review_status = CustomChoiceField(read_only=True)
     customer_status = CustomChoiceField(read_only=True)
     character_check_status = CustomChoiceField(read_only=True)
+    return_check_status = CustomChoiceField(read_only=True)
     submitter = EmailUserAppViewSerializer()
     licences = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
@@ -487,6 +490,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'review_status',
             'id_check_status',
             'character_check_status',
+            'return_check_status',
             'licence_type_data',
             'applicant',
             'org_applicant',
