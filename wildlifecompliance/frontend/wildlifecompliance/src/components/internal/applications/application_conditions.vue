@@ -19,7 +19,7 @@
                                                     <label class="control-label pull-left">Inspection Date</label>
                                                 </div>
                                                 <div class="col-sm-9">
-                                                    <div class="input-group date" ref="inspection_date" style="width: 70%;">
+                                                    <div class="input-group date" ref="inspection_date" style="width: 30%;">
                                                         <input type="text" class="form-control" name="inspection_date" placeholder="DD/MM/YYYY" v-model="inspectionDate">
                                                         <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
@@ -31,8 +31,9 @@
                                                 <div class="col-sm-3">
                                                     <label class="control-label pull-left">Inspection Report</label>
                                                 </div>
-                                                <div class="col-sm-9">
-                                                    <button @click.prevent="uploadInspectionReport()" style="margin-bottom:10px;" class="btn btn-primary">Attach Report</button>
+                                                <div class="col-sm-9" style="margin-bottom:10px; margin-top:10px;">
+                                                    <div style="margin-bottom: 10px;">{{uploadedInspectionReportFileName}}</div>
+                                                    <span class="btn btn-primary btn-file"> Select Inspection Report to Upload <input type="file" ref="uploadedInspectionReport" @change="readFileInspectionReport()"/></span>
                                                 </div>
                                             </div>
                                             <div class="row">
@@ -40,7 +41,13 @@
                                                     <label class="control-label pull-left">Comments</label>
                                                 </div>
                                                 <div class="col-sm-9">
-                                                    <textarea v-model="assessmentComments" />
+                                                    <textarea v-model="assessmentComments" style="width: 100%; max-width: 100%;" />
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <button v-if="!savingAssessment" @click.prevent="saveAssessment()" style="margin-top:10px" class="btn btn-primary pull-right">Save Assessment</button>
+                                                    <button v-else disabled class="btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Saving</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -93,6 +100,8 @@ export default {
             assessmentComments: "",
             inspectionDate: "",
             datepickerInitialised: false,
+            savingAssessment: false,
+            uploadedInspectionReport: null,
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
                 showClear:true,
@@ -187,6 +196,9 @@ export default {
             'application',
             'selected_activity_tab_id',
         ]),
+        uploadedInspectionReportFileName: function() {
+            return this.uploadedInspectionReport != null ? this.uploadedInspectionReport.name: '';
+        },
     },
     methods:{
         addCondition(){
@@ -292,28 +304,36 @@ export default {
         },
         //Initialise Date Picker
         initDatePicker: function() {
-            console.log('dater picker init start');
             if(this.datepickerInitialised || this.$refs === undefined) {
-                console.log('dater picker abrupt end');
                 return;
             }
-            console.log('dater picker loop start');
             const inspection_date = this.$refs.inspection_date;
 
-            const inspectionDate = new Date(this.inspection_date);
+            const inspectionDate = new Date(this.inspectionDate);
 
             $(inspection_date).datetimepicker(this.datepickerOptions);
             $(inspection_date).data('DateTimePicker').date(inspectionDate);
             $(inspection_date).off('dp.change').on('dp.change', (e) => {
                 const selected_inspection_date = $(inspection_date).data('DateTimePicker').date().format('YYYY-MM-DD');
-                if (selected_inspection_date && selected_inspection_date != this.inspection_date) {
-                    this.inspection_date = selected_inspection_date;
+                if (selected_inspection_date && selected_inspection_date != this.inspectionDate) {
+                    this.inspectionDate = selected_inspection_date;
                 }
             });
-            console.log('dater picker loop end');
-            console.log('dater picker initialised');
             this.datepickerInitialised = true;
-        }
+        },
+        readFileInspectionReport: function() {
+            let _file = null;
+            var input = $(this.$refs.uploadedInspectionReport)[0];
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.readAsDataURL(input.files[0]);
+                reader.onload = function(e) {
+                    _file = e.target.result;
+                };
+                _file = input.files[0];
+            }
+            this.uploadedInspectionReport = _file;
+        },
     },
     mounted: function(){
         let vm = this;
@@ -324,7 +344,6 @@ export default {
     },
     updated: function() {
         this.$nextTick(() => {
-            console.log('updated, init date picker');
             this.initDatePicker();
         });
     }
