@@ -138,6 +138,7 @@
                     Vessel Details
                     <input type="button" class="button formButton" value="Details ▼" data-toggle="measurements-dropdown"/>
                 </label>
+                <div style='position: relative;'>
                 <div class="dropdown-pane" id="measurements-dropdown" data-dropdown data-auto-focus="true">
                     <div class="row">
                         <div class="small-6 columns">
@@ -175,12 +176,14 @@
                         </div>
                     </div>
                 </div>
+                </div>
             </div>
             <div class="small-6 medium-6 large-2 columns" >
                 <label>
                     Guests 
                     <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
                 </label>
+                <div style='position: relative;'>
                 <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
                     <div class="row">
                         <div class="small-6 columns">
@@ -217,6 +220,7 @@
                             <input type="number" id="numInfants" name="num_infants" @change="checkGuests()" v-model="numInfants" min="0" max="16"/>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
             <div class="columns small-6 medium-6 large-2">
