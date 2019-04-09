@@ -260,7 +260,8 @@
                 <tbody><template v-for="(site, index) in sites" >
                     <tr v-show="mooring_book_row_display[index] == 'show'" >
                         <td class="site">{{ site.name }} - <i>{{ site.mooring_park }}</i><br>
-				<i>Distance: {{ site.distance_from_selection }}km</i>
+				<i v-if="site.distance_from_selection > 1" >Distance: {{ site.distance_from_selection }}km</i>
+				<i v-else >Distance: {{ site.distance_from_selection_meters }}m</i>
                         </td>
                         <td class="book">
                             <template v-if="site.price">
