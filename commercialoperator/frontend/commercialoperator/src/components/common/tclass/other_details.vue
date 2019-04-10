@@ -410,6 +410,7 @@ export default {
                 else{
                     for(var i=0;i<vm.proposal.other_details.accreditations.length; i++)
                     {
+                        
                         if(vm.proposal.other_details.accreditations[i].accreditation_type==accreditation_type.key)
                         {
                             if(vm.proposal.other_details.accreditations[i].id){

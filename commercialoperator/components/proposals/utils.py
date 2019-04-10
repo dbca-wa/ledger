@@ -2,7 +2,7 @@ import re
 from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
-from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrail, ProposalTrailSectionActivity, ProposalTrailSection, ProposalParkZone, ProposalParkZoneActivity, ProposalOtherDetails
+from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrail, ProposalTrailSectionActivity, ProposalTrailSection, ProposalParkZone, ProposalParkZoneActivity, ProposalOtherDetails, ProposalAccreditation
 from commercialoperator.components.proposals.serializers import SaveProposalSerializer, SaveProposalParkSerializer, SaveProposalTrailSerializer, ProposalAccreditationSerializer
 from commercialoperator.components.main.models import Activity, Park, AccessType, Trail, Section, Zone
 import traceback
@@ -642,9 +642,19 @@ def save_proponent_data(instance,request,viewset,other_details_data, select_park
             viewset.perform_update(serializer)
             if 'accreditations' in other_details_data:
                 for acc in other_details_data['accreditations']:
-                    serializer=ProposalAccreditationSerializer(data=acc)
-                    serializer.is_valid(raise_exception=True)
-                    serializer.save()
+                    #print acc
+                    if 'id' in acc:
+                        acc_instance=ProposalAccreditation.objects.get(id=acc['id'])
+                        if acc['is_deleted']==True:
+                            acc_instance.delete()
+                        else:
+                            serializer=ProposalAccreditationSerializer(acc_instance,data=acc)
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                    else:
+                        serializer=ProposalAccreditationSerializer(data=acc)
+                        serializer.is_valid(raise_exception=True)
+                        serializer.save()
             #import ipdb; ipdb.set_trace()
             if select_parks_activities:
                 try:
