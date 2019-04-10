@@ -196,8 +196,8 @@ class MooringArea(models.Model):
     site_type = models.SmallIntegerField(choices=SITE_TYPE_CHOICES, default=0)
     address = JSONField(null=True,blank=True)
     features = models.ManyToManyField('Feature')
-    description = models.TextField(blank=True, null=True)
-    additional_info = models.TextField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True, default="")
+    additional_info = models.TextField(blank=True, null=True, default="")
     area_activities = models.TextField(blank=True, null=True)
 
     # Tags for communications methods available and access type
