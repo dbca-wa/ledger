@@ -1,5 +1,7 @@
 import Vue from 'vue';
-
+import {
+    UPDATE_RETURNS,
+} from '@/store/mutation-types';
 
 export const returnsStore = {
     state: {
@@ -11,7 +13,7 @@ export const returnsStore = {
         isReturnsLoaded: state => Object.keys(state.returns).length && state.returns.table != null,
     },
     mutations: {
-        ['UPDATE_RETURNS'] (state, returns) {
+        [UPDATE_RETURNS] (state, returns) {
             Vue.set(state, 'returns', {...returns});
         },
     },
@@ -29,7 +31,7 @@ export const returnsStore = {
             })
         },
         setReturns({ dispatch, commit }, returns) {
-            commit('UPDATE_RETURNS', returns);
+            commit(UPDATE_RETURNS, returns);
         },
     }
 }

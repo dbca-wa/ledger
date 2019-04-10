@@ -16,6 +16,6 @@ export default new Vuex.Store({
 		appStore: applicationStore,
 		userStore: userStore,
 		rendererStore: rendererStore,
-	  returnsStore: returnsStore,
+    returnsStore: returnsStore,
 	}
 })
