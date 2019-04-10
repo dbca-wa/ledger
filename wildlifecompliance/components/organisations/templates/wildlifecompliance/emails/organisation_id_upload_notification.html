@@ -1,10 +1,12 @@
 {%  extends 'wildlifecompliance/emails/base_email.html' %}
 
 {%  block content %}
-    <p>Identification details for the following organisation you are assigned to has been uploaded.</p>
+    <p>Identification details for the following organisation has been uploaded.</p>
     <p><strong>Organisation: {{ organisation.name }}</strong></p>
     <p><strong>ABN: {{ organisation.abn }}</strong></p>
     <p><strong>Address: {{ organisation.address.line1 }}, {{ organisation.address.locality }},
         {{ organisation.address.state }}, {{ organisation.address.postcode}},
         {{ organisation.address.country.name}} </strong></p>
+    <p>This relates to the following applications from which the organisation was requested for an amended ID to be uploaded:</p>
+    <p><strong>Application : {{ applications }}</strong></p>
 {%  endblock %}

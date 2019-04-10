@@ -446,13 +446,14 @@ class Organisation(models.Model):
         send_organisation_request_link_email_notification(
             self, request, recipients)
 
-    def send_organisation_id_upload_email_notification(self, request):
-        # Notify reviewing internal officers of update to the organisation ID.
+    def send_organisation_id_upload_email_notification(self, applications, request):
+        # Notify reviewing internal officers of update to the organisation ID
+        # for relevant applications.
         officer_list = get_officer_email_list(self)
         contact_email = EmailUser.objects.filter(email=request.user).first()
         if officer_list:
             send_organisation_id_upload_email_notification(
-                officer_list, self, contact_email, request)
+                officer_list, self, contact_email, applications, request)
 
     @staticmethod
     def existance(abn):
@@ -513,6 +514,17 @@ class Organisation(models.Model):
             _names += '{0} {1} '.format(user.first_name, user.last_name)
 
         return _names
+
+    @property
+    def all_admin_emails(self):
+        return [org_admin.email for org_admin in
+                    OrganisationContact.objects.filter(
+                        organisation_id=self.id,
+                        user_role=OrganisationContact.ORG_CONTACT_ROLE_ADMIN,
+                        user_status=OrganisationContact.ORG_CONTACT_STATUS_ACTIVE,
+                        is_admin=True
+                    )
+                ]
 
     @property
     def has_no_admins(self):

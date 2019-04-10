@@ -92,14 +92,16 @@ def is_consultant(organisation, user):
 
 def get_officer_email_list(organisation):
     from wildlifecompliance.components.applications.models import Application
-    # Gets a list of internal staff emails assigned to an Application for an
-    # Organisation.
+    # Gets a list of internal staff emails assigned to an Application
+    # requesting ID update from an Organisation applicant.
     emails = set()
-    applications = Application.objects.filter(org_applicant=organisation.id)\
-        .exclude(customer_status__in=(
-            Application.CUSTOMER_STATUS_ACCEPTED,
-            Application.CUSTOMER_STATUS_DECLINED)
-        )
+    applications = Application.objects.filter(
+            org_applicant=organisation.id,
+            id_check_status=Application.ID_CHECK_STATUS_AWAITING_UPDATE
+    ).exclude(customer_status__in=(
+        Application.CUSTOMER_STATUS_ACCEPTED,
+        Application.CUSTOMER_STATUS_DECLINED)
+    )
     for application in applications:
         # Officer assigned to the application
         if application.is_assigned:

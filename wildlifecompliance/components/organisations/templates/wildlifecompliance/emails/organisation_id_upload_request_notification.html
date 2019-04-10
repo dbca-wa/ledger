@@ -1,0 +1,13 @@
+{%  extends 'wildlifecompliance/emails/base_email.html' %}
+
+{% block content %}
+    <p>An update to your organisation identification has been requested.</p>
+    <p>This request is associated with the following application:</p>
+    <p><strong>Application : {{ application.id }}</strong></p>
+    <p>Please log in and update your organisation's identification via Manage Organisation.</p>
+    <p><strong>Link: <a href="{{url}}">{{url}}</a></strong></p>
+    <p>Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.</p>
+{% endblock %}
+
+
+
