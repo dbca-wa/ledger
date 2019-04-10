@@ -1,9 +1,9 @@
-<template id="qaofficers_dashboard">
+<template id="proposal_dashboard">
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Proposals referred for QA
+                    <h3 class="panel-title">Proposals referred to me for QA
                         <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -14,7 +14,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Region</label>
-                                <select style="width:100%" class="form-control" multiple ref="filterRegion" >
+                                <select style="width:100%" class="form-control input-sm" multiple ref="filterRegion" >
                                     <option v-for="r in proposal_regions" :value="r">{{r}}</option>
                                 </select>
                             </div>
@@ -36,6 +36,9 @@
                                     <option v-for="s in proposal_status" :value="s.value">{{s.name}}</option>
                                 </select>
                             </div>
+                        </div>
+                        <div v-if="is_external" class="col-md-3">
+                            <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_proposal' }">New Proposal</router-link>
                         </div>
                     </div>
                     <div class="row">
@@ -78,7 +81,12 @@
     </div>
 </template>
 <script>
+import "babel-polyfill"
 import datatable from '@/utils/vue/datatable.vue'
+import Vue from 'vue'
+require("select2/dist/css/select2.min.css");
+require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
+//require("babel-polyfill"); /* only one of 'import' or 'require' is necessary */
 import {
     api_endpoints,
     helpers
@@ -86,17 +94,26 @@ import {
 export default {
     name: 'ProposalTableDash',
     props: {
+        level:{
+            type: String,
+            required: true,
+            validator:function(val) {
+                let options = ['internal','referral','external'];
+                return options.indexOf(val) != -1 ? true: false;
+            }
+        },
         url:{
             type: String,
             required: true
         },
     },
-
     data() {
         let vm = this;
         return {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'proposal-datatable-'+vm._uid,
+            //Profile to check if user has access to process Proposal
+            profile: {},
             // Filters for Proposals
             filterProposalRegion: [],
             filterProposalActivity: 'All',
@@ -112,14 +129,28 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            proposal_status:[],
+            internal_status:[
+                {value: 'draft', name: 'Draft'},
+                {value: 'with_assessor', name: 'With Assessor'},
+                {value: 'on_hold', name: 'On Hold'},
+                {value: 'with_qa_officer', name: 'With QA Officer'},
+                {value: 'with_referral', name: 'With Referral'},
+                {value: 'with_assessor_requirements', name: 'With Assessor (Requirements)'},
+                {value: 'with_approver', name: 'With Approver'},
+                {value: 'approved', name: 'Approved'},
+                {value: 'declined', name: 'Declined'},
+                {value: 'discarded', name: 'Discarded'},
+            ],
             proposal_activityTitles : [],
             proposal_regions: [],
             proposal_submitters: [],
-            proposal_headers:["Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"],
+            proposal_status: [],
+            proposal_headers:[
+                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
+                //"LodgementNo","CustomerStatus","AssessorProcess","CanUserEdit","CanUserView",
+            ],
             proposal_options:{
-                customProposalSearch: true,
-                tableID: 'proposal-datatable-'+vm._uid,
+                autoWidth: false,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
@@ -127,50 +158,43 @@ export default {
                 serverSide: true,
                 lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
-                    //"url": helpers.add_endpoint_json(api_endpoints.referrals,'user_list'),
-                    //"url": api_endpoints.list_referrals,
                     "url": vm.url,
                     "dataSrc": 'data',
 
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
                         d.regions = vm.filterProposalRegion.join();
-                        //d.processing_status = vm.filterProposalStatus;
                         d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
         		    }
-
                 },
+                dom: 'lBfrtip',
+                buttons:[
+                'excel', 'csv', ],
                 columns: [
                     {
-                        data: "proposal",
+                        data: "id",
                         mRender:function(data,type,full){
-                            let tick='';
-                            if (full.can_be_processed){
-                                // tick = "<span class='fa-stack'><i class='fa fa-circle fa-stack-1x' style='color:yellow'></i><i class='fa fa-exclamation fa-stack-1x' style=''></i></span>";
-                                tick = "<i class='fa fa-exclamation-circle' style='color:#FFBF00'></i>";
-                            }
-                            else
-                            {
-                                tick = "<i class='fa fa-check-circle' style='color:green'></i>";
-                            }
-                            return full.proposal_lodgement_number+tick;
+                            return full.lodgement_number;
                         },
-                        name: "proposal__id, proposal__lodgement_number",
+                        //name: "lodgement_number",
+                        data: "id, lodgement_number"
                     },
                     {
                         data: "region",
+                        'render': function (value) {
+                            return helpers.dtPopover(value);
+                        },
+                        'createdCell': helpers.dtPopoverCellFn,
                         searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
-
                     },
-                    {
-                        data: "activity",
-                        name: "proposal__activity",
-                        //searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
-                    },
+                    {data: "activity"},
                     {
                         data: "title",
-                        name: "proposal__title",
+                        'render': function (value) {
+                            return helpers.dtPopover(value);
+                        },
+                        'createdCell': helpers.dtPopoverCellFn
                     },
                     {
                         data: "submitter",
@@ -180,37 +204,60 @@ export default {
                             }
                             return ''
                         },
-                        name: "proposal__submitter__email",
+                        name: "submitter__email",
                     },
                     {
                         data: "applicant",
-                        name: "proposal__applicant__organisation__name",
+                        name: "applicant__organisation__name",
                     },
                     {
                         data: "processing_status",
-                        name: "proposal__processing_status",
+                        //mRender:function(data,type,full){
+                        //    return vm.level == 'external' ? full.customer_status: data;
+                        //},
+                        name: "processing_status",
                     },
                     {
-                        data: "proposal_lodgement_date",
+                        data: "lodgement_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
+                            //return data != '' && data != null ? moment(data): '';
                         },
-                        name: "proposal__lodgement_date",
+                        //name: "assigned_officer__first_name, assigned_officer__last_name",
+                        searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
+                    },
+                    {
+                        data: "assigned_officer",
+                        name: "assigned_officer__first_name, assigned_officer__last_name",
                     },
                     {
                         data: '',
                         mRender:function (data,type,full) {
                             let links = '';
-                            links +=  full.can_be_processed ? `<a href='/internal/proposal/${full.proposal}/referral/${full.id}'>Process</a><br/>`: `<a href='/internal/proposal/${full.proposal}/referral/${full.id}'>View</a><br/>`;
+                            if (!vm.is_external){
+                                /*if(vm.check_assessor(full) && full.can_officer_process)*/
+                                if(full.assessor_process){   
+                                        links +=  `<a href='/internal/proposal/${full.id}'>Process</a><br/>`;    
+                            }
+                                else{
+                                    links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
+                                }
+                            }
+                            else{
+                                if (full.can_user_edit) {
+                                    links +=  `<a href='/external/proposal/${full.id}'>Continue</a><br/>`;
+                                    links +=  `<a href='#${full.id}' data-discard-proposal='${full.id}'>Discard</a><br/>`;
+                                }
+                                else if (full.can_user_view) {
+                                    links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
+                                }
+                            }
                             return links;
                         },
+                        name: '',
                         searchable: false,
-                        orderable: false,
-                        name: ''
-                    },
-                    {data: "can_be_processed", visible: false},
-                    {data: "proposal_lodgement_number", visible: false},
-                    {data: "id", visible: false},
+                        orderable: false
+                    }
 
                 ],
                 processing: true,
@@ -262,6 +309,9 @@ export default {
                         })
                         vm.proposal_status = statusTitles;
                     });
+
+                    // Fix the table rendering columns
+                    vm.$refs.proposal_datatable.vmDataTable.columns.adjust().responsive.recalc();
                 }
                 */
             }
@@ -271,12 +321,26 @@ export default {
         datatable
     },
     watch:{
+        filterProposalRegion: function(){
+            this.$refs.proposal_datatable.vmDataTable.draw();
+            //let vm = this;
+            //vm.$refs.proposal_datatable.vmDataTable.columns(1).search(vm.filterProposalRegion.join()).draw();
+        },
         filterProposalActivity: function() {
             let vm = this;
             if (vm.filterProposalActivity!= 'All') {
                 vm.$refs.proposal_datatable.vmDataTable.columns(2).search(vm.filterProposalActivity).draw();
             } else {
                 vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
+            }
+        },
+        filterProposalSubmitter: function(){
+            //this.$refs.proposal_datatable.vmDataTable.draw();
+            let vm = this;
+            if (vm.filterProposalSubmitter!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalSubmitter).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
             }
         },
         filterProposalStatus: function() {
@@ -287,21 +351,6 @@ export default {
                 vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
             }
         },
-
-        filterProposalRegion: function(){
-            this.$refs.proposal_datatable.vmDataTable.draw();
-        },
-        filterProposalSubmitter: function(){
-            //this.$refs.proposal_datatable.vmDataTable.draw();
-            let vm = this;
-            if (vm.filterProposalSubmitter!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalSubmitter).draw();
-            } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
-            }
-
-
-        },
         filterProposalLodgedFrom: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
         },
@@ -310,23 +359,57 @@ export default {
         }
     },
     computed: {
+        is_external: function(){
+            return this.level == 'external';
+        },
+        is_referral: function(){
+            return this.level == 'referral';
+        },
+        
     },
     methods:{
         fetchFilterLists: function(){
             let vm = this;
 
-            vm.$http.get(api_endpoints.filter_list_referrals).then((response) => {
+            //vm.$http.get('/api/list_proposal/filter_list/').then((response) => {
+            vm.$http.get(api_endpoints.filter_list).then((response) => {
                 vm.proposal_regions = response.body.regions;
                 //vm.proposal_districts = response.body.districts;
                 vm.proposal_activityTitles = response.body.activities;
                 vm.proposal_submitters = response.body.submitters;
-                vm.proposal_status = response.body.processing_status_choices;
+                //vm.proposal_status = vm.level == 'internal' ? response.body.processing_status_choices: response.body.customer_status_choices;
+                vm.proposal_status = vm.level == 'internal' ? vm.internal_status: vm.external_status;
             },(error) => {
                 console.log(error);
             })
             //console.log(vm.regions);
         },
 
+        discardProposal:function (proposal_id) {
+            let vm = this;
+            swal({
+                title: "Discard Proposal",
+                text: "Are you sure you want to discard this proposal?",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonText: 'Discard Proposal',
+                confirmButtonColor:'#d9534f'
+            }).then(() => {
+                vm.$http.delete(api_endpoints.discard_proposal(proposal_id))
+                .then((response) => {
+                    swal(
+                        'Discarded',
+                        'Your proposal has been discarded',
+                        'success'
+                    )
+                    vm.$refs.proposal_datatable.vmDataTable.ajax.reload();
+                }, (error) => {
+                    console.log(error);
+                });
+            },(error) => {
+
+            });
+        },
         addEventListeners: function(){
             let vm = this;
             // Initialise Proposal Date Filters
@@ -443,11 +526,50 @@ export default {
                     }
                 }
             );
-        }
+        },
+
+
+        fetchProfile: function(){
+            let vm = this;
+            Vue.http.get(api_endpoints.profile).then((response) => {
+                vm.profile = response.body
+                              
+            },(error) => {
+                console.log(error);
+                
+            })
+        },
+
+        check_assessor: function(proposal){
+            let vm = this;
+            if (proposal.assigned_officer)
+                {
+                    { if(proposal.assigned_officer== vm.profile.full_name)
+                        return true;
+                    else
+                        return false;
+                }
+            }
+            else{
+                 var assessor = proposal.allowed_assessors.filter(function(elem){
+                    return(elem.id=vm.profile.id)
+                });
+                
+                if (assessor.length > 0)
+                    return true;
+                else
+                    return false;
+              
+            }
+            
+        },
     },
+
+
     mounted: function(){
+        this.fetchFilterLists();
+        this.fetchProfile();
         let vm = this;
-        vm.fetchFilterLists();
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];
             window.setTimeout( function () {
@@ -455,11 +577,14 @@ export default {
             }, 100 );
         });
         this.$nextTick(() => {
-            vm.addEventListeners();
             vm.initialiseSearch();
+            vm.addEventListeners();
         });
     }
 }
 </script>
 <style scoped>
+.dt-buttons{
+    float: right;
+}
 </style>

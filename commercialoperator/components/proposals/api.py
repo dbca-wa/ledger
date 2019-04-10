@@ -39,6 +39,8 @@ from commercialoperator.components.proposals.models import (
     ProposalDocument,
     Referral,
     ReferralRecipientGroup,
+    QAOfficerGroup,
+    QAOfficerReferral,
     ProposalRequirement,
     ProposalStandardRequirement,
     AmendmentRequest,
@@ -58,6 +60,7 @@ from commercialoperator.components.proposals.serializers import (
     ProposalLogEntrySerializer,
     DTReferralSerializer,
     ReferralSerializer,
+    QAOfficerReferralSerializer,
     ReferralProposalSerializer,
     ProposalRequirementSerializer,
     ProposalStandardRequirementSerializer,
@@ -279,22 +282,56 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         return self.paginator.get_paginated_response(serializer.data)
 
     @list_route(methods=['GET',])
-    def qaofficer_internal(self, request, *args, **kwargs):
+    def _qaofficer_internal(self, request, *args, **kwargs):
         """
         Used by the internal dashboard
 
-        http://localhost:8499/api/proposal_paginated/referrals_internal/?format=datatables&draw=1&length=2
+        http://localhost:8499/api/proposal_paginated/qaofficer_internal/?format=datatables&draw=1&length=2
         """
+        qa_officers = QAOfficerGroup.objects.get(default=True).members.all().values_list('email', flat=True)
+        if request.user.email not in qa_officers:
+            return self.paginator.get_paginated_response([])
+
         #import ipdb; ipdb.set_trace()
-        self.serializer_class = ReferralSerializer
-        #qs = Referral.objects.filter(referral=request.user) if is_internal(self.request) else Referral.objects.none()
-        qs = Referral.objects.filter(referral_group__in=request.user.referralrecipientgroup_set.all()) if is_internal(self.request) else Referral.objects.none()
+        self.serializer_class = QAOfficerReferralSerializer
+        #qs = Referral.objects.filter(referral_group__in=request.user.referralrecipientgroup_set.all()) if is_internal(self.request) else Referral.objects.none()
+        #qs = Proposal.objects.filter(qaofficer_referrals__isnull=False).filter(qaofficer_referrals__gt=0) if is_internal(self.request) else QAOfficerReferral.objects.none()
+        qs = Proposal.objects.filter(qaofficer_referrals__gt=0) if is_internal(self.request) else QAOfficerReferral.objects.none()
+
         #qs = self.filter_queryset(self.request, qs, self)
         qs = self.filter_queryset(qs)
 
         self.paginator.page_size = qs.count()
         result_page = self.paginator.paginate_queryset(qs, request)
-        serializer = DTReferralSerializer(result_page, context={'request':request}, many=True)
+        #serializer = DTReferralSerializer(result_page, context={'request':request}, many=True)
+        serializer = DTProposalSerializer(result_page, context={'request':request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
+
+    @list_route(methods=['GET',])
+    def qaofficer_internal(self, request, *args, **kwargs):
+        """
+        Used by the internal dashboard
+
+        http://localhost:8499/api/proposal_paginated/qaofficer_internal/?format=datatables&draw=1&length=2
+        """
+        #import ipdb; ipdb.set_trace()
+        qa_officers = QAOfficerGroup.objects.get(default=True).members.all().values_list('email', flat=True)
+        if request.user.email not in qa_officers:
+            return self.paginator.get_paginated_response([])
+
+        qs = self.get_queryset()
+        qs = qs.filter(qaofficer_referrals__gt=0)
+        #qs = self.filter_queryset(self.request, qs, self)
+        qs = self.filter_queryset(qs)
+
+        # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation
+        applicant_id = request.GET.get('org_id')
+        if applicant_id:
+            qs = qs.filter(applicant_id=applicant_id)
+
+        self.paginator.page_size = qs.count()
+        result_page = self.paginator.paginate_queryset(qs, request)
+        serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
         return self.paginator.get_paginated_response(serializer.data)
 
 

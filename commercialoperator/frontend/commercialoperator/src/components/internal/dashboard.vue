@@ -2,6 +2,7 @@
 <div class="container" id="internalDash">
     <ProposalDashTable level="internal" :url="proposals_url"/>
     <ReferralDashTable :url="referrals_url"/>
+    <QAOfficerDashTable level="internal" :url="qaofficer_url"/>
 </div>
 </template>
 <script>

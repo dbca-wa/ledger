@@ -106,10 +106,10 @@ class QAOfficerReferralSerializer(serializers.ModelSerializer):
         return obj.get_processing_status_display()
 
     def get_sent_by(self,obj):
-        return obj.sent_by.get_full_name()
+        return obj.sent_by.get_full_name() if obj.sent_by else ''
 
     def get_qaofficer(self,obj):
-        return obj.qaofficer.get_full_name()
+        return obj.qaofficer.get_full_name() if obj.qaofficer else ''
 
 
 class BaseProposalSerializer(serializers.ModelSerializer):
@@ -241,6 +241,7 @@ class ListProposalSerializer(BaseProposalSerializer):
 
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
     assessor_process = serializers.SerializerMethodField(read_only=True)
+    qaofficer_referrals = QAOfficerReferralSerializer(many=True)
 
     class Meta:
         model = Proposal
@@ -273,7 +274,9 @@ class ListProposalSerializer(BaseProposalSerializer):
                 'can_officer_process',
                 'assessor_process',
                 'allowed_assessors',
-                'proposal_type'
+                'proposal_type',
+                'qaofficer_referrals',
+                'is_qa_officer'
                 )
         # the serverSide functionality of datatables is such that only columns that have field 'data' defined are requested from the serializer. We
         # also require the following additional fields for some of the mRender functions
@@ -325,6 +328,10 @@ class ListProposalSerializer(BaseProposalSerializer):
             elif user in obj.allowed_assessors:
                 return True
         return False
+
+    def get_is_qa_officer(self,obj):
+        request = self.context['request']
+        return request.user.email in obj.qa_officers()
 
 
 class ProposalSerializer(BaseProposalSerializer):
