@@ -517,8 +517,18 @@ class OrganisationViewSet(viewsets.ModelViewSet):
                     OrganisationAction.ACTION_ID_UPDATE.format(
                         '{} ({})'.format(
                             instance.name, instance.abn)), request)
+            # For any of the submitter's applications that have requested ID update,
+            # email the assigned officer
+            applications = instance.org_applications.filter(
+                org_applicant=instance,
+                id_check_status=Application.ID_CHECK_STATUS_AWAITING_UPDATE,
+                proxy_applicant=None
+            ).exclude(customer_status__in=(
+                Application.CUSTOMER_STATUS_ACCEPTED,
+                Application.CUSTOMER_STATUS_DECLINED)
+            ).order_by('id')
             Organisation.send_organisation_id_upload_email_notification(
-                instance, request)
+                instance, applications, request)
             serializer = OrganisationSerializer(instance, partial=True)
             return Response(serializer.data)
         except serializers.ValidationError:

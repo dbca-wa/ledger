@@ -3,7 +3,7 @@
   <div class="container" id="externalReturnQuestion">
     <div class="row">
       <div class="col-md-3">
-        <h3>Question Return: {{ returns.id }}</h3>
+        <h3>Return: {{ returns.id }}</h3>
       </div>
       <!-- div class="col-md-1" div -->
       <div class="col-md-8">
@@ -25,22 +25,14 @@
                     </h3>
                   </div>
                   <div class="panel-body panel-collapse in" :id="pdBody">
-                    <div class="col-sm-12">
+                    <div class="col-sm-16">
                       <div>
                         <div v-for="(item,index) in returns.table">
-                          <tr v-for="question in item.headers">
-                            <div v-for="(answer,key) in item.data">
-                              <td style="width:85%;">
-                              <strong>{{ question.title }}</strong>
-                              </td>
-                              <td>
-                              <input v-if="question.type != 'date'" v-model="answer.value">
-                              <div v-if="question.type == 'date'" class="input-group date" ref="answerDatePicker">
-                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="answer.value">
-                                <span class="input-group-addon">
-                                    <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
-                              </div>
+                          <tr v-for="(question,key) in item.headers">
+                            <div v-for="answer in item.data">
+                              <td style="width:85%;"><strong>{{ question.title }}</strong>
+                                 <renderer-block :component="question" :json_data="answer.value"
+                                  v-bind:key="`q_${key}`" />
                               </td>
                             </div>
                           </tr>
@@ -89,6 +81,7 @@ export default {
   data() {
     let vm = this;
     return {
+        pdBody: 'pdBody' + vm._uid,
         returns: {
             table: [{
                 data: null
@@ -147,7 +140,6 @@ export default {
     }
   },
   beforeRouteEnter: function(to, from, next) {
-    console.log('BEFORE-ROUTE func()')
      Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
         next(vm => {
            vm.returns = res.body;

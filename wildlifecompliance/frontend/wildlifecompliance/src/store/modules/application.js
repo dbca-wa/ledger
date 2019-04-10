@@ -66,7 +66,7 @@ export const applicationStore = {
                 exclude_processing_statuses: exclude_processing_statuses,
                 for_user_role: for_user_role,
                 licence_activity_id_key: 'licence_activity'
-            });
+            }).length;
         },
         licenceActivities: (state, getters) => (activity_status, for_user_role) => {
             return getters.filterActivityList({
