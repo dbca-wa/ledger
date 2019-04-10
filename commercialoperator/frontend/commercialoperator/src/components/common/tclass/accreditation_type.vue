@@ -1,8 +1,6 @@
 <template lang="html" :id="id">
 <div>
-    <label>I am here</label>
-    <label>I am here too</label>
-    <div>
+    <div class="row">
                 <fieldset class="scheduler-border">
                     <legend class="scheduler-border">{{accreditation.accreditation_type}}</legend>
                     <div class="form-group">
@@ -24,7 +22,7 @@
                                 <label class="control-label pull-left"  for="Name">Accreditation certificates</label>
                             </div>
                             <div class="col-sm-9">
-                                <FileField :proposal_id="proposal_id" isRepeatable="false" name="accreditation_certificate" :id="'accreditation'+accreditation_type+proposal_id"></FileField>
+                                <FileField :proposal_id="proposal_id" isRepeatable="false" name="'accreditation'+accreditation_type+proposal_id" :id="'accreditation'+accreditation_type+proposal_id"></FileField>
                             </div>
                         </div>
                     </div>
@@ -72,159 +70,29 @@ export default {
         }
     },
 
-    //computed: {
-    //    csrf_token: function() {
-    //        return helpers.getCookie('csrftoken')
-    //    }
-    //},
-
     computed: {
         
     },
 
     methods:{
-        
-
-        toggleComment(){
-            this.showingComment = ! this.showingComment;
-        },
-        handleChange:function (e) {
-            let vm = this;
-            console.log(e.target.name)
-            vm.show_spinner = true;
-            if (vm.isRepeatable) {
-                let  el = $(e.target).attr('data-que');
-                let avail = $('input[name='+e.target.name+']');
-
-                avail = [...avail.map(id => {
-                    return $(avail[id]).attr('data-que');
-                })];
-                avail.pop();
-                console.log('el', el, 'avail',avail.indexOf(el))
-                if (vm.repeat == 1) {
-                    vm.repeat+=1;
-                }else {
-                    if (avail.indexOf(el) < 0 ){
-                        vm.repeat+=1;
+        eventListeners:function (){
+            let vm=this;
+                $(vm.$refs.accreditation_expiry).datetimepicker(vm.datepickerOptions);
+                $(vm.$refs.accreditation_expiry).on('dp.change', function(e){
+                    if ($(vm.$refs.accreditation_expiry).data('DateTimePicker').date()) {
+                        vm.accreditation.accreditation_expiry =  e.date.format('DD/MM/YYYY');
                     }
-                }
-                $(e.target).css({ 'display': 'none'});
-                $(e.target.parentElement).css({ 'display': 'none'});//to hide <span> element btn-link
-
-            } else {
-                vm.files = [];
-            }
-            vm.files.push(e.target.files[0]);
-
-            if (e.target.files.length > 0) {
-                //vm.upload_file(e)
-                vm.save_document(e);
-            }
-
-            vm.show_spinner = false;
+                    else if ($(vm.$refs.accreditation_expiry).data('date') === "") {
+                        vm.accreditation.accreditation_expiry = "";
+                    }
+                 });
         },
-
-        /*
-        upload_file: function(e) {
-            let vm = this;
-            $("[id=save_and_continue_btn][value='Save Without Confirmation']").trigger( "click" );
-        },
-		*/
-
-        get_documents: function() {
-            let vm = this;
-
-            var formData = new FormData();
-            formData.append('action', 'list');
-            formData.append('input_name', vm.name);
-            formData.append('required_doc_id', vm.required_doc_id);
-            //formData.append('csrfmiddlewaretoken', vm.csrf_token);
-            vm.$http.post(vm.proposal_document_action, formData)
-                .then(res=>{
-                    vm.documents = res.body;
-                    //console.log(vm.documents);
-                    vm.show_spinner = false;
-                });
-
-        },
-
-        delete_document: function(file) {
-            let vm = this;
-            vm.show_spinner = true;
-
-            var formData = new FormData();
-            formData.append('action', 'delete');
-            formData.append('document_id', file.id);
-            formData.append('required_doc_id', vm.required_doc_id);
-            //formData.append('csrfmiddlewaretoken', vm.csrf_token);
-
-            vm.$http.post(vm.proposal_document_action, formData)
-                .then(res=>{
-                    vm.documents = vm.get_documents()
-                    //vm.documents = res.body;
-                    vm.show_spinner = false;
-                });
-
-        },
-        
-        uploadFile(e){
-            let vm = this;
-            let _file = null;
-
-            if (e.target.files && e.target.files[0]) {
-                var reader = new FileReader();
-                reader.readAsDataURL(e.target.files[0]); 
-                reader.onload = function(e) {
-                    _file = e.target.result;
-                };
-                _file = e.target.files[0];
-            }
-            return _file
-        },
-
-        save_document: function(e) {
-            let vm = this; 
-
-            var formData = new FormData();
-            formData.append('action', 'save');
-            formData.append('proposal_id', vm.proposal_id);
-            formData.append('input_name', vm.name);
-            formData.append('filename', e.target.files[0].name);
-            formData.append('_file', vm.uploadFile(e));
-            formData.append('required_doc_id', vm.required_doc_id);
-            //formData.append('csrfmiddlewaretoken', vm.csrf_token);
-
-            vm.$http.post(vm.proposal_document_action, formData)
-                .then(res=>{
-                    vm.documents = res.body;
-                },err=>{
-                });
-
-        },
-
-        num_documents: function() {
-            let vm = this;
-            if (vm.documents) {
-                return vm.documents.length;
-            }
-            return 0;
-        },
-
     },
     mounted:function () {
         let vm = this;
-        // vm.documents = vm.get_documents();
-        // if (vm.value) {
-        //     //vm.files = (Array.isArray(vm.value))? vm.value : [vm.value];
-        //     if (Array.isArray(vm.value)) {
-        //         vm.value;
-        //     } else {
-        //         var file_names = vm.value.replace(/ /g,'_').split(",")
-        //         vm.files = file_names.map(function( file_name ) { 
-        //               return {name: file_name}; 
-        //         });
-        //     }
-        // }
+        this.$nextTick(()=>{
+                vm.eventListeners();
+            });
     }
 }
 

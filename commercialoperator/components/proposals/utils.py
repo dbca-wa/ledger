@@ -3,7 +3,7 @@ from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrail, ProposalTrailSectionActivity, ProposalTrailSection, ProposalParkZone, ProposalParkZoneActivity, ProposalOtherDetails
-from commercialoperator.components.proposals.serializers import SaveProposalSerializer, SaveProposalParkSerializer, SaveProposalTrailSerializer
+from commercialoperator.components.proposals.serializers import SaveProposalSerializer, SaveProposalParkSerializer, SaveProposalTrailSerializer, ProposalAccreditationSerializer
 from commercialoperator.components.main.models import Activity, Park, AccessType, Trail, Section, Zone
 import traceback
 import os
@@ -633,17 +633,18 @@ def save_proponent_data(instance,request,viewset,other_details_data, select_park
 #                'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
 #            }
             data = {
-            'other_details': other_details_data
             }
 
-            #import ipdb; ipdb.set_trace()
-            # s=request.data.get('selected')
-            # print type(s)
             other_details=ProposalOtherDetails.objects.update_or_create(proposal=instance)
             # instance.save()
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
+            if 'accreditations' in other_details_data:
+                for acc in other_details_data['accreditations']:
+                    serializer=ProposalAccreditationSerializer(data=acc)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
             #import ipdb; ipdb.set_trace()
             if select_parks_activities:
                 try:

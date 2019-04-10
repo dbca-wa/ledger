@@ -15,13 +15,13 @@
                         <label class="control-label">Are you currently accredited?</label>
                         <ul class="list-inline"  >
                             <li v-for="c in accreditation_choices" class="form-check list-inline-item">
-                                <input  class="form-check-input" ref="Checkbox" type="checkbox" @click="selectAccreditation($event, c)" v-model="accreditation_type" :value="c" data-parsley-required />
+                                <input  class="form-check-input" ref="Checkbox" type="checkbox" @click="selectAccreditation($event, c)" v-model="selected_accreditations" :value="c.key" data-parsley-required />
                                         {{ c.value }}
                             </li>
                         </ul>
                         <div v-for=" accreditation in proposal.other_details.accreditations">
-                            <div class="col-sm-12">
-                            <Accreditation :accreditation="accreditation":proposal_id="proposal.id" id="accreditation"></Accreditation>
+                            <div v-if="!accreditation.is_deleted" class="col-sm-12">
+                                <Accreditation :accreditation="accreditation":proposal_id="proposal.id" id="accreditation"></Accreditation>
                             </div>
                             <!-- <fieldset class="scheduler-border">
                                 <legend class="scheduler-border">{{accreditation_type.value}}</legend>
@@ -324,6 +324,7 @@ export default {
                 values:null,
                 accreditation_choices:[],
                 accreditation_type:[],
+                selected_accreditations:[],
                 licence_period_choices:[],
                 datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -373,18 +374,55 @@ export default {
                     console.log(error);
                 } );
             },
+            checkProposalAccreditation: function(){
+                let vm= this;
+                if(vm.proposal && vm.proposal.other_details){
+                    for(var i=0; i<vm.proposal.other_details.accreditations.length; i++){
+                        vm.proposal.other_details.accreditations[i].is_deleted=false;
+                        vm.selected_accreditations.push(vm.proposal.other_details.accreditations[i].accreditation_type);
+                    }
+                }
+            },
             selectAccreditation: function(e, accreditation_type){
                 let vm=this;
                 console.log("I am here");
                 if(e.target.checked){
+                    var found=false;
+                    for(var i=0;i<vm.proposal.other_details.accreditations.length; i++){
+                        if(vm.proposal.other_details.accreditations[i].accreditation_type==accreditation_type.key){
+                            found=true;
+                            console.log(found);
+                            vm.proposal.other_details.accreditations[i].is_deleted=false;
+                        }
+                    }
+                    if(found==false){
                     var data={
                         'accreditation_type': accreditation_type.key,
-                        'accreditation_expiry':''
+                        'accreditation_expiry':'',
+                        'proposal_other_details': vm.proposal.other_details.id,
+                        'is_deleted': false,
                     }
                     var acc=helpers.copyObject(vm.proposal.other_details.accreditations);
                     acc.push(data);
                     vm.proposal.other_details.accreditations=acc;
-
+                    }
+                }
+                else{
+                    for(var i=0;i<vm.proposal.other_details.accreditations.length; i++)
+                    {
+                        if(vm.proposal.other_details.accreditations[i].accreditation_type==accreditation_type.key)
+                        {
+                            if(vm.proposal.other_details.accreditations[i].id){
+                                //console.log('yes')
+                                vm.proposal.other_details.accreditations[i].is_deleted=true;
+                            }
+                            else{
+                                var acc=helpers.copyObject(vm.proposal.other_details.accreditations);
+                                acc.splice(i,1);
+                                vm.proposal.other_details.accreditations=acc;
+                            }
+                        }
+                    }
                 }
             },
             eventListeners:function (){
@@ -446,6 +484,7 @@ export default {
             let vm = this;
             vm.fetchAccreditationChoices();
             vm.fetchLicencePeriodChoices();
+            vm.checkProposalAccreditation();
             this.$nextTick(()=>{
                 vm.eventListeners();
             });
