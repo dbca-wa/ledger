@@ -49,6 +49,7 @@ from wildlifecompliance.components.applications.serializers import (
     AssessmentSerializer,
     ActivityPermissionGroupSerializer,
     SaveAssessmentSerializer,
+    SimpleSaveAssessmentSerializer,
     AmendmentRequestSerializer,
     ApplicationProposedIssueSerializer,
     DTAssessmentSerializer,
@@ -233,13 +234,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             qs = instance.conditions.all()
             licence_activity = self.request.query_params.get(
                 'licence_activity', None)
-            print('activity from conditions api')
-            print(licence_activity)
             if licence_activity is not None:
-                print('inside if')
                 qs = qs.filter(licence_activity=licence_activity)
-            print(qs)
-
             serializer = ApplicationConditionSerializer(qs, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -538,10 +534,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def complete_assessment(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            selected_assessment_id = request.data.get(
-                'selected_assessment_tab')
-            print('from api')
-            print(selected_assessment_id)
             instance.complete_assessment(request)
             serializer = InternalApplicationSerializer(
                 instance, context={'request': request})
@@ -926,6 +918,21 @@ class AssessmentViewSet(viewsets.ModelViewSet):
         return Assessment.objects.none()
 
     @list_route(methods=['GET', ])
+    def get_latest_for_application_activity(self, request, *args, **kwargs):
+        application_id = request.query_params.get(
+            'application_id', None)
+        activity_id = request.query_params.get(
+            'activity_id', None)
+        latest_assessment = Assessment.objects.filter(
+            application_id=application_id,
+            licence_activity_id=activity_id
+        ).exclude(
+            status='recalled'
+        ).latest('id')
+        serializer = AssessmentSerializer(latest_assessment)
+        return Response(serializer.data)
+
+    @list_route(methods=['GET', ])
     def user_list(self, request, *args, **kwargs):
         # Get the assessor groups the current user is member of
         assessor_groups = request.user.get_wildlifelicence_permission_group('assessor', first=False)
@@ -942,7 +949,6 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
         try:
-            print(request.data)
             serializer = SaveAssessmentSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
@@ -1009,6 +1015,27 @@ class AssessmentViewSet(viewsets.ModelViewSet):
         except ValidationError as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['PUT', ])
+    def update_assessment(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = SimpleSaveAssessmentSerializer(instance, data=self.request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                print e
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
