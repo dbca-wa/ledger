@@ -1,0 +1,14 @@
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
+{% block content %}
+    An update to your account identification has been requested.
+
+    This request is associated with the following application:
+
+    Application : {{ application.id }}
+
+    Please log in and update your identification via Manage Account.
+
+    Link: <a href="{{url}}">{{url}}</a>
+
+    Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.
+{% endblock %}

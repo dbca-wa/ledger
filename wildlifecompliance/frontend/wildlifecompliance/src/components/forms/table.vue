@@ -71,7 +71,7 @@ import Comment from './comment.vue';
 import HelpText from './help_text.vue';
 import HelpTextUrl from './help_text_url.vue';
 import { mapGetters } from 'vuex';
-export default {
+const TableBlock = {
     props:{
         headers: String,  // Input received as String, later converted to JSON within data() below
         name: String,
@@ -231,6 +231,8 @@ export default {
 
     }
 }
+
+export default TableBlock;
 </script>
 
 <style scoped lang="css">
