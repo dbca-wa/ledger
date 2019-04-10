@@ -1193,7 +1193,6 @@ export default {
             let vm = this;
             let formData = new FormData(vm.form);
             vm.$http.post(vm.application_form_url,formData).then(res=>{
-
             },err=>{
             });
         },

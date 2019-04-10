@@ -46,6 +46,10 @@ def update_pdf_licence_filename(instance, filename):
     return 'applications/{}/wildlife_compliance_licence/{}'.format(instance.id, filename)
 
 
+def update_assessment_inspection_report_filename(instance, filename):
+    return 'assessments/{}/inspection_report/{}'.format(instance.id, filename)
+
+
 def replace_special_chars(input_str, new_char='_'):
     return re.sub('[^A-Za-z0-9]+', new_char, input_str).strip('_').lower()
 
@@ -1317,6 +1321,8 @@ class Assessment(ApplicationRequest):
         'wildlifecompliance.LicenceActivity', null=True)
     comment = models.TextField(blank=True)
     purpose = models.TextField(blank=True)
+    inspection_date = models.DateField(null=True, blank=True)
+    inspection_report = models.FileField(upload_to=update_assessment_inspection_report_filename, blank=True, null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
