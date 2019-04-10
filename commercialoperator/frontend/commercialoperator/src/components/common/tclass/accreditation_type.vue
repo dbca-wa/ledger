@@ -22,7 +22,7 @@
                                 <label class="control-label pull-left"  for="Name">Accreditation certificates</label>
                             </div>
                             <div class="col-sm-9">
-                                <FileField :proposal_id="proposal_id" isRepeatable="false" name="'accreditation'+accreditation_type+proposal_id" :id="'accreditation'+accreditation_type+proposal_id"></FileField>
+                                <FileField :proposal_id="proposal_id" isRepeatable="false" :name="'accreditation'+accreditation.accreditation_type+proposal_id" :id="'accreditation'+accreditation_type+proposal_id"></FileField>
                             </div>
                         </div>
                     </div>

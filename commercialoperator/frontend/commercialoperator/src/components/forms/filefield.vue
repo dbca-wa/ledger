@@ -130,7 +130,6 @@ export default {
                     return $(avail[id]).attr('data-que');
                 })];
                 avail.pop();
-                console.log('el', el, 'avail',avail.indexOf(el))
                 if (vm.repeat == 1) {
                     vm.repeat+=1;
                 }else {

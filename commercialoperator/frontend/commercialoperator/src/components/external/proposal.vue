@@ -124,7 +124,7 @@ export default {
       //console.log('marine activities', vm.proposal.marine_parks_activities);
       formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
 
-      //console.log(vm.proposal.selected_trails_activities);
+      console.log(vm.proposal.other_details.accreditations);
       vm.$http.post(vm.proposal_form_url,formData).then(res=>{
           swal(
             'Saved',

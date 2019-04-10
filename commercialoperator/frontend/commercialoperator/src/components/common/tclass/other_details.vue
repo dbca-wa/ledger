@@ -385,13 +385,11 @@ export default {
             },
             selectAccreditation: function(e, accreditation_type){
                 let vm=this;
-                console.log("I am here");
                 if(e.target.checked){
                     var found=false;
                     for(var i=0;i<vm.proposal.other_details.accreditations.length; i++){
                         if(vm.proposal.other_details.accreditations[i].accreditation_type==accreditation_type.key){
                             found=true;
-                            console.log(found);
                             vm.proposal.other_details.accreditations[i].is_deleted=false;
                         }
                     }
@@ -410,12 +408,14 @@ export default {
                 else{
                     for(var i=0;i<vm.proposal.other_details.accreditations.length; i++)
                     {
-                        
+
                         if(vm.proposal.other_details.accreditations[i].accreditation_type==accreditation_type.key)
                         {
                             if(vm.proposal.other_details.accreditations[i].id){
                                 //console.log('yes')
-                                vm.proposal.other_details.accreditations[i].is_deleted=true;
+                                var acc=helpers.copyObject(vm.proposal.other_details.accreditations);
+                                acc[i].is_deleted=true;
+                                vm.proposal.other_details.accreditations=acc;
                             }
                             else{
                                 var acc=helpers.copyObject(vm.proposal.other_details.accreditations);

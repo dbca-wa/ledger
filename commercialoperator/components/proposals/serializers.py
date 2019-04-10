@@ -188,8 +188,8 @@ class SaveProposalOtherDetailsSerializer(serializers.ModelSerializer):
         model = ProposalOtherDetails
         #fields = '__all__'
         fields=(
-                'accreditation_type',
-                'accreditation_expiry',
+                # 'accreditation_type',
+                # 'accreditation_expiry',
                 'preferred_licence_period',
                 'nominated_start_date',
                 'insurance_expiry',
