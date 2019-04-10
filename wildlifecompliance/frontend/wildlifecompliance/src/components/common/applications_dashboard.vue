@@ -55,7 +55,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Submitter</label>
-                                <select class="form-control" v-model="filterApplicationSubmitter">
+                                <select class="form-control" v-model="filterApplicationSubmitter" ref="submitter_select">
                                     <option value="All">All</option>
                                     <option v-for="s in application_submitters" :value="s.email" v-bind:key="`submitter_${s.email}`">{{s.search_term}}</option>
                                 </select>
@@ -470,47 +470,23 @@ export default {
                 var id = $(this).attr('data-pay-application-fee');
                 vm.payApplicationFee(id);
             });
-            // Initialise select2 for region
-            $(vm.$refs.filterRegion).select2({
+            // Initialise select2 for submitter
+            $(vm.$refs.submitter_select).select2({
                 "theme": "bootstrap",
-                allowClear: true,
-                placeholder:"Select Region"
+                placeholder:"Select Submitter"
             }).
             on("select2:select",function (e) {
                 var selected = $(e.currentTarget);
-                vm.filterApplicationRegion = selected.val();
+                vm.filterApplicationSubmitter = selected.val();
             }).
             on("select2:unselect",function (e) {
                 var selected = $(e.currentTarget);
-                vm.filterApplicationRegion = selected.val();
+                vm.filterApplicationSubmitter = selected.val();
             });
         },
         initialiseSearch:function(){
-            this.regionSearch();
             this.submitterSearch();
             this.dateSearch();
-        },
-        regionSearch:function(){
-            // let vm = this;
-            // vm.visibleDatatable.table.dataTableExt.afnFiltering.push(
-            //     function(settings,data,dataIndex,original){
-            //         let found = false;
-            //         let filtered_regions = vm.filterApplicationRegion;
-            //         if (filtered_regions.length == 0){ return true; } 
-
-            //         let regions = original.region != '' && original.region != null ? original.region.split(','): [];
-
-            //         $.each(regions,(i,r) => {
-            //             if (filtered_regions.indexOf(r) != -1){
-            //                 found = true;
-            //                 return false;
-            //             }
-            //         });
-            //         if  (found) { return true; }
-
-            //         return false;
-            //     }
-            // );
         },
         submitterSearch:function(){
             let vm = this;
