@@ -15,12 +15,15 @@
                         <label class="control-label">Are you currently accredited?</label>
                         <ul class="list-inline"  >
                             <li v-for="c in accreditation_choices" class="form-check list-inline-item">
-                                <input  class="form-check-input" ref="Checkbox" type="radio" v-model="accreditation_type" :value="c" data-parsley-required />
+                                <input  class="form-check-input" ref="Checkbox" type="checkbox" @click="selectAccreditation($event, c)" v-model="accreditation_type" :value="c" data-parsley-required />
                                         {{ c.value }}
                             </li>
                         </ul>
-                        <div v-if="proposal.other_details.accreditation_type">
-                            <fieldset class="scheduler-border">
+                        <div v-for=" accreditation in proposal.other_details.accreditations">
+                            <div class="col-sm-12">
+                            <Accreditation :accreditation="accreditation":proposal_id="proposal.id" id="accreditation"></Accreditation>
+                            </div>
+                            <!-- <fieldset class="scheduler-border">
                                 <legend class="scheduler-border">{{accreditation_type.value}}</legend>
                                 <div class="form-group">
                                     <div class="row">
@@ -45,7 +48,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </fieldset>
+                            </fieldset> -->
                         </div>
                     </div>
                 </div>
@@ -294,6 +297,7 @@
 <script>
 import Vue from 'vue' 
 //import FileField from './required_docs.vue'
+import Accreditation from './accreditation_type.vue'
 import FileField from '@/components/forms/filefield.vue'
 import {
   api_endpoints,
@@ -332,6 +336,7 @@ export default {
         },
         components: {
           FileField,
+          Accreditation
         },
         computed: {
             
@@ -367,6 +372,20 @@ export default {
                 },(error) => {
                     console.log(error);
                 } );
+            },
+            selectAccreditation: function(e, accreditation_type){
+                let vm=this;
+                console.log("I am here");
+                if(e.target.checked){
+                    var data={
+                        'accreditation_type': accreditation_type.key,
+                        'accreditation_expiry':''
+                    }
+                    var acc=helpers.copyObject(vm.proposal.other_details.accreditations);
+                    acc.push(data);
+                    vm.proposal.other_details.accreditations=acc;
+
+                }
             },
             eventListeners:function (){
                 let vm=this;
