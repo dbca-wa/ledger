@@ -18,7 +18,8 @@ from commercialoperator.components.proposals.models import (
                                     ProposalParkActivity,
                                     Vehicle,
                                     Vessel,
-                                    ProposalTrail
+                                    ProposalTrail,
+                                    QAOfficerReferral,
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
@@ -93,11 +94,31 @@ class SaveProposalTrailSerializer(serializers.ModelSerializer):
         model = ProposalTrail
         fields = '__all__'
 
+class QAOfficerReferralSerializer(serializers.ModelSerializer):
+    processing_status = serializers.SerializerMethodField(read_only=True)
+    sent_by = serializers.SerializerMethodField(read_only=True)
+    qaofficer = serializers.SerializerMethodField(read_only=True)
+    class Meta:
+        model = QAOfficerReferral
+        fields = '__all__'
+
+    def get_processing_status(self,obj):
+        return obj.get_processing_status_display()
+
+    def get_sent_by(self,obj):
+        return obj.sent_by.get_full_name()
+
+    def get_qaofficer(self,obj):
+        return obj.qaofficer.get_full_name()
+
+
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
     proposal_type = serializers.SerializerMethodField()
     allowed_assessors = EmailUserSerializer(many=True)
+    #qaofficer_referral = QAOfficerReferralSerializer(required=False)
+    qaofficer_referrals = QAOfficerReferralSerializer(many=True)
 
     applicant_details = ProposalApplicantDetailsSerializer(required=False)
     activities_land = ProposalActivitiesLandSerializer(required=False)
@@ -154,7 +175,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'allowed_assessors',
                 'proposal_type',
                 'is_qa_officer',
-                'qaofficer_referral',
+                'qaofficer_referrals',
 
                 # tab field models
                 'applicant_details',
@@ -421,6 +442,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     region = serializers.CharField(source='region.name', read_only=True)
     district = serializers.CharField(source='district.name', read_only=True)
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
+    qaofficer_referrals = QAOfficerReferralSerializer(many=True)
 
     class Meta:
         model = Proposal
@@ -469,7 +491,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'lodgement_number',
                 'lodgement_sequence',
                 'can_officer_process',
-                'proposal_type'
+                'proposal_type',
+                'qaofficer_referrals'
                 )
         read_only_fields=('documents','requirements')
 

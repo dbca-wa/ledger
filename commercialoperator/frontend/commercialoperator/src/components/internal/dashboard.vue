@@ -31,7 +31,7 @@ export default {
     watch: {},
     components: {
         ProposalDashTable,
-        ReferralDashTable
+        ReferralDashTable,
         QAOfficerDashTable
     },
     computed: {

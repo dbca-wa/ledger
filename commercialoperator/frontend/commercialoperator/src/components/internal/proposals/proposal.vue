@@ -196,7 +196,34 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-sm-12">
+                                        <!--
+                                        <div v-if="isQAOfficerAssessmentCompleted" class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="true" @click.prevent="withQAOfficer()">Completed: {{QAOfficerAssessmentCompletedBy}}</button>
+                                        </div>
+                                        -->
+
+                                        <div v-if="isQAOfficerAssessmentCompleted" class="col-sm-12">
+                                            <div class="col-sm-12">
+                                                <div class="separator"></div>
+                                            </div>
+                                            <table class="table small-table">
+                                                <tr>
+                                                    <th>QA Officer Referral</th>
+                                                    <th>Status/Action</th>
+                                                </tr>
+                                                <tr v-for="r in proposal.qaofficer_referrals">
+                                                    <td>
+                                                        <small><strong>{{r.lodged_on | formatDate}}</strong></small>
+                                                    </td>
+                                                    <td>
+                                                        <small><strong>{{r.processing_status}}</strong></small><br/>
+                                                        <small><strong>{{r.qaofficer}}</strong></small><br/>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
+
+                                        <div v-else>
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="withQAOfficer()">Send to QA Officer</button>
                                         </div>
                                     </div>
@@ -590,6 +617,12 @@ export default {
         },
         isApprovalLevelDocument: function(){
             return this.proposal && this.proposal.processing_status == 'With Approver' && this.proposal.approval_level != null && this.proposal.approval_level_document == null ? true : false;
+        },
+        isQAOfficerAssessmentCompleted: function(){
+            return this.proposal && this.proposal.qaofficer_referrals && this.proposal.qaofficer_referrals[0].processing_status == 'Completed' ? true : false;
+        },
+        QAOfficerAssessmentCompletedBy: function(){
+            return this.isQAOfficerAssessmentCompleted ? this.proposal.qaofficer_referrals[0].qaofficer : '';
         },
     },
     methods: {

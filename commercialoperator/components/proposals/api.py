@@ -1093,11 +1093,9 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 is_with_qaofficer =  eval(request.data.get('with_qaofficer'))
                 data = {}
                 if is_with_qaofficer:
-                    #data['type'] = u'onhold'
                     data['type'] = u'with_qaofficer'
                     instance.with_qaofficer(request)
                 else:
-                    #data['type'] = u'onhold_remove'
                     data['type'] = u'with_qaofficer_completed'
                     instance.with_qaofficer_completed(request)
 
@@ -1130,7 +1128,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-
 
     @detail_route(methods=['post'])
     def assesor_send_referral(self, request, *args, **kwargs):

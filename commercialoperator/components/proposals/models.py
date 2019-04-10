@@ -396,7 +396,8 @@ class Proposal(RevisionedMixin):
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
     proposed_decline_status = models.BooleanField(default=False)
-    qaofficer_referral = models.BooleanField(default=False)
+    #qaofficer_referral = models.BooleanField(default=False)
+    #qaofficer_referral = models.OneToOneField('QAOfficerReferral', blank=True, null=True)
     # Special Fields
     title = models.CharField(max_length=255,null=True,blank=True)
     activity = models.CharField(max_length=255,null=True,blank=True)
@@ -1035,7 +1036,16 @@ class Proposal(RevisionedMixin):
                 self.prev_processing_status = self.processing_status
                 self.processing_status = self.PROCESSING_STATUS_WITH_QA_OFFICER
                 self.qaofficer_referral = True
+                if self.qaofficer_referrals.exists():
+                    qaofficer_referral = self.qaofficer_referrals.first()
+                    qaofficer_referral.sent_by = request.user
+                    qaofficer_referral.processing_status = 'with_qaofficer'
+                else:
+                    qaofficer_referral = self.qaofficer_referrals.create(sent_by=request.user)
+
+                qaofficer_referral.save()
                 self.save()
+
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_WITH_QA_OFFICER.format(self.id),request)
                 # Log entry for organisation
@@ -1058,7 +1068,16 @@ class Proposal(RevisionedMixin):
 
                 self.processing_status = self.prev_processing_status
                 self.prev_processing_status = self.PROCESSING_STATUS_WITH_QA_OFFICER
+
+                qaofficer_referral = self.qaofficer_referrals.first()
+                qaofficer_referral.qaofficer = request.user
+                qaofficer_referral.qaofficer_group = QAOfficerGroup.objects.get(default=True)
+                qaofficer_referral.qaofficer_text = request.data['text']
+                qaofficer_referral.processing_status = 'completed'
+
+                qaofficer_referral.save()
                 self.save()
+
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_QA_OFFICER_COMPLETED.format(self.id),request)
                 # Log entry for organisation
