@@ -100,7 +100,7 @@ export default {
     data() {
         let vm = this;
         let internal_application_headers = [];
-        internal_application_headers = ["Number","Licence Category","Activity","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"];
+        internal_application_headers = ["Number","Category","Activity","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"];
         let internal_columns = [
             {
                 data: "lodgement_number",
@@ -110,9 +110,9 @@ export default {
             },
             {data: "category_name"},
             {
-                data: "activity_purpose_string",
+                data: "purpose_string",
                 mRender:function (data,type,full) {
-                    let output = data.replace(/(?:\r\n|\r|\n)/g, '<br>');
+                    let output = data.replace(/(?:\r\n|\r|\n|,)/g, '<br>');
                     return output;
                 }
             },
@@ -176,9 +176,9 @@ export default {
             },
             {data: "category_name"},
             {
-                data: "activity_purpose_string",
+                data: "purpose_string",
                 mRender:function (data,type,full) {
-                    let output = data.replace(/(?:\r\n|\r|\n)/g, '<br>');
+                    let output = data.replace(/(?:\r\n|\r|\n|,)/g, '<br>');
                     return output;
                 }
             },
@@ -250,7 +250,7 @@ export default {
             application_licence_types : [],
             application_submitters: [],
             application_status: [],
-            application_ex_headers:["Number","Licence Category","Activity","Submitter","Applicant","Status","Lodged on","Action"],
+            application_ex_headers:["Number","Category","Activity","Submitter","Applicant","Status","Lodged on","Action"],
             application_ex_options:{
                 order: [
                     [0, 'desc']
@@ -267,14 +267,14 @@ export default {
                 columns: external_columns,
                 processing: true,
                 initComplete: function () {
-                    // Grab Activity from the data in the table
-                    var titleColumn = vm.visibleDatatable.vmDataTable.columns(vm.getColumnIndex('licence category'));
+                    // Grab Category from the data in the table
+                    var titleColumn = vm.visibleDatatable.vmDataTable.columns(vm.getColumnIndex('category'));
                     titleColumn.data().unique().sort().each( function ( d, j ) {
-                        let activityTitles = [];
+                        let categoryTitles = [];
                         $.each(d,(index,a) => {
-                            a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
+                            a != null && categoryTitles.indexOf(a) < 0 ? categoryTitles.push(a): '';
                         })
-                        vm.application_licence_types = activityTitles;
+                        vm.application_licence_types = categoryTitles;
                     });
                     // Grab submitters from the data in the table
                     var submittersColumn = vm.visibleDatatable.vmDataTable.columns(vm.getColumnIndex('submitter'));
@@ -319,7 +319,7 @@ export default {
                 processing: true,
                 initComplete: function () {
                     // Grab Activity from the data in the table
-                    var titleColumn = vm.visibleDatatable.vmDataTable.columns(vm.getColumnIndex('licence category'));
+                    var titleColumn = vm.visibleDatatable.vmDataTable.columns(vm.getColumnIndex('category'));
                     titleColumn.data().unique().sort().each( function ( d, j ) {
                         let activityTitles = [];
                         $.each(d,(index,a) => {
@@ -373,7 +373,7 @@ export default {
             this.visibleDatatable.vmDataTable.draw();
         },
         filterApplicationLicenceType: function(){
-            this.filterByColumn('licence category', this.filterApplicationLicenceType);
+            this.filterByColumn('category', this.filterApplicationLicenceType);
         },
         
     },
