@@ -102,7 +102,7 @@ export default {
                 id: "",
                 comment: "",
                 inspection_date: "",
-                uploadedInspectionReport: null,
+                inspection_report: null,
             },
             form: null,
             datepickerInitialised: false,
