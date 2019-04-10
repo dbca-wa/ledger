@@ -1,6 +1,8 @@
 <template>
   <form method="POST" name="enter_return_question" enctype="multipart/form-data">
   <div class="container" id="externalReturnQuestion">
+
+    <Returns v-if="isReturnsLoaded">
     <div class="row">
       <div class="col-md-3">
         <h3>Return: {{ returns.id }}</h3>
@@ -30,10 +32,7 @@
                         <div v-for="(item,index) in returns.table">
                           <tr v-for="(question,key) in item.headers">
                             <div v-for="answer in item.data">
-                              <td style="width:85%;"><strong>{{ question.title }}</strong>
-                                 <renderer-block :component="question" :json_data="answer.value"
-                                  v-bind:key="`q_${key}`" />
-                              </td>
+                              <renderer-block :component="question" :json_data="answer.value" v-bind:key="`q_${key}`"/>
                             </div>
                           </tr>
                         </div>
@@ -63,11 +62,14 @@
         </div>
       </div>
     </div>
+    </Returns>
   </div>
   </form>
 </template>
 
 <script>
+import Returns from '../../returns_form.vue'
+import { mapActions, mapGetters } from 'vuex'
 import $ from 'jquery'
 import Vue from 'vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
@@ -82,11 +84,6 @@ export default {
     let vm = this;
     return {
         pdBody: 'pdBody' + vm._uid,
-        returns: {
-            table: [{
-                data: null
-            }],
-        },
         returnTab: 'returnTab'+vm._uid,
         form: null,
         returnBtn: 'Submit',
@@ -100,23 +97,23 @@ export default {
         },
         filterAnswerDatePicker: '',
     }
-    returns: null
+  },
+  components: {
+    Returns,
+  },
+  computed: {
+    ...mapGetters([
+        'isReturnsLoaded',
+        'returns',
+    ]),
   },
   methods: {
-    save: function(e) {
-      let vm = this;
-      vm.form=document.forms.enter_return
-      let data = new FormData(vm.form);
-    },
-    submit: function(e) {
-      let vm = this;
-      vm.form=document.forms.enter_return_question
-    },
-    init: function() {
-      // TODO: set return button for payment.
-      // returnBtn = return.requires_payment ? 'Pay and Submit' : 'Submit'
-
-    },
+    ...mapActions({
+      load: 'loadReturns',
+    }),
+    ...mapActions([
+        'setReturns',
+    ]),
     addEventListeners: function(){
       let vm = this;
       // Initialise Application Date Filters
@@ -132,30 +129,10 @@ export default {
       });
     },
   },
-  computed: {
-
-  },
-  watch:{
-    filterAnswerDatePicker: function() {
-    }
-  },
   beforeRouteEnter: function(to, from, next) {
-     Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
-        next(vm => {
-           vm.returns = res.body;
-        // TODO: set return button if requires payment.
-        // if (vm.returns.requires_pay)
-        //   returnBtn = 'Pay and Submit'
-        // }
-        });
-     }, err => {
-        console.log(err);
+     next(vm => {
+       vm.load({ url: `/api/returns/${to.params.return_id}.json` })
      });
-  },
-  mounted: function(){
-     let vm = this;
-     vm.form = document.forms.enter_return_question;
-     vm.addEventListeners();
   },
 }
 </script>

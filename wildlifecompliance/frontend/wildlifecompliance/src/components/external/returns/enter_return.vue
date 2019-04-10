@@ -1,6 +1,8 @@
 <template>
   <form method="POST" name="enter_return" enctype="multipart/form-data">
   <div class="container" id="externalReturn">
+
+    <Returns v-if="isReturnsLoaded">
     <div class="row">
       <div class="col-md-3">
         <h3>Return: {{ returns.id }}</h3>
@@ -107,11 +109,14 @@
         </div>
       </div>
     </div>
+    </Returns>
   </div>
   </form>
 </template>
 
 <script>
+import Returns from '../../returns_form.vue'
+import { mapActions, mapGetters } from 'vuex'
 import $ from 'jquery'
 import Vue from 'vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
@@ -122,22 +127,41 @@ import {
 from '@/utils/hooks'
 export default {
   name: 'externalReturn',
+  props: {
+     url:{
+        type: String,
+        required: false
+     }
+  },
   data() {
     let vm = this;
     return {
-        returns: {
-            table: [{
-                data: null
-            }],
-        },
+        pdBody: 'pdBody' + vm._uid,
         returnTab: 'returnTab'+vm._uid,
         form: null,
         spreadsheet: null,
         returnBtn: 'Submit',
     }
-    returns: null
+  },
+  components:{
+    Returns,
+  },
+  computed: {
+     ...mapGetters([
+        'isReturnsLoaded',
+        'returns',
+    ]),
+    uploadedFileName: function() {
+      return this.spreadsheet != null ? this.spreadsheet.name: '';
+    },
   },
   methods: {
+    ...mapActions({
+      load: 'loadReturns',
+    }),
+    ...mapActions([
+        'setReturns',
+    ]),
     save: function(e) {
       let vm = this;
       vm.form=document.forms.enter_return
@@ -225,32 +249,17 @@ export default {
     },
     
   },
-  computed: {
-    uploadedFileName: function() {
-      return this.spreadsheet != null ? this.spreadsheet.name: '';
-    },
-  },
   beforeRouteEnter: function(to, from, next) {
-
-     Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
-        next(vm => {
-           vm.returns = res.body;
-           console.log(vm.returns)
-           vm.returns.nil = 'yes'
-           vm.returns.nil_return = true
-           if (vm.returns.table[0]) {
-             vm.returns.nil = 'no'
-             vm.returns.nil_return = false
-             vm.returns.spreadsheet = 'no'
-           }
-        //   vm.buildRow()
-        // TODO: set return button if requires payment.
-        // if (vm.returns.requires_pay)
-        //   returnBtn = 'Pay and Submit'
-        // }
-        });
-     }, err => {
-        console.log(err);
+     next(vm => {
+       vm.load({ url: `/api/returns/${to.params.return_id}.json` }).then(() => {
+          // returns.nil = 'yes'
+         //  returns.nil_return = true
+         //  if (returns.table[0]) {
+         //    returns.nil = 'no'
+         //    returns.nil_return = false
+         //    returns.spreadsheet = 'no'
+         //  }
+       });
      });
    },
    mounted: function(){

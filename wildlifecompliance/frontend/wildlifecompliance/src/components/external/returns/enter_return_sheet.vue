@@ -2,6 +2,7 @@
   <form method="POST" name="enter_return_sheet" enctype="multipart/form-data">
   <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
   <div class="container" id="externalReturnSheet">
+    <Returns v-if="isReturnsLoaded">
     <div class="row">
       <div class="col-md-3">
         <h3>Return: {{ returns.id }}</h3>
@@ -86,12 +87,15 @@
         </div>
       </div>
     </div>
+    </Returns>
   </div>
   <SheetEntry ref="sheet_entry" :return_id=5 @refreshFromResponse="refreshFromResponse"></SheetEntry>
   </form>
 </template>
 
 <script>
+import Returns from '../../returns_form.vue'
+import { mapActions, mapGetters } from 'vuex'
 import datatable from '@/utils/vue/datatable.vue'
 import $ from 'jquery'
 import Vue from 'vue'
@@ -115,12 +119,6 @@ export default {
     return {
         pdBody: 'pdBody' + vm._uid,
         datatable_id: 'return-datatable',
-        returns: {
-            id: 0,
-            table: [{
-                data: null
-            }],
-        },
         fullSpeciesList: {'': ''},
         //fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
         //                  'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
@@ -197,9 +195,31 @@ export default {
             }
         }
     }
-    returns: null
+  },
+  components:{
+    Returns,
+    SheetEntry,
+    datatable,
+  },
+  computed: {
+    ...mapGetters([
+        'isReturnsLoaded',
+        'returns',
+    ]),
+    sheetURL: function(){
+      return helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
+    },
+    csrf_token: function() {
+      return helpers.getCookie('csrftoken')
+    },
   },
   methods: {
+    ...mapActions({
+      load: 'loadReturns',
+    }),
+    ...mapActions([
+        'setReturns',
+    ]),
     save: function(e) {
       let vm = this;
       vm.form=document.forms.enter_return_sheet;
@@ -265,36 +285,20 @@ export default {
       vm.$refs.sheet_entry.isModalOpen = true;
     }
   },
-  components:{
-    SheetEntry,
-    datatable,
-  },
-  computed: {
-    sheetURL: function(){
-      return helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
-    },
-    csrf_token: function() {
-      return helpers.getCookie('csrftoken')
-    },
-  },
   beforeRouteEnter: function(to, from, next) {
-    Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
-        next(vm => {
-           vm.returns = res.body;
+     next(vm => {
+       vm.load({ url: `/api/returns/${to.params.return_id}.json` }).then(() => {
            vm.sheetTitle = 'Please Add Species Type';
            vm.newSpecies = vm.returns.sheet_species
            if (vm.returns.sheet_species !== '0000000') {
               vm.sheetTitle = vm.fullSpeciesList[vm.returns.sheet_species]
            };
-        });
-    }, err => {
-      console.log(err);
-    });
+       });
+     });
   },
   mounted: function(){
      let vm = this;
      vm.form = document.forms.enter_return_sheet;
-
      // Row Actions
      vm.$refs.return_datatable.vmDataTable.on('click','.edit-row', function(e) {
         e.preventDefault();
