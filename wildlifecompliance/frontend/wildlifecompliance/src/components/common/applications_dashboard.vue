@@ -252,6 +252,8 @@ export default {
             application_status: [],
             application_ex_headers:["Number","Category","Activity","Submitter","Applicant","Status","Lodged on","Action"],
             application_ex_options:{
+                serverSide: true,
+                searchDelay: 1000,
                 order: [
                     [0, 'desc']
                 ],
@@ -303,6 +305,8 @@ export default {
             },
             application_headers:internal_application_headers,
             application_options:{
+                serverSide: true,
+                searchDelay: 1000,
                 order: [
                     [0, 'desc']
                 ],
