@@ -57,12 +57,83 @@ from wildlifecompliance.components.applications.serializers import (
     SearchReferenceSerializer
 )
 
+from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
+from rest_framework_datatables.pagination import DatatablesPageNumberPagination
+from rest_framework_datatables.filters import DatatablesFilterBackend
+from rest_framework_datatables.renderers import DatatablesRenderer
+from rest_framework.filters import BaseFilterBackend
+
 
 class GetEmptyList(views.APIView):
     renderer_classes = [JSONRenderer, ]
 
     def get(self, request, format=None):
         return Response([])
+
+
+class ApplicationFilterBackend(DatatablesFilterBackend):
+    """
+    Custom filters
+    """
+    def filter_queryset(self, request, queryset, view):
+        total_count = queryset.count()
+        #
+        # date_from = request.GET.get('date_from')
+        # date_to = request.GET.get('date_to')
+        # if queryset.model is Application:
+        #     if date_from:
+        #         queryset = queryset.filter(lodgement_date__gte=date_from)
+        #
+        #     if date_to:
+        #         queryset = queryset.filter(lodgement_date__lte=date_to)
+        queryset = super(ApplicationFilterBackend, self).filter_queryset(request, queryset, view)
+        setattr(view, '_datatables_total_count', total_count)
+        return queryset
+
+
+class ApplicationRenderer(DatatablesRenderer):
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        # if 'view' in renderer_context and hasattr(renderer_context.get('view'), '_datatables_total_count'):
+        #     data['recordsTotal'] = renderer_context.get('view')._datatables_total_count
+        return super(ApplicationRenderer, self).render(data, accepted_media_type, renderer_context)
+
+
+class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (DatatablesFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (ApplicationRenderer,)
+    queryset = Application.objects.none()
+    serializer_class = DTInternalApplicationSerializer
+    page_size = 10
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return Application.objects.all()
+        elif is_customer(self.request):
+            user_orgs = [
+                org.id for org in user.wildlifecompliance_organisations.all()]
+            return Application.objects.filter(Q(org_applicant_id__in=user_orgs) | Q(
+                proxy_applicant=user) | Q(submitter=user))
+        return Application.objects.none()
+
+    @list_route(methods=['GET', ])
+    def internal_datatable_list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        # queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = DTInternalApplicationSerializer(result_page, context={'request': request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
+
+    @list_route(methods=['GET', ])
+    def external_datatable_list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        # queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = DTExternalApplicationSerializer(result_page, context={'request': request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
 
 
 class ApplicationViewSet(viewsets.ModelViewSet):
@@ -85,19 +156,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         serializer = BaseApplicationSerializer(
             queryset, many=True, context={'request': request})
         return Response(serializer.data)
-
-#    @detail_route(methods=['GET',])
-#    def is_editable_fields(self, request, *args, **kwargs):
-#        try:
-#            instance = self.get_object()
-#            editable_items = {}
-#            for i in instance.activities:
-#                editable_items.update({i.activity_name:get_activity_sys_answers(i)})
-#            return Response([editable_items])
-#            #return Response(['a','b'])
-#        except Exception as e:
-#            print(traceback.print_exc())
-#            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))

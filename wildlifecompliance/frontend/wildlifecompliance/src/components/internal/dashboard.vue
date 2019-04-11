@@ -19,7 +19,7 @@ export default {
     data() {
         let vm = this;
         return {
-            applications_url: helpers.add_endpoint_join(api_endpoints.applications,'internal_datatable_list/?format=datatables'),
+            applications_url: helpers.add_endpoint_join(api_endpoints.applications_paginated,'internal_datatable_list/?format=datatables'),
             returns_url:helpers.add_endpoint_json(api_endpoints.returns,'user_list'),
         }
     

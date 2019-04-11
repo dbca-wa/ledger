@@ -264,7 +264,7 @@ export default {
                 responsive: true,
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": ''
+                    "dataSrc": 'data'
                 },
                 columns: external_columns,
                 processing: true,
@@ -317,7 +317,7 @@ export default {
                 responsive: true,
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": ''
+                    "dataSrc": 'data'
                 },
                 columns: internal_columns,
                 processing: true,
