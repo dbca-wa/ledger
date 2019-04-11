@@ -30,23 +30,23 @@
                     <div class="col-sm-12">
                       <div class="row">
                         <label style="width:70%;" class="col-sm-4">Do you want to Lodge a nil Return?</label>
-                        <input type="radio" id="nilYes" name="nilYes" value="yes" v-model='returns.nil'>
+                        <input type="radio" id="nilYes" name="nilYes" value="yes" v-model='nilReturn'>
                         <label style="width:10%;" for="nilYes">Yes</label>
-                        <input type="radio" id="nilNo" name="nilNo" value="no" v-model='returns.nil'>
+                        <input type="radio" id="nilNo" name="nilNo" value="no" v-model='nilReturn'>
                         <label style="width:10%;" for="nilNo">No</label>
                       </div>
-                      <div v-if="returns.nil == 'yes'" class="row">
+                      <div v-if="nilReturn === 'yes'" class="row">
                         <label style="width:70%;" class="col-sm-4">Reason for providing a Nil return.</label>
                         <input type="textarea" name="nilReason" v-model="returns.nilReason">
                       </div>
-                      <div v-if="returns.nil == 'no'" class="row">
+                      <div v-if="nilReturn === 'no'" class="row">
                         <label style="width:70%;" class="col-sm-4">Do you want to upload spreadsheet with Return data?<br>(Download <a v-bind:href="url">spreadsheet template</a>)</label>
-                        <input type="radio" name="SpreadsheetYes" value="yes" v-model='returns.spreadsheet'>
+                        <input type="radio" name="SpreadsheetYes" value="yes" v-model='spreadsheetReturn'>
                         <label style="width:10%;" for="SpreadsheetYes">Yes</label>
-                        <input type="radio" name="SpreadsheetNo" value="no" v-model='returns.spreadsheet'>
+                        <input type="radio" name="SpreadsheetNo" value="no" v-model='spreadsheetReturn'>
                         <label style="width:10%;" for="SpreadsheetNo">No</label>
                       </div>
-                      <div v-if="returns.nil =='no' && returns.spreadsheet != null" class="row">
+                      <div v-if="nilReturn === 'no' && spreadsheetReturn != null" class="row">
                         <label style="width:70%;" class="col-sm-4">Do you want to add to existing data or replace existing data?</label>
                         <input type="radio" name="ReplaceYes" value="replace" v-model='returns.replace'>
                         <label style="width:10%;" for="ReplaceYes">Replace</label>
@@ -54,7 +54,7 @@
                         <label style="width:10%;" for="ReplaceNo">Add to</label>
                       </div>
                       <div class="row"></div>
-                      <div v-if="returns.nil =='no' && returns.spreadsheet =='no'" class="row">
+                      <div v-if="nilReturn === 'no' && spreadsheetReturn === 'no'" class="row">
                         <table class="return-table table table-striped table-bordered dataTable" style="width:100%">
                         <thead>
                         <tr>
@@ -77,7 +77,7 @@
                         </table>
                         <input type="button" class="btn btn-primary" @click.prevent="addRow()" >Add Row</button>
                       </div>
-                      <div v-if="returns.nil === 'no' && returns.spreadsheet === 'yes'" class="row">
+                      <div v-if="nilReturn === 'no' && spreadsheetReturn === 'yes'" class="row">
                         <span class="btn btn-primary btn-file pull-left">Upload File
                           <input type="file" ref="spreadsheet" @change="uploadFile()"/>
                         </span>
@@ -141,6 +141,8 @@ export default {
         form: null,
         spreadsheet: null,
         returnBtn: 'Submit',
+        nilReturn: 'yes',
+        spreadsheetReturn: 'no',
     }
   },
   components:{
@@ -252,20 +254,16 @@ export default {
   beforeRouteEnter: function(to, from, next) {
      next(vm => {
        vm.load({ url: `/api/returns/${to.params.return_id}.json` }).then(() => {
-          // returns.nil = 'yes'
-         //  returns.nil_return = true
-         //  if (returns.table[0]) {
-         //    returns.nil = 'no'
-         //    returns.nil_return = false
-         //    returns.spreadsheet = 'no'
-         //  }
+          if (vm.returns.table[0]) {
+            vm.nilReturn = 'no'
+            vm.spreadsheetReturn = 'no'
+          }
        });
      });
-   },
-   mounted: function(){
-        let vm = this;
-        vm.form = document.forms.enter_return;
-    },
-
+  },
+  mounted: function(){
+    let vm = this;
+    vm.form = document.forms.enter_return;
+  },
 }
 </script>

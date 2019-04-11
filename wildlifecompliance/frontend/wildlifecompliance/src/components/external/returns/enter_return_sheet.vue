@@ -1,15 +1,15 @@
 <template>
   <form method="POST" name="enter_return_sheet" enctype="multipart/form-data">
   <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-  <div class="container" id="externalReturnSheet">
-    <Returns v-if="isReturnsLoaded">
+  <div class="container" id="externalReturnRunningSheet">
+
     <div class="row">
       <div class="col-md-3">
         <h3>Return: {{ returns.id }}</h3>
         <!-- List of applicable species available for Return -->
         <label>Species on Return:</label>
         <div v-for="species in returns.sheet_species_list">
-          <a :species_id="species" :href="'/external/return/sheet/'+returns.id+'/'+species"><h5>{{fullSpeciesList[species]}}</h5></a>
+          <a class="change-species" :species_id="species" :href="'/external/return/sheet/'+returns.id+'/'+species"><h5>{{fullSpeciesList[species]}}</h5></a>
         </div>
       </div>
       <!-- div class="col-md-1" div -->
@@ -47,7 +47,7 @@
                           <div class="col-md-6">
                             <div class="form-group">
                                 <label for="">Activity Type:</label>
-                                <select class="form-control" v-model="filterSheetActivityType">
+                                <select class="form-control">
                                     <option v-for="sa in sheet_activity_type" :value="sa">{{sa['label']}}</option>
                                 </select>
                             </div>
@@ -87,15 +87,13 @@
         </div>
       </div>
     </div>
-    </Returns>
+
   </div>
-  <SheetEntry ref="sheet_entry" :return_id=5 @refreshFromResponse="refreshFromResponse"></SheetEntry>
+  <SheetEntry ref="sheet_entry"></SheetEntry>
   </form>
 </template>
 
 <script>
-import Returns from '../../returns_form.vue'
-import { mapActions, mapGetters } from 'vuex'
 import datatable from '@/utils/vue/datatable.vue'
 import $ from 'jquery'
 import Vue from 'vue'
@@ -119,6 +117,12 @@ export default {
     return {
         pdBody: 'pdBody' + vm._uid,
         datatable_id: 'return-datatable',
+        returns: {
+            id: 0,
+            table: [{
+                data: null
+            }],
+        },
         fullSpeciesList: {'': ''},
         //fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
         //                  'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
@@ -142,10 +146,8 @@ export default {
                 dataSrc: '',
                 type: 'GET',
                 data: function(_data) {
-                  let URL_RETURN_ID_IDX = 6;
-                  let URL_SPECIES_ID_IDX = 7;
-                  _data.return_id = window.location.href.split("/")[URL_RETURN_ID_IDX]
-                  _data.species_id = window.location.href.split("/")[URL_SPECIES_ID_IDX]
+                  _data.return_id = vm.returns.id
+                  _data.species_id = vm.returns.sheet_species
                   return _data;
                 },
             },
@@ -176,6 +178,11 @@ export default {
                 }
               }
             ],
+            drawCallback: function() {
+              if (vm.returns.sheet_species !== '0000000') {
+                vm.sheetTitle = vm.fullSpeciesList[vm.returns.sheet_species]
+              };
+            },
             processing: true,
             ordering: false,
             rowId: function(_data) {
@@ -197,15 +204,10 @@ export default {
     }
   },
   components:{
-    Returns,
     SheetEntry,
     datatable,
   },
   computed: {
-    ...mapGetters([
-        'isReturnsLoaded',
-        'returns',
-    ]),
     sheetURL: function(){
       return helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
     },
@@ -214,12 +216,6 @@ export default {
     },
   },
   methods: {
-    ...mapActions({
-      load: 'loadReturns',
-    }),
-    ...mapActions([
-        'setReturns',
-    ]),
     save: function(e) {
       let vm = this;
       vm.form=document.forms.enter_return_sheet;
@@ -256,19 +252,6 @@ export default {
       data.append('species_data', speciesData);
       vm.isNewSpecies = true;
     },
-    addEventListeners: function() {
-      let vm = this;
-    },
-    initialiseSearch:function() {
-    },
-    filterSheetActivityType: function(){
-       console.log('filterSheetActivityType')
-    },
-    refreshFromResponse:function(response){
-       console.log('RefreshFromResponse function')
-       let vm = this;
-       //vm.return = helpers.copyObject(response.body);
-    },
     addSheetRow: function () {
       let vm = this;
       vm.$refs.sheet_entry.isAddEntry = true;
@@ -286,15 +269,16 @@ export default {
     }
   },
   beforeRouteEnter: function(to, from, next) {
-     next(vm => {
-       vm.load({ url: `/api/returns/${to.params.return_id}.json` }).then(() => {
-           vm.sheetTitle = 'Please Add Species Type';
-           vm.newSpecies = vm.returns.sheet_species
-           if (vm.returns.sheet_species !== '0000000') {
-              vm.sheetTitle = vm.fullSpeciesList[vm.returns.sheet_species]
-           };
-       });
-     });
+    Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
+      next(vm => {
+        vm.returns = res.body;
+        vm.sheetTitle = 'Please Add Species Type';
+        vm.newSpecies = vm.returns.sheet_species
+        vm.$refs.return_datatable.vmDataTable.ajax.reload()
+      });
+    }, err => {
+      console.log(err);
+    });
   },
   mounted: function(){
      let vm = this;
@@ -323,10 +307,9 @@ export default {
         vm.$refs.sheet_entry.isModalOpen = false;
      });
      $('form').on('click', '.change-species', function(e) {
-        // FIXME: cannot get ajax call working with change of parameters.
         e.preventDefault();
+        vm.returns.sheet_species = $(this).attr('species_id');
         vm.$refs.return_datatable.vmDataTable.clear().draw()
-        // Reload the data for new species type
         vm.$refs.return_datatable.vmDataTable.ajax.url = helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
         vm.$refs.return_datatable.vmDataTable.ajax.reload()
      });
