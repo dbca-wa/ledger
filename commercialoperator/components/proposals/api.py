@@ -991,22 +991,21 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def draft(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            schema=request.data.get('schema')
-            parks=[]
-            import json
-            sc=json.loads(schema)
+            # schema=request.data.get('schema')
+            # import json
+            # sc=json.loads(schema)
             #import ipdb; ipdb.set_trace()
-            other_details_data=sc['other_details']
-            print other_details_data
-            serializer = ProposalOtherDetailsSerializer(instance.other_details,data=other_details_data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            select_parks_activities=sc['selected_parks_activities']
-            select_trails_activities=sc['selected_trails_activities']
-            marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
+            # other_details_data=sc['other_details']
+            # print other_details_data
+            # serializer = ProposalOtherDetailsSerializer(instance.other_details,data=other_details_data)
+            # serializer.is_valid(raise_exception=True)
+            # serializer.save()
+            # select_parks_activities=sc['selected_parks_activities']
+            # select_trails_activities=sc['selected_trails_activities']
+            # marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
             #print marine_parks_activities
             #trails=list(sc['trails'])
-            save_proponent_data(instance,request,self,other_details_data, select_parks_activities, select_trails_activities, marine_parks_activities)
+            save_proponent_data(instance,request,self)
             # if parks:
             #     instance.save_parks(request,parks)
             return redirect(reverse('external'))

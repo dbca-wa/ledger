@@ -3,7 +3,7 @@ from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrail, ProposalTrailSectionActivity, ProposalTrailSection, ProposalParkZone, ProposalParkZoneActivity, ProposalOtherDetails, ProposalAccreditation
-from commercialoperator.components.proposals.serializers import SaveProposalSerializer, SaveProposalParkSerializer, SaveProposalTrailSerializer, ProposalAccreditationSerializer
+from commercialoperator.components.proposals.serializers import SaveProposalSerializer, SaveProposalParkSerializer, SaveProposalTrailSerializer, ProposalAccreditationSerializer, ProposalOtherDetailsSerializer
 from commercialoperator.components.main.models import Activity, Park, AccessType, Trail, Section, Zone
 import traceback
 import os
@@ -616,7 +616,7 @@ def save_park_zone_activity_data(instance,marine_parks_activities):
         except:
             raise
 
-def save_proponent_data(instance,request,viewset,other_details_data, select_parks_activities,select_trails_activities, marine_parks_activities):
+def save_proponent_data(instance,request,viewset):
     with transaction.atomic():
         try:
 #            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
@@ -634,7 +634,18 @@ def save_proponent_data(instance,request,viewset,other_details_data, select_park
 #            }
             data = {
             }
-
+            schema=request.data.get('schema')
+            import json
+            sc=json.loads(schema)
+            #import ipdb; ipdb.set_trace()
+            other_details_data=sc['other_details']
+            print other_details_data
+            serializer = ProposalOtherDetailsSerializer(instance.other_details,data=other_details_data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            select_parks_activities=sc['selected_parks_activities']
+            select_trails_activities=sc['selected_trails_activities']
+            marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
             other_details=ProposalOtherDetails.objects.update_or_create(proposal=instance)
             # instance.save()
             serializer = SaveProposalSerializer(instance, data, partial=True)

@@ -677,7 +677,7 @@ class Proposal(RevisionedMixin):
                 ret2 = send_external_submit_email_notification(request, self)
 
                 #import ipdb; ipdb.set_trace()
-                self.save_form_tabs(request)
+                #self.save_form_tabs(request)
                 if ret1 and ret2:
                     self.processing_status = 'with_assessor'
                     self.customer_status = 'with_assessor'
