@@ -399,6 +399,7 @@ export default {
                         'accreditation_expiry':'',
                         'proposal_other_details': vm.proposal.other_details.id,
                         'is_deleted': false,
+                        'accreditation_type_value': accreditation_type.value
                     }
                     var acc=helpers.copyObject(vm.proposal.other_details.accreditations);
                     acc.push(data);

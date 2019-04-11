@@ -2,7 +2,7 @@
 <div>
     <div class="row">
                 <fieldset class="scheduler-border">
-                    <legend class="scheduler-border">{{accreditation.accreditation_type}}</legend>
+                    <legend class="scheduler-border">{{accreditation.accreditation_type_value}}</legend>
                     <div class="form-group">
                         <div class="row">
                             <div class="col-sm-3">

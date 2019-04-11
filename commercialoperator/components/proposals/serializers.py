@@ -143,7 +143,7 @@ class SaveProposalTrailSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProposalAccreditationSerializer(serializers.ModelSerializer):
-    #accreditation_type= serializers.SerializerMethodField()
+    accreditation_type_value= serializers.SerializerMethodField()
     accreditation_expiry = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
     
     class Meta:
@@ -153,8 +153,12 @@ class ProposalAccreditationSerializer(serializers.ModelSerializer):
                 'accreditation_type',
                 'accreditation_expiry',
                 'comments',
-                'proposal_other_details'
+                'proposal_other_details',
+                'accreditation_type_value'
                 )
+
+    def get_accreditation_type_value(self,obj):
+        return obj.get_accreditation_type_display()
 
 class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
     #park=ParkSerializer()
