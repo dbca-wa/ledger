@@ -71,7 +71,7 @@ export default {
         'isRequired': String,
         'help_text':String,
         'help_text_url':String,
-        "value":[String,Array],
+        "field_data": Object,
         "comment_value": String,
         "options":Array,
         "conditions":Object,
@@ -97,9 +97,12 @@ export default {
         ...mapGetters([
             'canViewComments',
         ]),
-        cons:function () {
+        cons: function () {
             return JSON.stringify(this.conditions);
         },
+        value: function() {
+            return this.field_data.value;
+        }
     },
     components: { Comment, HelpText, HelpTextUrl,},
     methods:{
@@ -131,7 +134,10 @@ export default {
                        vm.handleChange(selected[0])
                        e.preventDefault();
                         if( vm.isMultiple){
+                            console.log(">>> Assigning: ", selected.val());
+                            vm.field_data.value = selected.val();
                             vm.multipleSelected = selected.val();
+                            console.log(">>> Done: ", vm.field_data.value);
                         }
                    }).
                    on("select2:unselect",function (e) {
@@ -139,7 +145,7 @@ export default {
                         vm.handleChange(selected[0])
                         e.preventDefault();
                         if( vm.isMultiple){
-                            vm.multipleSelected = selected.val();
+                            vm.field_data.value = vm.multipleSelected = selected.val();
                         }
                    });
                    if (vm.value) {

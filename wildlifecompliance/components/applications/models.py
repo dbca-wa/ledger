@@ -1487,6 +1487,26 @@ class ApplicationSelectedActivity(models.Model):
         app_label = 'wildlifecompliance'
 
 
+class ApplicationDataRecord(models.Model):
+
+    FIELD_TYPE_TEXT = 'text'
+    FIELD_TYPE_NUMBER = 'number'
+    FIELD_TYPE_CHOICES = (
+        (FIELD_TYPE_TEXT, 'Text'),
+        (FIELD_TYPE_NUMBER, 'Text'),
+    )
+
+    application = models.ForeignKey(Application, related_name='data_records')
+    field_name = models.CharField(max_length=255, null=True, blank=True)
+    instance = models.IntegerField(default=0)
+    field_type = models.CharField(
+        max_length=40,
+        choices=FIELD_TYPE_CHOICES,
+        default=FIELD_TYPE_TEXT)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
 @python_2_unicode_compatible
 class ApplicationStandardCondition(RevisionedMixin):
     text = models.TextField()

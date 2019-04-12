@@ -55,7 +55,6 @@
                     <AmendmentRequestDetails :activity_id="activity.id" />
                     <renderer-block
                         :component="activity"
-                        :json_data="applicationData"
                         v-if="activity.id == selected_activity_tab_id"
                         v-bind:key="`renderer_block_${index}`"
                         />
@@ -98,15 +97,13 @@ export default {
         'application',
         'selected_activity_tab_id',
         'renderer_tabs',
+        'renderer_form_data',
         'unfinishedActivities',
         'sectionsForTab',
     ]),
     listVisibleActivities: function() {
         return this.unfinishedActivities;
     },
-    applicationData: function() {
-        return this.application.data ? this.application.data[0] : null;
-    }
   },
   methods: {
     ...mapActions([

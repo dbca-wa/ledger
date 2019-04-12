@@ -37,7 +37,7 @@ import HelpText from './help_text.vue';
 import HelpTextUrl from './help_text_url.vue';
 import { mapGetters } from 'vuex';
 export default {
-    props: ["name", "label", "id", "readonly", "help_text", "value", "conditions", "handleChange",
+    props: ["name", "label", "id", "readonly", "help_text", "field_data", "conditions", "handleChange",
             "comment_value", "isRequired", "help_text_url"],
     data(){
         return {
@@ -56,6 +56,9 @@ export default {
         options: function() {
         return JSON.stringify(this.conditions);
         },
+        value: function() {
+            return this.field_data.value;
+        }
     },
     methods:{
         toggleComment(){

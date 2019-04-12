@@ -75,6 +75,7 @@ export default {
     ...mapGetters([
         'application',
         'application_readonly',
+        'renderer_form_data',
         'selected_activity_tab_id',
         'selected_activity_tab_name',
         'isApplicationLoaded',
@@ -163,8 +164,17 @@ export default {
     },
     saveExit: function(e) {
       let vm = this;
-      this.isProcessing = true;
       let formData = new FormData(vm.form);
+      console.log("-- FD --");
+      /*
+      for (var pair of formData.entries()) {
+        console.log(pair[0]+ ' Value: ' + pair[1]); 
+      }
+      */
+      console.log("- As JSON -");
+      console.log(this.renderer_form_data);
+      return;
+      this.isProcessing = true;
       vm.$http.post(vm.application_form_url,formData).then(res=>{
           swal(
             'Saved',

@@ -5,6 +5,7 @@
                 <renderer-block v-for="(subcomponent, index) in conditionBlocks(condition)"
                     :component="subcomponent"
                     :json_data="data"
+                    :instance="instance"
                     v-bind:key="`condition_${condition}_${index}`"
                     />
             </div>
@@ -16,7 +17,7 @@
     import { mapGetters } from 'vuex';
     export default {
         name: 'conditions',
-        props: ["conditions","name","data","readonly"],
+        props: ["conditions","name","data","readonly","instance"],
         computed: {
             ...mapGetters([
                 'isComponentVisible',

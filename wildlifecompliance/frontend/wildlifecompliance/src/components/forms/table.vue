@@ -19,7 +19,7 @@
             </template>
 
             <!-- the next line required for saving value JSON-ified table to application.data - creates an invisible field -->
-            <textarea readonly="readonly" class="form-control" rows="5" :name="name" style="display:none;">{{ value }}</textarea><br/>
+            <textarea readonly="readonly" class="form-control" rows="5" :name="name" style="display:none;">{{ field_data.value }}</textarea><br/>
 
             <div id="content-editable-table">
               <table class="table table-striped editable-table">
@@ -50,16 +50,6 @@
                 </tbody>
 
               </table>
-
-              <!-- for debugging -->
-              <!--
-              <pre class="output">
-                {{ value }}
-              </pre>
-              <pre class="output">
-                {{ headers }}
-              </pre>
-              -->
             </div>
 
         </div>
@@ -81,11 +71,7 @@ const TableBlock = {
         comment_value: String,
         help_text: String,
         help_text_url: String,
-        value:{
-            default:function () {
-                return null;
-            }
-        },
+        field_data: Object,
         readonly:Boolean,
 
         /*
@@ -119,7 +105,7 @@ const TableBlock = {
     */
     data(){
         let vm = this;
-        var value  =JSON.parse(vm.value);
+        const value  = this.field_data.value ? JSON.parse(this.field_data.value) : null;
 
         var headers = JSON.parse(vm.headers)
         var col_headers = Object.keys(headers);
@@ -127,7 +113,7 @@ const TableBlock = {
 
         // setup initial empty row for display
         var init_row = [];
-        for(var i = 0, length = col_headers.length; i < length; i++) { init_row.push('')  }
+        for(var i = 0, length = col_headers.length; i < length; i++) { init_row.push('') }
 
         if (value == null) {
             vm.table = {
@@ -165,7 +151,7 @@ const TableBlock = {
         updateTableJSON: function() {
           let vm = this;
           vm.tableJSON = JSON.stringify(vm.table);
-          vm.value = vm.tableJSON;
+          this.field_data.value = vm.tableJSON;
         },
 
         addRow: function() {
