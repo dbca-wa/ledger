@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.contrib.postgres.fields import ArrayField
 
-from dpaw_utils.models import ActiveMixin
+from dbca_utils.models import ActiveMixin
 
 from ledger.accounts.models import RevisionedMixin
 

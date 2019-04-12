@@ -1,10 +1,8 @@
 from ledger.settings_base import *
-from decimal import Decimal
+
 
 ROOT_URLCONF = 'parkstay.urls'
 SITE_ID = 1
-
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_ps')
 
 # number of seconds before expiring a temporary booking
 BOOKING_TIMEOUT = 1200
@@ -48,8 +46,8 @@ else:
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'parkstay', 'templates'))
 TEMPLATES[0]['OPTIONS']['context_processors'].append('parkstay.context_processors.parkstay_url')
 '''BOOTSTRAP3 = {
-    'jquery_url': '//static.dpaw.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',
-    'base_url': '//static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
+    'jquery_url': '//static.dbca.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',
+    'base_url': '//static.dbca.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
     'css_url': None,
     'theme_url': None,
     'javascript_url': None,

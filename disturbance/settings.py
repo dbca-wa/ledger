@@ -119,3 +119,8 @@ CKEDITOR_CONFIGS = {
     },
 }
 
+# Additional logging for disturbance
+LOGGING['loggers']['disturbance'] = {
+    'handlers': ['file'],
+    'level': 'INFO'
+}
