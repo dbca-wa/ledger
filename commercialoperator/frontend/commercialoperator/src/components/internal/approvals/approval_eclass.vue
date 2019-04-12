@@ -36,7 +36,7 @@ import alert from '@vue-utils/alert.vue'
 import TextArea from '@/components/forms/text-area.vue'
 import TextField from '@/components/forms/text.vue'
 import FileField from '@/components/forms/file.vue'
-import DateField from '@/components/forms/date.vue'
+import DateField from '@/components/forms/date-field.vue'
 
 import {helpers, api_endpoints} from "@/utils/hooks.js"
 export default {
