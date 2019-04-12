@@ -92,7 +92,6 @@ const ExpanderTable = {
     data(){
         return {
             expanded: {},
-            tableList: [],
         };
     },
     methods: {
@@ -118,22 +117,25 @@ const ExpanderTable = {
             if(this.expanded[tableId]) {
                 this.$delete(this.expanded, tableId);
             }
-            this.tableList = this.tableList.filter(table => table != tableId);
             this.removeFormInstance(
                 this.getInstanceName(tableId)
             );
-            this.updateTableCount();
+            this.updateVisibleTables(
+                this.existingTables.filter(table => table != tableId)
+            );
         },
-        addNewTable: function() {
-            const tableId = this.getTableId(this.tableList.length);
-            this.tableList.push(tableId);
-            this.updateTableCount();
+        addNewTable: function(params={}) {
+            let { tableId } = params;
+            if(!tableId) {
+                tableId = this.getTableId(this.lastTableId+1);
+            }
+            this.existingTables.push(tableId);
         },
-        updateTableCount: function() {
+        updateVisibleTables: function(tableList) {
             this.setFormValue({
                 key: this.component.name,
                 value: {
-                    "value": this.tableList.length,
+                    "value": tableList,
                 }
             });
         },
@@ -142,25 +144,29 @@ const ExpanderTable = {
         },
         getInstanceName: function(tableId) {
             return `__instance-${tableId}`
-        }
+        },
     },
     computed:{
         ...mapGetters([
             'canViewComments',
             'getFormValue',
         ]),
-        expectedTableCount: function() {
-            return this.getFormValue(this.component.name) || 1;
+        lastTableId: function() {
+            if(!this.existingTables.length) {
+                return 0;
+            }
+            let lastId = 0;
+            this.existingTables.map(tableId => tableId[tableId.length-1] > lastId && (lastId = tableId[tableId.length-1]));
+            return parseInt(lastId, 10);
+        },
+        existingTables: function() {
+            return this.getFormValue(this.component.name) || [];
         },
         expanderTables: function() {
-            if(this.tableList.length < this.expectedTableCount) {
-                [...Array(
-                    this.expectedTableCount - this.tableList.length
-                    )].map(i => {
-                        this.addNewTable();
-                })
+            if(!this.existingTables.length) {
+                this.addNewTable();
             }
-            return this.tableList;
+            return this.existingTables;
         },
         value: function() {
             return this.json_data;
