@@ -492,7 +492,7 @@ class ReturnSheet(object):
             self._species_list.append(_species.name)
             self._species = _species.name
         # build list of Species available on Licence.
-        self._licence_species_list = ['S000001', 'S000002', 'S000003', 'S000004']
+        self._licence_species_list = []
 
     def _get_table_rows(self, _data):
         """
