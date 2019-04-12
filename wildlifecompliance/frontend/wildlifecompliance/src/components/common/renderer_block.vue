@@ -3,6 +3,7 @@
         <div v-if="component.type === 'tab'">
             <renderer-block v-for="(subcomponent, index) in component.children"
                 :component="subcomponent"
+                :instance="instance"
                 v-bind:key="`subcomponent_${index}`"
                 />
         </div>
@@ -11,6 +12,7 @@
             :label="component.label" :Index="component_name" :id="component_name">
                 <renderer-block v-for="(subcomponent, index) in component.children"
                     :component="subcomponent"
+                    :instance="instance"
                     v-bind:key="`section_${index}`"
                     />
         </FormSection>
@@ -24,6 +26,7 @@
             :isRemovable="true">
                 <renderer-block v-for="(subcomponent, index) in component.children"
                     :component="subcomponent"
+                    :instance="instance"
                     v-bind:key="`group_${index}`"
                     />
         </Group>
@@ -361,7 +364,6 @@ const RendererBlock = {
             return this.json_data[this.component_name];
         },
         set: function(value) {
-            console.log(`Set ${this.component_name} to: ${value}`);
             this.setFormValue({
                 key: this.component_name,
                 value: {"value": value}

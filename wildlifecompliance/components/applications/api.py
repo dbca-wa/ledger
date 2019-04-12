@@ -30,7 +30,8 @@ from wildlifecompliance.components.applications.models import (
     AmendmentRequest,
     ApplicationUserAction,
     search_keywords,
-    search_reference
+    search_reference,
+    ApplicationFormDataRecord,
 )
 from wildlifecompliance.components.applications.serializers import (
     ApplicationSerializer,
@@ -655,6 +656,24 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+        raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def form_data(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            ApplicationFormDataRecord.process_form(instance, request.data)
+            return redirect(reverse('external'))
+        except MissingFieldsException as e:
+            return Response({
+                'missing': e.error_list},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except ValidationError as e:
             raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:

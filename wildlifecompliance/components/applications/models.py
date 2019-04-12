@@ -230,7 +230,6 @@ class Application(RevisionedMixin):
         max_length=40,
         choices=APPLICATION_TYPE_CHOICES,
         default=APPLICATION_TYPE_NEW_LICENCE)
-    data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
     schema = JSONField(blank=False, null=False)
     licence_purposes = models.ManyToManyField(
@@ -939,6 +938,11 @@ class Application(RevisionedMixin):
             return WildlifeLicence.objects.none()
 
     @property
+    def data(self):
+        """ returns a queryset of activities attached to application (shortcut to ApplicationSelectedActivity related_name). """
+        return self.form_data_records.all()
+
+    @property
     def activities(self):
         """ returns a queryset of activities attached to application (shortcut to ApplicationSelectedActivity related_name). """
         return self.selected_activities.exclude(processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED)
@@ -1487,25 +1491,49 @@ class ApplicationSelectedActivity(models.Model):
         app_label = 'wildlifecompliance'
 
 
-class ApplicationDataRecord(models.Model):
+@python_2_unicode_compatible
+class ApplicationFormDataRecord(models.Model):
 
-    FIELD_TYPE_TEXT = 'text'
-    FIELD_TYPE_NUMBER = 'number'
-    FIELD_TYPE_CHOICES = (
-        (FIELD_TYPE_TEXT, 'Text'),
-        (FIELD_TYPE_NUMBER, 'Text'),
-    )
+    INSTANCE_ID_SEPARATOR = "__instance-"
 
-    application = models.ForeignKey(Application, related_name='data_records')
-    field_name = models.CharField(max_length=255, null=True, blank=True)
-    instance = models.IntegerField(default=0)
-    field_type = models.CharField(
-        max_length=40,
-        choices=FIELD_TYPE_CHOICES,
-        default=FIELD_TYPE_TEXT)
+    application = models.ForeignKey(Application, related_name='form_data_records')
+    field_name = models.CharField(max_length=512, null=True, blank=True)
+    schema_name = models.CharField(max_length=256, null=True, blank=True)
+    instance_name = models.CharField(max_length=256, null=True, blank=True)
+    value = models.TextField()
+
+    def __str__(self):
+        return "Application {id} record {field}: {value}".format(
+            id=self.application_id,
+            field=self.field_name,
+            value=self.value[:8]
+        )
 
     class Meta:
         app_label = 'wildlifecompliance'
+        unique_together = ('application', 'field_name',)
+
+    @staticmethod
+    def process_form(application, form_data):
+        for field_name, field_data in form_data.items():
+            schema_name = field_name
+            value = field_data.get('value', '')
+            instance_name = ''
+
+            if ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR in field_name:
+                [schema_name, instance_name] = field_name.split(
+                    ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR
+                )
+
+            form_data_record, created = ApplicationFormDataRecord.objects.get_or_create(
+                application_id=application.id,
+                field_name=field_name
+            )
+            form_data_record.schema_name = schema_name
+            form_data_record.instance_name = instance_name
+            form_data_record.value = value
+            form_data_record.save()
+
 
 @python_2_unicode_compatible
 class ApplicationStandardCondition(RevisionedMixin):

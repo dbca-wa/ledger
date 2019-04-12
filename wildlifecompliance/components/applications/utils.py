@@ -108,9 +108,6 @@ class SchemaParser(object):
             comment_fields_search = CommentDataSearch()
         try:
             for item in schema:
-                print(">>> Schema item: %s" % item)
-                print(">>> Post data:")
-                print(post_data)
                 data.update(
                     self._create_data_from_item(
                         item,
