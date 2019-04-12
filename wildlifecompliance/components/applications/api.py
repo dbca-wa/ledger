@@ -162,7 +162,7 @@ class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
     pagination_class = DatatablesPageNumberPagination
     renderer_classes = (ApplicationRenderer,)
     queryset = Application.objects.none()
-    serializer_class = DTInternalApplicationSerializer
+    serializer_class = DTExternalApplicationSerializer
     page_size = 10
 
     def get_queryset(self):
