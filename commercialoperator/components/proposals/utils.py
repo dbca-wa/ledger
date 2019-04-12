@@ -639,7 +639,7 @@ def save_proponent_data(instance,request,viewset):
             sc=json.loads(schema)
             #import ipdb; ipdb.set_trace()
             other_details_data=sc['other_details']
-            print other_details_data
+            #print other_details_data
             serializer = ProposalOtherDetailsSerializer(instance.other_details,data=other_details_data)
             serializer.is_valid(raise_exception=True)
             serializer.save()

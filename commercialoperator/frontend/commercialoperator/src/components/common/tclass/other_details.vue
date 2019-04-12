@@ -397,6 +397,7 @@ export default {
                     var data={
                         'accreditation_type': accreditation_type.key,
                         'accreditation_expiry':'',
+                        'comments':'',
                         'proposal_other_details': vm.proposal.other_details.id,
                         'is_deleted': false,
                         'accreditation_type_value': accreditation_type.value

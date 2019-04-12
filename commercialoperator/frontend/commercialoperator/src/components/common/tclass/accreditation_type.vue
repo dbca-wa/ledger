@@ -25,6 +25,16 @@
                                 <FileField :proposal_id="proposal_id" isRepeatable="false" :name="'accreditation'+accreditation.accreditation_type+proposal_id" :id="'accreditation'+accreditation_type+proposal_id"></FileField>
                             </div>
                         </div>
+                        <div  v-if="typeOther"class="row">
+                            <div class="col-sm-3">
+                                <label class="control-label pull-right"  for="Name">Details</label>
+                            </div>
+                            <div class="col-sm-9">
+                                <div class="" ref="accreditation_comments" style="width: 70%;">
+                                    <input type="textarea" class="form-control" v-model="accreditation.comments" name="accreditation_comments">        
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </fieldset>
             </div>  
@@ -78,7 +88,9 @@ export default {
     },
 
     computed: {
-        
+        typeOther: function(){
+            return this.accreditation && this.accreditation.accreditation_type=='other' ? true: false;
+        }
     },
 
     methods:{

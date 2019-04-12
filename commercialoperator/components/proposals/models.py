@@ -1344,6 +1344,7 @@ class ProposalAccreditation(models.Model):
         ('atap', 'ATAP'),
         ('eco_certification', 'Eco Certification'),
         ('narta', 'NARTA'),
+        ('other', 'Other')
     )
     
     accreditation_type = models.CharField('Accreditation', max_length=40, choices=ACCREDITATION_TYPE_CHOICES,
