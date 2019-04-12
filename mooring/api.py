@@ -602,6 +602,7 @@ def delete_booking(request, *args, **kwargs):
     response_data = {}
     response_data['result'] = 'success'
     response_data['message'] = ''
+    nowtime = datetime.strptime(str(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')+timedelta(hours=8)
     booking = None
     booking_item = request.POST['booking_item']
     if 'ps_booking' in request.session:
@@ -609,11 +610,12 @@ def delete_booking(request, *args, **kwargs):
         if booking_id:
             booking = Booking.objects.get(id=booking_id)
             ms_booking = MooringsiteBooking.objects.get(id=booking_item,booking=booking)
-            if ms_booking.from_dt.date() > datetime.now().date(): 
-                ms_booking.delete()
+            msb = datetime.strptime(str(ms_booking.from_dt.strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')+timedelta(hours=8)
+            if msb > nowtime:
+                  ms_booking.delete()
             else:
-                response_data['result'] = 'error'
-                response_data['message'] = 'Unable to delete booking'
+                  response_data['result'] = 'error'
+                  response_data['message'] = 'Unable to delete booking'
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 
 @csrf_exempt
