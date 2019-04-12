@@ -19,7 +19,7 @@
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
             <div class='input-group date'>
-                <input type="text" :readonly="readonly" :name="name" class="form-control" placeholder="DD/MM/YYYY" :value="value" :required="isRequired"/>
+                <input type="text" :readonly="readonly" :name="name" class="form-control" placeholder="DD/MM/YYYY" v-model="value" :required="isRequired"/>
                 <span class="input-group-addon">
                     <span class="glyphicon glyphicon-calendar"></span>
                 </span>
@@ -50,15 +50,20 @@ export default {
             'canViewComments',
         ]),
         isChecked: function() {
-        //TODO return value from database
-        return false;
+            //TODO return value from database
+            return false;
         },
         options: function() {
         return JSON.stringify(this.conditions);
         },
-        value: function() {
-            return this.field_data.value;
-        }
+        value: {
+            get: function() {
+                return this.field_data.value;
+            },
+            set: function(value) {
+                this.field_data.value = value;
+            }
+        },
     },
     methods:{
         toggleComment(){
@@ -67,7 +72,9 @@ export default {
     },
     mounted: function() {
         $('.date').datetimepicker({
-        format: 'DD/MM/YYYY'
+            format: 'DD/MM/YYYY'
+        }).off('dp.change').on('dp.change', (e) => {
+            this.value = $(e.target).data('DateTimePicker').date().format('DD/MM/YYYY');
         });
     }
 }

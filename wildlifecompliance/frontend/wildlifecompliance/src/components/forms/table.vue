@@ -21,7 +21,7 @@
             <!-- the next line required for saving value JSON-ified table to application.data - creates an invisible field -->
             <textarea readonly="readonly" class="form-control" rows="5" :name="name" style="display:none;">{{ field_data.value }}</textarea><br/>
 
-            <div id="content-editable-table">
+            <div class="content-editable-table">
               <table class="table table-striped editable-table">
                 <thead v-if="table.thead.length">
                   <tr>
@@ -192,12 +192,11 @@ const TableBlock = {
 
         vm.updateTableJSON();
 
-        //$('#content-editable-table').on('change', '[type="text"]', function() {
-        $('#content-editable-table').on('change', '.tbl_input', function() {
+        $('.content-editable-table').on('change', '.tbl_input', function() {
             vm.updateTableJSON();
         });
 
-        $("#content-editable-table").on("click", ".ibtnDel", function (event) {
+        $(".content-editable-table").on("click", ".ibtnDel", function (event) {
             $(this).closest("tr").remove();
         });
 
