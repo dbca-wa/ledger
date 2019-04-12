@@ -103,6 +103,7 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
                         or search_text in ', '.join(application.licence_purpose_names).lower()
                         or search_text in application.applicant
                         or search_text in application.processing_status
+                        or search_text in application.customer_status
                         or search_text in application.payment_status):
                             search_text_app_ids.append(application.id)
                     # if applicant is not an organisation, also search against the user's email address
