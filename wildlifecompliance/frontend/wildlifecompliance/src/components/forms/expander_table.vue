@@ -17,8 +17,6 @@
             <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
         </div>
 
-        <!--<textarea readonly="readonly" class="form-control form-value" :name="name">{{ value }}</textarea>-->
-
         <div class="expander-table" v-for="(table, tableIdx) in expanderTables">
             <div class="row header-row">
                 <div :class="`col-xs-${Math.floor(12 / component.header.length)}`"
@@ -34,7 +32,7 @@
                             v-bind:key="`expander_header_contents_${component.name}_${index}`"
                             />
                         </span>
-                        <a v-if="tableIdx && index == component.header.length-1" class="delete-icon fa fa-trash-o" title="Delete row"
+                        <a v-if="tableIdx && index == component.header.length-1 && !readonly" class="delete-icon fa fa-trash-o" title="Delete row"
                             @click.prevent="removeTable(table)"></a>
                 </div>
             </div>
@@ -51,7 +49,7 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        <div class="row" v-if="!readonly">
             <input type="button" value="Add New" class="btn btn-primary add-new-button"
                 @click.prevent="addNewTable">
         </div>
