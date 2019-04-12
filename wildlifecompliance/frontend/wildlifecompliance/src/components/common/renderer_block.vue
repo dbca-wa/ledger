@@ -406,8 +406,6 @@ const RendererBlock = {
             }
         }
     },
-  },
-  mounted: function() {
   }
 }
 

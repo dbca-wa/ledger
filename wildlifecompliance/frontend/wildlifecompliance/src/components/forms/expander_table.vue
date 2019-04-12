@@ -175,8 +175,6 @@ const ExpanderTable = {
         value: function() {
             return this.json_data;
         },
-    },
-    mounted:function () {
     }
 }
 

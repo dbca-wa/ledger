@@ -97,7 +97,6 @@ export default {
         'application',
         'selected_activity_tab_id',
         'renderer_tabs',
-        'renderer_form_data',
         'unfinishedActivities',
         'sectionsForTab',
     ]),
