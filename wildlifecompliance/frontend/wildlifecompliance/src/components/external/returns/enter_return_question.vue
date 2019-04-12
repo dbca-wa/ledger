@@ -4,20 +4,13 @@
 
     <Returns v-if="isReturnsLoaded">
     <div class="row">
-      <div class="col-md-3">
-        <h3>Return: {{ returns.id }}</h3>
-      </div>
+
       <!-- div class="col-md-1" div -->
       <div class="col-md-8">
         <div class="row">
           <template>
-            <div >
-              <ul class="nav nav-tabs">
-                <li ><a data-toggle="tab" :href="returnTab">Return</a></li>
-              </ul>
-            </div>
-            <div  class="tab-content">
-              <div :id="returnTab" class="tab-pane fade active in">
+
+
                 <div class="panel panel-default">
                   <div class="panel-heading">
                     <h3 class="panel-title">Return
@@ -41,8 +34,7 @@
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+
             <input type='hidden' name="table_name" :value="returns.table[0].name" />
           </template>
           <!-- End template for Return Tab -->
@@ -84,7 +76,6 @@ export default {
     let vm = this;
     return {
         pdBody: 'pdBody' + vm._uid,
-        returnTab: 'returnTab'+vm._uid,
         form: null,
         returnBtn: 'Submit',
         dateFormat: 'DD/MM/YYYY',
@@ -133,6 +124,7 @@ export default {
      next(vm => {
        vm.load({ url: `/api/returns/${to.params.return_id}.json` })
      });
+
   },
 }
 </script>

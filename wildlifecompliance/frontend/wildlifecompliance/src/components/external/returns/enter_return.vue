@@ -4,20 +4,12 @@
 
     <Returns v-if="isReturnsLoaded">
     <div class="row">
-      <div class="col-md-3">
-        <h3>Return: {{ returns.id }}</h3>
-      </div>
+
       <!-- div class="col-md-1" div -->
       <div class="col-md-8">
         <div class="row">
-          <template>
-            <div >
-              <ul class="nav nav-tabs">
-                <li ><a data-toggle="tab" :href="returnTab">Return</a></li>
-              </ul>
-            </div>
-            <div  class="tab-content">
-              <div :id="returnTab" class="tab-pane fade active in">
+
+
                 <div class="panel panel-default">
                   <div class="panel-heading">
                     <h3 class="panel-title">Return
@@ -59,7 +51,7 @@
                         <thead>
                         <tr>
                           <div v-for="(item,index) in returns.table">
-                            <th v-f="item.headers" v-for="header in item.headers">{{header.title}}</th>
+                            <th v-if="item.headers" v-for="header in item.headers">{{header.label}}</th>
                           </div>
                         </tr>
                         </thead>
@@ -68,7 +60,7 @@
                           <div v-for="(item,index) in returns.table">
                             <td v-if="item.headers" v-for="header in item.headers">
                               <div v-for ="item1 in item.data">
-                                <input v-for="(title,key) in item1" v-if="key == header.title" class="form-control returns" :name="`${item.name}::${header.title}`" :data-species="`${header.species}`" v-model="title.value">
+                                <input v-for="(title,key) in item1" v-if="key == header.label" class="form-control returns" :name="`${item.name}::${header.label}`" :data-species="`${header.species}`" v-model="title.value">
                               </div>
                             </td>
                           </div>
@@ -88,10 +80,8 @@
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+
             <input type='hidden' name="table_name" :value="returns.table[0].name" />
-          </template>
           <!-- End template for Return Tab -->
           <div class="row" style="margin-bottom:50px;">
             <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
@@ -137,7 +127,6 @@ export default {
     let vm = this;
     return {
         pdBody: 'pdBody' + vm._uid,
-        returnTab: 'returnTab'+vm._uid,
         form: null,
         spreadsheet: null,
         returnBtn: 'Submit',
@@ -163,7 +152,15 @@ export default {
     }),
     ...mapActions([
         'setReturns',
+        'setReturnsTab',
     ]),
+    eventListeners: function(){
+      console.log('eventListener')
+      console.log(this)
+      $("[data-target!=''][data-target]").off("click").on("click", function (e) {
+        this.setReturnsTab(0, 'Return')
+      });
+    },
     save: function(e) {
       let vm = this;
       vm.form=document.forms.enter_return
@@ -250,6 +247,10 @@ export default {
                     });
     },
     
+  },
+  eventListeners: function(){
+     let vm = this;
+      $('#tabs-section li:first-child a').click();
   },
   beforeRouteEnter: function(to, from, next) {
      next(vm => {

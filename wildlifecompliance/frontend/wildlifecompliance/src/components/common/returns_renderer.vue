@@ -1,5 +1,22 @@
 <template lang="html">
     <div>
+        <div class="col-md-3">
+            <h3>Return: {{ returns.id }}</h3>
+        </div>
+        <div :class="`${form_width ? form_width : 'col-md-9'}`" id="returns-tabs">
+            <div >
+              <ul class="nav nav-tabs">
+                <li ><a data-toggle="tab_1">Return</a></li>
+              </ul>
+            </div>
+            <div class="tab-content">
+              <renderer-block :component="returns" :json_data="returnsData"
+                  v-if="returns.id"
+                  v-bind:key="`renderer_block_0`"
+              />
+              {{ this.$slots.default }}
+            </div>
+        </div>
     </div>
 </template>
 
@@ -15,7 +32,7 @@ export default {
   },
   data: function() {
     return {
-        return_tab_id: 0,
+        returns_tab_id: 0,
     }
   },
   props:{
@@ -26,28 +43,28 @@ export default {
     form_width: {
         type: String,
         default: 'col-md-9'
-    }
+    },
   },
   computed: {
-    // getters
-    //...mapGetters([
-    //    'application',
-    //    'selected_activity_tab_id',
-    //    'renderer_tabs',
-    //    'unfinishedActivities',
-    //    'sectionsForTab',
-    //]),
+    ...mapGetters([
+      'returns',
+      'selected_returns_tab_id',
+    ]),
+    returnsData: function() {
+        return this.returns;
+    }
   },
   methods: {
-    // setters
-    //...mapActions([
-    //    'setRendererTabs',
-    //    'setRendererSections',
-    //    'setActivityTab',
-    //]),
+    ...mapActions([
+      'setReturnsTab',
+    ]),
+    selectTab: function(component) {
+        this.returns_tab_id = component.id;
+        this.setReturnsTab({id: component.id, name: component.label});
+    },
   },
   mounted: function() {
-    // initialise functions.
+
   },
 }
 </script>
