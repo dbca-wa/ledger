@@ -12,20 +12,12 @@ class ClassificationAdmin(admin.ModelAdmin):
 class LocationAdmin(admin.ModelAdmin):
     pass
 
-@admin.register(models.SpeciesType)
-class SpeciesTypeAdmin(admin.ModelAdmin):
-    pass
-
-@admin.register(models.Species)
-class SpeciesAdmin(admin.ModelAdmin):
+@admin.register(models.ReportType)
+class ReportTypeAdmin(admin.ModelAdmin):
     pass
 
 @admin.register(models.Referrer)
 class ReferrerAdmin(admin.ModelAdmin):
-    pass
-
-@admin.register(models.Report)
-class ReportAdmin(admin.ModelAdmin):
     pass
 
 @admin.register(models.CallEmail)

@@ -26,6 +26,8 @@ class Classification(models.Model):
 
     class Meta:
         app_label = 'wildlifecompliance'
+        verbose_name = 'CM_Classification'
+        verbose_name_plural = 'CM_Classifications'
 
     def __str__(self):
         #return '{}'.format(self.name)
@@ -55,12 +57,14 @@ class Location(models.Model):
 
     class Meta:
         app_label='wildlifecompliance'
+        verbose_name = 'CM_Location'
+        verbose_name_plural = 'CM_Locations'
 
-    #def __str__(self):
-       # return '{}'.format(self.)
+    def __str__(self):
+       return str(self.street)
 
 
-class SpeciesType(models.Model):
+class ReportType(models.Model):
     TYPE_CHOICES = (
             ('bird', 'Bird'),
             ('mammal', 'Mammal'),
@@ -71,31 +75,21 @@ class SpeciesType(models.Model):
             ('other', 'Other'),
             )
 
-    species_type = models.CharField(
+    report_type = models.CharField(
             max_length=50, 
             choices=TYPE_CHOICES,
             default='bird'
             )
 
-    class Meta:
-        app_label='wildlifecompliance'
-
-    def __str__(self):
-        return self.get_species_type_display()
-
-
-class Species(models.Model):
-    species_type = models.ForeignKey(
-            SpeciesType,
-            null=True
-            )
-    name = models.CharField(max_length=100, blank=True)
+    schema = JSONField(default=list)
 
     class Meta:
         app_label='wildlifecompliance'
+        verbose_name = 'CM_ReportType'
+        verbose_name_plural = 'CM_ReportTypes'
 
     def __str__(self):
-        return self.name
+        return self.get_report_type_display()
 
 
 class Referrer(models.Model):
@@ -103,46 +97,11 @@ class Referrer(models.Model):
 
     class Meta:
         app_label = 'wildlifecompliance'
+        verbose_name = 'CM_Referrer'
+        verbose_name_plural = 'CM_Referrers'
 
     def __str__(self):
         return self.name
-
-
-class Report(models.Model):
-    AGE_CHOICES = (
-            ('baby', 'Baby'),
-            ('juvenile', 'Juvenile'),
-            ('adult', 'Adult')
-            )
-    
-    species_type = models.ForeignKey(
-            SpeciesType,
-            null=True
-            )
-    species = models.ForeignKey(
-            Species,
-            null=True
-            )
-    report_type = models.CharField(max_length=100, blank=True)
-    schema = JSONField()
-    age = models.CharField(
-            max_length=20, 
-            choices=AGE_CHOICES, 
-            default='baby'
-            )
-    details = models.CharField(max_length=500, blank=True)
-    referred_to = models.ForeignKey(
-            Referrer,
-            null=True
-            )
-    advice_given = models.BooleanField(default=False)
-    advice_details = models.CharField(max_length=500, blank=True)
-
-    class Meta:
-        app_label='wildlifecompliance'
-
-    #def __str__(self):
-     #   return '{}'.format(self)
 
 
 class CallEmail(models.Model):
@@ -170,6 +129,7 @@ class CallEmail(models.Model):
             # default=1,
             # related_name='calls'
             )
+    data = JSONField(default=list)
     schema = JSONField(default=list)
     lodged_on = models.DateField(auto_now_add=True)
     number = models.CharField(max_length=50)
@@ -181,17 +141,16 @@ class CallEmail(models.Model):
     occurrence_time_from = models.TimeField(null=True)
     occurrence_date_to = models.DateField(null=True)
     occurrence_time_to = models.TimeField(null=True)
-    report = models.ForeignKey(
-            Report,
+    report_type = models.ForeignKey(
+            ReportType,
             null=True
             )
 
     class Meta:
         app_label = 'wildlifecompliance'
-        verbose_name = 'Call/Email'
-        verbose_name_plural = 'Calls/Emails'
+        verbose_name = 'CM_Call/Email'
+        verbose_name_plural = 'CM_Calls/Emails'
 
     def __str__(self):
-        #return self.status
-        return '{}'.format(self.status)
+        return str(self.id)
 

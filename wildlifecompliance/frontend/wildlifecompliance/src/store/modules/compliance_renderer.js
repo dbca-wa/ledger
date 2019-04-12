@@ -7,7 +7,7 @@ import {
 
 export const complianceRendererStore = {
     state: {
-        tabs: [],
+        tabs: ['one',],
         sections: {},
         visible_components: []
     },

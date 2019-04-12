@@ -126,6 +126,7 @@
             createCallEmail: function (e) {
                 let vm = this;
                 let formData = new FormData(vm.form);
+                console.log(formData);
                 vm.callEmailId = 66;
                 formData.append('additional_key_example', 'some_val') // example of additonal info sent to server
                 //console.log(formData);

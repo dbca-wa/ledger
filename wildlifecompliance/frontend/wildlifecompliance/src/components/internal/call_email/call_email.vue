@@ -1,7 +1,7 @@
 <template lang="html">
     <div class="container">
-
         <div class="row">
+
             <div class="col-sm-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -13,112 +13,68 @@
                         </h3>
                     </div>
                     <div class="panel-body collapse in" :id="pBody">
-                        <form class="form-horizontal" name="createForm" method="post">
+                        <!--
+                        <form method="post" name="newCallEmail" enctype="multipart/form-data">
+                        <form :action="call_email_form_url" method="post" name="newCallEmail" enctype="multipart/form-data">       
+                        -->
+                        <form method="post" name="newCallEmail">
                             <input type="hidden" name="create_type" value="call_email"/>
                             <input type="hidden" name="status" value="draft"/>
                             <div class="col-sm-12">
                                 <div class="row">
                                     <label class="col-sm-4">Classification</label>
-                                    <!--
-
-                                    <input type="text" :value="call_email.classification.name"
-                                    
-                                    @change="updateClassification">
-                                    -->
-                                    <input type="text" name="classification" v-model="call_email.classification.name">                                    
-                                    
+                                    <input type="text" name="classification" v-model="call_email.classification.name" value="Complaint">
                                 </div>
                             </div>
-                            <!--
-                            <div class="col-sm-12">
-                                <div class="row">
-                                    <label class="col-sm-4">Lodgment Date</label>
-                                    <input type="date" name="lodgement_date" v-model="lodgement_date">
-                                </div>
-                            </div>
-                            -->
+        
                             <div class="col-sm-12">
                                 <div class="row">
                                     <label class="col-sm-4">Number</label>
-                                    <!--
-                                    <input type="text" name="number" :value="call_email.number">
-
-                                    -->
-                                    <input type="text" name="number" v-model="call_email.number">                                    
+                                    <input type="text" name="number" v-model="call_email.number" value="CM67">
                                 </div>
                             </div>
                             <div class="col-sm-12">
                                 <div class="row">
                                     <label class="col-sm-4">Caller</label>
-                                    <input type="text" name="caller" v-model="call_email.caller">
+                                    <input type="text" name="caller" v-model="call_email.caller" value="Shayne">
                                 </div>
                             </div>
                             <div class="col-sm-12">
                                 <div class="row">
                                     <label class="col-sm-4">Assigned To</label>
-                                    <input type="text" name="assigned_to" v-model="call_email.assigned_to">
+                                    <input type="text" name="assigned_to" v-model="call_email.assigned_to" value="Brendan">
                                 </div>
+                            
                             </div>
-                            <div class="col-sm-12">
-                                <button @click.prevent="createCallEmail"
-                                    class="btn btn-primary pull-right">Update</button>
-                            </div>
-                        </form>
+
+        
+                        </form>   
+                        
                     </div>
                 </div>
             </div>
         </div>
-
-    <!--
-     <Application form_width="inherit" :withSectionsSelector="false" v-if="isApplicationLoaded">
-                                    <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-                                    <input type='hidden' name="schema" :value="JSON.stringify(application)" />
-                                    <input type='hidden' name="application_id" :value="1" />
-                                    <input type='hidden' id="selected_activity_tab_id" v-model="selected_activity_tab_id" />
-                                    <div class="row" style="margin-bottom:50px;">
-                                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
-                                            <div class="navbar-inner">
-                                                <div class="container">
-                                                    <p class="pull-right" style="margin-top:5px;">
-                                                        <button v-if="canReturnToConditions" class="btn btn-primary" @click.prevent="returnToOfficerConditions()">Return to Officer - Conditions</button>
-                                                        <button v-if="canCompleteAssessment" class="btn btn-info" @click.prevent="toggleConditions()">Assess</button>
-                                                        <button v-if="!applicationIsDraft && canRequestAmendment" class="btn btn-primary" @click.prevent="save()">Save Changes</button>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Application>
-            -->
-            <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
-            <CallEmail form_width="inherit" :withSectionsSelector="false" >
-                
-                                    <input type='hidden' name="schema" :value="JSON.stringify(call_email)" />
-                                    <div class="row" style="margin-bottom:50px;">
-                                        <!--
-                                        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
-                                            <div class="navbar-inner">
-                                                <div class="container">
-                                                    <p class="pull-right" style="margin-top:5px;">
-                                                        <button class="btn btn-primary" @click.prevent="returnToOfficerConditions()">Return to Officer - Conditions</button>
-                                                        <button class="btn btn-info" @click.prevent="toggleConditions()">Assess</button>
-                                                        <button class="btn btn-primary" @click.prevent="save()">Save Changes</button>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        
-                                        </div>
-                                        -->
-                                    </div>
-
-
-            </CallEmail>
-                
-            </div>   
+        <form method="post" name="callEmailUpdate">
+            <div>
+                <div v-for="dict in call_email.report_type.schema">
+                <div v-for="(item, index) in dict.children[0].children">
+                    <compliance-renderer-block
+                        :component="item" 
+                        :json_data="nothing"
+                        v-bind:key="`q_${index}`"
+                        />
+                </div>
+                </div>
+                </div>
+                <div class="col-sm-12">
+                    <button @click.prevent="createCallEmail"
+                        class="btn btn-primary pull-right">Save</button>
+                </div>
+        </form>
     </div>
 </template>
 <script>
-    import CallEmail from '../../../components/compliance_form.vue'
+    //import CallEmail from '../../../components/compliance_form.vue'
     import Vue from 'vue'
     import CommsLogs from '@common-utils/comms_logs.vue'
     import {
@@ -127,10 +83,10 @@
     }
     from '@/utils/hooks'
     import utils from '@/components/external/utils'
-    //import { mapState, mapGetters, mapActions, mapMutations } from 'vuex'
+    import { mapState, mapGetters, mapActions, mapMutations } from 'vuex'
     //import { mapFields } from 'vuex-map-fields'
-    import { createNamespacedHelpers } from 'vuex'
-    const { mapState, mapGetters, mapActions } = createNamespacedHelpers('callemailStore')
+    //import { createNamespacedHelpers } from 'vuex'
+    //const { mapState, mapGetters, mapActions } = createNamespacedHelpers('callemailStore')
     export default {
         name: 'ViewCallEmail',
         data: function () {
@@ -143,6 +99,16 @@
                         comms_url: 'www.google.com',
                         comms_add_url: 'www.google.com',
                         logs_url: 'www.google.com',
+                        rend_text_area: {
+                        id: '1',
+                        label: 'label',
+                        status: 'status',
+                        type: 'text_area'
+                        },
+                        nothing: null,
+                        renderer_form: {},
+                        new_form: {},
+                        //data: function() {}
                         /*
                         call_email: function() {
                         console.log("computed");
@@ -170,7 +136,7 @@
         },
         
         components: {
-            CallEmail,
+            //CallEmail,
             CommsLogs
         },
         computed: {
@@ -180,10 +146,10 @@
             }
             ),
             */
-            ...mapGetters([
-                'call_email',
+            ...mapGetters({
+                call_email: 'callemailStore/call_email',
 
-            ]),
+            }),
             /*
             ...mapFields({
                 callemail_classification_name: "call_email.classification['name']",
@@ -196,13 +162,20 @@
             isLoading: function () {
                 return this.loading.length > 0
             },
-            
+            call_email_form_url: function() {
+                return (this.call_email) ? `/api/call_email/${this.call_email.id}/update_call.json` : '';
+            },
+            /*
+            renderer_form: function() {
+                this.form = document.forms.callEmailUpdate;
+            },
+            */
             
             //call_email: this.$store.call_email
         },
         methods: {
             ...mapActions({
-                load: 'loadCallEmail',
+                load: 'callemailStore/loadCallEmail',
             }),
             /*
             ...mapMutations([
@@ -220,11 +193,16 @@
             },
             */
             createCallEmail: function (e) {
-                let formData = new FormData(this.form);
+                this.renderer_form = document.forms.callEmailUpdate;
+                this.new_form = document.forms.newCallEmail;
+                let formData = new FormData(this.renderer_form);
                 
-                formData.append('additional_key_example', 'some_val') // example of additonal info sent to server
-                console.log(this);
-                this.$http.post('/api/call_email/', formData).then(
+                //formData.append('additional_key_example', 'some_val') // example of additonal info sent to server
+                console.log(formData);
+                this.$http.post(helpers.add_endpoint_join(
+                    api_endpoints.call_email,
+                    this.call_email.id+'/update_renderer_form/'), formData)
+                .then(
                     res => {
                     swal(
                         'Saved',
@@ -238,11 +216,15 @@
                 });
                 */    
             },
+            
         },
         /*
         watch: {
+            renderer_form: function() {
+                this.renderer_form = document.forms.callEmailUpdate;
+            }
 
-        }
+        },
         */
         beforeRouteEnter: function (to, from, next) {
             console.log("before route enter");
@@ -258,12 +240,25 @@
         
         mounted: function () {
             //this.form = document.forms.createForm;
-            
+            //this.form = document.forms.createForm;
+            //this.form = document.forms.newCallEmail;
+            //this.renderer_form = document.forms.newCallEmail;
+            //this.renderer_form = document.forms.callEmailUpdate;
             this.$nextTick( function() {
-            this.form = document.forms.createForm;
+            this.renderer_form = document.forms.callEmailUpdate;
+            this.new_form = document.forms.newCallEmail;
+            //this.form = document.forms.new_call_email;
+            //this.form = document.forms.createForm;
             })
             
         },
+        
+        /*
+        mounted: function () {
+            let vm = this;
+            vm.form = document.forms.createForm;
+        },
+        */
 
 
     }
