@@ -144,8 +144,10 @@ export default {
                 dataSrc: '',
                 type: 'GET',
                 data: function(_data) {
-                  _data.return_id = window.location.href.split("/")[6]
-                  _data.species_id = window.location.href.split("/")[7]
+                  let URL_RETURN_ID_IDX = 6;
+                  let URL_SPECIES_ID_IDX = 7;
+                  _data.return_id = window.location.href.split("/")[URL_RETURN_ID_IDX]
+                  _data.species_id = window.location.href.split("/")[URL_SPECIES_ID_IDX]
                   return _data;
                 },
             },
