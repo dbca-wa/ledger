@@ -231,7 +231,6 @@ class Application(RevisionedMixin):
         choices=APPLICATION_TYPE_CHOICES,
         default=APPLICATION_TYPE_NEW_LICENCE)
     comment_data = JSONField(blank=True, null=True)
-    schema = JSONField(blank=False, null=False)
     licence_purposes = models.ManyToManyField(
         'wildlifecompliance.LicencePurpose',
         blank=True
@@ -938,8 +937,13 @@ class Application(RevisionedMixin):
             return WildlifeLicence.objects.none()
 
     @property
+    def schema(self):
+        from wildlifecompliance.components.applications.utils import get_activity_schema
+        return get_activity_schema(self.activities.values_list('licence_activity_id', flat=True))
+
+    @property
     def data(self):
-        """ returns a queryset of activities attached to application (shortcut to ApplicationSelectedActivity related_name). """
+        """ returns a queryset of form data records attached to application (shortcut to ApplicationFormDataRecord related_name). """
         return self.form_data_records.all()
 
     @property

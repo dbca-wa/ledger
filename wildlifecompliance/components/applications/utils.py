@@ -41,9 +41,7 @@ class SchemaParser(object):
                     instance.schema, request.POST, request.FILES)
 
                 self.raise_missing_fields_exception()
-                instance.data = extracted_fields
                 data = {
-                    'data': extracted_fields,
                     'customer_status': instance.customer_status,
                 }
                 serializer = SaveApplicationSerializer(
@@ -398,7 +396,6 @@ def get_activity_schema(activity_ids):
     from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
     schema_activity = []
     schema_tab = []
-
     try:
         activities = LicencePurpose.objects.filter(
             id__in=activity_ids

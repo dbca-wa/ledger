@@ -16,7 +16,6 @@ from django.shortcuts import redirect
 from wildlifecompliance.components.applications.utils import (
     SchemaParser,
     MissingFieldsException,
-    get_activity_schema
 )
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
@@ -723,9 +722,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             application_fee = request.data.get('application_fee')
             licence_fee = request.data.get('licence_fee')
             licence_purposes = request.data.get('licence_purposes')
-            schema_data = get_activity_schema(licence_purposes)
             data = {
-                'schema': schema_data,
                 'submitter': request.user.id,
                 'licence_type_data': licence_category_data,
                 'org_applicant': org_applicant,

@@ -92,6 +92,7 @@ const ExpanderTable = {
     data(){
         return {
             expanded: {},
+            showingComment: false,
         };
     },
     methods: {
@@ -130,6 +131,9 @@ const ExpanderTable = {
                 tableId = this.getTableId(this.lastTableId+1);
             }
             this.existingTables.push(tableId);
+            this.updateVisibleTables(
+                this.existingTables
+            );
         },
         updateVisibleTables: function(tableList) {
             this.setFormValue({
