@@ -134,10 +134,7 @@ export default {
                        vm.handleChange(selected[0])
                        e.preventDefault();
                         if( vm.isMultiple){
-                            console.log(">>> Assigning: ", selected.val());
-                            vm.field_data.value = selected.val();
-                            vm.multipleSelected = selected.val();
-                            console.log(">>> Done: ", vm.field_data.value);
+                            vm.field_data.value = vm.multipleSelected = selected.val();
                         }
                    }).
                    on("select2:unselect",function (e) {

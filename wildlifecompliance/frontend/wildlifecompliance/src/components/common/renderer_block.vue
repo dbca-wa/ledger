@@ -107,7 +107,7 @@
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
-        <TextAreaBlock v-if="component.type === 'text_area' || component.type === 'text-area'"
+        <TextAreaBlock v-if="component.type === 'text_area'"
             :readonly="is_readonly"
             :name="component_name"
             :field_data="value"
@@ -299,12 +299,6 @@ const RendererBlock = {
           type: Object,
           required: true
       },
-      /*
-      json_data: {
-          type: Object | null,
-          required: true
-      },
-      */
       instance: {
           type: String,
           default: null
@@ -338,18 +332,6 @@ const RendererBlock = {
     json_data: function() {
         return this.renderer_form_data;
     },
-    isInput: function() {
-        switch(this.component.type) {
-            case 'tab':
-            case 'section':
-            case 'group':
-            case 'expander_table':
-                return false;
-            break;
-        }
-
-        return true;
-    },
     value: {
         get: function() {
             if(this.json_data == null) {
@@ -358,7 +340,11 @@ const RendererBlock = {
             if(this.json_data[this.component_name] == null) {
                 this.setFormValue({
                     key: this.component_name,
-                    value: {"value": ''}
+                    value: {
+                        "value": '',
+                        "schema_name": this.component.name,
+                        "component_type": this.component.type
+                    }
                 });
             }
             return this.json_data[this.component_name];
@@ -366,7 +352,7 @@ const RendererBlock = {
         set: function(value) {
             this.setFormValue({
                 key: this.component_name,
-                value: {"value": value}
+                value: { "value": value }
             });
         }
     },

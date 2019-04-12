@@ -164,12 +164,14 @@ class ApplicationFormDataRecordSerializer(serializers.ModelSerializer):
         fields = (
             'field_name',
             'schema_name',
+            'component_type',
             'instance_name',
             'value',
         )
         read_only_fields = (
             'field_name',
             'schema_name',
+            'component_type',
             'instance_name',
             'value',
         )

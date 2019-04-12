@@ -97,7 +97,8 @@ const ExpanderTable = {
     },
     methods: {
         ...mapActions([
-            'removeFormInstance'
+            'removeFormInstance',
+            'setFormValue'
         ]),
         toggleComment(){
             this.showingComment = ! this.showingComment;
@@ -121,10 +122,20 @@ const ExpanderTable = {
             this.removeFormInstance(
                 this.getInstanceName(tableId)
             );
+            this.updateTableCount();
         },
         addNewTable: function() {
             const tableId = this.getTableId(this.tableList.length);
             this.tableList.push(tableId);
+            this.updateTableCount();
+        },
+        updateTableCount: function() {
+            this.setFormValue({
+                key: this.component.name,
+                value: {
+                    "value": this.tableList.length,
+                }
+            });
         },
         getTableId: function(tableIdx) {
             return `${this.id}_table_${tableIdx}`;
@@ -136,8 +147,19 @@ const ExpanderTable = {
     computed:{
         ...mapGetters([
             'canViewComments',
+            'getFormValue',
         ]),
+        expectedTableCount: function() {
+            return this.getFormValue(this.component.name) || 1;
+        },
         expanderTables: function() {
+            if(this.tableList.length < this.expectedTableCount) {
+                [...Array(
+                    this.expectedTableCount - this.tableList.length
+                    )].map(i => {
+                        this.addNewTable();
+                })
+            }
             return this.tableList;
         },
         value: function() {
@@ -145,7 +167,6 @@ const ExpanderTable = {
         },
     },
     mounted:function () {
-        this.addNewTable();
     }
 }
 

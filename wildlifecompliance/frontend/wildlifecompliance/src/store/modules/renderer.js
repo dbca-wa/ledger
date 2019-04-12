@@ -54,6 +54,9 @@ export const rendererStore = {
         sectionsForTab: (state) => (tab_id) => {
             return state.sections[tab_id] ? state.sections[tab_id] : [];
         },
+        getFormValue: (state) => (component_name) => {
+            return state.form_data[component_name] ? state.form_data[component_name].value : null;
+        }
     },
     mutations: {
         [UPDATE_RENDERER_TABS] (state, tabs) {
@@ -77,7 +80,11 @@ export const rendererStore = {
             }
         },
         [UPDATE_FORM_FIELD] (state, { key, value }) {
-            Vue.set(state.form_data, key, value);
+            let currentValue = state.form_data[key] ? {...state.form_data[key]} : {};
+            for(let idx in value) {
+                currentValue[idx] = value[idx];
+            }
+            Vue.set(state.form_data, key, currentValue);
         },
         [REMOVE_FORM_FIELD] (state, key) {
             Vue.delete(state.form_data, key);
