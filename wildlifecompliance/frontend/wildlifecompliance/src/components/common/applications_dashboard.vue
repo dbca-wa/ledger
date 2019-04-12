@@ -108,16 +108,21 @@ export default {
                     return data;
                 }
             },
-            {data: "category_name"},
+            {
+                data: "category_name",
+                searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
+            },
             {
                 data: "purpose_string",
                 mRender:function (data,type,full) {
                     let output = data.replace(/(?:\r\n|\r|\n|,)/g, '<br>');
                     return output;
-                }
+                },
+                searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "submitter",
+                name: "submitter__first_name, submitter__last_name, submitter__email",
                 mRender:function (data,type,full) {
                     if (data) {
                         return `${data.first_name} ${data.last_name}`;
@@ -125,18 +130,23 @@ export default {
                     return ''
                 }
             },
-            {data: "applicant"},
+            {
+                data: "applicant",
+                searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
+            },
             {
                 data: "processing_status",
                 mRender:function(data,type,full){
                     return vm.is_external ? full.customer_status.name: data.name;
-                }
+                },
+                searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "payment_status",
                 mRender:function(data,type,full){
                     return vm.is_external ? full.customer_status.name: data;
-                }
+                },
+                searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "lodgement_date",
@@ -144,7 +154,10 @@ export default {
                     return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                 }
             },
-            {data: "assigned_officer"},
+            {
+                data: "assigned_officer",
+                name: "assigned_officer__first_name, assigned_officer__last_name, assigned_officer__email"
+            },
             {
                 // Actions
                 mRender:function (data,type,full) {
@@ -163,7 +176,8 @@ export default {
                         }
                     }
                     return links;
-                }
+                },
+                searchable: false
             }
         ]
         

@@ -77,29 +77,52 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
     """
     def filter_queryset(self, request, queryset, view):
         total_count = queryset.count()
-        #
         # date_from = request.GET.get('date_from')
         # date_to = request.GET.get('date_to')
-        # if queryset.model is Application:
-        #     if date_from:
-        #         queryset = queryset.filter(lodgement_date__gte=date_from)
-        #
-        #     if date_to:
-        #         queryset = queryset.filter(lodgement_date__lte=date_to)
-        queryset = super(ApplicationFilterBackend, self).filter_queryset(request, queryset, view)
+        # category_name = request.GET.get('category_name')
+        # purpose_string = request.GET.get('purpose_string')
+        # processing_status = request.GET.get('processing_status')
+        # applicant = request.GET.get('applicant')
+        # payment_status = request.GET.get('payment_status')
+        search_text = request.GET.get('search[value]')
+        if queryset.model is Application:
+            if date_from:
+                queryset = queryset.filter(lodgement_date__gte=date_from)
+            if date_to:
+                queryset = queryset.filter(lodgement_date__lte=date_to)
+            # if category_name:
+            #     queryset = queryset.filter(licence_category=category_name)
+            if search_text:
+                purpose_matching_app_ids = []
+                for application in queryset:
+                    if search_text in ', '.join(application.licence_purpose_names).lower():
+                        purpose_matching_app_ids.append(application.id)
+                queryset = queryset.filter(id__in=purpose_matching_app_ids)
+            # if processing_status:
+            #     processing_status_matching_ids = []
+            #     for application in queryset:
+            #         if processing_status == application.processing_status:
+            #             processing_status_matching_ids.append(application.id)
+            #     queryset = queryset.filter(id__in=processing_status_matching_ids)
+            # if applicant:
+            #     queryset = queryset.filter(licence_category=category_name)
+            # if payment_status:
+            #     queryset = queryset.filter(licence_category=category_name)
+
+        queryset = queryset.distinct() | super(ApplicationFilterBackend, self).filter_queryset(request, queryset, view).distinct()
         setattr(view, '_datatables_total_count', total_count)
         return queryset
 
 
 class ApplicationRenderer(DatatablesRenderer):
     def render(self, data, accepted_media_type=None, renderer_context=None):
-        # if 'view' in renderer_context and hasattr(renderer_context.get('view'), '_datatables_total_count'):
-        #     data['recordsTotal'] = renderer_context.get('view')._datatables_total_count
+        if 'view' in renderer_context and hasattr(renderer_context['view'], '_datatables_total_count'):
+            data['recordsTotal'] = renderer_context['view']._datatables_total_count
         return super(ApplicationRenderer, self).render(data, accepted_media_type, renderer_context)
 
 
 class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
-    filter_backends = (DatatablesFilterBackend,)
+    filter_backends = (ApplicationFilterBackend,)
     pagination_class = DatatablesPageNumberPagination
     renderer_classes = (ApplicationRenderer,)
     queryset = Application.objects.none()
@@ -120,7 +143,7 @@ class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET', ])
     def internal_datatable_list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        # queryset = self.filter_queryset(queryset)
+        queryset = self.filter_queryset(queryset)
         self.paginator.page_size = queryset.count()
         result_page = self.paginator.paginate_queryset(queryset, request)
         serializer = DTInternalApplicationSerializer(result_page, context={'request': request}, many=True)
@@ -128,8 +151,16 @@ class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['GET', ])
     def external_datatable_list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        # queryset = self.filter_queryset(queryset)
+        user_orgs = [
+            org.id for org in request.user.wildlifecompliance_organisations.all()]
+        queryset = self.get_queryset().filter(
+            Q(submitter=request.user) |
+            Q(proxy_applicant=request.user) |
+            Q(org_applicant_id__in=user_orgs)
+        ).computed_exclude(
+            processing_status=Application.PROCESSING_STATUS_DISCARDED
+        ).distinct()
+        queryset = self.filter_queryset(queryset)
         self.paginator.page_size = queryset.count()
         result_page = self.paginator.paginate_queryset(queryset, request)
         serializer = DTExternalApplicationSerializer(result_page, context={'request': request}, many=True)
