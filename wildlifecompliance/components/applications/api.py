@@ -16,7 +16,6 @@ from django.shortcuts import redirect
 from wildlifecompliance.components.applications.utils import (
     SchemaParser,
     MissingFieldsException,
-    get_activity_schema
 )
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
@@ -30,7 +29,8 @@ from wildlifecompliance.components.applications.models import (
     AmendmentRequest,
     ApplicationUserAction,
     search_keywords,
-    search_reference
+    search_reference,
+    ApplicationFormDataRecord,
 )
 from wildlifecompliance.components.applications.serializers import (
     ApplicationSerializer,
@@ -663,6 +663,24 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
+    def form_data(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            ApplicationFormDataRecord.process_form(instance, request.data)
+            return redirect(reverse('external'))
+        except MissingFieldsException as e:
+            return Response({
+                'missing': e.error_list},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+        raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
     def application_officer_save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -704,9 +722,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             application_fee = request.data.get('application_fee')
             licence_fee = request.data.get('licence_fee')
             licence_purposes = request.data.get('licence_purposes')
-            schema_data = get_activity_schema(licence_purposes)
             data = {
-                'schema': schema_data,
                 'submitter': request.user.id,
                 'licence_type_data': licence_category_data,
                 'org_applicant': org_applicant,

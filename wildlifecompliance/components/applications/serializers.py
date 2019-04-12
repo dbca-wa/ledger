@@ -9,7 +9,8 @@ from wildlifecompliance.components.applications.models import (
     Assessment,
     ActivityPermissionGroup,
     AmendmentRequest,
-    ApplicationSelectedActivity
+    ApplicationSelectedActivity,
+    ApplicationFormDataRecord,
 )
 from wildlifecompliance.components.organisations.models import (
     Organisation
@@ -157,6 +158,25 @@ class ExternalAmendmentRequestSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ApplicationFormDataRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ApplicationFormDataRecord
+        fields = (
+            'field_name',
+            'schema_name',
+            'component_type',
+            'instance_name',
+            'value',
+        )
+        read_only_fields = (
+            'field_name',
+            'schema_name',
+            'component_type',
+            'instance_name',
+            'value',
+        )
+
+
 class BaseApplicationSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     licence_type_short_name = serializers.ReadOnlyField()
@@ -178,6 +198,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     processed = serializers.SerializerMethodField()
     id_check_status = CustomChoiceField(read_only=True)
     processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
+    data = ApplicationFormDataRecordSerializer(many=True)
 
     class Meta:
         model = Application

@@ -18,7 +18,7 @@
                 </template>
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
-            <textarea :readonly="readonly" class="form-control" rows="5" :name="name" :required="isRequired">{{ value }}</textarea><br/>
+            <textarea :readonly="readonly" class="form-control" rows="5" :name="name" :required="isRequired" v-model="field_data.value"></textarea><br/>
         </div>
         <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :value="comment_value"/>
     </div>
@@ -30,7 +30,7 @@ import HelpText from './help_text.vue';
 import HelpTextUrl from './help_text_url.vue';
 import { mapGetters } from 'vuex';
 export default {
-    props:["name", "value", "id", "isRequired", "help_text", "label", "readonly", "comment_value", "help_text_url"],
+    props:["name", "field_data", "id", "isRequired", "help_text", "label", "readonly", "comment_value", "help_text_url"],
     components: {Comment, HelpText, HelpTextUrl},
     data(){
         let vm = this;

@@ -10,7 +10,7 @@ from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
-from django.utils import timezone
+from django.utils import timezone, six
 from django.utils.encoding import python_2_unicode_compatible
 
 from ledger.accounts.models import EmailUser, RevisionedMixin
@@ -230,9 +230,7 @@ class Application(RevisionedMixin):
         max_length=40,
         choices=APPLICATION_TYPE_CHOICES,
         default=APPLICATION_TYPE_NEW_LICENCE)
-    data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
-    schema = JSONField(blank=False, null=False)
     licence_purposes = models.ManyToManyField(
         'wildlifecompliance.LicencePurpose',
         blank=True
@@ -939,6 +937,16 @@ class Application(RevisionedMixin):
             return WildlifeLicence.objects.none()
 
     @property
+    def schema(self):
+        from wildlifecompliance.components.applications.utils import get_activity_schema
+        return get_activity_schema(self.activities.values_list('licence_activity_id', flat=True))
+
+    @property
+    def data(self):
+        """ returns a queryset of form data records attached to application (shortcut to ApplicationFormDataRecord related_name). """
+        return self.form_data_records.all()
+
+    @property
     def activities(self):
         """ returns a queryset of activities attached to application (shortcut to ApplicationSelectedActivity related_name). """
         return self.selected_activities.exclude(processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED)
@@ -1485,6 +1493,98 @@ class ApplicationSelectedActivity(models.Model):
 
     class Meta:
         app_label = 'wildlifecompliance'
+
+
+@python_2_unicode_compatible
+class ApplicationFormDataRecord(models.Model):
+
+    INSTANCE_ID_SEPARATOR = "__instance-"
+
+    COMPONENT_TYPE_TEXT = 'text'
+    COMPONENT_TYPE_TAB = 'tab'
+    COMPONENT_TYPE_SECTION = 'section'
+    COMPONENT_TYPE_GROUP = 'group'
+    COMPONENT_TYPE_NUMBER = 'number'
+    COMPONENT_TYPE_EMAIL = 'email'
+    COMPONENT_TYPE_SELECT = 'select'
+    COMPONENT_TYPE_MULTI_SELECT = 'multi-select'
+    COMPONENT_TYPE_TEXT_AREA = 'text_area'
+    COMPONENT_TYPE_TABLE = 'table'
+    COMPONENT_TYPE_EXPANDER_TABLE = 'expander_table'
+    COMPONENT_TYPE_LABEL = 'label'
+    COMPONENT_TYPE_RADIO = 'radiobuttons'
+    COMPONENT_TYPE_CHECKBOX = 'checkbox'
+    COMPONENT_TYPE_DECLARATION = 'declaration'
+    COMPONENT_TYPE_FILE = 'file'
+    COMPONENT_TYPE_DATE = 'date'
+    COMPONENT_TYPE_CHOICES = (
+        (COMPONENT_TYPE_TEXT, 'Text'),
+        (COMPONENT_TYPE_TAB, 'Tab'),
+        (COMPONENT_TYPE_SECTION, 'Section'),
+        (COMPONENT_TYPE_GROUP, 'Group'),
+        (COMPONENT_TYPE_NUMBER, 'Number'),
+        (COMPONENT_TYPE_EMAIL, 'Email'),
+        (COMPONENT_TYPE_SELECT, 'Select'),
+        (COMPONENT_TYPE_MULTI_SELECT, 'Multi-Select'),
+        (COMPONENT_TYPE_TEXT_AREA, 'Text Area'),
+        (COMPONENT_TYPE_TABLE, 'Table'),
+        (COMPONENT_TYPE_EXPANDER_TABLE, 'Expander Table'),
+        (COMPONENT_TYPE_LABEL, 'Label'),
+        (COMPONENT_TYPE_RADIO, 'Radio'),
+        (COMPONENT_TYPE_CHECKBOX, 'Checkbox'),
+        (COMPONENT_TYPE_DECLARATION, 'Declaration'),
+        (COMPONENT_TYPE_FILE, 'File'),
+        (COMPONENT_TYPE_DATE, 'Date'),
+    )
+
+    application = models.ForeignKey(Application, related_name='form_data_records')
+    field_name = models.CharField(max_length=512, null=True, blank=True)
+    schema_name = models.CharField(max_length=256, null=True, blank=True)
+    instance_name = models.CharField(max_length=256, null=True, blank=True)
+    component_type = models.CharField(
+        max_length=64,
+        choices=COMPONENT_TYPE_CHOICES,
+        default=COMPONENT_TYPE_TEXT)
+    value = JSONField(blank=True, null=True)
+    comment = models.TextField(blank=True)
+    deficiency = models.TextField(blank=True)
+
+    def __str__(self):
+        return "Application {id} record {field}: {value}".format(
+            id=self.application_id,
+            field=self.field_name,
+            value=self.value[:8]
+        )
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        unique_together = ('application', 'field_name',)
+
+    @staticmethod
+    def process_form(application, form_data):
+        for field_name, field_data in form_data.items():
+            schema_name = field_data.get('schema_name', '')
+            component_type = field_data.get('component_type', '')
+            value = field_data.get('value', '')
+            instance_name = ''
+
+            if ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR in field_name:
+                [parsed_schema_name, instance_name] = field_name.split(
+                    ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR
+                )
+                schema_name = schema_name if schema_name else parsed_schema_name
+
+            form_data_record, created = ApplicationFormDataRecord.objects.get_or_create(
+                application_id=application.id,
+                field_name=field_name
+            )
+            if created:
+                form_data_record.schema_name = schema_name
+                form_data_record.instance_name = instance_name
+                form_data_record.component_type = component_type
+
+            form_data_record.value = value
+            form_data_record.save()
 
 
 @python_2_unicode_compatible
