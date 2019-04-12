@@ -1,5 +1,6 @@
 import traceback
 import os
+from datetime import datetime, timedelta
 from django.db.models import Q
 from django.db import transaction
 from django.core.files.base import ContentFile
@@ -18,6 +19,7 @@ from wildlifecompliance.components.applications.utils import (
     MissingFieldsException,
     get_activity_schema
 )
+from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.applications.models import (
@@ -76,40 +78,74 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
     Custom filters
     """
     def filter_queryset(self, request, queryset, view):
+
+        # Get built-in DRF datatables queryset first to join with search text, then apply additional filters
+        super_queryset = super(ApplicationFilterBackend, self).filter_queryset(request, queryset, view).distinct()
+
         total_count = queryset.count()
-        # date_from = request.GET.get('date_from')
-        # date_to = request.GET.get('date_to')
-        # category_name = request.GET.get('category_name')
-        # purpose_string = request.GET.get('purpose_string')
-        # processing_status = request.GET.get('processing_status')
-        # applicant = request.GET.get('applicant')
-        # payment_status = request.GET.get('payment_status')
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        category_name = request.GET.get('category_name')
+        processing_status = request.GET.get('processing_status')
+        customer_status = request.GET.get('customer_status')
+        submitter = request.GET.get('submitter')
         search_text = request.GET.get('search[value]')
         if queryset.model is Application:
+
+            # search_text filter, join all custom search columns
+            # where ('searchable: false' in the datatable definiton)
+            if search_text:
+                search_text = search_text.lower()
+                # join queries for the search_text search
+                search_text_app_ids = []
+                for application in queryset:
+                    if (search_text in application.licence_category.lower()
+                        or search_text in ', '.join(application.licence_purpose_names).lower()
+                        or search_text in application.applicant
+                        or search_text in application.processing_status
+                        or search_text in application.payment_status):
+                            search_text_app_ids.append(application.id)
+                    # if applicant is not an organisation, also search against the user's email address
+                    if (application.applicant_type == Application.APPLICANT_TYPE_PROXY and
+                        search_text in application.proxy_applicant.email):
+                            search_text_app_ids.append(application.id)
+                    if (application.applicant_type == Application.APPLICANT_TYPE_SUBMITTER and
+                        search_text in application.submitter.email):
+                            search_text_app_ids.append(application.id)
+                # use pipe to join both custom and built-in DRF datatables querysets (returned by super call below)
+                # (otherwise they will filter on top of each other)
+                queryset = queryset.filter(id__in=search_text_app_ids).distinct() | super_queryset
+
+            # apply user selected filters
+            if category_name and category_name != 'All':
+                category_name = category_name.lower()
+                category_name_app_ids = []
+                for application in queryset:
+                    if category_name in application.licence_category.lower():
+                        category_name_app_ids.append(application.id)
+                queryset = queryset.filter(id__in=category_name_app_ids)
+            if processing_status and processing_status != 'All':
+                processing_status = processing_status.lower()
+                processing_status_app_ids = []
+                for application in queryset:
+                    if processing_status in application.processing_status.lower():
+                        processing_status_app_ids.append(application.id)
+                queryset = queryset.filter(id__in=processing_status_app_ids)
+            if customer_status and customer_status != 'All':
+                customer_status = customer_status.lower()
+                customer_status_app_ids = []
+                for application in queryset:
+                    if customer_status in application.customer_status.lower():
+                        customer_status_app_ids.append(application.id)
+                queryset = queryset.filter(id__in=customer_status_app_ids)
             if date_from:
                 queryset = queryset.filter(lodgement_date__gte=date_from)
             if date_to:
+                date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
                 queryset = queryset.filter(lodgement_date__lte=date_to)
-            # if category_name:
-            #     queryset = queryset.filter(licence_category=category_name)
-            if search_text:
-                purpose_matching_app_ids = []
-                for application in queryset:
-                    if search_text in ', '.join(application.licence_purpose_names).lower():
-                        purpose_matching_app_ids.append(application.id)
-                queryset = queryset.filter(id__in=purpose_matching_app_ids)
-            # if processing_status:
-            #     processing_status_matching_ids = []
-            #     for application in queryset:
-            #         if processing_status == application.processing_status:
-            #             processing_status_matching_ids.append(application.id)
-            #     queryset = queryset.filter(id__in=processing_status_matching_ids)
-            # if applicant:
-            #     queryset = queryset.filter(licence_category=category_name)
-            # if payment_status:
-            #     queryset = queryset.filter(licence_category=category_name)
+            if submitter and submitter != 'All':
+                queryset = queryset.filter(submitter__email__iexact=submitter)
 
-        queryset = queryset.distinct() | super(ApplicationFilterBackend, self).filter_queryset(request, queryset, view).distinct()
         setattr(view, '_datatables_total_count', total_count)
         return queryset
 
