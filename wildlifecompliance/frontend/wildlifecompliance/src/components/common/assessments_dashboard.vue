@@ -76,7 +76,7 @@ import {
     helpers
 }from '@/utils/hooks'
 export default {
-    name: 'ApplicationTableDash',
+    name: 'AssessmentTableDash',
     data() {
         let vm = this;
         return {
