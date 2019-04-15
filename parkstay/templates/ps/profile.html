@@ -168,8 +168,8 @@
 
 {% block custom_js %}
 {{ block.super }}
-<script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.18.0/moment.min.js"></script>
-<script src="//static.dpaw.wa.gov.au/static/libs/vue/2.4.2/vue.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.0/moment.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/vue/2.2.4/vue.min.js"></script>
 <script type="text/javascript">
     var API_COUNTRIES = "/api/countries";
     var API_PROFILE = "/api/profile";
@@ -227,7 +227,7 @@
                         console.log(response);
                         vm.updatingPersonal = false;
                         vm.setProfile(response);
-                    }, 
+                    },
                     error: function (error) {
                         vm.errorPersonal = error.responseJSON;
                         console.log(vm.errorPersonal);
@@ -277,7 +277,7 @@
                         console.log('AAAAAA');
                         console.log(response);
                         vm.updatingAddress = false;
-                        
+
                     },
                     error: function (error) {
                         vm.errorAddress = error.responseJSON;
@@ -295,7 +295,7 @@
                     success: function (response) {
                         vm.countries = response;
                         console.log(vm.countries);
-                    }, 
+                    },
                     error: function (response) {
                         console.log(response);
                     }
@@ -304,8 +304,8 @@
             setProfile: function (data) {
                 var vm = this;
                 vm.profile = data;
-                if (vm.profile && (vm.profile.residential_address == null)) { 
-                    vm.profile.residential_address = {}; 
+                if (vm.profile && (vm.profile.residential_address == null)) {
+                    vm.profile.residential_address = {};
                 }
             },
             fetchProfile: function () {

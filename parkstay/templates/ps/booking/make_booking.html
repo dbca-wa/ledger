@@ -35,7 +35,7 @@
     </div>
 {% else %}
     <form method="POST" name="addBookingForm" @submit.prevent="validate()" novalidate><div class="container">
-        {% csrf_token %} 
+        {% csrf_token %}
         <div class="row">
             <div class="col-lg-12">
                 <div class="well">
@@ -43,7 +43,7 @@
                         <div class="col-md-12">
                             <p v-cloak>
                             {% verbatim %}
-                                <b>Time left to complete booking {{ timeleft }}.</b> 
+                                <b>Time left to complete booking {{ timeleft }}.</b>
                             {% endverbatim %}
                                 <a class="btn btn-info" href="{% url 'public_abort_booking' %}?change=true">Change in-progress booking</a>
                                 <a class="btn btn-warning" href="{% url 'public_abort_booking' %}">Cancel in-progress booking</a>
@@ -299,7 +299,7 @@
                             </p>
                         </div>
                         <div class="col-md-6">
-                            <div class="row"> 
+                            <div class="row">
                                 <div class="col-md-8 col-md-offset-5">
                                     <div class="checkbox">
                                         <label><input type="checkbox" value="" v-model="toc">I agree to the <a target="_blank" href="{{EXPLORE_PARKS_TERMS}}">terms and conditions</a></label>
@@ -320,8 +320,8 @@
 {% block custom_js %}
 {{ block.super }}
 {% if booking %}
-<script src="//static.dpaw.wa.gov.au/static/libs/moment.js/2.18.0/moment.min.js"></script>
-<script src="//static.dpaw.wa.gov.au/static/libs/vue/2.2.4/vue.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.0/moment.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/vue/2.2.4/vue.min.js"></script>
 <script type="text/javascript">
     var book = new Vue({
         el: '#addBooking',
@@ -391,7 +391,7 @@
                 var data = {
                     booking: vm.booking_id,
                     vehicles: vm.vehicles
-                } 
+                }
                 localStorage.setItem('checkoutVehicleData',JSON.stringify(data));
             },
             updateVehicles: function () {
@@ -489,7 +489,7 @@
                 if (!saneTz) {
                     vm.timer -= 1;
                 } else {
-                    // if the timezone is sane, do live updates 
+                    // if the timezone is sane, do live updates
                     // this way unloaded tabs won't cache the wrong time.
                     var newTimer = Math.floor((vm.expiry - moment.now())/1000);
                     vm.timer = newTimer;
@@ -499,7 +499,7 @@
                     clearInterval(timer);
                     var loc = window.location;
                     window.location = loc.protocol + '//' + loc.host + loc.pathname;
-                } 
+                }
             }, 1000);
 
             // wire up events to the form controls
@@ -519,7 +519,7 @@
             if (storedData){
                 try{
                     storedData = JSON.parse(storedData);
-                    if (storedData.hasOwnProperty('booking') && storedData.hasOwnProperty('vehicles') && parseInt(storedData.booking) == parseInt(vm.booking_id)){ 
+                    if (storedData.hasOwnProperty('booking') && storedData.hasOwnProperty('vehicles') && parseInt(storedData.booking) == parseInt(vm.booking_id)){
                         if (Array.isArray(storedData.vehicles)){
                             var length = storedData.vehicles.length;
                             vm.vehicles = [];
