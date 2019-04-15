@@ -47,7 +47,7 @@ import {
     helpers
 }from '@/utils/hooks'
 export default {
-    name: 'ReturnTableDash',
+    name: 'ApplicationTableDash',
     props: {
         level:{
             type: String,
@@ -138,7 +138,7 @@ export default {
 
                             links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;
                             if (full.format == 'sheet') {
-                              links +=  `<a href='/external/return/sheet/${full.id}'>Continue</a><br/>`;
+                              links +=  `<a href='/external/return/sheet/${full.id}/${full.sheet_species}'>Continue</a><br/>`;
                             } else if (full.format == 'question') {
                               links +=  `<a href='/external/return/question/${full.id}'>Continue</a><br/>`;
                             } else {

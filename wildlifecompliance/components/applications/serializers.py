@@ -206,7 +206,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField(read_only=True)
     activity_names = serializers.SerializerMethodField(read_only=True)
     activity_purpose_string = serializers.SerializerMethodField(read_only=True)
-    purpose_string = serializers.SerializerMethodField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
@@ -253,7 +252,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'category_name',
             'activity_names',
             'activity_purpose_string',
-            'purpose_string',
             'can_current_user_edit',
             'payment_status',
             'assigned_officer',
@@ -278,10 +276,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 
     def get_activity_purpose_string(self, obj):
         activity_names = obj.licence_type_name.split(' - ')[1] if ' - ' in obj.licence_type_name else obj.licence_type_name
-        return activity_names
-
-    def get_purpose_string(self, obj):
-        return ', '.join(obj.licence_purpose_names)
+        return activity_names.replace('), ', ')\n')
 
     def get_activity_names(self, obj):
         return obj.licence_activity_names
@@ -364,7 +359,6 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
             'category_name',
             'activity_names',
             'activity_purpose_string',
-            'purpose_string',
             'can_user_view',
             'can_current_user_edit',
             'payment_status',
@@ -402,7 +396,6 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
             'category_name',
             'activity_names',
             'activity_purpose_string',
-            'purpose_string',
             'can_user_view',
             'can_current_user_edit',
             'payment_status',

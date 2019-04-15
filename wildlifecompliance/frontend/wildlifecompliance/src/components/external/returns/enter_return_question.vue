@@ -1,16 +1,21 @@
 <template>
   <form method="POST" name="enter_return_question" enctype="multipart/form-data">
   <div class="container" id="externalReturnQuestion">
-
-    <Returns v-if="isReturnsLoaded">
     <div class="row">
-
+      <div class="col-md-3">
+        <h3>Return: {{ returns.id }}</h3>
+      </div>
       <!-- div class="col-md-1" div -->
       <div class="col-md-8">
         <div class="row">
           <template>
-
-
+            <div >
+              <ul class="nav nav-tabs">
+                <li ><a data-toggle="tab" :href="returnTab">Return</a></li>
+              </ul>
+            </div>
+            <div  class="tab-content">
+              <div :id="returnTab" class="tab-pane fade active in">
                 <div class="panel panel-default">
                   <div class="panel-heading">
                     <h3 class="panel-title">Return
@@ -25,7 +30,10 @@
                         <div v-for="(item,index) in returns.table">
                           <tr v-for="(question,key) in item.headers">
                             <div v-for="answer in item.data">
-                              <renderer-block :component="question" :json_data="answer.value" v-bind:key="`q_${key}`"/>
+                              <td style="width:85%;"><strong>{{ question.title }}</strong>
+                                 <renderer-block :component="question" :json_data="answer.value"
+                                  v-bind:key="`q_${key}`" />
+                              </td>
                             </div>
                           </tr>
                         </div>
@@ -34,7 +42,8 @@
                     </div>
                   </div>
                 </div>
-
+              </div>
+            </div>
             <input type='hidden' name="table_name" :value="returns.table[0].name" />
           </template>
           <!-- End template for Return Tab -->
@@ -54,14 +63,11 @@
         </div>
       </div>
     </div>
-    </Returns>
   </div>
   </form>
 </template>
 
 <script>
-import Returns from '../../returns_form.vue'
-import { mapActions, mapGetters } from 'vuex'
 import $ from 'jquery'
 import Vue from 'vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
@@ -76,6 +82,12 @@ export default {
     let vm = this;
     return {
         pdBody: 'pdBody' + vm._uid,
+        returns: {
+            table: [{
+                data: null
+            }],
+        },
+        returnTab: 'returnTab'+vm._uid,
         form: null,
         returnBtn: 'Submit',
         dateFormat: 'DD/MM/YYYY',
@@ -88,23 +100,23 @@ export default {
         },
         filterAnswerDatePicker: '',
     }
-  },
-  components: {
-    Returns,
-  },
-  computed: {
-    ...mapGetters([
-        'isReturnsLoaded',
-        'returns',
-    ]),
+    returns: null
   },
   methods: {
-    ...mapActions({
-      load: 'loadReturns',
-    }),
-    ...mapActions([
-        'setReturns',
-    ]),
+    save: function(e) {
+      let vm = this;
+      vm.form=document.forms.enter_return
+      let data = new FormData(vm.form);
+    },
+    submit: function(e) {
+      let vm = this;
+      vm.form=document.forms.enter_return_question
+    },
+    init: function() {
+      // TODO: set return button for payment.
+      // returnBtn = return.requires_payment ? 'Pay and Submit' : 'Submit'
+
+    },
     addEventListeners: function(){
       let vm = this;
       // Initialise Application Date Filters
@@ -120,11 +132,30 @@ export default {
       });
     },
   },
-  beforeRouteEnter: function(to, from, next) {
-     next(vm => {
-       vm.load({ url: `/api/returns/${to.params.return_id}.json` })
-     });
+  computed: {
 
+  },
+  watch:{
+    filterAnswerDatePicker: function() {
+    }
+  },
+  beforeRouteEnter: function(to, from, next) {
+     Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
+        next(vm => {
+           vm.returns = res.body;
+        // TODO: set return button if requires payment.
+        // if (vm.returns.requires_pay)
+        //   returnBtn = 'Pay and Submit'
+        // }
+        });
+     }, err => {
+        console.log(err);
+     });
+  },
+  mounted: function(){
+     let vm = this;
+     vm.form = document.forms.enter_return_question;
+     vm.addEventListeners();
   },
 }
 </script>

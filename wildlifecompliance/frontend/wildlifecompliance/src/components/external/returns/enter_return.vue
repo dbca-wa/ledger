@@ -1,15 +1,21 @@
 <template>
   <form method="POST" name="enter_return" enctype="multipart/form-data">
   <div class="container" id="externalReturn">
-
-    <Returns v-if="isReturnsLoaded">
     <div class="row">
-
+      <div class="col-md-3">
+        <h3>Return: {{ returns.id }}</h3>
+      </div>
       <!-- div class="col-md-1" div -->
       <div class="col-md-8">
         <div class="row">
-
-
+          <template>
+            <div >
+              <ul class="nav nav-tabs">
+                <li ><a data-toggle="tab" :href="returnTab">Return</a></li>
+              </ul>
+            </div>
+            <div  class="tab-content">
+              <div :id="returnTab" class="tab-pane fade active in">
                 <div class="panel panel-default">
                   <div class="panel-heading">
                     <h3 class="panel-title">Return
@@ -22,23 +28,23 @@
                     <div class="col-sm-12">
                       <div class="row">
                         <label style="width:70%;" class="col-sm-4">Do you want to Lodge a nil Return?</label>
-                        <input type="radio" id="nilYes" name="nilYes" value="yes" v-model='nilReturn'>
+                        <input type="radio" id="nilYes" name="nilYes" value="yes" v-model='returns.nil'>
                         <label style="width:10%;" for="nilYes">Yes</label>
-                        <input type="radio" id="nilNo" name="nilNo" value="no" v-model='nilReturn'>
+                        <input type="radio" id="nilNo" name="nilNo" value="no" v-model='returns.nil'>
                         <label style="width:10%;" for="nilNo">No</label>
                       </div>
-                      <div v-if="nilReturn === 'yes'" class="row">
+                      <div v-if="returns.nil == 'yes'" class="row">
                         <label style="width:70%;" class="col-sm-4">Reason for providing a Nil return.</label>
                         <input type="textarea" name="nilReason" v-model="returns.nilReason">
                       </div>
-                      <div v-if="nilReturn === 'no'" class="row">
+                      <div v-if="returns.nil == 'no'" class="row">
                         <label style="width:70%;" class="col-sm-4">Do you want to upload spreadsheet with Return data?<br>(Download <a v-bind:href="url">spreadsheet template</a>)</label>
-                        <input type="radio" name="SpreadsheetYes" value="yes" v-model='spreadsheetReturn'>
+                        <input type="radio" name="SpreadsheetYes" value="yes" v-model='returns.spreadsheet'>
                         <label style="width:10%;" for="SpreadsheetYes">Yes</label>
-                        <input type="radio" name="SpreadsheetNo" value="no" v-model='spreadsheetReturn'>
+                        <input type="radio" name="SpreadsheetNo" value="no" v-model='returns.spreadsheet'>
                         <label style="width:10%;" for="SpreadsheetNo">No</label>
                       </div>
-                      <div v-if="nilReturn === 'no' && spreadsheetReturn != null" class="row">
+                      <div v-if="returns.nil =='no' && returns.spreadsheet != null" class="row">
                         <label style="width:70%;" class="col-sm-4">Do you want to add to existing data or replace existing data?</label>
                         <input type="radio" name="ReplaceYes" value="replace" v-model='returns.replace'>
                         <label style="width:10%;" for="ReplaceYes">Replace</label>
@@ -46,12 +52,12 @@
                         <label style="width:10%;" for="ReplaceNo">Add to</label>
                       </div>
                       <div class="row"></div>
-                      <div v-if="nilReturn === 'no' && spreadsheetReturn === 'no'" class="row">
+                      <div v-if="returns.nil =='no' && returns.spreadsheet =='no'" class="row">
                         <table class="return-table table table-striped table-bordered dataTable" style="width:100%">
                         <thead>
                         <tr>
                           <div v-for="(item,index) in returns.table">
-                            <th v-if="item.headers" v-for="header in item.headers">{{header.label}}</th>
+                            <th v-f="item.headers" v-for="header in item.headers">{{header.title}}</th>
                           </div>
                         </tr>
                         </thead>
@@ -60,7 +66,7 @@
                           <div v-for="(item,index) in returns.table">
                             <td v-if="item.headers" v-for="header in item.headers">
                               <div v-for ="item1 in item.data">
-                                <input v-for="(title,key) in item1" v-if="key == header.label" class="form-control returns" :name="`${item.name}::${header.label}`" :data-species="`${header.species}`" v-model="title.value">
+                                <input v-for="(title,key) in item1" v-if="key == header.title" class="form-control returns" :name="`${item.name}::${header.title}`" :data-species="`${header.species}`" v-model="title.value">
                               </div>
                             </td>
                           </div>
@@ -69,7 +75,7 @@
                         </table>
                         <input type="button" class="btn btn-primary" @click.prevent="addRow()" >Add Row</button>
                       </div>
-                      <div v-if="nilReturn === 'no' && spreadsheetReturn === 'yes'" class="row">
+                      <div v-if="returns.nil === 'no' && returns.spreadsheet === 'yes'" class="row">
                         <span class="btn btn-primary btn-file pull-left">Upload File
                           <input type="file" ref="spreadsheet" @change="uploadFile()"/>
                         </span>
@@ -80,8 +86,10 @@
                     </div>
                   </div>
                 </div>
-
+              </div>
+            </div>
             <input type='hidden' name="table_name" :value="returns.table[0].name" />
+          </template>
           <!-- End template for Return Tab -->
           <div class="row" style="margin-bottom:50px;">
             <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
@@ -99,14 +107,11 @@
         </div>
       </div>
     </div>
-    </Returns>
   </div>
   </form>
 </template>
 
 <script>
-import Returns from '../../returns_form.vue'
-import { mapActions, mapGetters } from 'vuex'
 import $ from 'jquery'
 import Vue from 'vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
@@ -117,50 +122,22 @@ import {
 from '@/utils/hooks'
 export default {
   name: 'externalReturn',
-  props: {
-     url:{
-        type: String,
-        required: false
-     }
-  },
   data() {
     let vm = this;
     return {
-        pdBody: 'pdBody' + vm._uid,
+        returns: {
+            table: [{
+                data: null
+            }],
+        },
+        returnTab: 'returnTab'+vm._uid,
         form: null,
         spreadsheet: null,
         returnBtn: 'Submit',
-        nilReturn: 'yes',
-        spreadsheetReturn: 'no',
     }
-  },
-  components:{
-    Returns,
-  },
-  computed: {
-     ...mapGetters([
-        'isReturnsLoaded',
-        'returns',
-    ]),
-    uploadedFileName: function() {
-      return this.spreadsheet != null ? this.spreadsheet.name: '';
-    },
+    returns: null
   },
   methods: {
-    ...mapActions({
-      load: 'loadReturns',
-    }),
-    ...mapActions([
-        'setReturns',
-        'setReturnsTab',
-    ]),
-    eventListeners: function(){
-      console.log('eventListener')
-      console.log(this)
-      $("[data-target!=''][data-target]").off("click").on("click", function (e) {
-        this.setReturnsTab(0, 'Return')
-      });
-    },
     save: function(e) {
       let vm = this;
       vm.form=document.forms.enter_return
@@ -248,23 +225,38 @@ export default {
     },
     
   },
-  eventListeners: function(){
-     let vm = this;
-      $('#tabs-section li:first-child a').click();
+  computed: {
+    uploadedFileName: function() {
+      return this.spreadsheet != null ? this.spreadsheet.name: '';
+    },
   },
   beforeRouteEnter: function(to, from, next) {
-     next(vm => {
-       vm.load({ url: `/api/returns/${to.params.return_id}.json` }).then(() => {
-          if (vm.returns.table[0]) {
-            vm.nilReturn = 'no'
-            vm.spreadsheetReturn = 'no'
-          }
-       });
+
+     Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
+        next(vm => {
+           vm.returns = res.body;
+           console.log(vm.returns)
+           vm.returns.nil = 'yes'
+           vm.returns.nil_return = true
+           if (vm.returns.table[0]) {
+             vm.returns.nil = 'no'
+             vm.returns.nil_return = false
+             vm.returns.spreadsheet = 'no'
+           }
+        //   vm.buildRow()
+        // TODO: set return button if requires payment.
+        // if (vm.returns.requires_pay)
+        //   returnBtn = 'Pay and Submit'
+        // }
+        });
+     }, err => {
+        console.log(err);
      });
-  },
-  mounted: function(){
-    let vm = this;
-    vm.form = document.forms.enter_return;
-  },
+   },
+   mounted: function(){
+        let vm = this;
+        vm.form = document.forms.enter_return;
+    },
+
 }
 </script>

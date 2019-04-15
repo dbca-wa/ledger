@@ -67,7 +67,6 @@ class Return(models.Model):
     RETURN_PROCESSING_STATUS_FUTURE = 'future'
     RETURN_PROCESSING_STATUS_WITH_CURATOR = 'with_curator'
     RETURN_PROCESSING_STATUS_ACCEPTED = 'accepted'
-    RETURN_PROCESSING_STATUS_PAYMENT = 'payment'
     PROCESSING_STATUS_CHOICES = (
         (RETURN_PROCESSING_STATUS_DUE, 'Due'),
         (RETURN_PROCESSING_STATUS_OVERDUE, 'Overdue'),
@@ -75,7 +74,6 @@ class Return(models.Model):
         (RETURN_PROCESSING_STATUS_FUTURE, 'Future'),
         (RETURN_PROCESSING_STATUS_WITH_CURATOR, 'With Curator'),
         (RETURN_PROCESSING_STATUS_ACCEPTED, 'Accepted'),
-        (RETURN_PROCESSING_STATUS_PAYMENT, 'Awaiting Payment')
     )
     RETURN_CUSTOMER_STATUS_DUE = 'due'
     RETURN_CUSTOMER_STATUS_OVERDUE = 'overdue'
@@ -83,6 +81,14 @@ class Return(models.Model):
     RETURN_CUSTOMER_STATUS_FUTURE = 'future'
     RETURN_CUSTOMER_STATUS_UNDER_REVIEW = 'under_review'
     RETURN_CUSTOMER_STATUS_ACCEPTED = 'accepted'
+    CUSTOMER_STATUS_CHOICES = (
+        (RETURN_CUSTOMER_STATUS_DUE, 'Due'),
+        (RETURN_CUSTOMER_STATUS_OVERDUE, 'Overdue'),
+        (RETURN_CUSTOMER_STATUS_DRAFT, 'Draft'),
+        (RETURN_CUSTOMER_STATUS_FUTURE, 'Future'),
+        (RETURN_CUSTOMER_STATUS_UNDER_REVIEW, 'Under Review'),
+        (RETURN_CUSTOMER_STATUS_ACCEPTED, 'Accepted'),
+    )
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     application = models.ForeignKey(Application, related_name='returns')
     licence = models.ForeignKey(
@@ -94,6 +100,10 @@ class Return(models.Model):
         choices=PROCESSING_STATUS_CHOICES,
         max_length=20,
         default=RETURN_PROCESSING_STATUS_FUTURE)
+    customer_status = models.CharField(
+        choices=CUSTOMER_STATUS_CHOICES,
+        max_length=20,
+        default=RETURN_CUSTOMER_STATUS_FUTURE)
     assigned_to = models.ForeignKey(
         EmailUser,
         related_name='wildlifecompliance_return_assignments',
@@ -147,7 +157,7 @@ class Return(models.Model):
     @property
     def table(self):
         tables = []
-        if self.format == ReturnType.RETURN_TYPE_SHEET:
+        if self.format == 'sheet':
             return tables
         for resource in self.return_type.resources:
             resource_name = resource.get('name')
@@ -216,7 +226,7 @@ class Return(models.Model):
         Property defining if the Return is Question based.
         :return: Boolean
         """
-        return True if self.format == ReturnType.RETURN_TYPE_QUESTION else False
+        return True if self.format == 'question' else False
 
     @property
     def has_data(self):
@@ -224,7 +234,7 @@ class Return(models.Model):
         Property defining if the Return is Data based.
         :return: Boolean
         """
-        return True if self.format == ReturnType.RETURN_TYPE_DATA else False
+        return True if self.format == 'data' else False
 
     @property
     def has_sheet(self):
@@ -232,25 +242,7 @@ class Return(models.Model):
         Property defining if the Return is Running Sheet based.
         :return: Boolean
         """
-        return True if self.format == ReturnType.RETURN_TYPE_SHEET else False
-
-    @property
-    def customer_status(self):
-        """
-        Property defining external status in relation to processing status.
-        :return: External Status.
-        """
-        workflow_mapper = {
-            self.RETURN_PROCESSING_STATUS_DUE : self.RETURN_CUSTOMER_STATUS_DUE,
-            self.RETURN_PROCESSING_STATUS_OVERDUE: self.RETURN_CUSTOMER_STATUS_OVERDUE,
-            self.RETURN_PROCESSING_STATUS_DRAFT: self.RETURN_CUSTOMER_STATUS_DRAFT,
-            self.RETURN_PROCESSING_STATUS_FUTURE: self.RETURN_CUSTOMER_STATUS_FUTURE,
-            self.RETURN_PROCESSING_STATUS_WITH_CURATOR: self.RETURN_CUSTOMER_STATUS_UNDER_REVIEW,
-            self.RETURN_PROCESSING_STATUS_ACCEPTED: self.RETURN_CUSTOMER_STATUS_ACCEPTED,
-            self.RETURN_PROCESSING_STATUS_PAYMENT: self.RETURN_CUSTOMER_STATUS_UNDER_REVIEW
-        }
-
-        return workflow_mapper.get(self.processing_status, self.RETURN_CUSTOMER_STATUS_FUTURE)
+        return True if self.format == 'sheet' else False
 
     def set_submitted(self, request):
         with transaction.atomic():
@@ -492,7 +484,7 @@ class ReturnSheet(object):
             self._species_list.append(_species.name)
             self._species = _species.name
         # build list of Species available on Licence.
-        self._licence_species_list = []
+        self._licence_species_list = ['S000001', 'S000002', 'S000003', 'S000004']
 
     def _get_table_rows(self, _data):
         """
@@ -626,29 +618,6 @@ class ReturnSheet(object):
         """
         self._create_return_data(self._return, _species_id, _data)
         self.set_species(_species_id)
-
-    def set_activity_from_previous(self):
-        """
-        Sets Running Sheet Activity for the movement of Species stock from previous Licence Running Sheet.
-        :return:
-        """
-        previous_licence = self._return.application.previous_application.licence
-        if previous_licence:
-            # TODO : for the reissue of licences. Species stock count must carry over. Nb. change in species.
-            '''      
-            table = {'data': None}              
-            for each species in previous_licence
-                try:
-                    return_table = self._return.returntable_set.get(name=_resource_name)
-                    rows = [_return_row.data for _return_row in _return_table.returnrow_set.all()]
-                    table['data'] = rows
-                    table['echo'] = 1
-                    table['totalRecords'] = str(rows.__len__())
-                    table['totalDisplayRecords'] = str(rows.__len__())
-                except ReturnTable.DoesNotExist:
-                    self._table = self._NO_ACTIVITY
-                self._create_return_data(self._return, _species_id, _table)
-            '''
 
     def set_species(self, _species):
         """
