@@ -281,7 +281,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         return activity_names
 
     def get_purpose_string(self, obj):
-        return ', '.join(obj.licence_purpose_names)
+        return obj.licence_purpose_names
 
     def get_activity_names(self, obj):
         return obj.licence_activity_names

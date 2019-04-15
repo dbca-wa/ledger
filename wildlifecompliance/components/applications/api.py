@@ -100,7 +100,7 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
                 search_text_app_ids = []
                 for application in queryset:
                     if (search_text in application.licence_category.lower()
-                        or search_text in ', '.join(application.licence_purpose_names).lower()
+                        or search_text in application.licence_purpose_names.lower()
                         or search_text in application.applicant
                         or search_text in application.processing_status
                         or search_text in application.customer_status
