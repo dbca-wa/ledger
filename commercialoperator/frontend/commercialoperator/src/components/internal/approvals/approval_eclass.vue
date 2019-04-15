@@ -10,28 +10,30 @@
                             <div class="row">
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
+                                        <!--
                                         <h1>Vue Select</h1>
                                         <v-select :options="options2"></v-select>
 
-<h1>Vue Select - Ajax</h1>
-  <v-select label="name" :filterable="false" :options="options" @search="onSearch">
+<h3>Vue Select - Ajax</h3>
+  <v-select label="name" :filterable="false" :options="options" @search="onSearch" >
     <template slot="no-options">
-      type to search GitHub repositories..
+      type to search users/organisations.
     </template>
     <template slot="option" slot-scope="option">
       <div class="d-center">
-        {{ option.full_name }}
+        {{ option.name }}
         </div>
     </template>
 
     <template slot="selected-option" slot-scope="option">
-      <div class="selected d-center">
-        {{ option.full_name }}
+      <div class="selected d-center" :user_id="option.id">
+        {{ option.name }}
       </div>
     </template>
   </v-select>
+                                        -->
 
-                                        <TextField :proposal_id="proposal_id" :readonly="readonly" name="holder" label="Holder" id="id_holder" />
+                                        <TextFilteredField :url="filtered_users_url" :readonly="readonly" name="vHolder" label="Holder" id="id_holder" />
                                         <DateField :proposal_id="proposal_id" :readonly="readonly" name="issue_date" label="Issue Date" id="id_issue_date" />
                                         <DateField :proposal_id="proposal_id" :readonly="readonly" name="start_date" label="Start Date" id="id_start_date" />
                                         <DateField :proposal_id="proposal_id" :readonly="readonly" name="expiry_date" label="Expiry Date" id="id_expiry_date" />
@@ -50,8 +52,8 @@
 
 <script>
 import Vue from 'vue'
-import vSelect from "vue-select"
-Vue.component('v-select', vSelect)
+//import vSelect from "vue-select"
+//Vue.component('v-select', vSelect)
 
 import modal from '@vue-utils/bootstrap-modal.vue'
 import alert from '@vue-utils/alert.vue'
@@ -60,6 +62,7 @@ import TextArea from '@/components/forms/text-area.vue'
 import TextField from '@/components/forms/text.vue'
 import FileField from '@/components/forms/file.vue'
 import DateField from '@/components/forms/date-field.vue'
+import TextFilteredField from '@/components/forms/text-filtered.vue'
 
 import {helpers, api_endpoints} from "@/utils/hooks.js"
 export default {
@@ -70,6 +73,7 @@ export default {
         TextField,
         FileField,
         DateField,
+        TextFilteredField,
         modal,
         alert,
     },
@@ -90,8 +94,8 @@ export default {
             errorString: '',
             validation_form: null,
             _comments: '_comments',
-            options2: [1,2],
-            options: [],
+            //options2: [1,2],
+            //options: [],
         }
     },
     computed: {
@@ -102,24 +106,13 @@ export default {
         document_url: function() {
             // location on media folder for the docs - to be passed to FileField
             return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_qaofficer_document/` : '';
+        },
+        filtered_users_url: function() {
+            return api_endpoints.filtered_users + '?search=';
         }
 
     },
     methods:{
-        onSearch(search, loading) {
-            loading(true);
-            this.search(loading, search, this);
-        },
-        search: _.debounce((loading, search, vm) => {
-            fetch(
-                //`https://api.github.com/search/repositories?q=${escape(search)}`
-                `http://localhost:8499/api/users?q=${escape(search)}`
-            ).then(res => {
-                res.json().then(json => (vm.options = json.items));
-                loading(false);
-            });
-        }, 350),
-
         refreshFromResponse:function(document_list){
             let vm = this;
             vm.document_list = helpers.copyObject(document_list);
@@ -132,6 +125,22 @@ export default {
             //    vm.updateAssignedOfficerSelect();
             //});
         },
+
+//        _onSearch(search, loading) {
+//            loading(true);
+//            this.search(loading, search, this);
+//        },
+//        _search: _.debounce((loading, search, vm) => {
+//
+//            vm.$http.get(vm.filtered_users_url+escape(search),{
+//                emulateJSON: true
+//            }).then(res=>{
+//                //vm.options = JSON.parse(res.body);
+//                vm.options = res.body;
+//                console.log(vm.options);
+//                loading(false);
+//            });
+//        }, 350),
 
         save: function(){
             let vm = this;

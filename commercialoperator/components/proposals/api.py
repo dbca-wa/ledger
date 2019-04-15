@@ -361,12 +361,11 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
 class ProposalViewSet(viewsets.ModelViewSet):
     #import ipdb; ipdb.set_trace()
     #queryset = Proposal.objects.all()
-    #queryset = Proposal.objects.none()
-    queryset = Proposal.objects.all()
+    queryset = Proposal.objects.none()
     serializer_class = ProposalSerializer
     lookup_field = 'id'
 
-    def _get_queryset(self):
+    def get_queryset(self):
         user = self.request.user
         #import ipdb; ipdb.set_trace()
         if is_internal(self.request): #user.is_authenticated():
@@ -581,6 +580,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
         result_page = paginator.paginate_queryset(proposals, request)
         serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
     @detail_route(methods=['GET',])
     def action_log(self, request, *args, **kwargs):
