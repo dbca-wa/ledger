@@ -372,6 +372,29 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
             'can_be_processed',
             'user_in_officers_and_assessors'
         )
+        # the serverSide functionality of datatables is such that only columns that have field 'data'
+        # defined are requested from the serializer. We also require the following additional fields
+        # for some of the mRender functions
+        datatables_always_serialize = (
+            'id',
+            'customer_status',
+            'processing_status',
+            'applicant',
+            'proxy_applicant',
+            'submitter',
+            'lodgement_number',
+            'lodgement_date',
+            'category_name',
+            'activity_names',
+            'activity_purpose_string',
+            'purpose_string',
+            'can_user_view',
+            'can_current_user_edit',
+            'payment_status',
+            'assigned_officer',
+            'can_be_processed',
+            'user_in_officers_and_assessors'
+        )
 
     def get_user_in_officers_and_assessors(self, obj):
         if self.context['request'].user and self.context['request'].user in obj.officers_and_assessors:
@@ -391,6 +414,26 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
     class Meta:
         model = Application
         fields = (
+            'id',
+            'customer_status',
+            'processing_status',
+            'applicant',
+            'proxy_applicant',
+            'submitter',
+            'lodgement_number',
+            'lodgement_date',
+            'category_name',
+            'activity_names',
+            'activity_purpose_string',
+            'purpose_string',
+            'can_user_view',
+            'can_current_user_edit',
+            'payment_status',
+        )
+        # the serverSide functionality of datatables is such that only columns that have field 'data'
+        # defined are requested from the serializer. We also require the following additional fields
+        # for some of the mRender functions
+        datatables_always_serialize = (
             'id',
             'customer_status',
             'processing_status',
