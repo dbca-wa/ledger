@@ -113,7 +113,7 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
                     if (application.applicant_type == Application.APPLICANT_TYPE_SUBMITTER and
                         search_text in application.submitter.email):
                             search_text_app_ids.append(application.id)
-                # use pipe to join both custom and built-in DRF datatables querysets (returned by super call below)
+                # use pipe to join both custom and built-in DRF datatables querysets (returned by super call above)
                 # (otherwise they will filter on top of each other)
                 queryset = queryset.filter(id__in=search_text_app_ids).distinct() | super_queryset
 
@@ -146,6 +146,16 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(lodgement_date__lte=date_to)
             if submitter and submitter != 'All':
                 queryset = queryset.filter(submitter__email__iexact=submitter)
+
+        # override queryset ordering, required because the ordering is usually handled
+        # in the super call, but is then clobbered by the custom queryset joining above
+        # also needed to disable ordering for all fields for which data is not an
+        # Application model field, as property functions will not work with order_by
+        getter = request.query_params.get
+        fields = self.get_fields(getter)
+        ordering = self.get_ordering(getter, fields)
+        if len(ordering):
+            queryset = queryset.order_by(*ordering)
 
         setattr(view, '_datatables_total_count', total_count)
         return queryset

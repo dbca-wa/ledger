@@ -104,12 +104,10 @@ export default {
         let internal_columns = [
             {
                 data: "lodgement_number",
-                mRender:function(data,type,full){
-                    return data;
-                }
             },
             {
                 data: "category_name",
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
@@ -118,6 +116,7 @@ export default {
                     let output = data.replace(/(?:\r\n|\r|\n|,)/g, '<br>');
                     return output;
                 },
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
@@ -132,20 +131,20 @@ export default {
             },
             {
                 data: "applicant",
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "processing_status",
                 mRender:function(data,type,full){
-                    return vm.is_external ? full.customer_status.name: data.name;
+                    return data.name;
                 },
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "payment_status",
-                mRender:function(data,type,full){
-                    return vm.is_external ? full.customer_status.name: data;
-                },
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
@@ -178,6 +177,7 @@ export default {
                     }
                     return links;
                 },
+                orderable: false,
                 searchable: false
             }
         ]
@@ -185,12 +185,10 @@ export default {
         let external_columns = [
             {
                 data: "lodgement_number",
-                mRender:function(data,type,full){
-                    return data;
-                }
             },
             {
                 data: "category_name",
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
@@ -199,6 +197,7 @@ export default {
                     let output = data.replace(/(?:\r\n|\r|\n|,)/g, '<br>');
                     return output;
                 },
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
@@ -213,13 +212,15 @@ export default {
             },
             {
                 data: "applicant",
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "customer_status",
                 mRender:function(data,type,full){
-                    return vm.is_external ? full.customer_status.name: data.name;
+                    return data.name;
                 },
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
@@ -253,6 +254,7 @@ export default {
                     }
                     return links;
                 },
+                orderable: false,
                 searchable: false
             }
         ]
