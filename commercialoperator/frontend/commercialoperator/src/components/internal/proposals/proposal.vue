@@ -619,7 +619,7 @@ export default {
             return this.proposal && this.proposal.processing_status == 'With Approver' && this.proposal.approval_level != null && this.proposal.approval_level_document == null ? true : false;
         },
         isQAOfficerAssessmentCompleted: function(){
-            return this.proposal && this.proposal.qaofficer_referrals && this.proposal.qaofficer_referrals[0].processing_status == 'Completed' ? true : false;
+            return this.proposal && this.proposal.qaofficer_referrals && this.proposal.qaofficer_referrals.length!=0 && this.proposal.qaofficer_referrals[0].processing_status == 'Completed' ? true : false;
         },
         QAOfficerAssessmentCompletedBy: function(){
             return this.isQAOfficerAssessmentCompleted ? this.proposal.qaofficer_referrals[0].qaofficer : '';

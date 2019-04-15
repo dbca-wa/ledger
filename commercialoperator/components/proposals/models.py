@@ -1790,7 +1790,7 @@ class QAOfficerGroup(models.Model):
         verbose_name_plural = "QA Officer group"
 
 
-    def clean(self):
+    def _clean(self):
         try:
             default = QAOfficerGroup.objects.get(default=True)
         except ProposalAssessorGroup.DoesNotExist:

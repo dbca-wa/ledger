@@ -361,10 +361,12 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
 class ProposalViewSet(viewsets.ModelViewSet):
     #import ipdb; ipdb.set_trace()
     #queryset = Proposal.objects.all()
-    queryset = Proposal.objects.none()
+    #queryset = Proposal.objects.none()
+    queryset = Proposal.objects.all()
     serializer_class = ProposalSerializer
+    lookup_field = 'id'
 
-    def get_queryset(self):
+    def _get_queryset(self):
         user = self.request.user
         #import ipdb; ipdb.set_trace()
         if is_internal(self.request): #user.is_authenticated():
