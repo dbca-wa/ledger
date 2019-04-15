@@ -216,6 +216,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     id_check_status = CustomChoiceField(read_only=True)
     processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
     data = ApplicationFormDataRecordSerializer(many=True)
+    application_type = CustomChoiceField(read_only=True)
 
     class Meta:
         model = Application
@@ -260,7 +261,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'can_be_processed',
             'pdf_licence',
             'activities',
-            'processed'
+            'processed',
+            'application_type'
         )
         read_only_fields = ('documents',)
 
@@ -349,6 +351,7 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
         source='assigned_officer.get_full_name')
     can_be_processed = serializers.SerializerMethodField(read_only=True)
     user_in_officers_and_assessors = serializers.SerializerMethodField(read_only=True)
+    application_type = CustomChoiceField(read_only=True)
 
     class Meta:
         model = Application
@@ -370,7 +373,8 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
             'payment_status',
             'assigned_officer',
             'can_be_processed',
-            'user_in_officers_and_assessors'
+            'user_in_officers_and_assessors',
+            'application_type'
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render
@@ -391,6 +395,7 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
     customer_status = CustomChoiceField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
+    application_type = CustomChoiceField(read_only=True)
 
     class Meta:
         model = Application
@@ -410,6 +415,7 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
             'can_user_view',
             'can_current_user_edit',
             'payment_status',
+            'application_type'
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render

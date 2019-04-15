@@ -100,7 +100,7 @@ export default {
     data() {
         let vm = this;
         let internal_application_headers = [];
-        internal_application_headers = ["Number","Category","Activity","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"];
+        internal_application_headers = ["Number","Category","Activity","Type","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"];
         let internal_columns = [
             {
                 data: "lodgement_number",
@@ -118,6 +118,12 @@ export default {
                 },
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
+            },
+            {
+                data: "application_type",
+                mRender:function (data,type,full) {
+                    return data.name;
+                }
             },
             {
                 data: "submitter",
@@ -201,6 +207,12 @@ export default {
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
+                data: "application_type",
+                mRender:function (data,type,full) {
+                    return data.name;
+                }
+            },
+            {
                 data: "submitter",
                 name: "submitter__first_name, submitter__last_name, submitter__email",
                 mRender:function (data,type,full) {
@@ -278,7 +290,7 @@ export default {
             application_licence_types : [],
             application_submitters: [],
             application_status: [],
-            application_ex_headers:["Number","Category","Activity","Submitter","Applicant","Status","Lodged on","Action"],
+            application_ex_headers:["Number","Category","Activity","Type","Submitter","Applicant","Status","Lodged on","Action"],
             application_ex_options:{
                 serverSide: true,
                 searchDelay: 1000,
