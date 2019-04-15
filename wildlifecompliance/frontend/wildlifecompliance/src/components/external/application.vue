@@ -47,6 +47,7 @@
                     </div>
                 </div>
             </Application>
+        <input type="button" @click.prevent="testButton" class="btn btn-danger" value="Test Button"/>
         </form>
     </div>
 </template>

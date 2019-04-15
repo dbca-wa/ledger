@@ -41,8 +41,12 @@ from wildlifecompliance.components.call_email.serializers import (
         CallEmailSerializer, 
         ClassificationSerializer, 
         CreateCallEmailSerializer,
+        UpdateRendererDataSerializer,
         )
-
+from wildlifecompliance.components.applications.utils import (                                                                                                                                              
+            SchemaParser,                                                                                                                                                            
+            MissingFieldsException
+            )
 
 class CallEmailViewSet(viewsets.ModelViewSet):
     queryset = CallEmail.objects.all()
@@ -72,19 +76,69 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     def create(self, request, *args, **kwargs):
+        print("create")
+        print(request.data)
         try:
             request_classification_str = request.data.get(
                         'classification')
             request_classification_obj = Classification.objects.get(
                     name=request_classification_str.capitalize())
-            data = {
+            parser = SchemaParser()
+            form_data = request.data.get('schema')
+            parsed_json = parser.create_data_from_form(form_data)
+            request_data = {
                     'status': request.data.get('status'),
                     'classification': request_classification_obj.id, 
                     'number': request.data.get('number'),
                     'caller': request.data.get('caller'),
                     'assigned_to': request.data.get('assigned_to'),
+                    'data': parsed_json,
                     }
-            serializer = CreateCallEmailSerializer(data=data)
+            serializer = CreateCallEmailSerializer(data=request_data)
+            serializer.is_valid(raise_exception=True)
+            if serializer.is_valid():
+                serializer.save()
+                headers = self.get_success_headers(serializer.data)
+                return Response(
+                    serializer.data,
+                    status=status.HTTP_201_CREATED,
+                    headers=headers
+                    )
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+    
+    @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
+    def update_renderer_form(self, request, *args, **kwargs):
+        print("update")
+        print(request.POST)
+        
+        try:
+            parser = SchemaParser()
+            # form_data = request.data.get('schema')
+            instance = self.get_object()
+            #print(instance)
+            parsed_json = parser.create_data_from_form(
+                    instance.report_type.schema, 
+                    request.POST, 
+                    #instance.report_type.schema,
+                    #file_data=False,
+                    request.FILES,
+                    comment_data=True
+                    )
+            rendered_data = parsed_json[0]
+            instance.data = rendered_data
+            data = {
+                    'data': rendered_data,
+                    }
+            serializer = UpdateRendererDataSerializer(instance, data=data)
             serializer.is_valid(raise_exception=True)
             if serializer.is_valid():
                 serializer.save()

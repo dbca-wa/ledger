@@ -66,6 +66,7 @@
         helpers
     }
     from '@/utils/hooks'
+    
     export default {
         name: 'CallEmailTableDash',
         data() {
@@ -99,7 +100,11 @@
                         "url": helpers.add_endpoint_json(api_endpoints.call_email, 'datatable_list'),
                         "dataSrc": '',
                     },
-                    columns: [{
+                    columns: [
+                        {
+                            data: "id",
+                        },
+                        {
                             data: "status",
                         },
                         {
@@ -125,7 +130,7 @@
                         },
                         {
                             mRender: function (data, type, full) {
-                                return `<a href="http://www.google.com">link</a>`
+                                return `<a href="/internal/call_email/${full.id}">View</a>`
                             }
                         }
                     ],
@@ -159,6 +164,7 @@
 
                 },
                 dtHeaders: [
+                    "Call/Email ID",
                     "Call/Email Status",
                     "Classification",
                     "lodgement_date",
@@ -173,17 +179,18 @@
         watch: {
             filterCall: function () {
                 let vm = this;
-
+                let regexSearch = helpers.datatableExactStringMatch(vm.filterCall);
                 if (vm.filterCall != 'All') {
-                    vm.$refs.call_email_table.vmDataTable.columns(0).search(vm.filterCall, false).draw();
+                    vm.$refs.call_email_table.vmDataTable.columns(0).search(regexSearch, true, false).draw();
                 } else {
                     vm.$refs.call_email_table.vmDataTable.columns(0).search('').draw();
                 }
             },
             filterClassification: function () {
                 let vm = this;
+                let regexSearch = helpers.datatableExactStringMatch(vm.filterClassification);
                 if (vm.filterClassification != 'All') {
-                    vm.$refs.call_email_table.vmDataTable.columns(1).search(vm.filterClassification, false).draw();
+                    vm.$refs.call_email_table.vmDataTable.columns(1).search(regexSearch, true, false).draw();
                 } else {
                     vm.$refs.call_email_table.vmDataTable.columns(1).search('').draw();
                 }
@@ -218,6 +225,7 @@
             
         },
         methods: {
+            
             createCallEmailUrl: function () {
                 //return `<a href="/api/call_email/create_call_email"/>`;
                 this.$router.push({
