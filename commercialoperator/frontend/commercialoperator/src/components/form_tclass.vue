@@ -1,6 +1,6 @@
 <template lang="html">
     <div>
-        <div class="col-md-3" >
+        <!-- <div class="col-md-3" >
             <div class="panel panel-default fixed">
               <div class="panel-heading">
                 <h5>Sections</h5>
@@ -11,9 +11,9 @@
                   </ul>
               </div>
             </div>
-        </div>
+        </div> -->
 
-        <div class="col-md-9">
+        <div class="col-md-12">
             <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
               <li class="nav-item">
                 <a class="nav-link active" id="pills-applicant-tab" data-toggle="pill" href="#pills-applicant" role="tab" aria-controls="pills-applicant" aria-selected="true">

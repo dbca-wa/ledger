@@ -578,7 +578,16 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'lodgement_number',
                 'lodgement_sequence',
                 'can_officer_process',
-                'proposal_type'
+                'proposal_type',
+                # tab field models
+                'applicant_details',
+                'other_details',
+                'activities_land',
+                'activities_marine',
+                'land_parks',
+                'marine_parks',
+                'trails',
+                'training_completed'
                 )
         read_only_fields=('documents','requirements')
 

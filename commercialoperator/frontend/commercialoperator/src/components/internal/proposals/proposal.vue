@@ -341,7 +341,7 @@
                     <div class="col-md-12">
                         <div class="row">
                             <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
-                                <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
+                                <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart">
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                     <input type='hidden' name="proposal_id" :value="1" />
@@ -357,7 +357,25 @@
                                     </div>      
                                     </div>
 
-                                </Proposal>
+                                </ProposalTClass>
+                                <!-- <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
+                                    <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
+                                    <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
+                                    <input type='hidden' name="proposal_id" :value="1" />
+                                    <div class="row" style="margin-bottom: 50px">
+                                    <div class="navbar navbar-fixed-bottom" v-if="hasAssessorMode" style="background-color: #f5f5f5;">
+                                        <div class="navbar-inner">
+                                            <div v-if="hasAssessorMode" class="container">
+                                            <p class="pull-right">                       
+                                            <button class="btn btn-primary pull-right" style="margin-top:5px;" @click.prevent="save()">Save Changes</button>
+                                            </p>                      
+                                            </div>                   
+                                        </div>
+                                    </div>      
+                                    </div>
+
+                                </Proposal> -->
+
                             </form>
                         </div>
                     </div>
@@ -372,6 +390,7 @@
 </template>
 <script>
 import Proposal from '../../form.vue'
+import ProposalTClass from '../../form_tclass.vue'
 import Vue from 'vue'
 import ProposedDecline from './proposal_proposed_decline.vue'
 import AmendmentRequest from './amendment_request.vue'
@@ -456,6 +475,7 @@ export default {
     },
     components: {
         Proposal,
+        ProposalTClass,
         datatable,
         ProposedDecline,
         AmendmentRequest,
