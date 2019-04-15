@@ -25,6 +25,8 @@ from django.core.cache import cache
 from ledger.accounts.models import EmailUser, Address, Profile, EmailIdentity, EmailUserAction, query_emailuser_by_args
 from ledger.address.models import Country
 from datetime import datetime, timedelta, date
+from wildlifecompliance.components.applications.models import Application
+from wildlifecompliance.components.applications.email import send_id_updated_notification
 from wildlifecompliance.components.organisations.models import (
     OrganisationRequest,
 )
@@ -37,18 +39,19 @@ from wildlifecompliance.components.users.serializers import (
     PersonalSerializer,
     ContactSerializer,
     EmailIdentitySerializer,
-    EmailUserActionSerializer
+    EmailUserActionSerializer,
+    MyUserDetailsSerializer
 )
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
 )
 
 
-class GetProfile(views.APIView):
+class GetMyUserDetails(views.APIView):
     renderer_classes = [JSONRenderer, ]
 
     def get(self, request, format=None):
-        serializer = UserSerializer(request.user, context={'request': request})
+        serializer = MyUserDetailsSerializer(request.user, context={'request': request})
         return Response(serializer.data)
 
 
@@ -310,6 +313,25 @@ class UserViewSet(viewsets.ModelViewSet):
                             instance.last_name,
                             instance.email)),
                     request)
+                # For any of the submitter's applications that have requested ID update,
+                # email the assigned officer
+                applications = instance.wildlifecompliance_applications.filter(
+                    submitter=instance,
+                    id_check_status=Application.ID_CHECK_STATUS_AWAITING_UPDATE,
+                    org_applicant=None,
+                    proxy_applicant=None
+                ).exclude(customer_status__in=(
+                    Application.CUSTOMER_STATUS_ACCEPTED,
+                    Application.CUSTOMER_STATUS_DECLINED)
+                ).order_by('id')
+                assigned_officers = [application.assigned_officer.email
+                                     for application
+                                     in applications
+                                     if application.assigned_officer]
+                # remove duplicate email addresses from assigned_officers list
+                assigned_officers = list(dict.fromkeys(assigned_officers))
+                if len(assigned_officers) > 0:
+                    send_id_updated_notification(instance, applications, assigned_officers, request)
             serializer = UserSerializer(instance, partial=True)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -328,7 +350,9 @@ class UserViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = OrganisationRequestDTSerializer(
                 instance.organisationrequest_set.filter(
-                    status=OrganisationRequest.ORG_REQUEST_STATUS_WITH_ASSESSOR), many=True)
+                    status=OrganisationRequest.ORG_REQUEST_STATUS_WITH_ASSESSOR),
+                many=True,
+                context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())

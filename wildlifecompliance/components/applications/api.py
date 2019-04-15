@@ -1,5 +1,6 @@
 import traceback
 import os
+from datetime import datetime, timedelta
 from django.db.models import Q
 from django.db import transaction
 from django.core.files.base import ContentFile
@@ -16,8 +17,8 @@ from django.shortcuts import redirect
 from wildlifecompliance.components.applications.utils import (
     SchemaParser,
     MissingFieldsException,
-    get_activity_schema
 )
+from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.applications.models import (
@@ -30,7 +31,8 @@ from wildlifecompliance.components.applications.models import (
     AmendmentRequest,
     ApplicationUserAction,
     search_keywords,
-    search_reference
+    search_reference,
+    ApplicationFormDataRecord,
 )
 from wildlifecompliance.components.applications.serializers import (
     ApplicationSerializer,
@@ -49,6 +51,7 @@ from wildlifecompliance.components.applications.serializers import (
     AssessmentSerializer,
     ActivityPermissionGroupSerializer,
     SaveAssessmentSerializer,
+    SimpleSaveAssessmentSerializer,
     AmendmentRequestSerializer,
     ApplicationProposedIssueSerializer,
     DTAssessmentSerializer,
@@ -56,12 +59,152 @@ from wildlifecompliance.components.applications.serializers import (
     SearchReferenceSerializer
 )
 
+from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
+from rest_framework_datatables.pagination import DatatablesPageNumberPagination
+from rest_framework_datatables.filters import DatatablesFilterBackend
+from rest_framework_datatables.renderers import DatatablesRenderer
+from rest_framework.filters import BaseFilterBackend
+
 
 class GetEmptyList(views.APIView):
     renderer_classes = [JSONRenderer, ]
 
     def get(self, request, format=None):
         return Response([])
+
+
+class ApplicationFilterBackend(DatatablesFilterBackend):
+    """
+    Custom filters
+    """
+    def filter_queryset(self, request, queryset, view):
+
+        # Get built-in DRF datatables queryset first to join with search text, then apply additional filters
+        super_queryset = super(ApplicationFilterBackend, self).filter_queryset(request, queryset, view).distinct()
+
+        total_count = queryset.count()
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        category_name = request.GET.get('category_name')
+        processing_status = request.GET.get('processing_status')
+        customer_status = request.GET.get('customer_status')
+        submitter = request.GET.get('submitter')
+        search_text = request.GET.get('search[value]')
+        if queryset.model is Application:
+
+            # search_text filter, join all custom search columns
+            # where ('searchable: false' in the datatable definiton)
+            if search_text:
+                search_text = search_text.lower()
+                # join queries for the search_text search
+                search_text_app_ids = []
+                for application in queryset:
+                    if (search_text in application.licence_category.lower()
+                        or search_text in ', '.join(application.licence_purpose_names).lower()
+                        or search_text in application.applicant
+                        or search_text in application.processing_status
+                        or search_text in application.customer_status
+                        or search_text in application.payment_status):
+                            search_text_app_ids.append(application.id)
+                    # if applicant is not an organisation, also search against the user's email address
+                    if (application.applicant_type == Application.APPLICANT_TYPE_PROXY and
+                        search_text in application.proxy_applicant.email):
+                            search_text_app_ids.append(application.id)
+                    if (application.applicant_type == Application.APPLICANT_TYPE_SUBMITTER and
+                        search_text in application.submitter.email):
+                            search_text_app_ids.append(application.id)
+                # use pipe to join both custom and built-in DRF datatables querysets (returned by super call below)
+                # (otherwise they will filter on top of each other)
+                queryset = queryset.filter(id__in=search_text_app_ids).distinct() | super_queryset
+
+            # apply user selected filters
+            category_name = category_name.lower() if category_name else 'all'
+            if category_name != 'all':
+                category_name = category_name.lower()
+                category_name_app_ids = []
+                for application in queryset:
+                    if category_name in application.licence_category.lower():
+                        category_name_app_ids.append(application.id)
+                queryset = queryset.filter(id__in=category_name_app_ids)
+            processing_status = processing_status.lower() if processing_status else 'all'
+            if processing_status != 'all':
+                processing_status = processing_status.lower()
+                processing_status_app_ids = []
+                for application in queryset:
+                    if processing_status in application.processing_status.lower():
+                        processing_status_app_ids.append(application.id)
+                queryset = queryset.filter(id__in=processing_status_app_ids)
+            customer_status = customer_status.lower() if customer_status else 'all'
+            if customer_status != 'all':
+                customer_status = customer_status.lower()
+                customer_status_app_ids = []
+                for application in queryset:
+                    if customer_status in application.customer_status.lower():
+                        customer_status_app_ids.append(application.id)
+                queryset = queryset.filter(id__in=customer_status_app_ids)
+            if date_from:
+                queryset = queryset.filter(lodgement_date__gte=date_from)
+            if date_to:
+                date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
+                queryset = queryset.filter(lodgement_date__lte=date_to)
+            if submitter and submitter != 'All':
+                queryset = queryset.filter(submitter__email__iexact=submitter)
+
+        setattr(view, '_datatables_total_count', total_count)
+        return queryset
+
+
+class ApplicationRenderer(DatatablesRenderer):
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        if 'view' in renderer_context and hasattr(renderer_context['view'], '_datatables_total_count'):
+            data['recordsTotal'] = renderer_context['view']._datatables_total_count
+        return super(ApplicationRenderer, self).render(data, accepted_media_type, renderer_context)
+
+
+class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (ApplicationFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (ApplicationRenderer,)
+    queryset = Application.objects.none()
+    serializer_class = DTExternalApplicationSerializer
+    page_size = 10
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return Application.objects.all()
+        elif is_customer(self.request):
+            user_orgs = [
+                org.id for org in user.wildlifecompliance_organisations.all()]
+            return Application.objects.filter(Q(org_applicant_id__in=user_orgs) | Q(
+                proxy_applicant=user) | Q(submitter=user))
+        return Application.objects.none()
+
+    @list_route(methods=['GET', ])
+    def internal_datatable_list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = DTInternalApplicationSerializer(result_page, context={'request': request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
+
+    @list_route(methods=['GET', ])
+    def external_datatable_list(self, request, *args, **kwargs):
+        user_orgs = [
+            org.id for org in request.user.wildlifecompliance_organisations.all()]
+        queryset = self.get_queryset().filter(
+            Q(submitter=request.user) |
+            Q(proxy_applicant=request.user) |
+            Q(org_applicant_id__in=user_orgs)
+        ).computed_exclude(
+            processing_status=Application.PROCESSING_STATUS_DISCARDED
+        ).distinct()
+        queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = DTExternalApplicationSerializer(result_page, context={'request': request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
 
 
 class ApplicationViewSet(viewsets.ModelViewSet):
@@ -84,19 +227,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         serializer = BaseApplicationSerializer(
             queryset, many=True, context={'request': request})
         return Response(serializer.data)
-
-#    @detail_route(methods=['GET',])
-#    def is_editable_fields(self, request, *args, **kwargs):
-#        try:
-#            instance = self.get_object()
-#            editable_items = {}
-#            for i in instance.activities:
-#                editable_items.update({i.activity_name:get_activity_sys_answers(i)})
-#            return Response([editable_items])
-#            #return Response(['a','b'])
-#        except Exception as e:
-#            print(traceback.print_exc())
-#            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
@@ -233,13 +363,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             qs = instance.conditions.all()
             licence_activity = self.request.query_params.get(
                 'licence_activity', None)
-            print('activity from conditions api')
-            print(licence_activity)
             if licence_activity is not None:
-                print('inside if')
                 qs = qs.filter(licence_activity=licence_activity)
-            print(qs)
-
             serializer = ApplicationConditionSerializer(qs, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -538,10 +663,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def complete_assessment(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            selected_assessment_id = request.data.get(
-                'selected_assessment_tab')
-            print('from api')
-            print(selected_assessment_id)
             instance.complete_assessment(request)
             serializer = InternalApplicationSerializer(
                 instance, context={'request': request})
@@ -667,6 +788,24 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
+    def form_data(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            ApplicationFormDataRecord.process_form(instance, request.data)
+            return redirect(reverse('external'))
+        except MissingFieldsException as e:
+            return Response({
+                'missing': e.error_list},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+        raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
     def application_officer_save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -708,9 +847,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             application_fee = request.data.get('application_fee')
             licence_fee = request.data.get('licence_fee')
             licence_purposes = request.data.get('licence_purposes')
-            schema_data = get_activity_schema(licence_purposes)
             data = {
-                'schema': schema_data,
                 'submitter': request.user.id,
                 'licence_type_data': licence_category_data,
                 'org_applicant': org_applicant,
@@ -926,6 +1063,21 @@ class AssessmentViewSet(viewsets.ModelViewSet):
         return Assessment.objects.none()
 
     @list_route(methods=['GET', ])
+    def get_latest_for_application_activity(self, request, *args, **kwargs):
+        application_id = request.query_params.get(
+            'application_id', None)
+        activity_id = request.query_params.get(
+            'activity_id', None)
+        latest_assessment = Assessment.objects.filter(
+            application_id=application_id,
+            licence_activity_id=activity_id
+        ).exclude(
+            status='recalled'
+        ).latest('id')
+        serializer = AssessmentSerializer(latest_assessment)
+        return Response(serializer.data)
+
+    @list_route(methods=['GET', ])
     def user_list(self, request, *args, **kwargs):
         # Get the assessor groups the current user is member of
         assessor_groups = request.user.get_wildlifelicence_permission_group('assessor', first=False)
@@ -942,7 +1094,6 @@ class AssessmentViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
         try:
-            print(request.data)
             serializer = SaveAssessmentSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
@@ -1013,6 +1164,27 @@ class AssessmentViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['PUT', ])
+    def update_assessment(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = SimpleSaveAssessmentSerializer(instance, data=self.request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                print e
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 class AssessorGroupViewSet(viewsets.ModelViewSet):
     queryset = ActivityPermissionGroup.objects.none()
@@ -1065,18 +1237,22 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             # print(request.data)
             amend_data = self.request.data
             reason = amend_data.pop('reason')
-            application = amend_data.pop('application')
+            application_id = amend_data.pop('application')
             text = amend_data.pop('text')
             activity_id = amend_data.pop('activity_id')
-            print(type(application))
-            print(application)
             for item in activity_id:
                 data = {
-                    'application': application,
+                    'application': application_id,
                     'reason': reason,
                     'text': text,
                     'licence_activity': item
                 }
+
+                application = Application.objects.get(id=application_id)
+                selected_activity = application.get_selected_activity(item)
+                if selected_activity.processing_status == ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED:
+                    raise serializers.ValidationError('Selected activity has been discarded by the customer!')
+
                 serializer = self.get_serializer(data=data)
                 serializer.is_valid(raise_exception=True)
                 instance = serializer.save()

@@ -32,19 +32,19 @@
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">Given name(s)</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="first_name" placeholder="" v-model="profile.first_name">
+                                <input type="text" class="form-control" name="first_name" placeholder="" v-model="current_user.first_name">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Surname</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="last_name" placeholder="" v-model="profile.last_name">
+                                <input type="text" class="form-control" name="last_name" placeholder="" v-model="current_user.last_name">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Date of Birth</label>
                             <div class="col-sm-6">
-                                <input type="date" class="form-control" name="dob" placeholder="" max="2100-12-31" v-model="profile.dob">
+                                <input type="date" class="form-control" name="dob" placeholder="" max="2100-12-31" v-model="current_user.dob">
                             </div>
                           </div>
                           <div class="form-group">
@@ -73,7 +73,7 @@
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">Identification</label>
                             <div class="col-sm-6">
-                                <img v-if="profile.identification" width="100%" name="identification" v-bind:src="profile.identification.file" />
+                                <img v-if="current_user.identification" width="100%" name="identification" v-bind:src="current_user.identification.file" />
                             </div>
                           </div>
                           <div class="form-group">
@@ -96,8 +96,8 @@
             <div class="col-sm-12">
                 <div class="panel panel-default">
                   <div class="panel-heading">
-                    <i v-if="showCompletion && profile.address_details" class="fa fa-check fa-2x pull-left" style="color:green"></i>
-                    <i v-else-if="showCompletion && !profile.address_details" class="fa fa-times fa-2x pull-left" style="color:red"></i>
+                    <i v-if="showCompletion && current_user.address_details" class="fa fa-check fa-2x pull-left" style="color:green"></i>
+                    <i v-else-if="showCompletion && !current_user.address_details" class="fa fa-times fa-2x pull-left" style="color:red"></i>
                     <h3 class="panel-title">Address Details <small>Provide your address details</small>
                         <a class="panelClicker" :href="'#'+adBody" data-toggle="collapse" expanded="false"  data-parent="#userInfo" :aria-controls="adBody">
                             <span class="glyphicon glyphicon-chevron-down pull-right "></span>
@@ -109,29 +109,29 @@
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">Street</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="street" placeholder="" v-model="profile.residential_address.line1">
+                                <input type="text" class="form-control" name="street" placeholder="" v-model="current_user.residential_address.line1">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="profile.residential_address.locality">
+                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="current_user.residential_address.locality">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">State</label>
                             <div class="col-sm-3">
-                                <input type="text" class="form-control" name="country" placeholder="" v-model="profile.residential_address.state">
+                                <input type="text" class="form-control" name="country" placeholder="" v-model="current_user.residential_address.state">
                             </div>
                             <label for="" class="col-sm-1 control-label">Postcode</label>
                             <div class="col-sm-2">
-                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="profile.residential_address.postcode">
+                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="current_user.residential_address.postcode">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Country</label>
                             <div class="col-sm-4">
-                                <select class="form-control" name="country" v-model="profile.residential_address.country">
+                                <select class="form-control" name="country" v-model="current_user.residential_address.country">
                                     <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
                                 </select>
                             </div>
@@ -151,8 +151,8 @@
             <div class="col-sm-12">
                 <div class="panel panel-default">
                   <div class="panel-heading">
-                    <i v-if="showCompletion && profile.contact_details" class="fa fa-check fa-2x pull-left" style="color:green"></i>
-                    <i v-else-if="showCompletion && !profile.contact_details" class="fa fa-times fa-2x pull-left" style="color:red"></i>
+                    <i v-if="showCompletion && current_user.contact_details" class="fa fa-check fa-2x pull-left" style="color:green"></i>
+                    <i v-else-if="showCompletion && !current_user.contact_details" class="fa fa-times fa-2x pull-left" style="color:red"></i>
                     <h3 class="panel-title">Contact Details <small>Provide your contact details</small>
                         <a class="panelClicker" :href="'#'+cBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cBody">
                             <span class="glyphicon glyphicon-chevron-down pull-right "></span>
@@ -164,19 +164,19 @@
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">Phone (work)</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="phone" placeholder="" v-model="profile.phone_number">
+                                <input type="text" class="form-control" name="phone" placeholder="" v-model="current_user.phone_number">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Mobile</label>
                             <div class="col-sm-6">
-                                <input type="text" class="form-control" name="mobile" placeholder="" v-model="profile.mobile_number">
+                                <input type="text" class="form-control" name="mobile" placeholder="" v-model="current_user.mobile_number">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Email</label>
                             <div class="col-sm-6">
-                                <input disabled type="email" class="form-control" name="email" placeholder="" v-model="profile.email">
+                                <input disabled type="email" class="form-control" name="email" placeholder="" v-model="current_user.email">
                             </div>
                           </div>
                           <div class="form-group">
@@ -226,7 +226,7 @@
 
 
 
-                          <div v-for="org in profile.wildlifecompliance_organisations">
+                          <div v-for="org in current_user.wildlifecompliance_organisations">
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>
                                 <div class="col-sm-3"> 
@@ -392,7 +392,7 @@ import Vue from 'vue'
 import $ from 'jquery'
 import { api_endpoints, helpers } from '@/utils/hooks'
 export default {
-    name: 'Profile',
+    name: 'MyUserDetails',
     data () {
         let vm = this;
         return {
@@ -401,7 +401,7 @@ export default {
             idBody: 'idBody'+vm._uid,
             cBody: 'cBody'+vm._uid,
             oBody: 'oBody'+vm._uid,
-            profile: {
+            current_user: {
                 first_name: '',
                 last_name: '',
                 dob: '',
@@ -465,7 +465,7 @@ export default {
     },
     computed: {
         hasOrgs: function() {
-            return this.profile.wildlifecompliance_organisations && this.profile.wildlifecompliance_organisations.length > 0 ? true: false;
+            return this.current_user.wildlifecompliance_organisations && this.current_user.wildlifecompliance_organisations.length > 0 ? true: false;
         },
         uploadedFileName: function() {
             return this.uploadedFile != null ? this.uploadedFile.name: '';
@@ -477,7 +477,7 @@ export default {
             return this.$route.name == 'first-time'
         },
         completedProfile: function(){
-            return this.profile.contact_details && this.profile.personal_details && this.profile.address_details;
+            return this.current_user.contact_details && this.current_user.personal_details && this.current_user.address_details;
         }
     },
     methods: {
@@ -524,7 +524,7 @@ export default {
         },
         deleteUserLogout: function() {
             let vm = this;
-            vm.$http.delete(helpers.add_endpoint_json(api_endpoints.users,vm.profile.id)).then((response) => {
+            vm.$http.delete(helpers.add_endpoint_json(api_endpoints.users,vm.current_user.id)).then((response) => {
                 window.location.href='/ledger/logout';
             },(error) => {
             })
@@ -532,12 +532,13 @@ export default {
         updatePersonal: function() {
             let vm = this;
             vm.updatingPersonal = true;
-            if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+            console.log(vm.current_user.residential_address);
+            if (vm.current_user.residential_address == null){ vm.current_user.residential_address = {}; }
             let params = '?';
-            params += '&first_name=' + vm.profile.first_name;
-            params += '&last_name=' + vm.profile.last_name;
-            params += '&dob=' + vm.profile.dob;
-            if (vm.profile.first_name == '' || vm.profile.last_name == '' || (vm.profile.dob == null || vm.profile.dob == '')){
+            params += '&first_name=' + vm.current_user.first_name;
+            params += '&last_name=' + vm.current_user.last_name;
+            params += '&dob=' + vm.current_user.dob;
+            if (vm.current_user.first_name == '' || vm.current_user.last_name == '' || (vm.current_user.dob == null || vm.current_user.dob == '')){
                 let error_msg = 'Please ensure all fields are filled in.';
                 swal({
                     title: 'Update Personal Details',
@@ -545,7 +546,7 @@ export default {
                     type: 'error'
                 }).then(() => {
                     vm.updatingPersonal = false;
-                    vm.profile.personal_details = false;
+                    vm.current_user.personal_details = false;
                 });
                 return;
             }
@@ -554,7 +555,7 @@ export default {
                     title: "Update Personal Details",
                     html: 'If you already have a Parks and Wildlife customer account under another email address, please ' +
                         '<strong>log out and sign in again with that account</strong> and ' +
-                        'instead add <strong>' + vm.profile.email + '</strong> as a new Profile.<br/><br/>If this is a new account, please proceed to update ' +
+                        'instead add <strong>' + vm.current_user.email + '</strong> as a new Profile.<br/><br/>If this is a new account, please proceed to update ' +
                         'your details.',
                     type: "question",
                     allowOutsideClick: false,
@@ -565,7 +566,7 @@ export default {
                     cancelButtonClass: 'btn btn-danger'
                 }).then((result) => {
                     if (result.value) {
-                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_personal')),JSON.stringify(vm.profile),{
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.current_user.id+'/update_personal')),JSON.stringify(vm.current_user),{
                             emulateJSON:true
                         }).then((response) => {
                             swal({
@@ -574,7 +575,7 @@ export default {
                                 type: 'success',
                             }).then(() => {
                                 vm.updatingPersonal = false;
-                                vm.profile.personal_details = true;
+                                vm.current_user.personal_details = true;
                                 if (vm.completedProfile) {
                                     vm.$http.get(api_endpoints.user_profile_completed).then((response) => {
                                     },(error) => {
@@ -583,7 +584,7 @@ export default {
                             });
                         }, (error) => {
                             vm.updatingPersonal = false;
-                            vm.profile.personal_details = false;
+                            vm.current_user.personal_details = false;
                             let error_msg = '<br/>';
                             for (var key in error.body) {
                                 if (key === 'dob') {
@@ -605,7 +606,7 @@ export default {
                     }
                 }, (error) => {
                     vm.updatingPersonal = false;
-                    vm.profile.personal_details = false;
+                    vm.current_user.personal_details = false;
                     swal({
                         title: 'Update Personal Details',
                         html: 'There was an error updating your personal details.',
@@ -613,7 +614,7 @@ export default {
                     })
                 });
             } else {
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_personal')),JSON.stringify(vm.profile),{
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.current_user.id+'/update_personal')),JSON.stringify(vm.current_user),{
                     emulateJSON:true
                 }).then((response) => {
                     swal({
@@ -622,7 +623,7 @@ export default {
                         type: 'success',
                     }).then(() => {
                         vm.updatingPersonal = false;
-                        vm.profile.personal_details = true;
+                        vm.current_user.personal_details = true;
                         if (vm.completedProfile) {
                             vm.$http.get(api_endpoints.user_profile_completed).then((response) => {
                             },(error) => {
@@ -631,7 +632,7 @@ export default {
                     });
                 }, (error) => {
                     vm.updatingPersonal = false;
-                    vm.profile.personal_details = false;
+                    vm.current_user.personal_details = false;
                     let error_msg = '<br/>';
                     for (var key in error.body) {
                         if (key === 'dob') {
@@ -651,12 +652,12 @@ export default {
         updateContact: function() {
             let vm = this;
             vm.updatingContact = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_contact')),JSON.stringify(vm.profile),{
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.current_user.id+'/update_contact')),JSON.stringify(vm.current_user),{
                 emulateJSON:true
             }).then((response) => {
                 vm.updatingContact = false;
-                vm.profile = response.body;
-                if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                vm.current_user = response.body;
+                if (vm.current_user.residential_address == null){ vm.current_user.residential_address = {}; }
                 swal({
                     title: 'Update Contact Details',
                     html: 'Your contact details has been successfully updated.',
@@ -669,7 +670,7 @@ export default {
                 }
             }, (error) => {
                 vm.updatingContact = false;
-                vm.profile.contact_details = false;
+                vm.current_user.contact_details = false;
                 let error_msg = '<br/>';
                 for (var key in error.body) {
                     error_msg += key + ': ' + error.body[key] + '<br/>';
@@ -684,12 +685,12 @@ export default {
         updateAddress: function() {
             let vm = this;
             vm.updatingAddress = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_address')),JSON.stringify(vm.profile.residential_address),{
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.current_user.id+'/update_address')),JSON.stringify(vm.current_user.residential_address),{
                 emulateJSON:true
             }).then((response) => {
                 vm.updatingAddress = false;
-                vm.profile = response.body;
-                if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                vm.current_user = response.body;
+                if (vm.current_user.residential_address == null){ vm.current_user.residential_address = {}; }
                 swal({
                     title: 'Update Address Details',
                     html: 'Your address details has been successfully updated.',
@@ -697,7 +698,7 @@ export default {
                 })
             }, (error) => {
                 vm.updatingAddress = false;
-                vm.profile.address_details = false;
+                vm.current_user.address_details = false;
                 let error_msg = '<br/>';
                 for (var key in error.body) {
                     error_msg += key + ': ' + error.body[key] + '<br/>';
@@ -718,8 +719,8 @@ export default {
             console.log('Entered CheckOrg')
             let vm = this;
             let new_organisation = vm.newOrg;
-            for (var organisation in vm.profile.wildlifecompliance_organisations) {
-                if (new_organisation.abn && vm.profile.wildlifecompliance_organisations[organisation].abn == new_organisation.abn) {
+            for (var organisation in vm.current_user.wildlifecompliance_organisations) {
+                if (new_organisation.abn && vm.current_user.wildlifecompliance_organisations[organisation].abn == new_organisation.abn) {
                     swal({
                         title: 'Checking Organisation',
                         html: 'You are already associated with this organisation.',
@@ -776,10 +777,10 @@ export default {
                     vm.uploadedFile = null;
                     vm.addingCompany = false;
                     vm.resetNewOrg();
-                    Vue.http.get(api_endpoints.profile).then((response) => {
-                        vm.profile = response.body
-                        if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
-                        if ( vm.profile.wildlifecompliance_organisations && vm.profile.wildlifecompliance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
+                    Vue.http.get(api_endpoints.my_user_details).then((response) => {
+                        vm.current_user = response.body
+                        if (vm.current_user.residential_address == null){ vm.current_user.residential_address = {}; }
+                        if ( vm.current_user.wildlifecompliance_organisations && vm.current_user.wildlifecompliance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
                     },(error) => {
                     })
                 }else {
@@ -809,7 +810,7 @@ export default {
                         type: 'error'
                 });
             } else {
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/upload_id')),data,{
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.current_user.id+'/upload_id')),data,{
                     emulateJSON:true
                 }).then((response) => {
                     vm.uploadingID = false;
@@ -893,8 +894,8 @@ export default {
             vm.registeringOrg = true;
             let data = new FormData();
             let new_organisation = vm.newOrg;
-            for (var organisation in vm.profile.wildlifecompliance_organisations) {
-                if (new_organisation.abn && vm.profile.wildlifecompliance_organisations[organisation].abn == new_organisation.abn) {
+            for (var organisation in vm.current_user.wildlifecompliance_organisations) {
+                if (new_organisation.abn && vm.current_user.wildlifecompliance_organisations[organisation].abn == new_organisation.abn) {
                     swal({
                         title: 'Checking Organisation',
                         html: 'You are already associated with this organisation.',
@@ -1035,13 +1036,13 @@ export default {
                 confirmButtonText: 'Accept'
             }).then((result) => {
                 if (result.value) {
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),JSON.stringify(vm.profile),{
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,org.id+'/unlink_user'),JSON.stringify(vm.current_user),{
                         emulateJSON:true
                     }).then((response) => {
-                        Vue.http.get(api_endpoints.profile).then((response) => {
-                            vm.profile = response.body
-                            if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
-                            if ( vm.profile.wildlifecompliance_organisations && vm.profile.wildlifecompliance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
+                        Vue.http.get(api_endpoints.my_user_details).then((response) => {
+                            vm.current_user = response.body
+                            if (vm.current_user.residential_address == null){ vm.current_user.residential_address = {}; }
+                            if ( vm.current_user.wildlifecompliance_organisations && vm.current_user.wildlifecompliance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
                         },(error) => {
                         })
                         swal(
@@ -1073,15 +1074,15 @@ export default {
         },
     },
     beforeRouteEnter: function(to,from,next){
-        Vue.http.get(api_endpoints.profile).then((response) => {
+        Vue.http.get(api_endpoints.my_user_details).then((response) => {
             if (response.body.address_details && response.body.personal_details && response.body.contact_details && to.name == 'first-time'){
                 window.location.href='/';
             }
             else{
                 next(vm => {
-                    vm.profile = response.body
-                    if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
-                    if ( vm.profile.wildlifecompliance_organisations && vm.profile.wildlifecompliance_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
+                    vm.current_user = response.body
+                    if (vm.current_user.residential_address == null){ vm.current_user.residential_address = {}; }
+                    if (vm.current_user.wildlifecompliance_organisations && vm.current_user.wildlifecompliance_organisations.length > 0) { vm.managesOrg = 'Yes' }
                 });
             }
         },(error) => {

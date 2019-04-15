@@ -1,6 +1,6 @@
 <template id="application_issuance">
                 <div class="col-md-12">
-                    <div class="row" v-for="(item,index) in visibleLicenceActivities" v-bind:key="`issue_activity_${index}`">
+                    <div class="row" v-for="(item, index) in visibleLicenceActivities" v-bind:key="`issue_activity_${index}`">
                         <div class="panel panel-default">
                             <div class="panel-heading">
                                 <h3 class="panel-title">Issue/Decline - {{item.name}}
@@ -15,20 +15,20 @@
                                         <div class="form-group">
                                             <div class="row">
                                                 <div class="col-sm-3">
-                                                    <input type="radio"  id="issue" name="licence_category" v-model="licence.activity[index].final_status"  value="issued" > Issue
+                                                    <input type="radio"  id="issue" name="licence_category" v-model="getActivity(item.id).final_status"  value="issued" > Issue
                                                 </div>
                                                 <div class="col-sm-3">
-                                                    <input type="radio"  id="decline" name="licence_category" v-model="licence.activity[index].final_status"  value="declined" > Decline
+                                                    <input type="radio"  id="decline" name="licence_category" v-model="getActivity(item.id).final_status"  value="declined" > Decline
                                                 </div>
                                             </div>
-                                            <div class="row" v-if="licence.activity[index].final_status == 'issued'">
+                                            <div class="row" v-if="finalStatus(item.id) === 'issued'">
                                                 <div class="col-sm-3">
                                                     
                                                     <label class="control-label pull-left">Proposed Start Date</label>
                                                 </div>
                                                 <div class="col-sm-9">
-                                                    <div class="input-group date" ref="start_date" style="width: 70%;">
-                                                        <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY" v-model="licence.activity[index].start_date">
+                                                    <div class="input-group date" ref="start_date" style="width: 70%;" :data-init="false" :data-activity="item.id">
+                                                        <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY" v-model="getActivity(item.id).start_date">
                                                         <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
                                                         </span>
@@ -36,12 +36,12 @@
                                                 </div>
 
                                             </div>
-                                            <div class="row" v-if="licence.activity[index].final_status == 'issued'">
+                                            <div class="row" v-if="finalStatus(item.id) === 'issued'">
                                                 <div class="col-sm-3">
                                                     <label class="control-label pull-left">Proposed Expiry Date</label>
                                                 </div>
                                                 <div class="col-sm-9">
-                                                    <div class="input-group date" ref="end_date" style="width: 70%;">
+                                                    <div class="input-group date" ref="end_date" style="width: 70%;" :data-activity="item.id">
                                                         <input type="text" class="form-control" name="end_date" placeholder="DD/MM/YYYY">
                                                         <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
@@ -104,7 +104,7 @@
                     </div>
 
 
-                    <div class="row">
+                    <div class="row" v-if="licence.activity.some(activity => activity.final_status === 'issued')">
                         <div class="panel panel-default">
                             <div class="panel-heading">
                                 <h3 class="panel-title">Issue
@@ -116,29 +116,39 @@
                             <div class="panel-body panel-collapse collapse in" :id="panelBody">
                                 <div class="row">
                                     <div class="col-sm-3">
-                                        
                                         <label class="control-label pull-left"  for="details">ID Check</label>
                                     </div>
-
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="details" style="width: 70%;">
-                                            <button v-if="isIdCheckAccepted" disabled class="btn btn-light">Accepted</button>
-                                            <label v-if="isIdNotChecked">Has not been accepted. Override to Issue: </label><input v-if="isIdNotChecked" type="checkbox" v-model="licence.id_check" >
-                                            
+                                            <button v-if="isIdCheckAccepted" disabled class="btn btn-success">Accepted</button>
+                                            <label v-if="isIdCheckAwaitingUpdate">Awaiting update. Override to Issue: &nbsp;</label>
+                                            <label v-if="isIdNotChecked">Has not been accepted. Override to Issue: &nbsp;</label>
+                                            <input v-if="isIdNotChecked || isIdCheckAwaitingUpdate" type="checkbox" v-model="licence.id_check" />
                                         </div>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-sm-3">
-                                        
                                         <label class="control-label pull-left"  for="details">Character Check</label>
                                     </div>
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="cc_email" style="width: 70%;">
-                                            <button v-if="isCharacterCheckAccepted" disabled class="btn btn-light">Accepted</button>
-                                            <label v-if="isCharacterNotChecked">Has not been accepted. Override to Issue: </label><input v-if="isCharacterNotChecked" type="checkbox" v-model="licence.character_check" >
-                                            
-                                            
+                                            <button v-if="isCharacterCheckAccepted" disabled class="btn btn-success">Accepted</button>
+                                            <label v-if="isCharacterNotChecked">Has not been accepted. Override to Issue: &nbsp;</label>
+                                            <input v-if="isCharacterNotChecked" type="checkbox" v-model="licence.character_check" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <label class="control-label pull-left"  for="details">Return Check</label>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <div class="input-group date" ref="cc_email" style="width: 70%;">
+                                            <button v-if="isReturnCheckAccepted" disabled class="btn btn-success">Accepted</button>
+                                            <label v-if="isReturnCheckAwaitingReturns">Awaiting return. Override to Issue: &nbsp;</label>
+                                            <label v-if="isReturnNotChecked">Has not been accepted. Override to Issue: &nbsp;</label>
+                                            <input v-if="isReturnNotChecked || isReturnCheckAwaitingReturns" type="checkbox" v-model="licence.return_check" />
                                         </div>
                                     </div>
                                 </div>
@@ -181,11 +191,11 @@ export default {
         return {
             panelBody: "application-issuance-"+vm._uid,
             proposed_licence:{},
-            datepickerInitialised: false,
             licence:{
-                activity:[],
+                activity: [],
                 id_check:false,
                 character_check:false,
+                return_check:false,
                 current_application: vm.application.id,
                 },
             datepickerOptions:{
@@ -200,18 +210,27 @@ export default {
     computed:{
         ...mapGetters([
             'licenceActivities',
+            'filterActivityList',
         ]),
         canIssueOrDecline: function() {
-            return this.licence.id_check && this.licence.character_check && this.visibleLicenceActivities.length;
+            return this.licence.id_check && this.licence.character_check &&
+                this.licence.return_check && this.visibleLicenceActivities.length;
         },
         visibleLicenceActivities: function() {
-            return this.licenceActivities('with_officer_finalisation', 'issuing_officer');
+            return this.filterActivityList({
+                activity_list: this.licenceActivities('with_officer_finalisation', 'issuing_officer'),
+                exclude_processing_statuses: ['discarded']
+            });
         },
         isIdCheckAccepted: function(){
             return this.application.id_check_status.id == 'accepted';
         },
+        isIdCheckAwaitingUpdate: function(){
+            return this.application.id_check_status.id == 'awaiting_update';
+        },
         isIdNotChecked: function(){
-            return this.application.id_check_status.id == 'not_checked';
+            return this.application.id_check_status.id == 'not_checked'
+                || this.application.id_check_status.id == 'updated' ;
         },
         isCharacterCheckAccepted: function(){
             return this.application.character_check_status.id == 'accepted';
@@ -219,6 +238,21 @@ export default {
         isCharacterNotChecked: function(){
             return this.application.character_check_status.id == 'not_checked';
         },
+        isReturnCheckAccepted: function(){
+            return this.application.return_check_status.id == 'accepted';
+        },
+        isIdReturnCheckAwaitingReturns: function(){
+            return this.application.return_check_status.id == 'awaiting_returns';
+        },
+        isReturnNotChecked: function(){
+            return this.application.return_check_status.id == 'not_checked'
+                || this.application.return_check_status.id == 'updated' ;
+        },
+        finalStatus: function() {
+            return (id) => {
+                return this.getActivity(id).final_status;
+            }
+        }
     },
     methods:{
         ok: function () {
@@ -241,39 +275,51 @@ export default {
                         )
                     });
         },
+        getActivity: function(id) {
+            const activity = this.licence.activity.find(activity => activity.id == id);
+            return activity ? activity : {};
+        },
         initialiseLicenceDetails() {
-            let vm=this;
-            var final_status=null
-            for(var i=0, len=vm.proposed_licence.length; i<len; i++){
-                if (vm.proposed_licence[i].proposed_action.id =='propose_issue'){
+            var final_status = null;
+            for(let proposal of this.proposed_licence){
+                if (proposal.proposed_action.id =='propose_issue'){
                     final_status="issued"
                 }
-                if (vm.proposed_licence[i].proposed_action.id =='propose_decline'){
+                if (proposal.proposed_action.id =='propose_decline'){
                     final_status="declined"
                 }
-                const processing_status = vm.proposed_licence[i].processing_status;
+                const processing_status = proposal.processing_status;
                 if(!['with_officer_finalisation'].includes(processing_status)) {
                     continue;
                 }
-                vm.licence.activity.push({
-                                        id:         vm.proposed_licence[i].licence_activity.id,
-                                        name:       vm.proposed_licence[i].licence_activity.name,
-                                        start_date: vm.proposed_licence[i].proposed_start_date,
-                                        end_date: vm.proposed_licence[i].proposed_end_date,
-                                        final_status:final_status
-                                    })
+                const activity_id = proposal.licence_activity.id;
+                this.licence.activity.push({
+                    id: activity_id,
+                    name: proposal.licence_activity.name,
+                    start_date: proposal.proposed_start_date,
+                    end_date: proposal.proposed_end_date,
+                    reason: proposal.reason,
+                    cc_email: proposal.cc_email,
+                    final_status: final_status,
+                });
             }
-            if(vm.application.id_check_status.id == 'accepted'){
-                vm.licence.id_check=true;
+            if(this.application.id_check_status.id == 'accepted'){
+                this.licence.id_check = true;
             }
-            if(vm.application.id_check_status.id == 'not_checked'){
-                vm.licence.id_check=false;
+            if(this.application.id_check_status.id == 'not_checked'){
+                this.licence.id_check = false;
             }
-            if(vm.application.character_check_status.id == 'accepted'){
-                vm.licence.character_check=true;
+            if(this.application.character_check_status.id == 'accepted'){
+                this.licence.character_check = true;
             }
-            if(vm.application.character_check_status.id == 'not_checked'){
-                vm.licence.character_check=false;
+            if(this.application.character_check_status.id == 'not_checked'){
+                this.licence.character_check = false;
+            }
+            if(vm.application.return_check_status.id == 'accepted'){
+                vm.licence.return_check=true;
+            }
+            if(vm.application.return_check_status.id == 'not_checked'){
+                vm.licence.return_check=false;
             }
         },
         
@@ -306,23 +352,30 @@ export default {
 
         //Initialise Date Picker
         initDatePicker: function() {
-            if(this.datepickerInitialised || this.$refs === undefined || this.$refs.end_date === undefined) {
+            if(this.$refs === undefined || this.$refs.end_date === undefined) {
                 return;
             }
 
             for (let i=0; i < this.$refs.end_date.length; i++) {
                 const start_date = this.$refs.start_date[i];
                 const end_date = this.$refs.end_date[i];
+                const activity_id = end_date.dataset.activity;
+                if(end_date.dataset.init) {
+                    continue;
+                }
 
-                const proposedStartDate = new Date(this.licence.activity[i].start_date);
-                const proposedEndDate = new Date(this.licence.activity[i].end_date);
+                const activity = this.getActivity(activity_id);
+                const proposedStartDate = new Date(activity.start_date);
+                const proposedEndDate = new Date(activity.end_date);
 
+                end_date.dataset.init = true;
+                start_date.dataset.init = true;
                 $(end_date).datetimepicker(this.datepickerOptions);
                 $(end_date).data('DateTimePicker').date(proposedEndDate);
                 $(end_date).off('dp.change').on('dp.change', (e) => {
                     const selected_end_date = $(end_date).data('DateTimePicker').date().format('YYYY-MM-DD');
-                    if (selected_end_date && selected_end_date != this.licence.activity[i].end_date) {
-                        this.licence.activity[i].end_date = selected_end_date;
+                    if (selected_end_date && selected_end_date != activity.end_date) {
+                        activity.end_date = selected_end_date;
                     }
                 });
 
@@ -330,12 +383,11 @@ export default {
                 $(start_date).data('DateTimePicker').date(proposedStartDate);
                 $(start_date).off('dp.change').on('dp.change', (e) => {
                     const selected_start_date = $(start_date).data('DateTimePicker').date().format('YYYY-MM-DD');
-                    if (selected_start_date && selected_start_date != this.licence.activity[i].start_date) {
-                        this.licence.activity[i].start_date = selected_start_date;
+                    if (selected_start_date && selected_start_date != activity.start_date) {
+                        activity.start_date = selected_start_date;
                     }
                 });
             }
-            this.datepickerInitialised = true;
         }
     },
     mounted: function(){

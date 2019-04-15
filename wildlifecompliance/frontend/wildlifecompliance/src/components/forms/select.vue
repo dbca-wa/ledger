@@ -12,7 +12,7 @@
             </template>
 
 
-            <template v-if="renderer.canViewComments()">
+            <template v-if="canViewComments">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
@@ -59,9 +59,10 @@
 var select2 = require('select2');
 require("select2/dist/css/select2.min.css");
 require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
-import Comment from './comment.vue'
-import HelpText from './help_text.vue'
-import HelpTextUrl from './help_text_url.vue'
+import Comment from './comment.vue';
+import HelpText from './help_text.vue';
+import HelpTextUrl from './help_text_url.vue';
+import { mapGetters } from 'vuex';
 export default {
     props:{
         'name':String,
@@ -70,7 +71,7 @@ export default {
         'isRequired': String,
         'help_text':String,
         'help_text_url':String,
-        "value":[String,Array],
+        "field_data": Object,
         "comment_value": String,
         "options":Array,
         "conditions":Object,
@@ -81,10 +82,6 @@ export default {
             }
         },
         'readonly': Boolean,
-        "renderer": {
-            type: Object,
-            required: true
-        }
     },
     data:function () {
         let vm =this;
@@ -97,9 +94,15 @@ export default {
         }
     },
     computed:{
-        cons:function () {
+        ...mapGetters([
+            'canViewComments',
+        ]),
+        cons: function () {
             return JSON.stringify(this.conditions);
         },
+        value: function() {
+            return this.field_data.value;
+        }
     },
     components: { Comment, HelpText, HelpTextUrl,},
     methods:{
@@ -131,7 +134,7 @@ export default {
                        vm.handleChange(selected[0])
                        e.preventDefault();
                         if( vm.isMultiple){
-                            vm.multipleSelected = selected.val();
+                            vm.field_data.value = vm.multipleSelected = selected.val();
                         }
                    }).
                    on("select2:unselect",function (e) {
@@ -139,7 +142,7 @@ export default {
                         vm.handleChange(selected[0])
                         e.preventDefault();
                         if( vm.isMultiple){
-                            vm.multipleSelected = selected.val();
+                            vm.field_data.value = vm.multipleSelected = selected.val();
                         }
                    });
                    if (vm.value) {
@@ -156,7 +159,7 @@ export default {
 
 <style lang="css">
 .select2-container {
-  width: 100% !important;
+    width: inherit !important;
 }
 
 input {

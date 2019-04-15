@@ -114,12 +114,41 @@ class OrganisationIdUploadNotificationEmail(TemplateEmailBase):
     txt_template = 'wildlifecompliance/emails/organisation_id_upload_notification.txt'
 
 
+class OrganisationIdUploadRequestNotificationEmail(TemplateEmailBase):
+    subject = 'An update for your organisation''s identification has been requested'
+    html_template = 'wildlifecompliance/emails/organisation_id_upload_request_notification.html'
+    txt_template = 'wildlifecompliance/emails/organisation_id_upload_request_notification.txt'
+
+
+def send_org_id_update_request_notification(application, request):
+    # An email to submitter requesting an update to the user identification
+    email = OrganisationIdUploadRequestNotificationEmail()
+
+    url = request.build_absolute_uri(
+        '/external/organisations/manage/{}'.format(application.org_applicant.id)
+    )
+    context = {
+        'application': application,
+        'url': url
+    }
+
+    organisation_admin_emails = application.org_applicant.all_admin_emails
+
+    msg = email.send(organisation_admin_emails, context=context)
+
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    # OrganisationContact is not EmailUser, set customer = None when logging OrganisationLogEntry
+    _log_org_email(msg, application.org_applicant, None, sender=sender)
+
+
 def send_organisation_id_upload_email_notification(
-        contacts, organisation, org_contact, request):
+        contacts, organisation, org_contact, applications, request):
     email = OrganisationIdUploadNotificationEmail()
 
+    applications_list_string = ', '.join([str(application.id) for application in applications])
     context = {
-        'organisation': organisation
+        'organisation': organisation,
+        'applications': applications_list_string
     }
 
     msg = email.send(contacts, context=context)

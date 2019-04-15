@@ -1,9 +1,67 @@
+$amendment-color: #ff0000;
+$section-text-color: #000000;
+$tablet-screen-size: 991px;
+$sections-menu-width: 249px;
+
 .amendment-highlight {
-    color: #ff0000 !important;
+    color: $amendment-color !important;
 
     &:after {
         font-family: "FontAwesome";
         content: "\f06a";
         margin-left: 5px;
     }
+}
+
+.sections-menu {
+    width: $sections-menu-width;
+}
+
+.sections-dropdown {
+
+    @media only screen and (max-width: $tablet-screen-size) {
+        display: none;
+    }
+
+    a {
+        color: $section-text-color;
+        cursor: pointer;
+    }
+    
+    .section-list {
+        .menu-row {
+            text-transform: capitalize;
+            padding-left: 20px;
+            padding-top: 4px;
+            padding-bottom: 4px;
+            cursor: pointer;
+
+            &:hover, :focus {
+                color: #262626;
+                text-decoration: none;
+                background-color: #f5f5f5;
+            }
+            div {
+                display: grid;
+                grid-template-columns: 10px auto;
+                grid-column-gap: 5px;
+            }
+            i {
+                font-size: 6px;
+                margin-top: 6px;
+            }
+            span {
+                padding-right: 5px;
+            }
+        }
+    }
+
+    .dropdown-panel {
+        max-height: calc(100vh - 150px);
+        overflow-y: auto;
+    }
+}
+
+.nav-tabs {
+    cursor: pointer;
 }

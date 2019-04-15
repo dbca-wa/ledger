@@ -67,8 +67,8 @@
                                 <div>
                                     <div class="col-sm-12">
                                         <strong>Application</strong><br/>
-                                        <a class="actionBtn" v-if="!showingApplication" @click.prevent="toggleApplication()">Show Application</a>
-                                        <a class="actionBtn" v-else @click.prevent="toggleApplication()">Hide Application</a>
+                                        <a class="actionBtn" v-if="!showingApplication || !this.unfinishedActivities.length" @click.prevent="toggleApplication({show: true, showFinalised: true})">Show Application</a>
+                                        <a class="actionBtn" v-else @click.prevent="toggleApplication({show: false})">Hide Application</a>
                                     </div>
                                     <div class="col-sm-12">
                                         <div class="separator"></div>
@@ -118,7 +118,8 @@
                                             <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleFinalViewConditions()">View Final Conditions</button>
                                         </div>
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
+                                            <button v-if="!userIsAssignedOfficer" style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
+                                            <button v-else disabled style="width:80%;" class="btn btn-success top-buffer-s">Issue/Decline</button>
                                         </div>
                                     </div>
                                 </template>
@@ -130,7 +131,7 @@
                                     </div>
                                     <div v-if="!isFinalised && (isSendingToAssessor || isOfficerConditions || isFinalViewConditions || showingConditions || isofficerfinalisation)"class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication()">Back to Application</button><br/>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication({show: true})">Back to Application</button><br/>
                                         </div>
                                     </div>
                                 </template>
@@ -146,7 +147,7 @@
                 <template v-if="isFinalised || isPartiallyFinalised">
                     <LicenceScreen/>
                 </template>
-                <template v-if="canIssueDecline">
+                <template v-if="canIssueDecline && isofficerfinalisation">
                     <IssueLicence :application="application" :licence_activity_tab="selected_activity_tab_id"/>
                 </template>
                 <template v-if="showingConditions">
@@ -158,7 +159,7 @@
                     <div class="tab-content">
                         <div v-for="activity in getVisibleConditionsFor('assessor', 'with_assessor', selected_activity_tab_id)">
                             <div :id="`${activity.id}`" class="tab-pane fade in">
-                                <Conditions :application="application" :licence_activity_tab="selected_activity_tab_id" :key="`assessor_condition_${selected_activity_tab_id}`"/>
+                                <Conditions :key="`assessor_condition_${selected_activity_tab_id}`"/>
                             </div>
                         </div>
                     </div>
@@ -183,7 +184,7 @@
                     </div>
                     <div class="tab-content">
                         <div v-for="activity in getVisibleConditionsFor('licensing_officer', 'with_officer_conditions', selected_activity_tab_id)" :id="`${activity.id}`" class="tab-pane fade active in">
-                            <OfficerConditions :application="application" :licence_activity_tab="`${activity.id}`" :final_view_conditions="false" :key="`officer_condition_${selected_activity_tab_id}`"/>
+                            <OfficerConditions :application="application" :licence_activity_tab="activity.id" :final_view_conditions="false" :key="`officer_condition_${selected_activity_tab_id}`"/>
                         </div>
                     </div>
                 </template>
@@ -244,8 +245,8 @@
                 <template v-if="applicationDetailsVisible">
                     <div>
                     <ul class="nav nav-tabs" id="tabs-main">
-                        <li><a data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
-                        <li><a data-toggle="tab" :href="'#'+applicationTab">Application</a></li>
+                        <li><a ref="applicantTab" data-toggle="tab" :href="'#'+applicantTab">Applicant</a></li>
+                        <li><a ref="applicationTab" data-toggle="tab" :href="'#'+applicationTab">Application</a></li>
                     </ul>
                     <div class="tab-content">
                     <div :id="applicantTab" class="tab-pane fade in active">
@@ -557,7 +558,7 @@
                                         <button v-if="isIdCheckRequested" disabled class="btn btn-light">Awaiting Update</button>
                                     </div>
                                     <div class="col-sm-4">
-                                        <button v-if="isIdNotChecked" class="btn btn-primary" @click.prevent="updateIdRequest()">Request Update</button>
+                                        <button v-if="isIdNotChecked" :disabled="application.proxy_applicant" class="btn btn-primary" @click.prevent="updateIdRequest()">Request Update</button>
                                         <button v-if="isIdCheckUpdated" disabled class="btn btn-light">Request updated</button>
                                         <button v-if="isIdCheckAccepted || isIdCheckRequested"  class="btn btn-primary" @click.prevent="resetIdRequest()">Reset</button>
                                     </div>
@@ -757,12 +758,14 @@ export default {
             'isFinalised',
             'isApplicationLoaded',
             'isApplicationActivityVisible',
+            'unfinishedActivities',
+            'current_user',
         ]),
         sendToAssessorActivities: function() {
             return this.licenceActivities(['with_officer', 'with_officer_conditions', 'with_assessor'], 'licensing_officer');
         },
         applicationDetailsVisible: function() {
-            return !this.isSendingToAssessor && !this.showingConditions && !this.isofficerfinalisation && !this.isFinalised && !this.isOfficerConditions && !this.isFinalViewConditions;
+            return !this.isSendingToAssessor && !this.showingConditions && !this.isofficerfinalisation && this.unfinishedActivities.length && !this.isOfficerConditions && !this.isFinalViewConditions;
         },
         applicationIsDraft: function(){
             return this.application.processing_status.id == 'draft';
@@ -856,6 +859,9 @@ export default {
                 return false;
             }
             return this.application && this.application.processing_status.id == 'under_review' && !this.isFinalised && !this.application.can_user_edit && this.application.user_in_licence_officers ? true : false;
+        },
+        userIsAssignedOfficer: function(){
+            return this.current_user.id == this.application.assigned_officer;
         }
     },
     methods: {
@@ -867,6 +873,8 @@ export default {
             'setOriginalApplication',
             'setApplication',
             'setActivityTab',
+            'loadCurrentUser',
+            'toggleFinalisedTabs',
         ]),
         eventListeners: function(){
             let vm = this;
@@ -979,6 +987,7 @@ export default {
             return s.replace(/[,;]/g, '\n');
         },
         proposedDecline: function(){
+            this.save_wo();
 //            this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
         },
@@ -1029,12 +1038,13 @@ export default {
         proposedLicence: function(){
             var activity_name=[]
             var selectedTabTitle = $("#tabs-section li.active");
-
+            this.save_wo();
             this.$refs.proposed_licence.propose_issue.licence_activity_id=this.selected_activity_tab_id;
             this.$refs.proposed_licence.propose_issue.licence_activity_name=selectedTabTitle.text();
             this.$refs.proposed_licence.isModalOpen = true;
         },
         toggleIssue:function(){
+            this.save_wo();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1137,7 +1147,7 @@ export default {
             var activity_id=[];
 
             $('.deficiency').each((i,d) => {
-                values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n`: '';
+                values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
             });
 
             activity_id.push(vm.selected_activity_tab_id);
@@ -1159,6 +1169,7 @@ export default {
         },
         togglesendtoAssessor:function(){
             let vm=this;
+            vm.save_wo();
             $('#tabs-main li').removeClass('active');
             vm.isSendingToAssessor = !vm.isSendingToAssessor;
             vm.showingApplication = false;
@@ -1182,32 +1193,36 @@ export default {
             let vm = this;
             let formData = new FormData(vm.form);
             vm.$http.post(vm.application_form_url,formData).then(res=>{
-
             },err=>{
             });
         },
-        toggleApplication:function(){
-            let vm = this;
-            this.showingApplication = !this.showingApplication;
+        toggleApplication: function({show=false, showFinalised=false}){
+
+            this.showingApplication = show;
             if(this.isSendingToAssessor){
-                this.isSendingToAssessor=!this.isSendingToAssessor
+                this.isSendingToAssessor = !show;
             }
             if(this.showingConditions){
-                this.showingConditions=!this.showingConditions
+                this.showingConditions = !show;
             }
             if(this.isOfficerConditions){
-                this.isOfficerConditions=!this.isOfficerConditions
+                this.isOfficerConditions = !show;
             }
             if(this.isFinalViewConditions){
-                this.isFinalViewConditions=!this.isFinalViewConditions
+                this.isFinalViewConditions = !show;
             }
             if(this.isofficerfinalisation){
-                this.isofficerfinalisation=!this.isofficerfinalisation
+                this.isofficerfinalisation = !show;
             }
-            setTimeout(function(){
-                $('#tabs-main li a')[1].click();
-                vm.initFirstTab(true);
+            this.toggleFinalisedTabs(showFinalised);
+            setTimeout(() => {
+                const firstTab = $('#tabs-main li a')[1];
+                if(firstTab != null) {
+                    firstTab.click();
+                }
+                this.initFirstTab(true);
             }, 50);
+            !showFinalised && this.load({ url: `/api/application/${this.application.id}/internal_application.json` });
         },
         toggleConditions:function(){
             this.showingConditions = true;
@@ -1231,6 +1246,7 @@ export default {
             );
         },
         toggleOfficerConditions:function(){
+            this.save_wo();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1243,6 +1259,7 @@ export default {
 
         },
         toggleFinalViewConditions:function(){
+            this.save_wo();
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.showingConditions=false;
@@ -1388,7 +1405,7 @@ export default {
                 console.log(error);
             });
         },
-        initialiseAssignedOfficerSelect:function(reinit=false){
+        initialiseAssignedOfficerSelect: function(reinit=false){
             let vm = this;
             if (reinit){
                 $(vm.$refs.assigned_officer).data('select2') ? $(vm.$refs.assigned_officer).select2('destroy'): '';
@@ -1415,10 +1432,10 @@ export default {
             });
         },
         initialiseSelects: function(){
-            let vm = this;
-            if (!vm.initialisedSelects){
-                vm.initialiseAssignedOfficerSelect();
-                vm.initialisedSelects = true;
+            if (!this.initialisedSelects){
+                this.initialiseAssignedOfficerSelect();
+                this.initialisedSelects = true;
+                this.initMainTab();
             }
         },
         initialiseAssessmentOptions: function() {
@@ -1459,11 +1476,16 @@ export default {
                     processing: true
                 }
             }
+        },
+        initMainTab: function() {
+            if(!this.$refs.applicantTab) {
+                return;
+            }
+            this.$refs.applicantTab.click();
+            this.initFirstTab(true);
         }
     },
     mounted: function() {
-        this.$nextTick(function () {
-        });
     },
     updated: function(){
         let vm = this;
@@ -1488,6 +1510,7 @@ export default {
             vm.load({ url: `/api/application/${to.params.application_id}/internal_application.json` }).then(() => {
                 vm.initialiseAssessmentOptions();
             });
+            vm.loadCurrentUser({ url: `/api/my_user_details` });
         });
     },
     beforeRouteUpdate: function(to, from, next) {
