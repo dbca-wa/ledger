@@ -58,7 +58,7 @@
             <div>
                 <div v-for="dict in call_email.report_type.schema">
                 <div v-for="(item, index) in dict.children[0].children">
-                    <compliance-renderer-block
+                    <renderer-block
                         :component="item" 
                         :json_data="nothing"
                         v-bind:key="`q_${index}`"

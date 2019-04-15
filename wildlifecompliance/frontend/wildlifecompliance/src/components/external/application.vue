@@ -24,7 +24,6 @@
                                         <strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong>
                                         <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
                                     </span>
-                                    <input type="button" @click.prevent="testButton" class="btn btn-danger" value="Test Button"/>
                                     <input v-if="!isProcessing && canDiscardActivity" type="button" @click.prevent="discardActivity" class="btn btn-danger" value="Discard Activity"/>
                                     <input v-if="!isProcessing" type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
                                     <input v-if="!isProcessing" type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
@@ -49,7 +48,6 @@
                 </div>
             </Application>
         <input type="button" @click.prevent="testButton" class="btn btn-danger" value="Test Button"/>
-        <p>anything here?</p>
         </form>
     </div>
 </template>
@@ -116,13 +114,6 @@ export default {
     eventListeners: function(){
         let vm = this;
         $('#tabs-section li:first-child a').click();
-    },
-    testButton: function(){
-      //this.isProcessing = true;
-      //let formData = new FormData(this.form)
-      let brendan = document.forms.new_application
-      let bbformData = new FormData(brendan)
-      console.log(bbformData)
     },
     discardActivity: function(e) {
       let swal_title = 'Discard Selected Activity';
