@@ -17,6 +17,13 @@
             <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
         </div>
 
+        <div class="row header-titles-row">
+            <div :class="`col-xs-${Math.floor(12 / component.header.length)}`"
+                v-for="(header, index) in component.header"
+                v-bind:key="`expander_header_${component.name}_${index}`">
+                    {{ header.label }}
+            </div>
+        </div>
         <div class="expander-table" v-for="(table, tableIdx) in expanderTables">
             <div class="row header-row">
                 <div :class="`col-xs-${Math.floor(12 / component.header.length)}`"
@@ -26,7 +33,7 @@
                             v-on:click="toggleTableVisibility(table)"></span>
                         <span class="header-contents">
                             <renderer-block
-                            :component="header"
+                            :component="removeLabel(header)"
                             :json_data="value"
                             :instance="table"
                             v-bind:key="`expander_header_contents_${component.name}_${index}`"
@@ -147,6 +154,11 @@ const ExpanderTable = {
         getInstanceName: function(tableId) {
             return `__instance-${tableId}`
         },
+        removeLabel: function(header) {
+            let newHeader = {...header};
+            delete newHeader['label'];
+            return newHeader;
+        }
     },
     computed:{
         ...mapGetters([

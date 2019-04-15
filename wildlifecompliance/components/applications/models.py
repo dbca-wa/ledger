@@ -10,7 +10,7 @@ from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
-from django.utils import timezone, six
+from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
 
 from ledger.accounts.models import EmailUser, RevisionedMixin
@@ -596,9 +596,6 @@ class Application(RevisionedMixin):
         from wildlifecompliance.components.licences.models import LicenceActivity
         with transaction.atomic():
             if self.can_user_edit:
-                # Save the data first
-                parser = SchemaParser(draft=False)
-                parser.save_application_user_data(self, request, viewset)
                 # self.processing_status = Application.PROCESSING_STATUS_UNDER_REVIEW
                 self.customer_status = Application.CUSTOMER_STATUS_UNDER_REVIEW
                 self.submitter = request.user
