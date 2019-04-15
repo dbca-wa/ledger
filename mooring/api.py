@@ -602,6 +602,7 @@ def delete_booking(request, *args, **kwargs):
     response_data = {}
     response_data['result'] = 'success'
     response_data['message'] = ''
+    nowtime = datetime.strptime(str(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')+timedelta(hours=8)
     booking = None
     booking_item = request.POST['booking_item']
     if 'ps_booking' in request.session:
@@ -609,11 +610,12 @@ def delete_booking(request, *args, **kwargs):
         if booking_id:
             booking = Booking.objects.get(id=booking_id)
             ms_booking = MooringsiteBooking.objects.get(id=booking_item,booking=booking)
-            if ms_booking.from_dt.date() > datetime.now().date(): 
-                ms_booking.delete()
+            msb = datetime.strptime(str(ms_booking.from_dt.strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')+timedelta(hours=8)
+            if msb > nowtime:
+                  ms_booking.delete()
             else:
-                response_data['result'] = 'error'
-                response_data['message'] = 'Unable to delete booking'
+                  response_data['result'] = 'error'
+                  response_data['message'] = 'Unable to delete booking'
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 
 @csrf_exempt
@@ -1707,6 +1709,19 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
 
          return distance
 
+    def distance_meters(self,origin, destination):
+         lat1, lon1 = origin
+         lat2, lon2 = destination
+         radius = 6372800 # meters 
+
+         dlon = lon2 - lon1
+         dlat = lat2 - lat1
+         a = (math.sin(dlat/2))**2 + math.cos(lat1) * math.cos(lat2) * (math.sin(dlon/2))**2
+         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+         distance = radius * c / 100 * 1.60934
+
+         return distance
+
     def retrieve(self, request, pk=None, ratis_id=None, format=None, show_all=False):
         """Fetch full campsite availability for a campground."""
         # convert GET parameters to objects
@@ -2005,6 +2020,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
             # make an entry under sites for each site
             for k, v in sites_map.items():
                 distance_from_selection = round(self.distance(ground.wkb_geometry,k.mooringarea.wkb_geometry),2)
+                distance_from_selection_meters = round(self.distance_meters(ground.wkb_geometry,k.mooringarea.wkb_geometry),0)
                 availability_map = []
                 date_rotate = start_date
                 for i in range(length):
@@ -2054,6 +2070,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                     'class': v[1].pk,
                     'price' : '0.00',
                     'distance_from_selection': distance_from_selection,
+                    'distance_from_selection_meters': distance_from_selection_meters,
                     'availability': availability_map,
                     'gearType': {
                         'tent': v[3],

@@ -2612,8 +2612,9 @@ export default {
                     var vessel_size = $('#vesselSize').val();
                     var vessel_draft = $('#vesselDraft').val();
                     var vessel_rego = $('#vesselRego').val();
+                    var vessel_beam = $('#vesselBeam').val();
 
-                    if (vessel_size > 0 && vessel_draft > 0 && vessel_rego.length > 1) {
+                    if (vessel_size > 0 && vessel_draft > 0 && vessel_beam > 0 &&vessel_rego.length > 1) {
                         var distance_radius = properties.props.park.distance_radius;
                         $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&distance_radius='+distance_radius+'&'+vm.bookingParam);
                         // $("#mapPopupBook").attr('target','_blank');

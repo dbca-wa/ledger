@@ -112,4 +112,4 @@ DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GIT_COMMIT_DATE = os.popen('cd '+BASE_DIR+' ; git log -1 --format=%cd').read()
 GIT_COMMIT_HASH = os.popen('cd  '+BASE_DIR+' ; git log -1 --format=%H').read()
-VERSION_NO = '2.00'
+VERSION_NO = '2.02'
