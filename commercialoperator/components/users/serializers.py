@@ -35,6 +35,23 @@ class UserOrganisationSerializer(serializers.ModelSerializer):
             'abn'
         )
 
+class UserFilterSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'last_name',
+            'first_name',
+            'email',
+            'name'
+        )
+
+    def get_name(self, obj):
+        return obj.get_full_name()
+
+
 class UserSerializer(serializers.ModelSerializer):
     commercialoperator_organisations = UserOrganisationSerializer(many=True)
     residential_address = UserAddressSerializer()

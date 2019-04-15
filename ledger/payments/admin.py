@@ -118,10 +118,14 @@ class OracleInterfaceRecipientInline(admin.TabularInline):
     model = models.OracleInterfaceRecipient
     extra = 1
 
+class OracleInterfaceDeductionInline(admin.TabularInline):
+    model = models.OracleInterfaceDeduction
+    extra = 1
+
 @admin.register(models.OracleInterfaceSystem)
 class OracleInterfaceSystemAdmin(admin.ModelAdmin):
     list_display = ('system_name','system_id')
-    inlines = [OracleInterfaceRecipientInline,] 
+    inlines = [OracleInterfaceRecipientInline, OracleInterfaceDeductionInline] 
 
 @admin.register(models.OracleAccountCode)
 class OracleAccountCode(admin.ModelAdmin):

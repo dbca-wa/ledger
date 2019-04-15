@@ -18,7 +18,9 @@ Vessel: {{v.Rego}}
 {% endfor %}
 
 Contact us about your booking
-{{campground_email}}
+{% if booking.mooringarea.email %}
+{{booking.mooringarea.email}}
+{% endif %}
 {% if booking.mooringarea.telephone %}
 {{booking.mooringarea.telephone}}
 {% endif %}

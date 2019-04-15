@@ -39,7 +39,7 @@
                             <div class="col-sm-12">
                                 <strong>Status</strong><br/>
                                 {{ approval.status }}
-                            </div>                        
+                            </div>
                         </div>
                     </div>
                 </div>

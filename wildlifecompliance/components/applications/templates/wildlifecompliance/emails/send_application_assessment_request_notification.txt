@@ -1,0 +1,15 @@
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
+
+{% block content %}
+    A Wildlife Licensing application has been reviewed and requires your assessment before approval.
+
+    {% if text %}
+        Assessment details: {{ text }}
+    {% endif %}
+
+    {% if url %}
+        Link: {{ url }}
+
+        Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.
+    {% endif %}
+{% endblock %}

@@ -2,6 +2,7 @@ import traceback
 import os
 import base64
 import geojson
+import json
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
@@ -37,6 +38,9 @@ from commercialoperator.components.proposals.models import (
     Proposal,
     ProposalDocument,
     Referral,
+    ReferralRecipientGroup,
+    QAOfficerGroup,
+    QAOfficerReferral,
     ProposalRequirement,
     ProposalStandardRequirement,
     AmendmentRequest,
@@ -57,6 +61,7 @@ from commercialoperator.components.proposals.serializers import (
     ProposalLogEntrySerializer,
     DTReferralSerializer,
     ReferralSerializer,
+    QAOfficerReferralSerializer,
     ReferralProposalSerializer,
     ProposalRequirementSerializer,
     ProposalStandardRequirementSerializer,
@@ -71,6 +76,7 @@ from commercialoperator.components.proposals.serializers import (
     SaveVehicleSerializer,
     VehicleSerializer,
     VesselSerializer,
+    OnHoldSerializer,
     ProposalOtherDetailsSerializer,
     SaveProposalOtherDetailsSerializer,
 )
@@ -268,7 +274,8 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         """
         #import ipdb; ipdb.set_trace()
         self.serializer_class = ReferralSerializer
-        qs = Referral.objects.filter(referral=request.user) if is_internal(self.request) else Referral.objects.none()
+        #qs = Referral.objects.filter(referral=request.user) if is_internal(self.request) else Referral.objects.none()
+        qs = Referral.objects.filter(referral_group__in=request.user.referralrecipientgroup_set.all()) if is_internal(self.request) else Referral.objects.none()
         #qs = self.filter_queryset(self.request, qs, self)
         qs = self.filter_queryset(qs)
 
@@ -276,6 +283,60 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         result_page = self.paginator.paginate_queryset(qs, request)
         serializer = DTReferralSerializer(result_page, context={'request':request}, many=True)
         return self.paginator.get_paginated_response(serializer.data)
+
+    @list_route(methods=['GET',])
+    def _qaofficer_internal(self, request, *args, **kwargs):
+        """
+        Used by the internal dashboard
+
+        http://localhost:8499/api/proposal_paginated/qaofficer_internal/?format=datatables&draw=1&length=2
+        """
+        qa_officers = QAOfficerGroup.objects.get(default=True).members.all().values_list('email', flat=True)
+        if request.user.email not in qa_officers:
+            return self.paginator.get_paginated_response([])
+
+        #import ipdb; ipdb.set_trace()
+        self.serializer_class = QAOfficerReferralSerializer
+        #qs = Referral.objects.filter(referral_group__in=request.user.referralrecipientgroup_set.all()) if is_internal(self.request) else Referral.objects.none()
+        #qs = Proposal.objects.filter(qaofficer_referrals__isnull=False).filter(qaofficer_referrals__gt=0) if is_internal(self.request) else QAOfficerReferral.objects.none()
+        qs = Proposal.objects.filter(qaofficer_referrals__gt=0) if is_internal(self.request) else QAOfficerReferral.objects.none()
+
+        #qs = self.filter_queryset(self.request, qs, self)
+        qs = self.filter_queryset(qs)
+
+        self.paginator.page_size = qs.count()
+        result_page = self.paginator.paginate_queryset(qs, request)
+        #serializer = DTReferralSerializer(result_page, context={'request':request}, many=True)
+        serializer = DTProposalSerializer(result_page, context={'request':request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
+
+    @list_route(methods=['GET',])
+    def qaofficer_internal(self, request, *args, **kwargs):
+        """
+        Used by the internal dashboard
+
+        http://localhost:8499/api/proposal_paginated/qaofficer_internal/?format=datatables&draw=1&length=2
+        """
+        #import ipdb; ipdb.set_trace()
+        qa_officers = QAOfficerGroup.objects.get(default=True).members.all().values_list('email', flat=True)
+        if request.user.email not in qa_officers:
+            return self.paginator.get_paginated_response([])
+
+        qs = self.get_queryset()
+        qs = qs.filter(qaofficer_referrals__gt=0)
+        #qs = self.filter_queryset(self.request, qs, self)
+        qs = self.filter_queryset(qs)
+
+        # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation
+        applicant_id = request.GET.get('org_id')
+        if applicant_id:
+            qs = qs.filter(applicant_id=applicant_id)
+
+        self.paginator.page_size = qs.count()
+        result_page = self.paginator.paginate_queryset(qs, request)
+        serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
+
 
     @list_route(methods=['GET',])
     def proposals_external(self, request, *args, **kwargs):
@@ -305,6 +366,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     #queryset = Proposal.objects.all()
     queryset = Proposal.objects.none()
     serializer_class = ProposalSerializer
+    lookup_field = 'id'
 
     def get_queryset(self):
         user = self.request.user
@@ -391,6 +453,114 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
+    def process_onhold_document(self, request, *args, **kwargs):
+        try:
+            #import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            action = request.POST.get('action')
+            section = request.POST.get('input_name')
+            if action == 'list' and 'input_name' in request.POST:
+                pass
+
+#            elif action == 'delete' and 'document_id' in request.POST:
+#                document_id = request.POST.get('document_id')
+#                document = instance.onhold_documents.get(id=document_id)
+#
+#                if document._file and os.path.isfile(document._file.path) and document.can_delete:
+#                    os.remove(document._file.path)
+#
+#                document.delete()
+#                instance.save(version_comment='OnHold File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
+#                #instance.current_proposal.save(version_comment='File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
+
+            elif action == 'delete' and 'document_id' in request.POST:
+                document_id = request.POST.get('document_id')
+                document = instance.onhold_documents.get(id=document_id)
+
+                document.visible = False
+                document.save()
+                instance.save(version_comment='OnHold File Hidden: {}'.format(document.name)) # to allow revision to be added to reversion history
+                #instance.current_proposal.save(version_comment='File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
+
+            elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
+                proposal_id = request.POST.get('proposal_id')
+                filename = request.POST.get('filename')
+                _file = request.POST.get('_file')
+                if not _file:
+                    _file = request.FILES.get('_file')
+
+                document = instance.onhold_documents.get_or_create(input_name=section, name=filename)[0]
+                path = default_storage.save('proposals/{}/onhold/{}'.format(proposal_id, filename), ContentFile(_file.read()))
+
+                document._file = path
+                document.save()
+                instance.save(version_comment='On Hold File Added: {}'.format(filename)) # to allow revision to be added to reversion history
+                #instance.current_proposal.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
+
+            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete) for d in instance.onhold_documents.filter(input_name=section, visible=True) if d._file] )
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
+    def process_qaofficer_document(self, request, *args, **kwargs):
+        try:
+            #import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            action = request.POST.get('action')
+            section = request.POST.get('input_name')
+            if action == 'list' and 'input_name' in request.POST:
+                pass
+
+            elif action == 'delete' and 'document_id' in request.POST:
+                document_id = request.POST.get('document_id')
+                document = instance.qaofficer_documents.get(id=document_id)
+
+                document.visible = False
+                document.save()
+                instance.save(version_comment='QA Officer File Hidden: {}'.format(document.name)) # to allow revision to be added to reversion history
+
+            elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
+                proposal_id = request.POST.get('proposal_id')
+                filename = request.POST.get('filename')
+                _file = request.POST.get('_file')
+                if not _file:
+                    _file = request.FILES.get('_file')
+
+                document = instance.qaofficer_documents.get_or_create(input_name=section, name=filename)[0]
+                path = default_storage.save('proposals/{}/qaofficer/{}'.format(proposal_id, filename), ContentFile(_file.read()))
+
+                document._file = path
+                document.save()
+                instance.save(version_comment='QA Officer File Added: {}'.format(filename)) # to allow revision to be added to reversion history
+                #instance.current_proposal.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
+
+            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete) for d in instance.qaofficer_documents.filter(input_name=section, visible=True) if d._file] )
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 #    def list(self, request, *args, **kwargs):
 #        #import ipdb; ipdb.set_trace()
@@ -413,6 +583,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
         result_page = paginator.paginate_queryset(proposals, request)
         serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
         return paginator.get_paginated_response(serializer.data)
+
 
     @detail_route(methods=['GET',])
     def action_log(self, request, *args, **kwargs):
@@ -963,15 +1134,108 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def on_hold(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                #import ipdb; ipdb.set_trace()
+                instance = self.get_object()
+                is_onhold =  eval(request.data.get('onhold'))
+                data = {}
+                if is_onhold:
+                    data['type'] = u'onhold'
+                    instance.on_hold(request)
+                else:
+                    data['type'] = u'onhold_remove'
+                    instance.on_hold_remove(request)
+
+                data['proposal'] = u'{}'.format(instance.id)
+                data['staff'] = u'{}'.format(request.user.id)
+                data['text'] = request.user.get_full_name() + u': {}'.format(request.data['text'])
+                data['subject'] = request.user.get_full_name() + u': {}'.format(request.data['text'])
+                serializer = ProposalLogEntrySerializer(data=data)
+                serializer.is_valid(raise_exception=True)
+                comms = serializer.save()
+
+                # Save the files
+                documents_qs = instance.onhold_documents.filter(input_name='on_hold_file', visible=True)
+                for f in documents_qs:
+                    document = comms.documents.create()
+                    document.name = f.name
+                    document._file = f._file #.strip('/media')
+                    document.input_name = f.input_name
+                    document.can_delete = True
+                    document.save()
+                # End Save Documents
+
+                return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def with_qaofficer(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                #import ipdb; ipdb.set_trace()
+                instance = self.get_object()
+                is_with_qaofficer =  eval(request.data.get('with_qaofficer'))
+                data = {}
+                if is_with_qaofficer:
+                    data['type'] = u'with_qaofficer'
+                    instance.with_qaofficer(request)
+                else:
+                    data['type'] = u'with_qaofficer_completed'
+                    instance.with_qaofficer_completed(request)
+
+                data['proposal'] = u'{}'.format(instance.id)
+                data['staff'] = u'{}'.format(request.user.id)
+                data['text'] = request.user.get_full_name() + u': {}'.format(request.data['text'])
+                data['subject'] = request.user.get_full_name() + u': {}'.format(request.data['text'])
+                serializer = ProposalLogEntrySerializer(data=data)
+                serializer.is_valid(raise_exception=True)
+                comms = serializer.save()
+
+                # Save the files
+                documents_qs = instance.qaofficer_documents.filter(input_name='qaofficer_file', visible=True)
+                for f in documents_qs:
+                    document = comms.documents.create()
+                    document.name = f.name
+                    document._file = f._file #.strip('/media')
+                    document.input_name = f.input_name
+                    document.can_delete = True
+                    document.save()
+                # End Save Documents
+
+                return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     @detail_route(methods=['post'])
     def assesor_send_referral(self, request, *args, **kwargs):
         try:
+            #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             serializer = SendReferralSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             #text=serializer.validated_data['text']
             #instance.send_referral(request,serializer.validated_data['email'])
-            instance.send_referral(request,serializer.validated_data['email'], serializer.validated_data['text'])
+            instance.send_referral(request,serializer.validated_data['email_group'], serializer.validated_data['text'])
             serializer = InternalProposalSerializer(instance,context={'request':request})
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -1136,7 +1400,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 'approval_level': approval_level,
                 #'other_details': {},
                 #'tenure': tenure,
-                'data': [                                           
+                'data': [
                     {
                         u'regionActivitySection': [{
                             'Region': Region.objects.get(id=region).name if region else None,
@@ -1242,6 +1506,11 @@ class ReferralViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @list_route(methods=['GET',])
+    def user_group_list(self, request, *args, **kwargs):
+        qs = ReferralRecipientGroup.objects.filter().values_list('name', flat=True)
+        return Response(qs)
+
+    @list_route(methods=['GET',])
     def datatable_list(self, request, *args, **kwargs):
         proposal = request.GET.get('proposal',None)
         qs = self.get_queryset().all()
@@ -1250,11 +1519,14 @@ class ReferralViewSet(viewsets.ModelViewSet):
         serializer = DTReferralSerializer(qs, many=True)
         return Response(serializer.data)
 
+
     @detail_route(methods=['GET',])
     def referral_list(self, request, *args, **kwargs):
         instance = self.get_object()
-        qs = self.get_queryset().all()
-        qs=qs.filter(sent_by=instance.referral, proposal=instance.proposal)
+        #qs = self.get_queryset().all()
+        #qs=qs.filter(sent_by=instance.referral, proposal=instance.proposal)
+
+        qs = Referral.objects.filter(referral_group__in=request.user.referralrecipientgroup_set.all(), proposal=instance.proposal)
         serializer = DTReferralSerializer(qs, many=True)
         #serializer = ProposalReferralSerializer(qs, many=True)
 
@@ -1265,8 +1537,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             #import ipdb; ipdb.set_trace()
-            referral_comment = request.data.get('referral_comment')
-            instance.complete(request, referral_comment)
+            instance.complete(request)
             serializer = self.get_serializer(instance, context={'request':request})
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -1315,6 +1586,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['GET',])
     def resend(self, request, *args, **kwargs):
         try:
+            import ipdb; ipdb.set_trace()
             instance = self.get_object()
             instance.resend(request)
             serializer = InternalProposalSerializer(instance.proposal,context={'request':request})
@@ -1332,6 +1604,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def send_referral(self, request, *args, **kwargs):
         try:
+            import ipdb; ipdb.set_trace()
             instance = self.get_object()
             serializer = SendReferralSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)

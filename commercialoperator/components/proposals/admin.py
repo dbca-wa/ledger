@@ -161,7 +161,43 @@ class Activity(admin.ModelAdmin):
 
 @admin.register(AccessType)
 class VehicleAdmin(admin.ModelAdmin):
-    list_display = ['id','name', 'visible']
+    list_display = ['id','name','visible']
+    ordering = ('id',)
+
+@admin.register(models.ReferralRecipientGroup)
+class ReferralRecipientGroupAdmin(admin.ModelAdmin):
+    filter_horizontal = ('members',)
+    list_display = ['name']
+    exclude = ('site',)
+    actions = None
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "members":
+            #kwargs["queryset"] = EmailUser.objects.filter(email__icontains='@dbca.wa.gov.au')
+            kwargs["queryset"] = EmailUser.objects.filter(is_staff=True)
+        return super(ReferralRecipientGroupAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+
+    #def has_add_permission(self, request):
+    #    return True if models.ReferralRecipientGroup.objects.count() == 0 else False
+
+    #def has_delete_permission(self, request, obj=None):
+    #    return False
+
+@admin.register(models.QAOfficerGroup)
+class QAOfficerGroupAdmin(admin.ModelAdmin):
+    filter_horizontal = ('members',)
+    list_display = ['name']
+    exclude = ('site',)
+    actions = None
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "members":
+            #kwargs["queryset"] = EmailUser.objects.filter(email__icontains='@dbca.wa.gov.au')
+            kwargs["queryset"] = EmailUser.objects.filter(is_staff=True)
+        return super(QAOfficerGroupAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+
+    #list_display = ['id','name', 'visible']
+    list_display = ['id','name']
     ordering = ('id',)
 
 # @admin.register(ParkActivity)

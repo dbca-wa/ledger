@@ -8,6 +8,8 @@ module.exports = {
     users: '/api/users.json',
     profile: '/api/profile',
     department_users: '/api/department_users',
+    filtered_users: '/api/filtered_users',
+    referral_recipient_groups: '/api/referrals/user_group_list',
     //other
     countries: "https://restcountries.eu/rest/v1/?fullText=true",
     proposal_type:"/api/proposal_type",
@@ -34,6 +36,7 @@ module.exports = {
     compliances_paginated_external: "/api/compliance_paginated/compliances_external/?format=datatables",
     proposals_paginated_internal:   "/api/proposal_paginated/proposals_internal/?format=datatables",
     referrals_paginated_internal:   "/api/proposal_paginated/referrals_internal/?format=datatables",
+    qaofficer_paginated_internal:   "/api/proposal_paginated/qaofficer_internal/?format=datatables",
     //filter_list:                    "/api/proposal_paginated/filter_list.json",
     filter_list:                    "/api/proposal/filter_list.json",
     filter_list_approvals:          "/api/approvals/filter_list.json",

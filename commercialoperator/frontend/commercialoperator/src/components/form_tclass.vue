@@ -1,6 +1,6 @@
 <template lang="html">
-    <div>
-        <div class="col-md-3" >
+    <div class="panel panel-default">
+        <div v-if="proposal.processing_status=='Draft'" class="col-md-3" >
             <div class="panel panel-default fixed">
               <div class="panel-heading">
                 <h5>Sections</h5>

@@ -22,7 +22,7 @@ from commercialoperator.components.main.models import CommunicationsLogEntry, Us
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
-from commercialoperator.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification, send_proposal_approver_sendback_email_notification
+from commercialoperator.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification, send_proposal_approver_sendback_email_notification, send_qaofficer_email_notification, send_qaofficer_complete_email_notification
 import copy
 import subprocess
 from django.db.models import Q
@@ -33,6 +33,15 @@ logger = logging.getLogger(__name__)
 
 def update_proposal_doc_filename(instance, filename):
     return 'proposals/{}/documents/{}'.format(instance.proposal.id,filename)
+
+def update_onhold_doc_filename(instance, filename):
+    return 'proposals/{}/on_hold/{}'.format(instance.proposal.id,filename)
+
+def update_qaofficer_doc_filename(instance, filename):
+    return 'proposals/{}/qaofficer/{}'.format(instance.proposal.id,filename)
+
+def update_referral_doc_filename(instance, filename):
+    return 'proposals/{}/referral/{}/documents/{}'.format(instance.referral.proposal.id,instance.referral.id,filename)
 
 def update_proposal_required_doc_filename(instance, filename):
     return 'proposals/{}/required_documents/{}/{}'.format(instance.proposal.id,instance.required_doc.id,filename)
@@ -81,9 +90,6 @@ class TaggedProposalAssessorGroupActivities(TaggedItemBase):
 
 class ProposalAssessorGroup(models.Model):
     name = models.CharField(max_length=255)
-    #members = models.ManyToManyField(EmailUser,blank=True)
-    #regions = TaggableManager(verbose_name="Regions",help_text="A comma-separated list of regions.",through=TaggedProposalAssessorGroupRegions,related_name = "+",blank=True)
-    #activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.",through=TaggedProposalAssessorGroupActivities,related_name = "+",blank=True)
     members = models.ManyToManyField(EmailUser)
     region = models.ForeignKey(Region, null=True, blank=True)
     default = models.BooleanField(default=False)
@@ -197,6 +203,17 @@ class ProposalDocument(Document):
     class Meta:
         app_label = 'commercialoperator'
 
+class OnHoldDocument(Document):
+    proposal = models.ForeignKey('Proposal',related_name='onhold_documents')
+    _file = models.FileField(upload_to=update_onhold_doc_filename)
+    input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+    visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
+
+    def delete(self):
+        if self.can_delete:
+            return super(ProposalDocument, self).delete()
+
 #Documents on Activities(land)and Activities(Marine) tab for T-Class related to required document questions
 class ProposalRequiredDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='required_documents')
@@ -213,6 +230,35 @@ class ProposalRequiredDocument(Document):
     class Meta:
         app_label = 'commercialoperator'
 
+class QAOfficerDocument(Document):
+    proposal = models.ForeignKey('Proposal',related_name='qaofficer_documents')
+    _file = models.FileField(upload_to=update_qaofficer_doc_filename)
+    input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+    visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
+
+    def delete(self):
+        if self.can_delete:
+            return super(QAOfficerDocument, self).delete()
+        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+
+class ReferralDocument(Document):
+    referral = models.ForeignKey('Referral',related_name='referral_documents')
+    _file = models.FileField(upload_to=update_referral_doc_filename)
+    input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+
+    def delete(self):
+        if self.can_delete:
+            return super(ProposalDocument, self).delete()
+        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+
+    class Meta:
+        app_label = 'commercialoperator'
 
 class ProposalApplicantDetails(models.Model):
     first_name = models.CharField(max_length=24, blank=True, default='')
@@ -258,6 +304,8 @@ class Proposal(RevisionedMixin):
     PROCESSING_STATUS_TEMP = 'temp'
     PROCESSING_STATUS_DRAFT = 'draft'
     PROCESSING_STATUS_WITH_ASSESSOR = 'with_assessor'
+    PROCESSING_STATUS_ONHOLD = 'on_hold'
+    PROCESSING_STATUS_WITH_QA_OFFICER = 'with_qa_officer'
     PROCESSING_STATUS_WITH_REFERRAL = 'with_referral'
     PROCESSING_STATUS_WITH_ASSESSOR_REQUIREMENTS = 'with_assessor_requirements'
     PROCESSING_STATUS_WITH_APPROVER = 'with_approver'
@@ -274,6 +322,8 @@ class Proposal(RevisionedMixin):
     PROCESSING_STATUS_CHOICES = ((PROCESSING_STATUS_TEMP, 'Temporary'),
                                  (PROCESSING_STATUS_DRAFT, 'Draft'),
                                  (PROCESSING_STATUS_WITH_ASSESSOR, 'With Assessor'),
+                                 (PROCESSING_STATUS_ONHOLD, 'On Hold'),
+                                 (PROCESSING_STATUS_WITH_QA_OFFICER, 'With QA Officer'),
                                  (PROCESSING_STATUS_WITH_REFERRAL, 'With Referral'),
                                  (PROCESSING_STATUS_WITH_ASSESSOR_REQUIREMENTS, 'With Assessor (Requirements)'),
                                  (PROCESSING_STATUS_WITH_APPROVER, 'With Approver'),
@@ -345,6 +395,7 @@ class Proposal(RevisionedMixin):
     assigned_approver = models.ForeignKey(EmailUser, blank=True, null=True, related_name='commercialoperator_proposals_approvals', on_delete=models.SET_NULL)
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
                                          default=PROCESSING_STATUS_CHOICES[1][0])
+    prev_processing_status = models.CharField(max_length=30, blank=True, null=True)
     id_check_status = models.CharField('Identification Check Status', max_length=30, choices=ID_CHECK_STATUS_CHOICES,
                                        default=ID_CHECK_STATUS_CHOICES[0][0])
     compliance_check_status = models.CharField('Return Check Status', max_length=30, choices=COMPLIANCE_CHECK_STATUS_CHOICES,
@@ -359,6 +410,8 @@ class Proposal(RevisionedMixin):
 
     previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
     proposed_decline_status = models.BooleanField(default=False)
+    #qaofficer_referral = models.BooleanField(default=False)
+    #qaofficer_referral = models.OneToOneField('QAOfficerReferral', blank=True, null=True)
     # Special Fields
     title = models.CharField(max_length=255,null=True,blank=True)
     activity = models.CharField(max_length=255,null=True,blank=True)
@@ -417,6 +470,12 @@ class Proposal(RevisionedMixin):
     @property
     def reference(self):
         return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
+
+    def qa_officers(self, name=None):
+        if not name:
+            return QAOfficerGroup.objects.get(default=True).members.all().values_list('email', flat=True)
+        else:
+            return QAOfficerGroup.objects.get(name=name).members.all().values_list('email', flat=True)
 
     @property
     def get_history(self):
@@ -605,7 +664,8 @@ class Proposal(RevisionedMixin):
 
 
     def can_assess(self,user):
-        if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':
+        #if self.processing_status == 'on_hold' or self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':
+        if self.processing_status in ['on_hold', 'with_qa_officer', 'with_assessor', 'with_referral', 'with_assessor_requirements']:
             return self.__assessor_group() in user.proposalassessorgroup_set.all()
         elif self.processing_status == 'with_approver':
             return self.__approver_group() in user.proposalapprovergroup_set.all()
@@ -700,7 +760,7 @@ class Proposal(RevisionedMixin):
                 try:
                     current_parks=self.parks.all()
                     if current_parks:
-                        print current_parks
+                        #print current_parks
                         for p in current_parks:
                             p.delete()
                     for item in parks:
@@ -708,7 +768,7 @@ class Proposal(RevisionedMixin):
                             park=Park.objects.get(id=item)
                             ProposalPark.objects.create(proposal=self, park=park)
                         except:
-                            raise                        
+                            raise
                 except:
                     raise
 
@@ -736,36 +796,45 @@ class Proposal(RevisionedMixin):
 
                     # Check if the user is in ledger
                     try:
-                        user = EmailUser.objects.get(email__icontains=referral_email)
-                    except EmailUser.DoesNotExist:
-                        # Validate if it is a deparment user
-                        department_user = get_department_user(referral_email)
-                        if not department_user:
-                            raise ValidationError('The user you want to send the referral to is not a member of the department')
-                        # Check if the user is in ledger or create
-
-                        user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
-                        if created:
-                            user.first_name = department_user['given_name']
-                            user.last_name = department_user['surname']
-                            user.save()
+                        #user = EmailUser.objects.get(email__icontains=referral_email)
+                        referral_group = ReferralRecipientGroup.objects.get(name__icontains=referral_email)
+                    #except EmailUser.DoesNotExist:
+                    except ReferralRecipientGroup.DoesNotExist:
+                        raise exceptions.ProposalReferralCannotBeSent()
+#                        # Validate if it is a deparment user
+#                        department_user = get_department_user(referral_email)
+#                        if not department_user:
+#                            raise ValidationError('The user you want to send the referral to is not a member of the department')
+#                        # Check if the user is in ledger or create
+#                        #import ipdb; ipdb.set_trace()
+#                        email = department_user['email'].lower()
+#                        user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
+#                        if created:
+#                            user.first_name = department_user['given_name']
+#                            user.last_name = department_user['surname']
+#                            user.save()
                     try:
-                        Referral.objects.get(referral=user,proposal=self)
-                        raise ValidationError('A referral has already been sent to this user')
+                        #Referral.objects.get(referral=user,proposal=self)
+                        Referral.objects.get(referral_group=referral_group,proposal=self)
+                        raise ValidationError('A referral has already been sent to this group')
                     except Referral.DoesNotExist:
                         # Create Referral
                         referral = Referral.objects.create(
                             proposal = self,
-                            referral=user,
+                            #referral=user,
+                            referral_group=referral_group,
                             sent_by=request.user,
                             text=referral_text
                         )
                     # Create a log entry for the proposal
-                    self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+                    #self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+                    self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}'.format(referral_group.name)),request)
                     # Create a log entry for the organisation
-                    self.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+                    #self.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+                    self.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}'.format(referral_group.name)),request)
                     # send email
-                    send_referral_email_notification(referral,request)
+                    recipients = referral_group.members_list
+                    send_referral_email_notification(referral,recipients,request)
                 else:
                     raise exceptions.ProposalReferralCannotBeSent()
             except:
@@ -938,6 +1007,111 @@ class Proposal(RevisionedMixin):
                 send_proposal_decline_email_notification(self,request, proposal_decline)
             except:
                 raise
+
+    def on_hold(self,request):
+        with transaction.atomic():
+            try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if not (self.processing_status == 'with_assessor' or self.processing_status == 'with_referral'):
+                    raise ValidationError('You cannot put on hold if it is not with assessor or with referral')
+
+                self.prev_processing_status = self.processing_status
+                self.processing_status = self.PROCESSING_STATUS_ONHOLD
+                self.save()
+                # Log proposal action
+                self.log_user_action(ProposalUserAction.ACTION_PUT_ONHOLD.format(self.id),request)
+                # Log entry for organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_PUT_ONHOLD.format(self.id),request)
+
+                #send_approver_decline_email_notification(reason, request, self)
+            except:
+                raise
+
+    def on_hold_remove(self,request):
+        with transaction.atomic():
+            try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if self.processing_status != 'on_hold':
+                    raise ValidationError('You cannot remove on hold if it is not currently on hold')
+
+                self.processing_status = self.prev_processing_status
+                self.prev_processing_status = self.PROCESSING_STATUS_ONHOLD
+                self.save()
+                # Log proposal action
+                self.log_user_action(ProposalUserAction.ACTION_REMOVE_ONHOLD.format(self.id),request)
+                # Log entry for organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_REMOVE_ONHOLD.format(self.id),request)
+
+                #send_approver_decline_email_notification(reason, request, self)
+            except:
+                raise
+
+    def with_qaofficer(self,request):
+        with transaction.atomic():
+            try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if not (self.processing_status == 'with_assessor' or self.processing_status == 'with_referral'):
+                    raise ValidationError('You cannot send to QA Officer if it is not with assessor or with referral')
+
+                self.prev_processing_status = self.processing_status
+                self.processing_status = self.PROCESSING_STATUS_WITH_QA_OFFICER
+                self.qaofficer_referral = True
+                if self.qaofficer_referrals.exists():
+                    qaofficer_referral = self.qaofficer_referrals.first()
+                    qaofficer_referral.sent_by = request.user
+                    qaofficer_referral.processing_status = 'with_qaofficer'
+                else:
+                    qaofficer_referral = self.qaofficer_referrals.create(sent_by=request.user)
+
+                qaofficer_referral.save()
+                self.save()
+
+                # Log proposal action
+                self.log_user_action(ProposalUserAction.ACTION_WITH_QA_OFFICER.format(self.id),request)
+                # Log entry for organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_WITH_QA_OFFICER.format(self.id),request)
+
+                #send_approver_decline_email_notification(reason, request, self)
+                recipients = self.qa_officers()
+                send_qaofficer_email_notification(self, recipients, request)
+
+            except:
+                raise
+
+    def with_qaofficer_completed(self,request):
+        with transaction.atomic():
+            try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if self.processing_status != 'with_qa_officer':
+                    raise ValidationError('You cannot Complete QA Officer Assessment if processing status not currently With Assessor')
+
+                self.processing_status = self.prev_processing_status
+                self.prev_processing_status = self.PROCESSING_STATUS_WITH_QA_OFFICER
+
+                qaofficer_referral = self.qaofficer_referrals.first()
+                qaofficer_referral.qaofficer = request.user
+                qaofficer_referral.qaofficer_group = QAOfficerGroup.objects.get(default=True)
+                qaofficer_referral.qaofficer_text = request.data['text']
+                qaofficer_referral.processing_status = 'completed'
+
+                qaofficer_referral.save()
+                self.save()
+
+                # Log proposal action
+                self.log_user_action(ProposalUserAction.ACTION_QA_OFFICER_COMPLETED.format(self.id),request)
+                # Log entry for organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_QA_OFFICER_COMPLETED.format(self.id),request)
+
+                #send_approver_decline_email_notification(reason, request, self)
+                recipients = self.qa_officers()
+                send_qaofficer_complete_email_notification(self, recipients, request)
+            except:
+                raise
+
 
     def proposed_approval(self,request,details):
         with transaction.atomic():
@@ -1346,7 +1520,7 @@ class ProposalAccreditation(models.Model):
         ('narta', 'NARTA'),
         ('other', 'Other')
     )
-    
+
     accreditation_type = models.CharField('Accreditation', max_length=40, choices=ACCREDITATION_TYPE_CHOICES,
                                        default=ACCREDITATION_TYPE_CHOICES[0][0])
     accreditation_expiry= models.DateField(blank=True, null=True)
@@ -1387,7 +1561,7 @@ class ProposalParkActivity(models.Model):
     activity = models.ForeignKey(Activity, blank=True, null=True)
 
     class Meta:
-        app_label = 'commercialoperator' 
+        app_label = 'commercialoperator'
         unique_together = ('proposal_park', 'activity')
 
 #To store Park access_types related to Proposal T class land parks
@@ -1396,7 +1570,7 @@ class ProposalParkAccess(models.Model):
     access_type = models.ForeignKey(AccessType, blank=True, null=True)
 
     class Meta:
-        app_label = 'commercialoperator' 
+        app_label = 'commercialoperator'
         unique_together = ('proposal_park', 'access_type')
 
 #To store Park zones related to Proposal T class marine parks
@@ -1416,7 +1590,7 @@ class ProposalParkZoneActivity(models.Model):
     #section=models.ForeignKey(Section, blank=True, null= True)
 
     class Meta:
-        app_label = 'commercialoperator' 
+        app_label = 'commercialoperator'
         unique_together = ('park_zone', 'activity')
 
 
@@ -1450,7 +1624,7 @@ class ProposalTrailSection(models.Model):
 #     section=models.ForeignKey(Section, blank=True, null= True)
 
 #     class Meta:
-#         app_label = 'commercialoperator' 
+#         app_label = 'commercialoperator'
 #         unique_together = ('proposal_trail', 'activity')
 
 class ProposalTrailSectionActivity(models.Model):
@@ -1459,7 +1633,7 @@ class ProposalTrailSectionActivity(models.Model):
     #section=models.ForeignKey(Section, blank=True, null= True)
 
     class Meta:
-        app_label = 'commercialoperator' 
+        app_label = 'commercialoperator'
         unique_together = ('trail_section', 'activity')
 
 
@@ -1484,7 +1658,7 @@ class Vessel(models.Model):
     spv_no = models.CharField(max_length=200, blank=True)
     hire_rego = models.CharField(max_length=200, blank=True)
     craft_no = models.CharField(max_length=200, blank=True)
-    size = models.CharField(max_length=200, blank=True)  
+    size = models.CharField(max_length=200, blank=True)
     #rego_expiry= models.DateField(blank=True, null=True)
     proposal = models.ForeignKey(Proposal, related_name='vessels')
 
@@ -1597,6 +1771,16 @@ class ProposalDeclinedDetails(models.Model):
     class Meta:
         app_label = 'commercialoperator'
 
+class ProposalOnHold(models.Model):
+    proposal = models.OneToOneField(Proposal)
+    officer = models.ForeignKey(EmailUser, null=False)
+    comment = models.TextField(blank=True)
+    documents = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='onhold_documents')
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+
 @python_2_unicode_compatible
 #class ProposalStandardRequirement(models.Model):
 class ProposalStandardRequirement(RevisionedMixin):
@@ -1670,7 +1854,8 @@ class ProposalUserAction(UserAction):
     ACTION_ENTER_REQUIREMENTS = "Enter Requirements for proposal {}"
     ACTION_BACK_TO_PROCESSING = "Back to processing for proposal {}"
     RECALL_REFERRAL = "Referral {} for proposal {} has been recalled"
-    CONCLUDE_REFERRAL = "Referral {} for proposal {} has been concluded by {}"
+    CONCLUDE_REFERRAL = "{}: Referral {} for proposal {} has been concluded by group {}"
+    ACTION_REFERRAL_DOCUMENT = "Assign Referral document {}"
     #Approval
     ACTION_REISSUE_APPROVAL = "Reissue approval for proposal {}"
     ACTION_CANCEL_APPROVAL = "Cancel approval for proposal {}"
@@ -1685,6 +1870,10 @@ class ProposalUserAction(UserAction):
     #Vessel
     ACTION_CREATE_VESSEL = "Create Vessel {}"
     ACTION_EDIT_VESSEL= "Edit Vessel {}"
+    ACTION_PUT_ONHOLD = "Put Proposal On-hold {}"
+    ACTION_REMOVE_ONHOLD = "Remove Proposal On-hold {}"
+    ACTION_WITH_QA_OFFICER = "Send Proposal QA Officer {}"
+    ACTION_QA_OFFICER_COMPLETED = "QA Officer Assessment Completed {}"
 
 
     class Meta:
@@ -1702,7 +1891,105 @@ class ProposalUserAction(UserAction):
     proposal = models.ForeignKey(Proposal, related_name='action_logs')
 
 
-class Referral(models.Model):
+class ReferralRecipientGroup(models.Model):
+    #site = models.OneToOneField(Site, default='1')
+    name = models.CharField(max_length=30, unique=True)
+    members = models.ManyToManyField(EmailUser)
+
+    def __str__(self):
+        return 'Referral Recipient Group'
+
+    @property
+    def all_members(self):
+        all_members = []
+        all_members.extend(self.members.all())
+        member_ids = [m.id for m in self.members.all()]
+        #all_members.extend(EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True).exclude(id__in=member_ids))
+        return all_members
+
+    @property
+    def filtered_members(self):
+        return self.members.all()
+
+    @property
+    def members_list(self):
+            return list(self.members.all().values_list('email', flat=True))
+
+    class Meta:
+        app_label = 'commercialoperator'
+        verbose_name_plural = "Referral recipient group"
+
+class QAOfficerGroup(models.Model):
+    #site = models.OneToOneField(Site, default='1')
+    name = models.CharField(max_length=30, unique=True)
+    members = models.ManyToManyField(EmailUser)
+    default = models.BooleanField(default=False)
+
+    def __str__(self):
+        return 'QA Officer Group'
+
+    @property
+    def all_members(self):
+        all_members = []
+        all_members.extend(self.members.all())
+        member_ids = [m.id for m in self.members.all()]
+        #all_members.extend(EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True).exclude(id__in=member_ids))
+        return all_members
+
+    @property
+    def filtered_members(self):
+        return self.members.all()
+
+    @property
+    def members_list(self):
+            return list(self.members.all().values_list('email', flat=True))
+
+    class Meta:
+        app_label = 'commercialoperator'
+        verbose_name_plural = "QA Officer group"
+
+
+    def _clean(self):
+        try:
+            default = QAOfficerGroup.objects.get(default=True)
+        except ProposalAssessorGroup.DoesNotExist:
+            default = None
+
+        if default and self.default:
+            raise ValidationError('There can only be one default proposal QA Officer group')
+
+    @property
+    def current_proposals(self):
+        assessable_states = ['with_qa_officer']
+        return Proposal.objects.filter(processing_status__in=assessable_states)
+
+
+#
+#class ReferralRequestUserAction(UserAction):
+#    ACTION_LODGE_REQUEST = "Lodge request {}"
+#    ACTION_ASSIGN_TO = "Assign to {}"
+#    ACTION_UNASSIGN = "Unassign"
+#    ACTION_DECLINE_REQUEST = "Decline request"
+#    # Assessors
+#
+#    ACTION_CONCLUDE_REQUEST = "Conclude request {}"
+#
+#    @classmethod
+#    def log_action(cls, request, action, user):
+#        return cls.objects.create(
+#            request=request,
+#            who=user,
+#            what=str(action)
+#        )
+#
+#    request = models.ForeignKey(ReferralRequest,related_name='action_logs')
+#
+#    class Meta:
+#        app_label = 'commercialoperator'
+
+
+#class Referral(models.Model):
+class Referral(RevisionedMixin):
     SENT_CHOICES = (
         (1,'Sent From Assessor'),
         (2,'Sent From Referral')
@@ -1716,12 +2003,14 @@ class Referral(models.Model):
     proposal = models.ForeignKey(Proposal,related_name='referrals')
     sent_by = models.ForeignKey(EmailUser,related_name='commercialoperator_assessor_referrals')
     referral = models.ForeignKey(EmailUser,null=True,blank=True,related_name='commercialoperator_referalls')
+    referral_group = models.ForeignKey(ReferralRecipientGroup,null=True,blank=True,related_name='commercialoperator_referral_groups')
     linked = models.BooleanField(default=False)
     sent_from = models.SmallIntegerField(choices=SENT_CHOICES,default=SENT_CHOICES[0][0])
     processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
                                          default=PROCESSING_STATUS_CHOICES[0][0])
     text = models.TextField(blank=True) #Assessor text
     referral_text = models.TextField(blank=True)
+    document = models.ForeignKey(ReferralDocument, blank=True, null=True, related_name='referral_document')
 
 
     class Meta:
@@ -1738,6 +2027,7 @@ class Referral(models.Model):
 
     @property
     def can_be_completed(self):
+        return True
         #Referral cannot be completed until second level referral sent by referral has been completed/recalled
         qs=Referral.objects.filter(sent_by=self.referral, proposal=self.proposal, processing_status='with_referral')
         if qs:
@@ -1761,11 +2051,13 @@ class Referral(models.Model):
             if not self.proposal.can_assess(request.user):
                 raise exceptions.ProposalNotAuthorized()
             # Create a log entry for the proposal
-            self.proposal.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            #self.proposal.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            self.proposal.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
             # Create a log entry for the organisation
-            self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
             # send email
-            send_referral_email_notification(self,request,reminder=True)
+            recipients = self.referral_group.members_list
+            send_referral_email_notification(self,recipients,request,reminder=True)
 
     def resend(self,request):
         with transaction.atomic():
@@ -1777,31 +2069,73 @@ class Referral(models.Model):
             self.sent_from = 1
             self.save()
             # Create a log entry for the proposal
-            self.proposal.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            #self.proposal.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            self.proposal.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
             # Create a log entry for the organisation
-            self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            #self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+            self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
             # send email
-            send_referral_email_notification(self,request)
+            recipients = self.referral_group.members_list
+            send_referral_email_notification(self,recipients,request)
 
-    def complete(self,request, referral_comment):
+    def complete(self,request):
         with transaction.atomic():
             try:
-                if request.user != self.referral:
+                #if request.user != self.referral:
+                group =  ReferralRecipientGroup.objects.filter(name=self.referral_group)
+                if group and group[0] in u.referralrecipientgroup_set.all():
                     raise exceptions.ReferralNotAuthorized()
                 self.processing_status = 'completed'
-                self.referral_text = referral_comment
+                self.referral = request.user
+                self.referral_text = request.user.get_full_name() + ': ' + request.data.get('referral_comment')
+                self.add_referral_document(request)
                 self.save()
                 # TODO Log proposal action
-                self.proposal.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+                #self.proposal.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+                self.proposal.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(request.user.get_full_name(), self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
                 # TODO log organisation action
-                self.proposal.applicant.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+                #self.proposal.applicant.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+                self.proposal.applicant.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(request.user.get_full_name(), self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
                 send_referral_complete_email_notification(self,request)
             except:
                 raise
 
+    def add_referral_document(self, request):
+        with transaction.atomic():
+            try:
+                referral_document = request.data['referral_document']
+                #import ipdb; ipdb.set_trace()
+                if referral_document != 'null':
+                    try:
+                        document = self.referral_documents.get(input_name=str(referral_document))
+                    except ReferralDocument.DoesNotExist:
+                        document = self.referral_documents.get_or_create(input_name=str(referral_document), name=str(referral_document))[0]
+                    document.name = str(referral_document)
+                    # commenting out below tow lines - we want to retain all past attachments - reversion can use them
+                    #if document._file and os.path.isfile(document._file.path):
+                    #    os.remove(document._file.path)
+                    document._file = referral_document
+                    document.save()
+                    d=ReferralDocument.objects.get(id=document.id)
+                    self.referral_document = d
+                    comment = 'Referral Document Added: {}'.format(document.name)
+                else:
+                    self.referral_document = None
+                    comment = 'Referral Document Deleted: {}'.format(request.data['referral_document_name'])
+                #self.save()
+                self.save(version_comment=comment) # to allow revision to be added to reversion history
+                self.proposal.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
+                # Create a log entry for the organisation
+                self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
+                return self
+            except:
+                raise
+
+
     def send_referral(self,request,referral_email,referral_text):
         with transaction.atomic():
             try:
+                #import ipdb; ipdb.set_trace()
                 if self.proposal.processing_status == 'with_referral':
                     if request.user != self.referral:
                         raise exceptions.ReferralNotAuthorized()
@@ -1845,11 +2179,13 @@ class Referral(models.Model):
                     # Create a log entry for the organisation
                     self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.proposal.id,'{}({})'.format(user.get_full_name(),user.email)),request)
                     # send email
-                    send_referral_email_notification(referral,request)
+                    recipients = self.email_group.members_list
+                    send_referral_email_notification(referral,recipients,request)
                 else:
                     raise exceptions.ProposalReferralCannotBeSent()
             except:
                 raise
+
 
     # Properties
     @property
@@ -1874,6 +2210,228 @@ class Referral(models.Model):
 
     def can_assess_referral(self,user):
         return self.processing_status == 'with_referral'
+
+class QAOfficerReferral(RevisionedMixin):
+    SENT_CHOICES = (
+        (1,'Sent From Assessor'),
+        (2,'Sent From Referral')
+    )
+    PROCESSING_STATUS_CHOICES = (
+                                 ('with_qaofficer', 'Awaiting'),
+                                 ('recalled', 'Recalled'),
+                                 ('completed', 'Completed'),
+                                 )
+    lodged_on = models.DateTimeField(auto_now_add=True)
+    proposal = models.ForeignKey(Proposal,related_name='qaofficer_referrals')
+    sent_by = models.ForeignKey(EmailUser,related_name='assessor_qaofficer_referrals')
+    qaofficer = models.ForeignKey(EmailUser, null=True, blank=True, related_name='qaofficers')
+    qaofficer_group = models.ForeignKey(QAOfficerGroup,null=True,blank=True,related_name='qaofficer_groups')
+    linked = models.BooleanField(default=False)
+    sent_from = models.SmallIntegerField(choices=SENT_CHOICES,default=SENT_CHOICES[0][0])
+    processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
+                                         default=PROCESSING_STATUS_CHOICES[0][0])
+    text = models.TextField(blank=True) #Assessor text
+    qaofficer_text = models.TextField(blank=True)
+    document = models.ForeignKey(QAOfficerDocument, blank=True, null=True, related_name='qaofficer_referral_document')
+
+
+    class Meta:
+        app_label = 'commercialoperator'
+        ordering = ('-lodged_on',)
+
+    def __str__(self):
+        return 'Proposal {} - QA Officer referral {}'.format(self.proposal.id,self.id)
+
+    # Methods
+    @property
+    def latest_qaofficer_referrals(self):
+        return QAOfficer.objects.filter(sent_by=self.qaofficer, proposal=self.proposal)[:2]
+
+#    @property
+#    def can_be_completed(self):
+#        #Referral cannot be completed until second level referral sent by referral has been completed/recalled
+#        qs=Referral.objects.filter(sent_by=self.referral, proposal=self.proposal, processing_status='with_referral')
+#        if qs:
+#            return False
+#        else:
+#            return True
+#
+#    def recall(self,request):
+#        with transaction.atomic():
+#            if not self.proposal.can_assess(request.user):
+#                raise exceptions.ProposalNotAuthorized()
+#            self.processing_status = 'recalled'
+#            self.save()
+#            # TODO Log proposal action
+#            self.proposal.log_user_action(ProposalUserAction.RECALL_REFERRAL.format(self.id,self.proposal.id),request)
+#            # TODO log organisation action
+#            self.proposal.applicant.log_user_action(ProposalUserAction.RECALL_REFERRAL.format(self.id,self.proposal.id),request)
+#
+#    def remind(self,request):
+#        with transaction.atomic():
+#            if not self.proposal.can_assess(request.user):
+#                raise exceptions.ProposalNotAuthorized()
+#            # Create a log entry for the proposal
+#            #self.proposal.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+#            self.proposal.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
+#            # Create a log entry for the organisation
+#            self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
+#            # send email
+#            recipients = self.referral_group.members_list
+#            send_referral_email_notification(self,recipients,request,reminder=True)
+#
+#    def resend(self,request):
+#        with transaction.atomic():
+#            if not self.proposal.can_assess(request.user):
+#                raise exceptions.ProposalNotAuthorized()
+#            self.processing_status = 'with_referral'
+#            self.proposal.processing_status = 'with_referral'
+#            self.proposal.save()
+#            self.sent_from = 1
+#            self.save()
+#            # Create a log entry for the proposal
+#            #self.proposal.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+#            self.proposal.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
+#            # Create a log entry for the organisation
+#            #self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+#            self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
+#            # send email
+#            recipients = self.referral_group.members_list
+#            send_referral_email_notification(self,recipients,request)
+#
+#    def complete(self,request):
+#        with transaction.atomic():
+#            try:
+#                #if request.user != self.referral:
+#                group =  ReferralRecipientGroup.objects.filter(name=self.referral_group)
+#                if group and group[0] in u.referralrecipientgroup_set.all():
+#                    raise exceptions.ReferralNotAuthorized()
+#                self.processing_status = 'completed'
+#                self.referral = request.user
+#                self.referral_text = request.user.get_full_name() + ': ' + request.data.get('referral_comment')
+#                self.add_referral_document(request)
+#                self.save()
+#                # TODO Log proposal action
+#                #self.proposal.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+#                self.proposal.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(request.user.get_full_name(), self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
+#                # TODO log organisation action
+#                #self.proposal.applicant.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
+#                self.proposal.applicant.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(request.user.get_full_name(), self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
+#                send_referral_complete_email_notification(self,request)
+#            except:
+#                raise
+#
+#    def add_referral_document(self, request):
+#        with transaction.atomic():
+#            try:
+#                referral_document = request.data['referral_document']
+#                #import ipdb; ipdb.set_trace()
+#                if referral_document != 'null':
+#                    try:
+#                        document = self.referral_documents.get(input_name=str(referral_document))
+#                    except ReferralDocument.DoesNotExist:
+#                        document = self.referral_documents.get_or_create(input_name=str(referral_document), name=str(referral_document))[0]
+#                    document.name = str(referral_document)
+#                    # commenting out below tow lines - we want to retain all past attachments - reversion can use them
+#                    #if document._file and os.path.isfile(document._file.path):
+#                    #    os.remove(document._file.path)
+#                    document._file = referral_document
+#                    document.save()
+#                    d=ReferralDocument.objects.get(id=document.id)
+#                    self.referral_document = d
+#                    comment = 'Referral Document Added: {}'.format(document.name)
+#                else:
+#                    self.referral_document = None
+#                    comment = 'Referral Document Deleted: {}'.format(request.data['referral_document_name'])
+#                #self.save()
+#                self.save(version_comment=comment) # to allow revision to be added to reversion history
+#                self.proposal.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
+#                # Create a log entry for the organisation
+#                self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
+#                return self
+#            except:
+#                raise
+#
+#
+#    def send_referral(self,request,referral_email,referral_text):
+#        with transaction.atomic():
+#            try:
+#                #import ipdb; ipdb.set_trace()
+#                if self.proposal.processing_status == 'with_referral':
+#                    if request.user != self.referral:
+#                        raise exceptions.ReferralNotAuthorized()
+#                    if self.sent_from != 1:
+#                        raise exceptions.ReferralCanNotSend()
+#                    self.proposal.processing_status = 'with_referral'
+#                    self.proposal.save()
+#                    referral = None
+#                    # Check if the user is in ledger
+#                    try:
+#                        user = EmailUser.objects.get(email__icontains=referral_email)
+#                    except EmailUser.DoesNotExist:
+#                        # Validate if it is a deparment user
+#                        department_user = get_department_user(referral_email)
+#                        if not department_user:
+#                            raise ValidationError('The user you want to send the referral to is not a member of the department')
+#                        # Check if the user is in ledger or create
+#
+#                        user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
+#                        if created:
+#                            user.first_name = department_user['given_name']
+#                            user.last_name = department_user['surname']
+#                            user.save()
+#                    qs=Referral.objects.filter(sent_by=user, proposal=self.proposal)
+#                    if qs:
+#                        raise ValidationError('You cannot send referral to this user')
+#                    try:
+#                        Referral.objects.get(referral=user,proposal=self.proposal)
+#                        raise ValidationError('A referral has already been sent to this user')
+#                    except Referral.DoesNotExist:
+#                        # Create Referral
+#                        referral = Referral.objects.create(
+#                            proposal = self.proposal,
+#                            referral=user,
+#                            sent_by=request.user,
+#                            sent_from=2,
+#                            text=referral_text
+#                        )
+#                    # Create a log entry for the proposal
+#                    self.proposal.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.proposal.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+#                    # Create a log entry for the organisation
+#                    self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.proposal.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+#                    # send email
+#                    recipients = self.email_group.members_list
+#                    send_referral_email_notification(referral,recipients,request)
+#                else:
+#                    raise exceptions.ProposalReferralCannotBeSent()
+#            except:
+#                raise
+
+
+    # Properties
+    @property
+    def region(self):
+        return self.proposal.region
+
+    @property
+    def activity(self):
+        return self.proposal.activity
+
+    @property
+    def title(self):
+        return self.proposal.title
+
+    @property
+    def applicant(self):
+        return self.proposal.applicant.name
+
+    @property
+    def can_be_processed(self):
+        return self.processing_status == 'with_qa_officer'
+
+    def can_asses(self):
+        return self.can_be_processed and self.proposal.is_qa_officer()
+
 
 @receiver(pre_delete, sender=Proposal)
 def delete_documents(sender, instance, *args, **kwargs):
@@ -2042,5 +2600,7 @@ reversion.register(Assessment)
 reversion.register(Referral)
 reversion.register(HelpPage)
 reversion.register(ApplicationType)
+reversion.register(ReferralRecipientGroup)
+reversion.register(QAOfficerGroup)
 
 
