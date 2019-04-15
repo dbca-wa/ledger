@@ -179,6 +179,7 @@ class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['GET', ])
     def internal_datatable_list(self, request, *args, **kwargs):
+        self.serializer_class = DTInternalApplicationSerializer
         queryset = self.get_queryset()
         queryset = self.filter_queryset(queryset)
         self.paginator.page_size = queryset.count()
@@ -188,6 +189,7 @@ class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['GET', ])
     def external_datatable_list(self, request, *args, **kwargs):
+        self.serializer_class = DTExternalApplicationSerializer
         user_orgs = [
             org.id for org in request.user.wildlifecompliance_organisations.all()]
         queryset = self.get_queryset().filter(
