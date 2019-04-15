@@ -1554,16 +1554,13 @@ class RefundFailedView(ListView):
                 mooring_booking = MooringsiteBooking.objects.filter(booking=fr.booking)
                 for mb in mooring_booking:
                     for i in mg:
-                       print i.moorings.count()
                        if i.moorings.count() > 0:
-                           print i.moorings.all()
                            if mb.campsite.mooringarea in i.moorings.all():
                                mg_split[i.id]['amount'] = mg_split[i.id]['amount'] + mb.amount
                 #print (mooring_booking)
                 mg_split_array = []
                 for b in mg_split:
                     mg_split_array.append(mg_split[b])
-                print mg_split_array 
                 row = {'fr': fr, 'mgsplit': mg_split_array}
                 failrefunds_list.append(row)
             context['failedrefunds'] = failrefunds_list

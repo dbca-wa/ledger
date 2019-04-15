@@ -271,7 +271,7 @@ export default {
         validToProceed: {
             cache: false,
             get: function(){
-                if (this.toc && !this.errorMsg && !this.errorMsgPersonal &&!this.noPayment){
+                if (this.toc && !this.errorMsg && !this.errorMsgPersonal &&!this.noPayment && vesselReg.length>0){
                     return true;
                 } else {
                     return false;
