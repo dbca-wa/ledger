@@ -100,8 +100,11 @@ export default {
             application_licence_types: [],
             application_regions: [],
             application_submitters: [],
-            application_headers:["Number","Licence Category","Activity","Submitter","Applicant","Status","Lodged on","Action"],
+            application_headers:["Number","Licence Category","Activity","Type","Submitter","Applicant","Status","Lodged on","Action"],
             application_options:{
+                serverSide: true,
+                searchDelay: 1000,
+                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 order: [
                     [0, 'desc']
                 ],
@@ -112,58 +115,86 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.assessment,'user_list'),
-                    "dataSrc": ''
+                    "url": helpers.add_endpoint_join(api_endpoints.assessment_paginated,'datatable_list/?format=datatables'),
+                    "dataSrc": "data",
+                    // adding extra GET params for Custom filtering
+                    "data": function (d) {
+                        d.category_name = vm.filterApplicationLicenceType;
+                        d.customer_status = vm.filterApplicationStatus.id;
+                        d.submitter = vm.filterApplicationSubmitter;
+                        d.date_from = vm.filterApplicationLodgedFrom != '' && vm.filterApplicationLodgedFrom != null ? moment(vm.filterApplicationLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_to = vm.filterApplicationLodgedTo != '' && vm.filterApplicationLodgedTo != null ? moment(vm.filterApplicationLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                    }
                 },
                 columns: [
                     {
                         data: "application",
-                        mRender:function(data,type,full){
-                            return 'P'+data;
-                        }
                     },
                     {
                         data: "application_category",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? `${data}` : '';
-                        }
+                        },
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
                     },
                     {
                         data: "licence_activity",
                         mRender:function (data,type,full) {
                             return data.id != '' && data.id != null ? `${data.name}` : '';
-                        }
+                        },
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
+                    },
+                    {
+                        data: "application_type",
+                        mRender:function (data,type,full) {
+                            return data.name;
+                        },
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
                     },
                     {
                         data: "submitter",
+                        name: "submitter__first_name, submitter__last_name, submitter__email",
                         mRender:function (data,type,full) {
-                            return data.id != '' && data.id != null ? `${data.first_name} ${data.last_name}` : '';
-                        }
+                            if (data) {
+                                return `${data.first_name} ${data.last_name}`;
+                            }
+                            return ''
+                        },
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
                     },
                     {
                         data: "applicant",
-                        mRender:function (data,type,full) {
-                            return data != '' && data != null ? `${data}` : '';
-                        }
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
                     },
                     {
                         data: "status",
                         mRender:function (data,type,full) {
-                            return data.name ? `${data.name}` : '';
-                        }
+                            return data.name;
+                        },
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
                     },
                     {
                         data: "application_lodgement_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
+                        },
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
                     },
                     {
                         mRender:function (data,type,full) {
                             let links = '';
-                            links +=  full.can_be_processed ? `<a href='/internal/application/${full.application}'>Process</a><br/>`: `<a href='/internal/application/${full.application}'>View</a><br/>`;
+                            links +=  full.can_be_processed ? `<a href='/internal/application/${full.application_id}'>Process</a><br/>`: `<a href='/internal/application/${full.application_id}'>View</a><br/>`;
                             return links;
-                        }
+                        },
+                        orderable: false,
+                        searchable: false
                     }
                 ],
                 processing: true,

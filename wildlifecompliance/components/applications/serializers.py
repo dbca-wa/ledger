@@ -736,6 +736,14 @@ class DTAssessmentSerializer(serializers.ModelSerializer):
     applicant = serializers.CharField(source='application.applicant')
     application_category = serializers.CharField(
         source='application.licence_category_name')
+    application = serializers.CharField(
+        source='application.lodgement_number')
+    application_id = serializers.CharField(
+        source='application.id')
+    application_type = CustomChoiceField(
+        source='application.application_type',
+        choices=Application.APPLICATION_TYPE_CHOICES,
+        read_only=True)
 
     class Meta:
         model = Assessment
@@ -749,8 +757,14 @@ class DTAssessmentSerializer(serializers.ModelSerializer):
             'submitter',
             'application_lodgement_date',
             'applicant',
-            'application_category'
+            'application_category',
+            'application_type',
+            'application_id'
         )
+        # the serverSide functionality of datatables is such that only columns that have field 'data'
+        # defined are requested from the serializer. Use datatables_always_serialize to force render
+        # of fields that are not listed as 'data' in the datatable columns
+        datatables_always_serialize = fields
 
     def get_submitter(self, obj):
         return EmailUserSerializer(obj.application.submitter).data

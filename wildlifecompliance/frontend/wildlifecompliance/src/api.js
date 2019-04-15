@@ -12,6 +12,7 @@ module.exports = {
     profiles: '/api/profiles/',
     my_profiles: '/api/my_profiles/',
     assessment:'/api/assessment/',
+    assessment_paginated:'/api/assessment_paginated/',
     amendment:'/api/amendment/',
     is_new_user: '/api/is_new_user/',
     user_profile_completed: '/api/user_profile_completed/',
