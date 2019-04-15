@@ -49,7 +49,7 @@ export default
                     name: 'enter_return_question'
                 },
                 {
-                    path: 'sheet/:return_id/:species_id',
+                    path: 'sheet/:return_id',
                     component: ReturnsSheet,
                     name: 'enter_return_sheet'
                 },

@@ -5,7 +5,7 @@
                 <input ref="radioB" :name="name" disabled type="radio" :value="value" @change="handleChange"  :required="isRequired" :data-conditions="options" :checked="isChecked"/>{{ label}}
             </label>
         </div>
-        <input type="hidden" :name="name" :value="savedValue"/>
+        <input type="hidden" :name="name" :value="savedValue.value"/>
     </div>
     <div v-else>
         <div class="radio">
@@ -22,14 +22,14 @@ export default {
     props:["value","label", "id", "name","isRequired","handleChange","conditions","savedValue","readonly"],
     computed:{
         isChecked:function () {
-            return this.value == this.savedValue;
+            return this.value == this.savedValue.value;
         },
         options:function () {
             return JSON.stringify(this.conditions);
         }
     },
     mounted:function () {
-        if (this.value == this.savedValue) {
+        if (this.value == this.savedValue.value) {
             var input = this.$refs.radioB;
             var e = document.createEvent('HTMLEvents');
             e.initEvent('change', true, true);

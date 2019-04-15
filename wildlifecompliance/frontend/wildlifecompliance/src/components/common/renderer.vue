@@ -55,7 +55,6 @@
                     <AmendmentRequestDetails :activity_id="activity.id" />
                     <renderer-block
                         :component="activity"
-                        :json_data="applicationData"
                         v-if="activity.id == selected_activity_tab_id"
                         v-bind:key="`renderer_block_${index}`"
                         />
@@ -104,9 +103,6 @@ export default {
     listVisibleActivities: function() {
         return this.unfinishedActivities;
     },
-    applicationData: function() {
-        return this.application.data ? this.application.data[0] : null;
-    }
   },
   methods: {
     ...mapActions([
