@@ -118,6 +118,7 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(id__in=search_text_app_ids).distinct() | super_queryset
 
             # apply user selected filters
+            category_name = category_name.lower() if category_name else 'all'
             if category_name != 'all':
                 category_name = category_name.lower()
                 category_name_app_ids = []
