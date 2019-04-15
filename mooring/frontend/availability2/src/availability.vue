@@ -289,6 +289,18 @@
                                             <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 'small'">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 'medium'">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 'large'">${{ bp.large_price }} </span></small>
                                         </button>
 					</div>
+                                        <div v-else-if="bp.status == 'perday'" >
+                                        <button class="button"  style='width: 160px; margin-bottom: 2px; background-color: rgb(255, 253, 199); color: #000;' >
+                                             <small>One Mooring Limit</small>
+                                        </button>
+                                        </div>
+
+                                        <div v-else-if="bp.status == 'maxstay'" >
+                                        <button class="button"  style='width: 160px; margin-bottom: 2px; background-color: rgb(255, 253, 199); color: #000;' >
+                                             <small>Max Stay Limit Reached</small>
+                                        </button>
+                                        </div>
+
 					<div v-else >
                                         <button class="button"  style='width: 160px; margin-bottom: 2px; background-color: rgb(255, 236, 236); text-decoration: line-through;color: #000;' >
                                              <small>{{ bp.period_name }}</small>
