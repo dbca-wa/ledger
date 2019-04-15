@@ -656,11 +656,14 @@ export default {
         },
         prepareTotal: function(){
             var family = 0;
-            var adults = this.noOfAdults;
-            var children = this.noOfChildren;
-            if (adults > 1 && children > 1){
-                if (adults == children){
-                    if (adults % 2 == 0){
+            var adults = parseInt(this.noOfAdults);
+            var children = parseInt(this.noOfChildren);
+            console.log("F"+family+"C"+children+"A"+adults);
+
+            if (adults > 1 && children > 1) {
+                if (adults == children) {
+                    console.log('HERE2');
+                    if (adults % 2 == 0) {
                         family = adults/2
                         adults = 0
                         children = 0
@@ -671,7 +674,8 @@ export default {
                         children = 1
                     }
                 }
-                else if (adults > children){
+                else if (adults > children) {
+                    console.log('HERE1');
                     if (children % 2 == 0){
                         family = children/2
                         adults -= children
@@ -684,6 +688,7 @@ export default {
                     }
                 }
                 else{
+                    console.log('HERE');
                     if (adults % 2 == 0){
                         family = adults/2
                         children -= adults
@@ -696,6 +701,7 @@ export default {
                     } 
                 }
             }
+            console.log("F"+family+"C"+children+"A"+adults);
             if (this.overnightStay == "yes"){
                 this.total = (this.adultOvernightCost * adults) + (this.childrenOvernightCost * children) + (this.infantOvernightCost * this.noOfInfants) + (this.familyOvernightCost * family);
             } else {
