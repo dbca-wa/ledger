@@ -232,6 +232,9 @@ class CancelBookingView(TemplateView):
         booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking.admission_payment, booking_cancellation_fees)
         booking_total = Decimal('{0:.2f}'.format(booking_total + Decimal(sum(Decimal(i['amount']) for i in booking_cancellation_fees))))
         basket = {}
+        print ("CANCELLATION FEES")
+        print (booking_cancellation_fees)
+
         return render(request, self.template_name, {'booking': booking,'basket': basket, 'booking_fees': booking_cancellation_fees, 'booking_total': booking_total, 'booking_total_positive': booking_total - booking_total - booking_total })
 
     def post(self, request, *args, **kwargs):
@@ -283,7 +286,7 @@ class CancelBookingView(TemplateView):
             booking_invoice = BookingInvoice.objects.filter(booking=booking).order_by('id')
             for bi in booking_invoice:
                 invoice = Invoice.objects.get(reference=bi.invoice_reference)
-            RefundFailed.objects.create(booking=booking, invoice_reference=invoice.reference, refund_amount=b_total,status=0)
+            RefundFailed.objects.create(booking=booking, invoice_reference=invoice.reference, refund_amount=b_total,status=0, basket_json=booking_cancellation_fees)
  
         invoice.voided = True
         invoice.save()
@@ -366,7 +369,7 @@ class CancelAdmissionsBookingView(TemplateView):
             booking_invoice = AdmissionsBookingInvoice.objects.filter(admissions_booking=booking).order_by('id')
             for bi in booking_invoice:
                 invoice = Invoice.objects.get(reference=bi.invoice_reference)
-            RefundFailed.objects.create(admission_booking=booking, invoice_reference=invoice.reference, refund_amount=b_total,status=0)
+            RefundFailed.objects.create(admission_booking=booking, invoice_reference=invoice.reference, refund_amount=b_total,status=0,basket_json=booking_cancellation_fees)
     
         invoice.voided = True
         invoice.save()
@@ -1500,7 +1503,6 @@ class ForbiddenView(TemplateView):
         return super(ForbiddenView, self).get(request, *args, **kwargs)
 
 
-
 class RefundFailedView(ListView):
     template_name = 'mooring/dash/view_failed_refunds.html'
     model = RefundFailed
@@ -1539,9 +1541,33 @@ class RefundFailedView(ListView):
                 query &= Q(Q(invoice_reference__icontains=context['keyword']) | Q(booking_id=int(context['keyword'])))
             else:
                 query &= Q(Q(invoice_reference__icontains=context['keyword']))
+            failrefunds_list =[]
+            failrefunds = RefundFailed.objects.filter(query)
+            mg = MooringAreaGroup.objects.all() 
             
 
-            context['failedrefunds'] = RefundFailed.objects.filter(query)
+            for fr in failrefunds:
+                mg_split = {}
+                for i in mg:
+                   mg_split[i.id] = {'amount': Decimal('0.00'), 'name': i.name, 'id': i.id}
+                
+                mooring_booking = MooringsiteBooking.objects.filter(booking=fr.booking)
+                for mb in mooring_booking:
+                    for i in mg:
+                       print i.moorings.count()
+                       if i.moorings.count() > 0:
+                           print i.moorings.all()
+                           if mb.campsite.mooringarea in i.moorings.all():
+                               mg_split[i.id]['amount'] = mg_split[i.id]['amount'] + mb.amount
+                #print (mooring_booking)
+                mg_split_array = []
+                for b in mg_split:
+                    mg_split_array.append(mg_split[b])
+                print mg_split_array 
+                row = {'fr': fr, 'mgsplit': mg_split_array}
+                failrefunds_list.append(row)
+            context['failedrefunds'] = failrefunds_list
+            #context['failedrefunds'] = RefundFailed.objects.filter(query)
         return context
 
     def get_initial(self):
@@ -1597,7 +1623,7 @@ class RefundFailedCompleted(UpdateView):
         if is_payment_officer(request.user) == True and self.object.status == 0:
             return super(RefundFailedCompleted, self).get(request, *args, **kwargs)
         else:
-             return HttpResponseRedirect("/forbidden")
+            return HttpResponseRedirect("/forbidden")
 
     def get_context_data(self, **kwargs):
         context = super(RefundFailedCompleted, self).get_context_data(**kwargs)
