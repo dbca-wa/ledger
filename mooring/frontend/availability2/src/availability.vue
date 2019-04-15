@@ -1165,7 +1165,7 @@ export default {
                                             if (booking_period.length > 1) {
                                                     vm.mooring_book_row[index] = false;
                                             } else {      
-                                                if (booking_period[0].status == 'closed' || booking_period[0].status == 'selected') {
+                                                if (booking_period[0].status == 'closed' || booking_period[0].status == 'selected' || booking_period[0].status == 'perday' || booking_period[0].status == 'maxstay') {
                                                     // vm.mooring_book_row[index] = 'disabled';
                                                     vm.mooring_book_row_disabled[index] = true;	
                                                 }
