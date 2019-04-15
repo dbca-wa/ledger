@@ -54,16 +54,55 @@ export const applicationStore = {
             return getters.checkActivityStatus(final_statuses) && !getters.checkActivityStatus(final_statuses, activity_count);
         },
         isApplicationLoaded: state => Object.keys(state.application).length && state.application.licence_type_data != null,
-        isApplicationActivityVisible: (state, getters, rootState, rootGetters) => (activity_id, exclude_statuses, exclude_processing_statuses) => {
+        isApplicationActivityVisible: (state, getters, rootState, rootGetters) =>
+            (activity_id, exclude_statuses, exclude_processing_statuses, for_user_role) => {
             if(!state.application.activities) {
                 return 0;
             }
-            return state.application.activities.filter(
-              activity => activity.licence_activity == activity_id &&
-                (!exclude_statuses || !exclude_statuses.includes(activity.decision_action)) &&
-                (!exclude_processing_statuses || !exclude_processing_statuses.includes(activity.processing_status))
-            ).length;
-          },
+            return getters.filterActivityList({
+                activity_list: state.application.activities,
+                activity_id: activity_id,
+                exclude_statuses: exclude_statuses,
+                exclude_processing_statuses: exclude_processing_statuses,
+                for_user_role: for_user_role,
+                licence_activity_id_key: 'licence_activity'
+            }).length;
+        },
+        licenceActivities: (state, getters) => (activity_status, for_user_role) => {
+            return getters.filterActivityList({
+                activity_list: getters.licence_type_data.activity,
+                only_processing_statuses: activity_status,
+                for_user_role: for_user_role,
+            });
+        },
+        filterActivityList: (state, getters, rootState, rootGetters) =>
+            ({activity_list,
+              activity_id,
+              exclude_statuses,
+              only_processing_statuses,
+              exclude_processing_statuses,
+              for_user_role,
+              licence_activity_id_key='licence_activity'
+            }) => {
+
+            if(!activity_list.length) {
+                return [];
+            }
+            return activity_list.filter(
+                activity =>
+                (!activity_id || activity[licence_activity_id_key] == activity_id) &&
+                (!exclude_statuses ||
+                    !(exclude_statuses.constructor === Array ? exclude_statuses : [exclude_statuses]
+                        ).includes(activity.decision_action)) &&
+                (!only_processing_statuses ||
+                    (only_processing_statuses.constructor === Array ? only_processing_statuses : [only_processing_statuses]
+                        ).includes(activity.processing_status.id ? activity.processing_status.id : activity.processing_status)) &&
+                (!exclude_processing_statuses ||
+                    !(exclude_processing_statuses.constructor === Array ? exclude_processing_statuses : [exclude_processing_statuses]
+                        ).includes(activity.processing_status.id ? activity.processing_status.id : activity.processing_status)) &&
+                (!for_user_role || rootGetters.hasRole(for_user_role, activity.id))
+            );
+        },
     },
     mutations: {
         [UPDATE_APPLICATION] (state, application) {
@@ -99,6 +138,12 @@ export const applicationStore = {
                 Vue.http.get(url).then(res => {
                     dispatch('setOriginalApplication', res.body);
                     dispatch('setApplication', res.body);
+                    for(let form_data_record of res.body.data) {
+                        dispatch('setFormValue', {
+                            key: form_data_record.field_name,
+                            value: {"value": form_data_record.value}
+                        });
+                    }
                     resolve();
                 },
                 err => {

@@ -19,17 +19,27 @@ INSTALLED_APPS += [
     'wildlifecompliance.components.call_email',
     'taggit',
     'rest_framework',
-    'rest_framework_gis'
+    'rest_framework_gis',
+    'rest_framework_datatables'
 ]
 
 # maximum number of days allowed for a booking
 WSGI_APPLICATION = 'wildlifecompliance.wsgi.application'
 
-'''REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': (
-        'wildlifecompliance.perms.OfficerPermission',
-    )
-}'''
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework_datatables.renderers.DatatablesRenderer',
+    ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'rest_framework_datatables.filters.DatatablesFilterBackend',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework_datatables.pagination.DatatablesPageNumberPagination',
+    'PAGE_SIZE': 50,
+}
+
+if env('EMAIL_INSTANCE') is not None and env('EMAIL_INSTANCE','') != 'PROD':
+    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] += ('rest_framework.renderers.BrowsableAPIRenderer',)
 
 MIDDLEWARE_CLASSES += [
     'wildlifecompliance.middleware.FirstTimeNagScreenMiddleware'

@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 router = routers.DefaultRouter()
 router.register(r'organisations', org_api.OrganisationViewSet)
 router.register(r'application', application_api.ApplicationViewSet)
+router.register(r'application_paginated', application_api.ApplicationPaginatedViewSet)
 router.register(r'assessment', application_api.AssessmentViewSet)
 router.register(r'amendment', application_api.AmendmentRequestViewSet)
 router.register(r'assessor_group', application_api.AssessorGroupViewSet)
@@ -50,9 +51,9 @@ router.register(r'my_profiles', users_api.MyProfilesViewSet)
 router.register(r'emailidentities', users_api.EmailIdentityViewSet)
 router.register(r'call_email', call_email_api.CallEmailViewSet)
 
-api_patterns = [url(r'^api/profile/$',
-                    users_api.GetProfile.as_view(),
-                    name='get-profile'),
+api_patterns = [url(r'^api/my_user_details/$',
+                    users_api.GetMyUserDetails.as_view(),
+                    name='get-my-user-details'),
                 url(r'^api/is_new_user/$',
                     users_api.IsNewUser.as_view(),
                     name='is-new-user'),

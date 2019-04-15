@@ -10,13 +10,14 @@ from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
-from django.utils import timezone
+from django.utils import timezone, six
 from django.utils.encoding import python_2_unicode_compatible
 
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.payments.invoice.models import Invoice
 
 from wildlifecompliance.components.organisations.models import Organisation
+from wildlifecompliance.components.organisations.emails import send_org_id_update_request_notification
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
 from wildlifecompliance.components.applications.email import (
     send_application_submitter_email_notification,
@@ -26,7 +27,8 @@ from wildlifecompliance.components.applications.email import (
     send_assessment_reminder_email,
     send_amendment_submit_email_notification,
     send_application_issue_notification,
-    send_application_decline_notification
+    send_application_decline_notification,
+    send_id_update_request_notification
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
@@ -42,6 +44,10 @@ def update_application_doc_filename(instance, filename):
 
 def update_pdf_licence_filename(instance, filename):
     return 'applications/{}/wildlife_compliance_licence/{}'.format(instance.id, filename)
+
+
+def update_assessment_inspection_report_filename(instance, filename):
+    return 'assessments/{}/inspection_report/{}'.format(instance.id, filename)
 
 
 def replace_special_chars(input_str, new_char='_'):
@@ -228,9 +234,7 @@ class Application(RevisionedMixin):
         max_length=40,
         choices=APPLICATION_TYPE_CHOICES,
         default=APPLICATION_TYPE_NEW_LICENCE)
-    data = JSONField(blank=True, null=True)
     comment_data = JSONField(blank=True, null=True)
-    schema = JSONField(blank=False, null=False)
     licence_purposes = models.ManyToManyField(
         'wildlifecompliance.LicencePurpose',
         blank=True
@@ -373,7 +377,7 @@ class Application(RevisionedMixin):
         elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED) == len(activity_statuses):
             return self.PROCESSING_STATUS_DISCARDED
         # amendment request sent to user and outstanding
-        elif self.amendment_requests.filter(status='requested').count() > 0:
+        elif self.active_amendment_requests.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED).count() > 0:
             return self.PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE
         # all activities approved
         elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED) == len(activity_statuses):
@@ -390,12 +394,7 @@ class Application(RevisionedMixin):
 
     @property
     def has_amendment(self):
-        qs = self.amendment_requests
-        qs = qs.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED)
-        if qs.exists():
-            return True
-        else:
-            return False
+        return self.active_amendment_requests.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED).exists()
 
     @property
     def is_assigned(self):
@@ -515,6 +514,12 @@ class Application(RevisionedMixin):
         ).distinct())
 
     @property
+    def licence_purpose_names(self):
+        return [purpose.licence_activity.short_name + ' - ' + purpose.short_name
+                for purpose in self.licence_purposes.all()
+                    .order_by('licence_activity','short_name')]
+
+    @property
     def licence_type_name(self):
         from wildlifecompliance.components.licences.models import LicenceActivity
         licence_category = self.licence_category_name
@@ -598,7 +603,6 @@ class Application(RevisionedMixin):
         with transaction.atomic():
             if self.can_user_edit:
                 # Save the data first
-                print("inside can_user_edit")
                 parser = SchemaParser(draft=False)
                 parser.save_application_user_data(self, request, viewset)
                 # self.processing_status = Application.PROCESSING_STATUS_UNDER_REVIEW
@@ -731,20 +735,27 @@ class Application(RevisionedMixin):
         self.log_user_action(
             ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(
                 self.id), request)
-        # Create a log entry for the applicant (submitter, organisation or
-        # proxy)
+        # Create a log entry for the applicant (submitter or organisation only)
         if self.org_applicant:
             self.org_applicant.log_user_action(
                 ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(
                     self.id), request)
         elif self.proxy_applicant:
-            self.proxy_applicant.log_user_action(
-                ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(
-                    self.id), request)
+            # do nothing if proxy_applicant
+            pass
         else:
             self.submitter.log_user_action(
                 ApplicationUserAction.ACTION_ID_REQUEST_UPDATE.format(
                     self.id), request)
+        # send email to submitter or org_applicant admins
+        if self.org_applicant:
+            send_org_id_update_request_notification(self, request)
+        elif self.proxy_applicant:
+            # do nothing if proxy_applicant
+            pass
+        else:
+            # send to submitter
+            send_id_update_request_notification(self, request)
 
     def accept_character_check(self, request):
         self.character_check_status = Application.CHARACTER_CHECK_STATUS_ACCEPTED
@@ -917,6 +928,11 @@ class Application(RevisionedMixin):
         return AmendmentRequest.objects.filter(application=self)
 
     @property
+    def active_amendment_requests(self):
+        activity_ids = self.activities.values_list('licence_activity_id', flat=True)
+        return self.amendment_requests.filter(licence_activity_id__in=activity_ids)
+
+    @property
     def assessments(self):
         qs = Assessment.objects.filter(
             application=self, status=Assessment.STATUS_AWAITING_ASSESSMENT)
@@ -929,6 +945,16 @@ class Application(RevisionedMixin):
             return WildlifeLicence.objects.filter(current_application=self)
         except WildlifeLicence.DoesNotExist:
             return WildlifeLicence.objects.none()
+
+    @property
+    def schema(self):
+        from wildlifecompliance.components.applications.utils import get_activity_schema
+        return get_activity_schema(self.activities.values_list('licence_activity_id', flat=True))
+
+    @property
+    def data(self):
+        """ returns a queryset of form data records attached to application (shortcut to ApplicationFormDataRecord related_name). """
+        return self.form_data_records.all()
 
     @property
     def activities(self):
@@ -1309,6 +1335,8 @@ class Assessment(ApplicationRequest):
         'wildlifecompliance.LicenceActivity', null=True)
     comment = models.TextField(blank=True)
     purpose = models.TextField(blank=True)
+    inspection_date = models.DateField(null=True, blank=True)
+    inspection_report = models.FileField(upload_to=update_assessment_inspection_report_filename, blank=True, null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -1477,6 +1505,98 @@ class ApplicationSelectedActivity(models.Model):
 
     class Meta:
         app_label = 'wildlifecompliance'
+
+
+@python_2_unicode_compatible
+class ApplicationFormDataRecord(models.Model):
+
+    INSTANCE_ID_SEPARATOR = "__instance-"
+
+    COMPONENT_TYPE_TEXT = 'text'
+    COMPONENT_TYPE_TAB = 'tab'
+    COMPONENT_TYPE_SECTION = 'section'
+    COMPONENT_TYPE_GROUP = 'group'
+    COMPONENT_TYPE_NUMBER = 'number'
+    COMPONENT_TYPE_EMAIL = 'email'
+    COMPONENT_TYPE_SELECT = 'select'
+    COMPONENT_TYPE_MULTI_SELECT = 'multi-select'
+    COMPONENT_TYPE_TEXT_AREA = 'text_area'
+    COMPONENT_TYPE_TABLE = 'table'
+    COMPONENT_TYPE_EXPANDER_TABLE = 'expander_table'
+    COMPONENT_TYPE_LABEL = 'label'
+    COMPONENT_TYPE_RADIO = 'radiobuttons'
+    COMPONENT_TYPE_CHECKBOX = 'checkbox'
+    COMPONENT_TYPE_DECLARATION = 'declaration'
+    COMPONENT_TYPE_FILE = 'file'
+    COMPONENT_TYPE_DATE = 'date'
+    COMPONENT_TYPE_CHOICES = (
+        (COMPONENT_TYPE_TEXT, 'Text'),
+        (COMPONENT_TYPE_TAB, 'Tab'),
+        (COMPONENT_TYPE_SECTION, 'Section'),
+        (COMPONENT_TYPE_GROUP, 'Group'),
+        (COMPONENT_TYPE_NUMBER, 'Number'),
+        (COMPONENT_TYPE_EMAIL, 'Email'),
+        (COMPONENT_TYPE_SELECT, 'Select'),
+        (COMPONENT_TYPE_MULTI_SELECT, 'Multi-Select'),
+        (COMPONENT_TYPE_TEXT_AREA, 'Text Area'),
+        (COMPONENT_TYPE_TABLE, 'Table'),
+        (COMPONENT_TYPE_EXPANDER_TABLE, 'Expander Table'),
+        (COMPONENT_TYPE_LABEL, 'Label'),
+        (COMPONENT_TYPE_RADIO, 'Radio'),
+        (COMPONENT_TYPE_CHECKBOX, 'Checkbox'),
+        (COMPONENT_TYPE_DECLARATION, 'Declaration'),
+        (COMPONENT_TYPE_FILE, 'File'),
+        (COMPONENT_TYPE_DATE, 'Date'),
+    )
+
+    application = models.ForeignKey(Application, related_name='form_data_records')
+    field_name = models.CharField(max_length=512, null=True, blank=True)
+    schema_name = models.CharField(max_length=256, null=True, blank=True)
+    instance_name = models.CharField(max_length=256, null=True, blank=True)
+    component_type = models.CharField(
+        max_length=64,
+        choices=COMPONENT_TYPE_CHOICES,
+        default=COMPONENT_TYPE_TEXT)
+    value = JSONField(blank=True, null=True)
+    comment = models.TextField(blank=True)
+    deficiency = models.TextField(blank=True)
+
+    def __str__(self):
+        return "Application {id} record {field}: {value}".format(
+            id=self.application_id,
+            field=self.field_name,
+            value=self.value[:8]
+        )
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        unique_together = ('application', 'field_name',)
+
+    @staticmethod
+    def process_form(application, form_data):
+        for field_name, field_data in form_data.items():
+            schema_name = field_data.get('schema_name', '')
+            component_type = field_data.get('component_type', '')
+            value = field_data.get('value', '')
+            instance_name = ''
+
+            if ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR in field_name:
+                [parsed_schema_name, instance_name] = field_name.split(
+                    ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR
+                )
+                schema_name = schema_name if schema_name else parsed_schema_name
+
+            form_data_record, created = ApplicationFormDataRecord.objects.get_or_create(
+                application_id=application.id,
+                field_name=field_name
+            )
+            if created:
+                form_data_record.schema_name = schema_name
+                form_data_record.instance_name = instance_name
+                form_data_record.component_type = component_type
+
+            form_data_record.value = value
+            form_data_record.save()
 
 
 @python_2_unicode_compatible

@@ -10,7 +10,7 @@
                 <HelpTextUrl :help_text_url="help_text_url" />
             </template>
 
-            <template v-if="renderer.canViewComments()">
+            <template v-if="canViewComments">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
@@ -19,9 +19,9 @@
             </template>
 
             <!-- the next line required for saving value JSON-ified table to application.data - creates an invisible field -->
-            <textarea readonly="readonly" class="form-control" rows="5" :name="name" style="display:none;">{{ value }}</textarea><br/>
+            <textarea readonly="readonly" class="form-control" rows="5" :name="name" style="display:none;">{{ field_data.value }}</textarea><br/>
 
-            <div id="content-editable-table">
+            <div class="content-editable-table">
               <table class="table table-striped editable-table">
                 <thead v-if="table.thead.length">
                   <tr>
@@ -50,16 +50,6 @@
                 </tbody>
 
               </table>
-
-              <!-- for debugging -->
-              <!--
-              <pre class="output">
-                {{ value }}
-              </pre>
-              <pre class="output">
-                {{ headers }}
-              </pre>
-              -->
             </div>
 
         </div>
@@ -67,10 +57,11 @@
 </template>
 
 <script>
-import Comment from './comment.vue'
-import HelpText from './help_text.vue'
-import HelpTextUrl from './help_text_url.vue'
-export default {
+import Comment from './comment.vue';
+import HelpText from './help_text.vue';
+import HelpTextUrl from './help_text_url.vue';
+import { mapGetters } from 'vuex';
+const TableBlock = {
     props:{
         headers: String,  // Input received as String, later converted to JSON within data() below
         name: String,
@@ -80,15 +71,7 @@ export default {
         comment_value: String,
         help_text: String,
         help_text_url: String,
-        renderer: {
-            type: Object,
-            required: true
-        },
-        value:{
-            default:function () {
-                return null;
-            }
-        },
+        field_data: Object,
         readonly:Boolean,
 
         /*
@@ -122,7 +105,7 @@ export default {
     */
     data(){
         let vm = this;
-        var value  =JSON.parse(vm.value);
+        const value  = this.field_data.value ? JSON.parse(this.field_data.value) : null;
 
         var headers = JSON.parse(vm.headers)
         var col_headers = Object.keys(headers);
@@ -130,7 +113,7 @@ export default {
 
         // setup initial empty row for display
         var init_row = [];
-        for(var i = 0, length = col_headers.length; i < length; i++) { init_row.push('')  }
+        for(var i = 0, length = col_headers.length; i < length; i++) { init_row.push('') }
 
         if (value == null) {
             vm.table = {
@@ -168,7 +151,7 @@ export default {
         updateTableJSON: function() {
           let vm = this;
           vm.tableJSON = JSON.stringify(vm.table);
-          vm.value = vm.tableJSON;
+          this.field_data.value = vm.tableJSON;
         },
 
         addRow: function() {
@@ -198,6 +181,9 @@ export default {
     },
 
     computed:{
+        ...mapGetters([
+            'canViewComments',
+        ]),
     },
 
 
@@ -206,12 +192,11 @@ export default {
 
         vm.updateTableJSON();
 
-        //$('#content-editable-table').on('change', '[type="text"]', function() {
-        $('#content-editable-table').on('change', '.tbl_input', function() {
+        $('.content-editable-table').on('change', '.tbl_input', function() {
             vm.updateTableJSON();
         });
 
-        $("#content-editable-table").on("click", ".ibtnDel", function (event) {
+        $(".content-editable-table").on("click", ".ibtnDel", function (event) {
             $(this).closest("tr").remove();
         });
 
@@ -231,6 +216,8 @@ export default {
 
     }
 }
+
+export default TableBlock;
 </script>
 
 <style scoped lang="css">

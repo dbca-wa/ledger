@@ -47,7 +47,7 @@ import {
     helpers
 }from '@/utils/hooks'
 export default {
-    name: 'ApplicationTableDash',
+    name: 'ReturnTableDash',
     props: {
         level:{
             type: String,

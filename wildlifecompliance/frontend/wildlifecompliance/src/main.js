@@ -1,21 +1,28 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
-import Vue from 'vue'
-import resource from 'vue-resource'
-import App from './App'
-import router from './router'
-import bs from 'bootstrap'
-import helpers from '@/utils/helpers'
-import hooks from './packages'
-import api_endpoints from './api'
-import store from './store'
+import Vue from 'vue';
+import resource from 'vue-resource';
+import App from './App';
+import router from './router';
+import bs from 'bootstrap';
+import helpers from '@/utils/helpers';
+import hooks from './packages';
+import api_endpoints from './api';
+import store from './store';
+import RendererBlock from '@/components/common/renderer_block.vue';
+import VueScrollTo from 'vue-scrollto';
+import Affix from 'vue-affix';
+
 require( '../node_modules/bootstrap/dist/css/bootstrap.css' );
 //require('../node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css')
-require( '../node_modules/font-awesome/css/font-awesome.min.css' )
+require( '../node_modules/font-awesome/css/font-awesome.min.css' );
 
 //Vue.config.devtools = true;
 Vue.config.productionTip = false
 Vue.use( resource );
+Vue.use( VueScrollTo );
+Vue.use( Affix );
+Vue.component('renderer-block', RendererBlock);
 
 // Add CSRF Token to every request
 Vue.http.interceptors.push( function ( request, next ) {

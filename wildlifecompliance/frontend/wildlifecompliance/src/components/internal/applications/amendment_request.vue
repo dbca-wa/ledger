@@ -127,8 +127,6 @@ export default {
             },(error) => {
                 console.log(error);
             } );
-            console.log('this is amendment object')
-            console.log(vm.amendment)
         },
         sendData:function(){
             let vm = this;

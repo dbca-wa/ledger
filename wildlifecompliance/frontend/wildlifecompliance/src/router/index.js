@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Profile from '@/components/user/profile.vue'
+import MyUserDetails from '@/components/user/manage_my_user_details.vue'
 import ProfileDashTable from '@/components/user/profile_dashboard.vue'
 import CreateProfile from '@/components/user/profile_create.vue'
 import EditProfile from '@/components/user/profile_manage.vue'
@@ -14,12 +14,12 @@ export default new Router({
         {
           path: '/firsttime',
           name: 'first-time',
-          component: Profile
+          component: MyUserDetails
         },
         {
           path: '/account',
           name: 'account',
-          component: Profile
+          component: MyUserDetails
         },
         {
           path: '/profiles',

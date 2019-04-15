@@ -97,7 +97,7 @@ class ReturnSerializer(serializers.ModelSerializer):
 
 
 class ReturnTypeSerializer(serializers.ModelSerializer):
-    return_type = CustomChoiceField(read_only=True)
+    data_format = CustomChoiceField(read_only=True)
 
     class Meta:
         model = ReturnType

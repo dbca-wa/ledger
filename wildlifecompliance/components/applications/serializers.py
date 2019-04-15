@@ -9,7 +9,8 @@ from wildlifecompliance.components.applications.models import (
     Assessment,
     ActivityPermissionGroup,
     AmendmentRequest,
-    ApplicationSelectedActivity
+    ApplicationSelectedActivity,
+    ApplicationFormDataRecord,
 )
 from wildlifecompliance.components.organisations.models import (
     Organisation
@@ -104,6 +105,7 @@ class ActivityPermissionGroupSerializer(serializers.ModelSerializer):
 class AssessmentSerializer(serializers.ModelSerializer):
     assessor_group = ActivityPermissionGroupSerializer(read_only=True)
     status = CustomChoiceField(read_only=True)
+    inspection_report = serializers.FileField()
 
     class Meta:
         model = Assessment
@@ -113,7 +115,22 @@ class AssessmentSerializer(serializers.ModelSerializer):
             'assessor_group',
             'date_last_reminded',
             'status',
-            'licence_activity')
+            'licence_activity',
+            'comment',
+            'inspection_date',
+            'inspection_report'
+        )
+
+
+class SimpleSaveAssessmentSerializer(serializers.ModelSerializer):
+    inspection_report = serializers.FileField()
+
+    class Meta:
+        model = Assessment
+        fields = (
+            'comment',
+            'inspection_date',
+            'inspection_report')
 
 
 class SaveAssessmentSerializer(serializers.ModelSerializer):
@@ -157,11 +174,31 @@ class ExternalAmendmentRequestSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ApplicationFormDataRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ApplicationFormDataRecord
+        fields = (
+            'field_name',
+            'schema_name',
+            'component_type',
+            'instance_name',
+            'value',
+        )
+        read_only_fields = (
+            'field_name',
+            'schema_name',
+            'component_type',
+            'instance_name',
+            'value',
+        )
+
+
 class BaseApplicationSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
     licence_type_short_name = serializers.ReadOnlyField()
     documents_url = serializers.SerializerMethodField()
     character_check_status = CustomChoiceField(read_only=True)
+    return_check_status = CustomChoiceField(read_only=True)
     application_fee = serializers.DecimalField(
         max_digits=8, decimal_places=2, coerce_to_string=False)
     licence_fee = serializers.DecimalField(
@@ -169,6 +206,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField(read_only=True)
     activity_names = serializers.SerializerMethodField(read_only=True)
     activity_purpose_string = serializers.SerializerMethodField(read_only=True)
+    purpose_string = serializers.SerializerMethodField(read_only=True)
     amendment_requests = serializers.SerializerMethodField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
@@ -177,6 +215,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     processed = serializers.SerializerMethodField()
     id_check_status = CustomChoiceField(read_only=True)
     processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
+    data = ApplicationFormDataRecordSerializer(many=True)
 
     class Meta:
         model = Application
@@ -208,11 +247,13 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'documents_url',
             'id_check_status',
             'character_check_status',
+            'return_check_status',
             'application_fee',
             'licence_fee',
             'category_name',
             'activity_names',
             'activity_purpose_string',
+            'purpose_string',
             'can_current_user_edit',
             'payment_status',
             'assigned_officer',
@@ -237,7 +278,10 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 
     def get_activity_purpose_string(self, obj):
         activity_names = obj.licence_type_name.split(' - ')[1] if ' - ' in obj.licence_type_name else obj.licence_type_name
-        return activity_names.replace('), ', ')\n')
+        return activity_names
+
+    def get_purpose_string(self, obj):
+        return ', '.join(obj.licence_purpose_names)
 
     def get_activity_names(self, obj):
         return obj.licence_activity_names
@@ -276,7 +320,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         result = False
         is_proxy_applicant = False
         is_in_org_applicant = False
-        is_officer = helpers.is_officer(self.context['request'])
+        is_app_licence_officer = self.context['request'].user in obj.licence_officers
         is_submitter = obj.submitter == self.context['request'].user
         if obj.proxy_applicant:
             is_proxy_applicant = obj.proxy_applicant == self.context['request'].user
@@ -285,8 +329,11 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
                 org.id for org in self.context['request'].user.wildlifecompliance_organisations.all()]
             is_in_org_applicant = obj.org_applicant_id in user_orgs
         if obj.can_user_edit and (
-                is_officer or is_submitter or is_proxy_applicant or is_in_org_applicant):
-            result = True
+            is_app_licence_officer
+            or is_submitter
+            or is_proxy_applicant
+            or is_in_org_applicant):
+                result = True
         return result
 
 
@@ -317,6 +364,7 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
             'category_name',
             'activity_names',
             'activity_purpose_string',
+            'purpose_string',
             'can_user_view',
             'can_current_user_edit',
             'payment_status',
@@ -354,6 +402,7 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
             'category_name',
             'activity_names',
             'activity_purpose_string',
+            'purpose_string',
             'can_user_view',
             'can_current_user_edit',
             'payment_status',
@@ -375,7 +424,8 @@ class ApplicationSerializer(BaseApplicationSerializer):
 
     def get_amendment_requests(self, obj):
         return ExternalAmendmentRequestSerializer(
-            obj.amendment_requests.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED), many=True
+            obj.active_amendment_requests.filter(status=AmendmentRequest.AMENDMENT_REQUEST_STATUS_REQUESTED),
+            many=True
         ).data
 
 
@@ -462,6 +512,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
     review_status = CustomChoiceField(read_only=True)
     customer_status = CustomChoiceField(read_only=True)
     character_check_status = CustomChoiceField(read_only=True)
+    return_check_status = CustomChoiceField(read_only=True)
     submitter = EmailUserAppViewSerializer()
     licences = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
@@ -483,6 +534,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'review_status',
             'id_check_status',
             'character_check_status',
+            'return_check_status',
             'licence_type_data',
             'applicant',
             'org_applicant',
