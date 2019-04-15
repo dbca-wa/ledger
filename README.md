@@ -46,13 +46,12 @@ required environment variables at run time. Example content:
 # Docker image builds
 
 Individual Dockerfiles have been created for each derivative application. To
-build a new image for an application (e.g. Parkstay Bookings), copy the relevant
-Dockerfile to the root of the project and build as normal. Example:
+build a new image for an application (e.g. Parkstay Bookings):
 
-```
-cp parkstay/Dockerfile .
-docker image build -t dbcawa/parkstay .
-```
+1. Ensure that any required frontend assets have been built (`cd
+   parkstay/frontend/parkstay && npm run build`)
+2. Copy the relevant Dockerfile to the root of the project (e.g. `cp parkstay/Dockerfile`)
+3. Build the Docker image as normal (e.g. `docker image build -t dbcawa/parkstay .`)
 
 # Wildlife Licensing
 
