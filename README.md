@@ -50,7 +50,7 @@ build a new image for an application (e.g. Parkstay Bookings):
 
 1. Ensure that any required frontend assets have been built (`cd
    parkstay/frontend/parkstay && npm run build`)
-2. Copy the relevant Dockerfile to the root of the project (e.g. `cp parkstay/Dockerfile`)
+2. Copy the relevant Dockerfile to the root of the project (e.g. `cp parkstay/Dockerfile .`)
 3. Build the Docker image as normal (e.g. `docker image build -t dbcawa/parkstay .`)
 
 # Wildlife Licensing
