@@ -47,6 +47,8 @@ router.register(r'trails', main_api.TrailViewSet)
 router.register(r'vehicles', proposal_api.VehicleViewSet)
 router.register(r'land_activities', main_api.LandActivitiesViewSet)
 router.register(r'marine_activities', main_api.MarineActivitiesViewSet)
+router.register(r'required_documents', main_api.RequiredDocumentViewSet)
+router.register(r'questions', main_api.QuestionViewSet)
 
 api_patterns = [
     url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),
@@ -60,6 +62,9 @@ api_patterns = [
     url(r'^api/compliance_amendment_reason_choices',compliances_api.ComplianceAmendmentReasonChoicesView.as_view(),name='amendment_request_reason_choices'),
     url(r'^api/search_keywords',proposal_api.SearchKeywordsView.as_view(),name='search_keywords'),
     url(r'^api/search_reference',proposal_api.SearchReferenceView.as_view(),name='search_reference'),
+    url(r'^api/accreditation_choices',proposal_api.AccreditationTypeView.as_view(),name='accreditation_choices'),
+    url(r'^api/licence_period_choices',proposal_api.LicencePeriodChoicesView.as_view(),name='licence_period_choices'),
+
 ]
 
 # URL Patterns

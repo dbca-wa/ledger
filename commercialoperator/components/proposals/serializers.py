@@ -20,6 +20,13 @@ from commercialoperator.components.proposals.models import (
                                     Vessel,
                                     ProposalTrail,
                                     QAOfficerReferral,
+                                    ProposalParkAccess,
+                                    ProposalTrailSection,
+                                    ProposalTrailSectionActivity,
+                                    ProposalParkZoneActivity,
+                                    ProposalParkZone,
+                                    ProposalOtherDetails,
+                                    ProposalAccreditation
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
@@ -67,9 +74,34 @@ class ProposalParkActivitySerializer(serializers.ModelSerializer):
         model = ProposalParkActivity
         fields = '__all__'
 
+class ProposalParkAccessSerializer(serializers.ModelSerializer):
+    access_type=AccessTypeSerializer()
+    class Meta:
+        model = ProposalParkAccess
+        fields = '__all__'
+
+class ProposalParkZoneActivitySerializer(serializers.ModelSerializer):
+    #activities=ProposalTrailSectionActivitySerializer(many=True)
+    class Meta:
+        model = ProposalParkZoneActivity
+        fields = ('activity',)
+        #fields = '__all__'
+
+class ProposalParkZoneSerializer(serializers.ModelSerializer):
+    # trail=TrailSerializer()
+    # sections=ProposalTrailSectionSerializer()
+    park_activities=ProposalParkZoneActivitySerializer(many=True)
+    class Meta:
+        model = ProposalParkZone
+        fields = ('zone','access_point','park_activities')
+        #fields = '__all__'
+
 class ProposalParkSerializer(serializers.ModelSerializer):
     park=ParkSerializer()
     land_activities=ProposalParkActivitySerializer(many=True)
+    #marine_activities=ProposalParkActivitySerializer(many=True)
+    zones=ProposalParkZoneSerializer(many=True)
+    access_types=ProposalParkAccessSerializer(many=True)
     class Meta:
         model = ProposalPark
         fields = '__all__'
@@ -81,8 +113,25 @@ class SaveProposalParkSerializer(serializers.ModelSerializer):
         model = ProposalPark
         fields = '__all__'
 
+class ProposalTrailSectionActivitySerializer(serializers.ModelSerializer):
+    #activities=ProposalTrailSectionActivitySerializer(many=True)
+    class Meta:
+        model = ProposalTrailSectionActivity
+        fields = ('activity',)
+        #fields = '__all__'
+
+class ProposalTrailSectionSerializer(serializers.ModelSerializer):
+    # trail=TrailSerializer()
+    # sections=ProposalTrailSectionSerializer()
+    trail_activities=ProposalTrailSectionActivitySerializer(many=True)
+    class Meta:
+        model = ProposalTrailSection
+        fields = ('section','trail_activities')
+        #fields = '__all__'
+
 class ProposalTrailSerializer(serializers.ModelSerializer):
     trail=TrailSerializer()
+    sections=ProposalTrailSectionSerializer(many=True)
     #land_activities=ProposalParkActivitySerializer(many=True)
     class Meta:
         model = ProposalTrail
@@ -111,6 +160,66 @@ class QAOfficerReferralSerializer(serializers.ModelSerializer):
     def get_qaofficer(self,obj):
         return obj.qaofficer.get_full_name() if obj.qaofficer else ''
 
+class ProposalAccreditationSerializer(serializers.ModelSerializer):
+    accreditation_type_value= serializers.SerializerMethodField()
+    accreditation_expiry = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
+
+    class Meta:
+        model = ProposalAccreditation
+        #fields = '__all__'
+        fields=('id',
+                'accreditation_type',
+                'accreditation_expiry',
+                'comments',
+                'proposal_other_details',
+                'accreditation_type_value'
+                )
+
+    def get_accreditation_type_value(self,obj):
+        return obj.get_accreditation_type_display()
+
+class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
+    #park=ParkSerializer()
+    #accreditation_type= serializers.SerializerMethodField()
+    #accreditation_expiry = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
+    nominated_start_date = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
+    insurance_expiry = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
+    accreditations = ProposalAccreditationSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ProposalOtherDetails
+        #fields = '__all__'
+        fields=(
+                #'accreditation_type',
+                #'accreditation_expiry',
+                'id',
+                'accreditations',
+                'preferred_licence_period',
+                'nominated_start_date',
+                'insurance_expiry',
+                'other_comments',
+                'credit_fees',
+                'credit_docket_books',
+                )
+    # def get_accreditation_type(self,obj):
+    #     return obj.get_accreditation_type_display()
+
+class SaveProposalOtherDetailsSerializer(serializers.ModelSerializer):
+    #park=ParkSerializer()
+    class Meta:
+        model = ProposalOtherDetails
+        #fields = '__all__'
+        fields=(
+                # 'accreditation_type',
+                # 'accreditation_expiry',
+                'preferred_licence_period',
+                'nominated_start_date',
+                'insurance_expiry',
+                'other_comments',
+                'credit_fees',
+                'credit_docket_books',
+                'proposal',
+                )
 
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
@@ -123,8 +232,10 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     applicant_details = ProposalApplicantDetailsSerializer(required=False)
     activities_land = ProposalActivitiesLandSerializer(required=False)
     activities_marine = ProposalActivitiesMarineSerializer(required=False)
-    parks=ProposalParkSerializer(many=True)
+    land_parks=ProposalParkSerializer(many=True)
+    marine_parks=ProposalParkSerializer(many=True)
     trails=ProposalTrailSerializer(many=True)
+    other_details=ProposalOtherDetailsSerializer()
 
     get_history = serializers.ReadOnlyField()
     is_qa_officer = serializers.SerializerMethodField()
@@ -179,10 +290,13 @@ class BaseProposalSerializer(serializers.ModelSerializer):
 
                 # tab field models
                 'applicant_details',
+                'other_details',
                 'activities_land',
                 'activities_marine',
-                'parks',
-                'trails'
+                'land_parks',
+                'marine_parks',
+                'trails',
+                'training_completed'
                 )
         read_only_fields=('documents',)
 
@@ -360,6 +474,7 @@ class ProposalSerializer(BaseProposalSerializer):
 class SaveProposalSerializer(BaseProposalSerializer):
     assessor_data = serializers.JSONField(required=False)
     #applicant_details = ProposalApplicantDetailsSerializer(required=False)
+    #other_details= SaveProposalOtherDetailsSerializer()
 
     class Meta:
         model = Proposal
@@ -398,8 +513,9 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'applicant_details',
                 #'activities_land',
                 #'activities_marine',
+                #'other_details',
                 )
-        read_only_fields=('documents','requirements')
+        read_only_fields=('documents','requirements',)
 
 
 

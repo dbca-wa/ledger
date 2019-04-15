@@ -118,9 +118,12 @@ export default {
   methods: {
     save: function(e) {
       let vm = this;
+      //vm.form=document.forms.new_proposal;
       let formData = new FormData(vm.form);
-      //console.log(formData);
-      console.log(vm.proposal.trails);
+
+      //console.log('marine activities', vm.proposal.marine_parks_activities);
+      formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
+
       vm.$http.post(vm.proposal_form_url,formData).then(res=>{
           swal(
             'Saved',
@@ -144,6 +147,7 @@ export default {
     save_wo_confirm: function(e) {
       let vm = this;
       let formData = new FormData(vm.form);
+      formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
       vm.$http.post(vm.proposal_form_url,formData);
     },
 
@@ -287,6 +291,7 @@ export default {
     submit: function(){
         let vm = this;
         let formData = new FormData(vm.form);
+        formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
 
         var num_missing_fields = vm.validate()
         if (num_missing_fields > 0) {
@@ -342,6 +347,10 @@ export default {
           next(vm => {
             vm.loading.push('fetching proposal')
             vm.proposal = res.body;
+            //used in activities_land for T Class licence
+            vm.proposal.selected_trails_activities=[];
+            vm.proposal.selected_parks_activities=[];
+            vm.proposal.marine_parks_activities=[];
             vm.loading.splice('fetching proposal', 1);
             vm.setdata(vm.proposal.readonly);
           

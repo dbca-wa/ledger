@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, Activity, ActivityCategory
+from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, Activity, ActivityCategory, Section, Zone, RequiredDocument, Question
 from ledger.accounts.models import EmailUser
 #from commercialoperator.components.proposals.serializers import ProposalTypeSerializer 
 
@@ -27,22 +27,37 @@ class CommunicationLogEntrySerializer(serializers.ModelSerializer):
     def get_documents(self,obj):
         return [[d.name,d._file.url] for d in obj.documents.all()]
 
+
+class SectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Section
+        fields = ('id', 'name', 'visible')
+
+class ActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Activity
+        fields = ('id','name')
+
+        
+class ZoneSerializer(serializers.ModelSerializer):
+    allowed_activities=ActivitySerializer(many=True)
+    class Meta:
+        model = Zone
+        fields = ('id', 'name', 'visible', 'allowed_activities')
+
 class ParkSerializer(serializers.ModelSerializer):
+    zones=ZoneSerializer(many=True)
     class Meta:
         model = Park
-        fields = '__all__'
-
-class TrailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Trail
-        fields = '__all__'
-        
+        #fields = '__all__'
+        fields=('id', 'zones', 'name', 'code', 'park_type', 'allowed_activities', 'zone_ids')
 
 class DistrictSerializer(serializers.ModelSerializer):
-    parks = ParkSerializer(many=True)
+    land_parks = ParkSerializer(many=True)
+    marine_parks = ParkSerializer(many=True)
     class Meta:
         model = District
-        fields = ('id', 'name', 'code', 'parks')
+        fields = ('id', 'name', 'code', 'land_parks', 'marine_parks')
 
 
 
@@ -102,13 +117,27 @@ class AccessTypeSerializer(serializers.ModelSerializer):
 #         model = Vehicle
 #         fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry')
 
-class ActivitySerializer(serializers.ModelSerializer):
+class RequiredDocumentSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Activity
-        fields = ('id','name')
+        model = RequiredDocument
+        fields = ('id', 'park','activity', 'question')
+
 
 class ActivityCategorySerializer(serializers.ModelSerializer):
     activities = ActivitySerializer(many=True)
     class Meta:
         model = ActivityCategory
         fields = ('id', 'name','activities')
+
+class TrailSerializer(serializers.ModelSerializer):
+    sections=SectionSerializer(many=True)
+    allowed_activities=ActivitySerializer(many=True)
+    class Meta:
+        model = Trail
+        fields = ('id', 'name', 'code', 'section_ids', 'sections', 'allowed_activities')
+
+class QuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = ('id', 'question_text', 'answer_one', 'answer_two', 'answer_three', 'answer_four','correct_answer', 'correct_answer_value')
+
