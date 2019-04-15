@@ -4,10 +4,6 @@ from wildlifecompliance.components.call_email import models
 # Register your models here.
 
 
-@admin.register(models.Classification)
-class ClassificationAdmin(admin.ModelAdmin):
-    pass
-
 @admin.register(models.Location)
 class LocationAdmin(admin.ModelAdmin):
     pass

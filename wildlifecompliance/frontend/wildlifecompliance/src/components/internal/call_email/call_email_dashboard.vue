@@ -100,7 +100,11 @@
                         "url": helpers.add_endpoint_json(api_endpoints.call_email, 'datatable_list'),
                         "dataSrc": '',
                     },
-                    columns: [{
+                    columns: [
+                        {
+                            data: "id",
+                        },
+                        {
                             data: "status",
                         },
                         {
@@ -160,6 +164,7 @@
 
                 },
                 dtHeaders: [
+                    "Call/Email ID",
                     "Call/Email Status",
                     "Classification",
                     "lodgement_date",
