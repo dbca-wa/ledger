@@ -41,12 +41,18 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" id="pills-payment-tab" data-toggle="pill" href="#pills-payment" role="tab" aria-controls="pills-payment" aria-selected="false">
+                <!-- <a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="#pills-payment" role="tab" aria-controls="pills-payment" aria-selected="false">
+                  6. Payment
+                </a> -->
+                <a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="#" role="tab" aria-controls="pills-payment" aria-selected="false">
                   6. Payment
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" id="pills-confirm-tab" data-toggle="pill" href="#pills-confirm" role="tab" aria-controls="pills-confirm" aria-selected="false">
+                <!-- <a class="nav-link disabled" id="pills-confirm-tab" data-toggle="pill" href="#pills-confirm" role="tab" aria-controls="pills-confirm" aria-selected="false">
+                  7. Confirmation
+                </a> -->
+                <a class="nav-link disabled" id="pills-confirm-tab" data-toggle="pill" href="#" role="tab" aria-controls="pills-confirm" aria-selected="false">
                   7. Confirmation
                 </a>
               </li>
@@ -54,7 +60,7 @@
             </ul>
             <div class="tab-content" id="pills-tabContent">
               <!-- <div class="tab-pane fade show active" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">  -->
-                <div class="tab-pane fade" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab"> 
+                <div class="tab-pane fade row" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab"> 
                <Profile :isApplication="true"></Profile>
               
                 <Organisation :org_id="proposal.applicant" :isApplication="true"></Organisation> 

@@ -18,7 +18,7 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
@@ -33,6 +33,9 @@ logger = logging.getLogger(__name__)
 
 def update_proposal_doc_filename(instance, filename):
     return 'proposals/{}/documents/{}'.format(instance.proposal.id,filename)
+
+def update_proposal_required_doc_filename(instance, filename):
+    return 'proposals/{}/required_documents/{}/{}'.format(instance.proposal.id,instance.required_doc.id,filename)
 
 def update_proposal_comms_log_filename(instance, filename):
     return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
@@ -194,6 +197,22 @@ class ProposalDocument(Document):
     class Meta:
         app_label = 'commercialoperator'
 
+#Documents on Activities(land)and Activities(Marine) tab for T-Class related to required document questions
+class ProposalRequiredDocument(Document):
+    proposal = models.ForeignKey('Proposal',related_name='required_documents')
+    _file = models.FileField(upload_to=update_proposal_required_doc_filename)
+    input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+    required_doc = models.ForeignKey('RequiredDocument',related_name='proposals')
+
+    def delete(self):
+        if self.can_delete:
+            return super(ProposalRequiredDocument, self).delete()
+        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+
+    class Meta:
+        app_label = 'commercialoperator'
+
 
 class ProposalApplicantDetails(models.Model):
     first_name = models.CharField(max_length=24, blank=True, default='')
@@ -214,7 +233,6 @@ class ProposalActivitiesMarine(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
-
 
 
 class Proposal(RevisionedMixin):
@@ -357,13 +375,14 @@ class Proposal(RevisionedMixin):
 
     # common
     applicant_details = models.OneToOneField(ProposalApplicantDetails, blank=True, null=True) #, related_name='applicant_details')
+    training_completed = models.BooleanField(default=False)
     #payment = models.OneToOneField(ProposalPayment, blank=True, null=True)
     #confirmation = models.OneToOneField(ProposalConfirmation, blank=True, null=True)
 
     # T Class
     activities_land = models.OneToOneField(ProposalActivitiesLand, blank=True, null=True) #, related_name='activities_land')
     activities_marine = models.OneToOneField(ProposalActivitiesMarine, blank=True, null=True) #, related_name='activities_marine')
-    #other_details = models.OneToOneField(ProposalOtherDetails, blank=True, null=True)
+    #other_details = models.OneToOneField(ProposalOtherDetails, blank=True, null=True, related_name='proposal')
     #online_training = models.OneToOneField(ProposalOnlineTraining, blank=True, null=True)
 
     # Filming
@@ -463,6 +482,14 @@ class Proposal(RevisionedMixin):
     @property
     def latest_referrals(self):
         return self.referrals.all()[:2]
+
+    @property
+    def land_parks(self):
+        return self.parks.filter(park__park_type='land')
+
+    @property
+    def marine_parks(self):
+        return self.parks.filter(park__park_type='marine')
 
     @property
     def regions_list(self):
@@ -650,7 +677,7 @@ class Proposal(RevisionedMixin):
                 ret2 = send_external_submit_email_notification(request, self)
 
                 #import ipdb; ipdb.set_trace()
-                self.save_form_tabs(request)
+                #self.save_form_tabs(request)
                 if ret1 and ret2:
                     self.processing_status = 'with_assessor'
                     self.customer_status = 'with_assessor'
@@ -1265,6 +1292,72 @@ class ProposalLogEntry(CommunicationsLogEntry):
             self.reference = self.proposal.reference
         super(ProposalLogEntry, self).save(**kwargs)
 
+class ProposalOtherDetails(models.Model):
+    #activities_land = models.CharField(max_length=24, blank=True, default='')
+    # ACCREDITATION_TYPE_CHOICES = (
+    #     ('no', 'No'),
+    #     ('atap', 'ATAP'),
+    #     ('eco_certification', 'Eco Certification'),
+    #     ('narta', 'NARTA'),
+    # )
+    # LICENSE_PERIOD_CHOICES=(
+    #     ('2_months','2 months'),
+    #     ('1_year','1 Year'),
+    #     ('3_year', '3 Years'),
+    #     ('5_year', '5 Years'),
+    #     ('7_year', '7 Years'),
+    #     ('10_year', '10 Years'),
+    # )
+    LICENCE_PERIOD_CHOICES=(
+        ('2_months','2 months'),
+        ('1_year','1 Year'),
+        ('3_year', '3 Years'),
+        ('5_year', '5 Years'),
+        ('7_year', '7 Years'),
+        ('10_year', '10 Years'),
+    )
+    #accreditation_type = models.CharField('Accreditation', max_length=40, choices=ACCREDITATION_TYPE_CHOICES,
+    #                                   default=ACCREDITATION_TYPE_CHOICES[0][0])
+    #accreditation_expiry= models.DateTimeField(blank=True, null=True)
+    #accreditation_expiry= models.DateField(blank=True, null=True)
+
+    #preferred_license_period=models.CharField('Preferred license period', max_length=40, choices=LICENSE_PERIOD_CHOICES,default=LICENSE_PERIOD_CHOICES[0][0])
+    preferred_licence_period=models.CharField('Preferred licence period', max_length=40, choices=LICENCE_PERIOD_CHOICES,default=LICENCE_PERIOD_CHOICES[0][0])
+    #nominated_start_date= models.DateTimeField(blank=True, null=True)
+    #insurance_expiry= models.DateTimeField(blank=True, null=True)
+    nominated_start_date= models.DateField(blank=True, null=True)
+    insurance_expiry= models.DateField(blank=True, null=True)
+    other_comments=models.TextField(blank=True)
+    #if credit facilities for payment of fees is required
+    credit_fees=models.BooleanField(default=False)
+    #if credit/ cash payment docket books are required
+    credit_docket_books=models.BooleanField(default=False)
+    proposal = models.OneToOneField(Proposal, related_name='other_details', null=True)
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+class ProposalAccreditation(models.Model):
+    #activities_land = models.CharField(max_length=24, blank=True, default='')
+    ACCREDITATION_TYPE_CHOICES = (
+        ('no', 'No'),
+        ('atap', 'ATAP'),
+        ('eco_certification', 'Eco Certification'),
+        ('narta', 'NARTA'),
+        ('other', 'Other')
+    )
+    
+    accreditation_type = models.CharField('Accreditation', max_length=40, choices=ACCREDITATION_TYPE_CHOICES,
+                                       default=ACCREDITATION_TYPE_CHOICES[0][0])
+    accreditation_expiry= models.DateField(blank=True, null=True)
+    comments=models.TextField(blank=True)
+    proposal_other_details = models.ForeignKey(ProposalOtherDetails, related_name='accreditations', null=True)
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+
+
 class ProposalPark(models.Model):
     park = models.ForeignKey(Park, blank=True, null=True, related_name='proposals')
     proposal = models.ForeignKey(Proposal, blank=True, null=True, related_name='parks')
@@ -1280,9 +1373,15 @@ class ProposalPark(models.Model):
         activities=qs.filter(Q(activity__activity_category__in = categories)& Q(activity__visible=True))
         return activities
 
+    @property
+    def marine_activities(self):
+        qs=self.activities.all()
+        categories=ActivityCategory.objects.filter(activity_type='marine')
+        activities=qs.filter(Q(activity__activity_category__in = categories)& Q(activity__visible=True))
+        return activities
 
 
-
+#To store Park activities related to Proposal T class land parks
 class ProposalParkActivity(models.Model):
     proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='activities')
     activity = models.ForeignKey(Activity, blank=True, null=True)
@@ -1291,6 +1390,36 @@ class ProposalParkActivity(models.Model):
         app_label = 'commercialoperator' 
         unique_together = ('proposal_park', 'activity')
 
+#To store Park access_types related to Proposal T class land parks
+class ProposalParkAccess(models.Model):
+    proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='access_types')
+    access_type = models.ForeignKey(AccessType, blank=True, null=True)
+
+    class Meta:
+        app_label = 'commercialoperator' 
+        unique_together = ('proposal_park', 'access_type')
+
+#To store Park zones related to Proposal T class marine parks
+class ProposalParkZone(models.Model):
+    proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='zones')
+    zone = models.ForeignKey(Zone, blank=True, null=True, related_name='proposal_zones')
+    access_point = models.CharField(max_length=200, blank=True)
+
+
+    class Meta:
+        app_label = 'commercialoperator'
+        unique_together = ('zone', 'proposal_park')
+
+class ProposalParkZoneActivity(models.Model):
+    park_zone = models.ForeignKey(ProposalParkZone, blank=True, null=True, related_name='park_activities')
+    activity = models.ForeignKey(Activity, blank=True, null=True)
+    #section=models.ForeignKey(Section, blank=True, null= True)
+
+    class Meta:
+        app_label = 'commercialoperator' 
+        unique_together = ('park_zone', 'activity')
+
+
 class ProposalTrail(models.Model):
     trail = models.ForeignKey(Trail, blank=True, null=True, related_name='proposals')
     proposal = models.ForeignKey(Proposal, blank=True, null=True, related_name='trails')
@@ -1298,6 +1427,40 @@ class ProposalTrail(models.Model):
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('trail', 'proposal')
+
+    # @property
+    # def sections(self):
+    #     qs=self.activities.all()
+    #     categories=ActivityCategory.objects.filter(activity_type='land')
+    #     activities=qs.filter(Q(activity__activity_category__in = categories)& Q(activity__visible=True))
+    #     return activities
+
+class ProposalTrailSection(models.Model):
+    proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='sections')
+    section = models.ForeignKey(Section, blank=True, null=True, related_name='proposal_trails')
+
+    class Meta:
+        app_label = 'commercialoperator'
+        unique_together = ('section', 'proposal_trail')
+
+#TODO: Need to remove this model
+# class ProposalTrailActivity(models.Model):
+#     proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='trail_activities')
+#     activity = models.ForeignKey(Activity, blank=True, null=True)
+#     section=models.ForeignKey(Section, blank=True, null= True)
+
+#     class Meta:
+#         app_label = 'commercialoperator' 
+#         unique_together = ('proposal_trail', 'activity')
+
+class ProposalTrailSectionActivity(models.Model):
+    trail_section = models.ForeignKey(ProposalTrailSection, blank=True, null=True, related_name='trail_activities')
+    activity = models.ForeignKey(Activity, blank=True, null=True)
+    #section=models.ForeignKey(Section, blank=True, null= True)
+
+    class Meta:
+        app_label = 'commercialoperator' 
+        unique_together = ('trail_section', 'activity')
 
 
 @python_2_unicode_compatible

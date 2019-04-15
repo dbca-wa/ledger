@@ -2,7 +2,7 @@ from django.contrib import admin
 from ledger.accounts.models import EmailUser
 from commercialoperator.components.proposals import models
 from commercialoperator.components.proposals import forms
-from commercialoperator.components.main.models import ActivityMatrix, SystemMaintenance, ApplicationType, Park, Trail, ActivityType, ActivityCategory, Activity, AccessType
+from commercialoperator.components.main.models import ActivityMatrix, SystemMaintenance, ApplicationType, Park, Trail, ActivityType, ActivityCategory, Activity, AccessType, Section, Zone,RequiredDocument, Question
 #from commercialoperator.components.main.models import Activity, SubActivityLevel1, SubActivityLevel2, SubCategory
 from reversion.admin import VersionAdmin
 from django.conf.urls import url
@@ -108,11 +108,24 @@ class ApplicationTypeAdmin(admin.ModelAdmin):
 @admin.register(Park)
 class ParkAdmin(admin.ModelAdmin):
     list_display = ['name', 'district']
+    filter_horizontal = ('allowed_activities',)
     ordering = ('name',)
 
 @admin.register(Trail)
 class TrailAdmin(admin.ModelAdmin):
     list_display = ['name', 'code']
+    filter_horizontal = ('allowed_activities',)
+    ordering = ('name',)
+
+@admin.register(Section)
+class SectionAdmin(admin.ModelAdmin):
+    list_display = ['name', 'visible', 'trail']
+    ordering = ('name',)
+
+@admin.register(Zone)
+class ZoneAdmin(admin.ModelAdmin):
+    list_display = ['name', 'visible', 'park']
+    filter_horizontal = ('allowed_activities',)
     ordering = ('name',)
 
 @admin.register(models.Vehicle)
@@ -124,6 +137,12 @@ class VehicleAdmin(admin.ModelAdmin):
 class VesselAdmin(admin.ModelAdmin):
     list_display = ['nominated_vessel','spv_no', 'hire_rego', 'craft_no', 'size', 'proposal']
     ordering = ('nominated_vessel',)
+
+@admin.register(RequiredDocument)
+class RequiredDocumentAdmin(admin.ModelAdmin):
+    list_display = ['park', 'activity', 'question']
+    #filter_horizontal = ('allowed_activities',)
+    #ordering = ('name',)
 
 # @admin.register(ActivityType)
 # class ActivityTypeAdmin(admin.ModelAdmin):
@@ -144,3 +163,13 @@ class Activity(admin.ModelAdmin):
 class VehicleAdmin(admin.ModelAdmin):
     list_display = ['id','name', 'visible']
     ordering = ('id',)
+
+# @admin.register(ParkActivity)
+# class ParkActivity(admin.ModelAdmin):
+#     list_display = ['park', 'activity']
+#     #ordering = ('name',)
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ['question_text', 'answer_one', 'answer_two', 'answer_three', 'answer_four',]
+    ordering = ('question_text',)

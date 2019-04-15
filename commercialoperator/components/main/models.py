@@ -46,6 +46,14 @@ class District(models.Model):
     def parks(self):
         return Parks.objects.filter(district=self)
 
+    @property
+    def land_parks(self):
+        return Park.objects.filter(district=self, park_type='land')
+
+    @property
+    def marine_parks(self):
+        return Park.objects.filter(district=self, park_type='marine')
+    
 
 
 @python_2_unicode_compatible
@@ -74,35 +82,60 @@ class AccessType(models.Model):
 #     def __str__(self):
 #         return self.rego
 
-@python_2_unicode_compatible
-class Park(models.Model):
-    district = models.ForeignKey(District, related_name='parks')
-    name = models.CharField(max_length=200, unique=True)
-    code = models.CharField(max_length=10, blank=True)
-    #proposal = models.ForeignKey(Proposal, related_name='parks')
+# @python_2_unicode_compatible
+# class Park(models.Model):
+#     PARK_TYPE_CHOICES = (
+#         ('land', 'Land'),
+#         ('marine', 'Marine'),
+#         ('Film', 'Film'),
+#     )
+#     district = models.ForeignKey(District, related_name='parks')
+#     name = models.CharField(max_length=200, unique=True)
+#     code = models.CharField(max_length=10, blank=True)
+#     park_type = models.CharField('Park Type', max_length=40, choices=PARK_TYPE_CHOICES,
+#                                         default=PARK_TYPE_CHOICES[0][0])
+#     allowed_activities = models.ManyToManyField(Activity)
+#     #proposal = models.ForeignKey(Proposal, related_name='parks')
     
 
-    class Meta:
-        ordering = ['name']
-        app_label = 'commercialoperator'
-        #unique_together = ('id', 'proposal',)
+#     class Meta:
+#         ordering = ['name']
+#         app_label = 'commercialoperator'
+#         #unique_together = ('id', 'proposal',)
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
-@python_2_unicode_compatible
-class Trail(models.Model):
-    name = models.CharField(max_length=200, unique=True)
-    code = models.CharField(max_length=10, blank=True)
-    
+# @python_2_unicode_compatible
+# class Trail(models.Model):
+#     name = models.CharField(max_length=200, unique=True)
+#     code = models.CharField(max_length=10, blank=True)
+#     allowed_activities = models.ManyToManyField(Activity, blank=True)
 
-    class Meta:
-        ordering = ['name']
-        app_label = 'commercialoperator'
-        #unique_together = ('id', 'proposal',)
+#     class Meta:
+#         ordering = ['name']
+#         app_label = 'commercialoperator'
+#         #unique_together = ('id', 'proposal',)
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
+
+#     @property
+#     def section_ids(self):
+#         return [i.id for i in self.sections.all()]
+
+# @python_2_unicode_compatible
+# class Section(models.Model):
+#     name = models.CharField(max_length=200, blank=True)
+#     visible = models.BooleanField(default=True)
+#     trail = models.ForeignKey(Trail, related_name='sections')
+
+#     class Meta:
+#         ordering = ['name']
+#         app_label = 'commercialoperator'
+
+#     def __str__(self):
+#         return self.name
 
 @python_2_unicode_compatible
 class ActivityType(models.Model):
@@ -155,6 +188,114 @@ class Activity(models.Model):
         return self.name
 
 @python_2_unicode_compatible
+class Park(models.Model):
+    PARK_TYPE_CHOICES = (
+        ('land', 'Land'),
+        ('marine', 'Marine'),
+        ('Film', 'Film'),
+    )
+    district = models.ForeignKey(District, related_name='parks')
+    name = models.CharField(max_length=200, unique=True)
+    code = models.CharField(max_length=10, blank=True)
+    park_type = models.CharField('Park Type', max_length=40, choices=PARK_TYPE_CHOICES,
+                                        default=PARK_TYPE_CHOICES[0][0])
+    allowed_activities = models.ManyToManyField(Activity, blank=True)
+    #proposal = models.ForeignKey(Proposal, related_name='parks')
+    
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+        #unique_together = ('id', 'proposal',)
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def allowed_activities_ids(self):
+        return [i.id for i in self.allowed_activities.all()]
+
+    @property
+    def zone_ids(self):
+        return [i.id for i in self.zones.all()]
+
+
+# class ParkActivity(models.Model):
+#     park = models.ForeignKey(Park, blank=True, null=True, related_name='activities')
+#     activity = models.ForeignKey(Activity, blank=True, null=True, related_name='parks')
+
+#     class Meta:
+#         app_label = 'commercialoperator' 
+#         unique_together = ('park', 'activity')
+
+@python_2_unicode_compatible
+class Zone(models.Model):
+    name = models.CharField(max_length=200, blank=True)
+    visible = models.BooleanField(default=True)
+    park = models.ForeignKey(Park, related_name='zones')
+    allowed_activities = models.ManyToManyField(Activity, blank=True)
+
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def allowed_activities_ids(self):
+        return [i.id for i in self.allowed_activities.all()]
+
+    
+@python_2_unicode_compatible
+class Trail(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+    code = models.CharField(max_length=10, blank=True)
+    allowed_activities = models.ManyToManyField(Activity, blank=True)
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+        #unique_together = ('id', 'proposal',)
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def section_ids(self):
+        return [i.id for i in self.sections.all()]
+
+    @property
+    def allowed_activities_ids(self):
+        return [i.id for i in self.allowed_activities.all()]
+
+@python_2_unicode_compatible
+class Section(models.Model):
+    name = models.CharField(max_length=200, blank=True)
+    visible = models.BooleanField(default=True)
+    trail = models.ForeignKey(Trail, related_name='sections')
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.name
+
+@python_2_unicode_compatible
+class RequiredDocument(models.Model):
+    question = models.TextField(blank=False)
+    activity = models.ForeignKey(Activity,null=True, blank=True)
+    park= models.ForeignKey(Park,null=True, blank=True)
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.question
+
+@python_2_unicode_compatible
 class ApplicationType(models.Model):
     name = models.CharField(max_length=64, unique=True)
     order = models.PositiveSmallIntegerField(default=0)
@@ -197,6 +338,33 @@ class Tenure(models.Model):
 
     def __str__(self):
         return '{}: {}'.format(self.name, self.application_type)
+
+@python_2_unicode_compatible
+class Question(models.Model):
+    CORRECT_ANSWER_CHOICES = (
+        ('answer_one', 'Answer one'), ('answer_two', 'Answer two'), ('answer_three', 'Answer three'),
+        ('answer_four', 'Answer four'))
+    question_text = models.TextField(blank=False)
+    answer_one = models.CharField(max_length=200, blank=True)
+    answer_two = models.CharField(max_length=200, blank=True)
+    answer_three = models.CharField(max_length=200, blank=True)
+    answer_four = models.CharField(max_length=200, blank=True)
+    #answer_five = models.CharField(max_length=200, blank=True)
+    correct_answer = models.CharField('Correct Answer', max_length=40, choices=CORRECT_ANSWER_CHOICES,
+                                       default=CORRECT_ANSWER_CHOICES[0][0])
+    
+
+
+    class Meta:
+        #ordering = ['name']
+        app_label = 'commercialoperator'
+
+    def __str__(self):
+        return self.question_text
+
+    @property
+    def correct_answer_value(self):
+        return getattr(self, self.correct_answer)
 
 
 @python_2_unicode_compatible
