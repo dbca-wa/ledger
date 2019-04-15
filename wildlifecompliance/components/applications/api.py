@@ -120,15 +120,13 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
             # apply user selected filters
             category_name = category_name.lower() if category_name else 'all'
             if category_name != 'all':
-                category_name = category_name.lower()
                 category_name_app_ids = []
                 for application in queryset:
-                    if category_name in application.licence_category.lower():
+                    if category_name in application.licence_category_name.lower():
                         category_name_app_ids.append(application.id)
                 queryset = queryset.filter(id__in=category_name_app_ids)
             processing_status = processing_status.lower() if processing_status else 'all'
             if processing_status != 'all':
-                processing_status = processing_status.lower()
                 processing_status_app_ids = []
                 for application in queryset:
                     if processing_status in application.processing_status.lower():
@@ -136,7 +134,6 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(id__in=processing_status_app_ids)
             customer_status = customer_status.lower() if customer_status else 'all'
             if customer_status != 'all':
-                customer_status = customer_status.lower()
                 customer_status_app_ids = []
                 for application in queryset:
                     if customer_status in application.customer_status.lower():
