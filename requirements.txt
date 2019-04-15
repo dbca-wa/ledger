@@ -1,6 +1,7 @@
+git+git://github.com/dbca-wa/dbca-utils@1.0.0
+psycopg2-binary==2.7.7
 Django<1.11.0
 django-extensions==1.9.8
-git+https://github.com/dbca-wa/dpaw-utils.git@0.3a16#egg=dpaw-utils
 git+https://github.com/django-oscar/django-oscar.git@17a1f6b17aba19e3c0b095e90acc654d463e0cf9#egg=django-oscar
 social-auth-app-django==2.1.0
 git+https://github.com/scottp-dpaw/social-core.git@email_fix#egg=social-auth-core

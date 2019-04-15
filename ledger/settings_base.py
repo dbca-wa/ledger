@@ -11,15 +11,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_DIR = os.path.join(BASE_DIR, 'ledger')
 
 # Application definitions
-SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG', False)
+SECRET_KEY = env('SECRET_KEY', 'Placeholder_Secret_Key')
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
-if DEBUG:
-    ALLOWED_HOSTS = ['*']
+if not DEBUG:
+    ALLOWED_HOSTS = env('ALLOWED_DOMAINS', '').split(',')
 else:
-    ALLOWED_HOSTS = env('ALLOWED_HOSTS', [])
-WSGI_APPLICATION = 'ledger.wsgi.application'
+    ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -36,16 +35,16 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'django_countries',
     'django_cron',
-    ] + get_core_apps([  # django-oscar overrides
-        'ledger.basket',
-        'ledger.order',
-        'ledger.checkout',
-        'ledger.address',
-        'ledger.catalogue',
-        'ledger.dashboard.catalogue',
-        'ledger.payment'
-    ]) + [
-    'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
+] + get_core_apps([  # django-oscar overrides
+    'ledger.basket',
+    'ledger.order',
+    'ledger.checkout',
+    'ledger.address',
+    'ledger.catalogue',
+    'ledger.dashboard.catalogue',
+    'ledger.payment'
+]) + [
+    'ledger.accounts',  # Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
     'ledger.payments',
     'ledger.payments.bpay',
@@ -64,8 +63,8 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'dpaw_utils.middleware.SSOLoginMiddleware',
-    'dpaw_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
+    'dbca_utils.middleware.SSOLoginMiddleware',
+    'dbca_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
     'ledger.basket.middleware.BasketMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
 ]
@@ -115,7 +114,7 @@ if SESSION_COOKIE_DOMAIN:
 
 
 # Email settings
-ADMINS = ('asi@dpaw.wa.gov.au',)
+ADMINS = ('asi@dbca.wa.gov.au',)
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
@@ -149,8 +148,7 @@ TEMPLATES = [
 
 
 BOOTSTRAP3 = {
-    'jquery_url': '//static.dpaw.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',
-    #'base_url': '//static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
+    'jquery_url': '//static.dbca.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',
     'base_url': '/static/ledger/',
     'css_url': None,
     'theme_url': None,
@@ -207,8 +205,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(os.path.join(BASE_DIR, 'ledger', 'static')),
-    os.path.join(os.path.join(BASE_DIR, 'wildlifelicensing', 'static')),
-    os.path.join(os.path.join(BASE_DIR, 'wildlifecompliance', 'static')),
 ]
 if not os.path.exists(os.path.join(BASE_DIR, 'media')):
     os.mkdir(os.path.join(BASE_DIR, 'media'))
@@ -255,27 +251,6 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'INFO'
         },
-        'wildlifelicensing': {
-            'handlers': ['file'],
-            'level': 'INFO'
-        },
-        'wildlifecompliance': {
-            'handlers': ['file'],
-            'level': 'INFO'
-        },
-        'disturbance': {
-            'handlers': ['file'],
-            'level': 'INFO',
-            'propagate': True
-        },
-#        'oscar.checkout': {
-#            'handlers': ['file'],
-#            'level': 'INFO'
-#        },
-#        'bpoint_dpaw': {
-#            'handlers': ['file'],
-#            'level': 'INFO'
-#        }
     }
 }
 
@@ -308,18 +283,17 @@ EMAIL_BACKEND = 'ledger.ledger_email.LedgerEmailBackend'
 PRODUCTION_EMAIL = env('PRODUCTION_EMAIL', False)
 # Intercept and forward email recipient for non-production instances
 # Send to list of NON_PROD_EMAIL users instead
-EMAIL_INSTANCE = env('EMAIL_INSTANCE','PROD')
-NON_PROD_EMAIL = env('NON_PROD_EMAIL')
+EMAIL_INSTANCE = env('EMAIL_INSTANCE', 'DEV')
+NON_PROD_EMAIL = env('NON_PROD_EMAIL', 'noreply@dbca.wa.gov.au')
 if not PRODUCTION_EMAIL:
     if not NON_PROD_EMAIL:
         raise ImproperlyConfigured('NON_PROD_EMAIL must not be empty if PRODUCTION_EMAIL is set to False')
-    if EMAIL_INSTANCE not in ['PROD','DEV','TEST','UAT']:
+    if EMAIL_INSTANCE not in ['PROD', 'DEV', 'TEST', 'UAT']:
         raise ImproperlyConfigured('EMAIL_INSTANCE must be either "PROD","DEV","TEST","UAT"')
     if EMAIL_INSTANCE == 'PROD':
         raise ImproperlyConfigured('EMAIL_INSTANCE cannot be \'PROD\' if PRODUCTION_EMAIL is set to False')
 
 # Oscar settings
-from oscar.defaults import *
 OSCAR_ALLOW_ANON_CHECKOUT = True
 OSCAR_SHOP_NAME = env('OSCAR_SHOP_NAME')
 OSCAR_DASHBOARD_NAVIGATION.append(
@@ -343,4 +317,4 @@ OSCAR_DASHBOARD_NAVIGATION.append(
     }
 )
 OSCAR_DEFAULT_CURRENCY = 'AUD'
-ORACLE_IMPORT_SEQUENCE = env('ORACLE_IMPORT_SEQUENCE',70000)
+ORACLE_IMPORT_SEQUENCE = env('ORACLE_IMPORT_SEQUENCE', 70000)

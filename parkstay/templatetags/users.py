@@ -1,5 +1,5 @@
 from django.template import Library
-from wildlifelicensing.apps.main import helpers
+from parkstay import helpers
 
 register = Library()
 

@@ -374,7 +374,7 @@ class CampsiteSerialiser(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
 
     def get_status(self, obj):
-        return self.context.get('status', None) 
+        return self.context.get('status', None)
 
     def __init__(self, *args, **kwargs):
         try:
@@ -387,15 +387,16 @@ class CampsiteSerialiser(serializers.ModelSerializer):
             method = 'put'
         super(CampsiteSerialiser, self).__init__(*args, **kwargs)
         if method == 'get':
-            self.fields['features'] = FeatureSerializer(many=True)       
+            self.fields['features'] = FeatureSerializer(many=True)
         elif method == 'post':
             self.fields['features'] = serializers.HyperlinkedRelatedField(many=True,read_only=True,required=False,view_name='features-detail')
         elif method == 'put':
             self.fields['features'] = serializers.HyperlinkedRelatedField(many=True,allow_empty=True, queryset=Feature.objects.all(),view_name='feature-detail')
-        
+
 class RegionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Region
+        fields = '__all__'
 
 class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -705,7 +706,7 @@ class UserAddressSerializer(serializers.ModelSerializer):
             'state',
             'country',
             'postcode'
-        ) 
+        )
 
     def validate(self, obj):
         print('UHHHH')

@@ -43,6 +43,16 @@ required environment variables at run time. Example content:
     EMAIL_INSTANCE='UAT' (DEV/TEST/UAT/PROD)
     NON_PROD_EMAIL='comma@separated.email,listfor@nonproduction.emails'
 
+# Docker image builds
+
+Individual Dockerfiles have been created for each derivative application. To
+build a new image for an application (e.g. Parkstay Bookings):
+
+1. Ensure that any required frontend assets have been built (`cd
+   parkstay/frontend/parkstay && npm run build`)
+2. Copy the relevant Dockerfile to the root of the project (e.g. `cp parkstay/Dockerfile`)
+3. Build the Docker image as normal (e.g. `docker image build -t dbcawa/parkstay .`)
+
 # Wildlife Licensing
 
 This section contains information specific to the Wildlife Licensing projects.
@@ -56,13 +66,13 @@ are linked by the `Product Title` attribute of the Wildlife licence types.
 
 ### Creating a Product in Oscar
 
-To access the Oscar dashboard, select `Oscar Dashboard` under the Options menu (must be a *staff* user). From there, 
+To access the Oscar dashboard, select `Oscar Dashboard` under the Options menu (must be a *staff* user). From there,
 select `Products` under the `Cataloge` menu. You will then see the existing products and also a blue button with `+ New
 Product` which should be clicked to begin creating a new product.
 
 #### Product Details
 
-`Title`: What will be used to link the product to the wildlife licence type. It will also be visible on the invoice 
+`Title`: What will be used to link the product to the wildlife licence type. It will also be visible on the invoice
 so should be succinct but meaningful.
 
 `Oracle Code`: The account code in Oracle Finance where the revenue should be booked to.
@@ -71,7 +81,7 @@ so should be succinct but meaningful.
 
 #### Stock and pricing
 
-Click `Stock and pricing` on the left-side menu to get to this section. You must fill in all fields. 
+Click `Stock and pricing` on the left-side menu to get to this section. You must fill in all fields.
 
 `Partner`: select the only option available which should be Wildlife Licensing.
 
@@ -79,7 +89,7 @@ Click `Stock and pricing` on the left-side menu to get to this section. You must
 
 `Currency`: Enter AUD
 
-`Cost price`, `Price (excl tax)`, `Retail price`: These should all be the same, which is the cost of licence. Enter 
+`Cost price`, `Price (excl tax)`, `Retail price`: These should all be the same, which is the cost of licence. Enter
 0.00 if the licence is free.
 
 Once you've entered these details, click the blue `Save` button on the bottom right.
@@ -152,42 +162,42 @@ into groups of fields if required. A very simple example is shown below.
 ```
 [
     {
-        "type": "section", 
-        "name": "section_1", 
+        "type": "section",
+        "name": "section_1",
         "label": "Section 1"
         "children": [
             {
-                "type": "text", 
-                "name": "name", 
+                "type": "text",
+                "name": "name",
                 "label": "Provide you name"
-            }, 
+            },
             {
-                "type": "file", 
-                "name": "qualification_attachments", 
+                "type": "file",
+                "name": "qualification_attachments",
                 "label": "Qualification Attachment(s)"
-            }, 
+            },
             {
-                "type": "declaration", 
-                "name": "acknowledgement", 
+                "type": "declaration",
+                "name": "acknowledgement",
                 "label": "I acknowledge that all this information is true"
-            } 
+            }
         ]
     },
     {
-        "type": "section", 
-        "name": "section_2", 
+        "type": "section",
+        "name": "section_2",
         "label": "Section 2"
         "children": [
             {
-                "type": "text", 
-                "name": "additional_info", 
+                "type": "text",
+                "name": "additional_info",
                 "label": "Provide relevant additional information"
             },
             {
-                "type": "declaration", 
-                "name": "acknowledgement", 
+                "type": "declaration",
+                "name": "acknowledgement",
                 "label": "I acknowledge that all this information is true"
-            } 
+            }
         ]
     }
 ]
@@ -237,26 +247,26 @@ to allow repeated entries of the same type of certain data, such as a list of pe
 
 ```
 {
-    "type": "group", 
-    "name": "authorised_persons", 
+    "type": "group",
+    "name": "authorised_persons",
     "label": "Authorised Person",
-    "isRepeatable": true, 
+    "isRepeatable": true,
     "children": [
         {
-            "type": "text", 
-            "name": "ap_surname", 
+            "type": "text",
+            "name": "ap_surname",
             "label": "Surname"
         },
         {
-            "type": "checkbox", 
-            "name": "ap_given_names", 
+            "type": "checkbox",
+            "name": "ap_given_names",
             "label": "Given name(s)"
-        }, 
+        },
         {
-            "type": "date", 
-            "name": "ap_dob", 
+            "type": "date",
+            "name": "ap_dob",
             "label": "Date of birth"
-        } 
+        }
     ]
 }
 ```
@@ -269,29 +279,29 @@ actual value that will be stored in the database and `label` is the verbose vers
 
 ```
 {
-    "type": "select", 
-    "name": "ap_association", 
-    "label": "Association to applicant", 
+    "type": "select",
+    "name": "ap_association",
+    "label": "Association to applicant",
     "defaultBlank": true
     "options": [
         {
-            "value": "volunteer", 
+            "value": "volunteer",
             "label": "Volunteer"
-        }, 
+        },
         {
-            "value": "contractor", 
+            "value": "contractor",
             "label": "Contractor"
-        }, 
+        },
         {
-            "value": "staff", 
+            "value": "staff",
             "label": "Staff / Employee"
-        }, 
+        },
         {
-            "value": "student", 
+            "value": "student",
             "label": "Student"
-        }, 
+        },
         {
-            "value": "other", 
+            "value": "other",
             "label": "Other - Please provide details"
         }
     ]
@@ -308,23 +318,23 @@ attribute of a field - it is a field in its own right, and should have a label a
 
 ```
 {
-    "type": "label", 
-    "name": "ap_handler_type", 
+    "type": "label",
+    "name": "ap_handler_type",
     "label": "Handler Type"
-}, 
+},
 {
-    "type": "checkbox", 
-    "name": "ap_basic", 
+    "type": "checkbox",
+    "name": "ap_basic",
     "label": "Basic handling, trap clearing and animal measurements"
-}, 
+},
 {
-    "type": "checkbox", 
-    "name": "ap_biopsy", 
+    "type": "checkbox",
+    "name": "ap_biopsy",
     "label": "Biopsy/tissue samples"
-}, 
+},
 {
-    "type": "checkbox", 
-    "name": "ap_chipping", 
+    "type": "checkbox",
+    "name": "ap_chipping",
     "label": "Microchipping/tagging"
 }
 ```
@@ -339,47 +349,47 @@ fields. Note: not all options require an entry in `conditions`, only the values 
 
 ```
 {
-    "type": "radiobuttons", 
-    "name": "how_project_funded", 
+    "type": "radiobuttons",
+    "name": "how_project_funded",
     "label": "How is your project funded?",
     "options": [
         {
-            "value": "grant", 
+            "value": "grant",
             "label": "Grant / Sponsored"
-        }, 
+        },
         {
-            "value": "contract", 
+            "value": "contract",
             "label": "Contract / Consulting"
-        }, 
+        },
         {
-            "value": "other", 
+            "value": "other",
             "label": "Other - Please provide details"
         }
-    ], 
+    ],
     "conditions": {
         "grant": [
             {
-                "type": "text_area", 
-                "name": "grant_details", 
+                "type": "text_area",
+                "name": "grant_details",
                 "label": "Provide details of the grant or sponsorship"
             }
         ],
         "contract": [
             {
-                "type": "text", 
-                "name": "contract_client_name", 
+                "type": "text",
+                "name": "contract_client_name",
                 "label": "Provide the client name."
             },
             {
-                "type": "text_area", 
-                "name": "contract_client_address", 
+                "type": "text_area",
+                "name": "contract_client_address",
                 "label": "Provide the client address."
             }
         ],
         "other": [
             {
-                "type": "text_area", 
-                "name": "financial_details_other", 
+                "type": "text_area",
+                "name": "financial_details_other",
                 "label": "Provide details of who is funding the project or how the project is being funded"
             }
         ]
@@ -399,12 +409,12 @@ of optional fields that also relate to licence fields, which are:
 will be shown on licences (i.e. the normal `helpText` for the field won't show, only the `licenceFieldHelpText`
 text.
 * `isLicenceFieldReadonly` - If true, officers cannot adjust the content of the licence field answer before issuing
-the licence. 
+the licence.
 
 ```
 {
-    "type": "text", 
-    "name": "applicant_surname", 
+    "type": "text",
+    "name": "applicant_surname",
     "label": "Surname",
     "isLicenceField": true,
     "licenceFieldLabel": "The surname of the applicant",
@@ -421,8 +431,8 @@ specified as licence fields.
 
 ```
 {
-    "type": "group", 
-    "name": "species_taken", 
+    "type": "group",
+    "name": "species_taken",
     "label": "Species that are taken",
     "isRepeatable": true,
     "isLicenceField": true,
@@ -430,22 +440,22 @@ specified as licence fields.
     "licenceFieldHelpText": "All species that may be taken are taken for study throughout the licence period"
     "children": [
         {
-            "type": "text", 
-            "name": "species_scientific_name", 
+            "type": "text",
+            "name": "species_scientific_name",
             "label": "Species Scientific Name",
             "isLicenceField": true
         },
         {
-            "type": "text", 
-            "name": "species_common_name", 
+            "type": "text",
+            "name": "species_common_name",
             "label": "Species common name"
-        }, 
+        },
         {
-            "type": "number", 
-            "name": "species_count", 
+            "type": "number",
+            "name": "species_count",
             "label": "Species Count",
             "isLicenceField": true
-        } 
+        }
     ]
 }
 ```

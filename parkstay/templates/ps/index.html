@@ -5,7 +5,7 @@
 {% load static %}
 
 {% block extra_css %}
-    <link type="text/css" href="{% static 'wl/css/index.css' %}" rel="stylesheet">
+    <link type="text/css" href="{% static 'ledger/css/index.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block messages %}
@@ -16,7 +16,7 @@
         <div class="row">
             <div class="col-md-8">
                 <h2>
-                    Welcome to Parkstay 
+                    Welcome to Parkstay
                 </h2>
                 <p>This web portal allows you to manage your advance booking of a campsite in one of our many national parks.</p>
                 <p><b>To make a new booking, or to find a campground in a national park, please visit the interactive map on our <a href="{{EXPLORE_PARKS_SEARCH}}">Explore Parks website</a>.</b></p>
@@ -26,7 +26,7 @@
                 {% if not request.user.is_authenticated %}
                     <div id="ps-login-container">
                         <h3>
-                            Access Parkstay 
+                            Access Parkstay
                         </h3>
                         {% bootstrap_messages %}
                         <form method="post" action="{% url "social:complete" backend="email" %}">
@@ -43,7 +43,7 @@
                         </h4>
                         <p>
                             At the Department of Parks and Wildlife, we employ a password-less authentication system, meaning you never need to remember
-                            a password. When you need to login to a site, such as Wildlife Licensing, simply enter your email and an 
+                            a password. When you need to login to a site, such as Wildlife Licensing, simply enter your email and an
                             authentication link will be sent to your registered email address. From there, simply follow the link to complete the login process.
                         </p>
                     </div>

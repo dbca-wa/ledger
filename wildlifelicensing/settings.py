@@ -61,3 +61,9 @@ SYSTEM_NAME = env('SYSTEM_NAME', 'Wildlife Licensing System')
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
 DEFAULT_FROM_EMAIL = EMAIL_FROM
 DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
+
+# Additional logging for wildlifelicensing
+LOGGING['loggers']['wildlifelicensing'] = {
+    'handlers': ['file'],
+    'level': 'INFO'
+}
