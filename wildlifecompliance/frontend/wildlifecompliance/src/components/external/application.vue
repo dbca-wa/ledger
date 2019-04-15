@@ -76,6 +76,7 @@ export default {
     ...mapGetters([
         'application',
         'application_readonly',
+        'renderer_form_data',
         'selected_activity_tab_id',
         'selected_activity_tab_name',
         'isApplicationLoaded',
@@ -89,6 +90,9 @@ export default {
     },
     application_form_url: function() {
       return (this.application) ? `/api/application/${this.application.id}/draft.json` : '';
+    },
+    application_form_data_url: function() {
+      return (this.application) ? `/api/application/${this.application.id}/form_data.json` : '';
     },
     requiresCheckout: function() {
         return this.application.application_fee > 0 && this.application_customer_status_onload.id == 'draft'
@@ -110,6 +114,7 @@ export default {
     ...mapActions([
         'setApplication',
         'setActivityTab',
+        'saveFormData',
     ]),
     eventListeners: function(){
         let vm = this;
@@ -163,10 +168,8 @@ export default {
       });
     },
     saveExit: function(e) {
-      let vm = this;
       this.isProcessing = true;
-      let formData = new FormData(vm.form);
-      vm.$http.post(vm.application_form_url,formData).then(res=>{
+      this.saveFormData({ url: this.application_form_data_url }).then(res=>{
           swal(
             'Saved',
             'Your application has been saved',
@@ -186,10 +189,8 @@ export default {
       });
     },
     save: function(e) {
-      let vm = this;
       this.isProcessing = true;
-      let formData = new FormData(vm.form);
-      vm.$http.post(vm.application_form_url,formData).then(res=>{
+      this.saveFormData({ url: this.application_form_data_url }).then(res=>{
           swal(
             'Saved',
             'Your application has been saved',
