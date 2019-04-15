@@ -2198,7 +2198,10 @@ def create_admissions_booking(request, *args, **kwargs):
 
     admissionsBooking.customer = customer
     admissionsBooking.totalCost = total
-    admissionsBooking.created_by = request.user
+    admissionsBooking.created_by = None
+    if request.user.__class__.__name__ == 'EmailUser':
+        admissionsBooking.created_by = request.user
+        
     admissionsBooking.save()
     admissionsLine.cost = total
     admissionsLine.save()
