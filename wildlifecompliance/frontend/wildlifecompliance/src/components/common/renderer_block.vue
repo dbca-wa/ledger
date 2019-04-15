@@ -3,38 +3,38 @@
         <div v-if="component.type === 'tab'">
             <renderer-block v-for="(subcomponent, index) in component.children"
                 :component="subcomponent"
-                :json_data="value"
+                :instance="instance"
                 v-bind:key="`subcomponent_${index}`"
                 />
         </div>
 
         <FormSection v-if="component.type === 'section'"
-            :label="component.label" :Index="component.name" :id="component.name">
+            :label="component.label" :Index="component_name" :id="component_name">
                 <renderer-block v-for="(subcomponent, index) in component.children"
                     :component="subcomponent"
-                    :json_data="value"
+                    :instance="instance"
                     v-bind:key="`section_${index}`"
                     />
         </FormSection>
 
         <Group v-if="component.type === 'group'"
             :label="component.label"
-            :name="component.name"
+            :name="component_name"
             :id="element_id()"
             :help_text="help_text"
             :help_text_url="help_text_url"
             :isRemovable="true">
                 <renderer-block v-for="(subcomponent, index) in component.children"
                     :component="subcomponent"
-                    :json_data="value"
+                    :instance="instance"
                     v-bind:key="`group_${index}`"
                     />
         </Group>
 
         <TextField v-if="component.type === 'text'"
             type="text"
-            :name="component.name"
-            :value="value"
+            :name="component_name"
+            :field_data="value"
             :id="element_id()"
             :comment_value="comment_value"
             :label="component.label"
@@ -57,8 +57,8 @@
 
         <TextField v-if="component.type === 'number'"
             type="number"
-            :name="component.name"
-            :value="value"
+            :name="component_name"
+            :field_data="value"
             :id="element_id()"
             :min="component.min"
             :max="component.max"
@@ -71,8 +71,8 @@
 
         <TextField v-if="component.type === 'email'"
             type="email"
-            :name="component.name"
-            :value="value"
+            :name="component_name"
+            :field_data="value"
             :id="element_id()"
             :comment_value="comment_value"
             :label="component.label"
@@ -84,21 +84,21 @@
         <div v-if="component.type === 'select'">
             <SelectBlock
                 :readonly="is_readonly"
-                :name="component.name"
+                :name="component_name"
                 :label="component.label"
-                :value="value"
+                :field_data="value"
                 :id="element_id()"
                 :comment_value="comment_value"
                 :options="component.options"
                 :help_text="help_text"
-                :handleChange="handleComponentChange(component)"
+                :handleChange="handleComponentChange(component, true)"
                 :conditions="component.conditions"
                 :isRequired="component.isRequired"
                 :help_text_url="help_text_url"/>
                 
                 <SelectConditions
                     :conditions="component.conditions" 
-                    :name="component.name"
+                    :name="component_name"
                     :data="json_data"
                     :id="element_id(1)"
                     :readonly="is_readonly" 
@@ -106,23 +106,23 @@
         </div>
 
         <SelectBlock v-if="component.type === 'multi-select'"
-            :name="component.name"
+            :name="component_name"
             :label="component.label"
-            :value="value"
+            :field_data="value"
             :id="element_id()"
             :comment_value="comment_value"
             :options="component.options"
             :help_text="help_text"
-            :handleChange="handleComponentChange(component)"
+            :handleChange="handleComponentChange(component, false)"
             :readonly="is_readonly"
             :isMultiple="true"
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
-        <TextAreaBlock v-if="component.type === 'text_area' || component.type === 'text-area'"
+        <TextAreaBlock v-if="component.type === 'text_area'"
             :readonly="is_readonly"
-            :name="component.name"
-            :value="value"
+            :name="component_name"
+            :field_data="value"
             :id="element_id()"
             :comment_value="comment_value"
             :label="component.label"
@@ -133,8 +133,20 @@
         <TableBlock v-if="component.type === 'table'"
             :headers="component.headers"
             :readonly="is_readonly"
-            :name="component.name"
-            :value="value"
+            :name="component_name"
+            :field_data="value"
+            :id="element_id()"
+            :comment_value="comment_value"
+            :label="component.label"
+            :help_text="help_text"
+            :isRequired="component.isRequired"
+            :help_text_url="help_text_url"/>
+
+        <ExpanderTable v-if="component.type === 'expander_table'"
+            :json_data="value"
+            :readonly="is_readonly"
+            :name="component_name"
+            :component="component"
             :id="element_id()"
             :comment_value="comment_value"
             :label="component.label"
@@ -151,12 +163,12 @@
                 <HelpText :help_text="help_text"/>
                 <HelpTextUrl :help_text_url="help_text_url"/>
                 <CommentRadioCheckBox
-                    :name="component.name"
+                    :name="component_name"
                     :comment_value="comment_value"
                     :label="component.label"/>
 
                 <Radio v-for="(option, index) in component.options"
-                    :name="component.name"
+                    :name="component_name"
                     :label="option.label"
                     :value="option.value"
                     :isRequired="option.isRequired || component.isRequired"
@@ -165,11 +177,12 @@
                     :handleChange="handleComponentChange(component)"
                     :conditions="component.conditions"
                     :readonly="is_readonly"
-                    v-bind:key="`radio_${component.name}_${index}`"/>
+                    v-bind:key="`radio_${component_name}_${index}`"/>
  
                 <Conditions
                     :conditions="component.conditions"
-                    :name="component.name"
+                    :name="component_name"
+                    :instance="instance"
                     :data="json_data"
                     :id="element_id(2)"
                     :readonly="is_readonly"/>
@@ -178,19 +191,20 @@
         <div class="form-group" v-if="component.type === 'checkbox'">
             <Checkbox
                 :group="component.group"
-                :name="component.name"
+                :name="component_name"
                 :label="component.label"
                 :id="element_id(1)"
                 :help_text="help_text"
                 :help_text_url="help_text_url"
-                :value="value"
+                :field_data="value"
                 :handleChange="handleComponentChange(component)"
                 :conditions="component.conditions"
                 :readonly="is_readonly"
                 :isRequired="component.isRequired"/>
             <Conditions
                 :conditions="component.conditions"
-                :name="component.name"
+                :name="component_name"
+                :instance="instance"
                 :data="json_data"
                 :id="element_id(2)"
                 :isRequired="component.isRequired"/>
@@ -199,22 +213,23 @@
         <div class="form-group" v-if="component.type === 'declaration'">
             <label>{{component.label}}</label>
             <Checkbox
-                :name="component.name"
+                :name="component_name"
                 :label="component.label"
-                :value="value"
+                :field_data="value"
                 :help_text="component.help_text"
                 :handleChange="handleComponentChange(component)"
                 :conditions="component.conditions"/>
             <Conditions
                 :conditions="component.conditions"
-                :name="component.name"
+                :name="component_name"
+                :instance="instance"
                 :data="value"/>
         </div>
 
         <File v-if="component.type === 'file'"
-            :name="component.name"
+            :name="component_name"
             :label="component.label"
-            :value="value"
+            :field_data="value"
             :id="element_id()"
             :comment_value="comment_value"
             :isRepeatable="strToBool(component.isRepeatable)"
@@ -226,9 +241,9 @@
             :help_text_url="help_text_url"/>
 
         <DateField v-if="component.type === 'date'"
-            :name="component.name"
+            :name="component_name"
             :label="component.label"
-            :value="value"
+            :field_data="value"
             :id="element_id()"
             :comment_value="comment_value"
             :readonly="is_readonly"
@@ -264,6 +279,7 @@ import HelpText from '@/components/forms/help_text.vue'
 import HelpTextUrl from '@/components/forms/help_text_url.vue'
 import CommentRadioCheckBox from '@/components/forms/comment_icon_checkbox_radio.vue'
 import TableBlock from '@/components/forms/table.vue'
+import ExpanderTable from '@/components/forms/expander_table.vue'
 
 const RendererBlock = {
   name: 'renderer-block',
@@ -284,6 +300,7 @@ const RendererBlock = {
       TextAreaBlock,
       LabelBlock,
       TableBlock,
+      ExpanderTable,
   },
   data: function() {
     return {
@@ -294,15 +311,16 @@ const RendererBlock = {
           type: Object,
           required: true
       },
-      json_data: {
-          type: Object | null,
-          required: true
+      instance: {
+          type: String,
+          default: null
       }
   },
   computed: {
     ...mapGetters([
         'application',
         'application_id',
+        'renderer_form_data',
         'isComponentVisible',
     ]),
     is_readonly: function() {
@@ -320,18 +338,41 @@ const RendererBlock = {
     site_url: function() {
         return (api_endpoints.site_url.endsWith("/")) ? (api_endpoints.site_url): (api_endpoints.site_url + "/");
     },
-    value: function() {
-        if(this.json_data == null || this.json_data[this.component.name] == null) {
-            return null;
+    component_name: function() {
+        return `${this.component.name}${this.instance !== null ? `__instance-${this.instance}`: ''}`;
+    },
+    json_data: function() {
+        return this.renderer_form_data;
+    },
+    value: {
+        get: function() {
+            if(this.json_data == null) {
+                return this.json_data;
+            }
+            if(this.json_data[this.component_name] == null) {
+                this.setFormValue({
+                    key: this.component_name,
+                    value: {
+                        "value": '',
+                        "schema_name": this.component.name,
+                        "component_type": this.component.type
+                    }
+                });
+            }
+            return this.json_data[this.component_name];
+        },
+        set: function(value) {
+            this.setFormValue({
+                key: this.component_name,
+                value: { "value": value }
+            });
         }
-        return this.json_data[this.component.name].constructor === Array ?
-            this.json_data[this.component.name][0] : this.json_data[this.component.name];
     },
     comment_value: function() {
-        if(this.comment_data == null || this.comment_data[this.component.name] == null) {
+        if(this.comment_data == null || this.comment_data[this.component_name] == null) {
             return null;
         }
-        return this.comment_data[this.component.name];
+        return this.comment_data[this.component_name];
     },
     help_text: function() {
         return this.replaceSitePlaceholders(this.component.help_text);
@@ -342,11 +383,12 @@ const RendererBlock = {
   },
   methods: {
     ...mapActions([
-        'toggleVisibleComponent'
+        'toggleVisibleComponent',
+        'setFormValue',
     ]),
     strToBool: strToBool,
     element_id: function(depth=0) {
-        return 'id_' + this.component.name + ((depth) ? `_${depth}` : '');
+        return `id_${this.component_name}${(depth) ? `_${depth}` : ''}${this.instance !== null ? `__instance${this.instance}`: ''}`;
     },
     replaceSitePlaceholders: function(text_string) {
         if(text_string && text_string.includes("site_url:/")) {
@@ -358,21 +400,25 @@ const RendererBlock = {
         }
         return text_string;
     },
-    handleComponentChange: function(component) {
+    handleComponentChange: function(component, assignEventValue=true) {
         return (e) => {
             for(let condition in component.conditions) {
                 this.toggleVisibleComponent({
-                    'component_id': `cons_${component.name}_${condition}`,
+                    'component_id': `cons_${this.component_name}_${condition}`,
                     'visible': false
                 });
             }
-            this.toggleVisibleComponent({
+            e.target && this.toggleVisibleComponent({
                 'component_id': `cons_${e.target.name}_${e.target.value}`,
                 'visible': e.target.checked
             });
+            const value = e.value == null ? e.target.value : e.value;
+            if(assignEventValue && value != null) {
+                this.value =value;
+            }
         }
     },
-  },
+  }
 }
 
 export default RendererBlock;
