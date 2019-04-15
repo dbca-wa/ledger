@@ -9,8 +9,8 @@
     <head>
         <meta charset="UTF-8"/>
         <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-            {% bootstrap_css %}
-                <link type="text/css" href="{% static 'ps/css/base.css' %}" rel="stylesheet"/>
+            <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+            <link type="text/css" href="{% static 'ps/css/base.css' %}" rel="stylesheet"/>
             {% block extra_css %}
             {% endblock %}
             {% block extra_js %}
@@ -25,9 +25,9 @@
     </head>
     <body>
         <header class="topmast">
-            {% block header %}
-                {% include 'ps/header.html' %}
-            {% endblock %}
+        {% block header %}
+        {% include 'ps/header.html' %}
+        {% endblock %}
         </header>
         {% block menu %}
         <div class="topbar">
@@ -41,7 +41,7 @@
                                 <span class="icon-bar"></span>
                                 <span class="icon-bar"></span>
                             </button>
-                            {% if request.user.is_staff %}<a class="navbar-brand" href="{% url 'dash-campgrounds' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">Campgrounds</div></a>{% else %}<a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">My Bookings</div></a>{% endif %}
+                            {% if request.user.is_staff %}<a class="navbar-brand" href="{% url 'dash-campgrounds' %}"><div style="inline"><img src="{% static 'ledger/images/dpaw_small.png' %}">Campgrounds</div></a>{% else %}<a class="navbar-brand" href="{% url 'home' %}"><div style="inline"><img src="{% static 'ledger/images/dpaw_small.png' %}">My Bookings</div></a>{% endif %}
                         </div>
                         <div id="navbar" class="navbar-collapse collapse">
                             <ul class="nav navbar-nav">
@@ -119,8 +119,8 @@
         {% block modals %}
         {% endblock %}
         {% block custom_js %}
-        <script src="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-        <script src="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
         {% endblock %}
         <script async src="https://www.googletagmanager.com/gtag/js?id=UA-108679294-1"></script>
         <script>
