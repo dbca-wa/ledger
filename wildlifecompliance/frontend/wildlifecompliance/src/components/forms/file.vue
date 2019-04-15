@@ -60,11 +60,7 @@ export default {
         isRequired:String,
         comment_value: String,
         help_text:String,
-        value:{
-            default:function () {
-                return null;
-            }
-        },
+        field_data:Object,
         fileTypes:{
             default:function () {
                 var file_types = 
@@ -104,6 +100,9 @@ export default {
         application_document_action: function() {
           return (this.application_id) ? `/api/application/${this.application_id}/process_document/` : '';
         },
+        value: function() {
+            return this.field_data.value;
+        }
     },
 
     methods:{

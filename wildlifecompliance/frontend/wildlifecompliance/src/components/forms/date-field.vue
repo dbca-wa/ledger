@@ -19,7 +19,7 @@
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
             <div class='input-group date'>
-                <input type="text" :readonly="readonly" :name="name" class="form-control" placeholder="DD/MM/YYYY" :value="value" :required="isRequired"/>
+                <input type="text" :readonly="readonly" :name="name" class="form-control" placeholder="DD/MM/YYYY" v-model="value" :required="isRequired"/>
                 <span class="input-group-addon">
                     <span class="glyphicon glyphicon-calendar"></span>
                 </span>
@@ -37,7 +37,7 @@ import HelpText from './help_text.vue';
 import HelpTextUrl from './help_text_url.vue';
 import { mapGetters } from 'vuex';
 export default {
-    props: ["name", "label", "id", "readonly", "help_text", "value", "conditions", "handleChange",
+    props: ["name", "label", "id", "readonly", "help_text", "field_data", "conditions", "handleChange",
             "comment_value", "isRequired", "help_text_url"],
     data(){
         return {
@@ -50,11 +50,19 @@ export default {
             'canViewComments',
         ]),
         isChecked: function() {
-        //TODO return value from database
-        return false;
+            //TODO return value from database
+            return false;
         },
         options: function() {
         return JSON.stringify(this.conditions);
+        },
+        value: {
+            get: function() {
+                return this.field_data.value;
+            },
+            set: function(value) {
+                this.field_data.value = value;
+            }
         },
     },
     methods:{
@@ -64,7 +72,9 @@ export default {
     },
     mounted: function() {
         $('.date').datetimepicker({
-        format: 'DD/MM/YYYY'
+            format: 'DD/MM/YYYY'
+        }).off('dp.change').on('dp.change', (e) => {
+            this.value = $(e.target).data('DateTimePicker').date().format('DD/MM/YYYY');
         });
     }
 }
