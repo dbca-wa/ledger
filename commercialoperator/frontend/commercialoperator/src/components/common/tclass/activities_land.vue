@@ -544,7 +544,7 @@ export default {
             for(var l=0; l<vm.required_documents_list.length; l++){
               vm.required_documents_list[l].can_view=false;
               vm.checkRequiredDocuements(vm.selected_parks_activities)
-              console.log('park',vm.selected_parks_activities)
+              //console.log('park',vm.selected_parks_activities)
             }
             },(error) => {
             console.log(error);
@@ -848,7 +848,7 @@ export default {
             
             
             $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
-              console.log(this);
+              //console.log(this);
             var chev = $( this ).children()[ 0 ];
             window.setTimeout( function () {
                 $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );

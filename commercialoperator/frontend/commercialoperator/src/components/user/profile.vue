@@ -1,5 +1,6 @@
 <template>
     <div :class="classCompute" id="userInfo">
+      <div class="col-sm-12">
         <div v-if="showCompletion" class="row">
             <div class="col-sm-12">
                 <div class="well well-sm">
@@ -348,6 +349,7 @@
                 </div>
             </div>
         </div>
+      </div>
     </div>
 </template>
 

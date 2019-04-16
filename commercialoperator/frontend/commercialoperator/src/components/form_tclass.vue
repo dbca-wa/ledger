@@ -60,11 +60,15 @@
             </ul>
             <div class="tab-content" id="pills-tabContent">
               <!-- <div class="tab-pane fade show active" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">  -->
-                <div class="tab-pane fade row" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab"> 
-               <Profile :isApplication="true"></Profile>
+              <div class="tab-pane fade" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">
+                  <div v-if="is_external">
+                    <Profile :isApplication="true"></Profile>
               
-                <Organisation :org_id="proposal.applicant" :isApplication="true"></Organisation> 
-                <!-- <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant> -->
+                    <Organisation :org_id="proposal.applicant" :isApplication="true"></Organisation> 
+                  </div>
+                  <div v-else>
+                    <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant>
+                  </div>
               </div>
               <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">
                 <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand" :canEditActivities="canEditActivities"></ActivitiesLand>
@@ -116,6 +120,10 @@
             canEditActivities:{
               type: Boolean,
               default: true
+            },
+            is_external:{
+              type: Boolean,
+              default: false
             }
         },
         data:function () {
