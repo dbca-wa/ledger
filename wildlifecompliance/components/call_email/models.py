@@ -66,12 +66,17 @@ class Location(models.Model):
 class ReportType(models.Model):
 
     report_type = models.CharField(max_length=50)
-    schema = JSONField(default=list)
+    schema = JSONField(null=True)
+    version = models.SmallIntegerField(default=1, blank=False, null=False)
+    description = models.CharField(max_length=256, blank=True, null=True)
+    replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         app_label='wildlifecompliance'
         verbose_name = 'CM_ReportType'
         verbose_name_plural = 'CM_ReportTypes'
+        unique_together = ('report_type', 'version')
 
     def __str__(self):
         return self.report_type
