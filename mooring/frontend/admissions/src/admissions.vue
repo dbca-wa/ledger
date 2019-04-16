@@ -271,7 +271,7 @@ export default {
         validToProceed: {
             cache: false,
             get: function(){
-                if (this.toc && !this.errorMsg && !this.errorMsgPersonal &&!this.noPayment && vesselReg.length>0){
+                if (this.toc && !this.errorMsg && !this.errorMsgPersonal &&!this.noPayment ){
                     return true;
                 } else {
                     return false;
@@ -336,6 +336,7 @@ export default {
             this.validateNoOfPeople();
             var warningRefNo = this.warningRefNo;
             this.validateWarningRefNo();
+            
             var errs = this.errors
             if(errs.arrivalDate === true || errs.overnightStay === true || errs.givenName === true || errs.lastName === true || errs.email === true || errs.noOfAdults === true || errs.noOfChildren === true || errs.noOfInfants === true){
                 formInvalid = true;
@@ -560,7 +561,7 @@ export default {
                 }
             }
         },
-        validateNoOfPeople: function(){
+        validateNoOfPeople: function() {
             var error1 = "Please enter at least 1 person for admission booking.";
             var error2 = "Cannot purchase for a negative value for people.";
             var totalP = parseInt(this.noOfAdults) + parseInt(this.noOfConcessions) + parseInt(this.noOfChildren) + parseInt(this.noOfInfants);
@@ -602,7 +603,6 @@ export default {
         getPrices: function(callback){
             console.log(this.arrivalDate);
             var date = moment(this.arrivalDate).format('YYYY-MM-DD');
-            console.log(date);
             var location = $('#location').val();
             var data = {
                 'date': date,
@@ -614,7 +614,6 @@ export default {
                 data: data,
                 dataType: 'json',
                 success: (function(data){
-                    console.log(data.price);
                     if(data.price.period_end == 'null'){
                         var temp = new Date();
                         this.currentCostDateEnd = (temp.getDate + 1000);
@@ -658,11 +657,9 @@ export default {
             var family = 0;
             var adults = parseInt(this.noOfAdults);
             var children = parseInt(this.noOfChildren);
-            console.log("F"+family+"C"+children+"A"+adults);
 
             if (adults > 1 && children > 1) {
                 if (adults == children) {
-                    console.log('HERE2');
                     if (adults % 2 == 0) {
                         family = adults/2
                         adults = 0
@@ -675,7 +672,6 @@ export default {
                     }
                 }
                 else if (adults > children) {
-                    console.log('HERE1');
                     if (children % 2 == 0){
                         family = children/2
                         adults -= children
@@ -688,7 +684,6 @@ export default {
                     }
                 }
                 else{
-                    console.log('HERE');
                     if (adults % 2 == 0){
                         family = adults/2
                         children -= adults
@@ -701,7 +696,6 @@ export default {
                     } 
                 }
             }
-            console.log("F"+family+"C"+children+"A"+adults);
             if (this.overnightStay == "yes"){
                 this.total = (this.adultOvernightCost * adults) + (this.childrenOvernightCost * children) + (this.infantOvernightCost * this.noOfInfants) + (this.familyOvernightCost * family);
             } else {
