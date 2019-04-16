@@ -52,7 +52,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Submitter</label>
-                                <select class="form-control" v-model="filterApplicationSubmitter">
+                                <select class="form-control" v-model="filterApplicationSubmitter" ref="submitter_select">
                                     <option value="All">All</option>
                                     <option v-for="s in application_submitters" :value="s.email">{{s.search_term}}</option>
                                 </select>
@@ -120,7 +120,7 @@ export default {
                     // adding extra GET params for Custom filtering
                     "data": function (d) {
                         d.category_name = vm.filterApplicationLicenceType;
-                        d.customer_status = vm.filterApplicationStatus.id;
+                        d.status = vm.filterApplicationStatus.id;
                         d.submitter = vm.filterApplicationSubmitter;
                         d.date_from = vm.filterApplicationLodgedFrom != '' && vm.filterApplicationLodgedFrom != null ? moment(vm.filterApplicationLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterApplicationLodgedTo != '' && vm.filterApplicationLodgedTo != null ? moment(vm.filterApplicationLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
@@ -129,6 +129,7 @@ export default {
                 columns: [
                     {
                         data: "application",
+                        name: "application__lodgement_number"
                     },
                     {
                         data: "application_category",
@@ -156,7 +157,7 @@ export default {
                     },
                     {
                         data: "submitter",
-                        name: "submitter__first_name, submitter__last_name, submitter__email",
+                        name: "application__submitter__first_name, application__submitter__last_name, application__submitter__email",
                         mRender:function (data,type,full) {
                             if (data) {
                                 return `${data.first_name} ${data.last_name}`;
@@ -294,6 +295,19 @@ export default {
                 e.preventDefault();
                 var id = $(this).attr('data-discard-application');
                 vm.discardApplication(id);
+            });
+            // Initialise select2 for submitter
+            $(vm.$refs.submitter_select).select2({
+                "theme": "bootstrap",
+                placeholder:"Select Submitter"
+            }).
+            on("select2:select",function (e) {
+                var selected = $(e.currentTarget);
+                vm.filterApplicationSubmitter = selected.val();
+            }).
+            on("select2:unselect",function (e) {
+                var selected = $(e.currentTarget);
+                vm.filterApplicationSubmitter = selected.val();
             });
         },
         initialiseSearch:function(){

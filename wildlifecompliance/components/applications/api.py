@@ -1090,7 +1090,7 @@ class AssessmentFilterBackend(DatatablesFilterBackend):
                     if (search_text in assessment.application.licence_category.lower()
                         or search_text in assessment.licence_activity.short_name.lower()
                         or search_text in assessment.application.applicant.lower()
-                        or search_text in assessment.get_status_display.lower()
+                        or search_text in assessment.get_status_display().lower()
                     ):
                         search_text_ass_ids.append(assessment.id)
                     # if applicant is not an organisation, also search against the user's email address
@@ -1108,21 +1108,21 @@ class AssessmentFilterBackend(DatatablesFilterBackend):
             category_name = category_name.lower() if category_name else 'all'
             if category_name != 'all':
                 category_name_app_ids = []
-                for application in queryset:
-                    if category_name in application.licence_category_name.lower():
-                        category_name_app_ids.append(application.id)
+                for assessment in queryset:
+                    if category_name in assessment.application.licence_category_name.lower():
+                        category_name_app_ids.append(assessment.id)
                 queryset = queryset.filter(id__in=category_name_app_ids)
             status_filter = status_filter.lower() if status_filter else 'all'
             if status_filter != 'all':
                 queryset = queryset.filter(status=status_filter)
             if date_from:
-                queryset = queryset.filter(lodgement_date__gte=date_from)
+                queryset = queryset.filter(application__lodgement_date__gte=date_from)
             if date_to:
                 date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
-                queryset = queryset.filter(lodgement_date__lte=date_to)
+                queryset = queryset.filter(application__lodgement_date__lte=date_to)
             submitter = submitter.lower() if submitter else 'all'
             if submitter != 'all':
-                queryset = queryset.filter(submitter__email__iexact=submitter)
+                queryset = queryset.filter(application__submitter__email__iexact=submitter)
 
         # override queryset ordering, required because the ordering is usually handled
         # in the super call, but is then clobbered by the custom queryset joining above
