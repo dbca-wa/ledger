@@ -1,10 +1,10 @@
 <template lang="html">
     <div class="row" id="reasons">
         <div class="form-group">
-            <div v-bind:class="{'col-md-4':large,'col-md-2':!large}">
+            <div v-bind:class="{'col-md-4':large, 'col-md-2': !large }">
                 <label>Reason: </label>
             </div>
-            <div v-bind:class="{'col-md-8':large,'col-md-4':!large}">
+            <div v-bind:class="{'col-md-8':large,'col-md-4':!large, 'col-md-10':wide, 'col-md-9':threenine, 'col-md-4':!wide, }">
                 <select v-if="!reasons.length > 0" class="form-control" >
                     <option value="">Loading...</option>
                 </select>
@@ -42,6 +42,16 @@ export default {
             default:function () {
                 return false;
             }
+        },
+        wide: {
+            default: function(){
+                return false;
+            }
+        },
+        threenine: {
+            default: function() {
+                return false;
+            }
         }
     },
     methods:{
@@ -49,24 +59,28 @@ export default {
             let vm = this;
             $.get(api_endpoints.openReasons(),function (data) {
                 vm.reasons = data;
+                bus.$emit('openReasons', vm.reasons);
             });
         },
         fetchClosureReasons:function () {
             let vm = this;
             $.get(api_endpoints.closureReasons(),function (data) {
                 vm.reasons = data;
+                bus.$emit('closeReasons', vm.reasons);
             });
         },
         fetchMaxStayReasons:function () {
             let vm = this;
             $.get(api_endpoints.maxStayReasons(),function (data) {
                 vm.reasons = data;
+                bus.$emit('maxStayReasons', vm.reasons);
             });
         },
         fetchPriceReasons:function () {
             let vm = this;
             $.get(api_endpoints.priceReasons(),function (data) {
                 vm.reasons = data;
+                bus.$emit('priceReasons', vm.reasons);
             });
         }
     },
