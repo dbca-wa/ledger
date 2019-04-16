@@ -749,11 +749,12 @@ export default {
         store_trails: function(trails){
           let vm=this;
           var all_activities=[] //to store all activities for all sections so can find recurring onees to display selected_activities
+          var trail_list=[]
           for (var i = 0; i < trails.length; i++) {
               var current_trail=trails[i].trail.id
               var current_activities=[]
               var current_sections=[]
-              var trail_list=[]
+              
               for (var j = 0; j < trails[i].sections.length; j++) {
                 var trail_activities=[];
                 for (var k = 0; k < trails[i].sections[j].trail_activities.length; k++) {
