@@ -1125,7 +1125,7 @@ class AssessmentFilterBackend(DatatablesFilterBackend):
         # override queryset ordering, required because the ordering is usually handled
         # in the super call, but is then clobbered by the custom queryset joining above
         # also needed to disable ordering for all fields for which data is not an
-        # Application model field, as property functions will not work with order_by
+        # Assessment model field, as property functions will not work with order_by
         getter = request.query_params.get
         fields = self.get_fields(getter)
         ordering = self.get_ordering(getter, fields)
