@@ -73,11 +73,12 @@ class CallEmailSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', )
 
 
-class UpdateRendererDataSerializer(serializers.ModelSerializer):
+class UpdateRendererDataSerializer(CallEmailSerializer):
 
     class Meta:
         model = CallEmail
         fields = (
+                'schema',
                 'data',
                 )
 

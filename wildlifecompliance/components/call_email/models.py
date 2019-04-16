@@ -70,7 +70,7 @@ class ReportType(models.Model):
     version = models.SmallIntegerField(default=1, blank=False, null=False)
     description = models.CharField(max_length=256, blank=True, null=True)
     replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
-    date_created = models.DateTimeField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         app_label='wildlifecompliance'

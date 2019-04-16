@@ -55,17 +55,22 @@
             </div>
         </div>
         <form method="post" name="callEmailUpdate">
+            <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
+            <input type='hidden' name="schema" :value="JSON.stringify(call_email)" />
+            <!--
+            <input type='hidden' name="application_id" :value="1" />
+            -->
             <div>
                 <div v-for="dict in call_email.report_type.schema">
                 <div v-for="(item, index) in dict.children[0].children">
                     <renderer-block
                         :component="item" 
-                        :json_data="nothing"
+                        :value="call_email.data"
                         v-bind:key="`q_${index}`"
                         />
                 </div>
                 </div>
-                </div>
+            </div>
                 <div class="col-sm-12">
                     <button @click.prevent="createCallEmail"
                         class="btn btn-primary pull-right">Save</button>
@@ -150,6 +155,9 @@
                 call_email: 'callemailStore/call_email',
 
             }),
+            csrf_token: function() {
+                return helpers.getCookie('csrftoken')
+            },
             /*
             ...mapFields({
                 callemail_classification_name: "call_email.classification['name']",

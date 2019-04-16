@@ -10,7 +10,8 @@ class LocationAdmin(admin.ModelAdmin):
 
 @admin.register(models.ReportType)
 class ReportTypeAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['report_type', 'version', 'date_created']
+    ordering = ['report_type', '-version']
 
 @admin.register(models.Referrer)
 class ReferrerAdmin(admin.ModelAdmin):

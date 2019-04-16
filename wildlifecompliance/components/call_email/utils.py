@@ -14,6 +14,7 @@ import traceback
 
 class SchemaParser(object):
 
+    @transaction.atomic
     def create_data_from_form(
             self,
             schema,

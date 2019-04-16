@@ -43,10 +43,7 @@ from wildlifecompliance.components.call_email.serializers import (
         CreateCallEmailSerializer,
         UpdateRendererDataSerializer,
         )
-from wildlifecompliance.components.applications.utils import (                                                                                                                                              
-            SchemaParser,                                                                                                                                                            
-            MissingFieldsException
-            )
+from utils import SchemaParser
 
 class CallEmailViewSet(viewsets.ModelViewSet):
     queryset = CallEmail.objects.all()
@@ -136,9 +133,10 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             rendered_data = parsed_json[0]
             instance.data = rendered_data
             data = {
+                    'schema': instance.report_type.schema,
                     'data': rendered_data,
                     }
-            serializer = UpdateRendererDataSerializer(instance, data=data)
+            serializer = UpdateRendererDataSerializer(instance, data=data, partial=True)
             serializer.is_valid(raise_exception=True)
             if serializer.is_valid():
                 serializer.save()
