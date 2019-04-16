@@ -56,19 +56,27 @@
         </div>
         <form method="post" name="callEmailUpdate">
             <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-            <input type='hidden' name="schema" :value="JSON.stringify(call_email)" />
+            <input type='hidden' name="schema" :value="JSON.stringify(call_email.schema)" />
+            <input type='hidden' name="schema" :value="JSON.stringify(call_email.data)" />
             <!--
             <input type='hidden' name="application_id" :value="1" />
+            :json_data="this.call_email.data"
+            v-bind:key="`q_${index}`"
+            :field_data="call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0][item.name]"
             -->
+            
             <div>
-                <div v-for="dict in call_email.report_type.schema">
+                <div v-for="dict in call_email.schema">
                 <div v-for="(item, index) in dict.children[0].children">
+                    {{ call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0][item.name] }}
+                    <h3>{{item.name}}</h3>
                     <renderer-block
                         :component="item" 
-                        :value="call_email.data"
+                        
                         v-bind:key="`q_${index}`"
                         />
-                </div>
+                    </div>
+                
                 </div>
             </div>
                 <div class="col-sm-12">
@@ -99,7 +107,7 @@
             console.log(this);
             return {
                         pBody: 'pBody' + vm._uid,
-                        //form: null,
+                        form: null,
                         loading: [],
                         comms_url: 'www.google.com',
                         comms_add_url: 'www.google.com',
