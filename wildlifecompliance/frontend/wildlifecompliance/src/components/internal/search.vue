@@ -1,27 +1,6 @@
 <template>
 <div class="container" id="internalSearch">
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Search People 
-                        <a :href="'#'+cBody" data-toggle="collapse"  data-parent="#peopleInfo" expanded="true" :aria-controls="cBody">
-                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                        </a>
-                    </h3>
-                </div>
-                <div class="panel-body collapse in" :id="cBody">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <label class="control-label">
-                                <a href="/internal/users">Click here to search for people</a>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <UserDashTable level="internal" :url="users_url" />
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
@@ -152,6 +131,7 @@
 <script>
 import $ from 'jquery'
 import datatable from '@/utils/vue/datatable.vue'
+import UserDashTable from '@common-utils/users_dashboard.vue'
 import {
   api_endpoints,
   helpers
@@ -163,6 +143,7 @@ export default {
     data() {
         let vm = this;
         return {
+            users_url: api_endpoints.users,
             rBody: 'rBody' + vm._uid,
             oBody: 'oBody' + vm._uid,
             cBody: 'cBody' + vm._uid,
@@ -224,6 +205,7 @@ export default {
     watch: {},
     components: {
         datatable,
+        UserDashTable
     },
     beforeRouteEnter:function(to,from,next){
         let initialisers = [
@@ -231,7 +213,7 @@ export default {
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
-                vm.organisations = data[0];
+                vm.organisations = data[0].results;
             });
         });
     },

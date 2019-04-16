@@ -4,6 +4,9 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">People <small v-if="is_external">View people details</small>
+                        <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#peopleInfo" expanded="true" :aria-controls="pBody">
+                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                        </a>
                     </h3>
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
@@ -105,11 +108,6 @@ export default {
     watch:{
     },
     computed: {
-        // TODO: this status function needs checking
-        status: function(){
-            //return this.is_external ? this.external_status : this.internal_status;
-            return [];
-        },
         is_external: function(){
             return this.level == 'external';
         },
