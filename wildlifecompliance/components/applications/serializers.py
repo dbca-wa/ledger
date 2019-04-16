@@ -182,6 +182,8 @@ class ApplicationFormDataRecordSerializer(serializers.ModelSerializer):
             'schema_name',
             'component_type',
             'instance_name',
+            'comment',
+            'deficiency',
             'value',
         )
         read_only_fields = (
@@ -189,6 +191,8 @@ class ApplicationFormDataRecordSerializer(serializers.ModelSerializer):
             'schema_name',
             'component_type',
             'instance_name',
+            'comment',
+            'deficiency',
             'value',
         )
 

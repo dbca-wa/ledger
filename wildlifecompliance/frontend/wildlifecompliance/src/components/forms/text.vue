@@ -12,7 +12,7 @@
 
             <template v-if="canViewComments">
                 <template v-if="!showingComment">
-                    <a v-if="comment_value" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
+                    <a v-if="field_data.comment_value" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
                 </template>
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
@@ -24,7 +24,7 @@
                 <input :readonly="readonly" :type="type" class="form-control" :name="name" v-model="value" :required="isRequired" />
             </span>
         </div>
-        <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :value="comment_value"/>
+        <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :field_data="field_data"/>
     </div>
 </template>
 
@@ -34,7 +34,7 @@ import HelpText from './help_text.vue';
 import HelpTextUrl from './help_text_url.vue';
 import { mapGetters, mapActions } from 'vuex';
 export default {
-    props:["type","name","id", "comment_value","field_data","isRequired","help_text","label","readonly", "help_text_url", "min", "max"],
+    props:["type","name","id", "field_data","isRequired","help_text","label","readonly", "help_text_url", "min", "max"],
     components: {Comment, HelpText, HelpTextUrl},
     data(){
         let vm = this;

@@ -29,8 +29,11 @@ export const userStore = {
                 (!tab_id || tab_id == activity.id)
             );
         },
-        canViewComments: (state, getters) => {
+        canViewDeficiencies: (state, getters) => {
             return getters.hasRole('licensing_officer');
+        },
+        canViewComments: (state, getters) => {
+            return getters.hasRole('licensing_officer') || getters.hasRole('assessor');
         },
     },
     mutations: {

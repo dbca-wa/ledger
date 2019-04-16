@@ -11,10 +11,20 @@
 
         <div v-if="canViewComments">
             <div v-if="!showingComment">
-                <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
+                <a v-if="field_data.comment_value" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                 <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
             </div>
             <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
+            <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :field_data="field_data"/>
+        </div>
+
+        <div v-if="canViewDeficiencies">
+            <div v-if="!showingDeficiencies">
+                <a v-if="field_data.deficiency_value" href=""  @click.prevent="toggleDeficiencies"><i style="color:red" class="fa fa-exclamation-triangle">&nbsp;</i></a>
+                <a v-else href="" @click.prevent="toggleDeficiencies"><i class="fa fa-exclamation-triangle">&nbsp;</i></a>
+            </div>
+            <a href="" v-else  @click.prevent="toggleDeficiencies"><i class="fa fa-ban">&nbsp;</i></a>
+            <Comment :question="label" :name="name+'-deficiency-field'" v-show="showingDeficiencies" :field_data="field_data" :isDeficiency="true"/>
         </div>
 
         <div class="row header-titles-row">
@@ -76,14 +86,13 @@ const ExpanderTable = {
         label: String,
         id: String,
         isRequired: String,
-        comment_value: String,
         help_text: String,
         help_text_url: String,
         component: {
             type: Object | null,
             required: true
         },
-        json_data: {
+        field_data: {
             type: Object | null,
             required: true
         },
@@ -98,6 +107,7 @@ const ExpanderTable = {
         return {
             expanded: {},
             showingComment: false,
+            showingDeficiencies: false,
         };
     },
     methods: {
@@ -105,9 +115,6 @@ const ExpanderTable = {
             'removeFormInstance',
             'setFormValue'
         ]),
-        toggleComment(){
-            this.showingComment = ! this.showingComment;
-        },
         isExpanded: function(tableId) {
             return this.expanded[tableId];
         },
@@ -158,11 +165,18 @@ const ExpanderTable = {
             let newHeader = {...header};
             delete newHeader['label'];
             return newHeader;
-        }
+        },
+        toggleComment: function() {
+            this.showingComment = !this.showingComment;
+        },
+        toggleDeficiencies: function() {
+            this.showingDeficiencies = !this.showingDeficiencies;
+        },
     },
     computed:{
         ...mapGetters([
             'canViewComments',
+            'canViewDeficiencies',
             'getFormValue',
         ]),
         lastTableId: function() {
@@ -183,7 +197,7 @@ const ExpanderTable = {
             return this.existingTables;
         },
         value: function() {
-            return this.json_data;
+            return this.field_data;
         },
     }
 }

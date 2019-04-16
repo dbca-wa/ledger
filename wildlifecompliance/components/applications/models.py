@@ -940,7 +940,7 @@ class Application(RevisionedMixin):
     @property
     def schema(self):
         from wildlifecompliance.components.applications.utils import get_activity_schema
-        return get_activity_schema(self.activities.values_list('licence_activity_id', flat=True))
+        return get_activity_schema(self.licence_purposes.values_list('id', flat=True))
 
     @property
     def data(self):
@@ -1503,6 +1503,9 @@ class ApplicationFormDataRecord(models.Model):
 
     INSTANCE_ID_SEPARATOR = "__instance-"
 
+    ACTION_TYPE_ASSIGN_VALUE = 'value'
+    ACTION_TYPE_ASSIGN_COMMENT = 'comment'
+
     COMPONENT_TYPE_TEXT = 'text'
     COMPONENT_TYPE_TAB = 'tab'
     COMPONENT_TYPE_SECTION = 'section'
@@ -1564,11 +1567,13 @@ class ApplicationFormDataRecord(models.Model):
         unique_together = ('application', 'field_name',)
 
     @staticmethod
-    def process_form(application, form_data):
+    def process_form(application, form_data, action=ACTION_TYPE_ASSIGN_VALUE):
         for field_name, field_data in form_data.items():
             schema_name = field_data.get('schema_name', '')
             component_type = field_data.get('component_type', '')
             value = field_data.get('value', '')
+            comment = field_data.get('comment_value', '')
+            deficiency = field_data.get('deficiency_value', '')
             instance_name = ''
 
             if ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR in field_name:
@@ -1585,8 +1590,11 @@ class ApplicationFormDataRecord(models.Model):
                 form_data_record.schema_name = schema_name
                 form_data_record.instance_name = instance_name
                 form_data_record.component_type = component_type
-
-            form_data_record.value = value
+            if action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_VALUE:
+                form_data_record.value = value
+            elif action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT:
+                form_data_record.comment = comment
+                form_data_record.deficiency = deficiency
             form_data_record.save()
 
 

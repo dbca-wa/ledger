@@ -659,10 +659,32 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
+    def officer_comments(self, request, *args, **kwargs):
+        if not request.user.has_perm('wildlifecompliance.licensing_officer'):
+            raise serializers.ValidationError(
+                'You are not authorised to assign application comments')
+        try:
+            instance = self.get_object()
+            ApplicationFormDataRecord.process_form(
+                instance,
+                request.data,
+                action=ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT
+            )
+            return Response({'success': True})
+        except Exception as e:
+            print(traceback.print_exc())
+        raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
     def form_data(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            ApplicationFormDataRecord.process_form(instance, request.data)
+            ApplicationFormDataRecord.process_form(
+                instance,
+                request.data,
+                action=ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_VALUE
+            )
             return redirect(reverse('external'))
         except MissingFieldsException as e:
             return Response({

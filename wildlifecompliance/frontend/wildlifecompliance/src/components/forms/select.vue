@@ -14,7 +14,7 @@
 
             <template v-if="canViewComments">
                 <template v-if="!showingComment">
-                    <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
+                    <a v-if="field_data.comment_value" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
                 </template>
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
@@ -49,7 +49,7 @@
         </div>
 
         
-        <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :value="comment_value"/>
+        <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :field_data="field_data"/>
 
 
     </div>
@@ -72,7 +72,6 @@ export default {
         'help_text':String,
         'help_text_url':String,
         "field_data": Object,
-        "comment_value": String,
         "options":Array,
         "conditions":Object,
         "handleChange":null,

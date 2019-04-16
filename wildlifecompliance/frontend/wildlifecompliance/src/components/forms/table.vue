@@ -12,11 +12,12 @@
 
             <template v-if="canViewComments">
                 <template v-if="!showingComment">
-                    <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
+                    <a v-if="field_data.comment_value" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
                 </template>
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
+            <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :field_data="field_data"/>
 
             <!-- the next line required for saving value JSON-ified table to application.data - creates an invisible field -->
             <textarea readonly="readonly" class="form-control" rows="5" :name="name" style="display:none;">{{ field_data.value }}</textarea><br/>
@@ -68,7 +69,6 @@ const TableBlock = {
         label: String,
         id: String,
         isRequired: String,
-        comment_value: String,
         help_text: String,
         help_text_url: String,
         field_data: Object,

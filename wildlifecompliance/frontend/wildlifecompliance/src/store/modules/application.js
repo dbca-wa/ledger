@@ -141,7 +141,11 @@ export const applicationStore = {
                     for(let form_data_record of res.body.data) {
                         dispatch('setFormValue', {
                             key: form_data_record.field_name,
-                            value: {"value": form_data_record.value}
+                            value: {
+                                "value": form_data_record.value,
+                                "comment_value": form_data_record.comment,
+                                "deficiency_value": form_data_record.deficiency,
+                            }
                         });
                     }
                     resolve();
