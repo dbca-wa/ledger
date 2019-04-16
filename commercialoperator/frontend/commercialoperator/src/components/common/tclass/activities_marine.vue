@@ -15,12 +15,12 @@
                             <label class="control-label">Select required activities</label>
                             <div  class="" v-for="category in marine_activities" >
                                 <div class="form-check">
-                                    <input @click="clickCategory($event, category)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                                    <input @click="clickCategory($event, category)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities" />
                                     {{ category.name }}
                                 </div>
                                 <div class="col-sm-12" v-for="activity in category.activities">
                                     <div class="form-check ">
-                                        <input :onclick="isClickable"  :value="activity.id" class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_activities" data-parsley-required />
+                                        <input :onclick="isClickable"  :value="activity.id" class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_activities" data-parsley-required :disabled="!canEditActivities"/>
                                         {{ activity.name }}
                                     </div>
                                 </div>
@@ -30,9 +30,9 @@
                             <label class="control-label"> Select the parks for which the activities are required</label>
                             <div class="" v-for="p in marine_parks">
                                 <div class="form-check col-sm-12">
-                                  <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="{'park': p.id,'zones': p.zone_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
+                                  <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="{'park': p.id,'zones': p.zone_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities"/>
                                 {{ p.name }}
-                                  <span><a @click="edit_activities(p)" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
+                                  <span><a @click="edit_activities(p)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit access and activities</a></span>
                                 </div>
                             </div>
                             <div>{{selected_parks}}</div>
@@ -45,7 +45,7 @@
                           <div  v-for="rd in required_documents_list">
                             <div v-if="rd.can_view">
                               <label>{{rd.question}}</label>
-                              <FileField :proposal_id="proposal.id" isRepeatable="true" :name="'proposal'+proposal.id+'req_doc'+rd.id" :required_doc_id="rd.id" label="Add Document" :id="'proposal'+proposal.id+'req_doc'+rd.id"></FileField>
+                              <FileField :proposal_id="proposal.id" isRepeatable="true" :name="'proposal'+proposal.id+'req_doc'+rd.id" :required_doc_id="rd.id" label="Add Document" :id="'proposal'+proposal.id+'req_doc'+rd.id" :readonly="proposal.readonly"></FileField>
                             </div>
                           </div>
                         </div>
@@ -82,6 +82,10 @@ from '@/utils/hooks'
             proposal:{
                 type: Object,
                 required:true
+            },
+            canEditActivities:{
+              type: Boolean,
+              default: true
             }
         },
         data:function () {

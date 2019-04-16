@@ -67,10 +67,10 @@
                 <!-- <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant> -->
               </div>
               <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">
-                <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand"></ActivitiesLand>
+                <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand" :canEditActivities="canEditActivities"></ActivitiesLand>
               </div>
               <div class="tab-pane fade" id="pills-activities-marine" role="tabpanel" aria-labelledby="pills-activities-marine-tab">
-                <ActivitiesMarine :proposal="proposal" id="proposalStartActivitiesMarine"></ActivitiesMarine>
+                <ActivitiesMarine :proposal="proposal" id="proposalStartActivitiesMarine" :canEditActivities="canEditActivities"></ActivitiesMarine>
               </div>
               <div class="tab-pane fade" id="pills-other-details" role="tabpanel" aria-labelledby="pills-other-details-tab">
                 <OtherDetails :proposal="proposal" id="proposalStartOtherDetails"></OtherDetails>
@@ -112,6 +112,10 @@
             form_width: {
                 type: String,
                 default: 'col-md-9'
+            },
+            canEditActivities:{
+              type: Boolean,
+              default: true
             }
         },
         data:function () {

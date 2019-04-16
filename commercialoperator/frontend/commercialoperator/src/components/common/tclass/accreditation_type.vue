@@ -10,7 +10,7 @@
                             </div>
                             <div class="col-sm-9">
                                 <div class="input-group date" ref="accreditation_expiry" style="width: 70%;">
-                                    <input type="text" class="form-control" v-model="accreditation.accreditation_expiry" name="accreditation_expiry" placeholder="DD/MM/YYYY">
+                                    <input type="text" class="form-control" v-model="accreditation.accreditation_expiry" name="accreditation_expiry" placeholder="DD/MM/YYYY" :disabled="readonly">
                                     <span class="input-group-addon">
                                         <span class="glyphicon glyphicon-calendar"></span>
                                     </span>
@@ -22,7 +22,7 @@
                                 <label class="control-label pull-left"  for="Name">Accreditation certificates</label>
                             </div>
                             <div class="col-sm-9">
-                                <FileField :proposal_id="proposal_id" isRepeatable="false" :name="'accreditation'+accreditation.accreditation_type+proposal_id" :id="'accreditation'+accreditation_type+proposal_id"></FileField>
+                                <FileField :proposal_id="proposal_id" isRepeatable="false" :name="'accreditation'+accreditation.accreditation_type+proposal_id" :id="'accreditation'+accreditation_type+proposal_id" :readonly="readonly"></FileField>
                             </div>
                         </div>
                         <div  v-if="typeOther"class="row">
@@ -31,7 +31,7 @@
                             </div>
                             <div class="col-sm-9">
                                 <div class="" ref="accreditation_comments" style="width: 70%;">
-                                    <input type="textarea" class="form-control" v-model="accreditation.comments" name="accreditation_comments">        
+                                    <input type="textarea" class="form-control" v-model="accreditation.comments" name="accreditation_comments" :disabled="readonly">        
                                 </div>
                             </div>
                         </div>

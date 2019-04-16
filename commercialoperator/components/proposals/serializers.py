@@ -521,6 +521,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     proposaldeclineddetails = ProposalDeclinedDetailsSerializer()
     #
     assessor_mode = serializers.SerializerMethodField()
+    can_edit_activities = serializers.SerializerMethodField()
     current_assessor = serializers.SerializerMethodField()
     assessor_data = serializers.SerializerMethodField()
     latest_referrals = ProposalReferralSerializer(many=True)
@@ -587,7 +588,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'land_parks',
                 'marine_parks',
                 'trails',
-                'training_completed'
+                'training_completed',
+                'can_edit_activities'
                 )
         read_only_fields=('documents','requirements')
 
@@ -609,6 +611,11 @@ class InternalProposalSerializer(BaseProposalSerializer):
             'assessor_box_view': obj.assessor_comments_view(user)
         }
 
+    def get_can_edit_activities(self,obj):
+        request = self.context['request']
+        user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
+        return obj.can_edit_activities(user)
+            
     def get_readonly(self,obj):
         return True
 

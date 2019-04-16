@@ -612,6 +612,16 @@ class Proposal(RevisionedMixin):
         else:
             return False
 
+    #To allow/ prevent internal user to edit activities (Land and Marine) for T-class licence
+    #still need to check to assessor mode in on or not 
+    def can_edit_activities(self,user):
+        if self.processing_status == 'with_assessor' or self.processing_status == 'with_assessor_requirements':
+            return self.__assessor_group() in user.proposalassessorgroup_set.all()
+        elif self.processing_status == 'with_approver':
+            return self.__approver_group() in user.proposalapprovergroup_set.all()
+        else:
+            return False
+
     def assessor_comments_view(self,user):
 
         if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements' or self.processing_status == 'with_approver':

@@ -36,7 +36,7 @@
                	<h4>Commercial Operator - {{proposal.application_type}} application: {{proposal.lodgement_number}}</h4>
             </div>
 
-            <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart"></ProposalTClass>
+            <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart"  :canEditActivities="canEditActivities"></ProposalTClass>
             <ProposalFilming v-else-if="proposal && proposal.application_type=='Filming'" :proposal="proposal" id="proposalStart"></ProposalFilming>
             <ProposalEvent v-else-if="proposal && proposal.application_type=='Event'" :proposal="proposal" id="proposalStart"></ProposalEvent>
 
@@ -79,6 +79,7 @@ import {
 }
 from '@/utils/hooks'
 export default {
+  name: 'ExternalProposal',
   data: function() {
     return {
       "proposal": null,
@@ -113,6 +114,9 @@ export default {
       return (this.proposal) ? `/api/proposal/${this.proposal.id}/submit.json` : '';
       //return this.submit();
     },
+    canEditActivities: function(){
+      return this.proposal ? this.proposal.can_user_edit: 'false';
+    }
 
   },
   methods: {
