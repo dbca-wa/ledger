@@ -13,14 +13,14 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="">Licence Type</label>
+                                <label for="">Licence Category</label>
                                 <select class="form-control" v-model="filterLicenceType">
                                     <option value="All">All</option>
-                                    <option v-for="l in licence_types" :value="l">{{l}}</option>
+                                    <option v-for="l in licence_categories" :value="l">{{l}}</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <!--<div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Licence Status</label>
                                 <select class="form-control" v-model="filterLicenceStatus">
@@ -28,25 +28,36 @@
                                     <option v-for="s in licence_status" :value="s">{{s}}</option>
                                 </select>
                             </div>
+                        </div>-->
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="">Issued From</label>
+                            <div class="input-group date" ref="licenceDateFromPicker">
+                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLicenceIssuedFrom">
+                                <span class="input-group-addon">
+                                    <span class="glyphicon glyphicon-calendar"></span>
+                                </span>
+                            </div>
                         </div>
-                        <!--<div class="col-md-3">
-                            <div class="form-group">
-                                <label for="">Category</label>
-                                <select class="form-control" v-model="filterCategory">
-                                    <option value="All">All</option>
-                                    <option v-for="c in licence_categories" :value="c">{{c}}</option>
-                                </select>
+                        <div class="col-md-3">
+                            <label for="">Issued To</label>
+                            <div class="input-group date" ref="licenceDateToPicker">
+                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLicenceIssuedTo">
+                                <span class="input-group-addon">
+                                    <span class="glyphicon glyphicon-calendar"></span>
+                                </span>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="">Category Status</label>
-                                <select class="form-control" v-model="filterCategoryStatus">
+                                <label for="">Licence Holder</label>
+                                <select class="form-control" v-model="filterLicenceHolder" ref="licence_holder_select">
                                     <option value="All">All</option>
-                                    <option v-for="cs in licence_categoryStatus" :value="cs">{{cs}}</option>
+                                    <option v-for="holder in licence_holders" :value="holder.holder_name" v-bind:key="`licence_holder_${holder.holder_name}`">{{holder.holder_name}}</option>
                                 </select>
                             </div>
-                        </div>-->
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
@@ -85,11 +96,11 @@ export default {
         return {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'licence-datatable-'+vm._uid,
-            // Filters for Licences
             filterLicenceType: 'All',
-            filterLicenceStatus: 'All',
-            filterCategory: 'All',
-            filterCategoryStatus: '',
+//            filterLicenceStatus: 'All',
+            filterLicenceIssuedFrom: '',
+            filterLicenceIssuedTo: '',
+            filterLicenceHolder: 'All',
             dateFormat: 'DD/MM/YYYY',
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -98,14 +109,15 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            licence_status:[],
-            licence_activityTitles : [],
-            licence_submitters: [],
-            licence_types: [],
+//            licence_status:[],
+            licence_holders: [],
             licence_categories: [],
-            licence_categoryStatus: [],
-            licence_headers: ["Number", "Licence Type", "Licence Holder", "Status", "Issue Date", "Licence","Action"],
+//            licence_headers: ["Number", "Category", "Holder", "Status", "Issue Date", "Licence", "Action"],
+            licence_headers: ["Number", "Category", "Holder", "Issue Date", "Licence", "Action"],
             licence_options:{
+                serverSide: true,
+                searchDelay: 1000,
+                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 order: [
                     [0, 'desc']
                 ],
@@ -115,13 +127,29 @@ export default {
                 responsive: true,
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": ''
+                    "dataSrc": 'data',
+                    // adding extra GET params for Custom filtering
+                    "data": function (d) {
+                        d.category_name = vm.filterLicenceType;
+//                        d.status = vm.filterLicenceStatus.id;
+                        d.holder = vm.filterLicenceHolder;
+                        d.date_from = vm.filterLicenceIssuedFrom != '' && vm.filterLicenceIssuedFrom != null ? moment(vm.filterLicenceIssuedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_to = vm.filterLicenceIssuedTo != '' && vm.filterLicenceIssuedTo != null ? moment(vm.filterLicenceIssuedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                    }
                 },
                 columns: [
-                    {data: "id"},
-                    {data: "current_application.licence_type_data.name"},
-                    {data: "current_application.applicant"},
-                    {data: "current_application.processing_status.name"},
+                    {
+                        data: "licence_number"
+                    },
+                    {
+                        data: "current_application.category_name"
+                    },
+                    {
+                        data: "current_application.applicant"
+                    },
+//                    {
+//                        data: "current_application.processing_status.name"
+//                    },
                     {
                         data: "last_issue_date",
                         mRender:function (data,type,full) {
@@ -143,26 +171,37 @@ export default {
                 ],
                 processing: true,
                 initComplete: function () {
-                    // Grab Activity from the data in the table
-                    var titleColumn = vm.$refs.licence_datatable.vmDataTable.columns(vm.getColumnIndex('licence type'));
+                    // Grab Category from the data in the table
+                    var titleColumn = vm.$refs.licence_datatable.vmDataTable.columns(vm.getColumnIndex('category'));
                     titleColumn.data().unique().sort().each( function ( d, j ) {
-                        let activityTitles = [];
+                        let categoryTitles = [];
                         $.each(d,(index,a) => {
-                            a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
+                            a != null && categoryTitles.indexOf(a) < 0 ? categoryTitles.push(a): '';
                         })
-                        vm.licence_types = activityTitles;
+                        vm.licence_categories = categoryTitles;
+                    });
+                    // Grab holders from the data in the table
+                    var holdersColumn = vm.$refs.licence_datatable.vmDataTable.columns(vm.getColumnIndex('holder'));
+                    holdersColumn.data().unique().sort().each( function ( d, j ) {
+                        var holders = [];
+                        $.each(d,(index, holder) => {
+                            if (!holders.find(holder => holder) || holders.length == 0){
+                                holders.push({
+                                    'holder_name': holder,
+                                });
+                            }
+                        });
+                        vm.licence_holders = holders;
                     });
                     // Grab Status from the data in the table
-                    var statusColumn = vm.$refs.licence_datatable.vmDataTable.columns(vm.getColumnIndex('status'));
-                    statusColumn.data().unique().sort().each( function ( d, j ) {
-                        let statusTitles = [];
-                        $.each(d,(index,a) => {
-                            a != null && statusTitles.indexOf(a) < 0 ? statusTitles.push(a): '';
-                        })
-                        vm.licence_status = statusTitles;
-                    });
-                    // Fix the table rendering columns
-                    vm.$refs.licence_datatable.vmDataTable.columns.adjust().responsive.recalc();
+//                    var statusColumn = vm.$refs.licence_datatable.vmDataTable.columns(vm.getColumnIndex('status'));
+//                    statusColumn.data().unique().sort().each( function ( d, j ) {
+//                        let statusTitles = [];
+//                        $.each(d,(index,a) => {
+//                            a != null && !statusTitles.filter(status => status.id == a.id ).length ? statusTitles.push(a): '';
+//                        })
+//                        vm.licence_status = statusTitles;
+//                    });
                 }
             }
         }
@@ -172,22 +211,22 @@ export default {
     },
     watch:{
         filterLicenceType: function(){
-            this.filterByColumn('licence type', this.filterLicenceType);
+            this.$refs.licence_datatable.vmDataTable.draw();
         },
-        filterLicenceStatus: function(){
-            this.filterByColumn('status', this.filterLicenceStatus);
+//        filterLicenceStatus: function(){
+//            this.$refs.licence_datatable.vmDataTable.draw();
+//        },
+        filterLicenceIssuedFrom: function(){
+            this.$refs.licence_datatable.vmDataTable.draw();
         },
-        filterCategory: function(){
+        filterLicenceIssuedTo: function(){
+            this.$refs.licence_datatable.vmDataTable.draw();
         },
-        filterCategoryStatus: function(){
+        filterLicenceHolder: function(){
+            this.$refs.licence_datatable.vmDataTable.draw();
         },
     },
     computed: {
-        // TODO: this status function needs checking
-        status: function(){
-            //return this.is_external ? this.external_status : this.internal_status;
-            return [];
-        },
         is_external: function(){
             return this.level == 'external';
         },
@@ -196,118 +235,104 @@ export default {
     methods:{
         addEventListeners: function(){
             let vm = this;
-            // Initialise Application Date Filters
-            // $(vm.$refs.applicationDateToPicker).datetimepicker(vm.datepickerOptions);
-            // $(vm.$refs.applicationDateToPicker).on('dp.change', function(e){
-            //     if ($(vm.$refs.applicationDateToPicker).data('DateTimePicker').date()) {
-            //         vm.filterApplicationLodgedTo =  e.date.format('DD/MM/YYYY');
-            //     }
-            //     else if ($(vm.$refs.applicationDateToPicker).data('date') === "") {
-            //         vm.filterapplicationodgedTo = "";
-            //     }
-            //  });
-            // $(vm.$refs.applicationDateFromPicker).datetimepicker(vm.datepickerOptions);
-            // $(vm.$refs.applicationDateFromPicker).on('dp.change',function (e) {
-            //     if ($(vm.$refs.applicationDateFromPicker).data('DateTimePicker').date()) {
-            //         vm.filterApplicationLodgedFrom = e.date.format('DD/MM/YYYY');
-            //         $(vm.$refs.applicationDateToPicker).data("DateTimePicker").minDate(e.date);
-            //     }
-            //     else if ($(vm.$refs.applicationDateFromPicker).data('date') === "") {
-            //         vm.filterApplicationLodgedFrom = "";
-            //     }
-            // });
-            // // End Application Date Filters
-            // // External Discard listener
-            // vm.$refs.application_datatable.vmDataTable.on('click', 'a[data-discard-application]', function(e) {
-            //     e.preventDefault();
-            //     var id = $(this).attr('data-discard-application');
-            //     vm.discardApplication(id);
-            // });
+            // Initialise Licence Issued Date Filters
+            $(vm.$refs.licenceDateToPicker).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.licenceDateToPicker).on('dp.change', function(e){
+                if ($(vm.$refs.licenceDateToPicker).data('DateTimePicker').date()) {
+                    vm.filterLicenceIssuedTo =  e.date.format('DD/MM/YYYY');
+                }
+                else if ($(vm.$refs.licenceDateToPicker).data('date') === "") {
+                    vm.filterLicenceIssuedTo = "";
+                }
+             });
+            $(vm.$refs.licenceDateFromPicker).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.licenceDateFromPicker).on('dp.change',function (e) {
+                if ($(vm.$refs.licenceDateFromPicker).data('DateTimePicker').date()) {
+                    vm.filterLicenceIssuedFrom = e.date.format('DD/MM/YYYY');
+                    $(vm.$refs.licenceDateToPicker).data("DateTimePicker").minDate(e.date);
+                }
+                else if ($(vm.$refs.licenceDateFromPicker).data('date') === "") {
+                    vm.filterLicenceIssuedFrom = "";
+                    $(vm.$refs.licenceDateToPicker).data("DateTimePicker").minDate(false);
+                }
+            });
+            // Initialise select2 for holder
+            $(vm.$refs.licence_holder_select).select2({
+                "theme": "bootstrap",
+                placeholder:"Select Holder"
+            }).
+            on("select2:select",function (e) {
+                var selected = $(e.currentTarget);
+                vm.filterLicenceHolder = selected.val();
+            }).
+            on("select2:unselect",function (e) {
+                var selected = $(e.currentTarget);
+                vm.filterLicenceHolder = selected.val();
+            });
+
         },
         initialiseSearch:function(){
-            this.regionSearch();
             this.dateSearch();
+            this.holderSearch();
         },
-        regionSearch:function(){
-            // let vm = this;
-            // vm.$refs.application_datatable.table.dataTableExt.afnFiltering.push(
-            //     function(settings,data,dataIndex,original){
-            //         let found = false;
-            //         let filtered_regions = vm.filterApplicationRegion.split(',');
-            //         if (filtered_regions == 'All'){ return true; } 
-
-            //         let regions = original.region != '' && original.region != null ? original.region.split(','): [];
-
-            //         $.each(regions,(i,r) => {
-            //             if (filtered_regions.indexOf(r) != -1){
-            //                 found = true;
-            //                 return false;
-            //             }
-            //         });
-            //         if  (found) { return true; }
-
-            //         return false;
-            //     }
-            // );
-        },
-        submitterSearch:function(){
+        holderSearch:function(){
             let vm = this;
             vm.$refs.licence_datatable.table.dataTableExt.afnFiltering.push(
                 function(settings,data,dataIndex,original){
-                    let filtered_submitter = vm.filterLicenceSubmitter;
-                    if (filtered_submitter == 'All'){ return true; } 
-                    return filtered_submitter == original.submitter.email;
+                    let filtered_holder = vm.filterLicenceHolder;
+                    if (filtered_holder == 'All'){ return true; }
+                    return filtered_holder == original.holder;
                 }
             );
         },
         dateSearch:function(){
             let vm = this;
-            // vm.$refs.application_datatable.table.dataTableExt.afnFiltering.push(
-            //     function(settings,data,dataIndex,original){
-            //         let from = vm.filterApplicationLodgedFrom;
-            //         let to = vm.filterApplicationLodgedTo;
-            //         let val = original.lodgement_date;
+            vm.$refs.licence_datatable.table.dataTableExt.afnFiltering.push(
+                function(settings,data,dataIndex,original){
+                    let from = vm.filterLicenceIssuedFrom;
+                    let to = vm.filterLicenceIssuedTo;
+                    let val = original.last_issue_date;
 
-            //         if ( from == '' && to == ''){
-            //             return true;
-            //         }
-            //         else if (from != '' && to != ''){
-            //             return val != null && val != '' ? moment().range(moment(from,vm.dateFormat),moment(to,vm.dateFormat)).contains(moment(val)) :false;
-            //         }
-            //         else if(from == '' && to != ''){
-            //             if (val != null && val != ''){
-            //                 return moment(to,vm.dateFormat).diff(moment(val)) >= 0 ? true : false;
-            //             }
-            //             else{
-            //                 return false;
-            //             }
-            //         }
-            //         else if (to == '' && from != ''){
-            //             if (val != null && val != ''){
-            //                 return moment(val).diff(moment(from,vm.dateFormat)) >= 0 ? true : false;
-            //             }
-            //             else{
-            //                 return false;
-            //             }
-            //         } 
-            //         else{
-            //             return false;
-            //         }
-            //     }
-            // );
+                    if ( from == '' && to == ''){
+                        return true;
+                    }
+                    else if (from != '' && to != ''){
+                        return val != null && val != '' ? moment().range(moment(from,vm.dateFormat),moment(to,vm.dateFormat)).contains(moment(val)) :false;
+                    }
+                    else if(from == '' && to != ''){
+                        if (val != null && val != ''){
+                            return moment(to,vm.dateFormat).diff(moment(val)) >= 0 ? true : false;
+                        }
+                        else{
+                            return false;
+                        }
+                    }
+                    else if (to == '' && from != ''){
+                        if (val != null && val != ''){
+                            return moment(val).diff(moment(from,vm.dateFormat)) >= 0 ? true : false;
+                        }
+                        else{
+                            return false;
+                        }
+                    }
+                    else{
+                        return false;
+                    }
+                }
+            );
         },
         getColumnIndex: function(column_name) {
             return this.licence_headers.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
         },
-        filterByColumn: function(column, filterAttribute) {
-            const column_idx = this.getColumnIndex(column);
-            const filterValue = typeof(filterAttribute) == 'string' ? filterAttribute : filterAttribute.name;
-            if (filterValue!= 'All') {
-                this.$refs.licence_datatable.vmDataTable.columns(column_idx).search('^' + filterValue +'$', true, false).draw();
-            } else {
-                this.$refs.licence_datatable.vmDataTable.columns(column_idx).search('').draw();
-            }
-        },
+//        filterByColumn: function(column, filterAttribute) {
+//            const column_idx = this.getColumnIndex(column);
+//            const filterValue = typeof(filterAttribute) == 'string' ? filterAttribute : filterAttribute.name;
+//            if (filterValue!= 'All') {
+//                this.$refs.licence_datatable.vmDataTable.columns(column_idx).search('^' + filterValue +'$', true, false).draw();
+//            } else {
+//                this.$refs.licence_datatable.vmDataTable.columns(column_idx).search('').draw();
+//            }
+//        },
     },
     mounted: function(){
         let vm = this;

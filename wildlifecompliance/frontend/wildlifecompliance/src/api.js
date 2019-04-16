@@ -21,6 +21,7 @@ module.exports = {
     applications:"/api/application/",
     applications_paginated:"/api/application_paginated/",
     licences:"/api/licences/",
+    licences_paginated:"/api/licences_paginated/",
     returns:"/api/returns/",
     application_standard_conditions:"/api/application_standard_conditions/",
     return_types:"/api/return_types/",

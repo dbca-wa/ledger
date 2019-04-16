@@ -213,11 +213,11 @@ export default {
                     var submittersColumn = vm.$refs.application_datatable.vmDataTable.columns(vm.getColumnIndex('submitter'));
                     submittersColumn.data().unique().sort().each( function ( d, j ) {
                         var submitters = [];
-                        $.each(d,(index,s) => {
-                            if (!submitters.find(submitter => submitter.email == s.email) || submitters.length == 0){
+                        $.each(d,(index, submitter) => {
+                            if (!submitters.find(submitter => submitter.email) || submitters.length == 0){
                                 submitters.push({
-                                    'email':s.email,
-                                    'search_term': `${s.first_name} ${s.last_name} (${s.email})`
+                                    'email':submitter.email,
+                                    'search_term': `${submitter.first_name} ${submitter.last_name} (${submitter.email})`
                                 });
                             }
                         });
@@ -287,6 +287,7 @@ export default {
                 }
                 else if ($(vm.$refs.applicationDateFromPicker).data('date') === "") {
                     vm.filterApplicationLodgedFrom = "";
+                    $(vm.$refs.applicationDateToPicker).data("DateTimePicker").minDate(false);
                 }
             });
             // End Application Date Filters

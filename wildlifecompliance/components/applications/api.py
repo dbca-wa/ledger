@@ -59,11 +59,9 @@ from wildlifecompliance.components.applications.serializers import (
     SearchReferenceSerializer
 )
 
-from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
-from rest_framework.filters import BaseFilterBackend
 
 
 class GetEmptyList(views.APIView):
@@ -93,7 +91,7 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
         if queryset.model is Application:
 
             # search_text filter, join all custom search columns
-            # where ('searchable: false' in the datatable definiton)
+            # where ('searchable: false' in the datatable defintion)
             if search_text:
                 search_text = search_text.lower()
                 # join queries for the search_text search
@@ -1081,7 +1079,7 @@ class AssessmentFilterBackend(DatatablesFilterBackend):
         if queryset.model is Assessment:
 
             # search_text filter, join all custom search columns
-            # where ('searchable: false' in the datatable definiton)
+            # where ('searchable: false' in the datatable definition)
             if search_text:
                 search_text = search_text.lower()
                 # join queries for the search_text search

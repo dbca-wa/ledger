@@ -13,7 +13,7 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="">Licence Type</label>
+                                <label for="">Licence Category</label>
                                 <select class="form-control" v-model="filterApplicationLicenceType">
                                     <option value="All">All</option>
                                     <option v-for="lt in application_licence_types" :value="lt" v-bind:key="`licence_type_${lt}`">{{lt}}</option>
@@ -393,11 +393,11 @@ export default {
                     var submittersColumn = vm.visibleDatatable.vmDataTable.columns(vm.getColumnIndex('submitter'));
                     submittersColumn.data().unique().sort().each( function ( d, j ) {
                         var submitters = [];
-                        $.each(d,(index,s) => {
-                            if (!submitters.find(submitter => submitter.email == s.email) || submitters.length == 0){
+                        $.each(d,(index, submitter) => {
+                            if (!submitters.find(submitter => submitter.email) || submitters.length == 0){
                                 submitters.push({
-                                    'email':s.email,
-                                    'search_term': `${s.first_name} ${s.last_name} (${s.email})`
+                                    'email':submitter.email,
+                                    'search_term': `${submitter.first_name} ${submitter.last_name} (${submitter.email})`
                                 });
                             }
                         });
@@ -423,7 +423,7 @@ export default {
     },
     watch:{
         filterApplicationStatus: function() {
-            this.filterByColumn('status', this.filterApplicationStatus);
+            this.visibleDatatable.vmDataTable.draw();
         },
         filterApplicationSubmitter: function(){
             this.visibleDatatable.vmDataTable.draw();
@@ -435,9 +435,8 @@ export default {
             this.visibleDatatable.vmDataTable.draw();
         },
         filterApplicationLicenceType: function(){
-            this.filterByColumn('category', this.filterApplicationLicenceType);
+            this.visibleDatatable.vmDataTable.draw();
         },
-        
     },
     computed: {
         visibleHeaders: function() {
@@ -506,7 +505,7 @@ export default {
                     vm.filterApplicationLodgedTo =  e.date.format('DD/MM/YYYY');
                 }
                 else if ($(vm.$refs.applicationDateToPicker).data('date') === "") {
-                    vm.filterapplicationodgedTo = "";
+                    vm.filterApplicationLodgedTo = "";
                 }
              });
             $(vm.$refs.applicationDateFromPicker).datetimepicker(vm.datepickerOptions);
@@ -517,9 +516,9 @@ export default {
                 }
                 else if ($(vm.$refs.applicationDateFromPicker).data('date') === "") {
                     vm.filterApplicationLodgedFrom = "";
+                    $(vm.$refs.applicationDateToPicker).data("DateTimePicker").minDate(false);
                 }
             });
-            // End Application Date Filters
             // External Discard listener
             vm.visibleDatatable.vmDataTable.on('click', 'a[data-discard-application]', function(e) {
                 e.preventDefault();
@@ -555,7 +554,7 @@ export default {
             vm.visibleDatatable.table.dataTableExt.afnFiltering.push(
                 function(settings,data,dataIndex,original){
                     let filtered_submitter = vm.filterApplicationSubmitter;
-                    if (filtered_submitter == 'All'){ return true; } 
+                    if (filtered_submitter == 'All'){ return true; }
                     return filtered_submitter == original.submitter.email;
                 }
             );
@@ -589,7 +588,7 @@ export default {
                         else{
                             return false;
                         }
-                    } 
+                    }
                     else{
                         return false;
                     }
@@ -599,15 +598,15 @@ export default {
         getColumnIndex: function(column_name) {
             return this.visibleHeaders.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
         },
-        filterByColumn: function(column, filterAttribute) {
-            const column_idx = this.getColumnIndex(column);
-            const filterValue = typeof(filterAttribute) == 'string' ? filterAttribute : filterAttribute.name;
-            if (filterValue!= 'All') {
-                this.visibleDatatable.vmDataTable.columns(column_idx).search('^' + filterValue +'$', true, false).draw();
-            } else {
-                this.visibleDatatable.vmDataTable.columns(column_idx).search('').draw();
-            }
-        },
+//        filterByColumn: function(column, filterAttribute) {
+//            const column_idx = this.getColumnIndex(column);
+//            const filterValue = typeof(filterAttribute) == 'string' ? filterAttribute : filterAttribute.name;
+//            if (filterValue!= 'All') {
+//                this.visibleDatatable.vmDataTable.columns(column_idx).search('^' + filterValue +'$', true, false).draw();
+//            } else {
+//                this.visibleDatatable.vmDataTable.columns(column_idx).search('').draw();
+//            }
+//        },
     },
     mounted: function(){
         let vm = this;

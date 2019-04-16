@@ -32,6 +32,7 @@ router.register(r'assessment', application_api.AssessmentViewSet)
 router.register(r'amendment', application_api.AmendmentRequestViewSet)
 router.register(r'assessor_group', application_api.AssessorGroupViewSet)
 router.register(r'licences', licence_api.LicenceViewSet)
+router.register(r'licences_paginated', licence_api.LicencePaginatedViewSet)
 router.register(r'licences_class', licence_api.LicenceCategoryViewSet)
 router.register(r'licence_available_purposes',
                 licence_api.UserAvailableWildlifeLicencePurposesViewSet)

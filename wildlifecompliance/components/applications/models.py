@@ -948,7 +948,7 @@ class Application(RevisionedMixin):
     @property
     def schema(self):
         from wildlifecompliance.components.applications.utils import get_activity_schema
-        return get_activity_schema(self.activities.values_list('licence_activity_id', flat=True))
+        return get_activity_schema(self.licence_purposes.values_list('id', flat=True))
 
     @property
     def data(self):
