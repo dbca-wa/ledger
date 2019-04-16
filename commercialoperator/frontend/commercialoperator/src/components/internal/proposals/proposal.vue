@@ -341,7 +341,7 @@
                     <div class="col-md-12">
                         <div class="row">
                             <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
-                                <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="canEditActivities" :is_external="false">
+                                <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="canEditActivities" :is_external="false"></ProposalTClass>
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                     <input type='hidden' name="proposal_id" :value="1" />
@@ -357,7 +357,7 @@
                                     </div>      
                                     </div>
 
-                                </ProposalTClass>
+                                
                                 <!-- <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
@@ -590,6 +590,7 @@ export default {
         save: function(e) {
           let vm = this;
           let formData = new FormData(vm.form);
+          formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
           vm.$http.post(vm.proposal_form_url,formData).then(res=>{
               swal(
                 'Saved',
@@ -602,6 +603,7 @@ export default {
         save_wo: function() {
           let vm = this;
           let formData = new FormData(vm.form);
+          formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
           vm.$http.post(vm.proposal_form_url,formData).then(res=>{
 
               
@@ -1023,6 +1025,9 @@ export default {
                 vm.proposal = res.body;
                 vm.original_proposal = helpers.copyObject(res.body);
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                vm.proposal.selected_trails_activities=[];
+                vm.proposal.selected_parks_activities=[];
+                vm.proposal.marine_parks_activities=[];
               });
             },
             err => {

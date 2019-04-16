@@ -699,6 +699,28 @@ def save_assessor_data(instance,request,viewset):
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
+            #Save activities
+            schema=request.data.get('schema')
+            import json
+            sc=json.loads(schema)
+            select_parks_activities=sc['selected_parks_activities']
+            select_trails_activities=sc['selected_trails_activities']
+            marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
+            if select_parks_activities:
+                try:
+                    save_park_activity_data(instance, select_parks_activities)                        
+                except:
+                    raise
+            if select_trails_activities:
+                try:
+                    save_trail_section_activity_data(instance, select_trails_activities)                    
+                except:
+                    raise
+            if marine_parks_activities:
+                try:
+                    save_park_zone_activity_data(instance, marine_parks_activities)                    
+                except:
+                    raise
             # Save Documents
             for f in request.FILES:
                 try:
