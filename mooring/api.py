@@ -2127,7 +2127,14 @@ def create_admissions_booking(request, *args, **kwargs):
         'location' : location.pk
     }
 
-    
+    if len(request.POST.get('vesselReg', '')) > 0: 
+        pass
+    else:
+        return HttpResponse(geojson.dumps({
+            'status': 'failure',
+            'error': (None,"Please enter a vessel registration")
+        }), content_type='application/json')
+
 
     serializer = AdmissionsBookingSerializer(data=data)
     serializer.is_valid(raise_exception=True)
