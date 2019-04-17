@@ -310,6 +310,9 @@ class ApplicationType(models.Model):
     order = models.PositiveSmallIntegerField(default=0)
     visible = models.BooleanField(default=True)
 
+    max_renewals = models.PositiveSmallIntegerField('Maximum number of times an Approval can be renewed', null=True, blank=True)
+    max_renewal_period = models.PositiveSmallIntegerField('Maximum period of each Approval renewal (Years)', null=True, blank=True)
+
     class Meta:
         ordering = ['order', 'name']
         app_label = 'commercialoperator'

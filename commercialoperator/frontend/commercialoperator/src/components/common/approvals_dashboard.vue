@@ -142,7 +142,7 @@ export default {
             proposal_regions: [],
             proposal_submitters: [],
             proposal_headers:[
-                "Number","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action",
+                "Number","Licence Type","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action",
                 //"LodgementNo","CanReissue","CanAction","CanReinstate","SetToCancel","SetToSuspend","SetToSurrender","CurrentProposal","RenewalDoc","RenewalSent","CanAmend","CanRenew"
             ],
             proposal_options:{
@@ -210,6 +210,10 @@ export default {
                         },
                         'createdCell': helpers.dtPopoverCellFn,
                         name: "id, lodgement_number",
+                    },
+                    {
+                        data: "application_type",
+                        name: "current_proposal__application_type__name"
                     },
                     {
                         data: "region",
