@@ -16,8 +16,23 @@
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
                 </template>
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
+                <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :field_data="field_data"/>
             </template>
-            <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :field_data="field_data"/>
+
+            <div v-if="canViewDeficiencies">
+                <div v-if="canEditDeficiencies">
+                    <div v-if="!showingDeficiencies">
+                        <a v-if="field_data.deficiency_value" href=""  @click.prevent="toggleDeficiencies"><i style="color:red" class="fa fa-exclamation-triangle">&nbsp;</i></a>
+                        <a v-else href="" @click.prevent="toggleDeficiencies"><i class="fa fa-exclamation-triangle">&nbsp;</i></a>
+                    </div>
+                    <a href="" v-else  @click.prevent="toggleDeficiencies"><i class="fa fa-ban">&nbsp;</i></a>
+                    <Comment :question="label" :name="name+'-deficiency-field'" v-show="showingDeficiencies" :field_data="field_data" :isDeficiency="true"/>
+                </div>
+                <div v-else-if="field_data.deficiency_value" style="color:red">
+                    <i class="fa fa-exclamation-triangle">&nbsp;</i>
+                    <span>{{field_data.deficiency_value}}</span>
+                </div>
+            </div>
 
             <!-- the next line required for saving value JSON-ified table to application.data - creates an invisible field -->
             <textarea readonly="readonly" class="form-control" rows="5" :name="name" style="display:none;">{{ field_data.value }}</textarea><br/>
@@ -133,6 +148,7 @@ const TableBlock = {
 
         let data = {
             showingComment: false,
+            showingDeficiencies: false,
         }
         if(vm.readonly) {
             data.isClickable = "return false;";
@@ -146,6 +162,9 @@ const TableBlock = {
     methods: {
         toggleComment(){
             this.showingComment = ! this.showingComment;
+        },
+        toggleDeficiencies: function() {
+            this.showingDeficiencies = !this.showingDeficiencies;
         },
 
         updateTableJSON: function() {
@@ -183,6 +202,8 @@ const TableBlock = {
     computed:{
         ...mapGetters([
             'canViewComments',
+            'canViewDeficiencies',
+            'canEditDeficiencies',
         ]),
     },
 

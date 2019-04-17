@@ -30,6 +30,9 @@ export const userStore = {
             );
         },
         canViewDeficiencies: (state, getters) => {
+            return getters.hasRole('licensing_officer') || getters.application.can_current_user_edit;
+        },
+        canEditDeficiencies: (state, getters) => {
             return getters.hasRole('licensing_officer');
         },
         canViewComments: (state, getters) => {

@@ -17,6 +17,20 @@
                 </template>
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
+            <div v-if="canViewDeficiencies">
+                <div v-if="canEditDeficiencies">
+                    <div v-if="!showingDeficiencies">
+                        <a v-if="field_data.deficiency_value" href=""  @click.prevent="toggleDeficiencies"><i style="color:red" class="fa fa-exclamation-triangle">&nbsp;</i></a>
+                        <a v-else href="" @click.prevent="toggleDeficiencies"><i class="fa fa-exclamation-triangle">&nbsp;</i></a>
+                    </div>
+                    <a href="" v-else  @click.prevent="toggleDeficiencies"><i class="fa fa-ban">&nbsp;</i></a>
+                    <Comment :question="label" :name="name+'-deficiency-field'" v-show="showingDeficiencies" :field_data="field_data" :isDeficiency="true"/>
+                </div>
+                <div v-else-if="field_data.deficiency_value" style="color:red">
+                    <i class="fa fa-exclamation-triangle">&nbsp;</i>
+                    <span>{{field_data.deficiency_value}}</span>
+                </div>
+            </div>
             <div v-if="files">
                 <div v-for="v in documents">
                     <p>
@@ -83,6 +97,7 @@ export default {
             repeat:1,
             files:[],
             showingComment: false,
+            showingDeficiencies: false,
             show_spinner: false,
             documents:[],
             filename:null,
@@ -92,6 +107,8 @@ export default {
     computed: {
         ...mapGetters([
             'canViewComments',
+            'canViewDeficiencies',
+            'canEditDeficiencies',
         ]),
         csrf_token: function() {
             return helpers.getCookie('csrftoken')
@@ -108,6 +125,9 @@ export default {
 
         toggleComment(){
             this.showingComment = ! this.showingComment;
+        },
+        toggleDeficiencies: function() {
+            this.showingDeficiencies = !this.showingDeficiencies;
         },
         handleChange:function (e) {
             let vm = this;

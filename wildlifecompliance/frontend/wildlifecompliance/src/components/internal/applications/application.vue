@@ -1146,30 +1146,15 @@ export default {
         amendmentRequest: function(){
             let vm = this;
             vm.save_wo();
-            let values = '';
             var activity_name=[];
             var activity_id=[];
-
-            $('.deficiency').each((i,d) => {
-                values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
-            });
 
             activity_id.push(vm.selected_activity_tab_id);
             activity_name.push(vm.selected_activity_tab_name);
 
-            vm.$refs.amendment_request.amendment.text = values;
             vm.$refs.amendment_request.amendment.activity_name = activity_name;
             vm.$refs.amendment_request.amendment.activity_id = activity_id;
             vm.$refs.amendment_request.isModalOpen = true;
-
-            if (values === ''){
-               swal(
-                  'Amendment Request',
-                  'There are no deficiencies entered for this Application.',
-                  'error'
-               )
-               vm.$refs.amendment_request.isModalOpen = false;
-            }
         },
         togglesendtoAssessor:function(){
             let vm=this;

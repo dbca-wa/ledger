@@ -18,6 +18,20 @@
                 </template>
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
+            <div v-if="canViewDeficiencies">
+                <div v-if="canEditDeficiencies">
+                    <div v-if="!showingDeficiencies">
+                        <a v-if="field_data.deficiency_value" href=""  @click.prevent="toggleDeficiencies"><i style="color:red" class="fa fa-exclamation-triangle">&nbsp;</i></a>
+                        <a v-else href="" @click.prevent="toggleDeficiencies"><i class="fa fa-exclamation-triangle">&nbsp;</i></a>
+                    </div>
+                    <a href="" v-else  @click.prevent="toggleDeficiencies"><i class="fa fa-ban">&nbsp;</i></a>
+                    <Comment :question="label" :name="name+'-deficiency-field'" v-show="showingDeficiencies" :field_data="field_data" :isDeficiency="true"/>
+                </div>
+                <div v-else-if="field_data.deficiency_value" style="color:red">
+                    <i class="fa fa-exclamation-triangle">&nbsp;</i>
+                    <span>{{field_data.deficiency_value}}</span>
+                </div>
+            </div>
             <div class='input-group date'>
                 <input type="text" :readonly="readonly" :name="name" class="form-control" placeholder="DD/MM/YYYY" v-model="value" :required="isRequired"/>
                 <span class="input-group-addon">
@@ -40,13 +54,16 @@ export default {
     props: ["name", "label", "id", "readonly", "help_text", "field_data", "conditions", "handleChange", "isRequired", "help_text_url"],
     data(){
         return {
-            showingComment: false
+            showingComment: false,
+            showingDeficiencies: false,
         }
     },
     components: {Comment, HelpText, HelpTextUrl},
     computed: {
         ...mapGetters([
             'canViewComments',
+            'canViewDeficiencies',
+            'canEditDeficiencies',
         ]),
         isChecked: function() {
             //TODO return value from database
@@ -67,7 +84,10 @@ export default {
     methods:{
         toggleComment(){
             this.showingComment = ! this.showingComment;
-        }
+        },
+        toggleDeficiencies: function() {
+            this.showingDeficiencies = !this.showingDeficiencies;
+        },
     },
     mounted: function() {
         $('.date').datetimepicker({
