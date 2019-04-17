@@ -1152,6 +1152,7 @@ export default {
             activity_id.push(vm.selected_activity_tab_id);
             activity_name.push(vm.selected_activity_tab_name);
 
+            vm.$refs.amendment_request.amendment.text = '';
             vm.$refs.amendment_request.amendment.activity_name = activity_name;
             vm.$refs.amendment_request.amendment.activity_id = activity_id;
             vm.$refs.amendment_request.isModalOpen = true;
