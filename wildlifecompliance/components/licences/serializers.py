@@ -2,8 +2,13 @@ from wildlifecompliance.components.licences.models import (
     WildlifeLicence,
     LicenceCategory,
     LicenceActivity,
-    LicencePurpose)
-from wildlifecompliance.components.applications.serializers import BaseApplicationSerializer
+    LicencePurpose
+)
+from wildlifecompliance.components.applications.serializers import (
+    BaseApplicationSerializer,
+    DTInternalApplicationSerializer,
+    DTExternalApplicationSerializer
+)
 from rest_framework import serializers
 
 
@@ -17,12 +22,61 @@ class WildlifeLicenceSerializer(serializers.ModelSerializer):
         model = WildlifeLicence
         fields = (
             'id',
+            'licence_number',
             'licence_document',
             'replaced_by',
             'current_application',
             'extracted_fields',
             'last_issue_date',
         )
+
+    def get_last_issue_date(self, obj):
+        return obj.current_activities.order_by('-issue_date').first().issue_date
+
+
+class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
+    licence_document = serializers.CharField(
+        source='licence_document._file.url')
+    current_application = DTInternalApplicationSerializer(read_only=True)
+    last_issue_date = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = WildlifeLicence
+        fields = (
+            'id',
+            'licence_number',
+            'licence_document',
+            'current_application',
+            'last_issue_date',
+        )
+        # the serverSide functionality of datatables is such that only columns that have field 'data'
+        # defined are requested from the serializer. Use datatables_always_serialize to force render
+        # of fields that are not listed as 'data' in the datatable columns
+        datatables_always_serialize = fields
+
+    def get_last_issue_date(self, obj):
+        return obj.current_activities.order_by('-issue_date').first().issue_date
+
+
+class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
+    licence_document = serializers.CharField(
+        source='licence_document._file.url')
+    current_application = DTExternalApplicationSerializer(read_only=True)
+    last_issue_date = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = WildlifeLicence
+        fields = (
+            'id',
+            'licence_number',
+            'licence_document',
+            'current_application',
+            'last_issue_date',
+        )
+        # the serverSide functionality of datatables is such that only columns that have field 'data'
+        # defined are requested from the serializer. Use datatables_always_serialize to force render
+        # of fields that are not listed as 'data' in the datatable columns
+        datatables_always_serialize = fields
 
     def get_last_issue_date(self, obj):
         return obj.current_activities.order_by('-issue_date').first().issue_date

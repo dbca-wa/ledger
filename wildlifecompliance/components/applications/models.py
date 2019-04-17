@@ -514,6 +514,11 @@ class Application(RevisionedMixin):
         ).distinct())
 
     @property
+    def licence_purpose_names(self):
+        return ', '.join([purpose.licence_activity.short_name + ' - ' + purpose.short_name
+                          for purpose in self.licence_purposes.all().order_by('licence_activity','short_name')])
+
+    @property
     def licence_type_name(self):
         from wildlifecompliance.components.licences.models import LicenceActivity
         licence_category = self.licence_category_name
