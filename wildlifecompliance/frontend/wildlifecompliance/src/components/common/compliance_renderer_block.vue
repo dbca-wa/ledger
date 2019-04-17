@@ -1,7 +1,7 @@
 <template lang="html">
     <span>
         <div v-if="component.type === 'tab'">
-            <renderer-block v-for="(subcomponent, index) in component.children"
+            <compliance-renderer-block v-for="(subcomponent, index) in component.children"
                 :component="subcomponent"
                 :instance="instance"
                 v-bind:key="`subcomponent_${index}`"
@@ -10,7 +10,7 @@
 
         <FormSection v-if="component.type === 'section'"
             :label="component.label" :Index="component_name" :id="component_name">
-                <renderer-block v-for="(subcomponent, index) in component.children"
+                <compliance-renderer-block v-for="(subcomponent, index) in component.children"
                     :component="subcomponent"
                     :instance="instance"
                     v-bind:key="`section_${index}`"
@@ -24,7 +24,7 @@
             :help_text="help_text"
             :help_text_url="help_text_url"
             :isRemovable="true">
-                <renderer-block v-for="(subcomponent, index) in component.children"
+                <compliance-renderer-block v-for="(subcomponent, index) in component.children"
                     :component="subcomponent"
                     :instance="instance"
                     v-bind:key="`group_${index}`"
@@ -304,6 +304,8 @@ const ComplianceRendererBlock = {
   },
   data: function() {
     return {
+        //renderer_form_data: {field1: "text"},
+        //isComponentVisible: true,
     }
   },
   props:{
@@ -317,34 +319,38 @@ const ComplianceRendererBlock = {
       }
   },
   computed: {
-    ...mapGetters([
+    ...mapGetters({
+        call_email: 'callemailStore/call_email',
+        call_email_id: 'callemailStore/call_email_id',
         //'application',
         //'application_id',
-        //'renderer_form_data',
-        //'isComponentVisible',
-    ]),
+        renderer_form_data: 'complianceRendererStore/renderer_form_data',
+        isComponentVisible: 'complianceRendererStore/isComponentVisible',
+    }),
+    
     is_readonly: function() {
-        return this.component.readonly ? this.component.readonly : this.application.readonly;
+        return this.component.readonly ? this.component.readonly : null;
     },
-    /*
+    
     comment_data: function() {
-        return this.application.comment_data;
+        return this.call_email.comment_data;
     },
     documents_url: function() {
-        return this.application.documents_url;
+        return this.call_email.documents_url;
     },
     can_user_edit: function() {
-        return this.application.can_user_edit;
+        return this.call_email.can_user_edit;
     },
-    */
+    
     site_url: function() {
         return (api_endpoints.site_url.endsWith("/")) ? (api_endpoints.site_url): (api_endpoints.site_url + "/");
     },
     component_name: function() {
         return `${this.component.name}${this.instance !== null ? `__instance-${this.instance}`: ''}`;
     },
-    /*
+    
     json_data: function() {
+        console.log(this);
         return this.renderer_form_data;
     },
     value: {
@@ -371,7 +377,7 @@ const ComplianceRendererBlock = {
             });
         }
     },
-    */
+    
     comment_value: function() {
         if(this.comment_data == null || this.comment_data[this.component_name] == null) {
             return null;
@@ -386,10 +392,11 @@ const ComplianceRendererBlock = {
     },
   },
   methods: {
-    ...mapActions([
-        //'toggleVisibleComponent',
-        //'setFormValue',
-    ]),
+    ...mapActions({
+        toggleVisibleComponent: 'complianceRendererStore/toggleVisibleComponent',
+        setFormValue: 'complianceRendererStore/setFormValue',
+        updateFormField: 'complianceRendererStore/updateFormField',
+    }),
     strToBool: strToBool,
     element_id: function(depth=0) {
         return `id_${this.component_name}${(depth) ? `_${depth}` : ''}${this.instance !== null ? `__instance${this.instance}`: ''}`;

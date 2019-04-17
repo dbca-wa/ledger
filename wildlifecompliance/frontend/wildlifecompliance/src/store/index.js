@@ -7,6 +7,7 @@ import { rendererStore } from './modules/renderer';
 import { returnsStore } from './modules/returns';
 import { returnsRendererStore } from './modules/returns_renderer';
 import { callemailStore } from './modules/call_email';
+import { complianceRendererStore } from './modules/compliance_renderer';
 
 Vue.use(Vuex);
 
@@ -18,8 +19,10 @@ export default new Vuex.Store({
 		appStore: applicationStore,
 		userStore: userStore,
 		rendererStore: rendererStore,
-    returnsStore: returnsStore,
+		returnsStore: returnsStore,
 		returnsRendererStore: returnsRendererStore,
 		callemailStore: callemailStore,
+		complianceRendererStore: complianceRendererStore,
+
 	}
 });

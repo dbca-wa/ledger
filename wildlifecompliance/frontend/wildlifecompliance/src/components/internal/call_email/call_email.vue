@@ -56,23 +56,27 @@
         </div>
         <form method="post" name="callEmailUpdate">
             <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
+            
+            <!--
             <input type='hidden' name="schema" :value="JSON.stringify(call_email.schema)" />
             <input type='hidden' name="schema" :value="JSON.stringify(call_email.data)" />
-            <!--
             <input type='hidden' name="application_id" :value="1" />
             :json_data="this.call_email.data"
             v-bind:key="`q_${index}`"
             :field_data="call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0][item.name]"
+            :call_email_id="call_email.id"
+                        :instance="call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0][item.name]"
+            {{ call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0][item.name] }}
             -->
             
             <div>
                 <div v-for="dict in call_email.schema">
                 <div v-for="(item, index) in dict.children[0].children">
-                    {{ call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0][item.name] }}
-                    <h3>{{item.name}}</h3>
-                    <renderer-block
+                    {{call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0]}}
+                    {{ instance_data}}
+                    <compliance-renderer-block
                         :component="item" 
-                        
+                        :field_data="field_data"
                         v-bind:key="`q_${index}`"
                         />
                     </div>
@@ -106,21 +110,29 @@
             let vm = this;
             console.log(this);
             return {
+                        //field_data: this.call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0],
+                        instance_data: 'whatisthis',
                         pBody: 'pBody' + vm._uid,
                         form: null,
                         loading: [],
                         comms_url: 'www.google.com',
                         comms_add_url: 'www.google.com',
                         logs_url: 'www.google.com',
-                        rend_text_area: {
-                        id: '1',
-                        label: 'label',
-                        status: 'status',
-                        type: 'text_area'
-                        },
+
                         nothing: null,
-                        renderer_form: {},
+                        //renderer_form: {},
                         new_form: {},
+                        form: [],
+                        
+                        field_data: { 
+                            type: "label", 
+                            name: "SWS_Application0_0", 
+                            label: "Please click here to download the application form",
+                            field_data: "something",
+                        },
+                        
+                        //field_data: "something",
+                        
                         //data: function() {}
                         /*
                         call_email: function() {
@@ -255,16 +267,9 @@
         },
         
         mounted: function () {
-            //this.form = document.forms.createForm;
-            //this.form = document.forms.createForm;
-            //this.form = document.forms.newCallEmail;
-            //this.renderer_form = document.forms.newCallEmail;
-            //this.renderer_form = document.forms.callEmailUpdate;
             this.$nextTick( function() {
-            this.renderer_form = document.forms.callEmailUpdate;
-            this.new_form = document.forms.newCallEmail;
-            //this.form = document.forms.new_call_email;
-            //this.form = document.forms.createForm;
+            this.form = document.forms.callEmailUpdate;
+            //this.new_form = document.forms.newCallEmail;
             })
             
         },
