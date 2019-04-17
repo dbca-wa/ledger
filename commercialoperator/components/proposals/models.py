@@ -463,7 +463,7 @@ class Proposal(RevisionedMixin):
     #Append 'P' to Proposal id to generate Lodgement number. Lodgement number and lodgement sequence are used to generate Reference.
     def save(self, *args, **kwargs):
         super(Proposal, self).save(*args,**kwargs)
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         if self.lodgement_number == '' and self.application_type.name != 'E Class':
             new_lodgment_id = 'P{0:06d}'.format(self.pk)
             self.lodgement_number = new_lodgment_id
