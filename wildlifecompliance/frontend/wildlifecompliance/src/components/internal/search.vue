@@ -5,7 +5,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search Organisations
+                    <h3 class="panel-title">Organisations
                         <a :href="'#'+oBody" data-toggle="collapse"  data-parent="#organisationInfo" expanded="true" :aria-controls="oBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -39,7 +39,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search Keywords
+                    <h3 class="panel-title">Keywords
                         <a :href="'#'+kBody" data-toggle="collapse"  data-parent="#keywordInfo" expanded="true" :aria-controls="kBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -105,7 +105,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search Reference Number 
+                    <h3 class="panel-title">Reference Number
                         <a :href="'#'+rBody" data-toggle="collapse"  data-parent="#referenceNumberInfo" expanded="true" :aria-controls="rBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -132,6 +132,7 @@
 import $ from 'jquery'
 import datatable from '@/utils/vue/datatable.vue'
 import UserDashTable from '@common-utils/users_dashboard.vue'
+import '@/scss/dashboards/search.scss';
 import {
   api_endpoints,
   helpers
@@ -143,7 +144,7 @@ export default {
     data() {
         let vm = this;
         return {
-            users_url: api_endpoints.users,
+            users_url: api_endpoints.users_paginated,
             rBody: 'rBody' + vm._uid,
             oBody: 'oBody' + vm._uid,
             cBody: 'cBody' + vm._uid,

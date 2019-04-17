@@ -6,6 +6,7 @@ module.exports = {
     organisation_contacts: '/api/organisation_contacts/',
     organisation_access_group_members: '/api/organisation_access_group_members/',
     users: '/api/users/',
+    users_paginated: '/api/users_paginated/',
     my_user_details: '/api/my_user_details/',
     assessor_group:'/api/assessor_group/',
     emailidentities: '/api/emailidentities/',

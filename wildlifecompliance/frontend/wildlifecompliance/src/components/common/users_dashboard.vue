@@ -11,6 +11,26 @@
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
                     <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="">Character Flagged</label>
+                                <select class="form-control" v-model="filterCharacterFlagged">
+                                    <option value="All">All</option>
+                                    <option v-for="c in character_flagged_options" :value="c">{{c}}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="">Date of Birth</label>
+                            <div class="input-group date" ref="filterDateOfBirthPicker">
+                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterDateOfBirth">
+                                <span class="input-group-addon">
+                                    <span class="glyphicon glyphicon-calendar"></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
                         <div class="col-lg-12">
                             <datatable ref="user_datatable" :id="datatable_id" :dtOptions="user_options" :dtHeaders="user_headers"/>
                         </div>
@@ -47,7 +67,10 @@ export default {
         return {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'user-datatable-'+vm._uid,
-            // Filters for Users 
+            // Filters for Users
+            filterCharacterFlagged: 'All',
+            character_flagged_options: ['True','False'],
+            filterDateOfBirth: '',
             dateFormat: 'DD/MM/YYYY',
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -60,12 +83,22 @@ export default {
             user_options:{
                 serverSide: true,
                 searchDelay: 1000,
+                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+                order: [
+                    [4, 'asc']
+                ],
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
                 ajax: {
                     "url": vm.url,
+                    "data": 'data',
+                    // adding extra GET params for Custom filtering
+                    "data": function (d) {
+                        d.character_flagged = vm.filterCharacterFlagged;
+                        d.dob = vm.filterDateOfBirth != '' && vm.filterDateOfBirth != null ? moment(vm.filterDateOfBirth, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                    }
                 },
                 columns: [
                     {data: "title"},
@@ -75,13 +108,19 @@ export default {
                         data: "dob",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
+                        },
+                        searchable: false
                     },
                     {data: "email"},
                     {data: "phone_number"},
                     {data: "mobile_number"},
                     {data: "fax_number"},
-                    {data: "character_flagged"},
+                    {
+                        data: "character_flagged",
+                        orderable: false,
+                        searchable: false,
+                        className: "capitalise"
+                    },
                     {data: "character_comments"},
                     {
                         data:"id",
@@ -91,7 +130,9 @@ export default {
                             links +=  `<a href='#${full.id}' apply-on-behalf-of='${full.id}'>New Application</a>`;
 
                             return links.replace(/__ID__/g, data);
-                        }
+                        },
+                        orderable: false,
+                        searchable: false
                     },
                 ],
                 processing: true,
@@ -106,6 +147,12 @@ export default {
         datatable
     },
     watch:{
+        filterDateOfBirth: function(){
+            this.$refs.user_datatable.vmDataTable.draw();
+        },
+        filterCharacterFlagged: function(){
+            this.$refs.user_datatable.vmDataTable.draw();
+        },
     },
     computed: {
         is_external: function(){
@@ -126,13 +173,23 @@ export default {
         },
         addEventListeners: function(){
             let vm = this;
+            // Initialise Date of Birth Filter
+            $(vm.$refs.filterDateOfBirthPicker).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.filterDateOfBirthPicker).on('dp.change', function(e){
+                if ($(vm.$refs.filterDateOfBirthPicker).data('DateTimePicker').date()) {
+                    vm.filterDateOfBirth =  e.date.format('DD/MM/YYYY');
+                }
+                else if ($(vm.$refs.filterDateOfBirthPicker).data('date') === "") {
+                    vm.filterDateOfBirth = "";
+                }
+             });
             // Apply on behalf of listener
             vm.$refs.user_datatable.vmDataTable.on('click', 'a[apply-on-behalf-of]', function(e) {
                 e.preventDefault();
                 var id = parseInt($(this).attr('apply-on-behalf-of'));
                 vm.applyOnBehalfOf(id);
             });
-        }
+        },
     },
     mounted: function(){
         let vm = this;

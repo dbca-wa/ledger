@@ -1,4 +1,4 @@
-<template id="application_dashboard">
+<template id="licence_dashboard">
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
@@ -142,10 +142,14 @@ export default {
                         data: "licence_number"
                     },
                     {
-                        data: "current_application.category_name"
+                        data: "current_application.category_name",
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class LicenceFilterBackend
                     },
                     {
-                        data: "current_application.applicant"
+                        data: "current_application.applicant",
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class LicenceFilterBackend
                     },
 //                    {
 //                        data: "current_application.processing_status.name"
@@ -154,19 +158,26 @@ export default {
                         data: "last_issue_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
+                        },
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class LicenceFilterBackend
                     },
                     {
                         data: "licence_document",
                         mRender:function(data,type,full){
                             return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
-                        }
+                        },
+                        orderable: false,
+                        searchable: false
                     },
                     {
                         mRender:function (data,type,full) {
                             let links = '';
                             return links;
-                        }
+                        },
+                        orderable: false,
+                        searchable: false
+
                     }
                 ],
                 processing: true,
@@ -184,10 +195,10 @@ export default {
                     var holdersColumn = vm.$refs.licence_datatable.vmDataTable.columns(vm.getColumnIndex('holder'));
                     holdersColumn.data().unique().sort().each( function ( d, j ) {
                         var holders = [];
-                        $.each(d,(index, holder) => {
-                            if (!holders.find(holder => holder) || holders.length == 0){
+                        $.each(d,(index, h) => {
+                            if (!holders.find(holder => holder == h) || holders.length == 0){
                                 holders.push({
-                                    'holder_name': holder,
+                                    'holder_name': h,
                                 });
                             }
                         });
