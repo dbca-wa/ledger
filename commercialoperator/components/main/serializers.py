@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, Activity, ActivityCategory, Section, Zone, RequiredDocument, Question
 from ledger.accounts.models import EmailUser
-#from commercialoperator.components.proposals.serializers import ProposalTypeSerializer 
+#from commercialoperator.components.proposals.serializers import ProposalTypeSerializer
 
 class CommunicationLogEntrySerializer(serializers.ModelSerializer):
     customer = serializers.PrimaryKeyRelatedField(queryset=EmailUser.objects.all(),required=False)
@@ -38,7 +38,7 @@ class ActivitySerializer(serializers.ModelSerializer):
         model = Activity
         fields = ('id','name')
 
-        
+
 class ZoneSerializer(serializers.ModelSerializer):
     allowed_activities=ActivitySerializer(many=True)
     class Meta:
@@ -91,11 +91,13 @@ class TenureSerializer(serializers.ModelSerializer):
 class ApplicationTypeSerializer(serializers.ModelSerializer):
     #regions = RegionSerializer(many=True)
     #activity_app_types = ActivitySerializer(many=True)
-    tenure_app_types = TenureSerializer(many=True)
+    #tenure_app_types = TenureSerializer(many=True)
     class Meta:
         model = ApplicationType
         #fields = ('id', 'name', 'activity_app_types', 'tenure_app_types')
-        fields = ('id', 'name', 'tenure_app_types')
+        #fields = ('id', 'name', 'tenure_app_types')
+        fields = '__all__'
+        #extra_fields = ['pizzas']
 
 
 class AccessTypeSerializer(serializers.ModelSerializer):

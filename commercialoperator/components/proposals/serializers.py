@@ -556,6 +556,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     proposaldeclineddetails = ProposalDeclinedDetailsSerializer()
     #
     assessor_mode = serializers.SerializerMethodField()
+    can_edit_activities = serializers.SerializerMethodField()
     current_assessor = serializers.SerializerMethodField()
     assessor_data = serializers.SerializerMethodField()
     latest_referrals = ProposalReferralSerializer(many=True)
@@ -616,6 +617,16 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'can_officer_process',
                 'proposal_type',
                 'qaofficer_referrals'
+                # tab field models
+                'applicant_details',
+                'other_details',
+                'activities_land',
+                'activities_marine',
+                'land_parks',
+                'marine_parks',
+                'trails',
+                'training_completed',
+                'can_edit_activities'
                 )
         read_only_fields=('documents','requirements')
 
@@ -637,6 +648,11 @@ class InternalProposalSerializer(BaseProposalSerializer):
             'assessor_box_view': obj.assessor_comments_view(user)
         }
 
+    def get_can_edit_activities(self,obj):
+        request = self.context['request']
+        user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
+        return obj.can_edit_activities(user)
+            
     def get_readonly(self,obj):
         return True
 

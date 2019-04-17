@@ -221,15 +221,21 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
 #    def dispatch(self, *args, **kwargs):
 #        return super(ListProposalViewSet, self).dispatch(*args, **kwargs)
 
+    @property
+    def excluded_type(self):
+        try:
+            return ApplicationType.objects.get(name='E Class')
+        except:
+            return ApplicationType.objects.none()
+
     def get_queryset(self):
         user = self.request.user
         #import ipdb; ipdb.set_trace()
         if is_internal(self.request): #user.is_authenticated():
-            return Proposal.objects.all()
+            return Proposal.objects.all().exclude(application_type=self.excluded_type)
         elif is_customer(self.request):
             user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
-            return  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
-            #queryset =  Proposal.objects.filter(region__isnull=False).filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
+            return  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) ).exclude(application_type=excluded_type)
         return Proposal.objects.none()
 
 #    def filter_queryset(self, request, queryset, view):
@@ -282,32 +288,6 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         self.paginator.page_size = qs.count()
         result_page = self.paginator.paginate_queryset(qs, request)
         serializer = DTReferralSerializer(result_page, context={'request':request}, many=True)
-        return self.paginator.get_paginated_response(serializer.data)
-
-    @list_route(methods=['GET',])
-    def _qaofficer_internal(self, request, *args, **kwargs):
-        """
-        Used by the internal dashboard
-
-        http://localhost:8499/api/proposal_paginated/qaofficer_internal/?format=datatables&draw=1&length=2
-        """
-        qa_officers = QAOfficerGroup.objects.get(default=True).members.all().values_list('email', flat=True)
-        if request.user.email not in qa_officers:
-            return self.paginator.get_paginated_response([])
-
-        #import ipdb; ipdb.set_trace()
-        self.serializer_class = QAOfficerReferralSerializer
-        #qs = Referral.objects.filter(referral_group__in=request.user.referralrecipientgroup_set.all()) if is_internal(self.request) else Referral.objects.none()
-        #qs = Proposal.objects.filter(qaofficer_referrals__isnull=False).filter(qaofficer_referrals__gt=0) if is_internal(self.request) else QAOfficerReferral.objects.none()
-        qs = Proposal.objects.filter(qaofficer_referrals__gt=0) if is_internal(self.request) else QAOfficerReferral.objects.none()
-
-        #qs = self.filter_queryset(self.request, qs, self)
-        qs = self.filter_queryset(qs)
-
-        self.paginator.page_size = qs.count()
-        result_page = self.paginator.paginate_queryset(qs, request)
-        #serializer = DTReferralSerializer(result_page, context={'request':request}, many=True)
-        serializer = DTProposalSerializer(result_page, context={'request':request}, many=True)
         return self.paginator.get_paginated_response(serializer.data)
 
     @list_route(methods=['GET',])
@@ -368,17 +348,24 @@ class ProposalViewSet(viewsets.ModelViewSet):
     serializer_class = ProposalSerializer
     lookup_field = 'id'
 
+    @property
+    def excluded_type(self):
+        try:
+            return ApplicationType.objects.get(name='E Class')
+        except:
+            return ApplicationType.objects.none()
+
     def get_queryset(self):
         user = self.request.user
         #import ipdb; ipdb.set_trace()
         if is_internal(self.request): #user.is_authenticated():
-            return Proposal.objects.all()
+            return Proposal.objects.all().exclude(application_type=self.excluded_type)
             #return Proposal.objects.filter(region__isnull=False)
         elif is_customer(self.request):
             user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
             queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
             #queryset =  Proposal.objects.filter(region__isnull=False).filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
-            return queryset
+            return queryset.exclude(application_type=self.excluded_type)
         logger.warn("User is neither customer nor internal user: {} <{}>".format(user.get_full_name(), user.email))
         return Proposal.objects.none()
 

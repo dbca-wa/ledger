@@ -1,5 +1,6 @@
 <template>
-    <div class="container"  id="userInfo">
+    <div :class="classCompute"  id="userInfo">
+        <div class="col-sm-12">
         <div class="row">
             <div class="col-sm-12">
                 <div class="panel panel-default">
@@ -172,6 +173,7 @@
             </div>
         </div>
         <AddContact ref="add_contact" :org_id="org.id" />
+    </div>
     </div>
 </template>
 
@@ -460,7 +462,9 @@ export default {
         AddContact
     },
     computed: {
-        
+        classCompute:function(){
+          return this.isApplication? 'row' : 'container';
+        },
     },
     beforeRouteEnter: function(to, from, next){
         let initialisers = [

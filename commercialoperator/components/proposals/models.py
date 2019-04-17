@@ -61,7 +61,7 @@ class ProposalType(models.Model):
     #application_type = models.ForeignKey(ApplicationType, related_name='aplication_types')
     description = models.CharField(max_length=256, blank=True, null=True)
     #name = models.CharField(verbose_name='Application name (eg. commercialoperator, Apiary)', max_length=24, choices=application_type_choicelist(), default=application_type_choicelist()[0][0])
-    name = models.CharField(verbose_name='Application name (eg. T Class, Filming, Event)', max_length=64, choices=application_type_choicelist(), default='T Class')
+    name = models.CharField(verbose_name='Application name (eg. T Class, Filming, Event, E Class)', max_length=64, choices=application_type_choicelist(), default='T Class')
     schema = JSONField(default=[{}])
     #activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
     #site = models.OneToOneField(Site, default='1')
@@ -366,6 +366,7 @@ class Proposal(RevisionedMixin):
         ('new_proposal', 'New Proposal'),
         ('amendment', 'Amendment'),
         ('renewal', 'Renewal'),
+        ('external', 'External'),
     )
 
     proposal_type = models.CharField('Proposal Type', max_length=40, choices=APPLICATION_TYPE_CHOICES,
@@ -462,7 +463,8 @@ class Proposal(RevisionedMixin):
     #Append 'P' to Proposal id to generate Lodgement number. Lodgement number and lodgement sequence are used to generate Reference.
     def save(self, *args, **kwargs):
         super(Proposal, self).save(*args,**kwargs)
-        if self.lodgement_number == '':
+        #import ipdb; ipdb.set_trace()
+        if self.lodgement_number == '' and self.application_type.name != 'E Class':
             new_lodgment_id = 'P{0:06d}'.format(self.pk)
             self.lodgement_number = new_lodgment_id
             self.save()
@@ -487,15 +489,14 @@ class Proposal(RevisionedMixin):
             p = p.previous_application
         return l
 
-
-    def _get_history(self):
-        """ Return the prev proposal versions """
-        l = []
-        p = copy.deepcopy(self)
-        while (p.previous_application):
-            l.append( [p.id, p.previous_application.id] )
-            p = p.previous_application
-        return l
+#    def _get_history(self):
+#        """ Return the prev proposal versions """
+#        l = []
+#        p = copy.deepcopy(self)
+#        while (p.previous_application):
+#            l.append( [p.id, p.previous_application.id] )
+#            p = p.previous_application
+#        return l
 
     @property
     def is_assigned(self):
@@ -666,6 +667,16 @@ class Proposal(RevisionedMixin):
     def can_assess(self,user):
         #if self.processing_status == 'on_hold' or self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':
         if self.processing_status in ['on_hold', 'with_qa_officer', 'with_assessor', 'with_referral', 'with_assessor_requirements']:
+            return self.__assessor_group() in user.proposalassessorgroup_set.all()
+        elif self.processing_status == 'with_approver':
+            return self.__approver_group() in user.proposalapprovergroup_set.all()
+        else:
+            return False
+
+    #To allow/ prevent internal user to edit activities (Land and Marine) for T-class licence
+    #still need to check to assessor mode in on or not 
+    def can_edit_activities(self,user):
+        if self.processing_status == 'with_assessor' or self.processing_status == 'with_assessor_requirements':
             return self.__assessor_group() in user.proposalassessorgroup_set.all()
         elif self.processing_status == 'with_approver':
             return self.__approver_group() in user.proposalapprovergroup_set.all()
@@ -1139,6 +1150,56 @@ class Proposal(RevisionedMixin):
                 send_approver_approve_email_notification(request, self)
             except:
                 raise
+
+    def eclass_approval(self,request,details):
+        from commercialoperator.components.approvals.models import Approval
+        with transaction.atomic():
+            try:
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if self.processing_status != 'with_approver':
+                    raise ValidationError('You cannot issue the approval if it is not with an approver')
+                if not self.applicant.organisation.postal_address:
+                    raise ValidationError('The applicant needs to have set their postal address before approving this proposal.')
+
+                self.proposed_issuance_approval = {
+                    'start_date' : details.get('start_date').strftime('%d/%m/%Y'),
+                    'expiry_date' : details.get('expiry_date').strftime('%d/%m/%Y'),
+                    'details': details.get('details'),
+                    'cc_email':details.get('cc_email')
+                }
+                self.proposed_decline_status = False
+                self.processing_status = 'approved'
+                self.customer_status = 'approved'
+                # Log proposal action
+                self.log_user_action(ProposalUserAction.ACTION_ISSUE_APPROVAL_.format(self.id),request)
+                # Log entry for organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_ISSUE_APPROVAL_.format(self.id),request)
+
+                if self.proposal_type == 'renewal':
+                    pass
+                else:
+                    approval,created = Approval.objects.update_or_create(
+                        current_proposal = self,
+                        defaults = {
+                            #'title' : self.title,
+                            #'issue_date' : timezone.now(),
+                            'issue_date' : details.get('issue_date'),
+                            'expiry_date' : details.get('expiry_date'),
+                            'start_date' : details.get('start_date'),
+                            'applicant' : self.applicant
+                        }
+                    )
+                self.approval = approval
+
+                #send Proposal approval email with attachment
+                #send_proposal_approval_email_notification(self,request)
+                self.save(version_comment='Final Approval: {}'.format(self.approval.lodgement_number))
+                self.approval.documents.all().update(can_delete=False)
+
+            except:
+                raise
+
 
     def final_approval(self,request,details):
         from commercialoperator.components.approvals.models import Approval

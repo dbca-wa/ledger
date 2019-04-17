@@ -19,7 +19,7 @@
               <label class="control-label">Access</label>
               <div class="" v-for="a in accessTypes">
                 <div class="form-check">
-                  <input  class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_access" :value="a.id" data-parsley-required   />
+                  <input  class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_access" :value="a.id" data-parsley-required  :disabled="!canEditActivities" />
                   {{ a.name }}
                 </div>
               </div>
@@ -30,7 +30,7 @@
               <label class="control-label">Activities</label>
               <div class="" v-for="a in activities">
                 <div class="form-check">
-                  <input  class="form-check-input" v-model="selected_activities" :value="a.id" ref="Checkbox" type="checkbox" data-parsley-required  />
+                  <input  class="form-check-input" v-model="selected_activities" :value="a.id" ref="Checkbox" type="checkbox" :disabled="!canEditActivities"data-parsley-required  />
                   {{ a.name }}
                 </div>
               </div>
@@ -67,30 +67,30 @@
               </div>
             </div> testing end--> 
 
-            <div class="form-horizontal col-sm-12">
+            <div class="form-horizontal col-sm-12" >
               <label class="control-label">Select Parks</label>
               <div class="form-check">
-                  <input  class="form-check-input" @click="clickSelectAll" ref="Checkbox" type="checkbox" data-parsley-required  />
+                  <input  class="form-check-input" @click="clickSelectAll" ref="Checkbox" type="checkbox" :disabled="!canEditActivities" data-parsley-required  />
                   Select all parks from all regions
               </div>
               <div class="list-group list-group-root well">
               <div class="" v-for="r in api_regions">
                 <div class="form-check col-sm-12 list-group-item" style="">
-                  <input @click="clickRegion($event, r)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" data-parsley-required />
+                  <input @click="clickRegion($event, r)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" :disabled="!canEditActivities" data-parsley-required />
                   {{ r.name }}
                   <a data-toggle="collapse" :href="'#'+'r'+r.id" role="button" aria-expanded="true" aria controls="r.id" ><span class="glyphicon glyphicon-chevron-up pull-right "></span></a>
                 </div>
                 <div class="col-sm-12 list-group collapse" v-for="d in r.districts" :id="'r'+r.id">
                   <div class="form-check list-group-item" style="padding-left: 30px;">
-                    <input @click="clickDistrict($event, d)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" data-parsley-required />
+                    <input @click="clickDistrict($event, d)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" :disabled="!canEditActivities" data-parsley-required />
                     {{ d.name }}
                    <a data-toggle="collapse" :href="'#'+'d'+d.id" role="button" aria-expanded="true" aria controls="d.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> 
                   </div>
                   <div class="list-group collapse" v-for="p in d.land_parks" :id="'d'+d.id">
                     <div class="form-check col-sm-12 list-group-item" style="padding-left: 45px;">
-                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" :id="'park'+p.id" data-parsley-required />
+                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" :id="'park'+p.id" :disabled="!canEditActivities" data-parsley-required />
                     {{ p.name }}
-                      <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
+                      <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit access and activities</a></span>
                     </div>
                   </div>
                 </div>
@@ -107,7 +107,7 @@
               <div  v-for="rd in required_documents_list">
                 <div v-if="rd.can_view">
                   <label>{{rd.question}}</label>
-                  <FileField :proposal_id="proposal.id" isRepeatable="true" :name="'proposal'+proposal.id+'req_doc'+rd.id" :required_doc_id="rd.id" label="Add Document" :id="'proposal'+proposal.id+'req_doc'+rd.id"></FileField>
+                  <FileField :proposal_id="proposal.id" isRepeatable="true" :name="'proposal'+proposal.id+'req_doc'+rd.id" :required_doc_id="rd.id" label="Add Document" :id="'proposal'+proposal.id+'req_doc'+rd.id" :readonly="proposal.readonly"></FileField>
                 </div>
               </div>
           </div>
@@ -137,7 +137,7 @@
                 <label class="control-label">Activities</label>
                 <div class="" v-for="a in activities">
                   <div class="form-check">
-                    <input  class="form-check-input" ref="Checkbox" type="checkbox" v-model="trail_activities" :value="a.id" data-parsley-required/>
+                    <input  class="form-check-input" ref="Checkbox" type="checkbox" v-model="trail_activities" :value="a.id" data-parsley-required :disabled="!canEditActivities"/>
                       {{ a.name }}
                   </div>
                 </div>
@@ -149,8 +149,8 @@
                   <label class="control-label">Select the long distance trails</label>
                   <div class="" v-for="t in trails">
                     <div class="form-check col-sm-12">
-                      <input   name="selected_trails" v-model="selected_trails" :value="{'trail': t.id,'sections': t.section_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required />
-                      {{ t.name }} <span><a @click="edit_sections(t)" target="_blank" class="control-label pull-right">Edit section and activities</a></span>
+                      <input   name="selected_trails" v-model="selected_trails" :value="{'trail': t.id,'sections': t.section_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities" />
+                      {{ t.name }} <span><a @click="edit_sections(t)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit section and activities</a></span>
                     </div>
                   </div>
                 </div>
@@ -191,6 +191,10 @@ export default {
             proposal:{
                 type: Object,
                 required:true
+            },
+            canEditActivities:{
+              type: Boolean,
+              default: true
             }
         },
         data:function () {
@@ -540,7 +544,7 @@ export default {
             for(var l=0; l<vm.required_documents_list.length; l++){
               vm.required_documents_list[l].can_view=false;
               vm.checkRequiredDocuements(vm.selected_parks_activities)
-              console.log('park',vm.selected_parks_activities)
+              //console.log('park',vm.selected_parks_activities)
             }
             },(error) => {
             console.log(error);
@@ -745,11 +749,12 @@ export default {
         store_trails: function(trails){
           let vm=this;
           var all_activities=[] //to store all activities for all sections so can find recurring onees to display selected_activities
+          var trail_list=[]
           for (var i = 0; i < trails.length; i++) {
               var current_trail=trails[i].trail.id
               var current_activities=[]
               var current_sections=[]
-              var trail_list=[]
+              
               for (var j = 0; j < trails[i].sections.length; j++) {
                 var trail_activities=[];
                 for (var k = 0; k < trails[i].sections[j].trail_activities.length; k++) {
@@ -844,7 +849,7 @@ export default {
             
             
             $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
-              console.log(this);
+              //console.log(this);
             var chev = $( this ).children()[ 0 ];
             window.setTimeout( function () {
                 $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );

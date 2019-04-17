@@ -15,13 +15,13 @@
                         <label class="control-label">Are you currently accredited?</label>
                         <ul class="list-inline"  >
                             <li v-for="c in accreditation_choices" class="form-check list-inline-item">
-                                <input  class="form-check-input" ref="Checkbox" type="checkbox" @click="selectAccreditation($event, c)" v-model="selected_accreditations" :value="c.key" data-parsley-required />
+                                <input  class="form-check-input" ref="Checkbox" type="checkbox" @click="selectAccreditation($event, c)" v-model="selected_accreditations" :value="c.key" data-parsley-required :disabled="proposal.readonly" />
                                         {{ c.value }}
                             </li>
                         </ul>
                         <div v-for=" accreditation in proposal.other_details.accreditations">
                             <div v-if="!accreditation.is_deleted" class="col-sm-12">
-                                <Accreditation :accreditation="accreditation":proposal_id="proposal.id" id="accreditation"></Accreditation>
+                                <Accreditation :accreditation="accreditation":proposal_id="proposal.id" :readonly="proposal.readonly" id="accreditation"></Accreditation>
                             </div>
                             <!-- <fieldset class="scheduler-border">
                                 <legend class="scheduler-border">{{accreditation_type.value}}</legend>
@@ -58,7 +58,7 @@
     <div class="col-sm-12">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">License Period <small>123</small>
+                <h3 class="panel-title">License Period <small></small>
                 <a class="panelClicker" :href="'#'+lBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="lBody">
                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                 </a>
@@ -74,7 +74,7 @@
                                     <label class="control-label pull-left"  for="Name">Preferred licence period</label>
                                 </div>
                                 <div class="col-sm-9" style="margin-bottom: 5px">
-                                    <select class="form-control" v-model="proposal.other_details.preferred_licence_period" ref="preferred_licence_period">
+                                    <select class="form-control" v-model="proposal.other_details.preferred_licence_period" ref="preferred_licence_period" :disabled="proposal.readonly">
                                         <option v-for="l in licence_period_choices" :value="l.key">{{l.value}}</option>
                                     </select>
                                 </div>
@@ -85,7 +85,7 @@
                                 </div>
                                 <div class="col-sm-9">
                                     <div class="input-group date" ref="nominated_start_date" style="width: 70%;">
-                                        <input type="text" class="form-control" v-model="proposal.other_details.nominated_start_date" name="nominated_start_date" placeholder="DD/MM/YYYY">
+                                        <input type="text" class="form-control" v-model="proposal.other_details.nominated_start_date" name="nominated_start_date" placeholder="DD/MM/YYYY" :disabled="proposal.readonly">
                                         <span class="input-group-addon">
                                             <span class="glyphicon glyphicon-calendar"></span>
                                         </span>
@@ -121,7 +121,7 @@
                                     <label class="control-label pull-left"  for="Name">Mooring number</label>
                                 </div>
                                 <div class="col-sm-9">
-                                    <input type="text" class="form-control" name="Mooring number" placeholder="">
+                                    <input type="text" class="form-control" name="Mooring number" placeholder="" :disabled="proposal.readonly">
                                 </div>
                             </div>
                         </div>
@@ -133,7 +133,7 @@
     <div class="col-sm-12">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Insurance <small>123</small>
+                <h3 class="panel-title">Insurance <small></small>
                 <a class="panelClicker" :href="'#'+iBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="iBody">
                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                 </a>
@@ -159,7 +159,7 @@
                                     </label>
                                 </div>
                                 <div class="col-sm-3">
-                                    <FileField :proposal_id="proposal.id" isRepeatable="false" name="currency_certificate" :id="'proposal'+proposal.id"></FileField>
+                                    <FileField :proposal_id="proposal.id" isRepeatable="false" name="currency_certificate" :id="'proposal'+proposal.id" :readonly="proposal.readonly"></FileField>
                                 </div>
                                 <div class="col-sm-3">
                                     <label class="control-label pull-left"  for="Name">Expiry Date
@@ -167,7 +167,7 @@
                                 </div>
                                 <div class="col-sm-3">
                                     <div class="input-group date" ref="insurance_expiry" style="width: 70%;">
-                                        <input type="text" class="form-control" name="insurance_expiry" placeholder="DD/MM/YYYY" v-model="proposal.other_details.insurance_expiry">
+                                        <input type="text" class="form-control" name="insurance_expiry" placeholder="DD/MM/YYYY" v-model="proposal.other_details.insurance_expiry" :disabled="proposal.readonly">
                                             <span class="input-group-addon">
                                                 <span class="glyphicon glyphicon-calendar"></span>
                                             </span>
@@ -200,12 +200,12 @@
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <textarea class="form-control" v-model="proposal.other_details.other_comments"></textarea>
+                                    <textarea class="form-control" v-model="proposal.other_details.other_comments" :disabled="proposal.readonly"></textarea>
                                 </div>                                
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <FileField :proposal_id="proposal.id" isRepeatable="true" name="other_details" :id="'proposal'+proposal.id"></FileField>
+                                    <FileField :proposal_id="proposal.id" isRepeatable="true" name="other_details" :id="'proposal'+proposal.id" :readonly="proposal.readonly"></FileField>
                                 </div>                                
                             </div>
                        </div> 
@@ -232,12 +232,12 @@
                             </div>
                             <div class="col-sm-3">
                                 <label>
-                                    <input type="radio" value="true" v-model="proposal.other_details.credit_fees"/>Yes
+                                    <input type="radio" value="true" v-model="proposal.other_details.credit_fees" :disabled="proposal.readonly"/>Yes
                                 </label>
                             </div>
                             <div class="col-sm-3">
                                 <label>
-                                    <input type="radio" value="false" v-model="proposal.other_details.credit_fees"/>No
+                                    <input type="radio" value="false" v-model="proposal.other_details.credit_fees" :disabled="proposal.readonly"/>No
                                 </label>
                             </div>
                         </div>
@@ -247,12 +247,12 @@
                             </div>
                             <div class="col-sm-3">
                                 <label>
-                                    <input type="radio" v-model="proposal.other_details.credit_docket_books" value="true"/>Yes
+                                    <input type="radio" v-model="proposal.other_details.credit_docket_books" value="true" :disabled="proposal.readonly"/>Yes
                                 </label>
                             </div>
                             <div class="col-sm-3">
                                 <label>
-                                    <input type="radio" v-model="proposal.other_details.credit_docket_books" value="false"/>No
+                                    <input type="radio" v-model="proposal.other_details.credit_docket_books" value="false" :disabled="proposal.readonly"/>No
                                 </label>
                             </div>
                         </div>
@@ -281,7 +281,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <FileField :proposal_id="proposal.id" isRepeatable="false" name="deed_poll" :id="'proposal'+proposal.id"></FileField>
+                                    <FileField :proposal_id="proposal.id" isRepeatable="false" name="deed_poll" :id="'proposal'+proposal.id" :readonly="proposal.readonly"></FileField>
                                 </div>                                
                             </div>
                        </div> 
