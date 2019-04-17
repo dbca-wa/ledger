@@ -164,6 +164,9 @@ const TableBlock = {
             this.showingComment = ! this.showingComment;
         },
         toggleDeficiencies: function() {
+            if(this.showingDeficiencies) {
+                this.field_data.deficiency_value = '';
+            }
             this.showingDeficiencies = !this.showingDeficiencies;
         },
 
