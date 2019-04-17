@@ -250,7 +250,9 @@
             :help_text="help_text"
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
-
+<p>{{ value }}</p>
+<p>{{ renderer_form_data }}</p>
+<p>{{ stored_renderer_data }}</p>
     </span>
 </template>
 
@@ -306,6 +308,7 @@ const ComplianceRendererBlock = {
     return {
         //renderer_form_data: {field1: "text"},
         //isComponentVisible: true,
+        stored_data: this.call_email.stored_data
     }
   },
   props:{
@@ -321,6 +324,7 @@ const ComplianceRendererBlock = {
   computed: {
     ...mapGetters({
         call_email: 'callemailStore/call_email',
+        stored_renderer_data: 'callemailStore/stored_renderer_data',
         //call_email_id: 'callemailStore/call_email_id',
         //'application',
         //'application_id',
@@ -355,8 +359,16 @@ const ComplianceRendererBlock = {
     },
     value: {
         get: function() {
+            /*
+            if(this.call_email.value) {
+                //return this.json_data;
+                return this.call_email.value;
+            }
+            */
+            
             if(this.json_data == null) {
                 return this.json_data;
+                //return this.call_email.value;
             }
             if(this.json_data[this.component_name] == null) {
                 this.setFormValue({
@@ -369,6 +381,7 @@ const ComplianceRendererBlock = {
                 });
             }
             return this.json_data[this.component_name];
+            
         },
         set: function(value) {
             this.setFormValue({

@@ -12,11 +12,13 @@ export const callemailStore = {
         call_id: '',
         display_call_email: {},
         count: 1,
+        stored_renderer_data: {},
     },
     namespaced: true,
     getters: {
         call_email: state => state.call_email,
         call_email_id: state => state.call_email.id,
+        stored_renderer_data: state => state.call_email.data,
         //getField, 
 
     },

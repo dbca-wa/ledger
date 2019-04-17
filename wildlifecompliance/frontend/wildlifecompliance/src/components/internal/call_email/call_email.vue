@@ -18,7 +18,6 @@
                 <div v-for="dict in call_email.schema">
                 <div v-for="(item, index) in dict.children[0].children">
                     
-                    <p>{{ item.name }}</p>
                     <compliance-renderer-block
                         :component="item" 
                         v-bind:key="`SWS_Application${index}_0`"
@@ -113,6 +112,7 @@
             */
             ...mapGetters({
                 call_email: 'callemailStore/call_email',
+                stored_renderer_data: 'callemailStore/stored_renderer_data',
 
             }),
             csrf_token: function() {
@@ -133,9 +133,21 @@
             call_email_form_url: function() {
                 return (this.call_email) ? `/api/call_email/${this.call_email.id}/update_call.json` : '';
             },
-            value: function () {
-                return this.call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0];
-            }
+            /*
+            setValue: function () {
+                this.call_email.stored_data = 
+                { "SWS_Application1_0": 
+                { "value": this.call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0]["SWS_Application1_0"],  "schema_name": "SWS_Application1_0", 
+                "component_type": "text" 
+                }, 
+                "SWS_Application2_0": 
+                { "value": this.call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0]["SWS_Application2_0"],
+                    "schema_name": "SWS_Application2_0", "component_type": "text" }, 
+                    
+                }
+                //this.call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0];
+            },
+            */
             /*
             renderer_form: function() {
                 this.form = document.forms.callEmailUpdate;
