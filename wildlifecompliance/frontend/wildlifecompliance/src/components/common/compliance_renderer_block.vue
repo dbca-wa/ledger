@@ -257,7 +257,7 @@
 
 <script>
 import Vue from 'vue';
-import { mapActions, mapGetters } from 'vuex';
+import { mapActions, mapGetters, mapMutations } from 'vuex';
 import { helpers, api_endpoints } from "@/utils/hooks.js"
 import { strToBool } from "@/utils/helpers.js";
 
@@ -270,13 +270,13 @@ import Checkbox from '@/components/forms/checkbox.vue'
 import Declaration from '@/components/forms/declarations.vue'
 import File from '@/components/forms/file.vue'
 import SelectBlock from '@/components/forms/select.vue'
-import DateField from '@/components/forms/date-field.vue'
-import TextField from '@/components/forms/text.vue'
+import DateField from '@/components/compliance_forms/date-field.vue'
+import TextField from '@/components/compliance_forms/text.vue'
 import TextAreaBlock from '@/components/forms/text-area.vue'
 import LabelBlock from '@/components/forms/label.vue'
 import AssessorText from '@/components/forms/readonly_text.vue'
-import HelpText from '@/components/forms/help_text.vue'
-import HelpTextUrl from '@/components/forms/help_text_url.vue'
+import HelpText from '@/components/compliance_forms/help_text.vue'
+import HelpTextUrl from '@/components/compliance_forms/help_text_url.vue'
 import CommentRadioCheckBox from '@/components/forms/comment_icon_checkbox_radio.vue'
 import TableBlock from '@/components/forms/table.vue'
 import ExpanderTable from '@/components/forms/expander_table.vue'
@@ -321,7 +321,7 @@ const ComplianceRendererBlock = {
   computed: {
     ...mapGetters({
         call_email: 'callemailStore/call_email',
-        call_email_id: 'callemailStore/call_email_id',
+        //call_email_id: 'callemailStore/call_email_id',
         //'application',
         //'application_id',
         renderer_form_data: 'complianceRendererStore/renderer_form_data',
@@ -333,13 +333,13 @@ const ComplianceRendererBlock = {
     },
     
     comment_data: function() {
-        return this.call_email.comment_data;
+        this.call_email.comment_data;
     },
     documents_url: function() {
-        return this.call_email.documents_url;
+        this.call_email.documents_url;
     },
     can_user_edit: function() {
-        return this.call_email.can_user_edit;
+        this.call_email.can_user_edit;
     },
     
     site_url: function() {
@@ -392,14 +392,19 @@ const ComplianceRendererBlock = {
     },
   },
   methods: {
+    // ...mapMutations({
+    //     updateFormField: 'complianceRendererStore/updateFormField',
+
+    // }),
+    
     ...mapActions({
         toggleVisibleComponent: 'complianceRendererStore/toggleVisibleComponent',
         setFormValue: 'complianceRendererStore/setFormValue',
-        updateFormField: 'complianceRendererStore/updateFormField',
     }),
     strToBool: strToBool,
     element_id: function(depth=0) {
-        return `id_${this.component_name}${(depth) ? `_${depth}` : ''}${this.instance !== null ? `__instance${this.instance}`: ''}`;
+         return `id_${this.component_name}${(depth) ? `_${depth}` : ''}${this.instance !== null ? `__instance${this.instance}`: ''}`;
+        //return null;
     },
     
     replaceSitePlaceholders: function(text_string) {
@@ -412,7 +417,7 @@ const ComplianceRendererBlock = {
         }
         return text_string;
     },
-    /*
+    
     handleComponentChange: function(component, assignEventValue=true) {
         return (e) => {
             for(let condition in component.conditions) {
@@ -431,7 +436,7 @@ const ComplianceRendererBlock = {
             }
         }
     },
-    */
+    
   }
 }
 

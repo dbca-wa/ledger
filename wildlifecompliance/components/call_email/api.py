@@ -123,7 +123,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             #print(instance)
             parsed_json = parser.create_data_from_form(
-                    instance.report_type.schema, 
+                    #instance.report_type.schema, 
+                    instance.schema,
                     request.POST, 
                     #instance.report_type.schema,
                     #file_data=False,
@@ -131,9 +132,10 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     comment_data=True
                     )
             rendered_data = parsed_json[0]
-            instance.data = rendered_data
+            #print(rendered_data)
+            #instance.data = rendered_data
             data = {
-                    'schema': instance.report_type.schema,
+                    #'schema': instance.schema,
                     'data': rendered_data,
                     }
             serializer = UpdateRendererDataSerializer(instance, data=data, partial=True)

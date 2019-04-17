@@ -79,7 +79,7 @@ class ReportType(models.Model):
         unique_together = ('report_type', 'version')
 
     def __str__(self):
-        return self.report_type
+        return '{0}, v.{1}'.format(self.report_type, self.version)
 
 
 class Referrer(models.Model):
@@ -116,6 +116,7 @@ class CallEmail(models.Model):
             Classification, 
             )
     data = JSONField(default=list)
+    #_stored_renderer_data = JSONField(default=list)
     schema = JSONField(default=list)
     lodged_on = models.DateField(auto_now_add=True)
     number = models.CharField(max_length=50)
@@ -137,7 +138,17 @@ class CallEmail(models.Model):
         verbose_name = 'CM_Call/Email'
         verbose_name_plural = 'CM_Calls/Emails'
 
+    #def __init__(self):
+     #   self.stored_renderer_data = stored_renderer_data
+    
     def __str__(self):
         return 'ID: {0}, Status: {1}, Number: {2}, Caller: {3}, Assigned To: {4}' \
                 .format(self.id, self.status, self.number, self.caller, self.assigned_to)
+
+    #@property
+    #def stored_renderer_data(self):
+        #if self._stored_renderer_data:
+         #   return self._stored_renderer_data
+        #else:
+         #   return None
 

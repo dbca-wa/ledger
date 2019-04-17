@@ -1,83 +1,27 @@
 <template lang="html">
     <div class="container">
-        <div class="row">
-
-            <div class="col-sm-12">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">New Call / Email
-                            <a :href="'#'+pBody" data-toggle="collapse" data-parent="#userInfo" expanded="true"
-                                :aria-controls="pBody">
-                                <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                            </a>
-                        </h3>
-                    </div>
-                    <div class="panel-body collapse in" :id="pBody">
-                        <!--
-                        <form method="post" name="newCallEmail" enctype="multipart/form-data">
-                        <form :action="call_email_form_url" method="post" name="newCallEmail" enctype="multipart/form-data">       
-                        -->
-                        <form method="post" name="newCallEmail">
-                            <input type="hidden" name="create_type" value="call_email"/>
-                            <input type="hidden" name="status" value="draft"/>
-                            <div class="col-sm-12">
-                                <div class="row">
-                                    <label class="col-sm-4">Classification</label>
-                                    <input type="text" name="classification" v-model="call_email.classification.name" value="Complaint">
-                                </div>
-                            </div>
-        
-                            <div class="col-sm-12">
-                                <div class="row">
-                                    <label class="col-sm-4">Number</label>
-                                    <input type="text" name="number" v-model="call_email.number" value="CM67">
-                                </div>
-                            </div>
-                            <div class="col-sm-12">
-                                <div class="row">
-                                    <label class="col-sm-4">Caller</label>
-                                    <input type="text" name="caller" v-model="call_email.caller" value="Shayne">
-                                </div>
-                            </div>
-                            <div class="col-sm-12">
-                                <div class="row">
-                                    <label class="col-sm-4">Assigned To</label>
-                                    <input type="text" name="assigned_to" v-model="call_email.assigned_to" value="Brendan">
-                                </div>
-                            
-                            </div>
-
-        
-                        </form>   
-                        
-                    </div>
-                </div>
-            </div>
-        </div>
         <form method="post" name="callEmailUpdate">
-            <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-            
-            <!--
-            <input type='hidden' name="schema" :value="JSON.stringify(call_email.schema)" />
-            <input type='hidden' name="schema" :value="JSON.stringify(call_email.data)" />
-            <input type='hidden' name="application_id" :value="1" />
-            :json_data="this.call_email.data"
-            v-bind:key="`q_${index}`"
-            :field_data="call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0][item.name]"
-            :call_email_id="call_email.id"
-                        :instance="call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0][item.name]"
-            {{ call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0][item.name] }}
-            -->
+<!--
+    v-bind:key="`SWS_Application${index}_0`"
+    :instance='call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0]'
+    <p>{{ call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0] }}</p>
+<p>{{ `SWS_Application${index}_0` }}</p>
+                    <p>{{ item }}</p>
+                    v-bind:key="`${item.name}`"
+                    <p>{{ call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0] }}</p>
+                    Object.keys(call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0])
+                    :json_data='call_email.data'
+                    :instance='item.name'
+-->
             
             <div>
                 <div v-for="dict in call_email.schema">
                 <div v-for="(item, index) in dict.children[0].children">
-                    {{call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0]}}
-                    {{ instance_data}}
+                    
+                    <p>{{ item.name }}</p>
                     <compliance-renderer-block
                         :component="item" 
-                        :field_data="field_data"
-                        v-bind:key="`q_${index}`"
+                        v-bind:key="`SWS_Application${index}_0`"
                         />
                     </div>
                 
@@ -88,6 +32,7 @@
                         class="btn btn-primary pull-right">Save</button>
                 </div>
         </form>
+        
     </div>
 </template>
 <script>
@@ -110,29 +55,24 @@
             let vm = this;
             console.log(this);
             return {
-                        //field_data: this.call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0],
-                        instance_data: 'whatisthis',
+                        
                         pBody: 'pBody' + vm._uid,
-                        form: null,
+                        //form: null,
                         loading: [],
                         comms_url: 'www.google.com',
                         comms_add_url: 'www.google.com',
                         logs_url: 'www.google.com',
-
-                        nothing: null,
-                        //renderer_form: {},
-                        new_form: {},
-                        form: [],
-                        
-                        field_data: { 
-                            type: "label", 
-                            name: "SWS_Application0_0", 
-                            label: "Please click here to download the application form",
-                            field_data: "something",
+                        rend_text_area: {
+                        id: '1',
+                        label: 'label',
+                        status: 'status',
+                        type: 'text_area'
                         },
-                        
-                        //field_data: "something",
-                        
+                        nothing: null,
+                        renderer_form: null,
+                        new_form: {},
+                        dummy_field_data: { "SWS_Application1_0": "new new text" },
+                        //field_data: call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0][item.name]
                         //data: function() {}
                         /*
                         call_email: function() {
@@ -193,6 +133,9 @@
             call_email_form_url: function() {
                 return (this.call_email) ? `/api/call_email/${this.call_email.id}/update_call.json` : '';
             },
+            value: function () {
+                return this.call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0];
+            }
             /*
             renderer_form: function() {
                 this.form = document.forms.callEmailUpdate;
@@ -221,8 +164,9 @@
             },
             */
             createCallEmail: function (e) {
-                this.renderer_form = document.forms.callEmailUpdate;
-                this.new_form = document.forms.newCallEmail;
+                //this.renderer_form = document.forms.callEmailUpdate;
+                //this.new_form = document.forms.newCallEmail;
+                
                 let formData = new FormData(this.renderer_form);
                 
                 //formData.append('additional_key_example', 'some_val') // example of additonal info sent to server
@@ -261,14 +205,16 @@
             next(vm => {
                 console.log("before route enter - next");
                 vm.load({call_email_id: to.params.call_email_id});
-                Promise.all(initialisers).then(data => {
-                })
+                //Promise.all(initialisers).then(data => {
+                //})
             })
         },
         
         mounted: function () {
+            this.renderer_form = document.forms.callEmailUpdate;
             this.$nextTick( function() {
-            this.form = document.forms.callEmailUpdate;
+            //this.form = document.forms.callEmailUpdate;
+            this.renderer_form = document.forms.callEmailUpdate;
             //this.new_form = document.forms.newCallEmail;
             })
             

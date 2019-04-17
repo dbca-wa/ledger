@@ -1,5 +1,5 @@
 import Vue from 'vue';
-/*
+
 import {
     UPDATE_RENDERER_TABS,
     UPDATE_RENDERER_SECTIONS,
@@ -9,7 +9,7 @@ import {
     UPDATE_FORM_FIELD,
     REMOVE_FORM_FIELD,
 } from '@/store/mutation-types';
-*/
+
 export const complianceRendererStore = {
     namespaced: true,
     state: {
@@ -63,19 +63,19 @@ export const complianceRendererStore = {
         }
     },
     mutations: {
-        updateRendererTabs (state, tabs) {
+        UPDATE_RENDERER_TABS (state, tabs) {
             Vue.set(state, 'tabs', tabs);
         },
-        updateRendererSections (state, sections) {
+        UPDATE_RENDERER_SECTIONS (state, sections) {
             Vue.set(state, 'sections', {...sections});
         },
-        updateVisibleComponent (state, { key, value }) {
+        UPDATE_VISIBLE_COMPONENT (state, { key, value }) {
             Vue.set(state.visible_components, key, value);
         },
-        toggleFinalisedTabs (state, visible) {
+        TOGGLE_FINALISED_TABS (state, visible) {
             Vue.set(state.visibility, 'exclude_decisions', visible ? [] : ['issued', 'declined']);
         },
-        updateFormData (state, form_data) {
+        UPDATE_FORM_DATA (state, form_data) {
             if(form_data == null) {
                 Vue.set(state, 'form_data', {});
             }
@@ -83,43 +83,43 @@ export const complianceRendererStore = {
                 Vue.set(state, 'form_data', {...form_data});
             }
         },
-        updateFormField (state, { key, value }) {
+        UPDATE_FORM_FIELD (state, { key, value }) {
             let currentValue = state.form_data[key] ? {...state.form_data[key]} : {};
             for(let idx in value) {
                 currentValue[idx] = value[idx];
             }
             Vue.set(state.form_data, key, currentValue);
         },
-        removeFormField (state, key) {
+        REMOVE_FORM_FIELD (state, key) {
             Vue.delete(state.form_data, key);
         },
     },
     actions: {
         setRendererTabs({ commit }, tabs) {
-            commit(updateRendererTabs, tabs);
+            commit(UPDATE_RENDERER_TABS, tabs);
         },
         setRendererSections({ commit }, sections) {
-            commit(updateRendererSections, sections);
+            commit(UPDATE_RENDERER_SECTIONS, sections);
         },
         toggleVisibleComponent({ commit, getters }, { component_id, visible }) {
-            commit(updateVisibleComponent,
+            commit(UPDATE_VISIBLE_COMPONENT,
                 {key: component_id, value: visible});
         },
         toggleFinalisedTabs({ commit }, visible) {
-            commit(toggleFinalisedTabs, visible);
+            commit(TOGGLE_FINALISED_TABS, visible);
         },
         setFormData({ commit }, form_data) {
-            commit(updateFormData, form_data);
+            commit(UPDATE_FORM_DATA, form_data);
         },
         setFormValue({ commit }, params) {
-            commit(updateFormField, params);
+            commit(UPDATE_FORM_FIELD, params);
         },
         removeFormInstance({ state, commit }, instanceId) {
             for(let key in state.form_data) {
                 if(!key.includes(instanceId)) {
                     continue;
                 }
-                commit(removeFormField, key);
+                commit(REMOVE_FORM_FIELD, key);
             }
         },
         saveFormData({ dispatch, commit, getters }, { url }) {

@@ -9,7 +9,7 @@ from '@/utils/hooks';
 export const callemailStore = {
     state: {
         call_email: {},
-        call_email_id: '',
+        call_id: '',
         display_call_email: {},
         count: 1,
     },
