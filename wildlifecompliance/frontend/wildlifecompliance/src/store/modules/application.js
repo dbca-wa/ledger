@@ -11,9 +11,9 @@ export const applicationStore = {
     state: {
         original_application: {},
         application: {
-            "schema": [],
-            "licence_type_data": {
-                "activity": []
+            "schema": [],
+            "licence_type_data": {
+                "activity": []
             }
         },
     },

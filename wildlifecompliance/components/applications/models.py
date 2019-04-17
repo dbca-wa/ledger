@@ -515,9 +515,8 @@ class Application(RevisionedMixin):
 
     @property
     def licence_purpose_names(self):
-        return [purpose.licence_activity.short_name + ' - ' + purpose.short_name
-                for purpose in self.licence_purposes.all()
-                    .order_by('licence_activity','short_name')]
+        return ', '.join([purpose.licence_activity.short_name + ' - ' + purpose.short_name
+                          for purpose in self.licence_purposes.all().order_by('licence_activity','short_name')])
 
     @property
     def licence_type_name(self):
