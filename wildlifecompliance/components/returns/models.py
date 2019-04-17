@@ -146,45 +146,14 @@ class Return(models.Model):
 
     @property
     def table(self):
-        tables = []
-        if self.format == ReturnType.RETURN_TYPE_SHEET:
-            return tables
-        for resource in self.return_type.resources:
-            resource_name = resource.get('name')
-            schema = Schema(resource.get('schema'))
-            headers = []
-            for f in schema.fields:
-                header = {
-                    "label": f.name,
-                    "required": f.required,
-                    "type": f.type.name
-                }
-                if f.is_species:
-                    header["species"] = f.species_type
-                headers.append(header)
-            table = {
-               'name': resource_name,
-               'title': resource.get('title', resource.get('name')),
-               'headers': headers,
-               'data': None
-            }
-            try:
-                return_table = self.returntable_set.get(name=resource_name)
-                rows = [
-                    return_row.data for return_row in return_table.returnrow_set.all()]
-                validated_rows = schema.rows_validator(rows)
-                table['data'] = validated_rows
-            except ReturnTable.DoesNotExist:
-                result = {}
-                results = []
-                for field_name in schema.fields:
-                    result[field_name.name] = {
-                        'value': None
-                    }
-                results.append(result)
-                table['data'] = results
-        tables.append(table)
-        return tables
+        table = []
+        if self.has_sheet:
+            return self.sheet.table
+        if self.has_data:
+            return self.data.table
+        if self.has_question:
+            return self.question.table
+        return table
 
     @property
     def sheet(self):
@@ -257,7 +226,6 @@ class Return(models.Model):
             try:
                 if self.processing_status == Return.RETURN_PROCESSING_STATUS_FUTURE\
                         or self.processing_status == Return.RETURN_PROCESSING_STATUS_DUE:
-                            self.customer_status = Return.RETURN_CUSTOMER_STATUS_UNDER_REVIEW
                             self.processing_status = Return.RETURN_PROCESSING_STATUS_WITH_CURATOR
                             self.submitter = request.user
                             self.save()
@@ -280,7 +248,6 @@ class Return(models.Model):
     def accept(self, request):
         with transaction.atomic():
             self.processing_status = Return.RETURN_PROCESSING_STATUS_ACCEPTED
-            self.customer_status = Return.RETURN_CUSTOMER_STATUS_ACCEPTED
             self.save()
             self.log_user_action(
                 ReturnUserAction.ACTION_ACCEPT_REQUEST.format(
@@ -339,7 +306,7 @@ class ReturnData(object):
         Data Table of record information for Species.
         :return: formatted data.
         """
-        return self._return.table()
+        return self._get_raw_table()
 
     def store(self, request):
         """
@@ -358,6 +325,64 @@ class ReturnData(object):
                     self._create_return_data_from_post_data(returns_tables.encode('utf-8'), request.POST)
                 else:
                     raise FieldError('Enter data in correct format.')
+
+    def _get_raw_table(self):
+        tables = []
+        for resource in self._return.return_type.resources:
+            resource_name = resource.get('name')
+            schema = Schema(resource.get('schema'))
+            headers = []
+            for f in schema.fields:
+                header = {
+                    "label": f.name,
+                    "required": f.required,
+                    "type": f.type.name
+                }
+                if f.is_species:
+                    header["species"] = f.species_type
+                headers.append(header)
+            table = {
+                'name': resource_name,
+                'title': resource.get('title', resource.get('name')),
+                'headers': headers,
+                'data': None
+            }
+            try:
+                return_table = self._return.returntable_set.get(name=resource_name)
+                rows = [
+                    return_row.data for return_row in return_table.returnrow_set.all()]
+                validated_rows = schema.rows_validator(rows)
+                table['data'] = validated_rows
+            except ReturnTable.DoesNotExist:
+                result = {}
+                results = []
+                for field_name in schema.fields:
+                    result[field_name.name] = {
+                        'value': None
+                    }
+                results.append(result)
+                table['data'] = results
+        tables.append(table)
+
+        return tables
+
+    def _get_formatted_table(self):
+        headers = {}
+        tables = {}
+        #tables = {
+        #    "type": "table",
+        #    "headers": "{\"Species\": \"text\", \"Quantity\": \"number\", \"Date\": \"date\", \"Taken\": \"checkbox\"}",
+        #    "name": "Section2-0",
+        #    "label": "The first table in section 2"
+        #}
+
+        tables['headers'] = 'Quantity'
+        tables['type'] = 'table'
+        tables['label'] = 'first table'
+        tables['name'] = 'table-example'
+        tables['data'] = '100'
+
+        return tables
 
     def _is_post_data_valid(self, tables_info, post_data):
         """
@@ -440,7 +465,43 @@ class ReturnQuestion(object):
         Table of questions for Species. Defaults to a Species on the Return if exists.
         :return: formatted data.
         """
-        return self._return.table
+        tables = []
+        for resource in self._return.return_type.resources:
+            resource_name = resource.get('name')
+            schema = Schema(resource.get('schema'))
+            headers = []
+            for f in schema.fields:
+                header = {
+                    "label": f.name,
+                    "required": f.required,
+                    "type": f.type.name
+                }
+                if f.is_species:
+                    header["species"] = f.species_type
+                headers.append(header)
+            table = {
+                'name': resource_name,
+                'title': resource.get('title', resource.get('name')),
+                'headers': headers,
+                'data': None
+            }
+            try:
+                return_table = self._return.returntable_set.get(name=resource_name)
+                rows = [
+                    return_row.data for return_row in return_table.returnrow_set.all()]
+                validated_rows = schema.rows_validator(rows)
+                table['data'] = validated_rows
+            except ReturnTable.DoesNotExist:
+                result = {}
+                results = []
+                for field_name in schema.fields:
+                    result[field_name.name] = {
+                        'value': None
+                    }
+                results.append(result)
+                table['data'] = results
+        tables.append(table)
+        return tables
 
     def store(self, request):
         """
@@ -492,7 +553,7 @@ class ReturnSheet(object):
             self._species_list.append(_species.name)
             self._species = _species.name
         # build list of Species available on Licence.
-        self._licence_species_list = []
+        self._licence_species_list = ['S000001', 'S000002', 'S000003', 'S000004']
 
     def _get_table_rows(self, _data):
         """
