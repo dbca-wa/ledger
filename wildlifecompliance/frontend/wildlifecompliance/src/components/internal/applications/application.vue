@@ -862,7 +862,10 @@ export default {
         },
         userIsAssignedOfficer: function(){
             return this.current_user.id == this.application.assigned_officer;
-        }
+        },
+        form_data_comments_url: function() {
+            return (this.application) ? `/api/application/${this.application.id}/officer_comments.json` : '';
+        },
     },
     methods: {
         ...mapActions({
@@ -875,6 +878,7 @@ export default {
             'setActivityTab',
             'loadCurrentUser',
             'toggleFinalisedTabs',
+            'saveFormData',
         ]),
         eventListeners: function(){
             let vm = this;
@@ -1142,30 +1146,16 @@ export default {
         amendmentRequest: function(){
             let vm = this;
             vm.save_wo();
-            let values = '';
             var activity_name=[];
             var activity_id=[];
-
-            $('.deficiency').each((i,d) => {
-                values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
-            });
 
             activity_id.push(vm.selected_activity_tab_id);
             activity_name.push(vm.selected_activity_tab_name);
 
-            vm.$refs.amendment_request.amendment.text = values;
+            vm.$refs.amendment_request.amendment.text = '';
             vm.$refs.amendment_request.amendment.activity_name = activity_name;
             vm.$refs.amendment_request.amendment.activity_id = activity_id;
             vm.$refs.amendment_request.isModalOpen = true;
-
-            if (values === ''){
-               swal(
-                  'Amendment Request',
-                  'There are no deficiencies entered for this Application.',
-                  'error'
-               )
-               vm.$refs.amendment_request.isModalOpen = false;
-            }
         },
         togglesendtoAssessor:function(){
             let vm=this;
@@ -1177,24 +1167,25 @@ export default {
             vm.fetchAssessorGroup();
             vm.initFirstTab(true);
         },
-        save: function(e) {
-            let vm = this;
-            let formData = new FormData(vm.form);
-            vm.$http.post(vm.application_form_url,formData).then(res=>{
-              swal(
-                'Saved',
-                'Your application has been saved',
-                'success'
-              )
-            },err=>{
+        save: function(props = { showNotification: true }) {
+            const { showNotification } = props;
+            this.saveFormData({ url: this.form_data_comments_url }).then(response => {
+                showNotification && swal(
+                    'Saved',
+                    'Your application has been saved',
+                    'success'
+                )
+            }, error => {
+                console.log('Failed to save comments: ', error);
+                swal(
+                    'Application Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
             });
         },
         save_wo: function() {
-            let vm = this;
-            let formData = new FormData(vm.form);
-            vm.$http.post(vm.application_form_url,formData).then(res=>{
-            },err=>{
-            });
+            return this.save({ showNotification: false });
         },
         toggleApplication: function({show=false, showFinalised=false}){
 
