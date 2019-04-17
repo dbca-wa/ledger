@@ -1,15 +1,13 @@
 <template id="closureHistory">
 <div class="row">
     <Close ref="closeModal" @closeRange="addClosure()" @updateRange="updateClosure()" :title="getTitle" :statusHistory="closure"></Close>
-    <div class="well">
-        <div class="col-sm-8">
-            <h1>Closure History</h1>
-        </div>
-        <div class="col-sm-4">
+    <div class="col-sm-12">
+        <div class="col-sm-8" v-if="invent"/>
+        <div class="col-sm-4" v-if="invent">
             <button @click="showClose()" class="btn btn-primary pull-right table_btn">Add Closure Period</button>
         </div>
         <datatable ref="closure_dt" :dtHeaders ="ch_headers" :dtOptions="ch_options" id="cg_table"></datatable>
-     </div>
+    </div>
     <confirmbox id="deleteClosure" :options="deleteClosurePrompt"></confirmbox>
 </div>
 </template>
@@ -63,6 +61,7 @@ export default {
         return {
             campground: {},
             campsite:{},
+            invent: false,
             closure: {
                 id:'',
                 status: 1,
@@ -97,7 +96,7 @@ export default {
                 columns: [{
                     data: 'range_start',
                     mRender: function(data, type, full) {
-                        return Moment(data).format('DD/MM/YYYY');
+                        return Moment(data).format('DD/MM/YYYY HH:mm');
                     },
                     orderable: false
 
@@ -105,7 +104,7 @@ export default {
                     data: 'range_end',
                     mRender: function(data, type, full) {
                         if (data) {
-                            return Moment(data).add(1, 'day').format('DD/MM/YYYY');
+                            return Moment(data).format('DD/MM/YYYY HH:mm');
                         }
                         else {
                             return '';
@@ -182,6 +181,12 @@ export default {
                 xhrFields: { withCredentials:true },
                 dataType: 'json',
                 success: function(data, stat, xhr) {
+                    var start = data.range_start.split(" ");
+                    data.range_start_time = start[1];
+                    data.range_start = start[0];
+                    var end = data.range_end.split(" ");
+                    data.range_end_time = end[1];
+                    data.range_end = end[0];
                     vm.closure = data;
                     vm.showClose();
                 },
@@ -198,7 +203,7 @@ export default {
         },
         sendData: function(url,method) {
             let vm = this;
-            var data = vm.$refs.closeModal.statusHistory;
+            var data = vm.$refs.closeModal.statusHistory;            
             $.ajax({
                 url: url,
                 method: method,
@@ -220,12 +225,13 @@ export default {
         },
         addTableListeners: function() {
             let vm = this;
-            vm.$refs.closure_dt.vmDataTable.on('click','.editRange', function(e) {
+            var table = vm.$refs.closure_dt.vmDataTable;
+            table.on('click','.editRange', function(e) {
                 e.preventDefault();
                 var id = $(this).data('range');
                 vm.editClosure(id);
             });
-            vm.$refs.closure_dt.vmDataTable.on('click','.deleteRange', function(e) {
+            table.on('click','.deleteRange', function(e) {
                 e.preventDefault();
                 var id = $(this).data('range');
                 vm.deleteClosure = id;
@@ -236,6 +242,26 @@ export default {
     mounted: function() {
         let vm = this;
         vm.addTableListeners();
+        setTimeout(function(){
+            $.ajax({
+                url: api_endpoints.profile,
+                method: 'GET',
+                dataType: 'json',
+                success: function(data, stat, xhr){
+                    if(data.is_inventory){
+                        vm.invent = true;
+                    }
+                    if(!vm.invent){
+                        vm.$refs.closure_dt.vmDataTable.rows().every(function(){
+                            var data = this.data();
+                            data['editable'] = "";
+                            this.data(data);
+                        });
+                    }
+                }
+            });
+        }, 400);
+        
     }
 }
 </script>

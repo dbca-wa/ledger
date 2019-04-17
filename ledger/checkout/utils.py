@@ -11,6 +11,7 @@ from ledger.checkout import serializers
 from ledger.catalogue.models import Product
 from ledger.basket.models import Basket
 from ledger.basket.middleware import BasketMiddleware
+from django.core.signing import BadSignature, Signer
 
 Selector = get_class('partner.strategy', 'Selector')
 selector = Selector()
@@ -48,6 +49,20 @@ def create_basket_session(request, parameters):
                                     request.user, serializer.validated_data['system'])
 
     return basket, BasketMiddleware().get_basket_hash(basket.id)
+
+
+def get_cookie_basket(cookie_key,request):
+    basket = None
+    if cookie_key in request.COOKIES:
+       basket_hash = request.COOKIES[cookie_key]
+       try:
+           basket_id = Signer(sep='|').unsign(basket_hash)
+           basket = Basket.objects.get(pk=basket_id,
+                                      status=Basket.OPEN)
+       except (BadSignature, Basket.DoesNotExist):
+           request.cookies_to_delete.append(cookie_key)
+       return basket
+    return None
 
 
 # create a checkout session in Oscar.
@@ -99,7 +114,6 @@ def place_order_submission(request):
     from ledger.checkout.views import PaymentDetailsView
     pdv = PaymentDetailsView(request=request, checkout_session=CheckoutSessionData(request))
     result = pdv.handle_place_order_submission(request)
-
     return result
 
 
