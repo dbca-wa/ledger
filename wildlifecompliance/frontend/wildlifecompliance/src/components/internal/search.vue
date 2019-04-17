@@ -1,32 +1,11 @@
 <template>
 <div class="container" id="internalSearch">
+    <UserDashTable level="internal" :url="users_url" />
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search People 
-                        <a :href="'#'+cBody" data-toggle="collapse"  data-parent="#peopleInfo" expanded="true" :aria-controls="cBody">
-                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                        </a>
-                    </h3>
-                </div>
-                <div class="panel-body collapse in" :id="cBody">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <label class="control-label">
-                                <a href="/internal/users">Click here to search for people</a>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Search Organisations
+                    <h3 class="panel-title">Organisations
                         <a :href="'#'+oBody" data-toggle="collapse"  data-parent="#organisationInfo" expanded="true" :aria-controls="oBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -60,7 +39,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search Keywords
+                    <h3 class="panel-title">Keywords
                         <a :href="'#'+kBody" data-toggle="collapse"  data-parent="#keywordInfo" expanded="true" :aria-controls="kBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -126,7 +105,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search Reference Number 
+                    <h3 class="panel-title">Reference Number
                         <a :href="'#'+rBody" data-toggle="collapse"  data-parent="#referenceNumberInfo" expanded="true" :aria-controls="rBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -152,6 +131,8 @@
 <script>
 import $ from 'jquery'
 import datatable from '@/utils/vue/datatable.vue'
+import UserDashTable from '@common-utils/users_dashboard.vue'
+import '@/scss/dashboards/search.scss';
 import {
   api_endpoints,
   helpers
@@ -163,6 +144,7 @@ export default {
     data() {
         let vm = this;
         return {
+            users_url: api_endpoints.users_paginated,
             rBody: 'rBody' + vm._uid,
             oBody: 'oBody' + vm._uid,
             cBody: 'cBody' + vm._uid,
@@ -224,6 +206,7 @@ export default {
     watch: {},
     components: {
         datatable,
+        UserDashTable
     },
     beforeRouteEnter:function(to,from,next){
         let initialisers = [
@@ -231,7 +214,7 @@ export default {
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
-                vm.organisations = data[0];
+                vm.organisations = data[0].results;
             });
         });
     },
