@@ -34,7 +34,7 @@ export default {
         let vm = this;
         return {
             applications_url: helpers.add_endpoint_join(api_endpoints.applications_paginated,'external_datatable_list/?format=datatables'),
-            licences_url: helpers.add_endpoint_json(api_endpoints.licences,'user_list'),
+            licences_url: helpers.add_endpoint_join(api_endpoints.licences_paginated,'external_datatable_list/?format=datatables'),
             returns_url:helpers.add_endpoint_json(api_endpoints.returns,'user_list'),
             empty_list: '/api/empty_list',
         }

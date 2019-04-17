@@ -216,6 +216,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     id_check_status = CustomChoiceField(read_only=True)
     processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
     data = ApplicationFormDataRecordSerializer(many=True)
+    application_type = CustomChoiceField(read_only=True)
 
     class Meta:
         model = Application
@@ -260,7 +261,8 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'can_be_processed',
             'pdf_licence',
             'activities',
-            'processed'
+            'processed',
+            'application_type'
         )
         read_only_fields = ('documents',)
 
@@ -281,7 +283,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         return activity_names
 
     def get_purpose_string(self, obj):
-        return ', '.join(obj.licence_purpose_names)
+        return obj.licence_purpose_names
 
     def get_activity_names(self, obj):
         return obj.licence_activity_names
@@ -349,6 +351,7 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
         source='assigned_officer.get_full_name')
     can_be_processed = serializers.SerializerMethodField(read_only=True)
     user_in_officers_and_assessors = serializers.SerializerMethodField(read_only=True)
+    application_type = CustomChoiceField(read_only=True)
 
     class Meta:
         model = Application
@@ -370,31 +373,13 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
             'payment_status',
             'assigned_officer',
             'can_be_processed',
-            'user_in_officers_and_assessors'
+            'user_in_officers_and_assessors',
+            'application_type'
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
-        # defined are requested from the serializer. We also require the following additional fields
-        # for some of the mRender functions
-        datatables_always_serialize = (
-            'id',
-            'customer_status',
-            'processing_status',
-            'applicant',
-            'proxy_applicant',
-            'submitter',
-            'lodgement_number',
-            'lodgement_date',
-            'category_name',
-            'activity_names',
-            'activity_purpose_string',
-            'purpose_string',
-            'can_user_view',
-            'can_current_user_edit',
-            'payment_status',
-            'assigned_officer',
-            'can_be_processed',
-            'user_in_officers_and_assessors'
-        )
+        # defined are requested from the serializer. Use datatables_always_serialize to force render
+        # of fields that are not listed as 'data' in the datatable columns
+        datatables_always_serialize = fields
 
     def get_user_in_officers_and_assessors(self, obj):
         if self.context['request'].user and self.context['request'].user in obj.officers_and_assessors:
@@ -410,6 +395,7 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
     customer_status = CustomChoiceField(read_only=True)
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
+    application_type = CustomChoiceField(read_only=True)
 
     class Meta:
         model = Application
@@ -429,27 +415,12 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
             'can_user_view',
             'can_current_user_edit',
             'payment_status',
+            'application_type'
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
-        # defined are requested from the serializer. We also require the following additional fields
-        # for some of the mRender functions
-        datatables_always_serialize = (
-            'id',
-            'customer_status',
-            'processing_status',
-            'applicant',
-            'proxy_applicant',
-            'submitter',
-            'lodgement_number',
-            'lodgement_date',
-            'category_name',
-            'activity_names',
-            'activity_purpose_string',
-            'purpose_string',
-            'can_user_view',
-            'can_current_user_edit',
-            'payment_status',
-        )
+        # defined are requested from the serializer. Use datatables_always_serialize to force render
+        # of fields that are not listed as 'data' in the datatable columns
+        datatables_always_serialize = fields
 
 
 class ApplicationSerializer(BaseApplicationSerializer):
@@ -765,6 +736,14 @@ class DTAssessmentSerializer(serializers.ModelSerializer):
     applicant = serializers.CharField(source='application.applicant')
     application_category = serializers.CharField(
         source='application.licence_category_name')
+    application = serializers.CharField(
+        source='application.lodgement_number')
+    application_id = serializers.CharField(
+        source='application.id')
+    application_type = CustomChoiceField(
+        source='application.application_type',
+        choices=Application.APPLICATION_TYPE_CHOICES,
+        read_only=True)
 
     class Meta:
         model = Assessment
@@ -778,8 +757,14 @@ class DTAssessmentSerializer(serializers.ModelSerializer):
             'submitter',
             'application_lodgement_date',
             'applicant',
-            'application_category'
+            'application_category',
+            'application_type',
+            'application_id'
         )
+        # the serverSide functionality of datatables is such that only columns that have field 'data'
+        # defined are requested from the serializer. Use datatables_always_serialize to force render
+        # of fields that are not listed as 'data' in the datatable columns
+        datatables_always_serialize = fields
 
     def get_submitter(self, obj):
         return EmailUserSerializer(obj.application.submitter).data

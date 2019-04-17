@@ -515,9 +515,8 @@ class Application(RevisionedMixin):
 
     @property
     def licence_purpose_names(self):
-        return [purpose.licence_activity.short_name + ' - ' + purpose.short_name
-                for purpose in self.licence_purposes.all()
-                    .order_by('licence_activity','short_name')]
+        return ', '.join([purpose.licence_activity.short_name + ' - ' + purpose.short_name
+                          for purpose in self.licence_purposes.all().order_by('licence_activity','short_name')])
 
     @property
     def licence_type_name(self):
@@ -949,7 +948,7 @@ class Application(RevisionedMixin):
     @property
     def schema(self):
         from wildlifecompliance.components.applications.utils import get_activity_schema
-        return get_activity_schema(self.activities.values_list('licence_activity_id', flat=True))
+        return get_activity_schema(self.licence_purposes.values_list('id', flat=True))
 
     @property
     def data(self):

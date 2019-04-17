@@ -59,11 +59,9 @@ from wildlifecompliance.components.applications.serializers import (
     SearchReferenceSerializer
 )
 
-from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
-from rest_framework.filters import BaseFilterBackend
 
 
 class GetEmptyList(views.APIView):
@@ -93,27 +91,28 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
         if queryset.model is Application:
 
             # search_text filter, join all custom search columns
-            # where ('searchable: false' in the datatable definiton)
+            # where ('searchable: false' in the datatable defintion)
             if search_text:
                 search_text = search_text.lower()
                 # join queries for the search_text search
                 search_text_app_ids = []
                 for application in queryset:
                     if (search_text in application.licence_category.lower()
-                        or search_text in ', '.join(application.licence_purpose_names).lower()
-                        or search_text in application.applicant
-                        or search_text in application.processing_status
-                        or search_text in application.customer_status
-                        or search_text in application.payment_status):
-                            search_text_app_ids.append(application.id)
+                        or search_text in application.licence_purpose_names.lower()
+                        or search_text in application.applicant.lower()
+                        or search_text in application.processing_status.lower()
+                        or search_text in application.customer_status.lower()
+                        or search_text in application.payment_status.lower()
+                    ):
+                        search_text_app_ids.append(application.id)
                     # if applicant is not an organisation, also search against the user's email address
                     if (application.applicant_type == Application.APPLICANT_TYPE_PROXY and
-                        search_text in application.proxy_applicant.email):
+                        search_text in application.proxy_applicant.email.lower()):
                             search_text_app_ids.append(application.id)
                     if (application.applicant_type == Application.APPLICANT_TYPE_SUBMITTER and
-                        search_text in application.submitter.email):
+                        search_text in application.submitter.email.lower()):
                             search_text_app_ids.append(application.id)
-                # use pipe to join both custom and built-in DRF datatables querysets (returned by super call below)
+                # use pipe to join both custom and built-in DRF datatables querysets (returned by super call above)
                 # (otherwise they will filter on top of each other)
                 queryset = queryset.filter(id__in=search_text_app_ids).distinct() | super_queryset
 
@@ -144,8 +143,19 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
             if date_to:
                 date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
                 queryset = queryset.filter(lodgement_date__lte=date_to)
-            if submitter and submitter != 'All':
+            submitter = submitter.lower() if submitter else 'all'
+            if submitter != 'all':
                 queryset = queryset.filter(submitter__email__iexact=submitter)
+
+        # override queryset ordering, required because the ordering is usually handled
+        # in the super call, but is then clobbered by the custom queryset joining above
+        # also needed to disable ordering for all fields for which data is not an
+        # Application model field, as property functions will not work with order_by
+        getter = request.query_params.get
+        fields = self.get_fields(getter)
+        ordering = self.get_ordering(getter, fields)
+        if len(ordering):
+            queryset = queryset.order_by(*ordering)
 
         setattr(view, '_datatables_total_count', total_count)
         return queryset
@@ -1048,6 +1058,115 @@ class ApplicationStandardConditionViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(text__icontains=search)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+class AssessmentFilterBackend(DatatablesFilterBackend):
+    """
+    Custom filters
+    """
+    def filter_queryset(self, request, queryset, view):
+
+        # Get built-in DRF datatables queryset first to join with search text, then apply additional filters
+        super_queryset = super(AssessmentFilterBackend, self).filter_queryset(request, queryset, view).distinct()
+
+        total_count = queryset.count()
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        category_name = request.GET.get('category_name')
+        status_filter = request.GET.get('status')
+        submitter = request.GET.get('submitter')
+        search_text = request.GET.get('search[value]')
+        if queryset.model is Assessment:
+
+            # search_text filter, join all custom search columns
+            # where ('searchable: false' in the datatable definition)
+            if search_text:
+                search_text = search_text.lower()
+                # join queries for the search_text search
+                search_text_ass_ids = []
+                for assessment in queryset:
+                    if (search_text in assessment.application.licence_category.lower()
+                        or search_text in assessment.licence_activity.short_name.lower()
+                        or search_text in assessment.application.applicant.lower()
+                        or search_text in assessment.get_status_display().lower()
+                    ):
+                        search_text_ass_ids.append(assessment.id)
+                    # if applicant is not an organisation, also search against the user's email address
+                    if (assessment.application.applicant_type == Application.APPLICANT_TYPE_PROXY and
+                        search_text in assessment.application.proxy_applicant.email.lower()):
+                            search_text_ass_ids.append(assessment.id)
+                    if (assessment.application.applicant_type == Application.APPLICANT_TYPE_SUBMITTER and
+                        search_text in assessment.application.submitter.email.lower()):
+                            search_text_ass_ids.append(assessment.id)
+                # use pipe to join both custom and built-in DRF datatables querysets (returned by super call above)
+                # (otherwise they will filter on top of each other)
+                queryset = queryset.filter(id__in=search_text_ass_ids).distinct() | super_queryset
+
+            # apply user selected filters
+            category_name = category_name.lower() if category_name else 'all'
+            if category_name != 'all':
+                category_name_app_ids = []
+                for assessment in queryset:
+                    if category_name in assessment.application.licence_category_name.lower():
+                        category_name_app_ids.append(assessment.id)
+                queryset = queryset.filter(id__in=category_name_app_ids)
+            status_filter = status_filter.lower() if status_filter else 'all'
+            if status_filter != 'all':
+                queryset = queryset.filter(status=status_filter)
+            if date_from:
+                queryset = queryset.filter(application__lodgement_date__gte=date_from)
+            if date_to:
+                date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
+                queryset = queryset.filter(application__lodgement_date__lte=date_to)
+            submitter = submitter.lower() if submitter else 'all'
+            if submitter != 'all':
+                queryset = queryset.filter(application__submitter__email__iexact=submitter)
+
+        # override queryset ordering, required because the ordering is usually handled
+        # in the super call, but is then clobbered by the custom queryset joining above
+        # also needed to disable ordering for all fields for which data is not an
+        # Assessment model field, as property functions will not work with order_by
+        getter = request.query_params.get
+        fields = self.get_fields(getter)
+        ordering = self.get_ordering(getter, fields)
+        if len(ordering):
+            queryset = queryset.order_by(*ordering)
+
+        setattr(view, '_datatables_total_count', total_count)
+        return queryset
+
+
+class AssessmentRenderer(DatatablesRenderer):
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        if 'view' in renderer_context and hasattr(renderer_context['view'], '_datatables_total_count'):
+            data['recordsTotal'] = renderer_context['view']._datatables_total_count
+        return super(AssessmentRenderer, self).render(data, accepted_media_type, renderer_context)
+
+
+class AssessmentPaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (AssessmentFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (AssessmentRenderer,)
+    queryset = Assessment.objects.none()
+    serializer_class = DTAssessmentSerializer
+    page_size = 10
+
+    def get_queryset(self):
+        if is_internal(self.request):
+            return Assessment.objects.all()
+        elif is_customer(self.request):
+            return Assessment.objects.none()
+        return Assessment.objects.none()
+
+    @list_route(methods=['GET', ])
+    def datatable_list(self, request, *args, **kwargs):
+        self.serializer_class = DTAssessmentSerializer
+        queryset = self.get_queryset()
+        queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = DTAssessmentSerializer(result_page, context={'request': request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
 
 
 class AssessmentViewSet(viewsets.ModelViewSet):
