@@ -1,45 +1,55 @@
 <template lang="html">
     <div class="container">
-        <div id="map" class="map"></div>
+        <div id="mapOL"></div>
     </div>
 </template>
 
 <script>
-var L = require('leaflet');
-module.exports = {
-    data: function(){
-        return {
-            map: null,
-            tileLayer: null,
-            layers: [],
-        }
-    },
-    mounted(){
-        this.initMap();
-        this.initLayers();
-    },
-    methods: {
-        initMap() {
-            this.map = L.map('map').setView([38.63, -90.23], 12);
-            this.tileLayer = L.tileLayer(
-                'https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager/{z}/{x}/{y}.png',
-                {
-                    maxZoom: 18,
-                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>',
-                } 
-            );
-            this.tileLayer.addTo(this.map);
-        },
-        initLayers(){
+import 'ol/ol.css';
+import Map from 'ol/Map.js';
+import View from 'ol/View.js';
+import { defaults as defaultControls, ScaleLine} from 'ol/control.js';
+import TileLayer from 'ol/layer/Tile.js';
+import OSM from 'ol/source/OSM';
+import BingMaps from 'ol/source/BingMaps';
+import {addProjection, addCoordinateTransforms, transform} from 'ol/proj.js';
 
-        },
+
+export default {
+    name: "map-openlayers",
+    data: function(){
+
+    },
+    mounted: function(){
+        var coords = transform([10.0, 10.0], 'EPSG:4326', 'EPSG:3857');
+
+        let map = new Map({
+            controls: defaultControls().extend([
+                new ScaleLine({
+                    units: 'metric'
+                })
+            ]),
+            target: 'mapOL',
+            layers: [
+                new TileLayer({source: new OSM()}),
+                //new TileLayer({source: new BingMaps()}),
+            ],
+            view: new View({
+                center: [0, 0],
+                zoom: 5
+            })
+        });
+        map.getView().setCenter(transform([114.85, -29.714], 'EPSG:4326', 'EPSG:3857'));
+    },
+
+    methods: {
+
     },
 }
 </script>
 
 <style lang="css">
-.map { 
-    height: 400px; 
-    width: 400px; 
+#mapOL {
+    height: 400px;
 }
 </style>
