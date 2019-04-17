@@ -1,6 +1,6 @@
 <template lang="html">
-    <div class="panel panel-default">
-        <div v-if="proposal.processing_status=='Draft'" class="col-md-3" >
+    <div>
+        <!-- <div class="col-md-3" >
             <div class="panel panel-default fixed">
               <div class="panel-heading">
                 <h5>Sections</h5>
@@ -11,9 +11,9 @@
                   </ul>
               </div>
             </div>
-        </div>
+        </div> -->
 
-        <div class="col-md-9">
+        <div class="col-md-12">
             <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
               <li class="nav-item">
                 <a class="nav-link active" id="pills-applicant-tab" data-toggle="pill" href="#pills-applicant" role="tab" aria-controls="pills-applicant" aria-selected="true">
@@ -60,17 +60,21 @@
             </ul>
             <div class="tab-content" id="pills-tabContent">
               <!-- <div class="tab-pane fade show active" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">  -->
-                <div class="tab-pane fade row" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab"> 
-               <Profile :isApplication="true"></Profile>
+              <div class="tab-pane fade" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">
+                  <div v-if="is_external">
+                    <Profile :isApplication="true"></Profile>
               
-                <Organisation :org_id="proposal.applicant" :isApplication="true"></Organisation> 
-                <!-- <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant> -->
+                    <Organisation :org_id="proposal.applicant" :isApplication="true"></Organisation> 
+                  </div>
+                  <div v-else>
+                    <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant>
+                  </div>
               </div>
               <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">
-                <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand"></ActivitiesLand>
+                <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand" :canEditActivities="canEditActivities"></ActivitiesLand>
               </div>
               <div class="tab-pane fade" id="pills-activities-marine" role="tabpanel" aria-labelledby="pills-activities-marine-tab">
-                <ActivitiesMarine :proposal="proposal" id="proposalStartActivitiesMarine"></ActivitiesMarine>
+                <ActivitiesMarine :proposal="proposal" id="proposalStartActivitiesMarine" :canEditActivities="canEditActivities"></ActivitiesMarine>
               </div>
               <div class="tab-pane fade" id="pills-other-details" role="tabpanel" aria-labelledby="pills-other-details-tab">
                 <OtherDetails :proposal="proposal" id="proposalStartOtherDetails"></OtherDetails>
@@ -112,6 +116,14 @@
             form_width: {
                 type: String,
                 default: 'col-md-9'
+            },
+            canEditActivities:{
+              type: Boolean,
+              default: true
+            },
+            is_external:{
+              type: Boolean,
+              default: false
             }
         },
         data:function () {

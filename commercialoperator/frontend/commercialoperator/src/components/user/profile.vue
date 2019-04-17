@@ -1,5 +1,6 @@
 <template>
-    <div class="container" id="userInfo">
+    <div :class="classCompute" id="userInfo">
+      <div class="col-sm-12">
         <div v-if="showCompletion" class="row">
             <div class="col-sm-12">
                 <div class="well well-sm">
@@ -350,6 +351,7 @@
                 </div>
             </div>
         </div>
+      </div>
     </div>
 </template>
 
@@ -432,6 +434,9 @@ export default {
         },
     },
     computed: {
+        classCompute:function(){
+          return this.isApplication? 'row' : 'container';
+        },
         hasOrgs: function() {
             return this.profile.commercialoperator_organisations && this.profile.commercialoperator_organisations.length > 0 ? true: false;
         },

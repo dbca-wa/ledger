@@ -2,7 +2,7 @@
     <div class="row">
         <div class="col-sm-12"> 
             <div class="row" >
-                <div class="col-md-3">
+                <div class="col-md-3" v-if="!proposal.readonly">
                             <input type="button" style="margin-top:25px;" @click.prevent="newVessel" class="btn btn-primary" value="Add new vessel"/>
                 </div>
             </div>
@@ -102,8 +102,10 @@ export default {
                         data: '',
                         mRender:function (data,type,full) {
                             let links = '';
+                            if(!vm.proposal.readonly){
                             links +=  `<a href='#${full.id}' data-edit-vessel='${full.id}'>Edit Vessel</a><br/>`;
                             links +=  `<a href='#${full.id}' data-discard-vessel='${full.id}'>Discard</a><br/>`;
+                        }
                         //     if (!vm.is_external){
                         //         if (full.can_user_view) {
                         //             links +=  `<a href='/internal/compliance/${full.id}'>Process</a><br/>`;

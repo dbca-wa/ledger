@@ -28,19 +28,19 @@
                                         <label class="control-label">{{q.question_text}}</label></li>
                                         <ul class="list-inline col-sm-6">
                                             <li class="list-inline-item" v-if="q.answer_one">
-                                                <input  class="form-check-input" v-model="q.selected" ref="Checkbox" type="radio" :name="'option'+q.id" :id="answer_one+q.id":value="answer_one" data-parsley-required />
+                                                <input  class="form-check-input" v-model="q.selected" ref="Checkbox" type="radio" :name="'option'+q.id" :id="answer_one+q.id":value="answer_one" data-parsley-required :disabled="proposal.readonly"/>
                                                 {{ q.answer_one }}
                                             </li>
                                             <li class="list-inline-item" v-if="q.answer_two">
-                                                <input  class="form-check-input" v-model="q.selected" ref="Checkbox" type="radio" :name="'option'+q.id" :id="answer_two+q.id" :value="answer_two" data-parsley-required />
+                                                <input  class="form-check-input" v-model="q.selected" ref="Checkbox" type="radio" :name="'option'+q.id" :id="answer_two+q.id" :value="answer_two" data-parsley-required :disabled="proposal.readonly"/>
                                                 {{q.answer_two}}
                                             </li>
                                             <li class="list-inline-item" v-if="q.answer_three">
-                                                <input  class="form-check-input" ref="Checkbox" v-model="q.selected" type="radio" :value="answer_three" :name="'option'+q.id" :id="answer_three+q.id"data-parsley-required />
+                                                <input  class="form-check-input" ref="Checkbox" v-model="q.selected" type="radio" :value="answer_three" :name="'option'+q.id" :id="answer_three+q.id"data-parsley-required :disabled="proposal.readonly" />
                                                 {{q.answer_three}}
                                             </li>
                                             <li class="list-inline-item" v-if="q.answer_four">
-                                                <input  class="form-check-input" ref="Checkbox" v-model="q.selected" type="radio" :value="answer_four" :name="'option'+q.id" :id="answer_four+q.id" data-parsley-required />
+                                                <input  class="form-check-input" ref="Checkbox" v-model="q.selected" type="radio" :value="answer_four" :name="'option'+q.id" :id="answer_four+q.id" data-parsley-required :disabled="proposal.readonly"/>
                                                 {{q.answer_four}}
                                             </li>
                                             <li class="list-inline" v-if="showResult && q.is_correct">
@@ -61,7 +61,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <input type="button" v-if="!proposal.training_completed"@click.prevent="checkAnswers" class="btn btn-primary pull-right" value="Check Answers" />
+                                    <input type="button" v-if="!proposal.training_completed && !proposal.readonly"@click.prevent="checkAnswers" class="btn btn-primary pull-right" value="Check Answers" />
                                 </div>                                
                             </div>
                         </div>

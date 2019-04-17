@@ -319,7 +319,6 @@
                     <Requirements :proposal="proposal"/>
                 </template>
                 <template v-if="canSeeSubmission || (!canSeeSubmission && showingProposal)">
-                    <!--
                     <div class="col-md-12">
                         <div class="row">
                             <div class="panel panel-default">
@@ -415,17 +414,7 @@
                     <div class="col-md-12">
                         <div class="row">
                             <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
-                                <!-- <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal"> -->
-
-                                <div class="panel panel-default">
-                                    <div v-if="proposal" id="scrollspy-heading" class="col-lg-12" >
-                                        <h4>Commercial Operator - {{proposal.application_type}} application: {{proposal.lodgement_number}}</h4>
-                                    </div>
-
-                                    <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart"></ProposalTClass>
-                                    <ProposalFilming v-else-if="proposal && proposal.application_type=='Filming'" :proposal="proposal" id="proposalStart"></ProposalFilming>
-                                    <ProposalEvent v-else-if="proposal && proposal.application_type=='Event'" :proposal="proposal" id="proposalStart"></ProposalEvent>
-
+                                <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="canEditActivities" :is_external="false"></ProposalTClass>
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                     <input type='hidden' name="proposal_id" :value="1" />
@@ -442,7 +431,23 @@
                                     </div>
                                 </div>
 
-                                <!-- </Proposal> -->
+                                <!-- <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
+                                    <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
+                                    <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
+                                    <input type='hidden' name="proposal_id" :value="1" />
+                                    <div class="row" style="margin-bottom: 50px">
+                                    <div class="navbar navbar-fixed-bottom" v-if="hasAssessorMode" style="background-color: #f5f5f5;">
+                                        <div class="navbar-inner">
+                                            <div v-if="hasAssessorMode" class="container">
+                                            <p class="pull-right">                       
+                                            <button class="btn btn-primary pull-right" style="margin-top:5px;" @click.prevent="save()">Save Changes</button>
+                                            </p>                      
+                                            </div>                   
+                                        </div>
+                                    </div>      
+                                    </div>
+
+                                </Proposal> -->
                             </form>
                         </div>
                     </div>
@@ -549,6 +554,7 @@ export default {
     },
     components: {
         Proposal,
+        ProposalTClass,
         datatable,
         ProposedDecline,
         AmendmentRequest,
@@ -596,6 +602,9 @@ export default {
         hasAssessorMode:function(){
             return this.proposal && this.proposal.assessor_mode.has_assessor_mode ? true : false;
         },
+        canEditActivities: function(){
+            return this.proposal && this.proposal.assessor_mode && this.proposal.assessor_mode.assessor_mode && this.proposal.can_edit_activities;
+        },
         canAction: function(){
             if (this.proposal.processing_status == 'With Approver'){
                 return this.proposal && (this.proposal.processing_status == 'With Approver' || this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Assessor (Requirements)') && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_approver || this.proposal.assigned_approver == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
@@ -628,6 +637,7 @@ export default {
     methods: {
         initialiseOrgContactTable: function(){
             let vm = this;
+            console.log("i am here original")
             if (vm.proposal && !vm.contacts_table_initialised){
                 vm.contacts_options.ajax.url = helpers.add_endpoint_json(api_endpoints.organisations,vm.proposal.applicant.id+'/contacts');
                 vm.contacts_table = $('#'+vm.contacts_table_id).DataTable(vm.contacts_options);
@@ -678,6 +688,7 @@ export default {
         save: function(e) {
           let vm = this;
           let formData = new FormData(vm.form);
+          formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
           vm.$http.post(vm.proposal_form_url,formData).then(res=>{
               swal(
                 'Saved',
@@ -690,6 +701,7 @@ export default {
         save_wo: function() {
           let vm = this;
           let formData = new FormData(vm.form);
+          formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
           vm.$http.post(vm.proposal_form_url,formData).then(res=>{
 
               
@@ -1078,17 +1090,17 @@ export default {
     },
     updated: function(){
         let vm = this;
-        if (!vm.panelClickersInitialised){
-            $('.panelClicker[data-toggle="collapse"]').on('click', function () {
-                var chev = $(this).children()[0];
-                window.setTimeout(function () {
-                    $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
-                },100);
-            }); 
-            vm.panelClickersInitialised = true;
-        }
+        // if (!vm.panelClickersInitialised){
+        //     $('.panelClicker[data-toggle="collapse"]').on('click', function () {
+        //         var chev = $(this).children()[0];
+        //         window.setTimeout(function () {
+        //             $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
+        //         },100);
+        //     }); 
+        //     vm.panelClickersInitialised = true;
+        // }
         this.$nextTick(() => {
-            vm.initialiseOrgContactTable();
+            //vm.initialiseOrgContactTable();
             vm.initialiseSelects();
             vm.form = document.forms.new_proposal;
         });
@@ -1099,6 +1111,9 @@ export default {
                 vm.proposal = res.body;
                 vm.original_proposal = helpers.copyObject(res.body);
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                vm.proposal.selected_trails_activities=[];
+                vm.proposal.selected_parks_activities=[];
+                vm.proposal.marine_parks_activities=[];
               });
             },
             err => {
