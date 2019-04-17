@@ -10,7 +10,7 @@ from django.dispatch import receiver
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
-from django.utils import timezone, six
+from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
 
 from ledger.accounts.models import EmailUser, RevisionedMixin
@@ -601,9 +601,6 @@ class Application(RevisionedMixin):
         from wildlifecompliance.components.licences.models import LicenceActivity
         with transaction.atomic():
             if self.can_user_edit:
-                # Save the data first
-                parser = SchemaParser(draft=False)
-                parser.save_application_user_data(self, request, viewset)
                 # self.processing_status = Application.PROCESSING_STATUS_UNDER_REVIEW
                 self.customer_status = Application.CUSTOMER_STATUS_UNDER_REVIEW
                 self.submitter = request.user
@@ -1511,6 +1508,9 @@ class ApplicationFormDataRecord(models.Model):
 
     INSTANCE_ID_SEPARATOR = "__instance-"
 
+    ACTION_TYPE_ASSIGN_VALUE = 'value'
+    ACTION_TYPE_ASSIGN_COMMENT = 'comment'
+
     COMPONENT_TYPE_TEXT = 'text'
     COMPONENT_TYPE_TAB = 'tab'
     COMPONENT_TYPE_SECTION = 'section'
@@ -1572,11 +1572,27 @@ class ApplicationFormDataRecord(models.Model):
         unique_together = ('application', 'field_name',)
 
     @staticmethod
-    def process_form(application, form_data):
+    def process_form(request, application, form_data, action=ACTION_TYPE_ASSIGN_VALUE):
+        can_edit_comments = request.user.has_perm(
+            'wildlifecompliance.licensing_officer'
+        ) or request.user.has_perm(
+            'wildlifecompliance.assessor'
+        )
+        can_edit_deficiencies = request.user.has_perm(
+            'wildlifecompliance.licensing_officer'
+        )
+
+        if action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT and\
+                not can_edit_comments and not can_edit_deficiencies:
+            raise Exception(
+                'You are not authorised to perform this action!')
+
         for field_name, field_data in form_data.items():
             schema_name = field_data.get('schema_name', '')
             component_type = field_data.get('component_type', '')
             value = field_data.get('value', '')
+            comment = field_data.get('comment_value', '')
+            deficiency = field_data.get('deficiency_value', '')
             instance_name = ''
 
             if ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR in field_name:
@@ -1593,8 +1609,13 @@ class ApplicationFormDataRecord(models.Model):
                 form_data_record.schema_name = schema_name
                 form_data_record.instance_name = instance_name
                 form_data_record.component_type = component_type
-
-            form_data_record.value = value
+            if action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_VALUE:
+                form_data_record.value = value
+            elif action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT:
+                if can_edit_comments:
+                    form_data_record.comment = comment
+                if can_edit_deficiencies:
+                    form_data_record.deficiency = deficiency
             form_data_record.save()
 
 

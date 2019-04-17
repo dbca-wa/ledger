@@ -121,11 +121,11 @@ export const rendererStore = {
         saveFormData({ dispatch, commit, getters }, { url }) {
             return new Promise((resolve, reject) => {
                 Vue.http.post(url, getters.renderer_form_data).then(res => {
-                    resolve();
+                    resolve(res);
                 },
                 err => {
                     console.log(err);
-                    reject();
+                    reject(err);
                 });
             })
         },
