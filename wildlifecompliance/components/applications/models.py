@@ -1567,7 +1567,21 @@ class ApplicationFormDataRecord(models.Model):
         unique_together = ('application', 'field_name',)
 
     @staticmethod
-    def process_form(application, form_data, action=ACTION_TYPE_ASSIGN_VALUE):
+    def process_form(request, application, form_data, action=ACTION_TYPE_ASSIGN_VALUE):
+        can_edit_comments = request.user.has_perm(
+            'wildlifecompliance.licensing_officer'
+        ) or request.user.has_perm(
+            'wildlifecompliance.assessor'
+        )
+        can_edit_deficiencies = request.user.has_perm(
+            'wildlifecompliance.licensing_officer'
+        )
+
+        if action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT and\
+                not can_edit_comments and not can_edit_deficiencies:
+            raise Exception(
+                'You are not authorised to perform this action!')
+
         for field_name, field_data in form_data.items():
             schema_name = field_data.get('schema_name', '')
             component_type = field_data.get('component_type', '')
@@ -1593,8 +1607,10 @@ class ApplicationFormDataRecord(models.Model):
             if action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_VALUE:
                 form_data_record.value = value
             elif action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT:
-                form_data_record.comment = comment
-                form_data_record.deficiency = deficiency
+                if can_edit_comments:
+                    form_data_record.comment = comment
+                if can_edit_deficiencies:
+                    form_data_record.deficiency = deficiency
             form_data_record.save()
 
 

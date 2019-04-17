@@ -1176,6 +1176,11 @@ export default {
                 )
             }, error => {
                 console.log('Failed to save comments: ', error);
+                swal(
+                    'Application Error',
+                    helpers.apiVueResourceError(error),
+                    'error'
+                )
             });
         },
         save_wo: function() {
