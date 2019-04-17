@@ -684,7 +684,7 @@ def create_temp_bookingupdate(request,arrival,departure,booking_details,old_book
     booking_arrival = booking.arrival.strftime('%d-%m-%Y')
     booking_departure = booking.departure.strftime('%d-%m-%Y')
     reservation = u'Reservation for {} confirmation PS{}'.format(
-            u'{} {}'.format(booking.customer.first_name, booking.customer.last_name), booking.id)
+            u'{} {}'.format(booking.customer.first_name, booking.customer.last_name), old_booking.id)
     # Proceed to generate invoice
 
     checkout_response = checkout(request,booking,lines,invoice_text=reservation,internal=True)
