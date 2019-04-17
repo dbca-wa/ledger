@@ -396,6 +396,7 @@ class CampsiteSerialiser(serializers.ModelSerializer):
 class RegionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Region
+        fields = '__all__'
 
 class CampsiteClassSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
