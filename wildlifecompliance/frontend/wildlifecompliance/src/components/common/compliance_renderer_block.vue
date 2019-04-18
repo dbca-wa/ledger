@@ -363,30 +363,24 @@ const ComplianceRendererBlock = {
       console.log(this);
       return this.renderer_form_data;
     },
+    formDataRecord: function() {
+      if (this.json_data[this.component_name] == null) {
+        this.setFormValue({
+          key: this.component_name,
+          value: {
+            value: "",
+            comment_value: "",
+            deficiency_value: "",
+            schema_name: this.component.name,
+            component_type: this.component.type
+          }
+        });
+      }
+      return this.json_data[this.component_name];
+    },
     value: {
       get: function() {
-        /*
-            if(this.call_email.value) {
-                //return this.json_data;
-                return this.call_email.value;
-            }
-            */
-
-        if (this.json_data == null) {
-          return this.json_data;
-          //return this.call_email.value;
-        }
-        if (this.json_data[this.component_name] == null) {
-          this.setFormValue({
-            key: this.component_name,
-            value: {
-              value: "",
-              schema_name: this.component.name,
-              component_type: this.component.type
-            }
-          });
-        }
-        return this.json_data[this.component_name];
+        return this.formDataRecord;
       },
       set: function(value) {
         this.setFormValue({
@@ -414,8 +408,7 @@ const ComplianceRendererBlock = {
   },
   methods: {
     // ...mapMutations({
-    //   updateFormField: 'complianceRendererStore/updateFormField',
-
+    //   updateFormField: "complianceRendererStore/updateFormField"
     // }),
 
     ...mapActions({

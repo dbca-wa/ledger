@@ -1,8 +1,8 @@
 import Vue from 'vue';
 import {
-    UPDATE_SELECTED_TAB_ID,
-    UPDATE_SELECTED_TAB_NAME,
-    UPDATE_CURRENT_USER,
+    updateSelectedTabID,
+    updatedSelectedTabName,
+    updateCurrentUser,
 } from '@/store/mutation-types';
 
 export const complianceUserStore = {
@@ -47,13 +47,13 @@ export const complianceUserStore = {
         },
     },
     mutations: {
-        [UPDATE_SELECTED_TAB_ID](state, tab_id) {
+        updateSelectedTabID(state, tab_id) {
             state.selected_tab_id = tab_id;
         },
-        [UPDATE_SELECTED_TAB_NAME](state, tab_name) {
+        updatedSelectedTabName(state, tab_name) {
             state.selected_tab_name = tab_name;
         },
-        [UPDATE_CURRENT_USER](state, user) {
+        updateCurrentUser(state, user) {
             Vue.set(state, 'user', {
                 ...user
             });
@@ -92,7 +92,7 @@ export const complianceUserStore = {
             dispatch,
             commit
         }, user) {
-            commit(UPDATE_CURRENT_USER, user);
+            commit(updateCurrentUser, user);
         },
     }
 }

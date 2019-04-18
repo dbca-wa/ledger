@@ -15,19 +15,16 @@
                     Object.keys(call_email.data[0]["Sandalwood - Supplying"][0]["SWS_applicationSection_0"][0])
                     :json_data='call_email.data'
                     :instance='item.name'
+                    v-bind:key="`compliance_renderer_block_${index}`"
 -->
             
             <div>
                 <div v-for="dict in call_email.schema">
                 <div v-for="(item, index) in dict.children[0].children">
-                    
                     <compliance-renderer-block
                         :component="item" 
-                        
-                        v-bind:key="`compliance_renderer_block_${index}`"
                         />
                     </div>
-                
                 </div>
             </div>
                 <div class="col-sm-12">

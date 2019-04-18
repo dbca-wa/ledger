@@ -19,7 +19,7 @@ export const callemailStore = {
     namespaced: true,
     getters: {
         call_email: state => state.call_email,
-        call_email_id: state => state.call_email.id,
+        //call_email_id: state => state.call_email.id,
         //stored_renderer_data: state => state.call_email.data,
         //getField, 
 

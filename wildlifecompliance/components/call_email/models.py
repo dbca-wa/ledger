@@ -278,3 +278,4 @@ class ComplianceFormDataRecord(models.Model):
                 if can_edit_deficiencies:
                     form_data_record.deficiency = deficiency
             form_data_record.save()
+
