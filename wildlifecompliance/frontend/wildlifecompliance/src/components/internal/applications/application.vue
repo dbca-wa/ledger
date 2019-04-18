@@ -642,7 +642,7 @@ import OfficerConditions from './application_officer_conditions.vue';
 import ProposedLicence from './proposed_issuance.vue';
 import IssueLicence from './application_issuance.vue';
 import LicenceScreen from './application_licence.vue';
-import CommsLogs from '@common-utils/comms_logs.vue';
+import CommsLogs from '@common-components/comms_logs.vue';
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js";
 import {
     api_endpoints,

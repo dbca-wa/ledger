@@ -99,7 +99,7 @@
     import $ from 'jquery'
     import Vue from 'vue'
     import datatable from '@vue-utils/datatable.vue'
-    import CommsLogs from '@common-utils/comms_logs.vue'
+    import CommsLogs from '@common-components/comms_logs.vue'
     import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
     import {
       api_endpoints,

@@ -25,7 +25,7 @@ module.exports = {
       'vue$': 'vue/dist/vue.esm.js',
       '@': resolve('src'),
       '@vue-utils': resolve('src/utils/vue'),
-      '@common-utils': resolve('src/components/common/'),
+      '@common-components': resolve('src/components/common/'),
       'datetimepicker':'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js',
       'easing':'jquery.easing/jquery.easing.js'
     }
