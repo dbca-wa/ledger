@@ -342,7 +342,8 @@ const RendererBlock = {
                     "comment_value": '',
                     "deficiency_value": '',
                     "schema_name": this.component.name,
-                    "component_type": this.component.type
+                    "component_type": this.component.type,
+                    "instance_name": this.instance !== null ? this.instance: ''
                 }
             });
         }

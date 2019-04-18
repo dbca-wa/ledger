@@ -949,30 +949,68 @@ class Application(RevisionedMixin):
     def schema_fields(self):
         fields = {}
 
-        def iterate_children(schema_group, fields):
+        def iterate_children(schema_group, fields, parent={}, parent_type='', condition={}):
             children_keys = [
                 'children',
                 'header',
                 'expander',
                 'conditions',
-                'on',
             ]
-            for item in schema_group if isinstance(schema_group, list) else schema_group.values():
+            container = {
+                i: schema_group[i] for i in range(len(schema_group))
+            } if isinstance(schema_group, list) else schema_group
+
+            for key, item in container.items():
                 if isinstance(item, list):
-                    iterate_children(item, fields)
+                    if parent_type == 'conditions':
+                        condition[parent['name']] = key
+                    iterate_children(item, fields, parent, parent_type, condition)
                     continue
 
                 name = item['name']
                 fields[name] = {}
                 fields[name].update(item)
+                fields[name]['condition'] = {}
+                fields[name]['condition'].update(condition)
 
                 for children_key in children_keys:
                     if children_key in fields[name]:
                         del fields[name][children_key]
-                        iterate_children(item[children_key], fields)
+                        iterate_children(item[children_key], fields, fields[name], children_key, condition)
 
         iterate_children(self.schema, fields)
         return fields
+
+    def get_visible_form_data_tree(self, form_data_records=None):
+        data_tree = {}
+        schema_fields = self.schema_fields
+
+        if form_data_records is None:
+            form_data_records = [(record.field_name, {
+                'schema_name': record.schema_name,
+                'instance_name': record.instance_name,
+                'value': record.value,
+            }) for record in self.form_data_records.all()]
+
+        for field_name, item in form_data_records:
+            instance = item['instance_name']
+            schema_name = item['schema_name']
+
+            if instance not in data_tree:
+                data_tree[instance] = {}
+            data_tree[instance][schema_name] = item['value']
+
+        for instance, schemas in data_tree.items():
+            for schema_name, item in schemas.items():
+                schema_data = schema_fields[schema_name]
+                for condition_field, condition_value in schema_data['condition'].items():
+                    if condition_field in schemas and schemas[condition_field] != condition_value:
+                        try:
+                            del data_tree[instance][schema_name]
+                        except KeyError:
+                            continue
+
+        return data_tree
 
     @property
     def schema(self):
@@ -1620,22 +1658,30 @@ class ApplicationFormDataRecord(models.Model):
             raise Exception(
                 'You are not authorised to perform this action!')
 
-        required_fields = application.required_fields
         is_draft = form_data.pop('__draft', False)
+        visible_data_tree = application.get_visible_form_data_tree(form_data.items())
+        required_fields = application.required_fields
         missing_fields = []
+
         for field_name, field_data in form_data.items():
             schema_name = field_data.get('schema_name', '')
+            instance_name = field_data.get('instance_name', '')
             component_type = field_data.get('component_type', '')
             value = field_data.get('value', '')
             comment = field_data.get('comment_value', '')
             deficiency = field_data.get('deficiency_value', '')
-            instance_name = ''
 
             if ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR in field_name:
-                [parsed_schema_name, instance_name] = field_name.split(
+                [parsed_schema_name, parsed_instance_name] = field_name.split(
                     ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR
                 )
                 schema_name = schema_name if schema_name else parsed_schema_name
+                instance_name = instance_name if instance_name else parsed_instance_name
+
+            try:
+                visible_data_tree[instance_name][schema_name]
+            except KeyError:
+                continue
 
             form_data_record, created = ApplicationFormDataRecord.objects.get_or_create(
                 application_id=application.id,

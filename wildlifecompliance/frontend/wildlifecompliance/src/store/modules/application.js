@@ -150,6 +150,9 @@ export const applicationStore = {
                                 "value": form_data_record.value,
                                 "comment_value": form_data_record.comment,
                                 "deficiency_value": form_data_record.deficiency,
+                                "schema_name": form_data_record.schema_name,
+                                "component_type": form_data_record.component_type,
+                                "instance_name": form_data_record.instance_name,
                             }
                         });
                     }
