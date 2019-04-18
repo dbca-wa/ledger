@@ -105,5 +105,9 @@ disturbance/static/disturbance_vue/static/js/manifest.js
 disturbance/static/disturbance_vue/static/js/vendor.js
 disturbance/static/disturbance_vue/static/js/babel-polyfill.js
 
+# Parkstay built static files.
+parkstay/static/parkstay/js/parkstay.js
+parkstay/static/parkstay/js/vendor.js
+
 # npm locks
 *-lock.json
