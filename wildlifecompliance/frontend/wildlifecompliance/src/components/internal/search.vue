@@ -1,40 +1,7 @@
 <template>
 <div class="container" id="internalSearch">
     <UserDashTable level="internal" :url="users_url" />
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Organisations
-                        <a :href="'#'+oBody" data-toggle="collapse"  data-parent="#organisationInfo" expanded="true" :aria-controls="oBody">
-                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                        </a>
-                    </h3>
-                </div>
-                <div class="panel-body collapse in" :id="oBody">
-                    <div class="row">
-                        <form name="searchOrganisationForm">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label class="control-label" for="Organisation">Search Organisation</label>
-                                    <select v-if="organisations == null" class="form-control" name="organisation" v-model="selected_organisation">
-                                        <option value="">Loading...</option>
-                                    </select>
-                                    <select v-else ref="searchOrg" class="form-control" name="organisation">
-                                        <option value="">Select Organisation</option>
-                                        <option v-for="o in organisations" :value="o.id">{{ o.name }}</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-12 text-center">
-                                <router-link :disabled="selected_organisation == ''" :to="{name:'internal-org-detail',params:{'org_id':parseInt(selected_organisation)}}" class="btn btn-primary">View Details</router-link>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <OrganisationDashTable />
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
@@ -132,6 +99,7 @@
 import $ from 'jquery'
 import datatable from '@/utils/vue/datatable.vue'
 import UserDashTable from '@common-components/users_dashboard.vue'
+import OrganisationDashTable from '@internal-components/organisations/organisations_dashboard.vue'
 import '@/scss/dashboards/search.scss';
 import {
   api_endpoints,
@@ -206,7 +174,8 @@ export default {
     watch: {},
     components: {
         datatable,
-        UserDashTable
+        UserDashTable,
+        OrganisationDashTable
     },
     beforeRouteEnter:function(to,from,next){
         let initialisers = [
