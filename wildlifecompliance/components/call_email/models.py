@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.db import models
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.db.models import Max
+from django.utils.encoding import python_2_unicode_compatible
 from ledger.accounts.models import EmailUser
 from ledger.licence.models import LicenceType
 from wildlifecompliance.components.organisations.models import Organisation
@@ -13,16 +14,16 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
 
 class Classification(models.Model):
     NAME_CHOICES = (
-            ('complaint', 'Complaint'),
-            ('enquiry', 'Enquiry'),
-            ('incident', 'Incident'),
-            )
+        ('complaint', 'Complaint'),
+        ('enquiry', 'Enquiry'),
+        ('incident', 'Incident'),
+    )
 
     name = models.CharField(
-            max_length=30,
-            choices=NAME_CHOICES,
-            default=NAME_CHOICES[0][0]            
-            )
+        max_length=30,
+        choices=NAME_CHOICES,
+        default=NAME_CHOICES[0][0]
+    )
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -36,31 +37,34 @@ class Classification(models.Model):
 class Location(models.Model):
 
     STATE_CHOICES = (
-            ('WA', 'Western Australia'),
-            ('VIC', 'Victoria'),
-            ('QLD', 'Queensland'),
-            ('NSW', 'New South Wales'),
-            ('TAS', 'Tasmania'),
-            ('NT', 'Northern Territory'),
-            ('ACT', 'Australian Capital Territory')
-            )
+        ('WA', 'Western Australia'),
+        ('VIC', 'Victoria'),
+        ('QLD', 'Queensland'),
+        ('NSW', 'New South Wales'),
+        ('TAS', 'Tasmania'),
+        ('NT', 'Northern Territory'),
+        ('ACT', 'Australian Capital Territory')
+    )
 
-    latitude = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    longitude = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    latitude = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True)
+    longitude = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True)
     street = models.CharField(max_length=100)
     town_suburb = models.CharField(max_length=100)
-    state = models.CharField(max_length=50, choices=STATE_CHOICES, default='WA')
+    state = models.CharField(
+        max_length=50, choices=STATE_CHOICES, default='WA')
     postcode = models.IntegerField()
     country = models.CharField(max_length=100, default='Australia')
 
     class Meta:
-        app_label='wildlifecompliance'
+        app_label = 'wildlifecompliance'
         verbose_name = 'CM_Location'
         verbose_name_plural = 'CM_Locations'
 
     def __str__(self):
         return '{0}, {1}, {2}, {3}, {4}' \
-                .format(self.latitude, self.longitude, self.street, self.town_suburb, self.state)
+            .format(self.latitude, self.longitude, self.street, self.town_suburb, self.state)
 
 
 class ReportType(models.Model):
@@ -69,11 +73,12 @@ class ReportType(models.Model):
     schema = JSONField(null=True)
     version = models.SmallIntegerField(default=1, blank=False, null=False)
     description = models.CharField(max_length=256, blank=True, null=True)
-    replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    replaced_by = models.ForeignKey(
+        'self', on_delete=models.PROTECT, blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
-        app_label='wildlifecompliance'
+        app_label = 'wildlifecompliance'
         verbose_name = 'CM_ReportType'
         verbose_name_plural = 'CM_ReportTypes'
         unique_together = ('report_type', 'version')
@@ -109,14 +114,14 @@ class CallEmail(models.Model):
         choices=STATUS_CHOICES,
         default=STATUS_CHOICES[0][0])
     location = models.ForeignKey(
-            Location,
-            null=True,
-            )
+        Location,
+        null=True,
+    )
     classification = models.ForeignKey(
-            Classification, 
-            )
-    data = JSONField(default=list)
-    #_stored_renderer_data = JSONField(default=list)
+        Classification,
+    )
+    #data = JSONField(default=list)
+    # _stored_renderer_data = JSONField(default=list)
     schema = JSONField(default=list)
     lodged_on = models.DateField(auto_now_add=True)
     number = models.CharField(max_length=50)
@@ -129,26 +134,147 @@ class CallEmail(models.Model):
     occurrence_date_to = models.DateField(null=True)
     occurrence_time_to = models.TimeField(null=True)
     report_type = models.ForeignKey(
-            ReportType,
-            null=True
-            )
+        ReportType,
+        null=True
+    )
 
     class Meta:
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_Call/Email'
         verbose_name_plural = 'CM_Calls/Emails'
 
-    #def __init__(self):
+    # def __init__(self):
      #   self.stored_renderer_data = stored_renderer_data
-    
+
     def __str__(self):
         return 'ID: {0}, Status: {1}, Number: {2}, Caller: {3}, Assigned To: {4}' \
-                .format(self.id, self.status, self.number, self.caller, self.assigned_to)
+            .format(self.id, self.status, self.number, self.caller, self.assigned_to)
 
-    #@property
-    #def stored_renderer_data(self):
-        #if self._stored_renderer_data:
-         #   return self._stored_renderer_data
-        #else:
-         #   return None
+    # @property
+    # def stored_renderer_data(self):
+        # if self._stored_renderer_data:
+        #   return self._stored_renderer_data
+        # else:
+        #   return None
 
+    @property
+    def data(self):
+        """ returns a queryset of form data records attached to CallEmail (shortcut to ComplianceFormDataRecord related_name). """
+        return self.form_data_records.all()
+
+
+@python_2_unicode_compatible
+class ComplianceFormDataRecord(models.Model):
+
+    INSTANCE_ID_SEPARATOR = "__instance-"
+
+    ACTION_TYPE_ASSIGN_VALUE = 'value'
+    ACTION_TYPE_ASSIGN_COMMENT = 'comment'
+
+    COMPONENT_TYPE_TEXT = 'text'
+    COMPONENT_TYPE_TAB = 'tab'
+    COMPONENT_TYPE_SECTION = 'section'
+    COMPONENT_TYPE_GROUP = 'group'
+    COMPONENT_TYPE_NUMBER = 'number'
+    COMPONENT_TYPE_EMAIL = 'email'
+    COMPONENT_TYPE_SELECT = 'select'
+    COMPONENT_TYPE_MULTI_SELECT = 'multi-select'
+    COMPONENT_TYPE_TEXT_AREA = 'text_area'
+    COMPONENT_TYPE_TABLE = 'table'
+    COMPONENT_TYPE_EXPANDER_TABLE = 'expander_table'
+    COMPONENT_TYPE_LABEL = 'label'
+    COMPONENT_TYPE_RADIO = 'radiobuttons'
+    COMPONENT_TYPE_CHECKBOX = 'checkbox'
+    COMPONENT_TYPE_DECLARATION = 'declaration'
+    COMPONENT_TYPE_FILE = 'file'
+    COMPONENT_TYPE_DATE = 'date'
+    COMPONENT_TYPE_CHOICES = (
+        (COMPONENT_TYPE_TEXT, 'Text'),
+        (COMPONENT_TYPE_TAB, 'Tab'),
+        (COMPONENT_TYPE_SECTION, 'Section'),
+        (COMPONENT_TYPE_GROUP, 'Group'),
+        (COMPONENT_TYPE_NUMBER, 'Number'),
+        (COMPONENT_TYPE_EMAIL, 'Email'),
+        (COMPONENT_TYPE_SELECT, 'Select'),
+        (COMPONENT_TYPE_MULTI_SELECT, 'Multi-Select'),
+        (COMPONENT_TYPE_TEXT_AREA, 'Text Area'),
+        (COMPONENT_TYPE_TABLE, 'Table'),
+        (COMPONENT_TYPE_EXPANDER_TABLE, 'Expander Table'),
+        (COMPONENT_TYPE_LABEL, 'Label'),
+        (COMPONENT_TYPE_RADIO, 'Radio'),
+        (COMPONENT_TYPE_CHECKBOX, 'Checkbox'),
+        (COMPONENT_TYPE_DECLARATION, 'Declaration'),
+        (COMPONENT_TYPE_FILE, 'File'),
+        (COMPONENT_TYPE_DATE, 'Date'),
+    )
+
+    call_email = models.ForeignKey(CallEmail, related_name='form_data_records')
+    field_name = models.CharField(max_length=512, null=True, blank=True)
+    schema_name = models.CharField(max_length=256, null=True, blank=True)
+    instance_name = models.CharField(max_length=256, null=True, blank=True)
+    component_type = models.CharField(
+        max_length=64,
+        choices=COMPONENT_TYPE_CHOICES,
+        default=COMPONENT_TYPE_TEXT)
+    value = JSONField(blank=True, null=True)
+    comment = models.TextField(blank=True)
+    deficiency = models.TextField(blank=True)
+
+    def __str__(self):
+        return "CallEmail {id} record {field}: {value}".format(
+            id=self.call_email_id,
+            field=self.field_name,
+            value=self.value[:8]
+        )
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        unique_together = ('call_email', 'field_name',)
+
+    @staticmethod
+    def process_form(request, CallEmail, form_data, action=ACTION_TYPE_ASSIGN_VALUE):
+        print(form_data)
+        can_edit_comments = request.user.has_perm(
+            'wildlifecompliance.licensing_officer'
+        ) or request.user.has_perm(
+            'wildlifecompliance.assessor'
+        )
+        can_edit_deficiencies = request.user.has_perm(
+            'wildlifecompliance.licensing_officer'
+        )
+
+        if action == ComplianceFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT and\
+                not can_edit_comments and not can_edit_deficiencies:
+            raise Exception(
+                'You are not authorised to perform this action!')
+
+        for field_name, field_data in form_data.items():
+            schema_name = field_data.get('schema_name', '')
+            component_type = field_data.get('component_type', '')
+            value = field_data.get('value', '')
+            comment = field_data.get('comment_value', '')
+            deficiency = field_data.get('deficiency_value', '')
+            instance_name = ''
+
+            if ComplianceFormDataRecord.INSTANCE_ID_SEPARATOR in field_name:
+                [parsed_schema_name, instance_name] = field_name.split(
+                    ComplianceFormDataRecord.INSTANCE_ID_SEPARATOR
+                )
+                schema_name = schema_name if schema_name else parsed_schema_name
+
+            form_data_record, created = ComplianceFormDataRecord.objects.get_or_create(
+                call_email_id=CallEmail.id,
+                field_name=field_name
+            )
+            if created:
+                form_data_record.schema_name = schema_name
+                form_data_record.instance_name = instance_name
+                form_data_record.component_type = component_type
+            if action == ComplianceFormDataRecord.ACTION_TYPE_ASSIGN_VALUE:
+                form_data_record.value = value
+            elif action == ComplianceFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT:
+                if can_edit_comments:
+                    form_data_record.comment = comment
+                if can_edit_deficiencies:
+                    form_data_record.deficiency = deficiency
+            form_data_record.save()

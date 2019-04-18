@@ -250,208 +250,218 @@
             :help_text="help_text"
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
+<!--
 <p>{{ value }}</p>
 <p>{{ renderer_form_data }}</p>
 <p>{{ stored_renderer_data }}</p>
+-->
     </span>
 </template>
 
 
 <script>
-import Vue from 'vue';
-import { mapActions, mapGetters, mapMutations } from 'vuex';
-import { helpers, api_endpoints } from "@/utils/hooks.js"
+import Vue from "vue";
+import { mapActions, mapGetters, mapMutations } from "vuex";
+import { helpers, api_endpoints } from "@/utils/hooks.js";
 import { strToBool } from "@/utils/helpers.js";
 
-import FormSection from '@/components/forms/section.vue'
-import Group from '@/components/forms/group.vue'
-import Radio from '@/components/forms/radio.vue'
-import Conditions from '@/components/forms/conditions.vue'
-import SelectConditions from '@/components/forms/select-conditions.vue'
-import Checkbox from '@/components/forms/checkbox.vue'
-import Declaration from '@/components/forms/declarations.vue'
-import File from '@/components/forms/file.vue'
-import SelectBlock from '@/components/forms/select.vue'
-import DateField from '@/components/compliance_forms/date-field.vue'
-import TextField from '@/components/compliance_forms/text.vue'
-import TextAreaBlock from '@/components/forms/text-area.vue'
-import LabelBlock from '@/components/forms/label.vue'
-import AssessorText from '@/components/forms/readonly_text.vue'
-import HelpText from '@/components/compliance_forms/help_text.vue'
-import HelpTextUrl from '@/components/compliance_forms/help_text_url.vue'
-import CommentRadioCheckBox from '@/components/forms/comment_icon_checkbox_radio.vue'
-import TableBlock from '@/components/forms/table.vue'
-import ExpanderTable from '@/components/forms/expander_table.vue'
+import FormSection from "@/components/forms/section.vue";
+import Group from "@/components/forms/group.vue";
+import Radio from "@/components/forms/radio.vue";
+import Conditions from "@/components/forms/conditions.vue";
+import SelectConditions from "@/components/forms/select-conditions.vue";
+import Checkbox from "@/components/forms/checkbox.vue";
+import Declaration from "@/components/forms/declarations.vue";
+import File from "@/components/forms/file.vue";
+import SelectBlock from "@/components/forms/select.vue";
+import DateField from "@/components/compliance_forms/date-field.vue";
+import TextField from "@/components/compliance_forms/text.vue";
+import TextAreaBlock from "@/components/forms/text-area.vue";
+import LabelBlock from "@/components/forms/label.vue";
+import AssessorText from "@/components/forms/readonly_text.vue";
+import HelpText from "@/components/compliance_forms/help_text.vue";
+import HelpTextUrl from "@/components/compliance_forms/help_text_url.vue";
+import CommentRadioCheckBox from "@/components/forms/comment_icon_checkbox_radio.vue";
+import TableBlock from "@/components/forms/table.vue";
+import ExpanderTable from "@/components/forms/expander_table.vue";
 
 const ComplianceRendererBlock = {
-  name: 'compliance-renderer-block',
+  name: "compliance-renderer-block",
   components: {
-      FormSection,
-      TextField,
-      Group,
-      SelectBlock,
-      SelectConditions,
-      HelpText,
-      HelpTextUrl,
-      CommentRadioCheckBox,
-      Radio,
-      Conditions,
-      Checkbox,
-      File,
-      DateField,
-      TextAreaBlock,
-      LabelBlock,
-      TableBlock,
-      ExpanderTable,
+    FormSection,
+    TextField,
+    Group,
+    SelectBlock,
+    SelectConditions,
+    HelpText,
+    HelpTextUrl,
+    CommentRadioCheckBox,
+    Radio,
+    Conditions,
+    Checkbox,
+    File,
+    DateField,
+    TextAreaBlock,
+    LabelBlock,
+    TableBlock,
+    ExpanderTable
   },
   data: function() {
     return {
-        //renderer_form_data: {field1: "text"},
-        //isComponentVisible: true,
-        stored_data: this.call_email.stored_data
-    }
+      //renderer_form_data: {field1: "text"},
+      //isComponentVisible: true,
+      //stored_data: this.call_email.stored_data
+    };
   },
-  props:{
-      component: {
-          type: Object,
-          required: true
-      },
-      instance: {
-          type: String,
-          default: null
-      }
+  props: {
+    component: {
+      type: Object,
+      required: true
+    },
+    instance: {
+      type: String,
+      default: null
+    }
   },
   computed: {
     ...mapGetters({
-        call_email: 'callemailStore/call_email',
-        stored_renderer_data: 'callemailStore/stored_renderer_data',
-        //call_email_id: 'callemailStore/call_email_id',
-        //'application',
-        //'application_id',
-        renderer_form_data: 'complianceRendererStore/renderer_form_data',
-        isComponentVisible: 'complianceRendererStore/isComponentVisible',
+      call_email: "callemailStore/call_email",
+      //stored_renderer_data: 'callemailStore/stored_renderer_data',
+      call_email_id: "callemailStore/call_email_id",
+      //'application',
+      //'application_id',
+      renderer_form_data: "complianceRendererStore/renderer_form_data",
+      isComponentVisible: "complianceRendererStore/isComponentVisible"
     }),
-    
+
     is_readonly: function() {
-        return this.component.readonly ? this.component.readonly : null;
+      return this.component.readonly ? this.component.readonly : null;
     },
-    
+
     comment_data: function() {
-        this.call_email.comment_data;
+      this.call_email.comment_data;
     },
     documents_url: function() {
-        this.call_email.documents_url;
+      this.call_email.documents_url;
     },
     can_user_edit: function() {
-        this.call_email.can_user_edit;
+      this.call_email.can_user_edit;
     },
-    
+
     site_url: function() {
-        return (api_endpoints.site_url.endsWith("/")) ? (api_endpoints.site_url): (api_endpoints.site_url + "/");
+      return api_endpoints.site_url.endsWith("/")
+        ? api_endpoints.site_url
+        : api_endpoints.site_url + "/";
     },
     component_name: function() {
-        return `${this.component.name}${this.instance !== null ? `__instance-${this.instance}`: ''}`;
+      return `${this.component.name}${
+        this.instance !== null ? `__instance-${this.instance}` : ""
+      }`;
     },
-    
+
     json_data: function() {
-        console.log(this);
-        return this.renderer_form_data;
+      console.log(this);
+      return this.renderer_form_data;
     },
     value: {
-        get: function() {
-            /*
+      get: function() {
+        /*
             if(this.call_email.value) {
                 //return this.json_data;
                 return this.call_email.value;
             }
             */
-            
-            if(this.json_data == null) {
-                return this.json_data;
-                //return this.call_email.value;
-            }
-            if(this.json_data[this.component_name] == null) {
-                this.setFormValue({
-                    key: this.component_name,
-                    value: {
-                        "value": '',
-                        "schema_name": this.component.name,
-                        "component_type": this.component.type
-                    }
-                });
-            }
-            return this.json_data[this.component_name];
-            
-        },
-        set: function(value) {
-            this.setFormValue({
-                key: this.component_name,
-                value: { "value": value }
-            });
+
+        if (this.json_data == null) {
+          return this.json_data;
+          //return this.call_email.value;
         }
+        if (this.json_data[this.component_name] == null) {
+          this.setFormValue({
+            key: this.component_name,
+            value: {
+              value: "",
+              schema_name: this.component.name,
+              component_type: this.component.type
+            }
+          });
+        }
+        return this.json_data[this.component_name];
+      },
+      set: function(value) {
+        this.setFormValue({
+          key: this.component_name,
+          value: { value: value }
+        });
+      }
     },
-    
+
     comment_value: function() {
-        if(this.comment_data == null || this.comment_data[this.component_name] == null) {
-            return null;
-        }
-        return this.comment_data[this.component_name];
+      if (
+        this.comment_data == null ||
+        this.comment_data[this.component_name] == null
+      ) {
+        return null;
+      }
+      return this.comment_data[this.component_name];
     },
     help_text: function() {
-        return this.replaceSitePlaceholders(this.component.help_text);
+      return this.replaceSitePlaceholders(this.component.help_text);
     },
     help_text_url: function() {
-        return this.replaceSitePlaceholders(this.component.help_text_url);
-    },
+      return this.replaceSitePlaceholders(this.component.help_text_url);
+    }
   },
   methods: {
     // ...mapMutations({
-    //     updateFormField: 'complianceRendererStore/updateFormField',
+    //   updateFormField: 'complianceRendererStore/updateFormField',
 
     // }),
-    
+
     ...mapActions({
-        toggleVisibleComponent: 'complianceRendererStore/toggleVisibleComponent',
-        setFormValue: 'complianceRendererStore/setFormValue',
+      toggleVisibleComponent: "complianceRendererStore/toggleVisibleComponent",
+      setFormValue: "complianceRendererStore/setFormValue"
     }),
     strToBool: strToBool,
-    element_id: function(depth=0) {
-         return `id_${this.component_name}${(depth) ? `_${depth}` : ''}${this.instance !== null ? `__instance${this.instance}`: ''}`;
-        //return null;
+    element_id: function(depth = 0) {
+      return `id_${this.component_name}${depth ? `_${depth}` : ""}${
+        this.instance !== null ? `__instance${this.instance}` : ""
+      }`;
+      //return null;
     },
-    
-    replaceSitePlaceholders: function(text_string) {
-        if(text_string && text_string.includes("site_url:/")) {
-            text_string = text_string.replace('site_url:/', this.site_url);
 
-            if (text_string.includes("anchor=")) {
-                text_string = text_string.replace('anchor=', "#");
-            }
+    replaceSitePlaceholders: function(text_string) {
+      if (text_string && text_string.includes("site_url:/")) {
+        text_string = text_string.replace("site_url:/", this.site_url);
+
+        if (text_string.includes("anchor=")) {
+          text_string = text_string.replace("anchor=", "#");
         }
-        return text_string;
+      }
+      return text_string;
     },
-    
-    handleComponentChange: function(component, assignEventValue=true) {
-        return (e) => {
-            for(let condition in component.conditions) {
-                this.toggleVisibleComponent({
-                    'component_id': `cons_${this.component_name}_${condition}`,
-                    'visible': false
-                });
-            }
-            e.target && this.toggleVisibleComponent({
-                'component_id': `cons_${e.target.name}_${e.target.value}`,
-                'visible': e.target.checked
-            });
-            const value = e.value == null ? e.target.value : e.value;
-            if(assignEventValue && value != null) {
-                this.value =value;
-            }
+
+    handleComponentChange: function(component, assignEventValue = true) {
+      return e => {
+        for (let condition in component.conditions) {
+          this.toggleVisibleComponent({
+            component_id: `cons_${this.component_name}_${condition}`,
+            visible: false
+          });
         }
-    },
-    
+        e.target &&
+          this.toggleVisibleComponent({
+            component_id: `cons_${e.target.name}_${e.target.value}`,
+            visible: e.target.checked
+          });
+        const value = e.value == null ? e.target.value : e.value;
+        if (assignEventValue && value != null) {
+          this.value = value;
+        }
+      };
+    }
   }
-}
+};
 
 export default ComplianceRendererBlock;
 </script>
