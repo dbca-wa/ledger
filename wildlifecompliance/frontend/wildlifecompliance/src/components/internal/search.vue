@@ -131,7 +131,7 @@
 <script>
 import $ from 'jquery'
 import datatable from '@/utils/vue/datatable.vue'
-import UserDashTable from '@common-utils/users_dashboard.vue'
+import UserDashTable from '@common-components/users_dashboard.vue'
 import '@/scss/dashboards/search.scss';
 import {
   api_endpoints,
