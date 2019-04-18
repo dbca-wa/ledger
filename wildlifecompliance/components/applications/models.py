@@ -950,21 +950,26 @@ class Application(RevisionedMixin):
         fields = {}
 
         def iterate_children(schema_group, fields):
-            for item in schema_group:
+            children_keys = [
+                'children',
+                'header',
+                'expander',
+                'conditions',
+                'on',
+            ]
+            for item in schema_group if isinstance(schema_group, list) else schema_group.values():
+                if isinstance(item, list):
+                    iterate_children(item, fields)
+                    continue
+
                 name = item['name']
                 fields[name] = {}
                 fields[name].update(item)
-                if 'children' in fields[name]:
-                    del fields[name]['children']
-                    iterate_children(item['children'], fields)
 
-                if 'header' in fields[name]:
-                    del fields[name]['header']
-                    iterate_children(item['header'], fields)
-
-                if 'expander' in fields[name]:
-                    del fields[name]['expander']
-                    iterate_children(item['expander'], fields)
+                for children_key in children_keys:
+                    if children_key in fields[name]:
+                        del fields[name][children_key]
+                        iterate_children(item[children_key], fields)
 
         iterate_children(self.schema, fields)
         return fields
