@@ -15,7 +15,7 @@ export default {
     data() {
         let vm = this;
         return {
-            licences_url: api_endpoints.licences,
+            licences_url: helpers.add_endpoint_join(api_endpoints.licences_paginated,'internal_datatable_list/?format=datatables'),
         }
     
     },

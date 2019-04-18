@@ -52,7 +52,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Submitter</label>
-                                <select class="form-control" v-model="filterApplicationSubmitter">
+                                <select class="form-control" v-model="filterApplicationSubmitter" ref="submitter_select">
                                     <option value="All">All</option>
                                     <option v-for="s in application_submitters" :value="s.email">{{s.search_term}}</option>
                                 </select>
@@ -100,8 +100,11 @@ export default {
             application_licence_types: [],
             application_regions: [],
             application_submitters: [],
-            application_headers:["Number","Licence Category","Activity","Submitter","Applicant","Status","Lodged on","Action"],
+            application_headers:["Number","Licence Category","Activity","Type","Submitter","Applicant","Status","Lodged on","Action"],
             application_options:{
+                serverSide: true,
+                searchDelay: 1000,
+                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 order: [
                     [0, 'desc']
                 ],
@@ -112,58 +115,87 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.assessment,'user_list'),
-                    "dataSrc": ''
+                    "url": helpers.add_endpoint_join(api_endpoints.assessment_paginated,'datatable_list/?format=datatables'),
+                    "dataSrc": "data",
+                    // adding extra GET params for Custom filtering
+                    "data": function (d) {
+                        d.category_name = vm.filterApplicationLicenceType;
+                        d.status = vm.filterApplicationStatus.id;
+                        d.submitter = vm.filterApplicationSubmitter;
+                        d.date_from = vm.filterApplicationLodgedFrom != '' && vm.filterApplicationLodgedFrom != null ? moment(vm.filterApplicationLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_to = vm.filterApplicationLodgedTo != '' && vm.filterApplicationLodgedTo != null ? moment(vm.filterApplicationLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                    }
                 },
                 columns: [
                     {
                         data: "application",
-                        mRender:function(data,type,full){
-                            return 'P'+data;
-                        }
+                        name: "application__lodgement_number"
                     },
                     {
                         data: "application_category",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? `${data}` : '';
-                        }
+                        },
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
                     },
                     {
                         data: "licence_activity",
                         mRender:function (data,type,full) {
                             return data.id != '' && data.id != null ? `${data.name}` : '';
-                        }
+                        },
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
+                    },
+                    {
+                        data: "application_type",
+                        mRender:function (data,type,full) {
+                            return data.name;
+                        },
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
                     },
                     {
                         data: "submitter",
+                        name: "application__submitter__first_name, application__submitter__last_name, application__submitter__email",
                         mRender:function (data,type,full) {
-                            return data.id != '' && data.id != null ? `${data.first_name} ${data.last_name}` : '';
-                        }
+                            if (data) {
+                                return `${data.first_name} ${data.last_name}`;
+                            }
+                            return ''
+                        },
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
                     },
                     {
                         data: "applicant",
-                        mRender:function (data,type,full) {
-                            return data != '' && data != null ? `${data}` : '';
-                        }
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
                     },
                     {
                         data: "status",
                         mRender:function (data,type,full) {
-                            return data.name ? `${data.name}` : '';
-                        }
+                            return data.name;
+                        },
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
                     },
                     {
                         data: "application_lodgement_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
+                        },
+                        orderable: false,
+                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
                     },
                     {
                         mRender:function (data,type,full) {
                             let links = '';
-                            links +=  full.can_be_processed ? `<a href='/internal/application/${full.application}'>Process</a><br/>`: `<a href='/internal/application/${full.application}'>View</a><br/>`;
+                            links +=  full.can_be_processed ? `<a href='/internal/application/${full.application_id}'>Process</a><br/>`: `<a href='/internal/application/${full.application_id}'>View</a><br/>`;
                             return links;
-                        }
+                        },
+                        orderable: false,
+                        searchable: false
                     }
                 ],
                 processing: true,
@@ -181,11 +213,11 @@ export default {
                     var submittersColumn = vm.$refs.application_datatable.vmDataTable.columns(vm.getColumnIndex('submitter'));
                     submittersColumn.data().unique().sort().each( function ( d, j ) {
                         var submitters = [];
-                        $.each(d,(index,s) => {
-                            if (!submitters.find(submitter => submitter.email == s.email) || submitters.length == 0){
+                        $.each(d,(index, submitter) => {
+                            if (!submitters.find(submitter => submitter.email) || submitters.length == 0){
                                 submitters.push({
-                                    'email':s.email,
-                                    'search_term': `${s.first_name} ${s.last_name} (${s.email})`
+                                    'email':submitter.email,
+                                    'search_term': `${submitter.first_name} ${submitter.last_name} (${submitter.email})`
                                 });
                             }
                         });
@@ -255,6 +287,7 @@ export default {
                 }
                 else if ($(vm.$refs.applicationDateFromPicker).data('date') === "") {
                     vm.filterApplicationLodgedFrom = "";
+                    $(vm.$refs.applicationDateToPicker).data("DateTimePicker").minDate(false);
                 }
             });
             // End Application Date Filters
@@ -263,6 +296,19 @@ export default {
                 e.preventDefault();
                 var id = $(this).attr('data-discard-application');
                 vm.discardApplication(id);
+            });
+            // Initialise select2 for submitter
+            $(vm.$refs.submitter_select).select2({
+                "theme": "bootstrap",
+                placeholder:"Select Submitter"
+            }).
+            on("select2:select",function (e) {
+                var selected = $(e.currentTarget);
+                vm.filterApplicationSubmitter = selected.val();
+            }).
+            on("select2:unselect",function (e) {
+                var selected = $(e.currentTarget);
+                vm.filterApplicationSubmitter = selected.val();
             });
         },
         initialiseSearch:function(){

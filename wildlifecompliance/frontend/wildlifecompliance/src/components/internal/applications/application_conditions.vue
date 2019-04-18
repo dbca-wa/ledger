@@ -251,7 +251,9 @@ export default {
             this.savingAssessment = true;
             let formData = new FormData(this.form);
             formData.append('comment', this.assessment.comment);
-            formData.append('inspection_report', this.assessment.inspection_report);
+            if (this.assessment.inspection_report) {
+                formData.append('inspection_report', this.assessment.inspection_report);
+            }
             this.$http.put(helpers.add_endpoint_json(api_endpoints.assessment,this.assessment.id+'/update_assessment'),formData,{
                     emulateJSON:true
                 }).then(res=>{

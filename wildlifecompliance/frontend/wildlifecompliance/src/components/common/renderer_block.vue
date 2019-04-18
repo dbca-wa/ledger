@@ -36,7 +36,6 @@
             :name="component_name"
             :field_data="value"
             :id="element_id()"
-            :comment_value="comment_value"
             :label="component.label"
             :help_text="help_text"
             :readonly="is_readonly"
@@ -46,9 +45,8 @@
         <TextField v-if="component.type === 'string'"
             type="string"
             :name="component.name"
-            :value="value"
+            :field_data="value"
             :id="element_id()"
-            :comment_value="comment_value"
             :label="component.label"
             :help_text="help_text"
             :readonly="is_readonly"
@@ -62,7 +60,6 @@
             :id="element_id()"
             :min="component.min"
             :max="component.max"
-            :comment_value="comment_value"
             :label="component.label"
             :help_text="help_text"
             :readonly="is_readonly"
@@ -74,7 +71,6 @@
             :name="component_name"
             :field_data="value"
             :id="element_id()"
-            :comment_value="comment_value"
             :label="component.label"
             :help_text="help_text"
             :readonly="is_readonly"
@@ -88,7 +84,6 @@
                 :label="component.label"
                 :field_data="value"
                 :id="element_id()"
-                :comment_value="comment_value"
                 :options="component.options"
                 :help_text="help_text"
                 :handleChange="handleComponentChange(component, true)"
@@ -110,7 +105,6 @@
             :label="component.label"
             :field_data="value"
             :id="element_id()"
-            :comment_value="comment_value"
             :options="component.options"
             :help_text="help_text"
             :handleChange="handleComponentChange(component, false)"
@@ -124,7 +118,6 @@
             :name="component_name"
             :field_data="value"
             :id="element_id()"
-            :comment_value="comment_value"
             :label="component.label"
             :help_text="help_text"
             :isRequired="component.isRequired"
@@ -136,19 +129,17 @@
             :name="component_name"
             :field_data="value"
             :id="element_id()"
-            :comment_value="comment_value"
             :label="component.label"
             :help_text="help_text"
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
         <ExpanderTable v-if="component.type === 'expander_table'"
-            :json_data="value"
+            :field_data="value"
             :readonly="is_readonly"
             :name="component_name"
             :component="component"
             :id="element_id()"
-            :comment_value="comment_value"
             :label="component.label"
             :help_text="help_text"
             :isRequired="component.isRequired"
@@ -164,7 +155,7 @@
                 <HelpTextUrl :help_text_url="help_text_url"/>
                 <CommentRadioCheckBox
                     :name="component_name"
-                    :comment_value="comment_value"
+                    :field_data="value"
                     :label="component.label"/>
 
                 <Radio v-for="(option, index) in component.options"
@@ -231,7 +222,6 @@
             :label="component.label"
             :field_data="value"
             :id="element_id()"
-            :comment_value="comment_value"
             :isRepeatable="strToBool(component.isRepeatable)"
             :readonly="is_readonly"
             :help_text="help_text"
@@ -245,7 +235,6 @@
             :label="component.label"
             :field_data="value"
             :id="element_id()"
-            :comment_value="comment_value"
             :readonly="is_readonly"
             :help_text="help_text"
             :isRequired="component.isRequired"
@@ -344,22 +333,24 @@ const RendererBlock = {
     json_data: function() {
         return this.renderer_form_data;
     },
+    formDataRecord: function() {
+        if(this.json_data[this.component_name] == null) {
+            this.setFormValue({
+                key: this.component_name,
+                value: {
+                    "value": '',
+                    "comment_value": '',
+                    "deficiency_value": '',
+                    "schema_name": this.component.name,
+                    "component_type": this.component.type
+                }
+            });
+        }
+        return this.json_data[this.component_name];
+    },
     value: {
         get: function() {
-            if(this.json_data == null) {
-                return this.json_data;
-            }
-            if(this.json_data[this.component_name] == null) {
-                this.setFormValue({
-                    key: this.component_name,
-                    value: {
-                        "value": '',
-                        "schema_name": this.component.name,
-                        "component_type": this.component.type
-                    }
-                });
-            }
-            return this.json_data[this.component_name];
+            return this.formDataRecord;
         },
         set: function(value) {
             this.setFormValue({
@@ -367,12 +358,6 @@ const RendererBlock = {
                 value: { "value": value }
             });
         }
-    },
-    comment_value: function() {
-        if(this.comment_data == null || this.comment_data[this.component_name] == null) {
-            return null;
-        }
-        return this.comment_data[this.component_name];
     },
     help_text: function() {
         return this.replaceSitePlaceholders(this.component.help_text);
