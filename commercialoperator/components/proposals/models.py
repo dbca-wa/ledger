@@ -1342,6 +1342,7 @@ class ProposalOtherDetails(models.Model):
     credit_fees=models.BooleanField(default=False)
     #if credit/ cash payment docket books are required
     credit_docket_books=models.BooleanField(default=False)
+    docket_books_number=models.CharField('Docket books number', max_length=20, blank=True )
     proposal = models.OneToOneField(Proposal, related_name='other_details', null=True)
 
     class Meta:

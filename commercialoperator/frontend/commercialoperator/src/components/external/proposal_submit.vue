@@ -16,6 +16,8 @@
                                 <td><strong> {{proposal.lodgement_date|formatDate}}</strong></td>
                             </tr>
                         </table>
+                        <br/>
+                        <label>Please note that it may take up to 21 business days to process your application.<br/>If there is any missing information, the Department may assign this application back to you to complete. In that case you will be notified by email.</label>
                         <router-link :to="{name:'external-proposals-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
                     </div>
                     <div v-else class="col-sm-offset-3 col-sm-6 borderDecoration">

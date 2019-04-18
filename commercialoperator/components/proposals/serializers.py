@@ -182,6 +182,7 @@ class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
                 'other_comments',
                 'credit_fees',
                 'credit_docket_books',
+                'docket_books_number'
                 )
     # def get_accreditation_type(self,obj):
     #     return obj.get_accreditation_type_display()

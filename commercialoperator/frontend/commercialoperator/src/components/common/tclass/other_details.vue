@@ -256,6 +256,16 @@
                                 </label>
                             </div>
                         </div>
+                        <div>
+                            <div v-show="show_docket_number">
+                            <div class="col-sm-6" >
+                                <label class="control-label pull-left"  for="Name">Number of docket books</label>
+                            </div>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" name="docket_books_number" placeholder="" :disabled="proposal.readonly" v-model="proposal.other_details.docket_books_number">
+                            </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>                
@@ -326,12 +336,13 @@ export default {
                 accreditation_type:[],
                 selected_accreditations:[],
                 licence_period_choices:[],
+                show_docket_number:false,
                 datepickerOptions:{
                 format: 'DD/MM/YYYY',
                 showClear:true,
                 useCurrent:false,
                 keepInvalid:true,
-                allowInputToggle:true
+                allowInputToggle:true,
             },
             }
         },
@@ -340,9 +351,20 @@ export default {
           Accreditation
         },
         computed: {
-            
+            docker_books_required: function(){
+                return this.proposal? this.proposal.other_details.credit_docket_books : false;
+            }
         },
         watch:{
+            docker_books_required: function(){
+                console.log(this.proposal.other_details.credit_docket_books);
+             if(this.proposal){
+                this.show_docket_number= helpers.copyObject(this.proposal.other_details.credit_docket_books);
+             }
+             else{
+                this.show_docket_number=helpers.copyObject(this.proposal.other_details.credit_docket_books);;
+             }
+            },
             accreditation_type: function(){
                 this.proposal.other_details.accreditation_type=this.accreditation_type.key;
             },
