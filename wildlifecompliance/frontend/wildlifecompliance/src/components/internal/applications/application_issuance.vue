@@ -315,11 +315,11 @@ export default {
             if(this.application.character_check_status.id == 'not_checked'){
                 this.licence.character_check = false;
             }
-            if(vm.application.return_check_status.id == 'accepted'){
-                vm.licence.return_check=true;
+            if(this.application.return_check_status.id == 'accepted'){
+                this.licence.return_check=true;
             }
-            if(vm.application.return_check_status.id == 'not_checked'){
-                vm.licence.return_check=false;
+            if(this.application.return_check_status.id == 'not_checked'){
+                this.licence.return_check=false;
             }
         },
         
