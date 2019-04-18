@@ -208,14 +208,15 @@ export default {
       });
     },
     highlight_missing_fields: function(){
-        for (const missing_field of this.missing_fields) {
-            $(`[name=${missing_field.name}`).css("background-color", 'rgba(255,0,0,0.1)');
-        }
+      $('.missing-field').removeClass('missing-field');
+      for (const missing_field of this.missing_fields) {
+          $(`[name=${missing_field.name}`).addClass('missing-field');
+      }
 
-        var top = ($('#error').offset() || { "top": NaN }).top;
-        $('html, body').animate({
-            scrollTop: top
-        }, 1);
+      var top = ($('#error').offset() || { "top": NaN }).top;
+      $('html, body').animate({
+          scrollTop: top
+      }, 1);
     },
     submit: function(){
         let vm = this;
