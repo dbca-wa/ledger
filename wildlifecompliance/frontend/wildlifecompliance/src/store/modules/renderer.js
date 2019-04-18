@@ -118,9 +118,10 @@ export const rendererStore = {
                 commit(REMOVE_FORM_FIELD, key);
             }
         },
-        saveFormData({ dispatch, commit, getters }, { url }) {
+        saveFormData({ dispatch, commit, getters }, { url, draft }) {
             return new Promise((resolve, reject) => {
-                Vue.http.post(url, getters.renderer_form_data).then(res => {
+                const post_data = Object.assign({'__draft': draft}, getters.renderer_form_data);
+                Vue.http.post(url, post_data).then(res => {
                     resolve(res);
                 },
                 err => {

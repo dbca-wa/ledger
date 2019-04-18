@@ -597,7 +597,6 @@ class Application(RevisionedMixin):
         return ApplicationUserAction.log_action(self, action, request.user)
 
     def submit(self, request, viewset):
-        from wildlifecompliance.components.applications.utils import SchemaParser
         from wildlifecompliance.components.licences.models import LicenceActivity
         with transaction.atomic():
             if self.can_user_edit:
@@ -941,6 +940,34 @@ class Application(RevisionedMixin):
             return WildlifeLicence.objects.filter(current_application=self)
         except WildlifeLicence.DoesNotExist:
             return WildlifeLicence.objects.none()
+
+    @property
+    def required_fields(self):
+        return {key: data for key, data in self.schema_fields.items() if 'isRequired' in data and data['isRequired']}
+
+    @property
+    def schema_fields(self):
+        fields = {}
+
+        def iterate_children(schema_group, fields):
+            for item in schema_group:
+                name = item['name']
+                fields[name] = {}
+                fields[name].update(item)
+                if 'children' in fields[name]:
+                    del fields[name]['children']
+                    iterate_children(item['children'], fields)
+
+                if 'header' in fields[name]:
+                    del fields[name]['header']
+                    iterate_children(item['header'], fields)
+
+                if 'expander' in fields[name]:
+                    del fields[name]['expander']
+                    iterate_children(item['expander'], fields)
+
+        iterate_children(self.schema, fields)
+        return fields
 
     @property
     def schema(self):
@@ -1573,6 +1600,7 @@ class ApplicationFormDataRecord(models.Model):
 
     @staticmethod
     def process_form(request, application, form_data, action=ACTION_TYPE_ASSIGN_VALUE):
+        from wildlifecompliance.components.applications.utils import MissingFieldsException
         can_edit_comments = request.user.has_perm(
             'wildlifecompliance.licensing_officer'
         ) or request.user.has_perm(
@@ -1587,6 +1615,9 @@ class ApplicationFormDataRecord(models.Model):
             raise Exception(
                 'You are not authorised to perform this action!')
 
+        required_fields = application.required_fields
+        is_draft = form_data.pop('__draft', False)
+        missing_fields = []
         for field_name, field_data in form_data.items():
             schema_name = field_data.get('schema_name', '')
             component_type = field_data.get('component_type', '')
@@ -1610,6 +1641,11 @@ class ApplicationFormDataRecord(models.Model):
                 form_data_record.instance_name = instance_name
                 form_data_record.component_type = component_type
             if action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_VALUE:
+                if not is_draft and not value and schema_name in required_fields:
+                    missing_item = {'field_name': field_name}
+                    missing_item.update(required_fields[schema_name])
+                    missing_fields.append(missing_item)
+                    continue
                 form_data_record.value = value
             elif action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT:
                 if can_edit_comments:
@@ -1617,6 +1653,18 @@ class ApplicationFormDataRecord(models.Model):
                 if can_edit_deficiencies:
                     form_data_record.deficiency = deficiency
             form_data_record.save()
+
+        if action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_VALUE:
+            for existing_field in ApplicationFormDataRecord.objects.filter(application_id=application.id):
+                if existing_field.field_name not in form_data.keys():
+                    existing_field.delete()
+
+        if missing_fields:
+            raise MissingFieldsException(
+                [{'name': item['field_name'], 'label': '{label}'.format(
+                    label=item['label']
+                )} for item in missing_fields]
+            )
 
 
 @python_2_unicode_compatible

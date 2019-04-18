@@ -168,7 +168,7 @@ export default {
     },
     saveExit: function(e) {
       this.isProcessing = true;
-      this.saveFormData({ url: this.application_form_data_url }).then(res=>{
+      this.saveFormData({ url: this.application_form_data_url, draft: true }).then(res=>{
           swal(
             'Saved',
             'Your application has been saved',
@@ -189,7 +189,7 @@ export default {
     },
     save: function(e) {
       this.isProcessing = true;
-      this.saveFormData({ url: this.application_form_data_url }).then(res=>{
+      this.saveFormData({ url: this.application_form_data_url, draft: true }).then(res=>{
           swal(
             'Saved',
             'Your application has been saved',
@@ -209,7 +209,7 @@ export default {
     },
     highlight_missing_fields: function(){
         for (const missing_field of this.missing_fields) {
-            $("#id_" + missing_field.name).css("color", 'red');
+            $(`[name=${missing_field.name}`).css("background-color", 'rgba(255,0,0,0.1)');
         }
 
         var top = ($('#error').offset() || { "top": NaN }).top;
@@ -260,24 +260,21 @@ export default {
                           });
                       }
                   },err=>{
-                      console.log(err);
-                      if(err.body.missing) {
-                        this.missing_fields = err.body.missing;
-                        this.highlight_missing_fields();
-                        this.isProcessing = false;
-                      }
-                      else {
-                        swal(
-                            'Submit Error',
-                            helpers.apiVueResourceError(err),
-                            'error'
-                        ).then((result) => {
-                            this.isProcessing = false;
-                        })
-                      }
+                      swal(
+                          'Submit Error',
+                          helpers.apiVueResourceError(err),
+                          'error'
+                      ).then((result) => {
+                          this.isProcessing = false;
+                      });
                   });
                 }, err=>{
                   console.log(err);
+                  if(err.body.missing) {
+                      this.missing_fields = err.body.missing;
+                      this.highlight_missing_fields();
+                      this.isProcessing = false;
+                    }
                 });
             } else {
                 this.isProcessing = false;
