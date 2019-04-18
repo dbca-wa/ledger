@@ -64,8 +64,9 @@ export default {
     return {
       form: null,
       isProcessing: false,
+      tabSelected: false,
       application_customer_status_onload: {},
- 	  missing_fields: [],
+ 	    missing_fields: [],
     }
   },
   components: {
@@ -116,8 +117,10 @@ export default {
         'saveFormData',
     ]),
     eventListeners: function(){
-        let vm = this;
+      if(!this.tabSelected) {
         $('#tabs-section li:first-child a').click();
+        this.tabSelected = true;
+      }
     },
     discardActivity: function(e) {
       let swal_title = 'Discard Selected Activity';
