@@ -214,7 +214,7 @@ export default {
                     submittersColumn.data().unique().sort().each( function ( d, j ) {
                         var submitters = [];
                         $.each(d,(index, submitter) => {
-                            if (!submitters.find(submitter => submitter.email) || submitters.length == 0){
+                            if (!submitters.find(item => item.email == submitter.email) || submitters.length == 0){
                                 submitters.push({
                                     'email':submitter.email,
                                     'search_term': `${submitter.first_name} ${submitter.last_name} (${submitter.email})`

@@ -14,11 +14,26 @@
 
             <template v-if="canViewComments">
                 <template v-if="!showingComment">
-                    <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
+                    <a v-if="field_data.comment_value" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
                 </template>
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
+
+            <div v-if="canViewDeficiencies">
+                <div v-if="canEditDeficiencies">
+                    <div v-if="!showingDeficiencies">
+                        <a v-if="field_data.deficiency_value" href=""  @click.prevent="toggleDeficiencies"><i style="color:red" class="fa fa-exclamation-triangle">&nbsp;</i></a>
+                        <a v-else href="" @click.prevent="toggleDeficiencies"><i class="fa fa-exclamation-triangle">&nbsp;</i></a>
+                    </div>
+                    <a href="" v-else  @click.prevent="toggleDeficiencies"><i class="fa fa-ban">&nbsp;</i></a>
+                    <Comment :question="label" :name="name+'-deficiency-field'" v-show="showingDeficiencies" :field_data="field_data" :isDeficiency="true"/>
+                </div>
+                <div v-else-if="field_data.deficiency_value" style="color:red">
+                    <i class="fa fa-exclamation-triangle">&nbsp;</i>
+                    <span>{{field_data.deficiency_value}}</span>
+                </div>
+            </div>
      
             <template v-if="readonly">
                 <select v-if="!isMultiple" disabled ref="selectB" :id="selectid" :name="name" class="form-control" :data-conditions="cons" style="width:100%">
@@ -49,7 +64,7 @@
         </div>
 
         
-        <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :value="comment_value"/>
+        <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :field_data="field_data"/>
 
 
     </div>
@@ -72,7 +87,6 @@ export default {
         'help_text':String,
         'help_text_url':String,
         "field_data": Object,
-        "comment_value": String,
         "options":Array,
         "conditions":Object,
         "handleChange":null,
@@ -90,12 +104,15 @@ export default {
             selectid: "select"+vm._uid,
             multipleSelected: [],
             showingComment: false,
+            showingDeficiencies: false,
            
         }
     },
     computed:{
         ...mapGetters([
             'canViewComments',
+            'canViewDeficiencies',
+            'canEditDeficiencies',
         ]),
         cons: function () {
             return JSON.stringify(this.conditions);
@@ -108,6 +125,12 @@ export default {
     methods:{
         toggleComment(){
             this.showingComment = ! this.showingComment;
+        },
+        toggleDeficiencies: function() {
+            if(this.showingDeficiencies) {
+                this.field_data.deficiency_value = '';
+            }
+            this.showingDeficiencies = !this.showingDeficiencies;
         },
        
 
