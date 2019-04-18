@@ -1795,7 +1795,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
 
         # get a length of the stay (in days), capped if necessary to the request maximum
         today = date.today()
-        end_date =end_date  + timedelta(days=1)
+        #end_date =end_date  + timedelta(days=1)
         length = max(0, (end_date-start_date).days)
         max_advance_booking_days = max(0, (start_date-today).days)
 
@@ -2127,7 +2127,14 @@ def create_admissions_booking(request, *args, **kwargs):
         'location' : location.pk
     }
 
-    
+    if len(request.POST.get('vesselReg', '')) > 0: 
+        pass
+    else:
+        return HttpResponse(geojson.dumps({
+            'status': 'failure',
+            'error': (None,"Please enter a vessel registration")
+        }), content_type='application/json')
+
 
     serializer = AdmissionsBookingSerializer(data=data)
     serializer.is_valid(raise_exception=True)
@@ -2198,7 +2205,10 @@ def create_admissions_booking(request, *args, **kwargs):
 
     admissionsBooking.customer = customer
     admissionsBooking.totalCost = total
-    admissionsBooking.created_by = request.user
+    admissionsBooking.created_by = None
+    if request.user.__class__.__name__ == 'EmailUser':
+        admissionsBooking.created_by = request.user
+        
     admissionsBooking.save()
     admissionsLine.cost = total
     admissionsLine.save()

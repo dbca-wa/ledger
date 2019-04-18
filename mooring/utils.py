@@ -517,7 +517,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                for bp in results[ma][ma_dt][1]:
                     if results[ma][ma_dt][1][bp] == 'open':
                          pass
-                         results[ma][ma_dt][1][bp] = 'closed' 
+                         results[ma][ma_dt][1][bp] = 'perday' 
                  
     mooring_map = {cg[0]: [cs.pk for cs in campsites_qs if cs.mooringarea.pk == cg[0]] for cg in campsites_qs.distinct('mooringarea').values_list('mooringarea')}
     today = date.today()
@@ -545,7 +545,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
              if stop_mark+timedelta(days=i) > stop:
                  results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
                  for b in results[site.pk][stop_mark+timedelta(days=i)][1]:
-                     results[site.pk][stop_mark+timedelta(days=i)][1][b] = 'tofar'
+                     results[site.pk][stop_mark+timedelta(days=i)][1][b] = 'toofar'
     # Get the current stay history
     stay_history = None
     if campsites_qs.count() > 0:
@@ -562,12 +562,30 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
         max_days = settings.PS_MAX_BOOKING_LENGTH
     # strike out days after the max_stay period
     for site in campsites_qs:
+
+        stay_history = MooringAreaStayHistory.objects.filter(
+                    Q(range_start__lte=start_date,range_end__gte=start_date)|# filter start date is within period
+                    Q(range_start__lte=end_date,range_end__gte=end_date)|# filter end date is within period
+                    Q(Q(range_start__gt=start_date,range_end__lt=end_date)&Q(range_end__gt=today)) #filter start date is before and end date after period
+                    ,mooringarea=site.mooringarea
+                    )
+        if stay_history:
+            max_days = min([x.max_days for x in stay_history])
+        else:
+            max_days = settings.PS_MAX_BOOKING_LENGTH
+
         stop = start_date + timedelta(days=max_days)
         stop_mark = min(max(stop, start_date), end_date)
         for i in range((end_date-stop_mark).days):
             date_key = stop_mark+timedelta(days=i)
             if date_key in results[site.pk]:
                 results[site.pk][stop_mark+timedelta(days=i)][0] = 'toofar'
+                for b in results[site.pk][stop_mark+timedelta(days=i)][1]:
+                     if results[site.pk][stop_mark+timedelta(days=i)][1][b] == 'open': 
+                         results[site.pk][stop_mark+timedelta(days=i)][1][b] = 'maxstay'
+
+
+
     return results
 
 
@@ -775,6 +793,7 @@ def calculate_price_booking_cancellation(booking):
     current_date_time = datetime.strptime(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
     nowtime =  datetime.today()
     nowtimec = datetime.strptime(nowtime.strftime('%Y-%m-%d'),'%Y-%m-%d')
+    mg = MooringAreaGroup.objects.all()
 
     booking = MooringsiteBooking.objects.filter(booking=booking)
     cancellation_fees = []
@@ -794,6 +813,11 @@ def calculate_price_booking_cancellation(booking):
          #change_price_period = CancelPricePeriod.objects.filter(id=ob.booking_period_option.cancel_group_id).order_by('days')
          cancel_group =  CancelGroup.objects.get(id=ob.booking_period_option.cancel_group_id)
          cancel_price_period = cancel_group.cancel_period.all().order_by('days')
+         mooring_group =None
+         for i in mg:
+            if i.moorings.count() > 0:
+                    mooring_group = i.moorings.all()[0].id 
+
 
          for cpp in cancel_price_period:
              if daystillbooking < 0:
@@ -811,11 +835,11 @@ def calculate_price_booking_cancellation(booking):
              description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
 
              if datetime.strptime(ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S') < current_date_time:
-                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Past Booking - '+description,'amount': ob.amount})
+                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Past Booking - '+description,'amount': Decimal('0.00'), 'mooring_group': mooring_group})
              else:
                  #change_fees['amount'] = str(refund_amount)
-                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Cancel Fee - '+description,'amount': cancel_fee_amount})
-                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount)})
+                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Cancel Fee - '+description,'amount': cancel_fee_amount, 'mooring_group': mooring_group})
+                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount), 'mooring_group': mooring_group})
          else:
 
              print ("NO CANCELATION POLICY")
@@ -836,6 +860,7 @@ def calculate_price_booking_change(old_booking, new_booking):
     booking_changes = MooringsiteBooking.objects.filter(booking=new_booking)
     change_fees = []
     adjustment_fee = Decimal('0.00')
+    mg = MooringAreaGroup.objects.all()
     #{'additional_fees': 'true', 'description': 'Booking Change Fee','amount': Decimal('0.00')}
 
     for ob in old_booking_mooring:
@@ -846,6 +871,12 @@ def calculate_price_booking_change(old_booking, new_booking):
          from_dt = datetime.strptime(ob.from_dt.strftime('%Y-%m-%d'),'%Y-%m-%d')
          daystillbooking =  (from_dt-nowtimec).days
          refund_policy = None
+
+         for i in mg:
+            if i.moorings.count() > 0:
+                    mooring_group = i.moorings.all()[0].id
+
+
          if changed is True:
              change_fee_amount = '0.00' 
  #            change_price_period = ChangePricePeriod.objects.filter(id=ob.booking_period_option.change_group_id).order_by('-days')
@@ -866,17 +897,17 @@ def calculate_price_booking_change(old_booking, new_booking):
                     # Fixed Pricing
                 description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
                   #change_fees['amount'] = str(refund_amount)
-                change_fees.append({'additional_fees': 'true', 'description': 'Change Fee - '+description,'amount': change_fee_amount, 'oracle_code': str(ob.campsite.mooringarea.oracle_code)})
-                change_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount), 'oracle_code': str(ob.campsite.mooringarea.oracle_code)})
+                change_fees.append({'additional_fees': 'true', 'description': 'Change Fee - '+description,'amount': float(change_fee_amount), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group})
+                change_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group})
              else:
                  print ("NO REFUND POLICY")
                
          else:
              #description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
-             adjustment_fee = Decimal('0.00')
-             adjustment_fee = ob.amount + adjustment_fee
+             adjustment_fee = float('0.00')
+             adjustment_fee = float(ob.amount) + adjustment_fee
              description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
-             change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - '+description ,'amount': str(adjustment_fee - adjustment_fee - adjustment_fee), 'oracle_code': str(ob.campsite.mooringarea.oracle_code)})   
+             change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - '+description ,'amount': str(adjustment_fee - adjustment_fee - adjustment_fee), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group})   
 
     return change_fees
 
@@ -887,9 +918,9 @@ def calculate_price_admissions_changecancel(adBooking, change_fees):
             description = "Admission ({}) for {} guest(s)".format(datetime.strftime(line.arrivalDate, '%d/%m/%Y'), adBooking.total_admissions)
             oracle_code = AdmissionsOracleCode.objects.filter(mooring_group=line.location.mooring_group)[0]
             if not change_fees == []:
-                change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code)})
+                change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code), 'mooring_group': line.location.mooring_group.id})
             else:
-                change_fees.append({'additional_fees': 'true', 'description': 'Refund - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code)})
+                change_fees.append({'additional_fees': 'true', 'description': 'Refund - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code), 'mooring_group': line.location.mooring_group.id})
         else:
             # 0 line
             pass
