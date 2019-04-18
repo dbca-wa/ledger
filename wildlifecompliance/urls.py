@@ -24,11 +24,14 @@ logger = logging.getLogger(__name__)
 
 # API patterns
 router = routers.DefaultRouter()
-router.register(r'organisations', org_api.OrganisationViewSet)
 router.register(r'application', application_api.ApplicationViewSet)
 router.register(r'application_paginated', application_api.ApplicationPaginatedViewSet)
-router.register(r'assessment_paginated', application_api.AssessmentPaginatedViewSet)
+router.register(r'application_conditions',
+                application_api.ApplicationConditionViewSet)
+router.register(r'application_standard_conditions',
+                application_api.ApplicationStandardConditionViewSet)
 router.register(r'assessment', application_api.AssessmentViewSet)
+router.register(r'assessment_paginated', application_api.AssessmentPaginatedViewSet)
 router.register(r'amendment', application_api.AmendmentRequestViewSet)
 router.register(r'assessor_group', application_api.AssessorGroupViewSet)
 router.register(r'licences', licence_api.LicenceViewSet)
@@ -38,10 +41,8 @@ router.register(r'licence_available_purposes',
                 licence_api.UserAvailableWildlifeLicencePurposesViewSet)
 router.register(r'returns', return_api.ReturnViewSet)
 router.register(r'return_types', return_api.ReturnTypeViewSet)
-router.register(r'application_conditions',
-                application_api.ApplicationConditionViewSet)
-router.register(r'application_standard_conditions',
-                application_api.ApplicationStandardConditionViewSet)
+router.register(r'organisations', org_api.OrganisationViewSet)
+router.register(r'organisations_paginated', org_api.OrganisationPaginatedViewSet)
 router.register(r'organisation_requests', org_api.OrganisationRequestsViewSet)
 router.register(r'organisation_contacts', org_api.OrganisationContactViewSet)
 router.register(r'my_organisations', org_api.MyOrganisationsViewSet)

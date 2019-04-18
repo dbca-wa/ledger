@@ -493,8 +493,19 @@ class Organisation(models.Model):
         return self.organisation.postal_address
 
     @property
-    def phone_number(self):
-        return self.organisation.phone_number
+    def address_string(self):
+        org_address = self.organisation.postal_address
+        if org_address:
+            address_string = '{} {} {} {} {}'.format(
+                org_address.line1,
+                org_address.locality,
+                org_address.state,
+                org_address.postcode,
+                org_address.country
+            )
+            return address_string
+        else:
+            return ''
 
     @property
     def email(self):
