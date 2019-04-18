@@ -9,6 +9,7 @@ from django.db import models, IntegrityError, transaction
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 from django.dispatch import receiver
+from django.db.models import Q
 from django.db.models.signals import post_delete, pre_save, post_save
 from django.core.exceptions import ValidationError
 
@@ -21,7 +22,10 @@ from social_django.models import UserSocialAuth
 from datetime import datetime, date
 
 from ledger.accounts.signals import name_changed, post_clean
+from ledger.accounts.utils import get_department_user_compact, in_dbca_domain
 from ledger.address.models import UserAddress, Country
+
+
 
 class EmailUserManager(BaseUserManager):
     """A custom Manager for the EmailUser model.
@@ -33,7 +37,7 @@ class EmailUserManager(BaseUserManager):
         """
         if not email:
             raise ValueError('Email must be set')
-        email = self.normalize_email(email)
+        email = self.normalize_email(email).lower()
         if (EmailUser.objects.filter(email__iexact=email) or
             Profile.objects.filter(email__iexact=email) or
             EmailIdentity.objects.filter(email__iexact=email)):
@@ -197,7 +201,7 @@ class BaseAddress(models.Model):
         return zlib.crc32(self.summary.strip().upper().encode('UTF8'))
 
 class Address(BaseAddress):
-    user = models.ForeignKey('EmailUser', related_name='profile_adresses')
+    user = models.ForeignKey('EmailUser', related_name='profile_addresses')
     oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses')
     class Meta:
         verbose_name_plural = 'addresses'
@@ -291,7 +295,15 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     def save(self, *args, **kwargs):
         if not self.email:
             self.email = self.get_dummy_email()
-
+        elif in_dbca_domain(self):
+            # checks and updates department user details from address book after every login
+            user_details = get_department_user_compact(self.email)
+            if user_details:
+                self.phone_number = user_details.get('telephone')
+                self.mobile_number = user_details.get('mobile_phone')
+                self.title = user_details.get('title')
+                self.fax_number = user_details.get('org_unit__location__fax')
+                
         super(EmailUser, self).save(*args, **kwargs)
 
     def get_full_name(self):
@@ -306,6 +318,13 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         if self.first_name:
             return self.first_name.split(' ')[0]
         return self.email
+
+    def upload_identification(self, request):
+        with transaction.atomic():
+            document = Document(file=request.data.dict()['identification'])
+            document.save()
+            self.identification = document
+            self.save()
 
     dummy_email_suffix = ".s058@ledger.dpaw.wa.gov.au"
     dummy_email_suffix_len = len(dummy_email_suffix)
@@ -359,6 +378,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         else:
             return -1
 
+
     def upload_identification(self, request):
         with transaction.atomic():
             document = Document(file=request.data.dict()['identification'])
@@ -366,12 +386,62 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             self.identification = document
             self.save()
 
+
     def log_user_action(self, action, request=None):
         if request:
             return EmailUserAction.log_action(self, action, request.user)
         else:
             pass
 
+
+def query_emailuser_by_args(**kwargs):
+    ORDER_COLUMN_CHOICES = [
+        'title',
+        'first_name',
+        'last_name',
+        'dob',
+        'email',
+        'phone_number',
+        'mobile_number',
+        'fax_number',
+        'character_flagged',
+        'character_comments'
+    ]
+
+    draw = int(kwargs.get('draw', None)[0])
+    length = int(kwargs.get('length', None)[0])
+    start = int(kwargs.get('start', None)[0])
+    search_value = kwargs.get('search[value]', None)[0]
+    order_column = kwargs.get('order[0][column]', None)[0]
+    order = kwargs.get('order[0][dir]', None)[0]
+    order_column = ORDER_COLUMN_CHOICES[int(order_column)]
+    # django orm '-' -> desc
+    if order == 'desc':
+        order_column = '-' + order_column
+
+    queryset = EmailUser.objects.all()
+    total = queryset.count()
+
+    if search_value:
+        queryset = queryset.filter(Q(first_name__icontains=search_value) |
+                                        Q(last_name__icontains=search_value) |
+                                        Q(email__icontains=search_value) |
+                                        Q(phone_number__icontains=search_value) |
+                                        Q(mobile_number__icontains=search_value) |
+                                        Q(fax_number__icontains=search_value))
+
+    count = queryset.count()
+    queryset = queryset.order_by(order_column)[start:start + length]
+
+    return {
+        'items': queryset,
+        'count': count,
+        'total': total,
+        'draw': draw
+    }
+
+
+>>>>>>> upstream/master
 @python_2_unicode_compatible
 class UserAction(models.Model):
     who = models.ForeignKey(EmailUser, null=False, blank=False)
@@ -388,6 +458,7 @@ class UserAction(models.Model):
     class Meta:
         abstract = True
         app_label = 'accounts'
+
 
 class EmailUserAction(UserAction):
     ACTION_PERSONAL_DETAILS_UPDATE = "User {} Personal Details Updated"
@@ -525,9 +596,14 @@ class Organisation(models.Model):
     name = models.CharField(max_length=128, unique=True)
     abn = models.CharField(max_length=50, null=True, blank=True, verbose_name='ABN')
     # TODO: business logic related to identification file upload/changes.
-    identification = models.FileField(upload_to='uploads/%Y/%m/%d', null=True, blank=True)
+    identification = models.FileField(upload_to='%Y/%m/%d', null=True, blank=True)
     postal_address = models.ForeignKey('OrganisationAddress', related_name='org_postal_address', blank=True, null=True, on_delete=models.SET_NULL)
     billing_address = models.ForeignKey('OrganisationAddress', related_name='org_billing_address', blank=True, null=True, on_delete=models.SET_NULL)
+
+    def upload_identification(self, request):
+        with transaction.atomic():
+            self.identification = request.data.dict()['identification']
+            self.save()
 
     def __str__(self):
         return self.name
@@ -625,12 +701,14 @@ class ProfileListener(object):
                 address.oscar_address = oscar_address
                 address.save()
         # Clear out unused addresses
+        # EmailUser can have address that is not linked with profile, hence the exclude
         ''' This functionality no longer in use due to more than just
         profile objects using the UserAddresses
         user = instance.user
         user_addr = Address.objects.filter(user=user)
         for u in user_addr:
-            if not u.profiles.all():
+            if not u.profiles.all() \
+                and not u in (user.postal_address, user.residential_address, user.billing_address):
                 u.oscar_address.delete()
                 u.delete()'''
 

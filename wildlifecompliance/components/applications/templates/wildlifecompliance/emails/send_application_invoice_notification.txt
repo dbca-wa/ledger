@@ -1,0 +1,13 @@
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
+
+{%  block content %}
+        Your payment for your application has been received.
+        A copy of your invoice is attached to this email.
+
+        Application : {{ application.id }}
+
+        Link: {{ url }}
+
+        Invoice: {{ invoice_url }}
+
+{%  endblock %}

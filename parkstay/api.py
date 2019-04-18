@@ -1006,8 +1006,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             # make a map of class IDs to site IDs
             for s in sites_qs:
                 rate = rates_map[s.campsite_class.pk]
-                classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)]] for i in range(length)]
-
+                classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], None] for i in range(length)]
             # store number of campsites in each class
             class_sizes = {k: len(v) for k, v in class_sites_map.items()}
 
@@ -1026,6 +1025,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                         # update the per-site availability
                         classes_map[key]['breakdown'][s.name][offset][0] = False
                         classes_map[key]['breakdown'][s.name][offset][1] = stat if show_all else 'Unavailable'
+                        classes_map[key]['breakdown'][s.name][offset][3] = closure_reason if show_all else None
 
                         # update the class availability status
                         if stat == 'booked':
@@ -1608,6 +1608,11 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sqlParams['length'] = length
                 sqlParams['start'] = start
 
+            if length == 'all':
+                sql = sql + ' limit %(length)s offset %(start)s'
+                sqlParams['length'] = 2000
+                sqlParams['start'] = start
+
             sql += ';'
 
             cursor = connection.cursor()
@@ -1655,8 +1660,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                     bk['override_reason_info'] = booking.override_reason_info
                 if booking.send_invoice:
                     bk['send_invoice'] = booking.send_invoice
-                if booking.override_price:
-                    discount = booking.discount
+                if booking.override_price >= 0:
+                    bk['discount'] = booking.discount
                 if not booking.paid:
                     bk['payment_callback_url'] = '/api/booking/{}/payment_callback.json'.format(booking.id)
                 if booking.customer:
@@ -1798,6 +1803,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'num_concession' : guests['concession'],
                 'num_child' : guests['children'],
                 'num_infant' : guests['infants'],
+                'regos': request.data['entryFees']['regos'],
             }
             data = utils.update_booking(request,instance,booking_details)
             serializer = BookingSerializer(data)

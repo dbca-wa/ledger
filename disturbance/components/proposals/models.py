@@ -431,10 +431,19 @@ class Proposal(RevisionedMixin):
             group = self.__assessor_group()
         return group.members.all() if group else []
 
+    #Compliance and Approvals use assessor group to show/hide compliance/approvals actions on dashboard
     @property
     def compliance_assessors(self):
         group = self.__assessor_group()
         return group.members.all() if group else []
+
+    #Approver group required to show/hide reissue actions on Approval dashboard
+    @property
+    def allowed_approvers(self):
+        group = self.__approver_group()
+        return group.members.all() if group else []
+
+
 
     @property
     def can_officer_process(self):

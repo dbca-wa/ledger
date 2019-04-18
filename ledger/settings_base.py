@@ -101,13 +101,12 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.auth_allowed',
     'social_core.pipeline.social_auth.social_user',
     'social_core.pipeline.user.get_username',
-    # 'social.pipeline.mail.mail_validation',
     'ledger.accounts.pipeline.mail_validation',
     'ledger.accounts.pipeline.user_by_email',
     'social_core.pipeline.user.create_user',
+    'ledger.accounts.pipeline.user_is_new_session',
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
-    #'social_core.pipeline.user.user_details'
 )
 
 SESSION_COOKIE_DOMAIN = env('SESSION_COOKIE_DOMAIN', None)
@@ -151,7 +150,8 @@ TEMPLATES = [
 
 BOOTSTRAP3 = {
     'jquery_url': '//static.dpaw.wa.gov.au/static/libs/jquery/2.2.1/jquery.min.js',
-    'base_url': '//static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
+    #'base_url': '//static.dpaw.wa.gov.au/static/libs/twitter-bootstrap/3.3.6/',
+    'base_url': '/static/ledger/',
     'css_url': None,
     'theme_url': None,
     'javascript_url': None,
@@ -208,6 +208,7 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(os.path.join(BASE_DIR, 'ledger', 'static')),
     os.path.join(os.path.join(BASE_DIR, 'wildlifelicensing', 'static')),
+    os.path.join(os.path.join(BASE_DIR, 'wildlifecompliance', 'static')),
 ]
 if not os.path.exists(os.path.join(BASE_DIR, 'media')):
     os.mkdir(os.path.join(BASE_DIR, 'media'))
@@ -258,12 +259,15 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'INFO'
         },
+        'wildlifecompliance': {
+            'handlers': ['file'],
+            'level': 'INFO'
+        },
         'disturbance': {
             'handlers': ['file'],
             'level': 'INFO',
             'propagate': True
         },
-
 #        'oscar.checkout': {
 #            'handlers': ['file'],
 #            'level': 'INFO'

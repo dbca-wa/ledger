@@ -74,23 +74,29 @@
                     </div>
                 </div>
             </div>
-            <div class="columns small-6 medium-6 large-3">
+            <div class="columns small-6 medium-6 large-2">
                 <label>Arrival
                     <input id="date-arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
             </div>
-            <div class="columns small-6 medium-6 large-3">
+            <div class="columns small-6 medium-6 large-2">
                 <label>Departure
                     <input id="date-departure" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
             </div>
-            <div class="columns small-6 medium-6 large-3">
+            <div class="columns small-6 medium-6 large-2">
                 <label>Vessel Size
                     <input id="vesselSize" type="number" placeholder="0" v-on:change="update" v-model="vesselSize"/>
                 </label>
             </div>
+            <div class="columns small-6 medium-6 large-2">
+                <label>Vessel Draft 
+                    <input id="vesselDraft" type="number" placeholder="0" v-on:change="update" v-model="vesselDraft"/>
+                </label>
+            </div>
 
-            <div v-if="!useAdminApi" class="small-6 medium-6 large-3 columns" iiiistyle='display:none'>
+
+            <div v-if="!useAdminApi" class="small-6 medium-6 large-3 columns" style='display:none'>
                 <label>
                     Guests 
                     <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
@@ -152,7 +158,7 @@
         </div>
 
         <div class="row" v-show="status == 'online'"><div class="columns table-scroll">
-             <div v-if="mooring_vessel_size > vesselSize" class="small-12 medium-12 large-12">
+             <div v-if="mooring_vessel_size > vesselSize && mooring_vessel_draft > vesselDraft" class="small-12 medium-12 large-12">
             <table class="hover">
                 <thead>
                     <tr>
@@ -184,7 +190,7 @@
                 </template></tbody>
             </table>
             </div>
-     <div v-if="mooring_vessel_size < vesselSize" class="small-12 medium-12 large-12">
+     <div v-if="mooring_vessel_size <= vesselSize || mooring_vessel_draft <= vesselDraft" class="small-12 medium-12 large-12">
           <table class="hover">
                 <tbody>
                   <tr>
@@ -367,6 +373,7 @@ export default {
             numInfants: parseInt(getQueryParam('num_infants', 0)),
             numMooring: parseInt(getQueryParam('num_mooring', 1)),
             vesselSize: parseInt(getQueryParam('vessel_size', 0)),
+            vesselDraft: parseInt(getQueryParam('vessel_draft', 0)),
             maxAdults: 30,
             maxChildren: 30,
             gearType: getQueryParam('gear_type', 'tent'),
@@ -414,6 +421,7 @@ export default {
                 return this.departureEl[0].value ? moment(this.departureData.getDate()).format('YYYY/MM/DD') : null; 
             }
         },
+
     },
     methods: {
         toggleMoreInfo: function(){
@@ -458,7 +466,8 @@ export default {
                 num_mooring: vm.numMooring,
                 num_concession: vm.numConcessions,
                 num_infant: vm.numInfants,
-                vessel_size: vm.vesselSize
+                vessel_size: vm.vesselSize,
+                vessel_draft: vm.vesselDraft,
             };
             if (site.type == 0) { // per site listing
                 submitData.campsite = site.id;
@@ -502,7 +511,8 @@ export default {
                 num_concession: vm.numConcessions,
                 num_infant: vm.numInfants,
                 num_mooring: vm.numMooring,
-                vessel_size : vm.vesselSize
+                vessel_size : vm.vesselSize,
+                vessel_draft: vm.vesselDraft,
                 
             });
             history.replaceState('', '', newHist);
@@ -519,7 +529,8 @@ export default {
                         num_concession: vm.numConcessions,
                         num_infant: vm.numInfants,
                         num_mooring: vm.numMooring,
-                        vessel_size: vm.vesselSize
+                        vessel_size: vm.vesselSize,
+                        vessel_draft: vm.vesselDraft
                         
                     };
 
@@ -544,6 +555,7 @@ export default {
                         vm.ongoing_booking = data.ongoing_booking;
                         vm.ongoing_booking_id = data.ongoing_booking_id;
                         vm.mooring_vessel_size = data.vessel_size;
+                        vm.mooring_vessel_draft = data.vessel_draft;
                         vm.max_advance_booking = data.max_advance_booking;
                         vm.max_advance_booking_days = data.max_advance_booking_days;
 
