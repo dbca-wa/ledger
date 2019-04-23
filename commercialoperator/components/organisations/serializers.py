@@ -1,6 +1,6 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,OrganisationAddress
-from commercialoperator.components.organisations.models import (   
+from commercialoperator.components.organisations.models import (
                                 Organisation,
                                 OrganisationContact,
                                 OrganisationRequest,
@@ -14,7 +14,6 @@ from commercialoperator.components.organisations.utils import (
                                 can_manage_org,
                                 can_admin_org,
                                 is_consultant,
-                                can_relink,
                                 can_approve,
                             )
 from rest_framework import serializers, status
@@ -25,6 +24,17 @@ class LedgerOrganisationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ledger_organisation
         fields = '__all__'
+
+
+class LedgerOrganisationFilterSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ledger_organisation
+        fields = (
+            'id',
+            'name',
+        )
+
 
 class OrganisationCheckSerializer(serializers.Serializer):
     # Validation serializer for new Organisations
@@ -53,7 +63,7 @@ class OrganisationAddressSerializer(serializers.ModelSerializer):
             'state',
             'country',
             'postcode'
-        ) 
+        )
 
 class DelegateSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='get_full_name')
@@ -156,7 +166,7 @@ class DetailsSerializer(serializers.ModelSerializer):
 class OrganisationContactSerializer(serializers.ModelSerializer):
     user_status= serializers.SerializerMethodField()
     user_role= serializers.SerializerMethodField()
-    
+
     class Meta:
         model = OrganisationContact
         fields = '__all__'
@@ -221,13 +231,13 @@ class UserOrganisationSerializer(serializers.ModelSerializer):
 class OrganisationRequestActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
     class Meta:
-        model = OrganisationRequestUserAction 
+        model = OrganisationRequestUserAction
         fields = '__all__'
 
 class OrganisationActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
     class Meta:
-        model = OrganisationAction 
+        model = OrganisationAction
         fields = '__all__'
 
 class OrganisationRequestCommsSerializer(serializers.ModelSerializer):

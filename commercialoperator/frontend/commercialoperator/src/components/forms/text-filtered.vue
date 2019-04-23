@@ -40,7 +40,8 @@
                   </template>
 
                   <template slot="selected-option" slot-scope="option">
-                     <div class="selected d-center" :user_id="option.id">
+                     <div class="selected d-center"  :user_id="option.id">
+                        <input type="hidden" class="form-control" :name="name+'-selected'" :value="option.name" />
                         {{ option.name }}
                     </div>
                   </template>

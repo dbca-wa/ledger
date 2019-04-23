@@ -169,6 +169,26 @@ class ApprovalViewSet(viewsets.ModelViewSet):
 
             return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete) for d in instance.qaofficer_documents.filter(input_name=section, visible=True) if d._file] )
 
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def add_eclass_licence(self, request, *args, **kwargs):
+        #keys = request.data.keys()
+        #file_keys = [key for key in keys if 'file-upload' in i]
+        import ipdb; ipdb.set_trace()
+
+        _file = request.data.get('file-uploaad-0')
+        if request.data.get('applicant_type') == 'ORG':
+            applicant = Organisation.objects.get(organisation__name=request.data.get('applicant'))
+        else:
+            applicant = EmailUser.objects.get(email=request.data.get('applicant'))
+
+        start_date = request.data.get('start_date')
+        issue_date = request.data.get('issue_date')
+        expiry_date = request.data.get('expiry_date')
+        #Approval.objects.create(issue_date=datetime.now(), expiry_date=datetime.now(), start_date=datetime.now(),applicant=org.organisation_set.all()[0])
+        approval = Approval.objects.create(issue_date=issue_date, expiry_date=expiry_date, start_date=start_date, applicant=applicant)
+
+
 #def update_approval_doc_filename(instance, filename):
 #    return 'approvals/{}/documents/{}'.format(instance.approval.id,filename)
 

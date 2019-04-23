@@ -26,7 +26,7 @@ from ledger.accounts.models import EmailUser,OrganisationAddress
 from ledger.address.models import Country
 from datetime import datetime,timedelta, date
 from commercialoperator.helpers import is_customer, is_internal
-from commercialoperator.components.organisations.models import  (   
+from commercialoperator.components.organisations.models import  (
                                     Organisation,
                                     OrganisationContact,
                                     OrganisationRequest,
@@ -35,9 +35,10 @@ from commercialoperator.components.organisations.models import  (
                                     OrganisationAccessGroup,
                                     OrganisationRequestLogEntry,
                                     OrganisationAction,
+                                    ledger_organisation,
                                 )
 
-from commercialoperator.components.organisations.serializers import (   
+from commercialoperator.components.organisations.serializers import (
                                         OrganisationSerializer,
                                         OrganisationAddressSerializer,
                                         DetailsSerializer,
@@ -54,6 +55,7 @@ from commercialoperator.components.organisations.serializers import (
                                         OrgUserAcceptSerializer,
                                         MyOrganisationsSerializer,
                                         OrganisationCheckExistSerializer,
+                                        LedgerOrganisationFilterSerializer,
                                     )
 #from commercialoperator.components.applications.serializers import (
 #                                        BaseApplicationSerializer,
@@ -346,7 +348,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-            
+
 
     @detail_route(methods=['POST',])
     def reinstate_user(self, request, *args, **kwargs):
@@ -401,7 +403,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.action_logs.all()
             serializer = OrganisationActionSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -418,7 +420,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
 #            instance = self.get_object()
 #            qs = instance.org_applications.all()
 #            serializer = BaseApplicationSerializer(qs,many=True)
-#            return Response(serializer.data) 
+#            return Response(serializer.data)
 #        except serializers.ValidationError:
 #            print(traceback.print_exc())
 #            raise
@@ -435,7 +437,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.comms_logs.all()
             serializer = OrganisationCommsSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -567,6 +569,19 @@ class OrganisationViewSet(viewsets.ModelViewSet):
 #            print(traceback.print_exc())
 #            raise serializers.ValidationError(str(e))
 
+from rest_framework import filters
+class OrganisationListFilterView(generics.ListAPIView):
+    """ https://cop-internal.dbca.wa.gov.au/api/filtered_organisations?search=Org1
+    """
+    #queryset = Organisation.objects.all()
+    queryset = ledger_organisation.objects.none()
+    serializer_class = LedgerOrganisationFilterSerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+
+    def get_queryset(self):
+        org_list = Organisation.objects.all().values_list('id', flat=True)
+        return ledger_organisation.objects.filter(id__in=org_list)
 
 class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     queryset = OrganisationRequest.objects.all()
@@ -585,7 +600,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
         try:
             qs = self.get_queryset()
             serializer = OrganisationRequestDTSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -600,7 +615,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     # def user_organisation_request_list(self, request, *args, **kwargs):
     #     try:
     #         queryset = self.get_queryset()
-    #         queryset = queryset.filter(requester = request.user) 
+    #         queryset = queryset.filter(requester = request.user)
 
     #         # instance = OrganisationRequest.objects.get(requester = request.user)
     #         serializer = self.get_serializer(queryset, many=True)
@@ -653,7 +668,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object(requester =request.user)
             serializer = OrganisationRequestSerializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -670,7 +685,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.unassign(request)
             serializer = OrganisationRequestSerializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -687,7 +702,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.accept(request)
             serializer = OrganisationRequestSerializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -738,7 +753,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance.decline(request)
             serializer = OrganisationRequestSerializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -763,7 +778,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
                 raise serializers.ValidationError('A user with the id passed in does not exist')
             instance.assign_to(user,request)
             serializer = OrganisationRequestSerializer(instance)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -780,7 +795,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.action_logs.all()
             serializer = OrganisationRequestActionSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -797,7 +812,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.comms_logs.all()
             serializer = OrganisationRequestCommsSerializer(qs,many=True)
-            return Response(serializer.data) 
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -836,7 +851,7 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 class OrganisationAccessGroupMembers(views.APIView):
-    
+
     renderer_classes = [JSONRenderer,]
     def get(self,request, format=None):
         members = []
