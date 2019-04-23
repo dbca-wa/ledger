@@ -113,7 +113,7 @@ export default {
     data() {
         let vm = this;
         return {
-            users_url: api_endpoints.users_paginated,
+            users_url: helpers.add_endpoint_join(api_endpoints.users_paginated,'datatable_list/?format=datatables'),
             rBody: 'rBody' + vm._uid,
             oBody: 'oBody' + vm._uid,
             cBody: 'cBody' + vm._uid,
