@@ -98,6 +98,7 @@
 <script>
 import $ from 'jquery'
 import datatable from '@/utils/vue/datatable.vue'
+import alert from '@/utils/vue/alert.vue'
 import UserDashTable from '@common-components/users_dashboard.vue'
 import OrganisationDashTable from '@internal-components/organisations/organisations_dashboard.vue'
 import '@/scss/dashboards/search.scss';
@@ -108,7 +109,7 @@ import {
 from '@/utils/hooks'
 import utils from './utils'
 export default {
-    name: 'ExternalDashboard',
+    name: 'SearchDashboard',
     data() {
         let vm = this;
         return {
@@ -173,6 +174,7 @@ export default {
     },
     watch: {},
     components: {
+        alert,
         datatable,
         UserDashTable,
         OrganisationDashTable
