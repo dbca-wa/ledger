@@ -224,7 +224,7 @@ class Application(RevisionedMixin):
     APPLICATION_TYPE_AMENDMENT = 'amendment'
     APPLICATION_TYPE_RENEWAL = 'renewal'
     APPLICATION_TYPE_CHOICES = (
-        (APPLICATION_TYPE_NEW_LICENCE, 'New Licence'),
+        (APPLICATION_TYPE_NEW_LICENCE, 'New'),
         (APPLICATION_TYPE_AMENDMENT, 'Amendment'),
         (APPLICATION_TYPE_RENEWAL, 'Renewal'),
     )
@@ -515,7 +515,7 @@ class Application(RevisionedMixin):
 
     @property
     def licence_purpose_names(self):
-        return ', '.join([purpose.licence_activity.short_name + ' - ' + purpose.short_name
+        return ', '.join([purpose.short_name
                           for purpose in self.licence_purposes.all().order_by('licence_activity','short_name')])
 
     @property
