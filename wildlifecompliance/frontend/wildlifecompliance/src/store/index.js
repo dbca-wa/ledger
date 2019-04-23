@@ -19,12 +19,6 @@ import {
 import {
 	callemailStore
 } from './modules/call_email';
-import {
-	complianceRendererStore
-} from './modules/compliance_renderer';
-import {
-	complianceUserStore
-} from './modules/compliance_user';
 
 Vue.use(Vuex);
 
@@ -39,7 +33,6 @@ export default new Vuex.Store({
 		returnsStore: returnsStore,
 		returnsRendererStore: returnsRendererStore,
 		callemailStore: callemailStore,
-		complianceRendererStore: complianceRendererStore,
-		complianceUserStore: complianceUserStore,
+
 	}
 });

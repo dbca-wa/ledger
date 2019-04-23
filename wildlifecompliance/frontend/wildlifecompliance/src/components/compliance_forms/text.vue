@@ -7,16 +7,22 @@
             </template>
 
             <template v-if="help_text_url">
-                <HelpTextUrl :help_text_url="help_text_url" />
-            </template>
+  <HelpTextUrl :help_text_url="help_text_url"/>
+</template>
 
             <template v-if="canViewComments">
-                <template v-if="!showingComment">
-                    <a v-if="comment_value" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
-                    <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
-                </template>
-                <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
-            </template>
+  <template v-if="!showingComment">
+    <a v-if="comment_value" href @click.prevent="toggleComment">
+      <i style="color:red" class="fa fa-comment-o">&nbsp;</i>
+    </a>
+    <a v-else href @click.prevent="toggleComment">
+      <i class="fa fa-comment-o">&nbsp;</i>
+    </a>
+  </template>
+  <a href v-else @click.prevent="toggleComment">
+    <i class="fa fa-ban">&nbsp;</i>
+  </a>
+</template>
             <span v-if="min!='' || max!=''">
                 <input :readonly="readonly" :type="type" :min="min" :max="max" class="form-control" :name="name" v-model="field_data.value" :required="isRequired" />
             </span>
@@ -33,38 +39,51 @@
 </template>
 
 <script>
-import Comment from './comment.vue';
-import HelpText from './help_text.vue';
-import HelpTextUrl from './help_text_url.vue';
-import { mapGetters, mapActions } from 'vuex';
+import Comment from "./comment.vue";
+import HelpText from "./help_text.vue";
+import HelpTextUrl from "./help_text_url.vue";
+import { mapGetters, mapActions } from "vuex";
 export default {
-    props:["type","name","id", "comment_value","field_data","isRequired","help_text","label","readonly", "help_text_url", "min", "max"],
-    components: {Comment, HelpText, HelpTextUrl},
-    data(){
-        let vm = this;
-        return {
-            showingComment: false,
-            canViewComments: true,
-        }
-    },
-    methods: {
-        ...mapActions({
-            setFormValue: 'complianceRendererStore/setFormValue',
-        }),
-        toggleComment(){
-            this.showingComment = ! this.showingComment;
-        }
-    },
-    computed: {
-        ...mapGetters({
-            //canViewComments: 'complianceRendererStore/canViewComments',
-        }),
+  props: [
+    "type",
+    "name",
+    "id",
+    "comment_value",
+    "field_data",
+    "isRequired",
+    "help_text",
+    "label",
+    "readonly",
+    "help_text_url",
+    "min",
+    "max"
+  ],
+  components: { Comment, HelpText, HelpTextUrl },
+  data() {
+    let vm = this;
+    return {
+      showingComment: false
+      //canViewComments: true,
+    };
+  },
+  methods: {
+    ...mapActions({
+      setFormValue: "setFormValue"
+    }),
+    toggleComment() {
+      this.showingComment = !this.showingComment;
     }
-}
+  },
+  computed: {
+    ...mapGetters({
+      canViewComments: "canViewComments"
+    })
+  }
+};
 </script>
 
 <style lang="css">
-    input {
-        box-shadow:none;
-    }
+input {
+  box-shadow: none;
+}
 </style>

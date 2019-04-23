@@ -41,7 +41,7 @@ export const rendererStore = {
         unfinishedActivities: (state, getters, rootState, rootGetters) => {
             return getters.visibleActivities(
                 state.visibility.exclude_decisions, // Hide by decision
-                state.visibility.exclude_processing_status  // Hide by processing_status
+                state.visibility.exclude_processing_status // Hide by processing_status
             ).filter(activity => !rootGetters.application.has_amendment ||
                 rootGetters.application.amendment_requests.find(
                     request => request.licence_activity.id == activity.id
@@ -59,74 +59,112 @@ export const rendererStore = {
         }
     },
     mutations: {
-        [UPDATE_RENDERER_TABS] (state, tabs) {
+        [UPDATE_RENDERER_TABS](state, tabs) {
             Vue.set(state, 'tabs', tabs);
         },
-        [UPDATE_RENDERER_SECTIONS] (state, sections) {
-            Vue.set(state, 'sections', {...sections});
+        [UPDATE_RENDERER_SECTIONS](state, sections) {
+            Vue.set(state, 'sections', {
+                ...sections
+            });
         },
-        [UPDATE_VISIBLE_COMPONENT] (state, { key, value }) {
+        [UPDATE_VISIBLE_COMPONENT](state, {
+            key,
+            value
+        }) {
             Vue.set(state.visible_components, key, value);
         },
-        [TOGGLE_FINALISED_TABS] (state, visible) {
+        [TOGGLE_FINALISED_TABS](state, visible) {
             Vue.set(state.visibility, 'exclude_decisions', visible ? [] : ['issued', 'declined']);
         },
-        [UPDATE_FORM_DATA] (state, form_data) {
-            if(form_data == null) {
+        [UPDATE_FORM_DATA](state, form_data) {
+            if (form_data == null) {
                 Vue.set(state, 'form_data', {});
-            }
-            else {
-                Vue.set(state, 'form_data', {...form_data});
+            } else {
+                Vue.set(state, 'form_data', {
+                    ...form_data
+                });
             }
         },
-        [UPDATE_FORM_FIELD] (state, { key, value }) {
-            let currentValue = state.form_data[key] ? {...state.form_data[key]} : {};
-            for(let idx in value) {
+        [UPDATE_FORM_FIELD](state, {
+            key,
+            value
+        }) {
+            let currentValue = state.form_data[key] ? {
+                ...state.form_data[key]
+            } : {};
+            for (let idx in value) {
                 currentValue[idx] = value[idx];
             }
             Vue.set(state.form_data, key, currentValue);
         },
-        [REMOVE_FORM_FIELD] (state, key) {
+        [REMOVE_FORM_FIELD](state, key) {
             Vue.delete(state.form_data, key);
         },
     },
     actions: {
-        setRendererTabs({ commit }, tabs) {
+        setRendererTabs({
+            commit
+        }, tabs) {
             commit(UPDATE_RENDERER_TABS, tabs);
         },
-        setRendererSections({ commit }, sections) {
+        setRendererSections({
+            commit
+        }, sections) {
             commit(UPDATE_RENDERER_SECTIONS, sections);
         },
-        toggleVisibleComponent({ commit, getters }, { component_id, visible }) {
-            commit(UPDATE_VISIBLE_COMPONENT,
-                {key: component_id, value: visible});
+        toggleVisibleComponent({
+            commit,
+            getters
+        }, {
+            component_id,
+            visible
+        }) {
+            commit(UPDATE_VISIBLE_COMPONENT, {
+                key: component_id,
+                value: visible
+            });
         },
-        toggleFinalisedTabs({ commit }, visible) {
+        toggleFinalisedTabs({
+            commit
+        }, visible) {
             commit(TOGGLE_FINALISED_TABS, visible);
         },
-        setFormData({ commit }, form_data) {
+        setFormData({
+            commit
+        }, form_data) {
             commit(UPDATE_FORM_DATA, form_data);
         },
-        setFormValue({ commit }, params) {
+        setFormValue({
+            commit
+        }, params) {
             commit(UPDATE_FORM_FIELD, params);
         },
-        removeFormInstance({ state, commit }, instanceId) {
-            for(let key in state.form_data) {
-                if(!key.includes(instanceId)) {
+        removeFormInstance({
+            state,
+            commit
+        }, instanceId) {
+            for (let key in state.form_data) {
+                if (!key.includes(instanceId)) {
                     continue;
                 }
                 commit(REMOVE_FORM_FIELD, key);
             }
         },
-        saveFormData({ dispatch, commit, getters }, { url }) {
+        saveFormData({
+            dispatch,
+            commit,
+            getters
+        }, {
+            url
+        }) {
             return new Promise((resolve, reject) => {
                 Vue.http.post(url, getters.renderer_form_data).then(res => {
-                    resolve(res);
-                },
-                err => {
-                    console.log(err);
-                    reject(err);
-                });
+                        resolve(res);
+                    },
+                    err => {
+                        console.log(err);
+                        reject(err);
+                    });
             })
         },
     }

@@ -143,12 +143,11 @@
             :help_text_url="help_text_url"/>
 
         <ExpanderTable v-if="component.type === 'expander_table'"
-            :json_data="value"
+            :field_data="value"
             :readonly="is_readonly"
             :name="component_name"
             :component="component"
             :id="element_id()"
-            :comment_value="comment_value"
             :label="component.label"
             :help_text="help_text"
             :isRequired="component.isRequired"
@@ -236,7 +235,7 @@
             :readonly="is_readonly"
             :help_text="help_text"
             :docsUrl="documents_url"
-            :application_id="application_id"
+            :compliance_id="call_id"
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
@@ -250,11 +249,6 @@
             :help_text="help_text"
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
-<!--
-<p>{{ value }}</p>
-<p>{{ renderer_form_data }}</p>
-<p>{{ stored_renderer_data }}</p>
--->
     </span>
 </template>
 
@@ -265,25 +259,25 @@ import { mapActions, mapGetters, mapMutations } from "vuex";
 import { helpers, api_endpoints } from "@/utils/hooks.js";
 import { strToBool } from "@/utils/helpers.js";
 
-import FormSection from "@/components/forms/section.vue";
-import Group from "@/components/forms/group.vue";
-import Radio from "@/components/forms/radio.vue";
-import Conditions from "@/components/forms/conditions.vue";
-import SelectConditions from "@/components/forms/select-conditions.vue";
-import Checkbox from "@/components/forms/checkbox.vue";
-import Declaration from "@/components/forms/declarations.vue";
-import File from "@/components/forms/file.vue";
-import SelectBlock from "@/components/forms/select.vue";
+import FormSection from "@/components/compliance_forms/section.vue";
+import Group from "@/components/compliance_forms/group.vue";
+import Radio from "@/components/compliance_forms/radio.vue";
+import Conditions from "@/components/compliance_forms/conditions.vue";
+import SelectConditions from "@/components/compliance_forms/select-conditions.vue";
+import Checkbox from "@/components/compliance_forms/checkbox.vue";
+import Declaration from "@/components/compliance_forms/declarations.vue";
+import File from "@/components/compliance_forms/file.vue";
+import SelectBlock from "@/components/compliance_forms/select.vue";
 import DateField from "@/components/compliance_forms/date-field.vue";
 import TextField from "@/components/compliance_forms/text.vue";
-import TextAreaBlock from "@/components/forms/text-area.vue";
-import LabelBlock from "@/components/forms/label.vue";
-import AssessorText from "@/components/forms/readonly_text.vue";
+import TextAreaBlock from "@/components/compliance_forms/text-area.vue";
+import LabelBlock from "@/components/compliance_forms/label.vue";
+import AssessorText from "@/components/compliance_forms/readonly_text.vue";
 import HelpText from "@/components/compliance_forms/help_text.vue";
 import HelpTextUrl from "@/components/compliance_forms/help_text_url.vue";
 import CommentRadioCheckBox from "@/components/forms/comment_icon_checkbox_radio.vue";
-import TableBlock from "@/components/forms/table.vue";
-import ExpanderTable from "@/components/forms/expander_table.vue";
+import TableBlock from "@/components/compliance_forms/table.vue";
+import ExpanderTable from "@/components/compliance_forms/expander_table.vue";
 
 const ComplianceRendererBlock = {
   name: "compliance-renderer-block",
@@ -307,11 +301,7 @@ const ComplianceRendererBlock = {
     ExpanderTable
   },
   data: function() {
-    return {
-      //renderer_form_data: {field1: "text"},
-      //isComponentVisible: true,
-      //stored_data: this.call_email.stored_data
-    };
+    return {};
   },
   props: {
     component: {
@@ -326,14 +316,10 @@ const ComplianceRendererBlock = {
   computed: {
     ...mapGetters({
       call_email: "callemailStore/call_email",
-      //stored_renderer_data: 'callemailStore/stored_renderer_data',
-      call_email_id: "callemailStore/call_email_id",
-      //'application',
-      //'application_id',
-      renderer_form_data: "complianceRendererStore/renderer_form_data",
-      isComponentVisible: "complianceRendererStore/isComponentVisible"
+      call_id: "callemailStore/call_id",
+      renderer_form_data: "renderer_form_data",
+      isComponentVisible: "isComponentVisible"
     }),
-
     is_readonly: function() {
       return this.component.readonly ? this.component.readonly : null;
     },
@@ -360,7 +346,6 @@ const ComplianceRendererBlock = {
     },
 
     json_data: function() {
-      console.log(this);
       return this.renderer_form_data;
     },
     formDataRecord: function() {
@@ -407,20 +392,15 @@ const ComplianceRendererBlock = {
     }
   },
   methods: {
-    // ...mapMutations({
-    //   updateFormField: "complianceRendererStore/updateFormField"
-    // }),
-
     ...mapActions({
-      toggleVisibleComponent: "complianceRendererStore/toggleVisibleComponent",
-      setFormValue: "complianceRendererStore/setFormValue"
+      toggleVisibleComponent: "toggleVisibleComponent",
+      setFormValue: "setFormValue"
     }),
     strToBool: strToBool,
     element_id: function(depth = 0) {
       return `id_${this.component_name}${depth ? `_${depth}` : ""}${
         this.instance !== null ? `__instance${this.instance}` : ""
       }`;
-      //return null;
     },
 
     replaceSitePlaceholders: function(text_string) {

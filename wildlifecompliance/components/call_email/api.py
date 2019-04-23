@@ -101,89 +101,66 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
         raise serializers.ValidationError(str(e))
 
-    def bak_create(self, request, *args, **kwargs):
-        print("create")
-        print(request.data)
-        try:
-            request_classification_str = request.data.get(
-                'classification')
-            request_classification_obj = Classification.objects.get(
-                name=request_classification_str.capitalize())
-            parser = SchemaParser()
-            form_data = request.data.get('schema')
-            #parsed_json = parser.create_data_from_form(form_data)
-            request_data = {
-                'status': request.data.get('status'),
-                'classification': request_classification_obj.id,
-                'number': request.data.get('number'),
-                'caller': request.data.get('caller'),
-                'assigned_to': request.data.get('assigned_to'),
-                # 'data': parsed_json,
-            }
-            serializer = CreateCallEmailSerializer(data=request_data)
-            serializer.is_valid(raise_exception=True)
-            if serializer.is_valid():
-                serializer.save()
-                headers = self.get_success_headers(serializer.data)
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_201_CREATED,
-                    headers=headers
-                )
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['POST', ])
+    @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
-    def bak_update_renderer_form(self, request, *args, **kwargs):
-        print("update")
-        print(request.POST)
-
+    def process_document(self, request, *args, **kwargs):
         try:
-            parser = SchemaParser()
-            # form_data = request.data.get('schema')
             instance = self.get_object()
-            # print(instance)
-            parsed_json = parser.create_data_from_form(
-                # instance.report_type.schema,
-                instance.schema,
-                request.POST,
-                # instance.report_type.schema,
-                # file_data=False,
-                request.FILES,
-                comment_data=True
-            )
-            rendered_data = parsed_json[0]
-            # print(rendered_data)
-            #instance.data = rendered_data
-            data = {
-                # 'schema': instance.schema,
-                'data': rendered_data,
-            }
-            serializer = UpdateRendererDataSerializer(
-                instance, data=data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            if serializer.is_valid():
-                serializer.save()
-                headers = self.get_success_headers(serializer.data)
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_201_CREATED,
-                    headers=headers
-                )
+            action = request.POST.get('action')
+            section = request.POST.get('input_name')
+            if action == 'list' and 'input_name' in request.POST:
+                pass
+
+            elif action == 'delete' and 'document_id' in request.POST:
+                document_id = request.POST.get('document_id')
+                document = instance.documents.get(id=document_id)
+
+                if document._file and os.path.isfile(
+                        document._file.path) and document.can_delete:
+                    os.remove(document._file.path)
+
+                document.delete()
+                instance.save(version_comment='Approval File Deleted: {}'.format(
+                    document.name))  # to allow revision to be added to reversion history
+
+            elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
+                application_id = request.POST.get('application_id')
+                filename = request.POST.get('filename')
+                _file = request.POST.get('_file')
+                if not _file:
+                    _file = request.FILES.get('_file')
+
+                document = instance.documents.get_or_create(
+                    input_name=section, name=filename)[0]
+                path = default_storage.save(
+                    'applications/{}/documents/{}'.format(
+                        application_id, filename), ContentFile(
+                        _file.read()))
+
+                document._file = path
+                document.save()
+                # to allow revision to be added to reversion history
+                instance.save(
+                    version_comment='File Added: {}'.format(filename))
+
+            return Response(
+                [
+                    dict(
+                        input_name=d.input_name,
+                        name=d.name,
+                        file=d._file.url,
+                        id=d.id,
+                        can_delete=d.can_delete) for d in instance.documents.filter(
+                        input_name=section) if d._file])
+
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
         except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
