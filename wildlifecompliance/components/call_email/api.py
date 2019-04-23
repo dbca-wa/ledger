@@ -1,4 +1,5 @@
 import traceback
+import os
 import base64
 import geojson
 from django.db.models import Q, Min
@@ -105,6 +106,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def process_document(self, request, *args, **kwargs):
         try:
+            print("process_document")
+            print(request.POST)
             instance = self.get_object()
             action = request.POST.get('action')
             section = request.POST.get('input_name')

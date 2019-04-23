@@ -235,7 +235,7 @@
             :readonly="is_readonly"
             :help_text="help_text"
             :docsUrl="documents_url"
-            :compliance_id="call_id"
+            :compliance_id="call_email.id"
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
@@ -316,7 +316,7 @@ const ComplianceRendererBlock = {
   computed: {
     ...mapGetters({
       call_email: "callemailStore/call_email",
-      call_id: "callemailStore/call_id",
+      //call_id: "callemailStore/call_id",
       renderer_form_data: "renderer_form_data",
       isComponentVisible: "isComponentVisible"
     }),

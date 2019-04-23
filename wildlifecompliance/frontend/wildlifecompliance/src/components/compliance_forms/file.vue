@@ -116,6 +116,9 @@ export default {
       return helpers.getCookie("csrftoken");
     },
     compliance_document_action: function() {
+      console.log(this.compliance_id);
+      console.log(`/api/call_email/${this.compliance_id}/process_document/`);
+
       return this.compliance_id
         ? `/api/call_email/${this.compliance_id}/process_document/`
         : "";

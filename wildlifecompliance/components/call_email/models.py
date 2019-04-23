@@ -1,15 +1,24 @@
 from __future__ import unicode_literals
-
+import logging
 from django.db import models
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.db.models import Max
 from django.utils.encoding import python_2_unicode_compatible
 from ledger.accounts.models import EmailUser
 from ledger.licence.models import LicenceType
+from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document
+
+
+logger = logging.getLogger(__name__)
+
+
+def update_compliance_doc_filename(instance, filename):
+    return 'wildlifecompliance/compliance/{}/documents/{}'.format(
+        instance.call_email.id, filename)
 
 
 class Classification(models.Model):
@@ -279,3 +288,23 @@ class ComplianceFormDataRecord(models.Model):
                     form_data_record.deficiency = deficiency
             form_data_record.save()
 
+
+class ComplianceDocument(Document):
+    call_email = models.ForeignKey('CallEmail', related_name='documents')
+    _file = models.FileField(upload_to=update_compliance_doc_filename)
+    input_name = models.CharField(max_length=255, null=True, blank=True)
+    # after initial submit prevent document from being deleted
+    can_delete = models.BooleanField(default=True)
+    version_comment = models.CharField(max_length=255, null=True, blank=True)
+
+    def delete(self):
+        if self.can_delete:
+            return super(ComplianceDocument, self).delete()
+        logger.info(
+            'Cannot delete existing document object after application has been submitted (including document submitted before\
+            application pushback to status Draft): {}'.format(
+                self.name)
+        )
+
+    class Meta:
+        app_label = 'wildlifecompliance'
