@@ -241,7 +241,7 @@ export default {
         isReturnCheckAccepted: function(){
             return this.application.return_check_status.id == 'accepted';
         },
-        isIdReturnCheckAwaitingReturns: function(){
+        isReturnCheckAwaitingReturns: function(){
             return this.application.return_check_status.id == 'awaiting_returns';
         },
         isReturnNotChecked: function(){
