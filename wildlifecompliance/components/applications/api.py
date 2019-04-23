@@ -18,7 +18,6 @@ from wildlifecompliance.components.applications.utils import (
     SchemaParser,
     MissingFieldsException,
 )
-from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.applications.models import (
@@ -30,8 +29,6 @@ from wildlifecompliance.components.applications.models import (
     ActivityPermissionGroup,
     AmendmentRequest,
     ApplicationUserAction,
-    search_keywords,
-    search_reference,
     ApplicationFormDataRecord,
 )
 from wildlifecompliance.components.applications.serializers import (
@@ -55,8 +52,6 @@ from wildlifecompliance.components.applications.serializers import (
     AmendmentRequestSerializer,
     ApplicationProposedIssueSerializer,
     DTAssessmentSerializer,
-    SearchKeywordSerializer,
-    SearchReferenceSerializer
 )
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
@@ -1388,43 +1383,3 @@ class AmendmentRequestReasonChoicesView(views.APIView):
                 choices_list.append({'key': c[0], 'value': c[1]})
 
         return Response(choices_list)
-
-
-class SearchKeywordsView(views.APIView):
-    renderer_classes = [JSONRenderer]
-
-    def post(self, request, format=None):
-        qs = []
-        search_words = request.data.get('searchKeywords')
-        search_application = request.data.get('searchApplication')
-        search_licence = request.data.get('searchLicence')
-        search_returns = request.data.get('searchReturn')
-        if search_words:
-            qs = search_keywords(search_words, search_application, search_licence, search_returns)
-        serializer = SearchKeywordSerializer(qs, many=True)
-        return Response(serializer.data)
-
-
-class SearchReferenceView(views.APIView):
-    renderer_classes = [JSONRenderer]
-
-    def post(self, request, format=None):
-        try:
-            qs = []
-            reference_number = request.data.get('reference_number')
-            if reference_number:
-                qs = search_reference(reference_number)
-            serializer = SearchReferenceSerializer(qs)
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            if hasattr(e, 'error_dict'):
-                raise serializers.ValidationError(repr(e.error_dict))
-            else:
-                print e
-                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))

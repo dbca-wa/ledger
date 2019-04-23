@@ -54,7 +54,7 @@
                     <div class="row">
                       <div class="col-lg-12">
                         <div>
-                          <input type="button" @click.prevent="searchKeyword" class="btn btn-primary" style="margin-bottom: 5px"value="Search"/>
+                          <input :disabled="!hasSearchKeywords" type="button" @click.prevent="searchKeyword" class="btn btn-primary" style="margin-bottom: 5px"value="Search"/>
                           <input type="reset" @click.prevent="clearKeywordSearch" class="btn btn-primary" style="margin-bottom: 5px"value="Clear"/>
                         </div>
                       </div>
@@ -120,6 +120,7 @@ export default {
             kBody: 'kBody' + vm._uid,
             loading: [],
             searchKeywords: [],
+            hasSearchKeywords: false,
             selected_organisation:'',
             organisations: null,
             searchApplication: true,
@@ -159,7 +160,7 @@ export default {
                               links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
                             }
                             if(full.type == 'Licence') {
-                              links +=  `<a href='/internal/licence/${full.id}'>View</a><br/>`;
+                              links +=  `<a href="${full.licence_document}" target="_blank">View</a>`;
                             }
                             if(full.type == 'Return') {
                               links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;
@@ -172,7 +173,15 @@ export default {
             }
         }
     },
-    watch: {},
+    watch: {
+        searchKeywords: function() {
+            if (this.searchKeywords.length > 0){
+                this.hasSearchKeywords = true;
+            } else {
+                this.hasSearchKeywords = false;
+            };
+        }
+    },
     components: {
         alert,
         datatable,
@@ -194,8 +203,7 @@ export default {
             return this.loading.length == 0;
         },
         showError: function() {
-            var vm = this;
-            return vm.errors;
+            return this.errors;
         }
     },
     methods: {
