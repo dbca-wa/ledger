@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from django.contrib.gis.db import models
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.db.models import Max
 from ledger.accounts.models import EmailUser
@@ -47,6 +48,7 @@ class Location(models.Model):
 
     latitude = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     longitude = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     street = models.CharField(max_length=100)
     town_suburb = models.CharField(max_length=100)
     state = models.CharField(max_length=50, choices=STATE_CHOICES, default='WA')
