@@ -260,7 +260,7 @@ export default {
                           this.isProcessing = false;
                           vm.$router.push({
                               name: 'submit_application',
-                              params: { application: vm.application}
+                              params: { application: vm.application }
                           });
                       }
                   },err=>{
