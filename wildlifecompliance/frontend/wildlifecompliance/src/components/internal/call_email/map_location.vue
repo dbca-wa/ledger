@@ -4,8 +4,15 @@
         <div style="display: none;">
             <div id="popup"></div>
         </div>
+
+        <div class="col-sm-12"><div class="row">
+            <label class="col-sm-4">Lock Marker</label>
+            <input type="checkbox" v-model="marker_locked" />
+        </div></div>
+
         <div id="lon">Lat: {{ lat_4326_cursor }}</div>
         <div id="lon">Lng: {{ lng_4326_cursor }}</div>
+
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">Street</label>
             <input v-model="street" />
@@ -56,6 +63,7 @@ export default {
             element: null,
             lat_4326_cursor: null,
             lng_4326_cursor: null,
+            marker_locked: false,
 
             feature_marker: null,
             lat_4326: null,
@@ -73,7 +81,6 @@ export default {
         this.initMap();
         console.debug('End loading map');
     },
-
     methods: {
         importMapData: function(){
             this.$http.get("http://ubuntu-18:8071/api/call_email_location/7/")
@@ -181,7 +188,9 @@ export default {
                 });
                 $(this.element).popover('show');
             } else {
-                this.relocateMarker(coordinate);
+                if(!this.marker_locked){
+                    this.relocateMarker(coordinate);
+                }
                 $(this.element).popover('destroy');
             };
         }
