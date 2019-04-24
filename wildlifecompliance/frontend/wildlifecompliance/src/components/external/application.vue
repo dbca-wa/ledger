@@ -47,7 +47,6 @@
                     </div>
                 </div>
             </Application>
-        <input type="button" @click.prevent="testButton" class="btn btn-danger" value="Test Button"/>
         </form>
     </div>
 </template>
@@ -237,45 +236,48 @@ export default {
             confirmButtonText: 'Submit'
         }).then((result) => {
             if (result.value) {
-                let formData = new FormData(vm.form);
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
-                    this.setApplication(res.body);
-                    if (vm.requiresCheckout) {
-                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
-                            this.isProcessing = false;
-                            window.location.href = "/ledger/checkout/checkout/payment-details/";
-                        },err=>{
-                            swal(
-                                'Submit Error',
-                                helpers.apiVueResourceError(err),
-                                'error'
-                            ).then((result) => {
-                                this.isProcessing = false;
-                            })
-                        });
-                    } else {
-                        this.isProcessing = false;
-                        vm.$router.push({
-                            name: 'submit_application',
-                            params: { application: vm.application}
-                        });
-                    }
-                },err=>{
-                    console.log(err);
-                    if(err.body.missing) {
-                      this.missing_fields = err.body.missing;
-                      this.highlight_missing_fields();
-                      this.isProcessing = false;
-                    }
-                    else {
-                      swal(
-                          'Submit Error',
-                          helpers.apiVueResourceError(err),
-                          'error'
-                      ).then((result) => {
+                this.saveFormData({ url: this.application_form_data_url }).then(res=>{
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),{}).then(res=>{
+                      this.setApplication(res.body);
+                      if (vm.requiresCheckout) {
+                          vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
+                              this.isProcessing = false;
+                              window.location.href = "/ledger/checkout/checkout/payment-details/";
+                          },err=>{
+                              swal(
+                                  'Submit Error',
+                                  helpers.apiVueResourceError(err),
+                                  'error'
+                              ).then((result) => {
+                                  this.isProcessing = false;
+                              })
+                          });
+                      } else {
                           this.isProcessing = false;
-                      })
-                    }
+                          vm.$router.push({
+                              name: 'submit_application',
+                              params: { application: vm.application}
+                          });
+                      }
+                  },err=>{
+                      console.log(err);
+                      if(err.body.missing) {
+                        this.missing_fields = err.body.missing;
+                        this.highlight_missing_fields();
+                        this.isProcessing = false;
+                      }
+                      else {
+                        swal(
+                            'Submit Error',
+                            helpers.apiVueResourceError(err),
+                            'error'
+                        ).then((result) => {
+                            this.isProcessing = false;
+                        })
+                      }
+                  });
+                }, err=>{
+                  console.log(err);
                 });
             } else {
                 this.isProcessing = false;

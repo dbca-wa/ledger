@@ -10,6 +10,7 @@ import hooks from './packages';
 import api_endpoints from './api';
 import store from './store';
 import RendererBlock from '@/components/common/renderer_block.vue';
+import ComplianceRendererBlock from '@/components/common/compliance_renderer_block.vue';
 import VueScrollTo from 'vue-scrollto';
 import Affix from 'vue-affix';
 
@@ -23,6 +24,7 @@ Vue.use( resource );
 Vue.use( VueScrollTo );
 Vue.use( Affix );
 Vue.component('renderer-block', RendererBlock);
+Vue.component('compliance-renderer-block', ComplianceRendererBlock);
 
 // Add CSRF Token to every request
 Vue.http.interceptors.push( function ( request, next ) {
