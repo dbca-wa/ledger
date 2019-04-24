@@ -14,7 +14,7 @@
                     <div v-for="a in visibleRequests">
                         <p><b>Activity:</b> {{a.licence_activity.name}}</p>
                         <p><b>Reason:</b> {{a.reason.name}}</p>
-                        <p><b>Details:</b>
+                        <p v-if="a.text"><b>Details:</b>
                             <div v-for="t in splitText(a.text)">{{t}}<br></div></p> 
                     </div>
                 </div>

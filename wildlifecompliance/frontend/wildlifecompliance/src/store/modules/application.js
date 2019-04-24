@@ -10,7 +10,12 @@ import {
 export const applicationStore = {
     state: {
         original_application: {},
-        application: {},
+        application: {
+            "schema": [],
+            "licence_type_data": {
+                "activity": []
+            }
+        },
     },
     getters: {
         application: state => state.application,
@@ -53,7 +58,7 @@ export const applicationStore = {
             const activity_count = getters.licence_type_data.activity.length;
             return getters.checkActivityStatus(final_statuses) && !getters.checkActivityStatus(final_statuses, activity_count);
         },
-        isApplicationLoaded: state => Object.keys(state.application).length && state.application.licence_type_data != null,
+        isApplicationLoaded: state => Object.keys(state.application).length && state.application.licence_type_data.activity.length,
         isApplicationActivityVisible: (state, getters, rootState, rootGetters) =>
             (activity_id, exclude_statuses, exclude_processing_statuses, for_user_role) => {
             if(!state.application.activities) {
@@ -141,7 +146,11 @@ export const applicationStore = {
                     for(let form_data_record of res.body.data) {
                         dispatch('setFormValue', {
                             key: form_data_record.field_name,
-                            value: {"value": form_data_record.value}
+                            value: {
+                                "value": form_data_record.value,
+                                "comment_value": form_data_record.comment,
+                                "deficiency_value": form_data_record.deficiency,
+                            }
                         });
                     }
                     resolve();

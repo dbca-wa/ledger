@@ -2,13 +2,32 @@
     margin-bottom: 10px;
 }
 
-.expander-table:nth-of-type(odd) {
-    background-color: #f9f9f9;
+.expander-table {
+    border-bottom: 1px solid rgb(221, 221, 221);
+    &:nth-of-type(odd) {
+        background-color: #efefef;
+    }
+    &:nth-of-type(even) {
+        background-color: #fafafa;
+    }
+}
+
+.header-titles-row {
+    padding-left: 15px;
+    padding-right: 15px;
+    font-weight: 600;
+
+    div {
+        padding-top: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgb(221, 221, 221);
+    }
 }
 
 .header-row {
     padding-left: 10px;
     padding-right: 10px;
+    padding-top: 15px;
 
     .expand-icon {
         display: inline-block;
@@ -51,6 +70,9 @@
 .expander-row {
     padding-left: 20px;
     padding-right: 20px;
+    background: #dddddd;
+    margin-left: 0px;
+    margin-right: 0px;
 }
 
 .header-contents {
