@@ -407,6 +407,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @list_route(methods=['POST', ])
     def estimate_price(self, request, *args, **kwargs):
         purpose_ids = request.data.get('purpose_ids', [])
+        application_id = request.data.get('application_id')
+        if application_id is not None:
+            application = Application.objects.get(id=application_id)
+            return Response({
+                'fees': application.calculate_fees(request.data.get('field_data', {}))
+            })
         return Response({
             'fees': Application.calculate_base_fees(purpose_ids)
         })

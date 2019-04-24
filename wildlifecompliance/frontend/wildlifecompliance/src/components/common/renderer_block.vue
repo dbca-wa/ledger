@@ -386,6 +386,17 @@ const RendererBlock = {
         }
         return text_string;
     },
+    previewApplicationFees: function() {
+      this.$http.post('/api/application/estimate_price/', {
+                'application_id': this.application_id,
+                'field_data': this.renderer_form_data,
+            }).then(res => {
+                this.application.application_fee = res.body.fees.application;
+                this.application.licence_fee = res.body.fees.licence;
+        }, err => {
+            console.log(err);
+        });
+    },
     handleComponentChange: function(component, assignEventValue=true) {
         return (e) => {
             for(let condition in component.conditions) {
@@ -406,6 +417,7 @@ const RendererBlock = {
             if(assignEventValue && value !== null && value !== undefined) {
                 this.value = value;
             }
+            this.previewApplicationFees();
         }
     },
   }

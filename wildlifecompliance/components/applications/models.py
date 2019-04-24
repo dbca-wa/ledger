@@ -597,10 +597,7 @@ class Application(RevisionedMixin):
     def log_user_action(self, action, request):
         return ApplicationUserAction.log_action(self, action, request.user)
 
-    def update_fees(self):
-        if self.processing_status != Application.PROCESSING_STATUS_DRAFT:
-            return
-
+    def calculate_fees(self, data_source):
         schema_fields = self.schema_fields
         fees = Application.calculate_base_fees(
             self.licence_purposes.values_list('id', flat=True)
@@ -617,20 +614,35 @@ class Application(RevisionedMixin):
                 fees[field] += component[key]
 
         # Adjust fees based on selected options (radios and checkboxes)
-        for form_data_record in self.data:
-            schema_name = form_data_record.schema_name
+        for form_data_record in data_source:
+            try:
+                # Retrieve dictionary of fields from a model instance
+                data_record = form_data_record.__dict__
+            except AttributeError:
+                # If a raw form data (POST) is supplied, form_data_record is a key
+                data_record = data_source[form_data_record]
+
+            schema_name = data_record['schema_name']
             schema_data = schema_fields[schema_name]
 
             if 'options' in schema_data:
                 for option in schema_data['options']:
                     # Only consider fee modifications if the current option is selected
-                    if option['value'] != form_data_record.value:
+                    if option['value'] != data_record['value']:
                         continue
                     adjust_fee(fees, option)
 
             # If this is a checkbox - skip unchecked ones
-            elif form_data_record.value == 'on':
+            elif data_record['value'] == 'on':
                 adjust_fee(fees, schema_data)
+
+        return fees
+
+    def update_fees(self):
+        if self.processing_status != Application.PROCESSING_STATUS_DRAFT:
+            return
+
+        fees = self.calculate_fees(self.data)
 
         self.application_fee = fees['application']
         self.licence_fee = fees['licence']
