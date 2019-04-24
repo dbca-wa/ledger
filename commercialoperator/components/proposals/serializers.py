@@ -617,7 +617,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'lodgement_sequence',
                 'can_officer_process',
                 'proposal_type',
-                'qaofficer_referrals'
+                'qaofficer_referrals',
                 # tab field models
                 'applicant_details',
                 'other_details',
