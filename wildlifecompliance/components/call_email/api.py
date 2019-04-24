@@ -107,15 +107,15 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     def process_document(self, request, *args, **kwargs):
         try:
             print("process_document")
-            print(request.POST)
+            print(request.data)
             instance = self.get_object()
-            action = request.POST.get('action')
-            section = request.POST.get('input_name')
-            if action == 'list' and 'input_name' in request.POST:
+            action = request.data.get('action')
+            section = request.data.get('input_name')
+            if action == 'list' and 'input_name' in request.data:
                 pass
 
-            elif action == 'delete' and 'document_id' in request.POST:
-                document_id = request.POST.get('document_id')
+            elif action == 'delete' and 'document_id' in request.data:
+                document_id = request.data.get('document_id')
                 document = instance.documents.get(id=document_id)
 
                 if document._file and os.path.isfile(
@@ -126,12 +126,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 instance.save(version_comment='Approval File Deleted: {}'.format(
                     document.name))  # to allow revision to be added to reversion history
 
-            elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
-                application_id = request.POST.get('application_id')
-                filename = request.POST.get('filename')
-                _file = request.POST.get('_file')
+            elif action == 'save' and 'input_name' in request.data and 'filename' in request.data:
+                application_id = request.data.get('application_id')
+                filename = request.data.get('filename')
+                _file = request.data.get('_file')
                 if not _file:
-                    _file = request.FILES.get('_file')
+                    _file = request.data.get('_file')
 
                 document = instance.documents.get_or_create(
                     input_name=section, name=filename)[0]

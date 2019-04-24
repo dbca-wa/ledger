@@ -26,19 +26,7 @@ export default {
     return {
       pBody: "pBody" + this._uid,
       loading: [],
-      comms_url: "www.google.com",
-      comms_add_url: "www.google.com",
-      logs_url: "www.google.com",
-      rend_text_area: {
-        id: "1",
-        label: "label",
-        status: "status",
-        type: "text_area"
-      },
-      nothing: null,
       renderer_form: null,
-      new_form: {},
-      dummy_field_data: { SWS_Application1_0: "new new text" }
     };
   },
 
