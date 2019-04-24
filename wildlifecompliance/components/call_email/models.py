@@ -54,6 +54,7 @@ class Location(models.Model):
     state = models.CharField(max_length=50, choices=STATE_CHOICES, default='WA')
     postcode = models.IntegerField()
     country = models.CharField(max_length=100, default='Australia')
+    objects = models.GeoManager()
 
     class Meta:
         app_label='wildlifecompliance'

@@ -1,9 +1,12 @@
 import traceback
+
+from rest_framework_gis.serializers import GeoFeatureModelSerializer
+
 from wildlifecompliance.components.call_email.models import (
     CallEmail,
     Classification,
-    ReportType
-	)
+    ReportType,
+    Location)
 from wildlifecompliance.components.applications.serializers import BaseApplicationSerializer
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
@@ -48,12 +51,28 @@ class ReportTypeSerializer(serializers.ModelSerializer):
         read_only_fields = ('report_type', 'schema')
 
 
+class LocationSerializer(GeoFeatureModelSerializer):
+    class Meta:
+        model = Location
+        geo_field = 'wkb_geometry'
+        fields = (
+            'id',
+            'wkb_geometry',
+            'street',
+            'town_suburb',
+            'state',
+            'postcode',
+            'country',
+        )
+
+
 class CallEmailSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source='get_status_display')
     classification = ClassificationSerializer()
     lodgement_date = serializers.CharField(
             source='lodged_on')
     report_type = ReportTypeSerializer()
+    location = LocationSerializer()
 
     class Meta:
         model = CallEmail
@@ -80,4 +99,6 @@ class UpdateRendererDataSerializer(serializers.ModelSerializer):
         fields = (
                 'data',
                 )
+
+
 

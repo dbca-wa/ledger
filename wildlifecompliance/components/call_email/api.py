@@ -36,17 +36,23 @@ from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.helpers import is_customer, is_internal
-from wildlifecompliance.components.call_email.models import CallEmail, Classification
+from wildlifecompliance.components.call_email.models import CallEmail, Classification, Location
 from wildlifecompliance.components.call_email.serializers import (
-        CallEmailSerializer, 
-        ClassificationSerializer, 
-        CreateCallEmailSerializer,
-        UpdateRendererDataSerializer,
-        )
+    CallEmailSerializer,
+    ClassificationSerializer,
+    CreateCallEmailSerializer,
+    UpdateRendererDataSerializer,
+    LocationSerializer)
 from wildlifecompliance.components.applications.utils import (                                                                                                                                              
             SchemaParser,                                                                                                                                                            
             MissingFieldsException
             )
+
+
+class LocationViewSet(viewsets.ModelViewSet):
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+
 
 class CallEmailViewSet(viewsets.ModelViewSet):
     queryset = CallEmail.objects.all()
