@@ -247,17 +247,17 @@
                             </div>
                             <div class="col-sm-3">
                                 <label>
-                                    <input type="radio" v-model="proposal.other_details.credit_docket_books" value="true" :disabled="proposal.readonly"/>Yes
+                                    <input type="radio" v-model="proposal.other_details.credit_docket_books" value="true" @change="handleRadioChange" ref="docket_books_yes" :disabled="proposal.readonly"/>Yes
                                 </label>
                             </div>
                             <div class="col-sm-3">
                                 <label>
-                                    <input type="radio" v-model="proposal.other_details.credit_docket_books" value="false" :disabled="proposal.readonly"/>No
+                                    <input type="radio" v-model="proposal.other_details.credit_docket_books" value="false" @change="handleRadioChange" :disabled="proposal.readonly"/>No
                                 </label>
                             </div>
                         </div>
                         <div>
-                            <div v-if="show_docket_number">
+                            <div id="show_docket" class="hidden">
                             <div class="col-sm-6" >
                                 <label class="control-label pull-left"  for="Name">Number of docket books</label>
                             </div>
@@ -336,8 +336,6 @@ export default {
                 accreditation_type:[],
                 selected_accreditations:[],
                 licence_period_choices:[],
-                show_docket_number:false,
-                show_docket_field:false,
                 datepickerOptions:{
                 format: 'DD/MM/YYYY',
                 showClear:true,
@@ -352,25 +350,45 @@ export default {
           Accreditation
         },
         computed: {
-            docker_books_required: function(){
-                return this.proposal? this.proposal.other_details.credit_docket_books : false;
-            }
+            
         },
         watch:{
-            docker_books_required: function(){
-                console.log(this.docker_books_required);
-             if(this.proposal){
-                this.show_docket_number= helpers.copyObject(this.proposal.other_details.credit_docket_books);
-             }
-             else{
-                this.show_docket_number=helpers.copyObject(this.proposal.other_details.credit_docket_books);;
-             }
-            },
+            
             accreditation_type: function(){
                 this.proposal.other_details.accreditation_type=this.accreditation_type.key;
             },
         },
         methods:{
+            handleRadioChange: function(e){
+                    if(e.target.value=="true"){
+                        console.log(e.target.value);
+                        $('#show_docket').removeClass('hidden')
+                    }
+                    else{
+                        $('#show_docket').addClass('hidden')
+                    }
+                
+            },
+            showDockteNumber: function(){
+                let vm=this;
+                if(vm.proposal && vm.proposal.other_details.credit_docket_books){
+                    var input = this.$refs.docket_books_yes;
+                    var e = document.createEvent('HTMLEvents');
+                    e.initEvent('change', true, true);
+                    var disabledStatus = input.disabled;
+                    try {
+                        /* Firefox will not fire events for disabled widgets, so (temporarily) enabling them */
+                        if(disabledStatus) {
+                            input.disabled = false;
+                        }
+                        input.dispatchEvent(e);
+                    } finally {
+                        if(disabledStatus) {
+                            input.disabled = true;
+                        }
+                    }
+                }
+            },
             fetchAccreditationChoices: function(){
                 let vm = this;
                 vm.$http.get('/api/accreditation_choices.json').then((response) => {
@@ -511,6 +529,7 @@ export default {
             vm.fetchAccreditationChoices();
             vm.fetchLicencePeriodChoices();
             vm.checkProposalAccreditation();
+            vm.showDockteNumber();
             this.$nextTick(()=>{
                 vm.eventListeners();
             });

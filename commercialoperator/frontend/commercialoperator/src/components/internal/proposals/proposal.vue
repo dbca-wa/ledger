@@ -319,6 +319,7 @@
                     <Requirements :proposal="proposal"/>
                 </template>
                 <template v-if="canSeeSubmission || (!canSeeSubmission && showingProposal)">
+                    <!---
                     <div class="col-md-12">
                         <div class="row">
                             <div class="panel panel-default">
