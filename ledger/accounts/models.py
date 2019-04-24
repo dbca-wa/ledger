@@ -441,7 +441,7 @@ def query_emailuser_by_args(**kwargs):
     }
 
 
->>>>>>> upstream/master
+
 @python_2_unicode_compatible
 class UserAction(models.Model):
     who = models.ForeignKey(EmailUser, null=False, blank=False)

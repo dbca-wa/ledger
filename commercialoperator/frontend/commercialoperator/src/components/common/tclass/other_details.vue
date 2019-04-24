@@ -257,7 +257,7 @@
                             </div>
                         </div>
                         <div>
-                            <div v-show="show_docket_number">
+                            <div v-if="show_docket_number">
                             <div class="col-sm-6" >
                                 <label class="control-label pull-left"  for="Name">Number of docket books</label>
                             </div>
@@ -337,6 +337,7 @@ export default {
                 selected_accreditations:[],
                 licence_period_choices:[],
                 show_docket_number:false,
+                show_docket_field:false,
                 datepickerOptions:{
                 format: 'DD/MM/YYYY',
                 showClear:true,
@@ -357,7 +358,7 @@ export default {
         },
         watch:{
             docker_books_required: function(){
-                console.log(this.proposal.other_details.credit_docket_books);
+                console.log(this.docker_books_required);
              if(this.proposal){
                 this.show_docket_number= helpers.copyObject(this.proposal.other_details.credit_docket_books);
              }
