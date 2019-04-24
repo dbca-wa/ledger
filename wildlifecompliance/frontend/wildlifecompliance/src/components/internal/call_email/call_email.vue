@@ -1,20 +1,94 @@
 <template lang="html">
     <div class="container">
-          <div v-for="item in call_email.schema">
-            <compliance-renderer-block
-              :component="item" 
-              />
+    
+        <div class="row">
+          <h3>Call/Email: {{ call_email.number }}</h3>
+
+          <div class="col-md-3">
+            <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
+            <div class="row">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                       Submission 
+                    </div>
+                    <div class="panel-body panel-collapse">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <strong>Submitted by</strong><br/>
+                                {{ call_email.caller }}
+                            </div>
+                            <div class="col-sm-12 top-buffer-s">
+                                <strong>Lodged on</strong><br/>
+                                {{ call_email.lodgement_date | formatDate}}
+                            </div>
+                            <div class="col-sm-12 top-buffer-s">
+                                <table class="table small-table">
+                                    <tr>
+                                        <th>Lodgement</th>
+                                        <th>Date</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        Workflow 
+                    </div>
+                    <div class="panel-body panel-collapse">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <strong>Status</strong><br/>
+                                {{ call_email.name }}<br/>
+                                <div class ="col-sm-12" v-for="item in call_email.schema">
+                                    
+                                    <div v-for="item1 in item">
+                                        <div v-if="item1.name">
+                                            <strong>{{item1.name}}: </strong>{{item1.label}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                             
+                          </div>
+                          <button @click.prevent="save"
+                            class="btn btn-primary pull-right">Save</button>
+                      </div>
+                  </div>
+              </div>
+        </div>
+        <div class="col-md-1"></div>
+          <div class="col-md-8">  
+            <div class="row">
+              <FormSection :label="`Contact`" :Index="`0`">
+
+
+              </FormSection>
+              <FormSection :label="`Location`" :Index="`1`">
+
+
+              </FormSection>
+              <FormSection :label="`Details`" :Index="`2`">
+                <div v-for="item in call_email.schema">
+                  <compliance-renderer-block
+                    :component="item" 
+                    />
+                </div>
+              </FormSection>
+            </div>          
+              
           </div>
-          <div class="col-sm-12">
-            <button @click.prevent="save"
-              class="btn btn-primary pull-right">Save</button>
-          </div>
-            
+        </div>            
     </div>
 </template>
 <script>
 import Vue from "vue";
 import CommsLogs from "@common-utils/comms_logs.vue";
+import FormSection from "@/components/compliance_forms/section.vue";
 import { api_endpoints, helpers } from "@/utils/hooks";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
@@ -24,14 +98,32 @@ export default {
     //let vm = this;
     console.log(this);
     return {
+      sectionLabel: "Details",
+      sectionIndex: 1,
+
       pBody: "pBody" + this._uid,
       loading: [],
       renderer_form: null,
+      callemailTab: "callemailTab" + this._uid,
+      comms_url: helpers.add_endpoint_json(
+        api_endpoints.call_email,
+        this.$route.params.call_email_id + "/comms_log"
+      ),
+      comms_add_url: helpers.add_endpoint_json(
+        api_endpoints.call_email,
+        this.$route.params.call_email_id + "/add_comms_log"
+      ),
+      logs_url: helpers.add_endpoint_json(
+        api_endpoints.call_email,
+        this.$route.params.call_email_id + "/action_log"
+      )
+      //panelClickersInitialised: false
     };
   },
 
   components: {
-    CommsLogs
+    CommsLogs,
+    FormSection
   },
   computed: {
     ...mapGetters({
@@ -48,6 +140,11 @@ export default {
       return this.call_email
         ? `/api/call_email/${this.call_email.id}/form_data.json`
         : "";
+    }
+  },
+  filters: {
+    formatDate: function(data) {
+      return data ? moment(data).format("DD/MM/YYYY HH:mm:ss") : "";
     }
   },
   methods: {

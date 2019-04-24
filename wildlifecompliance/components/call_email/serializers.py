@@ -4,8 +4,9 @@ from wildlifecompliance.components.call_email.models import (
     Classification,
     ReportType,
     ComplianceFormDataRecord,
+    ComplianceLogEntry,
 )
-from wildlifecompliance.components.applications.serializers import BaseApplicationSerializer
+from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 
@@ -108,3 +109,24 @@ class UpdateRendererDataSerializer(CallEmailSerializer):
             'schema',
             'data',
         )
+
+ # class ComplianceUserActionSerializer(serializers.ModelSerializer):
+  #  who = serializers.CharField(source='who.get_full_name')
+
+   # class Meta:
+    #    model = ApplicationUserAction
+     #   fields = '__all__'
+
+
+class ComplianceLogEntrySerializer(CommunicationLogEntrySerializer):
+    documents = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ComplianceLogEntry
+        fields = '__all__'
+        read_only_fields = (
+            'customer',
+        )
+
+    def get_documents(self, obj):
+        return [[d.name, d._file.url] for d in obj.documents.all()]

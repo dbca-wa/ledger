@@ -48,6 +48,8 @@ from wildlifecompliance.components.call_email.serializers import (
     CreateCallEmailSerializer,
     UpdateRendererDataSerializer,
     ComplianceFormDataRecordSerializer,
+    UpdateRendererDataSerializer,
+    ComplianceLogEntrySerializer,
 )
 from utils import SchemaParser
 
@@ -164,6 +166,72 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 raise serializers.ValidationError(repr(e.error_dict))
             else:
                 raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    # @detail_route(methods=['GET', ])
+    # def action_log(self, request, *args, **kwargs):
+     #   try:
+      #      instance = self.get_object()
+       #     qs = instance.action_logs.all()
+        #    serializer = ApplicationUserActionSerializer(qs, many=True)
+         #   return Response(serializer.data)
+    #    except serializers.ValidationError:
+     #       print(traceback.print_exc())
+      #      raise
+       # except ValidationError as e:
+        #    print(traceback.print_exc())
+         #   raise serializers.ValidationError(repr(e.error_dict))
+    #    except Exception as e:
+     #       print(traceback.print_exc())
+      #      raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET', ])
+    def comms_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.comms_logs.all()
+            serializer = ComplianceLogEntrySerializer(qs, many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
+    def add_comms_log(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                instance = self.get_object()
+                request.data['call_email'] = u'{}'.format(instance.id)
+                #request.data['staff'] = u'{}'.format(request.user.id)
+                print("request.data")
+                print(request.data)
+                serializer = ComplianceLogEntrySerializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                comms = serializer.save()
+                # Save the files
+                for f in request.FILES:
+                    document = comms.documents.create()
+                    document.name = str(request.FILES[f])
+                    document._file = request.FILES[f]
+                    document.save()
+                # End Save Documents
+
+                return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))

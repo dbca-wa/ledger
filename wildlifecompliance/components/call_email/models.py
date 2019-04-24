@@ -21,6 +21,11 @@ def update_compliance_doc_filename(instance, filename):
         instance.call_email.id, filename)
 
 
+def update_compliance_comms_log_filename(instance, filename):
+    return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
+        instance.log_entry.call_email.id, instance.id, filename)
+
+
 class Classification(models.Model):
     NAME_CHOICES = (
         ('complaint', 'Complaint'),
@@ -31,7 +36,7 @@ class Classification(models.Model):
     name = models.CharField(
         max_length=30,
         choices=NAME_CHOICES,
-        default=NAME_CHOICES[0][0]
+        default='complaint'
     )
 
     class Meta:
@@ -121,15 +126,15 @@ class CallEmail(models.Model):
     status = models.CharField(
         max_length=40,
         choices=STATUS_CHOICES,
-        default=STATUS_CHOICES[0][0])
+        default='draft')
     location = models.ForeignKey(
         Location,
-        null=True,
+        null=True
     )
     classification = models.ForeignKey(
         Classification,
     )
-    #data = JSONField(default=list)
+    # data = JSONField(default=list)
     # _stored_renderer_data = JSONField(default=list)
     schema = JSONField(default=list)
     lodged_on = models.DateField(auto_now_add=True)
@@ -308,3 +313,26 @@ class ComplianceDocument(Document):
 
     class Meta:
         app_label = 'wildlifecompliance'
+
+
+class ComplianceLogDocument(Document):
+    log_entry = models.ForeignKey(
+        'ComplianceLogEntry',
+        related_name='documents')
+    _file = models.FileField(upload_to=update_compliance_comms_log_filename)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+
+class ComplianceLogEntry(CommunicationsLogEntry):
+    call_email = models.ForeignKey(CallEmail, related_name='comms_logs')
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    # def save(self, **kwargs):
+        # save the application reference if the reference not provided
+        # if not self.reference:
+        #   self.reference = self.application.reference
+        # super(ComplianceLogEntry, self).save(**kwargs)
