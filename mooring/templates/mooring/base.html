@@ -1,0 +1,145 @@
+
+{% load bootstrap3 %}
+
+{% load static %}
+
+{% load users %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+            {% bootstrap_css %}
+                <link type="text/css" href="{% static 'mooring/css/base.css' %}?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+                <link href="/static/common/css/font-awesome.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+
+            {% block extra_css %}
+            {% endblock %}
+            {% block extra_js %}
+            {% endblock %}
+            <title>
+                {% block title %}
+                    Mooring - Department of Parks and Wildlife
+                {% endblock %}
+            </title>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <input type='hidden' id='template_group' name='template_group' value='{{ TEMPLATE_GROUP }}'>
+    </head>
+    <body>
+        <header class="{% if TEMPLATE_GROUP == 'rottnest' %}topmast-rottnest{% else %}topmast{% endif %}">
+            {% block header %}
+                {% include 'mooring/header.html' %}
+            {% endblock %}
+        </header>
+        {% block menu %}
+        <div class="topbar">
+            <div class="container-fluid">
+                <nav class="navbar navbar-default">
+                    <div class="container">
+                        <div class="navbar-header">
+                            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                                <span class="sr-only">Toggle navigation</span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+                            {% if request.user.is_staff %}<a class="navbar-brand" href="{% url 'dash-campgrounds' %}"><div style="inline">{% if TEMPLATE_GROUP == 'rottnest' %}{% else %}<img src="{% static 'wl/img/dpaw_small.png' %}">{% endif %}Moorings</div></a>{% else %}<a class="navbar-brand" href="{% url 'home' %}"><div style="inline">{% if TEMPLATE_GROUP == 'rottnest' %}{% else %}<img src="{% static 'wl/img/dpaw_small.png' %}">{% endif %}My Bookings</div></a>{% endif %}
+                        </div>
+                        <div id="navbar" class="navbar-collapse collapse">
+                            <ul class="nav navbar-nav">
+                                {% block left_menu_items %}
+                                    {% if request.user.is_staff %}
+                                    {% include 'mooring/admin_nav_menu.html' %}
+                                    {% else %}
+                                    
+                                    {% endif %}
+                                    <li><a href="{{EXPLORE_PARKS_SEARCH}}">Search For A Mooring</a></li>
+                                {% endblock %}
+                            </ul>
+                            <ul class="nav navbar-nav navbar-right">
+                                {% if request.user.is_authenticated %}
+                                    <li>
+                                        <a>
+                                        Welcome
+                                        <strong>
+                                            {% if request.user.first_name %}
+                                                {{ request.user.get_short_name }}
+                                            {% elif request.user.last_name %}
+                                                {{ request.user.last_name }}
+                                            {% else %}
+                                                {{ request.user.email }}
+                                            {% endif %}
+                                        </strong>
+                                        </a>
+                                    </li>
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                            Options
+                                            <span class="caret"></span>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            {% if request.user|is_admin or request.user.is_superuser %}
+                                                <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                                                <li><a href="/dashboard/reports">Reports</a></li>
+                                                <li role="separator" class="divider"></li>
+                                                {% include 'mooring/admin_menu.html' %}
+                                                <li role="separator" class="divider"></li>
+                                            {% endif %}
+                                            <li><a href="{% url 'account' %}">Manage Account</a></li>
+                                            <li role="separator" class="divider"></li>
+                                            <li><a href="{% url 'accounts:logout' %}?next=/">Logout</a></li>
+                                        </ul>
+                                    </li>
+                                {% endif %}
+                                {% block right_menu_items %}
+                                {% endblock %}
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        {% endblock %}
+        {% block breadcrumbs %}
+        {% endblock %}
+        {% block messages %}
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        {% for message in messages %}
+                            <div class="{{ message|bootstrap_message_classes }} alert-dismissable">
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&#215;</button>
+                                {{ message|safe }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endblock %}
+        {% block content %}
+        {% endblock %}
+        {% block modals %}
+        {% endblock %}
+        {% block custom_js %}
+        <script src="/static/common/js/jquery.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+        <script src="/static/common/css/bootstrap.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+        <script src="/static/common/js/datatables.js"></script>
+        <script src="/static/common/js/dataTables.bootstrap.min.js"></script>
+        <script src="/static/common/js/date-dd-MMM-yyyy.js"></script>
+        <script src="/static/common/js/natural-sorting-datatables.js"></script>
+        <script src="/static/common/js/moment.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+        <script src="/static/common/js/bootstrap-datetimepicker.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+        <script src="/static/common/js/promise.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+
+        {% endblock %}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-108679294-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'UA-108679294-1');
+        </script>
+    </body>
+</html>

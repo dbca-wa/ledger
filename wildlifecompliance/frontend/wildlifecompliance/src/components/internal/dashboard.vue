@@ -1,7 +1,7 @@
 <template>
 <div class="container" id="internalDash">
     <ApplicationDashTable level="internal" :url="applications_url"/>
-    <ReferralDashTable />
+    <ReferralDashTable v-if="wc_version != 1.0" />
 </div>
 </template>
 <script>
@@ -17,7 +17,7 @@ export default {
     data() {
         let vm = this;
         return {
-            applications_url: api_endpoints.applications,
+            applications_url: helpers.add_endpoint_json(api_endpoints.applications,'internal_datatable_list'),
         }
     
     },
@@ -27,6 +27,9 @@ export default {
         ReferralDashTable
     },
     computed: {
+        wc_version: function (){
+            return this.$root.wc_version;
+        }
     },
     methods: {},
     mounted: function () {

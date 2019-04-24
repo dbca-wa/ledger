@@ -1,0 +1,28 @@
+{%  extends 'mooring/email/base_email.txt' %}
+
+{% block greetings %}
+{{booking.details.first_name}} {{booking.details.last_name}},
+{% endblock %}
+
+{% block content %}
+
+Print or save this confirmation for presentation on arrival and at any time during your stay.
+
+Arrival: {{booking.arrival|date:"d/m/Y"}}
+Departure: {{booking.departure|date:"d/m/Y"}}
+
+Mooring: {{booking.mooringarea.name }}, , {{ booking.mooringarea.park.name }}
+
+{% for v in booking.vehicle_payment_status %}
+Vessel: {{v.Rego}}
+{% endfor %}
+
+Contact us about your booking
+{% if booking.mooringarea.email %}
+{{booking.mooringarea.email}}
+{% endif %}
+{% if booking.mooringarea.telephone %}
+{{booking.mooringarea.telephone}}
+{% endif %}
+
+{% endblock %}

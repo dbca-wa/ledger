@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from rest_framework import routers
 
 from wildlifecompliance import views
+from wildlifecompliance.components.applications.views import ApplicationSuccessView
 from wildlifecompliance.admin import wildlifecompliance_admin_site
 
 from wildlifecompliance.components.applications import views as application_views
@@ -20,8 +21,11 @@ router = routers.DefaultRouter()
 router.register(r'organisations',org_api.OrganisationViewSet)
 router.register(r'application',application_api.ApplicationViewSet)
 router.register(r'referrals',application_api.ReferralViewSet)
+router.register(r'assessment',application_api.AssessmentViewSet)
+router.register(r'amendment',application_api.AmendmentRequestViewSet)
+router.register(r'assessor_group',application_api.AssessorGroupViewSet)
 router.register(r'licences',licence_api.LicenceViewSet)
-router.register(r'licences_class',licence_api.LicenceClassViewSet)
+router.register(r'licences_class',licence_api.WildlifeLicenceClassViewSet)
 router.register(r'returns',return_api.ReturnViewSet)
 router.register(r'application_conditions',application_api.ApplicationConditionViewSet)
 router.register(r'application_standard_conditions',application_api.ApplicationStandardConditionViewSet)
@@ -34,12 +38,13 @@ router.register(r'my_profiles',users_api.MyProfilesViewSet)
 router.register(r'emailidentities',users_api.EmailIdentityViewSet)
 
 api_patterns = [
-    url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),
-    url(r'^api/is_new_user$', users_api.IsNewUser.as_view(), name='is-new-user'),
-    url(r'^api/user_profile_completed$', users_api.UserProfileCompleted.as_view(), name='get-user-profile-completed'),
-    url(r'^api/department_users$', users_api.DepartmentUserList.as_view(), name='department-users-list'),
-    url(r'^api/application_type$', application_api.GetApplicationType.as_view(), name='get-application-type'),
-    url(r'^api/empty_list$', application_api.GetEmptyList.as_view(), name='get-empty-list'),
+    url(r'^api/profile/$', users_api.GetProfile.as_view(), name='get-profile'),
+    url(r'^api/is_new_user/$', users_api.IsNewUser.as_view(), name='is-new-user'),
+    url(r'^api/user_profile_completed/$', users_api.UserProfileCompleted.as_view(), name='get-user-profile-completed'),
+    url(r'^api/department_users/$', users_api.DepartmentUserList.as_view(), name='department-users-list'),
+    url(r'^api/application_type/$', application_api.GetApplicationType.as_view(), name='get-application-type'),
+    url(r'^api/amendment_request_reason_choices',application_api.AmendmentRequestReasonChoicesView.as_view(),name='amendment_request_reason_choices'),
+    url(r'^api/empty_list/$', application_api.GetEmptyList.as_view(), name='get-empty-list'),
     url(r'^api/organisation_access_group_members',org_api.OrganisationAccessGroupMembers.as_view(),name='organisation-access-group-members'),
     url(r'^api/',include(router.urls))
 ]
@@ -52,6 +57,8 @@ urlpatterns = [
     url(r'^internal/', views.InternalView.as_view(), name='internal'),
     url(r'^internal/application/(?P<application_pk>\d+)/referral/(?P<referral_pk>\d+)/$', views.ReferralView.as_view(), name='internal-referral-detail'),
     url(r'^external/', views.ExternalView.as_view(), name='external'),
+    url(r'^external/application/(?P<application_pk>\d+)/$', views.ExternalApplicationView.as_view(), name='external-application-detail'),
+    url(r'^external/return/(?P<return_pk>\d+)/$', views.ExternalReturnView.as_view(), name='external-return-detail'),
     url(r'^firsttime/$', views.first_time, name='first_time'),
     url(r'^account/$', views.ExternalView.as_view(), name='manage-account'),
     url(r'^profiles/', views.ExternalView.as_view(), name='manage-profiles'),
@@ -59,6 +66,15 @@ urlpatterns = [
     url(r'^application/$', application_views.ApplicationView.as_view(), name='application'),
     #url(r'^organisations/(?P<pk>\d+)/confirm-delegate-access/(?P<uid>[0-9A-Za-z]+)-(?P<token>.+)/$', views.ConfirmDelegateAccess.as_view(), name='organisation_confirm_delegate_access'),
     url('^healthcheck/', views.HealthCheckView.as_view(), name='health_check'),
+
+    #following url is defined so that to include url path when sending application emails to users
+    url(r'^internal/application/(?P<application_pk>\d+)/$', views.ApplicationView.as_view(),
+        name='internal-application-detail'),
+    url(r'^application_submit/submit_with_invoice/', ApplicationSuccessView.as_view(), name='external-application-success-invoice'),
+
+    #url(r'^export/xls/$', application_views.export_applications, name='export_applications'),
+    url(r'^mgt-commands/$', views.ManagementCommandsView.as_view(), name='mgt-commands'),
+
 ] + ledger_patterns
 
 if settings.DEBUG:  # Serve media locally in development.

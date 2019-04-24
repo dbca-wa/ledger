@@ -10,8 +10,14 @@ from wildlifecompliance.components.organisations.models import (
                                 OrganisationLogEntry,
                                 ledger_organisation,
                             )
-from wildlifecompliance.components.organisations.utils import can_manage_org, can_admin_org,is_consultant
-from rest_framework import serializers
+from wildlifecompliance.components.organisations.utils import (
+                                can_manage_org,
+                                can_admin_org,
+                                is_consultant,
+                                can_change_role,
+                                can_relink,
+                            )
+from rest_framework import serializers, status
 import rest_framework_gis.serializers as gis_serializers
 
 
@@ -21,8 +27,16 @@ class LedgerOrganisationSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class OrganisationCheckSerializer(serializers.Serializer):
+    # Validation serializer for new Organisations
     abn = serializers.CharField()
     name = serializers.CharField()
+
+    def validate(self, data):
+        requests = OrganisationRequest.objects.filter(abn=data['abn'], role='employee')\
+            .exclude(status__in=('declined', 'approved'))
+        if requests.exists():
+            raise serializers.ValidationError('A request already submitted - Pending Approval.')
+        return data
 
 class OrganisationPinCheckSerializer(serializers.Serializer):
     pin1 = serializers.CharField()
@@ -54,6 +68,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
     address = OrganisationAddressSerializer(read_only=True)
     pins = serializers.SerializerMethodField(read_only=True)
     delegates = DelegateSerializer(many=True, read_only=True)
+    organisation = LedgerOrganisationSerializer()
 
     class Meta:
         model = Organisation
@@ -63,24 +78,46 @@ class OrganisationSerializer(serializers.ModelSerializer):
             'abn',
             'address',
             'email',
+            'organisation',
             'phone_number',
             'pins',
             'delegates'
         )
 
     def get_pins(self, obj):
-        user = self.context['request'].user
-        # Check if the request user is among the first five delegates in the organisation
-        if can_manage_org(obj, user):
-            return {'one': obj.admin_pin_one, 'two': obj.admin_pin_two, 'three': obj.user_pin_one,
-                    'four': obj.user_pin_two}
-        else:
+        try:
+            user = self.context['request'].user
+            # Check if the request user is among the first five delegates in the organisation
+            if can_manage_org(obj, user):
+                return {'one': obj.admin_pin_one, 'two': obj.admin_pin_two, 'three': obj.user_pin_one,
+                        'four': obj.user_pin_two}
+            else:
+                return None
+        except KeyError:
             return None
+
+
+class OrganisationCheckExistSerializer(serializers.Serializer):
+    # Validation Serializer for existing Organisations
+    exists = serializers.BooleanField(default=False)
+    id = serializers.IntegerField(default=0)
+    first_five = serializers.CharField(allow_blank=True, required=False)
+    user = serializers.IntegerField()
+
+    def validate(self, data):
+        if data['exists']:
+            user = EmailUser.objects.get(id=data['user'])
+            org = Organisation.objects.get(id=data['id'])
+            if can_relink(org, user):
+                raise serializers.ValidationError('Please contact {} to re-link to Organisation'
+                                                  .format(data['first_five']))
+        return data
 
 
 class MyOrganisationsSerializer(serializers.ModelSerializer):
     is_admin = serializers.SerializerMethodField(read_only=True)
     is_consultant = serializers.SerializerMethodField(read_only=True)
+    can_change_role = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Organisation
@@ -89,7 +126,8 @@ class MyOrganisationsSerializer(serializers.ModelSerializer):
             'name',
             'abn',
             'is_admin',
-            'is_consultant'
+            'is_consultant',
+            'can_change_role'
         )
 
     def get_is_consultant(self, obj):
@@ -102,6 +140,10 @@ class MyOrganisationsSerializer(serializers.ModelSerializer):
         # Check if the request user is among the first five delegates in the organisation
         return can_admin_org(obj, user)
 
+    def get_can_change_role(self, obj):
+        user = self.context['request'].user
+        # Check if the request user can change their role within the organisation.
+        return can_change_role(obj, user)
 
 
 class DetailsSerializer(serializers.ModelSerializer):
@@ -154,6 +196,7 @@ class OrganisationRequestSerializer(serializers.ModelSerializer):
     # def get_role(self,obj):
     #     return obj.get_role_display()
 
+
 class OrganisationRequestDTSerializer(OrganisationRequestSerializer):
     assigned_officer = serializers.CharField(source='assigned_officer.get_full_name')
     requester = serializers.SerializerMethodField()
@@ -205,7 +248,6 @@ class OrganisationUnlinkUserSerializer(serializers.Serializer):
         except EmailUser.DoesNotExist:
             raise serializers.ValidationError('The user you want to unlink does not exist.')
         return obj
-        
 
 class OrgUserAcceptSerializer(serializers.Serializer):
 

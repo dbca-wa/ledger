@@ -4,15 +4,17 @@
         <div class="col-sm-12">
             <div class="well well-sm">
                 <p>
-                    Welcome to the Wildlife Compliance online system dashboard.<br/><br/> Here you can access your existing licences, view any applications in progress, lodge new<br/> applications or submit information required to comply with conditions listed
+                    Welcome to the Wildlife Licensing online system dashboard.<br/><br/> Here you can access your existing licences, view any applications in progress, lodge new<br/> applications or submit information required to comply with conditions listed
                     on your licence
                 </p>
             </div>
         </div>
     </div>
     <ApplicationDashTable level='external' :url='applications_url'/>
-    <LicenceDashTable level='external' :url='licences_url'/>
-    <ReturnDashTable level='external' :url='empty_list'/>
+    <div v-if="wc_version != 1.0">
+        <LicenceDashTable level='external' :url='licences_url'/>
+        <ReturnDashTable level='external' :url='returns_url'/>
+    </div>
 </div>
 </template>
 <script>
@@ -33,6 +35,7 @@ export default {
         return {
             applications_url: helpers.add_endpoint_json(api_endpoints.applications,'user_list'),
             licences_url: helpers.add_endpoint_json(api_endpoints.licences,'user_list'),
+            returns_url:helpers.add_endpoint_json(api_endpoints.returns,'user_list'),
             empty_list: '/api/empty_list',
         }
     },
@@ -43,6 +46,9 @@ export default {
     },
     watch: {},
     computed: {
+        wc_version: function (){
+            return this.$root.wc_version;
+        }
     },
     methods: {
     },

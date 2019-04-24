@@ -10,7 +10,7 @@ from django.contrib.postgres.fields.jsonb import JSONField
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 from wildlifecompliance.components.main.models import UserAction,CommunicationsLogEntry
-from wildlifecompliance.components.organisations.utils import random_generator
+from wildlifecompliance.components.organisations.utils import random_generator, can_change_role
 from wildlifecompliance.components.organisations.emails import (
                         send_organisation_request_accept_email_notification,
                         send_organisation_request_amendment_requested_email_notification,
@@ -260,17 +260,19 @@ class Organisation(models.Model):
             # send email
             send_organisation_contact_adminuser_email_notification(user,request.user,self,request)
 
-
     def make_user(self,user,request):
         with transaction.atomic():
             try:
-                delegate = UserDelegation.objects.get(organisation=self,user=user)
+                delegate = UserDelegation.objects.get(organisation=self, user=user)
             except UserDelegation.DoesNotExist:
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            # check user can change role.
+            if not can_change_role(self, user):
+                raise ValidationError('This user is the last Organisation Administrator')
             # delete contact person
             try:
-                org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
-                org_contact.user_role ='organisation_user'
+                org_contact = OrganisationContact.objects.get(organisation=self, email=delegate.user.email)
+                org_contact.user_role = 'organisation_user'
                 org_contact.is_admin = False
                 org_contact.save()
             except OrganisationContact.DoesNotExist:
@@ -278,7 +280,30 @@ class Organisation(models.Model):
             # log linking
             self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_USER.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email
-            send_organisation_contact_user_email_notification(user,request.user,self,request)
+            send_organisation_contact_user_email_notification(user, request.user, self, request)
+
+    def make_consultant(self, user, request):
+        with transaction.atomic():
+            try:
+                delegate = UserDelegation.objects.get(organisation=self, user=user)
+            except UserDelegation.DoesNotExist:
+                raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            # Validate for Organisation Admin
+            if not can_change_role(self, user):
+                raise ValidationError('This user is the last Organisation Administrator')
+            # add consultant
+            try:
+                org_contact = OrganisationContact.objects.get(organisation=self, email=delegate.user.email)
+                org_contact.user_role = 'consultant'
+                org_contact.is_admin = True
+                org_contact.save()
+            except OrganisationContact.DoesNotExist:
+                pass
+            # log linking
+            self.log_user_action(OrganisationAction.ACTION_MAKE_CONTACT_ADMIN.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
+            # send email
+            send_organisation_contact_adminuser_email_notification(user, request.user, self, request)
+
 
     def suspend_user(self,user,request):
         with transaction.atomic():
@@ -286,6 +311,9 @@ class Organisation(models.Model):
                 delegate = UserDelegation.objects.get(organisation=self,user=user)
             except UserDelegation.DoesNotExist:
                 raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
+            # check user can be suspended.
+            if not can_change_role(self, user):
+                raise ValidationError('This user is the last Organisation Administrator')
             # delete contact person
             try:
                 org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
@@ -372,7 +400,20 @@ class Organisation(models.Model):
 
     @property
     def first_five(self):
-        return ','.join([user.get_full_name() for user in self.delegates.all()[:5]])
+        """
+        :return: A string of names for the first five Administrator delegates.
+        """
+        _names = ''
+        for user in self.delegates.all()[:5]:
+            _is_admin = OrganisationContact.objects.filter(organisation_id=self.id,
+                                                           last_name=user.last_name,
+                                                           user_role='organisation_admin',
+                                                           user_status='active',
+                                                           is_admin=True).exists()
+            if _is_admin:
+                _names += user.get_full_name() + ' '
+
+        return _names
 
     @property
     def first_five_admin(self):
@@ -535,7 +576,13 @@ class OrganisationAction(UserAction):
     ACTION_CONTACT_DECLINE = "Declined contact {}"
     ACTION_MAKE_CONTACT_SUSPEND = "Suspended contact {}"
     ACTION_MAKE_CONTACT_REINSTATE = "REINSTATED contact {}"
+    ACTION_ID_UPDATE = "Organisation {} Identification Updated"
 
+    organisation = models.ForeignKey(Organisation,related_name='action_logs')
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        ordering = ['-when']
 
     @classmethod
     def log_action(cls, organisation, action, user):
@@ -544,12 +591,6 @@ class OrganisationAction(UserAction):
             who=user,
             what=str(action)
         )
-
-    organisation = models.ForeignKey(Organisation,related_name='action_logs')
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-        ordering = ['-when']
     
 class OrganisationLogEntry(CommunicationsLogEntry):
     organisation = models.ForeignKey(Organisation, related_name='comms_logs')
@@ -576,11 +617,11 @@ class OrganisationRequest(models.Model):
         ('employee','Employee'),
         ('consultant','Consultant')
         )
-    name = models.CharField(max_length=128, unique=True)
+    name = models.CharField(max_length=128)
     abn = models.CharField(max_length=50, null=True, blank=True, verbose_name='ABN')
     requester = models.ForeignKey(EmailUser)
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='org_request_assignee')
-    identification = models.FileField(upload_to='organisation/requests/%Y/%m/%d', null=True, blank=True)
+    identification = models.FileField(upload_to='wildlifecompliance/organisation/requests/%Y/%m/%d', null=True, blank=True)
     status = models.CharField(max_length=100,choices=STATUS_CHOICES, default="with_assessor")
     role = models.CharField(max_length=100,choices=ROLE_CHOICES, default="employee")
     lodgement_date = models.DateTimeField(auto_now_add=True)

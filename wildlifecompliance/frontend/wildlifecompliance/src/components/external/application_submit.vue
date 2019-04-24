@@ -12,15 +12,15 @@
                                 <td><strong>{{application.id}}</strong></td>
                             </tr>
                             <tr>
-                                <td><strong>Date/Time:</strong></td>
+                                <td><strong>Date:</strong></td>
                                 <td><strong> {{application.lodgement_date|formatDate}}</strong></td>
                             </tr>
                         </table>
-                        <router-link :to="{name:'external-applications-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
+                        <a href="/" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</a>
                     </div>
                     <div v-else class="col-sm-offset-3 col-sm-6 borderDecoration">
                         <strong>Sorry it looks like there isn't any application currently in your session.</strong>
-                        <br /><router-link :to="{name:'external-applications-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
+                        <br /><a href="/" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</a>
                     </div>
                 </div>
             </div>

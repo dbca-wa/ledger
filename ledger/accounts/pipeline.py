@@ -8,6 +8,7 @@ from django.core.validators import validate_email
 from django.urls import reverse
 
 def mail_validation(backend, details, is_new=False, *args, **kwargs):
+    #import ipdb; ipdb.set_trace()
     requires_validation = backend.REQUIRES_EMAIL_VALIDATION or \
                           backend.setting('FORCE_EMAIL_VALIDATION', False)
     send_validation = details.get('email') and \
@@ -63,11 +64,11 @@ def user_by_email(backend, details, *args, **kwargs):
     request_data = backend.strategy.request_data()
     if request_data.get('verification_code') and details.get('email'):
         try:
-            user = EmailIdentity.objects.get(email__iexact=details['email']).user
-        except EmailIdentity.DoesNotExist:
+            user = EmailIdentity.objects.filter(email__iexact=details['email'])[0].user
+        except IndexError:
             user = None
         return {'user': user}
 
 
-def user_is_new_session(backend, details, strategy, is_new, *args, **kwargs):
+def user_is_new_session(backend, details, strategy, is_new=False, *args, **kwargs):
     backend.strategy.session_set('is_new',is_new)

@@ -4,6 +4,8 @@ from ledger.settings_base import *
 ROOT_URLCONF = 'wildlifecompliance.urls'
 SITE_ID = 1
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_wc')
+
 INSTALLED_APPS += [
     'bootstrap3',
     'wildlifecompliance',
@@ -53,6 +55,20 @@ CACHES = {
         'LOCATION': os.path.join(BASE_DIR, 'wildlifecompliance', 'cache'),
     }
 }
+
+# Additional logging for wildlifecompliance
+LOGGING['handlers']['application_checkout'] = {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'wildlifecompliance_application_checkout.log'),
+            'formatter': 'verbose',
+            'maxBytes': 5242880
+        }
+LOGGING['loggers']['application_checkout'] = {
+            'handlers': ['application_checkout'],
+            'level': 'INFO'
+        }
+
 STATICFILES_DIRS.append(os.path.join(os.path.join(BASE_DIR, 'wildlifecompliance', 'static')))
 DEV_STATIC = env('DEV_STATIC',False)
 DEV_STATIC_URL = env('DEV_STATIC_URL')
@@ -61,7 +77,8 @@ if DEV_STATIC and not DEV_STATIC_URL:
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None 
 
 # Department details
-SYSTEM_EMAIL = env('SYSTEM_EMAIL','wildlifecompliance@dbca.wa.gov.au')
+SYSTEM_NAME = env('SYSTEM_NAME', 'Wildlife Licensing System')
+SYSTEM_EMAIL = env('SYSTEM_EMAIL','wildlifelicensing@dbca.wa.gov.au')
 WC_PAYMENT_SYSTEM_ID = env('WC_PAYMENT_SYSTEM_ID', 'S999')
 if not VALID_SYSTEMS:
     VALID_SYSTEMS = [WC_PAYMENT_SYSTEM_ID]
@@ -70,4 +87,8 @@ DEP_PHONE = env('DEP_PHONE','(08) 9219 9831')
 DEP_FAX = env('DEP_FAX','(08) 9423 8242')
 DEP_POSTAL = env('DEP_POSTAL','Locked Bag 104, Bentley Delivery Centre, Western Australia 6983')
 DEP_NAME = env('DEP_NAME','Department of Biodiversity, Conservation and Attractions')
-SITE_URL = env('SITE_URL','https://wildlifecompliance-uat.dpaw.wa.gov.au')
+DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
+SITE_URL = env('SITE_URL','https://wildlifels.dbca.wa.gov.au')
+EXT_USER_API_ROOT_URL = env('EXT_USER_API_ROOT_URL', None)
+WC_VERSION = env('WC_VERSION','RELEASE')
+EXCEL_OUTPUT_PATH = env('EXCEL_OUTPUT_PATH')

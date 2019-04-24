@@ -521,7 +521,7 @@ export default {
                 }, (error) => {
                     swal(
                         'Unlink',
-                        'There was an error unlinking '+person.name+' from '+org_name+'.',
+                        'There was an error unlinking '+person.name+' from '+org_name+'. '+error.body,
                         'error'
                     )
                 });

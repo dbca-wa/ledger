@@ -1,0 +1,336 @@
+{% extends 'mooring/base.html' %}
+{% load static %}
+
+{% block title %}
+    My Profile 
+{% endblock %}
+
+{% block content %}
+{% verbatim %}
+    <div class="container" id="userInfo">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                        <span class="panel-title">Personal Details</span>
+                        <span style="font-size: 10px;">Provide your personal details</small>
+                  </div>
+                  <div class="panel-body" id="pBody">
+                      <form class="form-horizontal" name="personal_form" method="post">
+                          <div v-if="errorPersonal && errorPersonal.non_field_errors" class="has-error">
+                            <span class="help-block" v-for="err in errorPersonal.non_field_errors">{{ err }}</span>
+                          </div>
+
+                          <div class="form-group" v-bind:class="{'has-error': errorPersonal && errorPersonal.first_name}">
+                            <label for="" class="col-sm-3 control-label">Given name(s)</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" name="first_name" placeholder="" v-model="profile.first_name">
+                                <template v-if="errorPersonal && errorPersonal.first_name">
+                                    <span class="help-block" v-for="err in errorPersonal.first_name">{{ err }}</span>
+                                </template>
+                            </div>
+                          </div>
+                          <div class="form-group" v-bind:class="{'has-error': errorPersonal && errorPersonal.last_name}">
+                            <label for="" class="col-sm-3 control-label" >Surname</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" name="last_name" placeholder="" v-model="profile.last_name">
+                                <template v-if="errorPersonal && errorPersonal.last_name">
+                                    <span class="help-block" v-for="err in errorPersonal.last_name">{{ err }}</span>
+                                </template>
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <div class="col-sm-12">
+                                <button v-if="!updatingPersonal" class="pull-right btn btn-primary" @click.prevent="updatePersonal()">Update</button>
+                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                            </div>
+                          </div>
+                       </form>
+                  </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                        <span class="panel-title">Address Details</span>
+                        <span style="font-size: 10px;">Provide your address details</span>
+                  </div>
+                  <div class="panel-body" id="adBody">
+                      <form class="form-horizontal" name="address_form" method="post">
+                          <div v-if="errorAddress && errorAddress.non_field_errors" class="has-error">
+                            <span class="help-block" v-for="err in errorAddress.non_field_errors">{{ err }}</span>
+                          </div>
+
+                          <div class="form-group" v-bind:class="{'has-error': errorAddress && errorAddress.line1}">
+                            <label for="" class="col-sm-3 control-label">Street</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" name="street" placeholder="" v-model="profile.residential_address.line1">
+                                <template v-if="errorAddress && errorAddress.line1">
+                                    <span class="help-block" v-for="err in errorAddress.line1">{{ err }}</span>
+                                </template>
+                            </div>
+                          </div>
+                          <div class="form-group" v-bind:class="{'has-error': errorAddress && errorAddress.locality}">
+                            <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="profile.residential_address.locality">
+                                <template v-if="errorAddress && errorAddress.locality">
+                                    <span class="help-block" v-for="err in errorAddress.locality">{{ err }}</span>
+                                </template>
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-3 control-label" v-bind:class="{'has-error': errorAddress && errorAddress.state}">State</label>
+                            <div class="col-sm-3" v-bind:class="{'has-error': errorAddress && errorAddress.state}">
+                                <input type="text" class="form-control" name="country" placeholder="" v-model="profile.residential_address.state">
+                                <template v-if="errorAddress && errorAddress.state">
+                                    <span class="help-block" v-for="err in errorAddress.state">{{ err }}</span>
+                                </template>
+                            </div>
+                            <label for="" class="col-sm-1 control-label"  v-bind:class="{'has-error': errorAddress && errorAddress.postcode}">Postcode</label>
+                            <div class="col-sm-2" v-bind:class="{'has-error': errorAddress && errorAddress.postcode}">
+                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="profile.residential_address.postcode">
+                                <template v-if="errorAddress && errorAddress.postcode">
+                                    <span class="help-block" v-for="err in errorAddress.postcode">{{ err }}</span>
+                                </template>
+                            </div>
+                          </div>
+                          <div class="form-group" v-bind:class="{'has-error': errorAddress && errorAddress.country}">
+                            <label for="" class="col-sm-3 control-label" >Country</label>
+                            <div class="col-sm-4">
+                                <select class="form-control" name="country" v-model="profile.residential_address.country">
+                                    <option v-for="c in countries" v-bind:value="c.iso_3166_1_a2">{{ c.printable_name }}</option>
+                                </select>
+                                <template v-if="errorAddress && errorAddress.country">
+                                    <span class="help-block" v-for="err in errorAddress.country">{{ err }}</span>
+                                </template>
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <div class="col-sm-12">
+                                <button v-if="!updatingAddress" class="pull-right btn btn-primary" @click.prevent="updateAddress()">Update</button>
+                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                            </div>
+                          </div>
+                       </form>
+                  </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                        <span class="panel-title">Contact Details</span>
+                        <span style="font-size: 10px;">Provide your contact details</span>
+                    </h3>
+                  </div>
+                  <div class="panel-body" id="cBody">
+                      <form class="form-horizontal" name="contact_form" method="post">
+                          <div v-if="errorContact && errorContact.non_field_errors" class="has-error">
+                            <span class="help-block" v-for="err in errorContact.non_field_errors">{{ err }}</span>
+                          </div>
+
+                          <div class="form-group" v-bind:class="{'has-error': errorContact && errorContact.phone_number}">
+                            <label for="" class="col-sm-3 control-label">Phone (work)</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" name="phone" placeholder="" v-model="profile.phone_number">
+                                <template v-if="errorContact && errorContact.phone_number">
+                                    <span class="help-block" v-for="err in errorContact.phone_number">{{ err }}</span>
+                                </template>
+                            </div>
+                          </div>
+                          <div class="form-group" v-bind:class="{'has-error': errorContact && errorContact.mobile_number}">
+                            <label for="" class="col-sm-3 control-label" >Mobile</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" name="mobile" placeholder="" v-model="profile.mobile_number">
+                                <template v-if="errorContact && errorContact.mobile_number">
+                                    <span class="help-block" v-for="err in errorContact.mobile_number">{{ err }}</span>
+                                </template>
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <div class="col-sm-12">
+                                <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="updateContact()">Update</button>
+                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                            </div>
+                          </div>
+                       </form-->
+                  </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endverbatim %}
+{% endblock %}
+
+{% block custom_js %}
+{{ block.super }}
+<script src="/static/common/js/moment.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+<script src="/static/common/js/vue.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+<script type="text/javascript">
+    var API_COUNTRIES = "/api/countries";
+    var API_PROFILE = "/api/profile";
+
+    var getCookie = function(name) {
+        var value = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1).trim() === (name + '=')) {
+                    value = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return value;
+    };
+
+    var book = new Vue({
+        el: '#userInfo',
+        data: function () {
+            return {
+                profile: {
+                    residential_address : {}
+                },
+                countries: [],
+                updatingPersonal: false,
+                updatingAddress: false,
+                updatingContact: false,
+                errorPersonal: null,
+                errorAddress: null,
+                errorContact: null,
+            }
+        },
+        watch: {
+        },
+        computed: {
+        },
+        methods: {
+            updatePersonal: function() {
+                var vm = this;
+                vm.updatingPersonal = true;
+                vm.errorPersonal = null;
+                $.ajax({
+                    url: API_PROFILE+'/update_personal',
+                    method: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify(vm.profile),
+                    headers: {
+                       'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    success: function (response) {
+                        console.log(response);
+                        vm.updatingPersonal = false;
+                        vm.setProfile(response);
+                    }, 
+                    error: function (error) {
+                        vm.errorPersonal = error.responseJSON;
+                        console.log(vm.errorPersonal);
+                        vm.updatingPersonal = false;
+                    },
+                });
+            },
+            updateContact: function() {
+                var vm = this;
+                vm.updatingContact = true;
+                vm.errorContact = null;
+                $.ajax({
+                    url: API_PROFILE+'/update_contact',
+                    method: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify(vm.profile),
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    success: function (response) {
+                        console.log(response);
+                        vm.updatingContact = false;
+                        vm.setProfile(response);
+                    },
+                    error: function (error) {
+                        vm.errorContact = error.responseJSON;
+                        console.log(vm.errorContact);
+                        vm.updatingContact = false;
+                    }
+                });
+            },
+            updateAddress: function() {
+                var vm = this;
+                vm.updatingAddress = true;
+                vm.errorAddress = null;
+                $.ajax({
+                    url: API_PROFILE+'/update_address',
+                    method: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify(vm.profile.residential_address),
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    success: function (response) {
+                        console.log('AAAAAA');
+                        console.log(response);
+                        vm.updatingAddress = false;
+                        
+                    },
+                    error: function (error) {
+                        vm.errorAddress = error.responseJSON;
+                        console.log(vm.errorAddress);
+                        vm.updatingAddress = false;
+                    },
+                });
+            },
+            fetchCountries: function () {
+                var vm = this;
+                $.ajax({
+                    url: API_COUNTRIES,
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    success: function (response) {
+                        vm.countries = response;
+                        console.log(vm.countries);
+                    }, 
+                    error: function (response) {
+                        console.log(response);
+                    }
+                });
+            },
+            setProfile: function (data) {
+                var vm = this;
+                vm.profile = data;
+                if (vm.profile && (vm.profile.residential_address == null)) { 
+                    vm.profile.residential_address = {}; 
+                }
+            },
+            fetchProfile: function () {
+                var vm = this;
+                $.ajax({
+                    url: API_PROFILE,
+                    dataType: 'json',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    success: function (response) {
+                        console.log(response);
+                        vm.setProfile(response);
+                    },
+                    error: function (error) {
+                        console.log(error);
+                    },
+                });
+            },
+        },
+        mounted: function(){
+            this.fetchProfile();
+            this.fetchCountries();
+        }
+
+    });
+</script>
+{% endblock %}

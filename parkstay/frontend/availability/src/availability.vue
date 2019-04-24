@@ -1,7 +1,14 @@
 <template>
     <div id="sites-cal" class="f6inject">
         <a name="makebooking" />
-        <div class="row" v-if="status == 'offline'">
+        <div class="row" v-if="status == 'ajaxerror'">
+            <div class="columns small-12 medium-12 large-12">
+                <div class="callout alert">
+                    Sorry, there was a problem connecting to Park Stay for availability information. Please try again later.
+                </div>
+            </div>
+        </div>
+        <div class="row" v-else-if="status == 'offline'">
             <div class="columns small-12 medium-12 large-12">
                 <div class="callout alert">
                     Sorry, this campground doesn't yet support online bookings. Please visit the <a href="https://parks.dpaw.wa.gov.au/campgrounds-status">Camp Site Availability checker</a> for expected availability.
@@ -140,11 +147,11 @@
                     <tr>
                         <th class="site">Campsite&nbsp;<a class="float-right" target="_blank" :href="map" v-if="map">View Map</a> </th>
                         <th class="book">Book</th>
-                        <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i-1) }}</th>
+                        <th class="date" v-for="(d, index) in days" v-bind:key="index">{{ getDateString(arrivalDate, d-1) }}</th>
                     </tr>
                 </thead>
-                <tbody><template v-for="site in sites" v-if="useAdminApi || site.gearType[gearType]">
-                    <tr>
+                <tbody><template v-for="(site, index) in sites" v-if="useAdminApi || site.gearType[gearType]">
+                    <tr v-bind:key="index">
                         <td class="site">{{ site.name }}<span v-if="site.class"> - {{ classes[site.class] }}</span><span v-if="site.warning" class="siteWarning"> - {{ site.warning }}</span></td>
                         <td class="book">
                             <template v-if="site.price">
@@ -156,12 +163,19 @@
                                 <button v-else class="button secondary disabled" disabled><small>Change dates</small></button>
                             </template>
                         </td>
-                        <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
+                        <td v-if="!useAdminApi" class="date" v-for="(day, siteAvailabilityIndex) in site.availability" v-bind:key="siteAvailabilityIndex" v-bind:class="{available: day[0]}" > {{ day[1] }} </td>
+                        <td v-if="useAdminApi" class="date" v-for="(day, siteAvailabilityIndex) in site.availability" v-bind:key="siteAvailabilityIndex" v-bind:class="{available: day[0]}" > 
+                            <span data-tooltip v-bind:title="day[3]"> {{ day[1] }} </span>
+                        </td>
                     </tr>
-                    <template v-if="site.showBreakdown"><tr v-for="line in site.breakdown" class="breakdown">
-                        <td class="site">Site: {{ line.name }}</td>
+                    <template v-if="site.showBreakdown"><tr v-for="(line, breakIndex) in site.breakdown" v-bind:key="breakIndex" class="breakdown">
+                        <td v-if="!useAdminApi" class="site">Site:</td>
+                        <td v-if="useAdminApi" class="site">Site: {{ line.name }}</td>
                         <td></td>
-                        <td class="date" v-for="day in line.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
+                        <td v-if="!useAdminApi" class="date" v-for="(day, availabilityIndex) in line.availability" v-bind:key="availabilityIndex" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
+                        <td v-if="useAdminApi" class="date" v-for="(day, availabilityIndex) in line.availability" v-bind:key="availabilityIndex" v-bind:class="{available: day[0]}" >
+                            <span data-tooltip v-bind:title="day[3]"> {{ day[1] }} </span>
+                        </td>
                     </tr></template>
                 </template></tbody>
             </table>
@@ -258,58 +272,36 @@ import 'foundation-sites';
 import 'foundation-datepicker/js/foundation-datepicker';
 import debounce from 'debounce';
 import moment from 'moment';
+import $ from 'jquery';
 
 
 var nowTemp = new Date();
 var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
 
-var siteType = {
-    NOBOOKINGS: 0,
-    ONLINE: 1,
-    PHONE: 2,
-    OTHER: 3
-};
 
 function getQueryParam(name, fallback) {
-    name = name.replace(/[\[\]]/g, "\\$&");
+    name = name.replace(/[[\]]/g, "\\$&");
     var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
     var results = regex.exec(window.location.href);
     if (!results) return fallback;
     if (!results[2]) return fallback;
     return decodeURIComponent(results[2].replace(/\+/g, " "));
-};
-
-function getCookie(name) {
-    var cookieValue = null;
-    if (document.cookie && document.cookie != '') {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = jQuery.trim(cookies[i]);
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-};
+}
 
 export default {
-    el: '#availability',
     data: function () {
         return {
             name: '',
             arrivalDate: moment.utc(getQueryParam('arrival', moment.utc(now).format('YYYY/MM/DD')), 'YYYY/MM/DD'),
+            arrivalData: null,
             departureDate:  moment.utc(getQueryParam('departure', moment.utc(now).add(5, 'days').format('YYYY/MM/DD')), 'YYYY/MM/DD'),
-            parkstayUrl: global.parkstayUrl || process.env.PARKSTAY_URL,
-            useAdminApi: global.useAdminApi || false,
+            departureData: null,
             // order of preference:
             // - GET parameter 'site_id'
             // - global JS var 'parkstayGroundId'
             // - '1'
-            parkstayGroundId: parseInt(getQueryParam('site_id', global.parkstayGroundId || '1')),
-            parkstayGroundRatisId: parseInt(getQueryParam('parkstay_site_id', '0')),
+            parkstayGroundId: parseInt(getQueryParam('site_id', 0)),
+            parkstayGroundRatisId: parseInt(getQueryParam('parkstay_site_id', 0)),
             days: 5,
             numAdults: parseInt(getQueryParam('num_adult', 2)),
             numChildren: parseInt(getQueryParam('num_children', 0)),
@@ -327,7 +319,7 @@ export default {
             errorMsg: null,
             classes: {},
             sites: [],
-            long_description: '',
+            long_description: '',   
             map: null,
             showMoreInfo: false,
             ongoing_booking: false,
@@ -335,11 +327,20 @@ export default {
             showSecondErrorLine: true,
         };
     },
+    props: {
+        siteId: Number,
+        parkstayUrl: String,
+        useAdminApi: Boolean,
+    },
     computed: {
         numPeople: {
             cache: false,
             get: function() {
-                var count = parseInt(this.numAdults) + parseInt(this.numConcessions) + parseInt(this.numChildren) + parseInt(this.numInfants);
+                var count = 0;
+                count += parseInt(this.numAdults) ? parseInt(this.numAdults) : 0;
+                count += parseInt(this.numConcessions) ? parseInt(this.numConcessions) : 0;
+                count += parseInt(this.numChildren) ? parseInt(this.numChildren) : 0;
+                count += parseInt(this.numInfants) ? parseInt(this.numInfants) : 0;
                 if (count === 1) {
                     return count +" person ▼";
                 } else {
@@ -382,10 +383,10 @@ export default {
             var submitData = {
                 arrival: vm.arrivalDateString,
                 departure: vm.departureDateString,
-                num_adult: vm.numAdults,
-                num_child: vm.numChildren,
-                num_concession: vm.numConcessions,
-                num_infant: vm.numInfants,
+                num_adult: parseInt(vm.numAdults) ? parseInt(vm.numAdults) : 0,
+                num_child: parseInt(vm.numChildren) ? parseInt(vm.numChildren) : 0,
+                num_concession: parseInt(vm.numConcessions) ? parseInt(vm.numConcessions) : 0,
+                num_infant: parseInt(vm.numInfants) ? parseInt(vm.numInfants) : 0,
             };
             if (site.type == 0) { // per site listing
                 submitData.campsite = site.id;
@@ -440,19 +441,20 @@ export default {
                 var params = {
                         arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
                         departure: moment(vm.departureDate).format('YYYY/MM/DD'),
-                        num_adult: vm.numAdults,
-                        num_child: vm.numChildren,
-                        num_concession: vm.numConcessions,
-                        num_infant: vm.numInfants
+                        num_adult: parseInt(vm.numAdults) ? parseInt(vm.numAdults) : 0,
+                        num_child: parseInt(vm.numChildren) ? parseInt(vm.numChildren) : 0,
+                        num_concession: parseInt(vm.numConcessions) ? parseInt(vm.numConcessions) : 0,
+                        num_infant: parseInt(vm.numInfants) ? parseInt(vm.numInfants) : 0
                     };
 
+                var url = '';
                 if (parseInt(vm.parkstayGroundRatisId) > 0){
-                    var url = vm.parkstayUrl + '/api/availability_ratis/'+ vm.parkstayGroundRatisId +'/?'+$.param(params);
+                    url = vm.parkstayUrl + '/api/availability_ratis/'+ vm.parkstayGroundRatisId +'/?'+$.param(params);
                 } else if (vm.useAdminApi) {
-                    var url = vm.parkstayUrl + '/api/availability_admin/'+ vm.parkstayGroundId +'/?'+$.param(params);
-                } else{
+                    url = vm.parkstayUrl + '/api/availability_admin/'+ vm.parkstayGroundId +'/?'+$.param(params);
+                } else {
                     vm.updateURL();
-                    var url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'.json/?'+$.param(params);
+                    url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'.json/?'+$.param(params);
                 }
                 console.log('AJAX '+url);
                 $.ajax({
@@ -502,6 +504,10 @@ export default {
                         }
                     },
                     error: function(xhr, stat, err) {
+                        if ((xhr.status >= 400) || !xhr.hasOwnProperty('responseJSON') ) {
+                            vm.status = 'ajaxerror';
+                            return;
+                        }
                         vm.showSecondErrorLine = true;
                         var max_error = 'Maximum number of people exceeded for the selected campsite';
                         var min_error = 'Number of people is less than the minimum allowed for the selected campsite';
@@ -511,8 +517,7 @@ export default {
                         else if (xhr.responseJSON.hasOwnProperty('error') && (xhr.responseJSON.error == max_error || xhr.responseJSON.error == min_error)){
                             vm.status = 'offline';
                             vm.showSecondErrorLine = false;
-                        }
-                        else{
+                        } else {
                             vm.status = 'offline';
                         }
                     }
@@ -527,6 +532,7 @@ export default {
         this.arrivalEl = $('#date-arrival');
         this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
+            endDate: moment(this.arrivalEl).add(180, 'days').toDate(),
             onRender: function (date) {
                 // disallow start dates before today
                 return date.valueOf() < now.valueOf() ? 'disabled': '';
@@ -575,7 +581,7 @@ export default {
             }
         }).data('datepicker');
 
-
+        
         this.arrivalData.date = this.arrivalDate.toDate();
         this.arrivalData.setValue();
         this.arrivalData.fill();

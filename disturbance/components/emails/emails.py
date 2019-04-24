@@ -16,6 +16,7 @@ logger = logging.getLogger('log')
 def _render(template, context):
     if isinstance(context, dict):
         context = Context(context)
+        context.update({'settings': settings})
     if isinstance(template, six.string_types):
         template = Template(template)
     return template.render(context)
@@ -83,6 +84,7 @@ class TemplateEmailBase(object):
         msg.attach_alternative(html_body, 'text/html')
         try:
             msg.send(fail_silently=False)
+            logger.info("Email sent to: {} - subject: {}".format(to_addresses, self.subject))
             return msg
         except Exception as e:
             logger.exception("Error while sending email to {}: {}".format(to_addresses, e))

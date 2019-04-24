@@ -1,0 +1,16 @@
+{% extends 'mooring/base.html' %}
+{% load static %}
+
+{% block title %}
+    Mooring Map - Department of Parks and Wildlife
+{% endblock %}
+
+{% block content %}
+    <div id="parkfinder"></div>
+    <script type="text/javascript">
+        var parkstayUrl = window.location.protocol + '//' + window.location.host;
+    </script>
+    <script src="{% static 'exploreparks/js/manifest.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
+    <script src="{% static 'exploreparks/js/vendor.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
+    <script src="{% static 'exploreparks/js/map.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
+{% endblock %}

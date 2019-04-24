@@ -223,7 +223,7 @@ def _create_licence(licence_buffer, licence, application):
                             style=licence_table_style))
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    delegation.append(Paragraph('Issued by a WildlifeCompliance Licensing Officer of the {} '
+    delegation.append(Paragraph('Issued by a Wildlife Licensing Officer of the {} '
                                 'under delegation from the Minister for Environment pursuant to section 133(1) '
                                 'of the Conservation and Land Management Act 1984.'.format(settings.DEP_NAME), styles['Left']))
 

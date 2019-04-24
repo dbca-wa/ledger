@@ -15,7 +15,8 @@ export default {
     data() {
         let vm = this;
         return {
-            compliances_url: api_endpoints.compliances,
+            //compliances_url: api_endpoints.compliances,
+            compliances_url: api_endpoints.compliances_paginated_external,
         }
     
     },

@@ -1,0 +1,99 @@
+{% extends 'mooring/dash/dash_tables.html' %}
+{% load static %}
+{% load users %}
+{% block extra_css %}
+    {{ block.super }}
+    <style>
+        [v-cloak]{
+            display: none;
+        }
+    </style>
+{% endblock %}
+{% block menu %}
+<div class="topbar row" id="menu" v-cloak>
+    <div class="container-fluid">
+        <nav class="navbar navbar-default">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    {% if request.user.is_staff %}<router-link class="navbar-brand" :to="{name: 'cg_main'}" ><div style="inline">{% if TEMPLATE_GROUP == 'rottnest' %}{% else %}<img src="{% static 'wl/img/dpaw_small.png' %}">{% endif %}Moorings</div></router-link>{% else %}<a class="navbar-brand" href="{% url 'home' %}"><div style="inline">{% if TEMPLATE_GROUP == 'rottnest' %}{% else %}<img src="{% static 'wl/img/dpaw_small.png' %}">{% endif %}My Bookings</div></a>{% endif %}
+                </div>
+                <div id="navbar" class="navbar-collapse collapse" >
+                    <ul class="nav navbar-nav">
+                        {% block left_menu_items %}
+                            {% if request.user.is_staff %}
+                            {% include 'mooring/admin_nav_menu.html' %}
+                            {% else %}
+                            
+                            {% endif %}
+                            <li><a href="{{EXPLORE_PARKS_SEARCH}}">Search For A Mooring</a></li>
+                        {% endblock %}
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        {% if request.user.is_authenticated %}
+                            <li>
+                                <a>
+                                Welcome
+                                <strong>
+                                    {% if request.user.first_name %}
+                                        {{ request.user.get_short_name }}
+                                    {% elif request.user.last_name %}
+                                        {{ request.user.last_name }}
+                                    {% else %}
+                                        {{ request.user.email }}
+                                    {% endif %}
+                                </strong>
+                                </a>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                    Options
+                                    <span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    {% if request.user|is_admin or request.user.is_superuser %}
+                                        <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                                        <li><a href="/dashboard/reports">Reports</a></li>
+                                        <li role="separator" class="divider"></li>
+                                        {% include 'mooring/admin_menu.html' %}
+                                        <li role="separator" class="divider"></li>
+                                    {% endif %}
+                                    <li><a href="{% url 'account' %}">Manage Account</a></li>
+                                    <li role="separator" class="divider"></li>
+                                    <li><a href="{% url 'accounts:logout' %}?next=/">Logout</a></li>
+                                </ul>
+                            </li>
+                        {% endif %}
+                        {% block right_menu_items %}
+                        {% endblock %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </div>
+</div>
+
+{% endblock %}
+{% block vue-component %}
+    <div id="app">
+      <alert :show="showAlert" :type="alertType" :data-alert="alertMessage" :duration="5000">
+          <p :text-content.prop="alertMessage"></p>
+      </alert>
+       <router-view></router-view>
+   </div>
+{% endblock %}
+
+{% block custom_js %}
+{% if not DEV_STATIC %}
+    <script type="text/javascript" src="{% static 'parkstay/js/manifest.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
+    <script type="text/javascript" src="{% static 'parkstay/js/vendor.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
+    <script type="text/javascript" src="{% static 'parkstay/js/parkstay.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
+{% else %}
+    <script type="text/javascript" src="{{ DEV_STATIC_URL }}"></script>
+{% endif %}
+{% endblock %}

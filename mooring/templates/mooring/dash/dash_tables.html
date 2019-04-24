@@ -1,0 +1,24 @@
+{% extends 'mooring/base.html' %}
+{% load static %}
+{% load users %}
+/static/common/
+{% block extra_css %}
+    <link href="/static/common/css/dataTables.bootstrap.min.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link href="/static/common/css/select2.min.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link href="/static/common/css/select2-bootstrap.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link href="/static/common/css/font-awesome.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link rel="stylesheet" href="{% static 'mooring/css/dashboard.css' %}?ver={{ GIT_COMMIT_HASH }}">
+{% endblock %}
+{% block extra_js %}
+{% endblock %}
+{% block requirements %}
+{% endblock %}
+
+{% block content %}
+    <div class="container" id="dashboard-table-container">
+        {% block vue-component %}
+
+        {% endblock %}
+        
+    </div>
+{% endblock %}

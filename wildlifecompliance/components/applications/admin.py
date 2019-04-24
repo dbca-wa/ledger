@@ -17,9 +17,42 @@ class ApplicationDocumentInline(admin.TabularInline):
 class ApplicationTypeAdmin(admin.ModelAdmin):
     pass
 
+@admin.register(models.AmendmentRequest)
+class AmendmentRequestAdmin(admin.ModelAdmin):
+    list_display = ['application','licence_activity_type']
+
+@admin.register(models.ApplicationDecisionPropose)
+class ApplicationDecisionPropose(admin.ModelAdmin):
+    pass
+
+@admin.register(models.Assessment)
+class Assessment(admin.ModelAdmin):
+    pass
+
+@admin.register(models.ApplicationCondition)
+class ApplicationCondition(admin.ModelAdmin):
+    pass
+
+@admin.register(models.DefaultCondition)
+class DefaultCondition(admin.ModelAdmin):
+    pass
+
+@admin.register(models.ApplicationGroupType)
+class ApplicationGroupTypeAdmin(admin.ModelAdmin):
+    list_display = ['name','display_name']
+    filter_horizontal = ('members',)
+    form = forms.ApplicationGroupTypeAdminForm
+
+    def has_delete_permission(self, request, obj=None):
+        return super(ApplicationGroupTypeAdmin, self).has_delete_permission(request, obj)
+
+class ApplicationInvoiceInline(admin.TabularInline):
+    model = models.ApplicationInvoice
+    extra = 0
+
 @admin.register(models.Application)
 class ApplicationAdmin(VersionAdmin):
-    inlines =[ApplicationDocumentInline,] 
+    inlines =[ApplicationDocumentInline,ApplicationInvoiceInline]
 
 @admin.register(models.ApplicationAssessorGroup)
 class ApplicationAssessorGroupAdmin(admin.ModelAdmin):

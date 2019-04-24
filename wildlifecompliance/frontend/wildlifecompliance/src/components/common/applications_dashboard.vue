@@ -99,6 +99,262 @@ export default {
     },
     data() {
         let vm = this;
+        let internal_application_headers = [];
+        if (wc_version == "1.0") {
+            internal_application_headers = ["Number","Licence Class","Activity Type","Type","Submitter","Applicant","Status","Lodged on","Action"];
+        } else {
+            internal_application_headers = ["Number","Licence Class","Activity Type","Type","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"];
+        }
+        let internal_columns = [];
+        if (wc_version == "1.0") {
+            internal_columns = [
+                {
+                    data: "lodgement_number",
+                    mRender:function(data,type,full){
+                        return data;
+                    }
+                },
+                {data: "class_name"},
+                {data: "activity_type_names"},
+                {
+                    // replace with purposes
+                    mRender:function (data,type,full) {
+                        let purposes = '';
+                        return purposes;
+                    }
+                },
+                {
+                    data: "submitter",
+                    mRender:function (data,type,full) {
+                        if (data) {
+                            if (full.proxy_applicant){
+                                return `${data.first_name} ${data.last_name} (Proxy)`
+                            } else {
+                                return `${data.first_name} ${data.last_name}`;
+                            }
+                        }
+                        return ''
+                    }
+                },
+                {data: "applicant"},
+                {
+                    data: "processing_status",
+                    mRender:function(data,type,full){
+                        return vm.level == 'external' ? full.customer_status: data;
+                    }
+                },
+                {
+                    data: "lodgement_date",
+                    mRender:function (data,type,full) {
+                        return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
+                    }
+                },
+                {
+                    // Actions
+                    mRender:function (data,type,full) {
+                        let links = '';
+                        if (!vm.is_external){
+                            links += `<a href='/internal/application/${full.id}'>View</a><br/>`;
+                        }
+                        if (full.can_current_user_edit) {
+                            links +=  `<a href='/external/application/${full.id}'>Edit</a><br/>`;
+                            links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
+                        }
+                        return links;
+                    }
+                }
+            ]
+        } else {
+            internal_columns = [
+                {
+                    data: "lodgement_number",
+                    mRender:function(data,type,full){
+                        return data;
+                    }
+                },
+                {data: "class_name"},
+                {data: "activity_type_names"},
+                {
+                    // replace with purposes
+                    mRender:function (data,type,full) {
+                        let purposes = '';
+                        return purposes;
+                    }
+                },
+                {
+                    data: "submitter",
+                    mRender:function (data,type,full) {
+                        if (data) {
+                            return `${data.first_name} ${data.last_name}`;
+                        }
+                        return ''
+                    }
+                },
+                {data: "applicant"},
+                {
+                    data: "processing_status",
+                    mRender:function(data,type,full){
+                        return vm.level == 'external' ? full.customer_status: data;
+                    }
+                },
+                {
+                    data: "payment_status",
+                    mRender:function(data,type,full){
+                        return vm.level == 'external' ? full.customer_status: data;
+                    }
+                },
+                {
+                    data: "lodgement_date",
+                    mRender:function (data,type,full) {
+                        return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
+                    }
+                },
+                {data: "assigned_officer"},
+                {
+                    // Actions
+                    mRender:function (data,type,full) {
+                        let links = '';
+                        if (!vm.is_external){
+                            links +=  full.can_be_processed ? `<a href='/internal/application/${full.id}'>Process</a><br/>`: `<a href='/internal/application/${full.id}'>View</a><br/>`;
+                        }
+                        else{
+                            if (full.can_current_user_edit) {
+                                links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
+                                links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
+                            }
+                            else if (full.can_user_view) {
+                                links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
+                            }
+                        }
+                        return links;
+                    }
+                }
+            ]
+        }
+        let external_columns = [];
+        if (wc_version == "1.0") {
+            external_columns = [
+                {
+                    data: "lodgement_number",
+                    mRender:function(data,type,full){
+                        return data;
+                    }
+                },
+                {data: "class_name"},
+                {data: "activity_type_names"},
+                {
+                    // replace with purposes
+                    mRender:function (data,type,full) {
+                        let purposes = '';
+                        return purposes;
+                    }
+                },
+                {
+                    data: "submitter",
+                    mRender:function (data,type,full) {
+                        if (data) {
+                            return `${data.first_name} ${data.last_name}`;
+                        }
+                        return ''
+                    }
+                },
+                {data: "applicant"},
+                {
+                    data: "processing_status",
+                    mRender:function(data,type,full){
+                        return vm.level == 'external' ? full.customer_status: data;
+                    }
+                },
+                {
+                    data: "lodgement_date",
+                    mRender:function (data,type,full) {
+                        return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
+                    }
+                },
+                {
+                    // Actions
+                    mRender:function (data,type,full) {
+                        let links = '';
+                        if (!vm.is_external){
+                            links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
+                        }
+                        else{
+                            if (full.can_current_user_edit) {
+                                links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
+                                links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
+                            }
+                            else if (full.can_user_view) {
+                                links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
+                            }
+                        }
+                        return links;
+                    }
+                }
+            ]
+        } else {
+            external_columns = [
+                {
+                    data: "lodgement_number",
+                    mRender:function(data,type,full){
+                        return data;
+                    }
+                },
+                {data: "class_name"},
+                {data: "activity_type_names"},
+                {
+                    // replace with purposes
+                    mRender:function (data,type,full) {
+                        let purposes = '';
+                        return purposes;
+                    }
+                },
+                {
+                    data: "submitter",
+                    mRender:function (data,type,full) {
+                        if (data) {
+                            return `${data.first_name} ${data.last_name}`;
+                        }
+                        return ''
+                    }
+                },
+                {data: "applicant"},
+                {
+                    data: "processing_status",
+                    mRender:function(data,type,full){
+                        return vm.level == 'external' ? full.customer_status: data;
+                    }
+                },
+                {
+                    data: "lodgement_date",
+                    mRender:function (data,type,full) {
+                        return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
+                    }
+                },
+                {
+                    // Actions
+                    mRender:function (data,type,full) {
+                        let links = '';
+                        if (!vm.is_external){
+                            links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
+                        }
+                        else{
+                            if (full.can_current_user_edit) {
+                                links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
+                                links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
+                            }
+                            else if (full.can_user_view) {
+                                links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
+
+                                if (full.payment_status == 'unpaid'){
+                                    links +=  `<a href='#${full.id}' data-pay-application-fee='${full.id}'>Pay Application Fee</a><br/>`;
+                                }
+                            }
+                        }
+                        return links;
+                    }
+                }
+            ]
+        }
         return {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'application-datatable-'+vm._uid,
@@ -119,7 +375,7 @@ export default {
             application_licence_types : [],
             application_submitters: [],
             application_status: [],
-            application_ex_headers:["Number","Licence Category","Activity Type","Type","Submiter","Applicant","Status","Lodged on","Action"],
+            application_ex_headers:["Number","Licence Class","Activity Type","Type","Submitter","Applicant","Status","Lodged on","Action"],
             application_ex_options:{
                 autoWidth: false,
                 language: {
@@ -130,69 +386,7 @@ export default {
                     "url": vm.url,
                     "dataSrc": ''
                 },
-                columns: [
-                    {
-                        data: "id",
-                        mRender:function(data,type,full){
-                            return 'P'+data;
-                        }
-                    },
-                    {
-                        data: "region",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn
-                    },
-                    {data: "activity"},
-                    {
-                        data: "title",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn
-                    },
-                    {
-                        data: "submitter",
-                        mRender:function (data,type,full) {
-                            if (data) {
-                                return `${data.first_name} ${data.last_name}`;
-                            }
-                            return ''
-                        }
-                    },
-                    {data: "applicant"},
-                    {
-                        data: "processing_status",
-                        mRender:function(data,type,full){
-                            return vm.level == 'external' ? full.customer_status: data;
-                        }
-                    },
-                    {
-                        data: "lodgement_date",
-                        mRender:function (data,type,full) {
-                            return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
-                    },
-                    {
-                        mRender:function (data,type,full) {
-                            let links = '';
-                            if (!vm.is_external){
-                                links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
-                            }
-                            else{
-                                if (full.can_user_edit) {
-                                    links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
-                                    links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
-                                }
-                                else if (full.can_user_view) {
-                                    links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
-                                }
-                            }
-                            return links;
-                        }
-                    }
-                ],
+                columns: external_columns,
                 processing: true,
                 initComplete: function () {
                     // Grab Regions from the data in the table
@@ -243,7 +437,7 @@ export default {
                     });
                 }
             },
-            application_headers:["Number","Licence Category","Activity Type","Type","Submiter","Applicant","Status","Lodged on","Action"],
+            application_headers:internal_application_headers,
             application_options:{
                 autoWidth: false,
                 language: {
@@ -254,70 +448,7 @@ export default {
                     "url": vm.url,
                     "dataSrc": ''
                 },
-                columns: [
-                    {
-                        data: "id",
-                        mRender:function(data,type,full){
-                            return 'P'+data;
-                        }
-                    },
-                    {
-                        data: "region",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn
-                    },
-                    {data: "activity"},
-                    {
-                        data: "title",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn
-                    },
-                    {
-                        data: "submitter",
-                        mRender:function (data,type,full) {
-                            if (data) {
-                                return `${data.first_name} ${data.last_name}`;
-                            }
-                            return ''
-                        }
-                    },
-                    {data: "applicant"},
-                    {
-                        data: "processing_status",
-                        mRender:function(data,type,full){
-                            return vm.level == 'external' ? full.customer_status: data;
-                        }
-                    },
-                    {
-                        data: "lodgement_date",
-                        mRender:function (data,type,full) {
-                            return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        }
-                    },
-                    {data: "assigned_officer"},
-                    {
-                        mRender:function (data,type,full) {
-                            let links = '';
-                            if (!vm.is_external){
-                                links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
-                            }
-                            else{
-                                if (full.can_user_edit) {
-                                    links +=  `<a href='/external/application/${full.id}'>Continue</a><br/>`;
-                                    links +=  `<a href='#${full.id}' data-discard-application='${full.id}'>Discard</a><br/>`;
-                                }
-                                else if (full.can_user_view) {
-                                    links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
-                                }
-                            }
-                            return links;
-                        }
-                    }
-                ],
+                columns: internal_columns,
                 processing: true,
                 initComplete: function () {
                     // Grab Regions from the data in the table
@@ -416,6 +547,9 @@ export default {
         },
         is_referral: function(){
             return this.level == 'referral';
+        },
+        wc_version: function (){
+            return this.$root.wc_version;
         }
     },
     methods:{
@@ -445,6 +579,19 @@ export default {
             },(error) => {
             });
         },
+        payApplicationFee:function (application_id) {
+            let vm = this;
+            console.log('test')
+            vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,application_id+'/application_fee_checkout/'), application_id).then(res=>{
+                    window.location.href = "/ledger/checkout/checkout/payment-details/";
+                },err=>{
+                    swal(
+                        'Submit Error',
+                        helpers.apiVueResourceError(err),
+                        'error'
+                    )
+                });
+        },
         addEventListeners: function(){
             let vm = this;
             // Initialise Application Date Filters
@@ -473,6 +620,12 @@ export default {
                 e.preventDefault();
                 var id = $(this).attr('data-discard-application');
                 vm.discardApplication(id);
+            });
+            // External Pay Application Fee listener
+            vm.$refs.application_datatable.vmDataTable.on('click', 'a[data-pay-application-fee]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-pay-application-fee');
+                vm.payApplicationFee(id);
             });
             // Initialise select2 for region
             $(vm.$refs.filterRegion).select2({

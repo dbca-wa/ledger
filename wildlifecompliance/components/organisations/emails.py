@@ -9,7 +9,7 @@ from wildlifecompliance.components.emails.emails import TemplateEmailBase
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_NAME = 'Wildlife Compliance Automated Message'
+SYSTEM_NAME = 'Wildlife Licensing Automated Message'
 class OrganisationRequestAcceptNotificationEmail(TemplateEmailBase):
     subject = 'Your organisation request has been accepted.'
     html_template = 'wildlifecompliance/emails/organisation_request_accept_notification.html'
@@ -65,7 +65,24 @@ class OrganisationAddressUpdatedNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/organisation_address_updated_notification.html'
     txt_template = 'wildlifecompliance/emails/organisation_address_updated_notification.txt'
 
-    
+
+class OrganisationIdUploadNotificationEmail(TemplateEmailBase):
+    subject = 'An organisation''s Identification has been uploaded.'
+    html_template = 'wildlifecompliance/emails/organisation_id_upload_notification.html'
+    txt_template = 'wildlifecompliance/emails/organisation_id_upload_notification.txt'
+
+
+def send_organisation_id_upload_email_notification(emails, organisation, org_contact, request):
+    email = OrganisationIdUploadNotificationEmail()
+
+    context = {
+        'organisation': organisation
+    }
+
+    msg = email.send(emails, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_email(msg, organisation, org_contact, sender=sender)
+
 
 def send_organisation_reinstate_email_notification(linked_user,linked_by,organisation,request):
     email = OrganisationContactReinstateNotificationEmail()

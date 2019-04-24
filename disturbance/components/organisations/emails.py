@@ -9,11 +9,16 @@ from disturbance.components.emails.emails import TemplateEmailBase
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_NAME = 'VIA Automated Message'
+SYSTEM_NAME = settings.SYSTEM_NAME_SHORT + ' Automated Message'
 class OrganisationRequestAcceptNotificationEmail(TemplateEmailBase):
     subject = 'Your organisation request has been accepted.'
     html_template = 'disturbance/emails/organisation_request_accept_notification.html'
     txt_template = 'disturbance/emails/organisation_request_accept_notification.txt'
+
+class OrganisationAccessGroupRequestAcceptNotificationEmail(TemplateEmailBase):
+    subject = 'New organisation request has been submitted.'
+    html_template = 'disturbance/emails/org_access_group_request_accept_notification.html'
+    txt_template = 'disturbance/emails/org_access_group_request_accept_notification.txt'
 
 class OrganisationRequestDeclineNotificationEmail(TemplateEmailBase):
     subject = 'Your organisation request has been declined.'
@@ -68,7 +73,28 @@ def send_organisation_request_accept_email_notification(org_request,organisation
     _log_org_request_email(msg, org_request, sender=sender)
     _log_org_email(msg, organisation, org_request.requester, sender=sender)
 
-def send_organisation_request_decline_email_notification(org_request,organisation,request):
+def send_org_access_group_request_accept_email_notification(org_request, request, recipient_list):
+    email = OrganisationAccessGroupRequestAcceptNotificationEmail()
+
+    url = request.build_absolute_uri('/internal/organisations/access/{}'.format(org_request.id))
+    if "-internal" not in url:
+        url = '-internal.{}'.format(settings.SITE_DOMAIN).join(url.split('.' + settings.SITE_DOMAIN))
+
+    context = {
+        'name': request.data.get('name'),
+        'abn': request.data.get('abn'),
+        'url': url,
+    }
+
+    msg = email.send(recipient_list, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_request_email(msg, org_request, sender=sender)
+
+    # commenting out because Organisation does not yet exist - only OrganisationRequest exists
+    #_log_org_email(msg, organisation, org_request.requester, sender=sender) 
+
+
+def send_organisation_request_decline_email_notification(org_request,request):
     email = OrganisationRequestDeclineNotificationEmail()
 
     context = {
@@ -78,7 +104,7 @@ def send_organisation_request_decline_email_notification(org_request,organisatio
     msg = email.send(org_request.requester.email, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_request_email(msg, org_request, sender=sender)
-    _log_org_email(msg, organisation, org_request.requester, sender=sender)
+    #_log_org_email(msg, organisation, org_request.requester, sender=sender)
 
 def _log_org_request_email(email_message, request, sender=None):
     from disturbance.components.organisations.models import OrganisationRequestLogEntry

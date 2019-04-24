@@ -9,11 +9,16 @@ from disturbance.components.emails.emails import TemplateEmailBase
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_NAME = 'VIA Automated Message'
+SYSTEM_NAME = settings.SYSTEM_NAME_SHORT + ' Automated Message'
 class ReferralSendNotificationEmail(TemplateEmailBase):
     subject = 'A referral for a proposal has been sent to you.'
     html_template = 'disturbance/emails/proposals/send_referral_notification.html'
     txt_template = 'disturbance/emails/proposals/send_referral_notification.txt'
+
+class ReferralCompleteNotificationEmail(TemplateEmailBase):
+    subject = 'A referral for a proposal has been completed.'
+    html_template = 'disturbance/emails/proposals/send_referral_complete_notification.html'
+    txt_template = 'disturbance/emails/proposals/send_referral_complete_notification.txt'
 
 class ProposalDeclineSendNotificationEmail(TemplateEmailBase):
     subject = 'Your Proposal has been declined.'
@@ -30,6 +35,31 @@ class AmendmentRequestSendNotificationEmail(TemplateEmailBase):
     html_template = 'disturbance/emails/proposals/send_amendment_notification.html'
     txt_template = 'disturbance/emails/proposals/send_amendment_notification.txt'
 
+class SubmitSendNotificationEmail(TemplateEmailBase):
+    subject = 'A new Proposal has been submitted.'
+    html_template = 'disturbance/emails/proposals/send_submit_notification.html'
+    txt_template = 'disturbance/emails/proposals/send_submit_notification.txt'
+
+class ExternalSubmitSendNotificationEmail(TemplateEmailBase):
+    subject = 'A new Proposal has been submitted.'
+    html_template = 'disturbance/emails/proposals/send_external_submit_notification.html'
+    txt_template = 'disturbance/emails/proposals/send_external_submit_notification.txt'
+
+class ApproverDeclineSendNotificationEmail(TemplateEmailBase):
+    subject = 'A Proposal has been recommended for decline.'
+    html_template = 'disturbance/emails/proposals/send_approver_decline_notification.html'
+    txt_template = 'disturbance/emails/proposals/send_approver_decline_notification.txt'
+
+class ApproverApproveSendNotificationEmail(TemplateEmailBase):
+    subject = 'A Proposal has been recommended for approval.'
+    html_template = 'disturbance/emails/proposals/send_approver_approve_notification.html'
+    txt_template = 'disturbance/emails/proposals/send_approver_approve_notification.txt'
+
+class ApproverSendBackNotificationEmail(TemplateEmailBase):
+    subject = 'A Proposal has been sent back by approver.'
+    html_template = 'disturbance/emails/proposals/send_approver_sendback_notification.html'
+    txt_template = 'disturbance/emails/proposals/send_approver_sendback_notification.txt'
+
 def send_referral_email_notification(referral,request,reminder=False):
     email = ReferralSendNotificationEmail()
     url = request.build_absolute_uri(reverse('internal-referral-detail',kwargs={'proposal_pk':referral.proposal.id,'referral_pk':referral.id}))
@@ -37,7 +67,8 @@ def send_referral_email_notification(referral,request,reminder=False):
     context = {
         'proposal': referral.proposal,
         'url': url,
-        'reminder':reminder
+        'reminder':reminder,
+        'comments': referral.text
     }
 
     msg = email.send(referral.referral.email, context=context)
@@ -45,11 +76,32 @@ def send_referral_email_notification(referral,request,reminder=False):
     _log_proposal_referral_email(msg, referral, sender=sender)
     _log_org_email(msg, referral.proposal.applicant, referral.referral, sender=sender)
 
+def send_referral_complete_email_notification(referral,request):
+    email = ReferralCompleteNotificationEmail()
+    url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': referral.proposal.id}))
+
+    context = {
+        'proposal': referral.proposal,
+        'url': url,
+        'referral_comments': referral.referral_text
+    }
+
+    msg = email.send(referral.sent_by.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_referral_email(msg, referral, sender=sender)
+    _log_org_email(msg, referral.proposal.applicant, referral.referral, sender=sender)
+
 
 def send_amendment_email_notification(amendment_request, request, proposal):
     email = AmendmentRequestSendNotificationEmail()
-    reason = amendment_request.get_reason_display()
+    #reason = amendment_request.get_reason_display()
+    reason = amendment_request.reason.reason
     url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+
+    if "-internal" in url:
+        # remove '-internal'. This email is for external submitters 
+        url = ''.join(url.split('-internal'))
+
     context = {
         'proposal': proposal,
         'reason': reason,
@@ -62,19 +114,102 @@ def send_amendment_email_notification(amendment_request, request, proposal):
     _log_proposal_email(msg, proposal, sender=sender)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
 
+def send_submit_email_notification(request, proposal):
+    email = SubmitSendNotificationEmail()
+    url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+    if "-internal" not in url:
+        # add it. This email is for internal staff (assessors)
+        url = '-internal.{}'.format(settings.SITE_DOMAIN).join(url.split('.' + settings.SITE_DOMAIN))
+
+    context = {
+        'proposal': proposal,
+        'url': url
+    }
+
+    msg = email.send(proposal.assessor_recipients, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+    return msg
+
+def send_external_submit_email_notification(request, proposal):
+    email = ExternalSubmitSendNotificationEmail()
+    url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+
+    if "-internal" in url:
+        # remove '-internal'. This email is for external submitters 
+        url = ''.join(url.split('-internal'))
+
+    context = {
+        'proposal': proposal,
+        'submitter': proposal.submitter.get_full_name(),
+        'url': url
+    }
+
+    msg = email.send(proposal.submitter.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+    return msg
+
+#send email when Proposal is 'proposed to decline' by assessor.
+def send_approver_decline_email_notification(reason, request, proposal):
+    email = ApproverDeclineSendNotificationEmail()
+    url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+    context = {
+        'proposal': proposal,
+        'reason': reason,
+        'url': url
+    }
+
+    msg = email.send(proposal.approver_recipients, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+
+def send_approver_approve_email_notification(request, proposal):
+    email = ApproverApproveSendNotificationEmail()
+    url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+    context = {
+        'start_date' : proposal.proposed_issuance_approval.get('start_date'),
+        'expiry_date' : proposal.proposed_issuance_approval.get('expiry_date'),
+        'details': proposal.proposed_issuance_approval.get('details'),
+        'proposal': proposal,
+        'url': url
+    }
+
+    msg = email.send(proposal.approver_recipients, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
 
 def send_proposal_decline_email_notification(proposal,request,proposal_decline):
     email = ProposalDeclineSendNotificationEmail()
 
     context = {
         'proposal': proposal,
-      
+
     }
     cc_list = proposal_decline.cc_email
     all_ccs = []
-    all_ccs = cc_list.split(',')
+    if cc_list:
+        all_ccs = cc_list.split(',')
 
     msg = email.send(proposal.submitter.email, bcc= all_ccs, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, proposal, sender=sender)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+
+def send_proposal_approver_sendback_email_notification(request, proposal):
+    email = ApproverSendBackNotificationEmail()
+    url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+    context = {
+        'proposal': proposal,
+        'url': url,
+        'approver_comment': proposal.approver_comment
+    }
+
+    msg = email.send(proposal.assessor_recipients, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
@@ -86,11 +221,12 @@ def send_proposal_approval_email_notification(proposal,request):
 
     context = {
         'proposal': proposal,
-      
+
     }
     cc_list = proposal.proposed_issuance_approval['cc_email']
     all_ccs = []
-    all_ccs = cc_list.split(',')
+    if cc_list:
+        all_ccs = cc_list.split(',')
 
     licence_document= proposal.approval.licence_document._file
     if licence_document is not None:

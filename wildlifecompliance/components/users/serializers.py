@@ -1,5 +1,5 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address,Profile,EmailIdentity,EmailUserAction
+from ledger.accounts.models import EmailUser,Address,Profile,EmailIdentity,EmailUserAction,Document
 from wildlifecompliance.components.organisations.models import (   
                                     Organisation,
                                     OrganisationRequest,
@@ -9,6 +9,14 @@ from wildlifecompliance.components.organisations.utils import can_admin_org,is_c
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from rest_framework.fields import CurrentUserDefault
+
+
+
+class DocumentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Document
+        fields = ('id','description','file','name','uploaded_date')
 
 
 class UserOrganisationContactSerializer(serializers.ModelSerializer):
@@ -137,6 +145,7 @@ class UserSerializer(serializers.ModelSerializer):
     address_details = serializers.SerializerMethodField()
     contact_details = serializers.SerializerMethodField()
     wildlifecompliance_organisations = serializers.SerializerMethodField()
+    identification = DocumentSerializer()
 
     class Meta:
         model = EmailUser
@@ -147,6 +156,7 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'dob',
             'email',
+            'identification',
             'residential_address',
             'phone_number',
             'mobile_number',

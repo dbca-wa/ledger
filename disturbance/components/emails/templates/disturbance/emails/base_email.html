@@ -17,16 +17,23 @@
             </p>
             <p></p>
             <p>
-                VIA Section
+            {{ settings.SYSTEM_NAME_SHORT }} Section
             </p>
         {% endblock %}
         {% block reply_statement %}
             <p></p>
             <p></p>
             <p>
+                <!--
                 <strong><em>Please do not reply directly to this email. Should you need to contact the licensing section of the Department of 
-                Parks and Wildlife, please send emails to <a href="mailto:via@dpaw.wa.gov.au">via@dpaw.wa.gov.au</a> 
+                Biodiversity, Conservation and Attractions, please send emails to <a href="mailto:das@dpaw.wa.gov.au">das@dpaw.wa.gov.au</a> 
                 or call (08) 9219 9000.</em></strong>
+                -->
+
+                <strong><em>
+                    Please do not reply directly to this email. Should you need to contact the licensing section of the {{settings.DEP_NAME}}, 
+                    please send emails to <a href="mailto:{{ settings.SUPPORT_EMAIL }}">{{ settings.SUPPORT_EMAIL }}</a> or call {{ settings.DEP_PHONE_SUPPORT }}.
+                </em></strong> 
             </p> 
         {% endblock %}
     </body> 

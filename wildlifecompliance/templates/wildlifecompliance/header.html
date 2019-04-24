@@ -4,11 +4,14 @@
     <div class="container">
         <div class="masthead">
             <div class="row">
-                <div class="col-lg-8">
-                    <div class="agency-freespace">
-                        <h1 id="site-title" class="site-logo"><a href="{%url 'home'%}">
+                <div class="column">
+                    <div class="col-lg-8">
+                    <a href="{% url 'home' %}">
+                        <img src="{% static 'wildlifecompliance/img/dpaw_logo.gif' %}" alt="DPaW Logo" />
+                    </a>
                     </div>
                 </div>
+                <div class="column"><h2 id="site-title" class="site-logo"style="color: white;">Wildlife Licensing System</h2></div>
             </div>
         </div>
     </div>

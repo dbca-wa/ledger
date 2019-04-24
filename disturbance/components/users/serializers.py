@@ -4,6 +4,7 @@ from disturbance.components.organisations.models import (
                                     Organisation,
                                 )
 from rest_framework import serializers
+from ledger.accounts.utils import in_dbca_domain
 
 
 class UserAddressSerializer(serializers.ModelSerializer):
@@ -36,6 +37,7 @@ class UserSerializer(serializers.ModelSerializer):
     address_details = serializers.SerializerMethodField()
     contact_details = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
+    is_department_user = serializers.SerializerMethodField()
 
     class Meta:
         model = EmailUser
@@ -51,6 +53,7 @@ class UserSerializer(serializers.ModelSerializer):
             'personal_details',
             'address_details',
             'contact_details',
+            'is_department_user',
             'full_name'
         )
     
@@ -63,13 +66,20 @@ class UserSerializer(serializers.ModelSerializer):
     def get_contact_details(self,obj):
         if obj.mobile_number and obj.email:
             return True
-        elif obj.mobile_number and obj.phone_number:
+        elif obj.email and obj.phone_number:
             return True
         else:
             return False
 
     def get_full_name(self, obj):
         return obj.get_full_name()
+
+    def get_is_department_user(self, obj):
+        if obj.email:
+            return in_dbca_domain(obj)
+        else:
+            return False
+
 
 
 

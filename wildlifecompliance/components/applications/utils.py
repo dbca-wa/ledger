@@ -10,7 +10,7 @@ from wildlifecompliance.components.licences.models import WildlifeLicenceActivit
 import traceback
 
 def create_data_from_form(schema, post_data, file_data, post_data_index=None,special_fields=[],assessor_data=False):
-    data = {} 
+    data = {}
     special_fields_list = []
     assessor_data_list = []
     comment_data_list = {}
@@ -42,7 +42,7 @@ def _extend_item_name(name, suffix, repetition):
 
 def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     item_data = {}
-    
+
     if 'name' in item:
         extended_item_name = item['name']
     else:
@@ -76,7 +76,7 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     if 'conditions' in item:
         for condition in item['conditions'].keys():
             for child in item['conditions'][condition]:
-                print(child)
+                #print(child)
                 item_data.update(_create_data_from_item(child, post_data, file_data, repetition, suffix))
 
     return item_data
@@ -86,7 +86,7 @@ def generate_item_data(item_name,item,item_data,post_data,file_data,repetition,s
     for rep in xrange(0, repetition):
         child_data = {}
         for child_item in item.get('children'):
-            print(child_item)
+            #print(child_item)
             child_data.update(_create_data_from_item(child_item, post_data, file_data, 0,
                                                      '{}-{}'.format(suffix, rep)))
         item_data_list.append(child_data)
@@ -133,7 +133,7 @@ class AssessorDataSearch(object):
     def extract_special_fields(self,item, post_data, file_data, repetition, suffix):
         item_data = {}
         if 'name' in item:
-            extended_item_name = item['name'] 
+            extended_item_name = item['name']
         else:
             raise Exception('Missing name in item %s' % item['label'])
 
@@ -174,7 +174,7 @@ class CommentDataSearch(object):
         self.comment_data = {}
 
     def extract_comment_data(self,item,post_data):
-        res = {} 
+        res = {}
         values = []
         for k in post_data:
             if re.match(item,k):
@@ -192,7 +192,7 @@ class CommentDataSearch(object):
     def extract_special_fields(self,item, post_data, file_data, repetition, suffix):
         item_data = {}
         if 'name' in item:
-            extended_item_name = item['name'] 
+            extended_item_name = item['name']
         else:
             raise Exception('Missing name in item %s' % item['label'])
 
@@ -234,7 +234,7 @@ class SpecialFieldsSearch(object):
     def extract_special_fields(self,item, post_data, file_data, repetition, suffix):
         item_data = {}
         if 'name' in item:
-            extended_item_name = item['name'] 
+            extended_item_name = item['name']
         else:
             raise Exception('Missing name in item %s' % item['label'])
 
@@ -298,21 +298,22 @@ def save_proponent_data(instance,request,viewset):
                 'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
                 'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
             }
+            #import ipdb; ipdb.set_trace()
             serializer = SaveApplicationSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
             # Save Documents
-            for f in request.FILES:
-                try:
-                    #document = instance.documents.get(name=str(request.FILES[f]))
-                    document = instance.documents.get(input_name=f)
-                except ApplicationDocument.DoesNotExist:
-                    document = instance.documents.get_or_create(input_name=f)[0]
-                document.name = str(request.FILES[f])
-                if document._file and os.path.isfile(document._file.path):
-                    os.remove(document._file.path)
-                document._file = request.FILES[f]
-                document.save()
+#            for f in request.FILES:
+#                try:
+#                    #document = instance.documents.get(name=str(request.FILES[f]))
+#                    document = instance.documents.get(input_name=f)
+#                except ApplicationDocument.DoesNotExist:
+#                    document = instance.documents.get_or_create(input_name=f)[0]
+#                document.name = str(request.FILES[f])
+#                if document._file and os.path.isfile(document._file.path):
+#                    os.remove(document._file.path)
+#                document._file = request.FILES[f]
+#                document.save()
             # End Save Documents
         except:
             raise
@@ -355,6 +356,9 @@ def get_activity_type_schema(licence_class_data):
         schema_activity=[]
         wl_activity_type_id = item['id']
         activity_type_obj = WildlifeLicenceActivityType.objects.get(id = wl_activity_type_id)
+        item["name"]=activity_type_obj.name
+        item["processing_status"]="Draft"
+        item["proposed_decline"]=False
 
         for index1, item1 in enumerate(item['activity']):
             wl_activity_id = item1['id']
@@ -362,14 +366,14 @@ def get_activity_type_schema(licence_class_data):
             schema_activity = schema_activity + activity_obj.schema
 
         update_schema_name(schema_activity,index)
-        for item in schema_activity:
-            print(item['name'])
-            
+        # for item in schema_activity:
+        #     print(item['name'])
+
         schema_tab.append({"type":"tab",
                   "id":activity_type_obj.id,
                   "label":activity_type_obj.name,
                   "name":activity_type_obj.name,
-                  "status":"draft",
+                  "status":"Draft",
                   "children":schema_activity
                 })
         # print(schema_tab)
@@ -390,6 +394,6 @@ def update_schema_name(item_data,id):
 
 
 
-    
+
 
 

@@ -1,4 +1,4 @@
-from decimal import Decimal as D, ROUND_HALF_DOWN
+from decimal import Decimal as D, getcontext
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
@@ -11,6 +11,7 @@ from ledger.checkout import serializers
 from ledger.catalogue.models import Product
 from ledger.basket.models import Basket
 from ledger.basket.middleware import BasketMiddleware
+from django.core.signing import BadSignature, Signer
 
 Selector = get_class('partner.strategy', 'Selector')
 selector = Selector()
@@ -50,6 +51,20 @@ def create_basket_session(request, parameters):
     return basket, BasketMiddleware().get_basket_hash(basket.id)
 
 
+def get_cookie_basket(cookie_key,request):
+    basket = None
+    if cookie_key in request.COOKIES:
+       basket_hash = request.COOKIES[cookie_key]
+       try:
+           basket_id = Signer(sep='|').unsign(basket_hash)
+           basket = Basket.objects.get(pk=basket_id,
+                                      status=Basket.OPEN)
+       except (BadSignature, Basket.DoesNotExist):
+           request.cookies_to_delete.append(cookie_key)
+       return basket
+    return None
+
+
 # create a checkout session in Oscar.
 # the checkout session contains all of the attributes about a purchase session (e.g. payment method,
 # shipping method, ID of the person performing the checkout)
@@ -59,6 +74,9 @@ def create_checkout_session(request, parameters):
 
     session_data = CheckoutSessionData(request) 
 
+    # reset method of payment when creating a new session
+    session_data.pay_by(None)
+    
     session_data.use_system(serializer.validated_data['system'])
     session_data.charge_by(serializer.validated_data['card_method'])
     session_data.use_shipping_method(serializer.validated_data['shipping_method'])
@@ -96,7 +114,6 @@ def place_order_submission(request):
     from ledger.checkout.views import PaymentDetailsView
     pdv = PaymentDetailsView(request=request, checkout_session=CheckoutSessionData(request))
     result = pdv.handle_place_order_submission(request)
-
     return result
 
 
@@ -247,7 +264,9 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
 
 def calculate_excl_gst(amount):
-    result = D(100.0)/ D(100 + settings.LEDGER_GST) * D(amount)
+    TWELVEPLACES = D(10) ** -12
+    getcontext().prec = 22
+    result = (D(100.0) / D(100 + settings.LEDGER_GST) * D(amount)).quantize(TWELVEPLACES)
     return result
 
 

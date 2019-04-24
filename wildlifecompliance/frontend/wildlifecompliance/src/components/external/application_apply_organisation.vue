@@ -13,26 +13,24 @@
                     <div class="panel-body collapse in" :id="pBody">
                         <form class="form-horizontal" name="personal_form" method="post">
                             <div class="col-sm-12">
-                                <div class="form-group">
+                                    <p><strong>Note: If you are applying for a Taking licence, it cannot be applied for on behalf of an organisation.</strong></p>
                                     <div class="radio">
                                         <label>
-                                        <input type="radio"  name="behalf_of_org" v-model="behalf_of"  value="other"> On behalf of yourself
+                                        <input type="radio"  name="behalf_of_org" v-model="yourself" value="yourself"> On behalf of yourself
                                         </label>
                                     </div>
                                     <div v-for="org in profile.wildlifecompliance_organisations" class="radio">
                                         <label v-if ="!org.is_consultant">
-                                          <input type="radio"  name="behalf_of_org" v-model="behalf_of"  :value="org.id"> On behalf of {{org.name}}
+                                          <input type="radio"  name="behalf_of_org" v-model="org_applicant"  :value="org.id"> On behalf of {{org.name}}
                                         </label>
                                         <label v-if ="org.is_consultant">
-                                          <input  type="radio"  name="behalf_of_org" v-model="behalf_of"  :value="org.id" > On behalf of {{org.name}} (as a Consultant)
+                                          <input  type="radio"  name="behalf_of_org" v-model="org_applicant"  :value="org.id" > On behalf of {{org.name}} (as a Consultant)
                                         </label>
                                     </div>
-                                    
-                                </div>
                             </div>
                            
                             <div class="col-sm-12">
-                                <button :disabled="behalf_of == ''" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
+                                <button :disabled="org_applicant == '' && yourself == ''" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
                             </div>
                         </form>
                     </div>
@@ -56,7 +54,8 @@ export default {
         licence_select : this.$route.params.licence_select,
         "application": null,
         agent: {},
-        behalf_of: '',
+        org_applicant: '',
+        yourself: '',
         organisations:null,
 
         profile: {
@@ -75,9 +74,9 @@ export default {
     },
     org: function() {
         let vm = this;
-        console.log('from org function',vm.behalf_of)
-        if (vm.behalf_of != '' || vm.behalf_of != 'other'){
-            return vm.profile.wildlifecompliance_organisations.find(org => parseInt(org.id) === parseInt(vm.behalf_of)).name;
+        console.log('from org function',vm.org_applicant)
+        if (vm.org_applicant != '' || vm.org_applicant != 'submitter'){
+            return vm.profile.wildlifecompliance_organisations.find(org => parseInt(org.id) === parseInt(vm.org_applicant)).name;
         }
         return '';
         
@@ -89,12 +88,14 @@ export default {
         let vm = this;
          vm.$router.push({
                       name:"apply_application_licence",
-                      params:{licence_select:vm.licence_select,
-                               org_select:vm.behalf_of }
+                      params:{
+                        licence_select:vm.licence_select,
+                        org_select:vm.org_applicant
+                      }
                   });
-        console.log('from apply organisation',vm.licence_select);
-        console.log('from apply organisation',vm.behalf_of);
-        console.log('From organisation submit',vm.behalf_of)
+        console.log('from organisation submit - licence_select: ',vm.licence_select);
+        console.log('from organisation submit - org id: ',vm.org_applicant);
+        console.log('From organisation submit - submitter id: ',vm.profile.id);
     },
     
     fetchOrgContact:function (){

@@ -1,26 +1,70 @@
 <template id="application_conditions">
-    <div class="col-md-12">
-        <div class="row">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Conditions
-                        <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
-                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                        </a>
-                    </h3>
-                </div>
-                <div class="panel-body panel-collapse collapse in" :id="panelBody">
-                    <form class="form-horizontal" action="index.html" method="post">
-                        <div class="col-sm-12">
-                            <button v-if="hasAssessorMode" @click.prevent="addCondition()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Condition</button>
+
+                    <div class="col-md-12">
+                    <div class="row">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Inspection Report
+                                    <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
+                                        <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                    </a>
+                                </h3>
+                            </div>
+                            <div class="panel-body panel-collapse collapse in" :id="panelBody">
+                                <form class="form-horizontal" action="index.html" method="post">
+                                    <div class="col-sm-12">
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-sm-3">
+                                                    <label class="control-label pull-left">Inspection Date</label>
+                                                </div>
+                                                <div class="col-sm-9">
+                                                    <div class="input-group date" style="width: 70%;">
+                                                       <input class="pull-left" placeholder="DD/MM/YYYY"/> 
+                                                       <span class="input-group-addon">
+                                                            <span class="glyphicon glyphicon-calendar"></span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm-3">
+                                                    <label class="control-label pull-left">Inspection Report</label>
+                                                </div>
+                                                <div class="col-sm-9">
+                                                       <a href="">Attach File</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </form>
+                            </div>
                         </div>
-                        <datatable ref="conditions_datatable" :id="'conditions-datatable-'+_uid" :dtOptions="condition_options" :dtHeaders="condition_headers"/>
-                    </form>
+                    </div>
+                    <div class="row">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Proposed Conditions
+                                    <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
+                                        <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                    </a>
+                                </h3>
+                            </div>
+                            <div class="panel-body panel-collapse collapse in" :id="panelBody">
+                                <form class="form-horizontal" action="index.html" method="post">
+                                    <div class="col-sm-12">
+                                        <button v-if="hasAssessorMode" @click.prevent="addCondition()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Condition</button>
+                                    </div>
+                                    <datatable ref="conditions_datatable" :id="'conditions-datatable-'+_uid" :dtOptions="condition_options" :dtHeaders="condition_headers"/>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions" :licence_activity_type_tab="licence_activity_type_tab"/>
                 </div>
-            </div>
-        </div>
-        <ConditionDetail ref="condition_detail" :application_id="application.id" :conditions="conditions"/>
-    </div>
+
+            
 </template>
 <script>
 import {
@@ -33,7 +77,8 @@ import ConditionDetail from './application_add_condition.vue'
 export default {
     name: 'InternalApplicationConditions',
     props: {
-        application: Object
+        application: Object,
+        licence_activity_type_tab:Number
     },
     data: function() {
         let vm = this;
@@ -48,7 +93,7 @@ export default {
                 },
                 responsive: true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/conditions'),
+                    "url": helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/conditions/?licence_activity_type='+vm.licence_activity_type_tab),
                     "dataSrc": ''
                 },
                 order: [],
@@ -86,10 +131,12 @@ export default {
                     {
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (vm.application.assessor_mode.has_assessor_mode){
-                                links +=  `<a href='#' class="editCondition" data-id="${full.id}">Edit</a><br/>`;
-                                links +=  `<a href='#' class="deleteCondition" data-id="${full.id}">Delete</a><br/>`;
-                            }
+                            // if (vm.application.assessor_mode.has_assessor_mode){
+                            //     links +=  `<a href='#' class="editCondition" data-id="${full.id}">Edit</a><br/>`;
+                            //     links +=  `<a href='#' class="deleteCondition" data-id="${full.id}">Delete</a><br/>`;
+                            // }
+                            links +=  `<a href='#' class="editCondition" data-id="${full.id}">Edit</a><br/>`;
+                            links +=  `<a href='#' class="deleteCondition" data-id="${full.id}">Delete</a><br/>`;
                             return links;
                         },
                         orderable: false
@@ -98,10 +145,12 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             // TODO check permission to change the order
-                            if (vm.application.assessor_mode.has_assessor_mode){
-                                links +=  `<a class="dtMoveUp" data-id="${full.id}" href='#'><i class="fa fa-angle-up fa-2x"></i></a><br/>`;
-                                links +=  `<a class="dtMoveDown" data-id="${full.id}" href='#'><i class="fa fa-angle-down fa-2x"></i></a><br/>`;
-                            }
+                            // if (vm.application.assessor_mode.has_assessor_mode){
+                            //     links +=  `<a class="dtMoveUp" data-id="${full.id}" href='#'><i class="fa fa-angle-up fa-2x"></i></a><br/>`;
+                            //     links +=  `<a class="dtMoveDown" data-id="${full.id}" href='#'><i class="fa fa-angle-down fa-2x"></i></a><br/>`;
+                            // }
+                            links +=  `<a class="dtMoveUp" data-id="${full.id}" href='#'><i class="fa fa-angle-up"></i></a><br/>`;
+                            links +=  `<a class="dtMoveDown" data-id="${full.id}" href='#'><i class="fa fa-angle-down"></i></a><br/>`;
                             return links;
                         },
                         orderable: false
@@ -111,11 +160,9 @@ export default {
                 drawCallback: function (settings) {
                     $(vm.$refs.conditions_datatable.table).find('tr:last .dtMoveDown').remove();
                     $(vm.$refs.conditions_datatable.table).children('tbody').find('tr:first .dtMoveUp').remove();
-
                     // Remove previous binding before adding it
                     $('.dtMoveUp').unbind('click');
                     $('.dtMoveDown').unbind('click');
-
                     // Bind clicks to functions
                     $('.dtMoveUp').click(vm.moveUp);
                     $('.dtMoveDown').click(vm.moveDown);
@@ -140,6 +187,10 @@ export default {
     },
     methods:{
         addCondition(){
+            var selectedTabTitle = $("li.active");
+            var tab_id=selectedTabTitle.children().attr('href').split(/(\d)/)[1]
+            
+            this.$refs.condition_detail.licence_activity_type=tab_id
             this.$refs.condition_detail.isModalOpen = true;
         },
         removeCondition(_id){
@@ -227,21 +278,16 @@ export default {
             // Move up or down (depending...)
             var table = this.$refs.conditions_datatable.vmDataTable;
             var index = table.row(row).index();
-
             var order = -1;
             if (direction === 'down') {
               order = 1;
             }
-
             var data1 = table.row(index).data();
             data1.order += order;
-
             var data2 = table.row(index + order).data();
             data2.order += -order;
-
             table.row(index).data(data2);
             table.row(index + order).data(data1);
-
             table.page(0).draw(false);
         }
     },

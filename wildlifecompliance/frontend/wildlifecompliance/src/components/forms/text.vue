@@ -1,17 +1,35 @@
 <template lang="html">
     <div>
         <div class="form-group">
-            <label for="label" >{{ label }}</label>
-            <i data-toggle="tooltip" v-if="help_text" data-placement="right" class="fa fa-question-circle" style="color:blue" :title="help_text">&nbsp;</i>
-            <i data-toggle="tooltip" v-if="help_text_assessor && assessorMode" data-placement="right" class="fa fa-question-circle" style="color:green" :title="help_text_assessor">&nbsp;</i>
-            <template v-if="assessorMode">
+            <label :id="id" for="label" class="inline" >{{ label }}</label>
+            <template v-if="help_text">
+                <HelpText :help_text="help_text" />
+            </template>
+            <template v-if="help_text_assessor && assessorMode">
+                <HelpText :help_text="help_text_assessor" assessorMode={assessorMode} isForAssessor={true} />
+            </template> 
+
+            <template v-if="help_text_url">
+                <HelpTextUrl :help_text_url="help_text_url" />
+            </template>
+            <template v-if="help_text_assessor_url && assessorMode">
+                <HelpTextUrl :help_text_url="help_text_assessor_url" assessorMode={assessorMode} isForAssessor={true} />
+            </template> 
+
+
+            <template v-if="assessorMode && !assessor_readonly && wc_version != 1.0">
                 <template v-if="!showingComment">
                     <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
                     <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
                 </template>
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
-            <input :readonly="readonly" :type="type" class="form-control" :name="name" :value="value" />
+            <span v-if="min!='' || max!=''">
+                <input :readonly="readonly" :type="type" :min="min" :max="max" class="form-control" :name="name" :value="value" :required="isRequired" />
+            <span>
+            <span v-else>
+                <input :readonly="readonly" :type="type" class="form-control" :name="name" :value="value" :required="isRequired" />
+            <span>
         </div>
         <Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> 
     </div>
@@ -19,9 +37,11 @@
 
 <script>
 import Comment from './comment.vue'
+import HelpText from './help_text.vue'
+import HelpTextUrl from './help_text_url.vue'
 export default {
-    props:["type","name","comment_value","value","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly"],
-    components: {Comment},
+    props:["type","name","id", "comment_value","value","isRequired","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly", "help_text_url", "help_text_assessor_url", "min", "max"],
+    components: {Comment, HelpText, HelpTextUrl},
     data(){
         let vm = this;
         return {
@@ -32,9 +52,17 @@ export default {
         toggleComment(){
             this.showingComment = ! this.showingComment;
         }
+    },
+    computed: {
+        wc_version: function (){
+            return this.$root.wc_version;
+        },
     }
 }
 </script>
 
 <style lang="css">
+    input {
+        box-shadow:none;
+    }
 </style>

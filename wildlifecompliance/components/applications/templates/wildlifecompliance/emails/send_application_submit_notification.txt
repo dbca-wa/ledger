@@ -1,0 +1,12 @@
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
+
+{%  block content %}
+        A new Application has been submitted with below details
+
+        Application : {{ application.id }}
+
+        Submitter: {{application.submitter}}
+
+        Link: {{url}}
+
+{%  endblock %}
