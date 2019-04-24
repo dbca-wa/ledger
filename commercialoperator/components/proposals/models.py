@@ -1918,7 +1918,9 @@ class ProposalUserAction(UserAction):
     ACTION_LINK_TRAIL = "Link trail {} to proposal {}"
     ACTION_UNLINK_TRAIL = "Unlink trail {} from proposal {}"
     ACTION_LINK_SECTION = "Link section {} to trail {}"
-    ACTION_UNLINK_SECTION = "Unink section {} to trail {}"
+    ACTION_UNLINK_SECTION = "Unlink section {} from trail {}"
+    ACTION_LINK_ZONE = "Link zone {} to park {}"
+    ACTION_UNLINK_ZONE = "Unlink zone {} from park {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"
