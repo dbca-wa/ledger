@@ -6,7 +6,7 @@
         </div>
 
         <div class="col-sm-12"><div class="row">
-            <label class="col-sm-4">Lock Marker</label>
+            <label class="col-sm-4">Lock Marker Location</label>
             <input type="checkbox" v-model="marker_locked" />
         </div></div>
 
@@ -38,7 +38,6 @@
 
 <script>
 import MapData from './map_location_store.js';
-import 'ol/ol.css';
 import Map from 'ol/Map.js';
 import View from 'ol/View.js';
 import { defaults as defaultControls, ScaleLine} from 'ol/control.js';
@@ -50,7 +49,11 @@ import Overlay from 'ol/Overlay';
 import Point from 'ol/geom/Point.js';
 import VectorSource from 'ol/source/Vector.js';
 import { Icon, Style } from 'ol/style.js';
+import Geocoder from 'ol-geocoder/dist/ol-geocoder.js'
+
+import 'ol/ol.css';
 import 'bootstrap/dist/css/bootstrap.css';
+import 'ol-geocoder/dist/ol-geocoder.css';
 
 export default {
     name: "map-openlayers",
@@ -95,10 +98,25 @@ export default {
                 this.street = geojson.properties.street;
                 this.town_suburb = geojson.properties.town_suburb;
                 this.addMarker();
+                this.addGeocoder();
             })
             .catch((response)=>{
                 console.log(response);
             });
+        },
+        addGeocoder: function(){
+            console.log(Geocoder);
+            var geocoder = new Geocoder('nominatim', {
+                provider: 'osm',
+                lang: 'en',
+                placeholder: 'Search for ...',
+                targetType: 'text-input',
+                limit: 5,
+                debug: true,
+                autoComplete: true,
+                keepOpen: true
+            });
+            this.map.addControl(geocoder);
         },
         addMarker: function(){
              var iconFeature = new Feature({
