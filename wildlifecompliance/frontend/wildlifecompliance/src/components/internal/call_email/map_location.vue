@@ -114,9 +114,19 @@ export default {
                 limit: 5,
                 debug: true,
                 autoComplete: true,
+                autoCompleteMinlength: 2,
                 keepOpen: true
             });
             this.map.addControl(geocoder);
+
+            var self = this;  // Create a new variable to access data inside the function below.
+
+            geocoder.on('addresschosen', function(evt){
+                console.log(evt);
+                var layerAdded = geocoder.getLayer();
+                console.log(layerAdded);
+                self.map.removeLayer(layerAdded);
+            });
         },
         addMarker: function(){
              var iconFeature = new Feature({
