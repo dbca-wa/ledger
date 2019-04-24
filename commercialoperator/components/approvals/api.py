@@ -29,8 +29,10 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
+from commercialoperator.components.proposals.models import Proposal
 from commercialoperator.components.approvals.models import (
-    Approval
+    Approval,
+    ApprovalDocument
 )
 from commercialoperator.components.approvals.serializers import (
     ApprovalSerializer,
@@ -172,21 +174,52 @@ class ApprovalViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST',])
     @renderer_classes((JSONRenderer,))
     def add_eclass_licence(self, request, *args, **kwargs):
-        #keys = request.data.keys()
-        #file_keys = [key for key in keys if 'file-upload' in i]
-        import ipdb; ipdb.set_trace()
 
-        _file = request.data.get('file-uploaad-0')
-        if request.data.get('applicant_type') == 'ORG':
-            applicant = Organisation.objects.get(organisation__name=request.data.get('applicant'))
-        else:
-            applicant = EmailUser.objects.get(email=request.data.get('applicant'))
+        def raiser(exception): raise serializers.ValidationError(exception)
 
-        start_date = request.data.get('start_date')
-        issue_date = request.data.get('issue_date')
-        expiry_date = request.data.get('expiry_date')
-        #Approval.objects.create(issue_date=datetime.now(), expiry_date=datetime.now(), start_date=datetime.now(),applicant=org.organisation_set.all()[0])
-        approval = Approval.objects.create(issue_date=issue_date, expiry_date=expiry_date, start_date=start_date, applicant=applicant)
+
+        try:
+			#keys = request.data.keys()
+			#file_keys = [key for key in keys if 'file-upload' in i]
+			#import ipdb; ipdb.set_trace()
+			org_applicant = None
+			proxy_applicant = None
+
+			_file = request.data.get('file-upload-0') if request.data.get('file-upload-0') else raiser('Licence File is required')
+			try:
+				if request.data.get('applicant_type') == 'org':
+					org_applicant = Organisation.objects.get(organisation__name=request.data.get('holder-selected'))
+				else:
+					proxy_applicant = EmailUser.objects.get(email=request.data.get('holder-selected'))
+			except:
+				raise serializers.ValidationError('Licence holder is required')
+
+			start_date = datetime.strptime(request.data.get('start_date'), '%d/%m/%Y') if request.data.get('start_date') else raiser('Start Date is required')
+			issue_date = datetime.strptime(request.data.get('issue_date'), '%d/%m/%Y') if request.data.get('issue_date') else raiser('Issue Date is required')
+			expiry_date = datetime.strptime(request.data.get('expiry_date'), '%d/%m/%Y') if request.data.get('expiry_date') else raiser('Expiry Date is required')
+
+			#import ipdb; ipdb.set_trace()
+			approval = Approval.objects.create(issue_date=issue_date, expiry_date=expiry_date, start_date=start_date, org_applicant=org_applicant, proxy_applicant=proxy_applicant)
+			approval.current_proposal = Proposal.objects.get(id=0) # Dummy 'E Class' proposal
+
+			doc = ApprovalDocument.objects.create(approval=approval, _file=_file)
+			approval.licence_document=doc
+			approval.save()
+
+			return Response({'approval': approval.lodgement_number})
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 
 #def update_approval_doc_filename(instance, filename):
