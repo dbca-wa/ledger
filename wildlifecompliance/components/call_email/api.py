@@ -50,6 +50,7 @@ from wildlifecompliance.components.call_email.serializers import (
     ComplianceFormDataRecordSerializer,
     UpdateRendererDataSerializer,
     ComplianceLogEntrySerializer,
+    LocationSerializer,
 )
 from utils import SchemaParser
 

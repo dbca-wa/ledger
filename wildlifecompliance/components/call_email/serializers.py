@@ -5,6 +5,7 @@ from wildlifecompliance.components.call_email.models import (
     ReportType,
     ComplianceFormDataRecord,
     ComplianceLogEntry,
+    Location,
 )
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers
@@ -74,9 +75,25 @@ class ReportTypeSerializer(serializers.ModelSerializer):
         read_only_fields = ('report_type', 'schema')
 
 
+class LocationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Location
+        fields = (
+            'latitude',
+            'longitude',
+            'street',
+            'town_suburb',
+            'state',
+            'postcode',
+            'country',             
+        )
+
+
 class CallEmailSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source='get_status_display')
     classification = ClassificationSerializer()
+    location = LocationSerializer()
     lodgement_date = serializers.CharField(
         source='lodged_on')
     report_type = ReportTypeSerializer()

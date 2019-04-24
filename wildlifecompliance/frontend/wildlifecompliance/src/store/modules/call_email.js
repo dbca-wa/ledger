@@ -9,15 +9,22 @@ export const callemailStore = {
     namespaced: true,
     state: {
         call_email: {
-            schema: [],
+            //schema: [],
+            classification: {},
+            location: {},
+            report_type: {},
         },
         call_id: '',
         display_call_email: {},
         count: 1,
+        classification: '',
     },
     getters: {
         call_email: state => state.call_email,
-        call_id: state => state.call_id,
+        call_id: state => state.call_email.id,
+        classification: state => state.call_email.classification.name,
+        location: state => state.call_email.location.street,
+        report_type: state => state.call_email.report_type.report_type,
 
     },
     mutations: {

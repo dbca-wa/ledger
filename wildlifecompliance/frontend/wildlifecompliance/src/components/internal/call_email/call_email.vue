@@ -73,6 +73,7 @@
 
               </FormSection>
               <FormSection :label="`Details`" :Index="`2`">
+                <input readonly v-model="report_type"/>
                 <div v-for="item in call_email.schema">
                   <compliance-renderer-block
                     :component="item" 
@@ -96,7 +97,7 @@ export default {
   name: "ViewCallEmail",
   data: function() {
     //let vm = this;
-    console.log(this);
+    //console.log(classification);
     return {
       sectionLabel: "Details",
       sectionIndex: 1,
@@ -128,7 +129,10 @@ export default {
   computed: {
     ...mapGetters({
       call_email: "callemailStore/call_email",
-      call_id: "callemailStore/call_id"
+      call_id: "callemailStore/call_id",
+      classification: "callemailStore/classification",
+      location: "callemailStore/location",
+      report_type: "callemailStore/report_type",
     }),
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
