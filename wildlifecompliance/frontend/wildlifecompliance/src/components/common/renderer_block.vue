@@ -398,9 +398,13 @@ const RendererBlock = {
                 'component_id': `cons_${e.target.name}_${e.target.value}`,
                 'visible': e.target.checked
             });
-            const value = e.value == null ? e.target.value : e.value;
-            if(assignEventValue && value != null) {
-                this.value =value;
+            let value = e.value == null ? e.target.value : e.value;
+            // Hack for unchecked checkboxes
+            if(value === 'on' && !e.target.checked) {
+                value = '';
+            }
+            if(assignEventValue && value !== null && value !== undefined) {
+                this.value = value;
             }
         }
     },

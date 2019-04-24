@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import datetime
 import logging
 import re
+from decimal import Decimal
 from django.db import models, transaction
 from django.db.models.signals import pre_delete
 from django.db.models.query import QuerySet
@@ -595,6 +596,45 @@ class Application(RevisionedMixin):
 
     def log_user_action(self, action, request):
         return ApplicationUserAction.log_action(self, action, request.user)
+
+    def update_fees(self):
+        if self.processing_status != Application.PROCESSING_STATUS_DRAFT:
+            return
+
+        schema_fields = self.schema_fields
+        fees = Application.calculate_base_fees(
+            self.licence_purposes.values_list('id', flat=True)
+        )
+
+        def adjust_fee(fees, component):
+            modifier_keys = {
+                'IncreaseLicenceFee': 'licence',
+                'IncreaseApplicationFee': 'application',
+            }
+            for key, field in modifier_keys.items():
+                if key not in component:
+                    continue
+                fees[field] += component[key]
+
+        # Adjust fees based on selected options (radios and checkboxes)
+        for form_data_record in self.data:
+            schema_name = form_data_record.schema_name
+            schema_data = schema_fields[schema_name]
+
+            if 'options' in schema_data:
+                for option in schema_data['options']:
+                    # Only consider fee modifications if the current option is selected
+                    if option['value'] != form_data_record.value:
+                        continue
+                    adjust_fee(fees, option)
+
+            # If this is a checkbox - skip unchecked ones
+            elif form_data_record.value == 'on':
+                adjust_fee(fees, schema_data)
+
+        self.application_fee = fees['application']
+        self.licence_fee = fees['licence']
+        self.save()
 
     def submit(self, request, viewset):
         from wildlifecompliance.components.licences.models import LicenceActivity
@@ -1251,6 +1291,21 @@ class Application(RevisionedMixin):
             except BaseException:
                 raise
 
+    @staticmethod
+    def calculate_base_fees(selected_purpose_ids):
+        from wildlifecompliance.components.licences.models import LicencePurpose
+
+        base_fees = {
+            'application': Decimal(0.0),
+            'licence': Decimal(0.0),
+        }
+
+        for purpose in LicencePurpose.objects.filter(id__in=selected_purpose_ids):
+            base_fees['application'] += purpose.base_application_fee
+            base_fees['licence'] += purpose.base_licence_fee
+
+        return base_fees
+
 
 class ApplicationInvoice(models.Model):
     application = models.ForeignKey(Application, related_name='invoices')
@@ -1706,6 +1761,7 @@ class ApplicationFormDataRecord(models.Model):
             form_data_record.save()
 
         if action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_VALUE:
+            application.update_fees()
             for existing_field in ApplicationFormDataRecord.objects.filter(application_id=application.id):
                 if existing_field.field_name not in form_data.keys():
                     existing_field.delete()

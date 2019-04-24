@@ -20,7 +20,7 @@
                         <div class="navbar-inner">
                             <div class="container">
                                 <p class="pull-right" style="margin-top:5px;">
-                                    <span v-if="requiresCheckout" style="margin-right: 5px; font-size: 18px;">
+                                    <span v-if="requiresCheckout" style="margin-right: 5px; font-size: 18px; display: block;">
                                         <strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong>
                                         <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
                                     </span>
@@ -95,7 +95,7 @@ export default {
       return (this.application) ? `/api/application/${this.application.id}/form_data.json` : '';
     },
     requiresCheckout: function() {
-        return this.application.application_fee > 0 && this.application_customer_status_onload.id == 'draft'
+      return this.application.application_fee > 0 && this.application_customer_status_onload.id == 'draft'
     },
     canDiscardActivity: function() {
       return this.application.activities.find(
@@ -169,6 +169,19 @@ export default {
       },(error) => {
       });
     },
+    reloadApplication: function(application_id) {
+      if(!application_id && this.application) {
+        application_id = this.application.id;
+      }
+      if (application_id) {
+        this.load({ url: `/api/application/${application_id}.json` }).then(() => {
+            this.application_customer_status_onload = this.application.customer_status;
+        });
+      }
+      else {
+        this.load({ url: '/api/application.json' });
+      }
+    },
     saveExit: function(e) {
       this.isProcessing = true;
       this.saveFormData({ url: this.application_form_data_url, draft: true }).then(res=>{
@@ -199,6 +212,7 @@ export default {
             'success'
           ).then((result) => {
             this.isProcessing = false;
+            this.reloadApplication();
           });
       },err=>{
         swal(
@@ -299,14 +313,7 @@ export default {
   },
   beforeRouteEnter: function(to, from, next) {
     next(vm => {
-      if (to.params.application_id) {
-        vm.load({ url: `/api/application/${to.params.application_id}.json` }).then(() => {
-            vm.application_customer_status_onload = vm.application.customer_status;
-        });
-      }
-      else {
-        vm.load({ url: '/api/application.json' });
-      }
+      vm.reloadApplication(to.params.application_id);
     });
   },
   updated: function(){

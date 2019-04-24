@@ -404,6 +404,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @list_route(methods=['POST', ])
+    def estimate_price(self, request, *args, **kwargs):
+        purpose_ids = request.data.get('purpose_ids', [])
+        return Response({
+            'fees': Application.calculate_base_fees(purpose_ids)
+        })
+
     @list_route(methods=['GET', ])
     def internal_datatable_list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -874,16 +881,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             licence_category_data = app_data.get('licence_category_data')
             org_applicant = request.data.get('org_applicant')
             proxy_applicant = request.data.get('proxy_applicant')
-            application_fee = request.data.get('application_fee')
-            licence_fee = request.data.get('licence_fee')
             licence_purposes = request.data.get('licence_purposes')
             data = {
                 'submitter': request.user.id,
                 'licence_type_data': licence_category_data,
                 'org_applicant': org_applicant,
                 'proxy_applicant': proxy_applicant,
-                'application_fee': application_fee,
-                'licence_fee': licence_fee,
                 'licence_purposes': licence_purposes,
             }
 
@@ -891,6 +894,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             serializer = CreateExternalApplicationSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+            serializer.instance.update_fees()
 
             return Response(serializer.data)
         except Exception as e:
