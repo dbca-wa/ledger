@@ -133,6 +133,45 @@ class ApprovalViewSet(viewsets.ModelViewSet):
         )
         return Response(data)
 
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
+    def process_document(self, request, *args, **kwargs):
+            #import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            action = request.POST.get('action')
+            section = request.POST.get('input_name')
+            if action == 'list' and 'input_name' in request.POST:
+                pass
+
+            elif action == 'delete' and 'document_id' in request.POST:
+                document_id = request.POST.get('document_id')
+                document = instance.qaofficer_documents.get(id=document_id)
+
+                document.visible = False
+                document.save()
+                instance.save(version_comment='Licence ({}): {}'.format(section, document.name)) # to allow revision to be added to reversion history
+
+            elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
+                proposal_id = request.POST.get('proposal_id')
+                filename = request.POST.get('filename')
+                _file = request.POST.get('_file')
+                if not _file:
+                    _file = request.FILES.get('_file')
+
+                document = instance.qaofficer_documents.get_or_create(input_name=section, name=filename)[0]
+                #path = default_storage.save('proposals/{}/qaofficer/{}'.format(proposal_id, filename), ContentFile(_file.read()))
+                path = default_storage.save('approvals/{}/documents/{}'.format(approval_id, filename), ContentFile(_file.read()))
+
+                document._file = path
+                document.save()
+                instance.save(version_comment='Licence ({}): {}'.format(section, filename)) # to allow revision to be added to reversion history
+                #instance.current_proposal.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
+
+            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete) for d in instance.qaofficer_documents.filter(input_name=section, visible=True) if d._file] )
+
+#def update_approval_doc_filename(instance, filename):
+#    return 'approvals/{}/documents/{}'.format(instance.approval.id,filename)
+
 
 #    @list_route(methods=['GET',])
 #    def approvals_paginated(self, request, *args, **kwargs):

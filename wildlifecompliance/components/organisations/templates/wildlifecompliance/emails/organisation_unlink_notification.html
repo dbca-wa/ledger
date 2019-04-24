@@ -2,14 +2,14 @@
 
 {%  block content %}
     {% if unlinked_by.email != user.email %}
-        <p>Your have been unlinked from:</p>
-        <p><strong>Organisation : {{ organisation.name }}</strong></p>
-        <p><strong>ABN : {{ organisation.abn}}</strong></p>
-        <p>You were unlinked from this organisation by {{unlinked_by.get_full_name}}({{unlinked_by.email}}).</p>
+        <p>You have been unlinked from the following organisation:</p>
+        <p><strong>Organisation: {{ organisation.name }}</strong></p>
+        <p><strong>ABN: {{ organisation.abn }}</strong></p>
+        <p>You were unlinked from this organisation by {{unlinked_by.get_full_name}} ({{unlinked_by.email}}).</p>
     {% else %}
-        <p>You have unlinked yourself from:</p>
-        <p><strong>Organisation : {{ organisation.name }}</strong></p>
-        <p><strong>ABN : {{ organisation.abn}}</strong></p>
+        <p>You have unlinked yourself from the following organisation:</p>
+        <p><strong>Organisation: {{ organisation.name }}</strong></p>
+        <p><strong>ABN: {{ organisation.abn }}</strong></p>
     {% endif %}
     <p>You can no longer make applications on behalf of this organisation.</p>
 {%  endblock %}

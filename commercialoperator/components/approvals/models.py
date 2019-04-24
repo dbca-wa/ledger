@@ -18,7 +18,7 @@ from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
 from commercialoperator.components.proposals.models import Proposal, ProposalUserAction
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, ApplicationType
 from commercialoperator.components.approvals.email import (
     send_approval_expire_email_notification,
     send_approval_cancel_email_notification,
@@ -67,7 +67,7 @@ class Approval(RevisionedMixin):
     cover_letter_document = models.ForeignKey(ApprovalDocument, blank=True, null=True, related_name='cover_letter_document')
     replaced_by = models.ForeignKey('self', blank=True, null=True)
     #current_proposal = models.ForeignKey(Proposal,related_name = '+')
-    current_proposal = models.ForeignKey(Proposal,related_name='approvals')
+    current_proposal = models.ForeignKey(Proposal,related_name='approvals', null=True)
 #    activity = models.CharField(max_length=255)
 #    region = models.CharField(max_length=255)
 #    tenure = models.CharField(max_length=255,null=True)
@@ -87,6 +87,9 @@ class Approval(RevisionedMixin):
     set_to_cancel = models.BooleanField(default=False)
     set_to_suspend = models.BooleanField(default=False)
     set_to_surrender = models.BooleanField(default=False)
+
+    #application_type = models.ForeignKey(ApplicationType, null=True, blank=True)
+    renewal_count = models.PositiveSmallIntegerField('Number of times an Approval has been renewed', default=0)
 
     class Meta:
         app_label = 'commercialoperator'
@@ -157,13 +160,17 @@ class Approval(RevisionedMixin):
     @property
     def can_renew(self):
         try:
-            renew_conditions = {
-                    'previous_application': self.current_proposal,
-                    'proposal_type': 'renewal'
-                    }
-            proposal=Proposal.objects.get(**renew_conditions)
-            if proposal:
-                return False
+            if self.application_type.name == 'E Class':
+                return self.application_type.max_renewals > self.renewal_count
+                #pass
+            else:
+                renew_conditions = {
+                        'previous_application': self.current_proposal,
+                        'proposal_type': 'renewal'
+                        }
+                proposal=Proposal.objects.get(**renew_conditions)
+                if proposal:
+                    return False
         except Proposal.DoesNotExist:
             return True
 

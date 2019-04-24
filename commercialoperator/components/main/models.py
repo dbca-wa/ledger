@@ -10,6 +10,7 @@ from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 from django.contrib.postgres.fields.jsonb import JSONField
 #from commercialoperator.components.proposals.models import Proposal
 
+
 @python_2_unicode_compatible
 class Region(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -25,7 +26,6 @@ class Region(models.Model):
     # @property
     # def districts(self):
     #     return District.objects.filter(region=self)
-
 
 
 @python_2_unicode_compatible
@@ -53,7 +53,7 @@ class District(models.Model):
     @property
     def marine_parks(self):
         return Park.objects.filter(district=self, park_type='marine')
-    
+
 
 
 @python_2_unicode_compatible
@@ -96,7 +96,7 @@ class AccessType(models.Model):
 #                                         default=PARK_TYPE_CHOICES[0][0])
 #     allowed_activities = models.ManyToManyField(Activity)
 #     #proposal = models.ForeignKey(Proposal, related_name='parks')
-    
+
 
 #     class Meta:
 #         ordering = ['name']
@@ -106,6 +106,15 @@ class AccessType(models.Model):
 #     def __str__(self):
 #         return self.name
 
+@python_2_unicode_compatible
+class Trail(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+    code = models.CharField(max_length=10, blank=True)
+
+    def __str__(self):
+        return self.name
+
+#
 # @python_2_unicode_compatible
 # class Trail(models.Model):
 #     name = models.CharField(max_length=200, unique=True)
@@ -201,7 +210,7 @@ class Park(models.Model):
                                         default=PARK_TYPE_CHOICES[0][0])
     allowed_activities = models.ManyToManyField(Activity, blank=True)
     #proposal = models.ForeignKey(Proposal, related_name='parks')
-    
+
 
     class Meta:
         ordering = ['name']
@@ -225,7 +234,7 @@ class Park(models.Model):
 #     activity = models.ForeignKey(Activity, blank=True, null=True, related_name='parks')
 
 #     class Meta:
-#         app_label = 'commercialoperator' 
+#         app_label = 'commercialoperator'
 #         unique_together = ('park', 'activity')
 
 @python_2_unicode_compatible
@@ -247,7 +256,7 @@ class Zone(models.Model):
     def allowed_activities_ids(self):
         return [i.id for i in self.allowed_activities.all()]
 
-    
+
 @python_2_unicode_compatible
 class Trail(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -301,6 +310,9 @@ class ApplicationType(models.Model):
     order = models.PositiveSmallIntegerField(default=0)
     visible = models.BooleanField(default=True)
 
+    max_renewals = models.PositiveSmallIntegerField('Maximum number of times an Approval can be renewed', null=True, blank=True)
+    max_renewal_period = models.PositiveSmallIntegerField('Maximum period of each Approval renewal (Years)', null=True, blank=True)
+
     class Meta:
         ordering = ['order', 'name']
         app_label = 'commercialoperator'
@@ -352,7 +364,7 @@ class Question(models.Model):
     #answer_five = models.CharField(max_length=200, blank=True)
     correct_answer = models.CharField('Correct Answer', max_length=40, choices=CORRECT_ANSWER_CHOICES,
                                        default=CORRECT_ANSWER_CHOICES[0][0])
-    
+
 
 
     class Meta:
@@ -386,7 +398,16 @@ class UserAction(models.Model):
 
 
 class CommunicationsLogEntry(models.Model):
-    TYPE_CHOICES = [('email', 'Email'), ('phone', 'Phone Call'), ('mail', 'Mail'), ('person', 'In Person')]
+    TYPE_CHOICES = [
+        ('email', 'Email'),
+        ('phone', 'Phone Call'),
+        ('mail', 'Mail'),
+        ('person', 'In Person'),
+        ('onhold', 'On Hold'),
+        ('onhold_remove', 'Remove On Hold'),
+        ('with_qaofficer', 'With QA Officer'),
+        ('with_qaofficer_completed', 'QA Officer Completed'),
+    ]
     DEFAULT_TYPE = TYPE_CHOICES[0][0]
 
     #to = models.CharField(max_length=200, blank=True, verbose_name="To")
@@ -395,7 +416,7 @@ class CommunicationsLogEntry(models.Model):
     #cc = models.CharField(max_length=200, blank=True, verbose_name="cc")
     cc = models.TextField(blank=True, verbose_name="cc")
 
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
+    type = models.CharField(max_length=35, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
     reference = models.CharField(max_length=100, blank=True)
     subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
     text = models.TextField(blank=True)
@@ -415,7 +436,7 @@ class Document(models.Model):
                             verbose_name='name', help_text='')
     description = models.TextField(blank=True,
                                    verbose_name='description', help_text='')
-    uploaded_date = models.DateTimeField(auto_now_add=True) 
+    uploaded_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         app_label = 'commercialoperator'

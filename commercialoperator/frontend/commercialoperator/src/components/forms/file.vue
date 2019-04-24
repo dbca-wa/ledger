@@ -50,6 +50,7 @@
 
         </div>
         <Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value" :required="isRequired"/> 
+		<input type="text" name="document_list" :value="documents" style="display:none;">
     </div>
 </template>
 
@@ -97,7 +98,7 @@ export default {
         },
         isRepeatable:Boolean,
         readonly:Boolean,
-        docsUrl: String,
+        document_url: String,
     },
     components: {Comment, HelpText},
     data:function(){
@@ -122,6 +123,16 @@ export default {
             return helpers.getCookie('csrftoken')
         },
         proposal_document_action: function() {
+            if (this.proposal_id) {
+                if (this.document_url) {
+                    return this.document_url;
+                } else {
+                    return `/api/proposal/${this.proposal_id}/process_document/`;
+                }
+                
+            } else {
+                return '';
+            }
           return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_document/` : '';
         }
     },
@@ -134,7 +145,6 @@ export default {
         handleChange:function (e) {
             let vm = this;
 
-            vm.show_spinner = true;
             if (vm.isRepeatable) {
                 let  el = $(e.target).attr('data-que');
                 let avail = $('input[name='+e.target.name+']');
@@ -161,7 +171,6 @@ export default {
                 vm.save_document(e);
             }
 
-            vm.show_spinner = false;
         },
 
         /*
@@ -181,8 +190,6 @@ export default {
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
-                    //console.log(vm.documents);
-                    vm.show_spinner = false;
                 });
 
         },
@@ -222,6 +229,7 @@ export default {
 
         save_document: function(e) {
             let vm = this; 
+            vm.show_spinner = true;
 
             var formData = new FormData();
             formData.append('action', 'save');
@@ -229,11 +237,13 @@ export default {
             formData.append('input_name', vm.name);
             formData.append('filename', e.target.files[0].name);
             formData.append('_file', vm.uploadFile(e));
+            formData.append('document_list', vm.get_documents());
             formData.append('csrfmiddlewaretoken', vm.csrf_token);
 
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
+                    vm.show_spinner = false;
                 },err=>{
                 });
 

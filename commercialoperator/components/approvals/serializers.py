@@ -1,6 +1,7 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
 from commercialoperator.components.proposals.serializers import ProposalSerializer, InternalProposalSerializer
+from commercialoperator.components.main.serializers import ApplicationTypeSerializer
 from commercialoperator.components.approvals.models import (
     Approval,
     ApprovalLogEntry,
@@ -33,6 +34,8 @@ class ApprovalSerializer(serializers.ModelSerializer):
     activity = serializers.CharField(source='current_proposal.activity')
     title = serializers.CharField(source='current_proposal.title')
     #current_proposal = InternalProposalSerializer(many=False)
+    #application_type = ApplicationTypeSerializer(many=True)
+    application_type = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Approval
@@ -70,7 +73,8 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'set_to_suspend',
             'can_renew',
             'can_amend',
-            'can_reinstate'
+            'can_reinstate',
+            'application_type'
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data' defined are requested from the serializer. We
         # also require the following additional fields for some of the mRender functions
@@ -97,12 +101,18 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'current_proposal',
             'renewal_document',
             'renewal_sent',
-            'allowed_assessors'
+            'allowed_assessors',
+            'application_type'
         )
 
     def get_renewal_document(self,obj):
         if obj.renewal_document and obj.renewal_document._file:
             return obj.renewal_document._file.url
+        return None
+
+    def get_application_type(self,obj):
+        if obj.current_proposal.application_type:
+            return obj.current_proposal.application_type.name
         return None
 
 

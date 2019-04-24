@@ -22,6 +22,7 @@ from commercialoperator.components.organisations.emails import (
                         send_organisation_contact_suspend_email_notification,
                         send_organisation_reinstate_email_notification,
                         send_organisation_contact_decline_email_notification,
+                        send_organisation_request_email_notification,
 
             )
 
@@ -47,22 +48,46 @@ class Organisation(models.Model):
         return OrganisationAction.log_action(self, action, request.user)
 
     def validate_pins(self,pin1,pin2,request):
-        val_admin = self.admin_pin_one == pin1 and self.admin_pin_two == pin2
-        val_user = self.user_pin_one == pin1 and self.user_pin_two == pin2
-        if val_admin:
-            val= val_admin
-            admin_flag= True
-            role = 'organisation_admin' 
-        elif val_user:
-            val = val_user
-            admin_flag = False
-            role = 'organisation_user'
-        else:
-            val = False
-            return val
+        #import ipdb; ipdb.set_trace()
+        try:
+            val_admin = self.admin_pin_one == pin1 and self.admin_pin_two == pin2
+            val_user = self.user_pin_one == pin1 and self.user_pin_two == pin2
+            if val_admin:
+                val= val_admin
+                admin_flag= True
+                role = 'organisation_admin' 
+            elif val_user:
+                val = val_user
+                admin_flag = False
+                role = 'organisation_user'
+            else:
+                val = False
+                return val
 
-        self.add_user_contact(request.user,request,admin_flag,role)
-        return val
+            self.add_user_contact(request.user,request,admin_flag,role)
+            return val
+        except Exception:
+            return None
+
+    def check_user_contact(self,request,admin_flag,role):
+        user = request.user
+        try:
+            org = OrganisationContact.objects.create(
+                organisation = self,
+                first_name = user.first_name,
+                last_name = user.last_name,
+                mobile_number = user.mobile_number,
+                phone_number = user.phone_number,
+                fax_number = user.fax_number,
+                email = user.email,
+                user_role = role,
+                user_status='pending',
+                is_admin = admin_flag
+            
+            )
+            return org
+        except Exception:
+            return False
 
     def add_user_contact(self,user,request,admin_flag,role):
         with transaction.atomic():
@@ -607,7 +632,7 @@ class OrganisationRequest(models.Model):
         except ledger_organisation.DoesNotExist:
             ledger_org = ledger_organisation.objects.create(name=self.name,abn=self.abn)
         # Create Organisation in commercialoperator
-        org = Organisation.objects.create(organisation=ledger_org)
+        org, created = Organisation.objects.get_or_create(organisation=ledger_org)
         # Link requester to organisation
         delegate = UserDelegation.objects.create(user=self.requester,organisation=org)
         # log who approved the request
@@ -667,6 +692,14 @@ class OrganisationRequest(models.Model):
             self.log_user_action(OrganisationRequestUserAction.ACTION_DECLINE_REQUEST,request)
             send_organisation_request_decline_email_notification(self,request)
 
+    def send_organisation_request_email_notification(self, request):
+        # user submits a new organisation request
+        # send email to organisation access group
+        group = OrganisationAccessGroup.objects.first()
+        if group and group.filtered_members:
+            org_access_recipients = [m.email for m in group.filtered_members]
+            send_organisation_request_email_notification(self, request, org_access_recipients)
+
     def log_user_action(self, action, request):
         return OrganisationRequestUserAction.log_action(self, action, request.user)
 
@@ -684,6 +717,10 @@ class OrganisationAccessGroup(models.Model):
         member_ids = [m.id for m in self.members.all()]
         #all_members.extend(EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True).exclude(id__in=member_ids))
         return all_members
+
+    @property
+    def filtered_members(self):
+        return self.members.all()
 
     class Meta:
         app_label = 'commercialoperator'

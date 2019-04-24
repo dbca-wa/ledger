@@ -31,6 +31,7 @@ from commercialoperator.components.organisations.models import  (
 
 from commercialoperator.components.users.serializers import   (   
                                                 UserSerializer,
+                                                UserFilterSerializer,
                                                 UserAddressSerializer,
                                                 PersonalSerializer,
                                                 ContactSerializer,
@@ -53,6 +54,15 @@ class GetProfile(views.APIView):
     def get(self, request, format=None):
         serializer  = UserSerializer(request.user)
         return Response(serializer.data)
+
+from rest_framework import filters
+class UserListFilterView(generics.ListAPIView):
+    """ https://cop-internal.dbca.wa.gov.au/api/filtered_users?search=russell
+    """
+    queryset = EmailUser.objects.all()
+    serializer_class = UserFilterSerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('email', 'first_name', 'last_name')
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = EmailUser.objects.all()

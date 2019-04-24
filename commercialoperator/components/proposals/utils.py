@@ -319,7 +319,7 @@ def save_park_activity_data(instance,select_parks_activities, request):
                                                 if a not in park.park.allowed_activities_ids:
                                                     #raise Exception('Activity not allowed for this park')
                                                     pass
-                                                else:    
+                                                else:
                                                     activity=Activity.objects.get(id=a)
                                                     ProposalParkActivity.objects.create(proposal_park=park, activity=activity)
                                                     instance.log_user_action(ProposalUserAction.ACTION_LINK_ACTIVITY.format(activity.id,park.park.id),request)
@@ -362,7 +362,7 @@ def save_park_activity_data(instance,select_parks_activities, request):
                                             ProposalParkAccess.objects.create(proposal_park=park, access_type=access)
                                             instance.log_user_action(ProposalUserAction.ACTION_LINK_ACCESS.format(access.id,park.park.id),request)
                                         except:
-                                            raise   
+                                            raise
                                 except:
                                     raise
                             #compare all activities (new+old) with the list of activities selected activities to get
@@ -428,18 +428,18 @@ def save_trail_section_activity_data(instance,select_trails_activities, request)
                                                             try:
                                                                 if act not in trail.trail.allowed_activities_ids:
                                                                     pass
-                                                                else:                                
+                                                                else:
                                                                     activity=Activity.objects.get(id=act)
                                                                     ProposalTrailSectionActivity.objects.create(trail_section=section, activity=activity)
                                                                     instance.log_user_action(ProposalUserAction.ACTION_LINK_ACTIVITY_SECTION.format(activity.id,section.section.id, trail.trail.id),request)
                                                             except:
-                                                                raise                                                   
+                                                                raise
                                             else:
                                                 section_instance=Section.objects.get(id=a['section'])
                                                 section=ProposalTrailSection.objects.create(proposal_trail=trail, section=section_instance)
                                                 instance.log_user_action(ProposalUserAction.ACTION_LINK_SECTION.format(section.section.id, trail.trail.id),request)
                                                 if a['activities']:
-                                                    for act in a['activities']:                            
+                                                    for act in a['activities']:
                                                         try:
                                                             if act not in trail.trail.allowed_activities_ids:
                                                                 pass
@@ -472,7 +472,7 @@ def save_trail_section_activity_data(instance,select_trails_activities, request)
                                                 section=ProposalTrailSection.objects.create(proposal_trail=trail, section=section_instance)
                                                 instance.log_user_action(ProposalUserAction.ACTION_LINK_SECTION.format(section.section.id, trail.trail.id),request)
                                                 if a['activities']:
-                                                    for act in a['activities']:                            
+                                                    for act in a['activities']:
                                                         try:
                                                             if act not in trail.trail.allowed_activities_ids:
                                                                 pass
@@ -482,11 +482,11 @@ def save_trail_section_activity_data(instance,select_trails_activities, request)
                                                                 instance.log_user_action(ProposalUserAction.ACTION_LINK_ACTIVITY_SECTION.format(activity.id,section.section.id, trail.trail.id),request)   
                                                         except:
                                                             raise
-                                            #Just to check the new activities. Next 3 lines can be deleted.                                            
+                                            #Just to check the new activities. Next 3 lines can be deleted.
                                             new_activities=section.trail_activities.all()
                                             new_activities_id=set(nw.activity_id for nw in new_activities)
                                             diff_activity=set(new_activities_id).difference(set(a['activities']))
-                                            #print("not deleting","trail:",trail.trail_id,"section:",section.section_id,"new_activities:",new_activities_id, "diff:", diff_activity)                               
+                                            #print("not deleting","trail:",trail.trail_id,"section:",section.section_id,"new_activities:",new_activities_id, "diff:", diff_activity)
                                 except:
                                     raise
                             #compare all sections (new+old) with the list of sections selected to get
@@ -556,12 +556,12 @@ def save_park_zone_activity_data(instance,marine_parks_activities):
                                                                 raise
                                                 if 'access_point' in a:
                                                     zone.access_point = a['access_point']
-                                                    zone.save()                                                   
+                                                    zone.save()
                                             else:
                                                 zone_instance=Zone.objects.get(id=a['zone'])
                                                 zone=ProposalParkZone.objects.create(proposal_park=park, zone=zone_instance)
                                                 if a['activities']:
-                                                    for act in a['activities']:                            
+                                                    for act in a['activities']:
                                                         try:
                                                             if act not in zone.zone.allowed_activities_ids:
                                                                 pass
@@ -572,7 +572,7 @@ def save_park_zone_activity_data(instance,marine_parks_activities):
                                                             raise
                                                 if 'access_point' in a:
                                                     zone.access_point = a['access_point']
-                                                    zone.save() 
+                                                    zone.save()
                                             new_activities=zone.park_activities.all()
                                             new_activities_id=set(n.activity_id for n in new_activities)
                                             diff_activity=set(new_activities_id).difference(set(a['activities']))
@@ -593,7 +593,7 @@ def save_park_zone_activity_data(instance,marine_parks_activities):
                                                 zone_instance=Zone.objects.get(id=a['zone'])
                                                 zone=ProposalParkZone.objects.create(proposal_park=park, zone=zone_instance)
                                                 if a['activities']:
-                                                    for act in a['activities']:                            
+                                                    for act in a['activities']:
                                                         try:
                                                             if act not in zone.zone.allowed_activities_ids:
                                                                 pass
@@ -604,12 +604,12 @@ def save_park_zone_activity_data(instance,marine_parks_activities):
                                                             raise
                                                 if 'access_point' in a:
                                                     zone.access_point = a['access_point']
-                                                    zone.save() 
-                                            #Just to check the new activities. Next 3 lines can be deleted.                                            
+                                                    zone.save()
+                                            #Just to check the new activities. Next 3 lines can be deleted.
                                             new_activities=zone.park_activities.all()
                                             new_activities_id=set(nw.activity_id for nw in new_activities)
                                             diff_activity=set(new_activities_id).difference(set(a['activities']))
-                                            print("not deleting","park:",park.park_id,"zone:",zone.zone_id,"new_activities:",new_activities_id, "diff:", diff_activity)                               
+                                            print("not deleting","park:",park.park_id,"zone:",zone.zone_id,"new_activities:",new_activities_id, "diff:", diff_activity)
                                 except:
                                     raise
                             #compare all zones (new+old) with the list of zones selected to get
@@ -633,7 +633,7 @@ def save_park_zone_activity_data(instance,marine_parks_activities):
         except:
             raise
 
-def save_proponent_data(instance,request,viewset):
+def save_proponent_data(instance,request,viewset,parks=None,trails=None):
     with transaction.atomic():
         try:
 #            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
@@ -686,17 +686,21 @@ def save_proponent_data(instance,request,viewset):
             #import ipdb; ipdb.set_trace()
             if select_parks_activities:
                 try:
+
                     save_park_activity_data(instance, select_parks_activities, request)                        
+
                 except:
                     raise
             if select_trails_activities:
                 try:
+
                     save_trail_section_activity_data(instance, select_trails_activities, request)                    
+
                 except:
                     raise
             if marine_parks_activities:
                 try:
-                    save_park_zone_activity_data(instance, marine_parks_activities)                    
+                    save_park_zone_activity_data(instance, marine_parks_activities)
                 except:
                     raise
         except:

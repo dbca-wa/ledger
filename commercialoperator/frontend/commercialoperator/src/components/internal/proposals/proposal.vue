@@ -74,10 +74,19 @@
                                 <div class="col-sm-12 top-buffer-s">
                                     <strong>Referrals</strong><br/>
                                     <div class="form-group">
+
+                                        <!--
                                         <select :disabled="!canLimitedAction" ref="department_users" class="form-control">
                                             <option value="null"></option>
                                             <option v-for="user in department_users" :value="user.email">{{user.name}}</option>
                                         </select>
+                                        -->
+
+                                        <select :disabled="!canLimitedAction" ref="referral_recipient_groups" class="form-control">
+                                            <option value="null"></option>
+                                            <option v-for="group in referral_recipient_groups" :value="group">{{group}}</option>
+                                        </select>
+
                                         <template v-if='!sendingReferral'>
                                             <template v-if="selected_referral">
                                                 <label class="control-label pull-left"  for="Name">Comments</label>
@@ -181,6 +190,44 @@
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="proposedDecline()">Propose to Decline</button>
                                         </div>
                                     </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="onHold()">Put On-hold</button>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <!--
+                                        <div v-if="isQAOfficerAssessmentCompleted" class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="true" @click.prevent="withQAOfficer()">Completed: {{QAOfficerAssessmentCompletedBy}}</button>
+                                        </div>
+                                        -->
+
+                                        <div v-if="isQAOfficerAssessmentCompleted" class="col-sm-12">
+                                            <div class="col-sm-12">
+                                                <div class="separator"></div>
+                                            </div>
+                                            <table class="table small-table">
+                                                <tr>
+                                                    <th>QA Officer Referral</th>
+                                                    <th>Status/Action</th>
+                                                </tr>
+                                                <tr v-for="r in proposal.qaofficer_referrals">
+                                                    <td>
+                                                        <small><strong>{{r.lodged_on | formatDate}}</strong></small>
+                                                    </td>
+                                                    <td>
+                                                        <small><strong>{{r.processing_status}}</strong></small><br/>
+                                                        <small><strong>{{r.qaofficer}}</strong></small><br/>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
+
+                                        <div v-else>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="withQAOfficer()">Send to QA Officer</button>
+                                        </div>
+                                    </div>
+
                                 </template>
                                 <template v-else-if="proposal.processing_status == 'With Assessor (Requirements)'">
                                     <div class="row">
@@ -231,6 +278,31 @@
                                         </div>
                                     </div>
                                 </template>
+                                <template v-else-if="proposal.processing_status == 'On Hold'">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <strong>Action</strong><br/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="onHold()">Remove On-hold</button>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template v-else-if="proposal.processing_status == 'With QA Officer'">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <strong>Action</strong><br/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit && proposal.is_qa_officer" @click.prevent="withQAOfficer()">Complete QA Assessment</button>
+                                        </div>
+                                    </div>
+                                </template>
+
                             </div>
                         </div>
                     </div>
@@ -247,7 +319,7 @@
                     <Requirements :proposal="proposal"/>
                 </template>
                 <template v-if="canSeeSubmission || (!canSeeSubmission && showingProposal)">
-                    <!-- <div class="col-md-12">
+                    <div class="col-md-12">
                         <div class="row">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
@@ -337,7 +409,8 @@
                                 </div>
                             </div>
                         </div>
-                    </div> -->
+                    </div>
+                    -->
                     <div class="col-md-12">
                         <div class="row">
                             <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
@@ -356,8 +429,8 @@
                                         </div>
                                     </div>      
                                     </div>
+                                </div>
 
-                                
                                 <!-- <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
@@ -375,7 +448,6 @@
                                     </div>
 
                                 </Proposal> -->
-
                             </form>
                         </div>
                     </div>
@@ -386,11 +458,12 @@
         <ProposedDecline ref="proposed_decline" :processing_status="proposal.processing_status" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
         <AmendmentRequest ref="amendment_request" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></AmendmentRequest>
         <ProposedApproval ref="proposed_approval" :processing_status="proposal.processing_status" :proposal_id="proposal.id" :proposal_type='proposal.proposal_type' :isApprovalLevelDocument="isApprovalLevelDocument" @refreshFromResponse="refreshFromResponse"/>
+        <OnHold ref="on_hold" :processing_status="proposal.processing_status" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></OnHold>
+        <WithQAOfficer ref="with_qa_officer" :processing_status="proposal.processing_status" :proposal_id="proposal.id"></WithQAOfficer>
     </div>
 </template>
 <script>
 import Proposal from '../../form.vue'
-import ProposalTClass from '../../form_tclass.vue'
 import Vue from 'vue'
 import ProposedDecline from './proposal_proposed_decline.vue'
 import AmendmentRequest from './amendment_request.vue'
@@ -401,6 +474,11 @@ import ApprovalScreen from './proposal_approval.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
 import MoreReferrals from '@common-utils/more_referrals.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
+import ProposalTClass from '@/components/form_tclass.vue'
+import ProposalFilming from '@/components/form_filming.vue'
+import ProposalEvent from '@/components/form_event.vue'
+import OnHold from './proposal_onhold.vue'
+import WithQAOfficer from './proposal_qaofficer.vue'
 import {
     api_endpoints,
     helpers
@@ -423,6 +501,7 @@ export default {
             form: null,
             members: [],
             department_users : [],
+            referral_recipient_groups : [],
             contacts_table_initialised: false,
             initialisedSelects: false,
             showingProposal:false,
@@ -462,7 +541,7 @@ export default {
                         data:'email'
                     },
                   ],
-                  processing: true
+                  processing: true,
             },
             contacts_table: null,
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
@@ -484,6 +563,11 @@ export default {
         ApprovalScreen,
         CommsLogs,
         MoreReferrals,
+        ProposalTClass,
+        ProposalFilming,
+        ProposalEvent,
+        OnHold,
+        WithQAOfficer,
     },
     filters: {
         formatDate: function(data){
@@ -526,7 +610,7 @@ export default {
                 return this.proposal && (this.proposal.processing_status == 'With Approver' || this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Assessor (Requirements)') && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_approver || this.proposal.assigned_approver == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
             }
             else{
-                return this.proposal && (this.proposal.processing_status == 'With Approver' || this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Assessor (Requirements)') && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_officer || this.proposal.assigned_officer == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
+                return this.proposal && (this.proposal.processing_status == 'With QA Officer' || this.proposal.processing_status == 'On Hold' || this.proposal.processing_status == 'With Approver' || this.proposal.processing_status == 'With Assessor' || this.proposal.processing_status == 'With Assessor (Requirements)') && !this.isFinalised && !this.proposal.can_user_edit && (this.proposal.current_assessor.id == this.proposal.assigned_officer || this.proposal.assigned_officer == null ) && this.proposal.assessor_mode.assessor_can_assess? true : false;
             }
         },
         canLimitedAction: function(){
@@ -542,6 +626,12 @@ export default {
         },
         isApprovalLevelDocument: function(){
             return this.proposal && this.proposal.processing_status == 'With Approver' && this.proposal.approval_level != null && this.proposal.approval_level_document == null ? true : false;
+        },
+        isQAOfficerAssessmentCompleted: function(){
+            return this.proposal && this.proposal.qaofficer_referrals && this.proposal.qaofficer_referrals.length!=0 && this.proposal.qaofficer_referrals[0].processing_status == 'Completed' ? true : false;
+        },
+        QAOfficerAssessmentCompletedBy: function(){
+            return this.isQAOfficerAssessmentCompleted ? this.proposal.qaofficer_referrals[0].qaofficer : '';
         },
     },
     methods: {
@@ -586,6 +676,14 @@ export default {
             this.$refs.amendment_request.amendment.text = values;
             
             this.$refs.amendment_request.isModalOpen = true;
+        },
+        onHold: function(){
+            this.save_wo();
+            this.$refs.on_hold.isModalOpen = true;
+        },
+        withQAOfficer: function(){
+            this.save_wo();
+            this.$refs.with_qa_officer.isModalOpen = true;
         },
         save: function(e) {
           let vm = this;
@@ -809,6 +907,19 @@ export default {
                 vm.loading.splice('Loading Department Users',1);
             })
         },
+        fetchReferralRecipientGroups: function(){
+            let vm = this;
+            vm.loading.push('Loading Referral Recipient Groups');
+            vm.$http.get(api_endpoints.referral_recipient_groups).then((response) => {
+                vm.referral_recipient_groups = response.body
+                vm.loading.splice('Loading Referral Recipient Groups',1);
+            },(error) => {
+                console.log(error);
+                vm.loading.splice('Loading Referral Recipient Groups',1);
+            })
+        },
+
+
         initialiseAssignedOfficerSelect:function(reinit=false){
             let vm = this;
             if (reinit){
@@ -848,7 +959,8 @@ export default {
         initialiseSelects: function(){
             let vm = this;
             if (!vm.initialisedSelects){
-                $(vm.$refs.department_users).select2({
+                //$(vm.$refs.department_users).select2({
+                $(vm.$refs.referral_recipient_groups).select2({
                     "theme": "bootstrap",
                     allowClear: true,
                     placeholder:"Select Referral"
@@ -872,65 +984,38 @@ export default {
             vm.sendingReferral = true;
             vm.$http.post(vm.proposal_form_url,formData).then(res=>{
             
-            let data = {'email':vm.selected_referral, 'text': vm.referral_text};
-            //vm.sendingReferral = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assesor_send_referral')),JSON.stringify(data),{
-                emulateJSON:true
-            }).then((response) => {
-                vm.sendingReferral = false;
-                vm.original_proposal = helpers.copyObject(response.body);
-                vm.proposal = response.body;
-                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
-                swal(
-                    'Referral Sent',
-                    'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
-                    'success'
-                )
-                $(vm.$refs.department_users).val(null).trigger("change");
-                vm.selected_referral = '';
-                vm.referral_text = '';
-            }, (error) => {
-                console.log(error);
-                swal(
-                    'Referral Error',
-                    helpers.apiVueResourceError(error),
-                    'error'
-                )
-                vm.sendingReferral = false;
-            });
+                let data = {'email_group':vm.selected_referral, 'text': vm.referral_text};
+                //vm.sendingReferral = true;
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assesor_send_referral')),JSON.stringify(data),{
+                    emulateJSON:true
+                }).then((response) => {
+                    vm.sendingReferral = false;
+                    vm.original_proposal = helpers.copyObject(response.body);
+                    vm.proposal = response.body;
+                    vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                    swal(
+                        'Referral Sent',
+                        //'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
+                        'The referral has been sent to '+vm.referral_recipient_groups.find(d => d.email == vm.selected_referral).name,
+                        'success'
+                    )
+                    //$(vm.$refs.department_users).val(null).trigger("change");
+                    $(vm.$refs.referral_recipient_groups).val(null).trigger("change");
+                    vm.selected_referral = '';
+                    vm.referral_text = '';
+                }, (error) => {
+                    console.log(error);
+                    swal(
+                        'Referral Error',
+                        helpers.apiVueResourceError(error),
+                        'error'
+                    )
+                    vm.sendingReferral = false;
+                });
 
               
-          },err=>{
-          });
-         
-        //this.$refs.referral_comment.selected_referral = vm.selected_referral;           
-        //this.$refs.referral_comment.isModalOpen = true;
-
-          /*  let data = {'email':vm.selected_referral};
-            vm.sendingReferral = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assesor_send_referral')),JSON.stringify(data),{
-                emulateJSON:true
-            }).then((response) => {
-                vm.sendingReferral = false;
-                vm.original_proposal = helpers.copyObject(response.body);
-                vm.proposal = response.body;
-                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
-                swal(
-                    'Referral Sent',
-                    'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
-                    'success'
-                )
-                $(vm.$refs.department_users).val(null).trigger("change");
-                vm.selected_referral = '';
-            }, (error) => {
-                console.log(error);
-                swal(
-                    'Referral Error',
-                    helpers.apiVueResourceError(error),
-                    'error'
-                )
-                vm.sendingReferral = false;
-            }); */
+            },err=>{
+            });
         },
         remindReferral:function(r){
             let vm = this;
@@ -1000,6 +1085,7 @@ export default {
     mounted: function() {
         let vm = this;
         vm.fetchDeparmentUsers();
+        vm.fetchReferralRecipientGroups();
         
     },
     updated: function(){

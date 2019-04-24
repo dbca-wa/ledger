@@ -38,6 +38,11 @@
                                 </select>
                             </div>
                         </div>
+                        <div v-if="is_internal" class="col-md-3">
+                            <label/>
+                            <!-- <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_proposal' }">New Proposal</router-link> -->
+                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="disabled" @click.prevent="createEClassLicence()">New E-Class licence</button>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-3">
@@ -70,6 +75,8 @@
         <ApprovalCancellation ref="approval_cancellation"  @refreshFromResponse="refreshFromResponse"></ApprovalCancellation>
         <ApprovalSuspension ref="approval_suspension"  @refreshFromResponse="refreshFromResponse"></ApprovalSuspension>
         <ApprovalSurrender ref="approval_surrender"  @refreshFromResponse="refreshFromResponse"></ApprovalSurrender>
+        <!--<EClassLicence ref="eclass_licence" :processing_status="proposal.processing_status" :proposal_id="proposal.id"></EClassLicence>-->
+        <EClassLicence ref="eclass_licence"></EClassLicence>
 
 
     </div>
@@ -80,6 +87,7 @@ import Vue from 'vue'
 import ApprovalCancellation from '../internal/approvals/approval_cancellation.vue'
 import ApprovalSuspension from '../internal/approvals/approval_suspension.vue'
 import ApprovalSurrender from '../internal/approvals/approval_surrender.vue'
+import EClassLicence from '../internal/approvals/approval_eclass.vue'
 import {
     api_endpoints,
     helpers
@@ -99,6 +107,13 @@ export default {
             type: String,
             required: true
         }
+    },
+    components:{
+        datatable,
+        ApprovalCancellation,
+        ApprovalSuspension,
+        ApprovalSurrender,
+        EClassLicence,
     },
     data() {
         let vm = this;
@@ -127,7 +142,7 @@ export default {
             proposal_regions: [],
             proposal_submitters: [],
             proposal_headers:[
-                "Number","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action",
+                "Number","Licence Type","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action",
                 //"LodgementNo","CanReissue","CanAction","CanReinstate","SetToCancel","SetToSuspend","SetToSurrender","CurrentProposal","RenewalDoc","RenewalSent","CanAmend","CanRenew"
             ],
             proposal_options:{
@@ -195,6 +210,10 @@ export default {
                         },
                         'createdCell': helpers.dtPopoverCellFn,
                         name: "id, lodgement_number",
+                    },
+                    {
+                        data: "application_type",
+                        name: "current_proposal__application_type__name"
                     },
                     {
                         data: "region",
@@ -340,12 +359,6 @@ export default {
             }
         }
     },
-    components:{
-        datatable,
-        ApprovalCancellation,
-        ApprovalSuspension,
-        ApprovalSurrender
-    },
     watch:{
         filterProposalRegion: function(){
             //this.$refs.proposal_datatable.vmDataTable.draw();
@@ -397,11 +410,19 @@ export default {
         is_external: function(){
             return this.level == 'external';
         },
+        is_internal: function(){
+            return this.level == 'internal';
+        },
         is_referral: function(){
             return this.level == 'referral';
         }
     },
     methods:{
+        createEClassLicence: function(){
+            //this.save_wo();
+            this.$refs.eclass_licence.isModalOpen = true;
+        },
+
         fetchFilterLists: function(){
             let vm = this;
 

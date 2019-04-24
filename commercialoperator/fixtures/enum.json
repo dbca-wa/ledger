@@ -11,7 +11,8 @@
     "model": "commercialoperator.applicationtype",
     "fields": {
         "name": "Filming",
-        "order": 1
+        "order": 1,
+        "visible": False
     }
 },
 {
@@ -19,9 +20,23 @@
     "model": "commercialoperator.applicationtype",
     "fields": {
         "name": "Event",
-        "order": 1
+        "order": 1,
+        "visible": False
     }
 },
+{
+    "pk": 4,
+    "model": "commercialoperator.applicationtype",
+    "fields": {
+        "name": "E Class",
+        "order": 1,
+        "visible": False,
+        "max_renewals": 1,
+        "max_renewal_period": 5
+    }
+},
+
+
 
 
 {
