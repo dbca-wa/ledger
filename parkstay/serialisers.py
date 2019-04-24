@@ -174,11 +174,6 @@ class CampgroundMapFilterSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id',)
 
 class CampgroundMapImageSerializer(serializers.HyperlinkedModelSerializer):
-    image = serializers.SerializerMethodField()
-
-    def get_image(self, obj):
-        return obj.image.url
-
     class Meta:
         model = CampgroundImage
         fields = ('image',)
