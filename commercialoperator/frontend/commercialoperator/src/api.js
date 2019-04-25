@@ -2,6 +2,7 @@ var site_url = location.origin
 
 module.exports = {
     organisations: '/api/organisations.json',
+    filtered_organisations: '/api/filtered_organisations',
     organisation_requests: '/api/organisation_requests.json',
     organisation_contacts: '/api/organisation_contacts.json',
     organisation_access_group_members: '/api/organisation_access_group_members',

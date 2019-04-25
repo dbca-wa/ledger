@@ -80,7 +80,8 @@ class Approval(RevisionedMixin):
     expiry_date = models.DateField()
     surrender_details = JSONField(blank=True,null=True)
     suspension_details = JSONField(blank=True,null=True)
-    applicant = models.ForeignKey(Organisation,on_delete=models.PROTECT, related_name='commercialoperator_approvals')
+    org_applicant = models.ForeignKey(Organisation,on_delete=models.PROTECT, blank=True, null=True, related_name='org_approvals')
+    proxy_applicant = models.ForeignKey(EmailUser,on_delete=models.PROTECT, blank=True, null=True, related_name='proxy_approvals')
     extracted_fields = JSONField(blank=True, null=True)
     cancellation_details = models.TextField(blank=True)
     cancellation_date = models.DateField(blank=True, null=True)
@@ -94,6 +95,20 @@ class Approval(RevisionedMixin):
     class Meta:
         app_label = 'commercialoperator'
         unique_together= ('lodgement_number', 'issue_date')
+
+    @property
+    def applicant(self):
+        if self.org_applicant:
+            return self.org_applicant.organisation.name
+        elif self.proxy_applicant:
+            return "{} {}".format(
+                self.proxy_applicant.first_name,
+                self.proxy_applicant.last_name)
+        else:
+            return None
+#            return "{} {}".format(
+#                self.submitter.first_name,
+#                self.submitter.last_name)
 
     @property
     def region(self):
