@@ -23,6 +23,7 @@ module.exports = {
     applications_paginated:"/api/application_paginated/",
     licences:"/api/licences/",
     call_email:"/api/call_email/",
+    classification:"/api/classification/",
     licences_paginated:"/api/licences_paginated/",
     returns:"/api/returns/",
     application_standard_conditions:"/api/application_standard_conditions/",

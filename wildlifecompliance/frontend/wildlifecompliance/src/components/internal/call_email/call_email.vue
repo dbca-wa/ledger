@@ -65,7 +65,12 @@
           <div class="col-md-8">  
             <div class="row">
               <FormSection :label="`Contact`" :Index="`0`">
-
+                <input type="text" name="classification" v-model="call_email.classification.name">
+                <template>
+                    <select class="form-control" v-model="call_email.classification.name">
+                        <option v-for="option in classification_types" v-bind:value="option">{{option}} </option>
+                    </select>
+                </template>
 
               </FormSection>
               <FormSection :label="`Location`" :Index="`1`">
@@ -130,7 +135,7 @@ export default {
     ...mapGetters({
       call_email: "callemailStore/call_email",
       call_id: "callemailStore/call_id",
-      classification: "callemailStore/classification",
+      classification_types: "callemailStore/classification_types",
       location: "callemailStore/location",
       report_type: "callemailStore/report_type",
     }),
@@ -154,6 +159,7 @@ export default {
   methods: {
     ...mapActions({
       loadCallEmail: "callemailStore/loadCallEmail",
+      loadClassification: "callemailStore/loadClassification",
       saveFormData: "saveFormData"
     }),
 
@@ -204,6 +210,7 @@ export default {
     next(vm => {
       console.log("before route enter - next");
       vm.loadCallEmail({ call_email_id: to.params.call_email_id });
+      vm.loadClassification();
     });
   },
 

@@ -236,3 +236,14 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+class ClassificationViewSet(viewsets.ModelViewSet):
+    queryset = Classification.objects.all()
+    serializer_class = ClassificationSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return Classification.objects.all()
+        return Classification.objects.none()
