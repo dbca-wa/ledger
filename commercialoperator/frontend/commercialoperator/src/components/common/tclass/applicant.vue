@@ -166,7 +166,7 @@ from '@/utils/hooks'
         methods:{
             initialiseOrgContactTable: function(){
                 let vm = this;
-                console.log("i am here")
+                //console.log("i am here")
                 if (vm.proposal && !vm.contacts_table_initialised){
                     vm.contacts_options.ajax.url = helpers.add_endpoint_json(api_endpoints.organisations,vm.proposal.applicant.id+'/contacts');
                     vm.contacts_table = $('#'+vm.contacts_table_id).DataTable(vm.contacts_options);

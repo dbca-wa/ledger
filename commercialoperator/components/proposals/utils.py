@@ -670,8 +670,10 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
             serializer = ProposalOtherDetailsSerializer(instance.other_details,data=other_details_data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            select_parks_activities=sc['selected_parks_activities']
-            select_trails_activities=sc['selected_trails_activities']
+            #select_parks_activities=sc['selected_parks_activities']
+            #select_trails_activities=sc['selected_trails_activities']
+            select_parks_activities=json.loads(request.data.get('selected_parks_activities'))
+            select_trails_activities=json.loads(request.data.get('selected_trails_activities'))
             marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
             other_details=ProposalOtherDetails.objects.update_or_create(proposal=instance)
             # instance.save()
@@ -734,10 +736,12 @@ def save_assessor_data(instance,request,viewset):
             schema=request.data.get('schema')
             import json
             sc=json.loads(schema)
-            select_parks_activities=sc['selected_parks_activities']
-            select_trails_activities=sc['selected_trails_activities']
+            #select_parks_activities=sc['selected_parks_activities']
+            #select_trails_activities=sc['selected_trails_activities']
+            select_parks_activities=json.loads(request.data.get('selected_parks_activities'))
+            select_trails_activities=json.loads(request.data.get('selected_trails_activities'))
             marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
-            print select_parks_activities, selected_trails_activities
+            #print select_parks_activities, selected_trails_activities
             if select_parks_activities:
                 try:
                     save_park_activity_data(instance, select_parks_activities, request)                        
