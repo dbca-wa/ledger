@@ -23,8 +23,7 @@ class ReturnType(models.Model):
         (RETURN_TYPE_QUESTION, 'Question'),
         (RETURN_TYPE_DATA, 'Data')
     )
-
-    Name = models.CharField(null=True, blank=True, max_length=100)
+    name = models.CharField(null=True, blank=True, max_length=100)
     description = models.TextField(null=True, blank=True, max_length=256)
     data_descriptor = JSONField()
     data_format = models.CharField(
@@ -37,7 +36,7 @@ class ReturnType(models.Model):
 
     class Meta:
         app_label = 'wildlifecompliance'
-        unique_together = ('Name', 'version')
+        unique_together = ('name', 'version')
 
     @property
     def resources(self):
@@ -54,7 +53,7 @@ class ReturnType(models.Model):
         return resource.get('schema', {}) if resource else None
 
     def __str__(self):
-        return '{} - v{}'.format(self.Name, self.version)
+        return '{} - v{}'.format(self.name, self.version)
 
 
 class Return(models.Model):
@@ -146,6 +145,10 @@ class Return(models.Model):
 
     @property
     def table(self):
+        """
+        Return data presented in table format with column headers.
+        :return: formatted data.
+        """
         table = []
         if self.has_sheet:
             return self.sheet.table
@@ -466,15 +469,17 @@ class ReturnQuestion(object):
         :return: formatted data.
         """
         tables = []
+        cnt = 0
         for resource in self._return.return_type.resources:
-            resource_name = resource.get('name')
+            resource_name = ReturnType.RETURN_TYPE_QUESTION
             schema = Schema(resource.get('schema'))
             headers = []
             for f in schema.fields:
                 header = {
                     "label": f.name,
+                    "name": f.name,
                     "required": f.required,
-                    "type": f.type.name
+                    "type": f.type.name,
                 }
                 if f.is_species:
                     header["species"] = f.species_type
@@ -489,8 +494,8 @@ class ReturnQuestion(object):
                 return_table = self._return.returntable_set.get(name=resource_name)
                 rows = [
                     return_row.data for return_row in return_table.returnrow_set.all()]
-                validated_rows = schema.rows_validator(rows)
-                table['data'] = validated_rows
+                #validated_rows = schema.rows_validator(rows)
+                table['data'] = rows
             except ReturnTable.DoesNotExist:
                 result = {}
                 results = []
@@ -509,7 +514,38 @@ class ReturnQuestion(object):
         :param request:
         :return:
         """
-        pass
+        self._create_return_data(self._return, request.POST)
+
+    def _get_table_rows(self, _data):
+        """
+        Gets the formatted row of data from Species data
+        :param _data:
+        :return: by_column is of format {'col_header':[row1_val, row2_val,...],...}
+        """
+        by_column = dict([])
+        for key in _data.keys():
+            by_column[key] = _data[key]
+        self._rows = []
+        self._rows.append(by_column)
+
+    def _create_return_data(self, ret, _data):
+        """
+        Saves row of data to db.
+        :param ret:
+        :param _data:
+        :return:
+        """
+        self._get_table_rows(_data)
+        if self._rows:
+            return_table = ReturnTable.objects.get_or_create(
+                name=ReturnType.RETURN_TYPE_QUESTION, ret=ret)[0]
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in self._rows]
+            ReturnRow.objects.bulk_create(return_rows)
 
     def __str__(self):
         return self._return.lodgement_number
