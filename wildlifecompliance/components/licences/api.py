@@ -37,8 +37,8 @@ class LicenceFilterBackend(DatatablesFilterBackend):
         category_name = request.GET.get('category_name')
         holder = request.GET.get('holder')
         search_text = request.GET.get('search[value]')
-        if queryset.model is WildlifeLicence:
 
+        if queryset.model is WildlifeLicence:
             # search_text filter, join all custom search columns
             # where ('searchable: false' in the datatable definition)
             if search_text:

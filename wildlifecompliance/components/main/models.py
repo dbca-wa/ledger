@@ -1,12 +1,9 @@
 from __future__ import unicode_literals
 
 from django.db import models
-from django.dispatch import receiver
-from django.db.models.signals import pre_delete
 from django.db.models.query import QuerySet
 from django.utils.encoding import python_2_unicode_compatible
-from django.core.exceptions import ValidationError
-from ledger.accounts.models import EmailUser, Document, RevisionedMixin
+from ledger.accounts.models import EmailUser
 import os
 
 

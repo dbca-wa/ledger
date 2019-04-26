@@ -157,7 +157,7 @@ def search(dictionary, search_list=[''], delimiter='.'):
     To run:
         from wildlifecompliance.utils import list_all
         a = application.objects.all().last()
-        dictionary = a.data[0]
+        dictionary = a.licence_type_data
         search(dictionary)
 
         OR
@@ -169,101 +169,10 @@ def search(dictionary, search_list=[''], delimiter='.'):
     result = []
     flat_dict = flatten(dictionary, delimiter=delimiter)
     for k, v in flat_dict.iteritems():
-        if any(x.lower() in v.lower() for x in search_list):
-            result.append({k: v})
+        if any(x.lower() in str(v).lower() for x in search_list):
+            result.append({k: str(v)})
 
     return result
-
-
-def search_licences(licence, search_words):
-    qs = []
-    l = licence
-    if l.surrender_details:
-        try:
-            results = search(l.surrender_details, search_words)
-            if results:
-                res = {
-                    'number': l.lodgement_number,
-                    'id': l.id,
-                    'type': 'Licence',
-                    'applicant': l.applicant,
-                    'text': results,
-                    }
-                qs.append(res)
-        except BaseException:
-            raise
-    if l.suspension_details:
-        try:
-            results = search(l.suspension_details, search_words)
-            if results:
-                res = {
-                    'number': l.lodgement_number,
-                    'id': l.id,
-                    'type': 'Licence',
-                    'applicant': l.applicant,
-                    'text': results,
-                    }
-                qs.append(res)
-        except BaseException:
-            raise
-    if l.cancellation_details:
-        try:
-            found = False
-            for s in search_words:
-                if s.lower() in l.cancellation_details.lower():
-                    found = True
-            if found:
-                res = {
-                    'number': l.lodgement_number,
-                    'id': l.id,
-                    'type': 'Licence',
-                    'applicant': l.applicant.name,
-                    'text': l.cancellation_details,
-                    }
-                qs.append(res)
-        except BaseException:
-            raise
-    return qs
-
-
-def search_returns(return_object, search_words):
-    qs = []
-    r = return_object
-    if r.text:
-        try:
-            found = False
-            for s in search_words:
-                if s.lower() in r.text.lower():
-                    found = True
-            if found:
-                res = {
-                    'number': r.reference,
-                    'id': r.id,
-                    'type': 'Return',
-                    'applicant': r.licence.applicant,
-                    'text': r.text,
-                    }
-                qs.append(res)
-        except BaseException:
-            raise
-    if r.requirement:
-        try:
-            found = False
-            for s in search_words:
-                if s.lower() in r.requirement.requirement.lower():
-                    found = True
-            if found:
-                res = {
-                    'number': r.reference,
-                    'id': r.id,
-                    'type': 'Return',
-                    'applicant': r.licence.applicant.name,
-                    'text': r.requirement.requirement,
-                    }
-                qs.append(res)
-        except BaseException:
-            raise
-    return qs
 
 
 def search_keys(dictionary, search_list=['help_text', 'label']):
@@ -302,19 +211,6 @@ def search_keys(dictionary, search_list=['help_text', 'label']):
             print e
 
     return help_list
-
-
-"""
-# Commented out as Proposal is not imported and undefined.
-def test_search_multiple_keys():
-    p = Proposal.objects.get(id=139)
-    return search_multiple_keys(
-        p.schema,
-        primary_search='isRequired',
-        search_list=[
-            'label',
-            'name'])
-"""
 
 
 def search_multiple_keys(

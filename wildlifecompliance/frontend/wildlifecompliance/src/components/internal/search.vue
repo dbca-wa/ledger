@@ -54,7 +54,7 @@
                     <div class="row">
                       <div class="col-lg-12">
                         <div>
-                          <input type="button" @click.prevent="searchKeyword" class="btn btn-primary" style="margin-bottom: 5px"value="Search"/>
+                          <input :disabled="!hasSearchKeywords" type="button" @click.prevent="searchKeyword" class="btn btn-primary" style="margin-bottom: 5px"value="Search"/>
                           <input type="reset" @click.prevent="clearKeywordSearch" class="btn btn-primary" style="margin-bottom: 5px"value="Clear"/>
                         </div>
                       </div>
@@ -98,6 +98,7 @@
 <script>
 import $ from 'jquery'
 import datatable from '@/utils/vue/datatable.vue'
+import alert from '@/utils/vue/alert.vue'
 import UserDashTable from '@common-components/users_dashboard.vue'
 import OrganisationDashTable from '@internal-components/organisations/organisations_dashboard.vue'
 import '@/scss/dashboards/search.scss';
@@ -108,17 +109,18 @@ import {
 from '@/utils/hooks'
 import utils from './utils'
 export default {
-    name: 'ExternalDashboard',
+    name: 'SearchDashboard',
     data() {
         let vm = this;
         return {
-            users_url: api_endpoints.users_paginated,
+            users_url: helpers.add_endpoint_join(api_endpoints.users_paginated,'datatable_list/?format=datatables'),
             rBody: 'rBody' + vm._uid,
             oBody: 'oBody' + vm._uid,
             cBody: 'cBody' + vm._uid,
             kBody: 'kBody' + vm._uid,
             loading: [],
             searchKeywords: [],
+            hasSearchKeywords: false,
             selected_organisation:'',
             organisations: null,
             searchApplication: true,
@@ -139,7 +141,7 @@ export default {
                 data: vm.results,
                 columns: [
                     {data: "number"},
-                    {data:"type"},
+                    {data:"record_type"},
                     {data: "applicant"},
                     {data: "text",
                         mRender: function (data,type,full) {
@@ -151,14 +153,14 @@ export default {
                             }
                         }
                     },
-                    {data: "id",
+                    {data: "record_id",
                         mRender:function (data,type,full) {
                             let links = '';
                             if(full.type == 'Application') {
                               links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
                             }
                             if(full.type == 'Licence') {
-                              links +=  `<a href='/internal/licence/${full.id}'>View</a><br/>`;
+                              links +=  `<a href="${full.licence_document}" target="_blank">View</a>`;
                             }
                             if(full.type == 'Return') {
                               links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;
@@ -171,8 +173,17 @@ export default {
             }
         }
     },
-    watch: {},
+    watch: {
+        searchKeywords: function() {
+            if (this.searchKeywords.length > 0){
+                this.hasSearchKeywords = true;
+            } else {
+                this.hasSearchKeywords = false;
+            };
+        }
+    },
     components: {
+        alert,
         datatable,
         UserDashTable,
         OrganisationDashTable
@@ -192,8 +203,7 @@ export default {
             return this.loading.length == 0;
         },
         showError: function() {
-            var vm = this;
-            return vm.errors;
+            return this.errors;
         }
     },
     methods: {
