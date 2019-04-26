@@ -151,8 +151,8 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             if instance.has_question:
                 instance.question.store(request)
 
-            instance.set_submitted(request)
-            instance.submitter = request.user
+            #instance.set_submitted(request)
+            #instance.submitter = request.user
             instance.save()
             serializer = self.get_serializer(instance)
             return Response(serializer.data)

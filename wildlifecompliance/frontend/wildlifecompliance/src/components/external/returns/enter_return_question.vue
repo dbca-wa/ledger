@@ -88,9 +88,6 @@ export default {
     ...mapActions({
       load: 'loadReturns',
     }),
-    ...mapActions([
-        'setReturns',
-    ]),
     save: function(e) {
       console.log('Save function')
       this.form=document.forms.enter_return_question;
@@ -98,7 +95,6 @@ export default {
       this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/save'),data,{
                        emulateJSON:true,
                     }).then((response)=>{
-                       this.returns = response.body;
                        swal('Save',
                             'Returns Saved',
                             'success'
