@@ -1,3 +1,4 @@
+import ast
 import requests
 import json
 import logging
@@ -201,14 +202,14 @@ def search_keywords(search_words, search_application, search_licence, search_ret
     if search_words:
         if search_application:
             for app in application_list:
-                if ApplicationFormDataRecord.objects.filter(application=app):
+                if app.data:
                     try:
-                        app_data = {'data':
-                                        [{'value': record.value}
-                                         for record
-                                         in ApplicationFormDataRecord.objects.filter(application=app)
-                                        ]
-                                   }
+                        app_data = {'data': []}
+                        for record in app.data:
+                            if 'thead' in record.value:
+                                app_data.get('data').append({'value': ast.literal_eval(record.value).get('tbody')})
+                            else:
+                                app_data.get('data').append({'value': record.value})
                         results = search(app_data, search_words)
                         final_results = {}
                         if results:

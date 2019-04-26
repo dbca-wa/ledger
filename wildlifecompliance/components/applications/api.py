@@ -876,7 +876,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 request.data,
                 action=ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_VALUE
             )
-            return redirect(reverse('external'))
+            return Response({'success': True})
         except MissingFieldsException as e:
             return Response({
                 'missing': e.error_list},
