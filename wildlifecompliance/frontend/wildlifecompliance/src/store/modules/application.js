@@ -175,5 +175,19 @@ export const applicationStore = {
             commit(UPDATE_APPLICATION, application);
             dispatch('refreshAddresses');
         },
+        refreshApplicationFees({ dispatch, state, getters, rootGetters }) {
+            Vue.http.post('/api/application/estimate_price/', {
+                    'application_id': getters.application_id,
+                    'field_data': rootGetters.renderer_form_data,
+            }).then(res => {
+                dispatch('setApplication', {
+                    ...state.application,
+                    application_fee: res.body.fees.application,
+                    licence_fee: res.body.fees.licence
+                });
+            }, err => {
+                console.log(err);
+            });
+        },
     }
 }

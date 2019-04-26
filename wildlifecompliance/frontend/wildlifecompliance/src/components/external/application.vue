@@ -258,7 +258,7 @@ export default {
                     vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),{}).then(res=>{
                       this.setApplication(res.body);
                       if (vm.requiresCheckout) {
-                          vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
+                          vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), {}).then(res=>{
                               this.isProcessing = false;
                               window.location.href = "/ledger/checkout/checkout/payment-details/";
                           },err=>{
