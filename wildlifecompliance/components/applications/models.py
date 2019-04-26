@@ -603,17 +603,36 @@ class Application(RevisionedMixin):
             self.licence_purposes.values_list('id', flat=True)
         )
 
-        def adjust_fee(fees, component):
+        def adjust_fee(fees, component, schema_name, adjusted_by_fields):
+            def increase_fee(fees, field, amount):
+                fees[field] += amount
+                fees[field] = fees[field] if fees[field] >= 0 else 0
+                return True
+
             modifier_keys = {
                 'IncreaseLicenceFee': 'licence',
                 'IncreaseApplicationFee': 'application',
             }
-            for key, field in modifier_keys.items():
-                if key not in component:
-                    continue
-                fees[field] += component[key]
+            increase_limit_key = 'IncreaseTimesLimit'
+            try:
+                increase_count = adjusted_by_fields[schema_name]
+            except KeyError:
+                increase_count = adjusted_by_fields[schema_name] = 0
+
+            if increase_limit_key in component:
+                max_increases = int(component[increase_limit_key])
+                if increase_count >= max_increases:
+                    return
+
+            adjustments_performed = sum(key in component and increase_fee(
+                fees, field, component[key]
+            ) for key, field in modifier_keys.items())
+
+            if adjustments_performed:
+                adjusted_by_fields[schema_name] += 1
 
         # Adjust fees based on selected options (radios and checkboxes)
+        adjusted_by_fields = {}
         for form_data_record in data_source:
             try:
                 # Retrieve dictionary of fields from a model instance
@@ -630,11 +649,11 @@ class Application(RevisionedMixin):
                     # Only consider fee modifications if the current option is selected
                     if option['value'] != data_record['value']:
                         continue
-                    adjust_fee(fees, option)
+                    adjust_fee(fees, option, schema_name, adjusted_by_fields)
 
             # If this is a checkbox - skip unchecked ones
             elif data_record['value'] == 'on':
-                adjust_fee(fees, schema_data)
+                adjust_fee(fees, schema_data, schema_name, adjusted_by_fields)
 
         return fees
 
@@ -1750,14 +1769,19 @@ class ApplicationFormDataRecord(models.Model):
             except KeyError:
                 continue
 
-            form_data_record, created = ApplicationFormDataRecord.objects.get_or_create(
+            form_data_record = ApplicationFormDataRecord.objects.filter(
                 application_id=application.id,
-                field_name=field_name
-            )
-            if created:
-                form_data_record.schema_name = schema_name
-                form_data_record.instance_name = instance_name
-                form_data_record.component_type = component_type
+                field_name=field_name,
+            ).first()
+
+            if not form_data_record:
+                form_data_record = ApplicationFormDataRecord.objects.create(
+                    application_id=application.id,
+                    field_name=field_name,
+                    schema_name=schema_name,
+                    instance_name=instance_name,
+                    component_type=component_type,
+                )
             if action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_VALUE:
                 if not is_draft and not value and schema_name in required_fields:
                     missing_item = {'field_name': field_name}
