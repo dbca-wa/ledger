@@ -11,6 +11,16 @@ from wildlifecompliance.components.returns.email import send_external_submit_ema
                                                         send_return_accept_email_notification
 
 
+def template_directory_path(instance, filename):
+    """
+    Static location for Returns template.
+    :param instance: Request.
+    :param filename: Name of file.
+    :return: file path.
+    """
+    return 'wildlifecompliance/returns/template/{0}'.format(filename)
+
+
 class ReturnType(models.Model):
     """
     A definition to identify the format used to facilitate Return.
@@ -31,6 +41,7 @@ class ReturnType(models.Model):
         max_length=30,
         choices=RETURN_TYPE_CHOICES,
         default=RETURN_TYPE_SHEET)
+    data_template = models.FileField(upload_to=template_directory_path, null=True)
     replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
     version = models.SmallIntegerField(default=1, blank=False, null=False)
 
