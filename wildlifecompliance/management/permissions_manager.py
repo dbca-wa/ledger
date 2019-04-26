@@ -112,7 +112,7 @@ class CustomGroupCollector(PermissionCollector):
 
     COLLECTION_SOURCE = 'PERMISSION_GROUPS'
 
-    def get_or_create_group(self, group_name, config):
+    def get_or_create_group(self, group_name, config, activity=None):
         created = None
         if settings.GROUP_PREFIX and settings.GROUP_PREFIX not in group_name:
             group_name = "{prefix} - {name}".format(
@@ -128,7 +128,16 @@ class CustomGroupCollector(PermissionCollector):
                     name=base_group.name
                 )
             else:
-                group = created = ActivityPermissionGroup.objects.create(name=group_name)
+                # Check if groups with the same permissions (but a different name) already exist.
+                # Do not re-create groups that have been manually re-named by admins.
+                if config['permissions']:
+                    groups_by_permission = ActivityPermissionGroup.objects.filter(permissions__codename__in=config['permissions'])
+                    if activity is not None:
+                        groups_by_permission = groups_by_permission.filter(
+                            licence_activities__id=activity.id)
+                    group = groups_by_permission.first()
+                if not group:
+                    group = created = ActivityPermissionGroup.objects.create(name=group_name)
 
         if created:
             logger.info("Created custom group: %s" % (group_name))
@@ -166,7 +175,7 @@ class CustomGroupCollector(PermissionCollector):
             if config['per_activity']:
                 for activity in LicenceActivity.objects.all():
                     activity_group_name = "{}: {}".format(group_name, activity.name)
-                    group = self.get_or_create_group(activity_group_name, config)
+                    group = self.get_or_create_group(activity_group_name, config, activity)
                     group.licence_activities.add(activity)
             else:
                 group = self.get_or_create_group(group_name, config)
