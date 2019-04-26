@@ -1717,10 +1717,9 @@ class ApplicationFormDataRecord(models.Model):
     deficiency = models.TextField(blank=True)
 
     def __str__(self):
-        return "Application {id} record {field}: {value}".format(
+        return "Application {id} record {field}".format(
             id=self.application_id,
-            field=self.field_name,
-            value=self.value[:8] if self.value else ''
+            field=self.field_name
         )
 
     class Meta:
