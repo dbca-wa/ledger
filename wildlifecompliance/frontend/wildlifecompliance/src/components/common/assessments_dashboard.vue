@@ -1,4 +1,4 @@
-<template id="application_dashboard">
+<template id="assessment_dashboard">
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
@@ -61,7 +61,7 @@
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
-                            <datatable ref="application_datatable" :id="datatable_id" :dtOptions="application_options" :dtHeaders="application_headers"/>
+                            <datatable ref="assessment_datatable" :id="datatable_id" :dtOptions="assessment_options" :dtHeaders="assessment_headers"/>
                         </div>
                     </div>
                 </div>
@@ -81,7 +81,7 @@ export default {
         let vm = this;
         return {
             pBody: 'pBody' + vm._uid,
-            datatable_id: 'application-datatable-'+vm._uid,
+            datatable_id: 'assessment-datatable-'+vm._uid,
             // Filters for Applications
             filterApplicationLicenceType: 'All',
             filterApplicationStatus: 'All',
@@ -100,16 +100,15 @@ export default {
             application_licence_types: [],
             application_regions: [],
             application_submitters: [],
-            application_headers:["Number","Licence Category","Activity","Type","Submitter","Applicant","Status","Lodged on","Action"],
-            application_options:{
+            assessment_headers:["Number","Licence Category","Activity","Type","Submitter","Applicant","Status","Lodged on","Action"],
+            assessment_options:{
                 serverSide: true,
                 searchDelay: 1000,
                 lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 order: [
                     [0, 'desc']
                 ],
-                customApplicationSearch: true,
-                tableID: 'application-datatable-'+vm._uid,
+                tableID: 'assessment-datatable-'+vm._uid,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
@@ -137,7 +136,7 @@ export default {
                             return data != '' && data != null ? `${data}` : '';
                         },
                         orderable: false,
-                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
+                        searchable: false // handled by filter_queryset override method - class AssessmentFilterBackend
                     },
                     {
                         data: "licence_activity",
@@ -145,7 +144,7 @@ export default {
                             return data.id != '' && data.id != null ? `${data.name}` : '';
                         },
                         orderable: false,
-                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
+                        searchable: false // handled by filter_queryset override method - class AssessmentFilterBackend
                     },
                     {
                         data: "application_type",
@@ -153,7 +152,7 @@ export default {
                             return data.name;
                         },
                         orderable: false,
-                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
+                        searchable: false // handled by filter_queryset override method - class AssessmentFilterBackend
                     },
                     {
                         data: "submitter",
@@ -165,12 +164,12 @@ export default {
                             return ''
                         },
                         orderable: false,
-                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
+                        searchable: false // handled by filter_queryset override method - class AssessmentFilterBackend
                     },
                     {
                         data: "applicant",
                         orderable: false,
-                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
+                        searchable: false // handled by filter_queryset override method - class AssessmentFilterBackend
                     },
                     {
                         data: "status",
@@ -178,7 +177,7 @@ export default {
                             return data.name;
                         },
                         orderable: false,
-                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
+                        searchable: false // handled by filter_queryset override method - class AssessmentFilterBackend
                     },
                     {
                         data: "application_lodgement_date",
@@ -186,7 +185,7 @@ export default {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         },
                         orderable: false,
-                        searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
+                        searchable: false // handled by filter_queryset override method - class AssessmentFilterBackend
                     },
                     {
                         mRender:function (data,type,full) {
@@ -201,7 +200,7 @@ export default {
                 processing: true,
                 initComplete: function () {
                     // Grab Activity from the data in the table
-                    var titleColumn = vm.$refs.application_datatable.vmDataTable.columns(vm.getColumnIndex('licence category'));
+                    var titleColumn = vm.$refs.assessment_datatable.vmDataTable.columns(vm.getColumnIndex('licence category'));
                     titleColumn.data().unique().sort().each( function ( d, j ) {
                         let activityTitles = [];
                         $.each(d,(index,a) => {
@@ -210,11 +209,11 @@ export default {
                         vm.application_licence_types = activityTitles;
                     });
                     // Grab submitters from the data in the table
-                    var submittersColumn = vm.$refs.application_datatable.vmDataTable.columns(vm.getColumnIndex('submitter'));
+                    var submittersColumn = vm.$refs.assessment_datatable.vmDataTable.columns(vm.getColumnIndex('submitter'));
                     submittersColumn.data().unique().sort().each( function ( d, j ) {
                         var submitters = [];
                         $.each(d,(index, submitter) => {
-                            if (!submitters.find(submitter => submitter.email) || submitters.length == 0){
+                            if (!submitters.find(item => item.email == submitter.email) || submitters.length == 0){
                                 submitters.push({
                                     'email':submitter.email,
                                     'search_term': `${submitter.first_name} ${submitter.last_name} (${submitter.email})`
@@ -224,7 +223,7 @@ export default {
                         vm.application_submitters = submitters;
                     });
                     // Grab Status from the data in the table
-                    var statusColumn = vm.$refs.application_datatable.vmDataTable.columns(vm.getColumnIndex('status'));
+                    var statusColumn = vm.$refs.assessment_datatable.vmDataTable.columns(vm.getColumnIndex('status'));
                     statusColumn.data().unique().sort().each( function ( d, j ) {
                         let statusTitles = [];
                         $.each(d,(index,a) => {
@@ -243,22 +242,22 @@ export default {
         filterApplicationActivity: function() {
             let vm = this;
             if (vm.filterApplicationActivity!= 'All') {
-                vm.$refs.application_datatable.vmDataTable.columns(2).search(vm.filterApplicationActivity).draw();
+                vm.$refs.assessment_datatable.vmDataTable.columns(2).search(vm.filterApplicationActivity).draw();
             } else {
-                vm.$refs.application_datatable.vmDataTable.columns(2).search('').draw();
+                vm.$refs.assessment_datatable.vmDataTable.columns(2).search('').draw();
             }
         },
         filterApplicationStatus: function() {
             this.filterByColumn('status', this.filterApplicationStatus);
         },
         filterApplicationSubmitter: function(){
-            this.$refs.application_datatable.vmDataTable.draw();
+            this.$refs.assessment_datatable.vmDataTable.draw();
         },
         filterApplicationLodgedFrom: function(){
-            this.$refs.application_datatable.vmDataTable.draw();
+            this.$refs.assessment_datatable.vmDataTable.draw();
         },
         filterApplicationLodgedTo: function(){
-            this.$refs.application_datatable.vmDataTable.draw();
+            this.$refs.assessment_datatable.vmDataTable.draw();
         },
         filterApplicationLicenceType: function(){
             this.filterByColumn('licence category', this.filterApplicationLicenceType);
@@ -290,13 +289,6 @@ export default {
                     $(vm.$refs.applicationDateToPicker).data("DateTimePicker").minDate(false);
                 }
             });
-            // End Application Date Filters
-            // External Discard listener
-            vm.$refs.application_datatable.vmDataTable.on('click', 'a[data-discard-application]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-discard-application');
-                vm.discardApplication(id);
-            });
             // Initialise select2 for submitter
             $(vm.$refs.submitter_select).select2({
                 "theme": "bootstrap",
@@ -317,7 +309,7 @@ export default {
         },
         submitterSearch:function(){
             let vm = this;
-            vm.$refs.application_datatable.table.dataTableExt.afnFiltering.push(
+            vm.$refs.assessment_datatable.table.dataTableExt.afnFiltering.push(
                 function(settings,data,dataIndex,original){
                     let filtered_submitter = vm.filterApplicationSubmitter;
                     if (filtered_submitter == 'All'){ return true; } 
@@ -327,7 +319,7 @@ export default {
         },
         dateSearch:function(){
             let vm = this;
-            vm.$refs.application_datatable.table.dataTableExt.afnFiltering.push(
+            vm.$refs.assessment_datatable.table.dataTableExt.afnFiltering.push(
                 function(settings,data,dataIndex,original){
                     let from = vm.filterApplicationLodgedFrom;
                     let to = vm.filterApplicationLodgedTo;
@@ -361,15 +353,15 @@ export default {
             );
         },
         getColumnIndex: function(column_name) {
-            return this.application_headers.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
+            return this.assessment_headers.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
         },
         filterByColumn: function(column, filterAttribute) {
             const column_idx = this.getColumnIndex(column);
             const filterValue = typeof(filterAttribute) == 'string' ? filterAttribute : filterAttribute.name;
             if (filterValue!= 'All') {
-                this.$refs.application_datatable.vmDataTable.columns(column_idx).search('^' + filterValue +'$', true, false).draw();
+                this.$refs.assessment_datatable.vmDataTable.columns(column_idx).search('^' + filterValue +'$', true, false).draw();
             } else {
-                this.$refs.application_datatable.vmDataTable.columns(column_idx).search('').draw();
+                this.$refs.assessment_datatable.vmDataTable.columns(column_idx).search('').draw();
             }
         },
     },

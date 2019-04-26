@@ -10,10 +10,6 @@
               </ul>
             </div>
             <div class="tab-content">
-              <renderer-block :component="returns" :json_data="returnsData"
-                  v-if="returns.id"
-                  v-bind:key="`renderer_block_0`"
-              />
               {{ this.$slots.default }}
             </div>
         </div>

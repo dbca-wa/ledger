@@ -119,7 +119,8 @@ const ExpanderTable = {
     methods: {
         ...mapActions([
             'removeFormInstance',
-            'setFormValue'
+            'setFormValue',
+            'refreshApplicationFees',
         ]),
         isExpanded: function(tableId) {
             return this.expanded[tableId];
@@ -142,6 +143,7 @@ const ExpanderTable = {
             this.updateVisibleTables(
                 this.existingTables.filter(table => table != tableId)
             );
+            this.refreshApplicationFees();
         },
         addNewTable: function(params={}) {
             let { tableId } = params;
@@ -152,6 +154,7 @@ const ExpanderTable = {
             this.updateVisibleTables(
                 this.existingTables
             );
+            this.refreshApplicationFees();
         },
         updateVisibleTables: function(tableList) {
             this.setFormValue({

@@ -204,9 +204,9 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     character_check_status = CustomChoiceField(read_only=True)
     return_check_status = CustomChoiceField(read_only=True)
     application_fee = serializers.DecimalField(
-        max_digits=8, decimal_places=2, coerce_to_string=False)
+        max_digits=8, decimal_places=2, coerce_to_string=False, read_only=True)
     licence_fee = serializers.DecimalField(
-        max_digits=8, decimal_places=2, coerce_to_string=False)
+        max_digits=8, decimal_places=2, coerce_to_string=False, read_only=True)
     category_name = serializers.SerializerMethodField(read_only=True)
     activity_names = serializers.SerializerMethodField(read_only=True)
     activity_purpose_string = serializers.SerializerMethodField(read_only=True)
@@ -772,18 +772,3 @@ class DTAssessmentSerializer(serializers.ModelSerializer):
 
     def get_submitter(self, obj):
         return EmailUserSerializer(obj.application.submitter).data
-
-
-class SearchKeywordSerializer(serializers.Serializer):
-    number = serializers.CharField()
-    id = serializers.IntegerField()
-    type = serializers.CharField()
-    org_applicant = serializers.CharField()
-    proxy_applicant = serializers.CharField()
-    submitter = serializers.CharField()
-    text = serializers.JSONField(required=False)
-
-
-class SearchReferenceSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    type = serializers.CharField()

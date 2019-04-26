@@ -5,6 +5,8 @@ from wildlifecompliance.components.call_email.models import (
     ReportType,
     ComplianceFormDataRecord,
     ComplianceLogEntry,
+    Location,
+    ComplianceUserAction,
 )
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers
@@ -74,9 +76,25 @@ class ReportTypeSerializer(serializers.ModelSerializer):
         read_only_fields = ('report_type', 'schema')
 
 
+class LocationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Location
+        fields = (
+            'latitude',
+            'longitude',
+            'street',
+            'town_suburb',
+            'state',
+            'postcode',
+            'country',
+        )
+
+
 class CallEmailSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source='get_status_display')
     classification = ClassificationSerializer()
+    location = LocationSerializer()
     lodgement_date = serializers.CharField(
         source='lodged_on')
     report_type = ReportTypeSerializer()
@@ -100,6 +118,21 @@ class CallEmailSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', )
 
 
+class UpdateCallEmailSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CallEmail
+        fields = (
+            'id',
+            'status',
+            'classification',
+            'number',
+            'caller',
+            'assigned_to',
+        )
+        read_only_fields = ('id', )
+
+
 class UpdateRendererDataSerializer(CallEmailSerializer):
     data = ComplianceFormDataRecordSerializer(many=True)
 
@@ -110,12 +143,13 @@ class UpdateRendererDataSerializer(CallEmailSerializer):
             'data',
         )
 
- # class ComplianceUserActionSerializer(serializers.ModelSerializer):
-  #  who = serializers.CharField(source='who.get_full_name')
 
-   # class Meta:
-    #    model = ApplicationUserAction
-     #   fields = '__all__'
+class ComplianceUserActionSerializer(serializers.ModelSerializer):
+    who = serializers.CharField(source='who.get_full_name')
+
+    class Meta:
+        model = ComplianceUserAction
+        fields = '__all__'
 
 
 class ComplianceLogEntrySerializer(CommunicationLogEntrySerializer):
