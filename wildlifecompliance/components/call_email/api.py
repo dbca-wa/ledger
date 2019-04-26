@@ -40,6 +40,7 @@ from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.call_email.models import (
     CallEmail,
     Classification,
+    Location,
     ComplianceFormDataRecord,
 )
 from wildlifecompliance.components.call_email.serializers import (
@@ -60,6 +61,12 @@ from utils import SchemaParser
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
+
+
+
+class LocationViewSet(viewsets.ModelViewSet):
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
 
 
 class CallEmailViewSet(viewsets.ModelViewSet):
