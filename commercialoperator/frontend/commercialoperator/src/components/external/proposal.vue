@@ -125,7 +125,7 @@ export default {
       //vm.form=document.forms.new_proposal;
       let formData = new FormData(vm.form);
 
-      //console.log('marine activities', vm.proposal.marine_parks_activities);
+      console.log('land activities', vm.proposal.selected_parks_activities);
       formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
 
       vm.$http.post(vm.proposal_form_url,formData).then(res=>{

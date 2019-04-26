@@ -200,7 +200,8 @@ class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
                 'other_comments',
                 'credit_fees',
                 'credit_docket_books',
-                'docket_books_number'
+                'docket_books_number',
+                'mooring'
                 )
     # def get_accreditation_type(self,obj):
     #     return obj.get_accreditation_type_display()

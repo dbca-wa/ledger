@@ -116,13 +116,18 @@
                                     <label>Provide the mooring number for any mooring within a marine reseve your operation will use</label>
                                 </div>   
                             </div>
-                            <div class="row">
+                            <div class="row" v-for="(m, index) in proposal.other_details.mooring">
                                 <div class="col-sm-3">
                                     <label class="control-label pull-left"  for="Name">Mooring number</label>
                                 </div>
-                                <div class="col-sm-9">
-                                    <input type="text" class="form-control" name="Mooring number" placeholder="" :disabled="proposal.readonly">
+                                <div class="col-sm-9" style="margin-bottom: 5px">
+                                    <input type="text" class="form-control" name="Mooring number" placeholder="" :disabled="proposal.readonly" v-model="proposal.other_details.mooring[index]">
                                 </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <span><a @click="addMooring()" target="_blank" class="control-label pull-left" v-if="!proposal.readonly">Add another mooring</a></span>
+                                </div>   
                             </div>
                         </div>
                    </div>
@@ -336,6 +341,8 @@ export default {
                 accreditation_type:[],
                 selected_accreditations:[],
                 licence_period_choices:[],
+                mooring: [''],
+                //mooring:[{'value':''}],
                 datepickerOptions:{
                 format: 'DD/MM/YYYY',
                 showClear:true,
@@ -388,6 +395,14 @@ export default {
                         }
                     }
                 }
+            },
+            addMooring: function(){
+                let vm=this;
+                //var new_mooring= helpers.copyObject(vm.mooring)
+                var new_mooring= helpers.copyObject(vm.proposal.other_details.mooring)
+                new_mooring.push('');
+                vm.proposal.other_details.mooring=new_mooring;
+                console.log(vm.proposal.other_details.mooring);
             },
             fetchAccreditationChoices: function(){
                 let vm = this;

@@ -1563,6 +1563,7 @@ class ProposalOtherDetails(models.Model):
     nominated_start_date= models.DateField(blank=True, null=True)
     insurance_expiry= models.DateField(blank=True, null=True)
     other_comments=models.TextField(blank=True)
+    mooring = JSONField(default=[''])
     #if credit facilities for payment of fees is required
     credit_fees=models.BooleanField(default=False)
     #if credit/ cash payment docket books are required
