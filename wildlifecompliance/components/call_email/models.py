@@ -176,6 +176,9 @@ class CallEmail(models.Model):
         """ returns a queryset of form data records attached to CallEmail (shortcut to ComplianceFormDataRecord related_name). """
         return self.form_data_records.all()
 
+    def log_user_action(self, action, request):
+        return ComplianceUserAction.log_action(self, action, request.user)
+
 
 @python_2_unicode_compatible
 class ComplianceFormDataRecord(models.Model):
@@ -336,3 +339,21 @@ class ComplianceLogEntry(CommunicationsLogEntry):
         # if not self.reference:
         #   self.reference = self.application.reference
         # super(ComplianceLogEntry, self).save(**kwargs)
+
+
+class ComplianceUserAction(UserAction):
+    ACTION_CHANGE_CLASSIFICATION_ = "Change Classification {}"
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        ordering = ('-when',)
+
+    @classmethod
+    def log_action(cls, call_email, action, user):
+        return cls.objects.create(
+            call_email=call_email,
+            who=user,
+            what=str(action)
+        )
+
+    call_email = models.ForeignKey(CallEmail, related_name='action_logs')
