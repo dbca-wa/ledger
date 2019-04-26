@@ -177,7 +177,6 @@ class WildlifeLicence(models.Model):
         if not self.licence_number:
             self.licence_number = 'L{0:06d}'.format(
                 self.next_licence_number_id)
-            # self.licence_number = 'L{0:06d}'.format(self.pk)
             self.save()
 
     def get_activities_by_status(self, status):
@@ -204,13 +203,6 @@ class WildlifeLicence(models.Model):
     @property
     def activities(self):
         return self.current_application.activities
-
-#    def seq_idx():
-#        no = WildlifeLicence.objects.get().aggregate(Max(order))
-#        if no == None:
-#            return 1
-#        else:
-#            return no + 1
 
     @property
     def reference(self):

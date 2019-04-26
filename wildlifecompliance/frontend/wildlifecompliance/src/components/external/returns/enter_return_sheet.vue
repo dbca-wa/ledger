@@ -97,7 +97,7 @@
 import datatable from '@/utils/vue/datatable.vue'
 import $ from 'jquery'
 import Vue from 'vue'
-import CommsLogs from '@common-utils/comms_logs.vue'
+import CommsLogs from '@common-components/comms_logs.vue'
 import SheetEntry from './enter_return_sheet_entry.vue'
 import {
   api_endpoints,

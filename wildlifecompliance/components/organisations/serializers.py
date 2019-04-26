@@ -80,6 +80,25 @@ class DelegateSerializer(serializers.ModelSerializer):
         )
 
 
+class DTOrganisationSerializer(serializers.ModelSerializer):
+    address_string = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Organisation
+        fields = (
+            'id',
+            'name',
+            'abn',
+            'address_string',
+        )
+        # the serverSide functionality of datatables is such that only columns that have field 'data'
+        # defined are requested from the serializer. Use datatables_always_serialize to force render
+        # of fields that are not listed as 'data' in the datatable columns
+        datatables_always_serialize = fields
+
+    def get_address_string(self, obj):
+        return obj.address_string
+
 class OrganisationSerializer(serializers.ModelSerializer):
     address = OrganisationAddressSerializer(read_only=True)
     pins = serializers.SerializerMethodField(read_only=True)
@@ -95,7 +114,6 @@ class OrganisationSerializer(serializers.ModelSerializer):
             'address',
             'email',
             'organisation',
-            'phone_number',
             'pins',
             'delegates'
         )
