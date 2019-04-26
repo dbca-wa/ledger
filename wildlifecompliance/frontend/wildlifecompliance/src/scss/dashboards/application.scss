@@ -1,0 +1,10 @@
+td {
+    &.normal-white-space {
+        white-space: normal !important;
+    }
+}
+tr {
+    :not(.child) {
+        cursor: pointer;
+    }
+}

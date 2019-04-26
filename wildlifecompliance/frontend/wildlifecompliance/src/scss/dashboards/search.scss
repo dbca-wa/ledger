@@ -1,5 +1,5 @@
 td {
-   &.capitalise {
+   &.capitalise, [data-dt-column="8"] .dtr-data {
        text-transform: capitalize;
    }
 }

@@ -150,6 +150,9 @@ export const applicationStore = {
                                 "value": form_data_record.value,
                                 "comment_value": form_data_record.comment,
                                 "deficiency_value": form_data_record.deficiency,
+                                "schema_name": form_data_record.schema_name,
+                                "component_type": form_data_record.component_type,
+                                "instance_name": form_data_record.instance_name,
                             }
                         });
                     }
@@ -171,6 +174,20 @@ export const applicationStore = {
         setApplication({ dispatch, commit }, application) {
             commit(UPDATE_APPLICATION, application);
             dispatch('refreshAddresses');
+        },
+        refreshApplicationFees({ dispatch, state, getters, rootGetters }) {
+            Vue.http.post('/api/application/estimate_price/', {
+                    'application_id': getters.application_id,
+                    'field_data': rootGetters.renderer_form_data,
+            }).then(res => {
+                dispatch('setApplication', {
+                    ...state.application,
+                    application_fee: res.body.fees.application,
+                    licence_fee: res.body.fees.licence
+                });
+            }, err => {
+                console.log(err);
+            });
         },
     }
 }

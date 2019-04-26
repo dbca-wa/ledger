@@ -20,9 +20,9 @@
 <script>
 
 import datatable from '@/utils/vue/datatable.vue'
-import ApplicationDashTable from '@common-utils/applications_dashboard.vue'
-import LicenceDashTable from '@common-utils/licences_dashboard.vue'
-import ReturnDashTable from '@common-utils/returns_dashboard.vue'
+import ApplicationDashTable from '@common-components/applications_dashboard.vue'
+import LicenceDashTable from '@common-components/licences_dashboard.vue'
+import ReturnDashTable from '@common-components/returns_dashboard.vue'
 import {
   api_endpoints,
   helpers
