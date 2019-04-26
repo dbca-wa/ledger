@@ -20,7 +20,7 @@
                         <div class="navbar-inner">
                             <div class="container">
                                 <p class="pull-right" style="margin-top:5px;">
-                                    <span v-if="requiresCheckout" style="margin-right: 5px; font-size: 18px;">
+                                    <span v-if="requiresCheckout" style="margin-right: 5px; font-size: 18px; display: block;">
                                         <strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong>
                                         <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
                                     </span>
@@ -28,7 +28,7 @@
                                     <input v-if="!isProcessing" type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
                                     <input v-if="!isProcessing" type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
                                     <input v-if="!isProcessing && !requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
-                                    <input v-if="requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
+                                    <input v-if="!isProcessing && requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
                                     <button v-if="isProcessing" disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Processing</button>
                                 </p>
                             </div>
@@ -47,7 +47,6 @@
                     </div>
                 </div>
             </Application>
-        <input type="button" @click.prevent="testButton" class="btn btn-danger" value="Test Button"/>
         </form>
     </div>
 </template>
@@ -65,8 +64,9 @@ export default {
     return {
       form: null,
       isProcessing: false,
+      tabSelected: false,
       application_customer_status_onload: {},
- 	  missing_fields: [],
+ 	    missing_fields: [],
     }
   },
   components: {
@@ -95,7 +95,7 @@ export default {
       return (this.application) ? `/api/application/${this.application.id}/form_data.json` : '';
     },
     requiresCheckout: function() {
-        return this.application.application_fee > 0 && this.application_customer_status_onload.id == 'draft'
+      return this.application.application_fee > 0 && this.application_customer_status_onload.id == 'draft'
     },
     canDiscardActivity: function() {
       return this.application.activities.find(
@@ -117,8 +117,10 @@ export default {
         'saveFormData',
     ]),
     eventListeners: function(){
-        let vm = this;
+      if(!this.tabSelected) {
         $('#tabs-section li:first-child a').click();
+        this.tabSelected = true;
+      }
     },
     discardActivity: function(e) {
       let swal_title = 'Discard Selected Activity';
@@ -167,9 +169,22 @@ export default {
       },(error) => {
       });
     },
+    reloadApplication: function(application_id) {
+      if(!application_id && this.application) {
+        application_id = this.application.id;
+      }
+      if (application_id) {
+        this.load({ url: `/api/application/${application_id}.json` }).then(() => {
+            this.application_customer_status_onload = this.application.customer_status;
+        });
+      }
+      else {
+        this.load({ url: '/api/application.json' });
+      }
+    },
     saveExit: function(e) {
       this.isProcessing = true;
-      this.saveFormData({ url: this.application_form_data_url }).then(res=>{
+      this.saveFormData({ url: this.application_form_data_url, draft: true }).then(res=>{
           swal(
             'Saved',
             'Your application has been saved',
@@ -190,13 +205,14 @@ export default {
     },
     save: function(e) {
       this.isProcessing = true;
-      this.saveFormData({ url: this.application_form_data_url }).then(res=>{
+      this.saveFormData({ url: this.application_form_data_url, draft: true }).then(res=>{
           swal(
             'Saved',
             'Your application has been saved',
             'success'
           ).then((result) => {
             this.isProcessing = false;
+            this.reloadApplication();
           });
       },err=>{
         swal(
@@ -209,14 +225,15 @@ export default {
       });
     },
     highlight_missing_fields: function(){
-        for (const missing_field of this.missing_fields) {
-            $("#id_" + missing_field.name).css("color", 'red');
-        }
+      $('.missing-field').removeClass('missing-field');
+      for (const missing_field of this.missing_fields) {
+          $(`[name=${missing_field.name}`).addClass('missing-field');
+      }
 
-        var top = ($('#error').offset() || { "top": NaN }).top;
-        $('html, body').animate({
-            scrollTop: top
-        }, 1);
+      var top = ($('#error').offset() || { "top": NaN }).top;
+      $('html, body').animate({
+          scrollTop: top
+      }, 1);
     },
     submit: function(){
         let vm = this;
@@ -237,44 +254,44 @@ export default {
             confirmButtonText: 'Submit'
         }).then((result) => {
             if (result.value) {
-                let formData = new FormData(vm.form);
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),formData).then(res=>{
-                    this.setApplication(res.body);
-                    if (vm.requiresCheckout) {
-                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), formData).then(res=>{
-                            this.isProcessing = false;
-                            window.location.href = "/ledger/checkout/checkout/payment-details/";
-                        },err=>{
-                            swal(
-                                'Submit Error',
-                                helpers.apiVueResourceError(err),
-                                'error'
-                            ).then((result) => {
-                                this.isProcessing = false;
-                            })
-                        });
-                    } else {
-                        this.isProcessing = false;
-                        vm.$router.push({
-                            name: 'submit_application',
-                            params: { application: vm.application}
-                        });
-                    }
-                },err=>{
-                    console.log(err);
-                    if(err.body.missing) {
-                      this.missing_fields = err.body.missing;
-                      this.highlight_missing_fields();
-                      this.isProcessing = false;
-                    }
-                    else {
+                this.saveFormData({ url: this.application_form_data_url }).then(res=>{
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/submit'),{}).then(res=>{
+                      this.setApplication(res.body);
+                      if (vm.requiresCheckout) {
+                          vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), {}).then(res=>{
+                              this.isProcessing = false;
+                              window.location.href = "/ledger/checkout/checkout/payment-details/";
+                          },err=>{
+                              swal(
+                                  'Submit Error',
+                                  helpers.apiVueResourceError(err),
+                                  'error'
+                              ).then((result) => {
+                                  this.isProcessing = false;
+                              })
+                          });
+                      } else {
+                          this.isProcessing = false;
+                          vm.$router.push({
+                              name: 'submit_application',
+                              params: { application: vm.application }
+                          });
+                      }
+                  },err=>{
                       swal(
                           'Submit Error',
                           helpers.apiVueResourceError(err),
                           'error'
                       ).then((result) => {
                           this.isProcessing = false;
-                      })
+                      });
+                  });
+                }, err=>{
+                  console.log(err);
+                  if(err.body.missing) {
+                      this.missing_fields = err.body.missing;
+                      this.highlight_missing_fields();
+                      this.isProcessing = false;
                     }
                 });
             } else {
@@ -296,14 +313,7 @@ export default {
   },
   beforeRouteEnter: function(to, from, next) {
     next(vm => {
-      if (to.params.application_id) {
-        vm.load({ url: `/api/application/${to.params.application_id}.json` }).then(() => {
-            vm.application_customer_status_onload = vm.application.customer_status;
-        });
-      }
-      else {
-        vm.load({ url: '/api/application.json' });
-      }
+      vm.reloadApplication(to.params.application_id);
     });
   },
   updated: function(){

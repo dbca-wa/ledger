@@ -13,7 +13,7 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="">Licence Type</label>
+                                <label for="">Licence Category</label>
                                 <select class="form-control" v-model="filterApplicationLicenceType">
                                     <option value="All">All</option>
                                     <option v-for="lt in application_licence_types" :value="lt" v-bind:key="`licence_type_${lt}`">{{lt}}</option>
@@ -81,6 +81,7 @@ import {
     api_endpoints,
     helpers
 }from '@/utils/hooks'
+import '@/scss/dashboards/application.scss';
 export default {
     name: 'ApplicationTableDash',
     props: {
@@ -99,17 +100,15 @@ export default {
     },
     data() {
         let vm = this;
-        let internal_application_headers = [];
-        internal_application_headers = ["Number","Category","Activity","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"];
+        let internal_application_headers = ["Number","Category","Activity","Type","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"];
         let internal_columns = [
             {
                 data: "lodgement_number",
-                mRender:function(data,type,full){
-                    return data;
-                }
             },
             {
                 data: "category_name",
+                className: "normal-white-space",
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
@@ -118,10 +117,18 @@ export default {
                     let output = data.replace(/(?:\r\n|\r|\n|,)/g, '<br>');
                     return output;
                 },
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
+                data: "application_type",
+                mRender:function (data,type,full) {
+                    return data.name;
+                }
+            },
+            {
                 data: "submitter",
+                className: "normal-white-space",
                 name: "submitter__first_name, submitter__last_name, submitter__email",
                 mRender:function (data,type,full) {
                     if (data) {
@@ -132,20 +139,22 @@ export default {
             },
             {
                 data: "applicant",
+                className: "normal-white-space",
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "processing_status",
+                className: "normal-white-space",
                 mRender:function(data,type,full){
-                    return vm.is_external ? full.customer_status.name: data.name;
+                    return data.name;
                 },
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "payment_status",
-                mRender:function(data,type,full){
-                    return vm.is_external ? full.customer_status.name: data;
-                },
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
@@ -178,6 +187,7 @@ export default {
                     }
                     return links;
                 },
+                orderable: false,
                 searchable: false
             }
         ]
@@ -185,12 +195,10 @@ export default {
         let external_columns = [
             {
                 data: "lodgement_number",
-                mRender:function(data,type,full){
-                    return data;
-                }
             },
             {
                 data: "category_name",
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
@@ -199,7 +207,14 @@ export default {
                     let output = data.replace(/(?:\r\n|\r|\n|,)/g, '<br>');
                     return output;
                 },
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
+            },
+            {
+                data: "application_type",
+                mRender:function (data,type,full) {
+                    return data.name;
+                }
             },
             {
                 data: "submitter",
@@ -213,13 +228,15 @@ export default {
             },
             {
                 data: "applicant",
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "customer_status",
                 mRender:function(data,type,full){
-                    return vm.is_external ? full.customer_status.name: data.name;
+                    return data.name;
                 },
+                orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
@@ -253,6 +270,7 @@ export default {
                     }
                     return links;
                 },
+                orderable: false,
                 searchable: false
             }
         ]
@@ -276,7 +294,7 @@ export default {
             application_licence_types : [],
             application_submitters: [],
             application_status: [],
-            application_ex_headers:["Number","Category","Activity","Submitter","Applicant","Status","Lodged on","Action"],
+            application_ex_headers: ["Number","Category","Activity","Type","Submitter","Applicant","Status","Lodged on","Action"],
             application_ex_options:{
                 serverSide: true,
                 searchDelay: 1000,
@@ -350,7 +368,26 @@ export default {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
-                responsive: true,
+                responsive: {
+                    details: {
+                        type: 'column',
+                        target: 'tr',
+                        renderer: function ( api, rowIdx, columns ) {
+                            var data = $.map( columns, function ( col, i ) {
+                                return col.hidden ?
+                                    '<tr data-dt-row="'+col.rowIndex+'" data-dt-column="'+col.columnIndex+'">'+
+                                        '<td><strong>'+col.title+':&nbsp;'+'</strong></td> '+
+                                        '<td>'+col.data+'</td>'+
+                                    '</tr>' :
+                                    '';
+                            } ).join('');
+
+                            return data ?
+                                $('<table/>').append( data ) :
+                                false;
+                        }
+                    }
+                },
                 ajax: {
                     "url": vm.url,
                     "dataSrc": 'data',
@@ -379,11 +416,11 @@ export default {
                     var submittersColumn = vm.visibleDatatable.vmDataTable.columns(vm.getColumnIndex('submitter'));
                     submittersColumn.data().unique().sort().each( function ( d, j ) {
                         var submitters = [];
-                        $.each(d,(index,s) => {
-                            if (!submitters.find(submitter => submitter.email == s.email) || submitters.length == 0){
+                        $.each(d,(index, submitter) => {
+                            if (!submitters.find(item => item.email == submitter.email || submitters.length == 0)){
                                 submitters.push({
-                                    'email':s.email,
-                                    'search_term': `${s.first_name} ${s.last_name} (${s.email})`
+                                    'email':submitter.email,
+                                    'search_term': `${submitter.first_name} ${submitter.last_name} (${submitter.email})`
                                 });
                             }
                         });
@@ -409,7 +446,7 @@ export default {
     },
     watch:{
         filterApplicationStatus: function() {
-            this.filterByColumn('status', this.filterApplicationStatus);
+            this.visibleDatatable.vmDataTable.draw();
         },
         filterApplicationSubmitter: function(){
             this.visibleDatatable.vmDataTable.draw();
@@ -421,9 +458,8 @@ export default {
             this.visibleDatatable.vmDataTable.draw();
         },
         filterApplicationLicenceType: function(){
-            this.filterByColumn('category', this.filterApplicationLicenceType);
+            this.visibleDatatable.vmDataTable.draw();
         },
-        
     },
     computed: {
         visibleHeaders: function() {
@@ -492,7 +528,7 @@ export default {
                     vm.filterApplicationLodgedTo =  e.date.format('DD/MM/YYYY');
                 }
                 else if ($(vm.$refs.applicationDateToPicker).data('date') === "") {
-                    vm.filterapplicationodgedTo = "";
+                    vm.filterApplicationLodgedTo = "";
                 }
              });
             $(vm.$refs.applicationDateFromPicker).datetimepicker(vm.datepickerOptions);
@@ -503,9 +539,9 @@ export default {
                 }
                 else if ($(vm.$refs.applicationDateFromPicker).data('date') === "") {
                     vm.filterApplicationLodgedFrom = "";
+                    $(vm.$refs.applicationDateToPicker).data("DateTimePicker").minDate(false);
                 }
             });
-            // End Application Date Filters
             // External Discard listener
             vm.visibleDatatable.vmDataTable.on('click', 'a[data-discard-application]', function(e) {
                 e.preventDefault();
@@ -541,7 +577,7 @@ export default {
             vm.visibleDatatable.table.dataTableExt.afnFiltering.push(
                 function(settings,data,dataIndex,original){
                     let filtered_submitter = vm.filterApplicationSubmitter;
-                    if (filtered_submitter == 'All'){ return true; } 
+                    if (filtered_submitter == 'All'){ return true; }
                     return filtered_submitter == original.submitter.email;
                 }
             );
@@ -575,7 +611,7 @@ export default {
                         else{
                             return false;
                         }
-                    } 
+                    }
                     else{
                         return false;
                     }
@@ -584,15 +620,6 @@ export default {
         },
         getColumnIndex: function(column_name) {
             return this.visibleHeaders.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
-        },
-        filterByColumn: function(column, filterAttribute) {
-            const column_idx = this.getColumnIndex(column);
-            const filterValue = typeof(filterAttribute) == 'string' ? filterAttribute : filterAttribute.name;
-            if (filterValue!= 'All') {
-                this.visibleDatatable.vmDataTable.columns(column_idx).search('^' + filterValue +'$', true, false).draw();
-            } else {
-                this.visibleDatatable.vmDataTable.columns(column_idx).search('').draw();
-            }
         },
     },
     mounted: function(){

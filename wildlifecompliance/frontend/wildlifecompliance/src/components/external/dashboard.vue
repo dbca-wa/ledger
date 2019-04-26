@@ -20,9 +20,9 @@
 <script>
 
 import datatable from '@/utils/vue/datatable.vue'
-import ApplicationDashTable from '@common-utils/applications_dashboard.vue'
-import LicenceDashTable from '@common-utils/licences_dashboard.vue'
-import ReturnDashTable from '@common-utils/returns_dashboard.vue'
+import ApplicationDashTable from '@common-components/applications_dashboard.vue'
+import LicenceDashTable from '@common-components/licences_dashboard.vue'
+import ReturnDashTable from '@common-components/returns_dashboard.vue'
 import {
   api_endpoints,
   helpers
@@ -34,7 +34,7 @@ export default {
         let vm = this;
         return {
             applications_url: helpers.add_endpoint_join(api_endpoints.applications_paginated,'external_datatable_list/?format=datatables'),
-            licences_url: helpers.add_endpoint_json(api_endpoints.licences,'user_list'),
+            licences_url: helpers.add_endpoint_join(api_endpoints.licences_paginated,'external_datatable_list/?format=datatables'),
             returns_url:helpers.add_endpoint_json(api_endpoints.returns,'user_list'),
             empty_list: '/api/empty_list',
         }

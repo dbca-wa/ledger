@@ -1,66 +1,12 @@
 <template>
 <div class="container" id="internalSearch">
+    <UserDashTable level="internal" :url="users_url" />
+    <OrganisationDashTable />
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search People 
-                        <a :href="'#'+cBody" data-toggle="collapse"  data-parent="#peopleInfo" expanded="true" :aria-controls="cBody">
-                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                        </a>
-                    </h3>
-                </div>
-                <div class="panel-body collapse in" :id="cBody">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <label class="control-label">
-                                <a href="/internal/users">Click here to search for people</a>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Search Organisations
-                        <a :href="'#'+oBody" data-toggle="collapse"  data-parent="#organisationInfo" expanded="true" :aria-controls="oBody">
-                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                        </a>
-                    </h3>
-                </div>
-                <div class="panel-body collapse in" :id="oBody">
-                    <div class="row">
-                        <form name="searchOrganisationForm">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label class="control-label" for="Organisation">Search Organisation</label>
-                                    <select v-if="organisations == null" class="form-control" name="organisation" v-model="selected_organisation">
-                                        <option value="">Loading...</option>
-                                    </select>
-                                    <select v-else ref="searchOrg" class="form-control" name="organisation">
-                                        <option value="">Select Organisation</option>
-                                        <option v-for="o in organisations" :value="o.id">{{ o.name }}</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-12 text-center">
-                                <router-link :disabled="selected_organisation == ''" :to="{name:'internal-org-detail',params:{'org_id':parseInt(selected_organisation)}}" class="btn btn-primary">View Details</router-link>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Search Keywords
+                    <h3 class="panel-title">Keywords
                         <a :href="'#'+kBody" data-toggle="collapse"  data-parent="#keywordInfo" expanded="true" :aria-controls="kBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -108,7 +54,7 @@
                     <div class="row">
                       <div class="col-lg-12">
                         <div>
-                          <input type="button" @click.prevent="searchKeyword" class="btn btn-primary" style="margin-bottom: 5px"value="Search"/>
+                          <input :disabled="!hasSearchKeywords" type="button" @click.prevent="searchKeyword" class="btn btn-primary" style="margin-bottom: 5px"value="Search"/>
                           <input type="reset" @click.prevent="clearKeywordSearch" class="btn btn-primary" style="margin-bottom: 5px"value="Clear"/>
                         </div>
                       </div>
@@ -126,7 +72,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Search Reference Number 
+                    <h3 class="panel-title">Reference Number
                         <a :href="'#'+rBody" data-toggle="collapse"  data-parent="#referenceNumberInfo" expanded="true" :aria-controls="rBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -152,6 +98,10 @@
 <script>
 import $ from 'jquery'
 import datatable from '@/utils/vue/datatable.vue'
+import alert from '@/utils/vue/alert.vue'
+import UserDashTable from '@common-components/users_dashboard.vue'
+import OrganisationDashTable from '@internal-components/organisations/organisations_dashboard.vue'
+import '@/scss/dashboards/search.scss';
 import {
   api_endpoints,
   helpers
@@ -159,16 +109,18 @@ import {
 from '@/utils/hooks'
 import utils from './utils'
 export default {
-    name: 'ExternalDashboard',
+    name: 'SearchDashboard',
     data() {
         let vm = this;
         return {
+            users_url: helpers.add_endpoint_join(api_endpoints.users_paginated,'datatable_list/?format=datatables'),
             rBody: 'rBody' + vm._uid,
             oBody: 'oBody' + vm._uid,
             cBody: 'cBody' + vm._uid,
             kBody: 'kBody' + vm._uid,
             loading: [],
             searchKeywords: [],
+            hasSearchKeywords: false,
             selected_organisation:'',
             organisations: null,
             searchApplication: true,
@@ -189,7 +141,7 @@ export default {
                 data: vm.results,
                 columns: [
                     {data: "number"},
-                    {data:"type"},
+                    {data:"record_type"},
                     {data: "applicant"},
                     {data: "text",
                         mRender: function (data,type,full) {
@@ -201,14 +153,14 @@ export default {
                             }
                         }
                     },
-                    {data: "id",
+                    {data: "record_id",
                         mRender:function (data,type,full) {
                             let links = '';
                             if(full.type == 'Application') {
                               links +=  `<a href='/internal/application/${full.id}'>View</a><br/>`;
                             }
                             if(full.type == 'Licence') {
-                              links +=  `<a href='/internal/licence/${full.id}'>View</a><br/>`;
+                              links +=  `<a href="${full.licence_document}" target="_blank">View</a>`;
                             }
                             if(full.type == 'Return') {
                               links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;
@@ -221,9 +173,20 @@ export default {
             }
         }
     },
-    watch: {},
+    watch: {
+        searchKeywords: function() {
+            if (this.searchKeywords.length > 0){
+                this.hasSearchKeywords = true;
+            } else {
+                this.hasSearchKeywords = false;
+            };
+        }
+    },
     components: {
+        alert,
         datatable,
+        UserDashTable,
+        OrganisationDashTable
     },
     beforeRouteEnter:function(to,from,next){
         let initialisers = [
@@ -231,7 +194,7 @@ export default {
         ]
         Promise.all(initialisers).then(data => {
             next(vm => {
-                vm.organisations = data[0];
+                vm.organisations = data[0].results;
             });
         });
     },
@@ -240,8 +203,7 @@ export default {
             return this.loading.length == 0;
         },
         showError: function() {
-            var vm = this;
-            return vm.errors;
+            return this.errors;
         }
     },
     methods: {

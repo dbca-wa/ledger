@@ -137,7 +137,6 @@ export default {
         },(error) => {
         });
     },
-
     handleRadioChange: function(e,index){
         let vm=this
         for(var i=0,_len=vm.licence_categories.length;i<_len;i++){
@@ -158,8 +157,6 @@ export default {
             }
 
         }
-        console.log("This is the value to pass on",vm.licence_category);
-
     },
     handleActivityCheckboxChange:function(index,index1){
         let vm = this
@@ -171,15 +168,18 @@ export default {
         }
     },
     handlePurposeCheckboxChange:function(index,index1,index2,event){
-        let vm = this
-        var purpose = vm.licence_categories[index].activity[index1].purpose[index2]
-        if(event.target.checked){
-            vm.application_fee += Number(purpose.base_application_fee);
-            vm.licence_fee += Number(purpose.base_licence_fee);
-        } else {
-            vm.application_fee -= Number(purpose.base_application_fee);
-            vm.licence_fee -= Number(purpose.base_licence_fee);
-        }
+        let purpose_ids = this.licence_categories[index].activity[index1].purpose.filter(
+            purpose => purpose.selected || (purpose.id == event.target.id && event.target.checked)
+        ).map(purpose => purpose.id);
+
+        this.$http.post('/api/application/estimate_price/', {
+                'purpose_ids': purpose_ids
+            }).then(res => {
+                this.application_fee = res.body.fees.application;
+                this.licence_fee = res.body.fees.licence;
+        }, err => {
+            console.log(err);
+        });
     },
     createApplication:function () {
         let vm = this;
@@ -283,15 +283,7 @@ export default {
             data.application_fee=vm.application_fee;
             data.licence_fee=vm.licence_fee;
             data.licence_purposes=licence_purposes;
-            console.log(' ---- application apply licence createApplication() ---- ');
-            console.log(`Licence category ID: ${data.licence_category_id}`);
-            console.log(vm.application_fee)
-            console.log(vm.licence_fee)
-            console.log(data.licence_category)
-            console.log(' ==== licence category data ==== ')
-            console.log(JSON.stringify(data));
             vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
-                console.log('New application response: ', res.body);
                 vm.application = res.body;
                 vm.$router.push({
                     name:"draft_application",
@@ -312,7 +304,6 @@ export default {
     ]
     Promise.all(initialisers).then(data => {
         next(vm => {
-            console.log(window.v_org_applicant);
             vm.licence_categories = data[0]
         });
     });

@@ -1,30 +1,13 @@
 import traceback
-import base64
-import geojson
-from six.moves.urllib.parse import urlparse
-from wsgiref.util import FileWrapper
-from django.db.models import Q, Min
 from django.db import transaction
 from django.http import HttpResponse
-from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
-from django.conf import settings
-from django.contrib import messages
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
-from rest_framework import viewsets, serializers, status, generics, views
-from rest_framework.decorators import detail_route, list_route, renderer_classes
+from rest_framework import viewsets, serializers, views
+from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
-from rest_framework.pagination import PageNumberPagination
-from datetime import datetime, timedelta
-from collections import OrderedDict
-from django.core.cache import cache
-from ledger.accounts.models import EmailUser, Address, Profile, EmailIdentity, EmailUserAction, query_emailuser_by_args
-from ledger.address.models import Country
-from datetime import datetime, timedelta, date
+from ledger.accounts.models import EmailUser, Address, Profile, EmailIdentity, EmailUserAction
+from datetime import datetime
 from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.applications.email import send_id_updated_notification
 from wildlifecompliance.components.organisations.models import (
@@ -34,6 +17,7 @@ from wildlifecompliance.components.organisations.models import (
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.users.serializers import (
     UserSerializer,
+    DTUserSerializer,
     UserProfileSerializer,
     UserAddressSerializer,
     PersonalSerializer,
@@ -45,6 +29,10 @@ from wildlifecompliance.components.users.serializers import (
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
 )
+
+from rest_framework_datatables.pagination import DatatablesPageNumberPagination
+from rest_framework_datatables.filters import DatatablesFilterBackend
+from rest_framework_datatables.renderers import DatatablesRenderer
 
 
 class GetMyUserDetails(views.APIView):
@@ -122,6 +110,60 @@ class MyProfilesViewSet(viewsets.ModelViewSet):
         return query_set
 
 
+class UserFilterBackend(DatatablesFilterBackend):
+
+    def filter_queryset(self, request, queryset, view):
+        """
+        Custom filters
+        """
+        character_flagged = request.GET.get('character_flagged')
+        dob = request.GET.get('dob')
+
+        if queryset.model is EmailUser:
+            # apply user selected filters
+            character_flagged = character_flagged if character_flagged else 'all'
+            if character_flagged.lower() != 'all':
+                queryset = queryset.filter(character_flagged=character_flagged)
+            if dob:
+                queryset = queryset.filter(dob=datetime.strptime(dob, '%Y-%m-%d').date())
+
+        queryset = super(UserFilterBackend, self).filter_queryset(request, queryset, view).distinct()
+        total_count = queryset.count()
+        setattr(view, '_datatables_total_count', total_count)
+        return queryset
+
+
+class UserRenderer(DatatablesRenderer):
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        if 'view' in renderer_context and hasattr(renderer_context['view'], '_datatables_total_count'):
+            data['recordsTotal'] = renderer_context['view']._datatables_total_count
+        return super(UserRenderer, self).render(data, accepted_media_type, renderer_context)
+
+
+class UserPaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (UserFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (UserRenderer,)
+    queryset = EmailUser.objects.none()
+    serializer_class = DTUserSerializer
+    page_size = 10
+
+    def get_queryset(self):
+        if is_internal(self.request):
+            return EmailUser.objects.all()
+        return EmailUser.objects.none()
+
+    @list_route(methods=['GET', ])
+    def datatable_list(self, request, *args, **kwargs):
+        self.serializer_class = DTUserSerializer
+        queryset = self.get_queryset()
+        queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = DTUserSerializer(result_page, context={'request': request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
+
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = EmailUser.objects.all()
     serializer_class = UserSerializer
@@ -154,26 +196,6 @@ class UserViewSet(viewsets.ModelViewSet):
         if dob is not None and dob is not u'':
             queryset = queryset.filter(dob=dob)
         return queryset
-
-    def list(self, request, **kwargs):
-        if request.query_params:
-            try:
-                users = query_emailuser_by_args(**request.query_params)
-                serializer = UserSerializer(users['items'], many=True)
-                result = dict()
-                result['data'] = serializer.data
-                result['draw'] = int(users['draw'])
-                result['recordsTotal'] = users['total']
-                result['recordsFiltered'] = users['count']
-                return Response(result)
-            except Exception as e:
-                return Response(e)
-        else:
-            try:
-                return super(UserViewSet, self).list(request, **kwargs)
-
-            except Exception as e:
-                return Response(e)
 
     @detail_route(methods=['GET', ])
     def action_log(self, request, *args, **kwargs):

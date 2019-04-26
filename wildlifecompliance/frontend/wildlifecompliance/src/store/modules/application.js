@@ -10,7 +10,12 @@ import {
 export const applicationStore = {
     state: {
         original_application: {},
-        application: {},
+        application: {
+            "schema": [],
+            "licence_type_data": {
+                "activity": []
+            }
+        },
     },
     getters: {
         application: state => state.application,
@@ -53,7 +58,7 @@ export const applicationStore = {
             const activity_count = getters.licence_type_data.activity.length;
             return getters.checkActivityStatus(final_statuses) && !getters.checkActivityStatus(final_statuses, activity_count);
         },
-        isApplicationLoaded: state => Object.keys(state.application).length && state.application.licence_type_data != null,
+        isApplicationLoaded: state => Object.keys(state.application).length && state.application.licence_type_data.activity.length,
         isApplicationActivityVisible: (state, getters, rootState, rootGetters) =>
             (activity_id, exclude_statuses, exclude_processing_statuses, for_user_role) => {
             if(!state.application.activities) {
@@ -141,7 +146,14 @@ export const applicationStore = {
                     for(let form_data_record of res.body.data) {
                         dispatch('setFormValue', {
                             key: form_data_record.field_name,
-                            value: {"value": form_data_record.value}
+                            value: {
+                                "value": form_data_record.value,
+                                "comment_value": form_data_record.comment,
+                                "deficiency_value": form_data_record.deficiency,
+                                "schema_name": form_data_record.schema_name,
+                                "component_type": form_data_record.component_type,
+                                "instance_name": form_data_record.instance_name,
+                            }
                         });
                     }
                     resolve();
@@ -162,6 +174,20 @@ export const applicationStore = {
         setApplication({ dispatch, commit }, application) {
             commit(UPDATE_APPLICATION, application);
             dispatch('refreshAddresses');
+        },
+        refreshApplicationFees({ dispatch, state, getters, rootGetters }) {
+            Vue.http.post('/api/application/estimate_price/', {
+                    'application_id': getters.application_id,
+                    'field_data': rootGetters.renderer_form_data,
+            }).then(res => {
+                dispatch('setApplication', {
+                    ...state.application,
+                    application_fee: res.body.fees.application,
+                    licence_fee: res.body.fees.licence
+                });
+            }, err => {
+                console.log(err);
+            });
         },
     }
 }

@@ -3,14 +3,12 @@ from __future__ import unicode_literals
 import os
 import zlib
 
-from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.contrib.postgres.fields import JSONField
 from django.db import models, IntegrityError, transaction
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 from django.dispatch import receiver
-from django.db.models import Q
 from django.db.models.signals import post_delete, pre_save, post_save
 from django.core.exceptions import ValidationError
 
@@ -420,53 +418,6 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             return EmailUserAction.log_action(self, action, request.user)
         else:
             pass
-
-
-def query_emailuser_by_args(**kwargs):
-    ORDER_COLUMN_CHOICES = [
-        'title',
-        'first_name',
-        'last_name',
-        'dob',
-        'email',
-        'phone_number',
-        'mobile_number',
-        'fax_number',
-        'character_flagged',
-        'character_comments'
-    ]
-
-    draw = int(kwargs.get('draw', None)[0])
-    length = int(kwargs.get('length', None)[0])
-    start = int(kwargs.get('start', None)[0])
-    search_value = kwargs.get('search[value]', None)[0]
-    order_column = kwargs.get('order[0][column]', None)[0]
-    order = kwargs.get('order[0][dir]', None)[0]
-    order_column = ORDER_COLUMN_CHOICES[int(order_column)]
-    # django orm '-' -> desc
-    if order == 'desc':
-        order_column = '-' + order_column
-
-    queryset = EmailUser.objects.all()
-    total = queryset.count()
-
-    if search_value:
-        queryset = queryset.filter(Q(first_name__icontains=search_value) |
-                                   Q(last_name__icontains=search_value) |
-                                   Q(email__icontains=search_value) |
-                                   Q(phone_number__icontains=search_value) |
-                                   Q(mobile_number__icontains=search_value) |
-                                   Q(fax_number__icontains=search_value))
-
-    count = queryset.count()
-    queryset = queryset.order_by(order_column)[start:start + length]
-
-    return {
-        'items': queryset,
-        'count': count,
-        'total': total,
-        'draw': draw
-    }
 
 
 @python_2_unicode_compatible

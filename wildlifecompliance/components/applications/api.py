@@ -18,7 +18,6 @@ from wildlifecompliance.components.applications.utils import (
     SchemaParser,
     MissingFieldsException,
 )
-from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.applications.models import (
@@ -30,8 +29,6 @@ from wildlifecompliance.components.applications.models import (
     ActivityPermissionGroup,
     AmendmentRequest,
     ApplicationUserAction,
-    search_keywords,
-    search_reference,
     ApplicationFormDataRecord,
 )
 from wildlifecompliance.components.applications.serializers import (
@@ -55,15 +52,11 @@ from wildlifecompliance.components.applications.serializers import (
     AmendmentRequestSerializer,
     ApplicationProposedIssueSerializer,
     DTAssessmentSerializer,
-    SearchKeywordSerializer,
-    SearchReferenceSerializer
 )
 
-from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
-from rest_framework.filters import BaseFilterBackend
 
 
 class GetEmptyList(views.APIView):
@@ -88,47 +81,47 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
         category_name = request.GET.get('category_name')
         processing_status = request.GET.get('processing_status')
         customer_status = request.GET.get('customer_status')
+        status_filter = request.GET.get('status')
         submitter = request.GET.get('submitter')
         search_text = request.GET.get('search[value]')
-        if queryset.model is Application:
 
+        if queryset.model is Application:
             # search_text filter, join all custom search columns
-            # where ('searchable: false' in the datatable definiton)
+            # where ('searchable: false' in the datatable defintion)
             if search_text:
                 search_text = search_text.lower()
                 # join queries for the search_text search
                 search_text_app_ids = []
                 for application in queryset:
                     if (search_text in application.licence_category.lower()
-                        or search_text in ', '.join(application.licence_purpose_names).lower()
-                        or search_text in application.applicant
-                        or search_text in application.processing_status
-                        or search_text in application.customer_status
-                        or search_text in application.payment_status):
-                            search_text_app_ids.append(application.id)
+                        or search_text in application.licence_purpose_names.lower()
+                        or search_text in application.applicant.lower()
+                        or search_text in application.processing_status.lower()
+                        or search_text in application.customer_status.lower()
+                        or search_text in application.payment_status.lower()
+                    ):
+                        search_text_app_ids.append(application.id)
                     # if applicant is not an organisation, also search against the user's email address
                     if (application.applicant_type == Application.APPLICANT_TYPE_PROXY and
-                        search_text in application.proxy_applicant.email):
+                        search_text in application.proxy_applicant.email.lower()):
                             search_text_app_ids.append(application.id)
                     if (application.applicant_type == Application.APPLICANT_TYPE_SUBMITTER and
-                        search_text in application.submitter.email):
+                        search_text in application.submitter.email.lower()):
                             search_text_app_ids.append(application.id)
-                # use pipe to join both custom and built-in DRF datatables querysets (returned by super call below)
+                # use pipe to join both custom and built-in DRF datatables querysets (returned by super call above)
                 # (otherwise they will filter on top of each other)
                 queryset = queryset.filter(id__in=search_text_app_ids).distinct() | super_queryset
 
             # apply user selected filters
             category_name = category_name.lower() if category_name else 'all'
             if category_name != 'all':
-                category_name = category_name.lower()
                 category_name_app_ids = []
                 for application in queryset:
-                    if category_name in application.licence_category.lower():
+                    if category_name in application.licence_category_name.lower():
                         category_name_app_ids.append(application.id)
                 queryset = queryset.filter(id__in=category_name_app_ids)
             processing_status = processing_status.lower() if processing_status else 'all'
             if processing_status != 'all':
-                processing_status = processing_status.lower()
                 processing_status_app_ids = []
                 for application in queryset:
                     if processing_status in application.processing_status.lower():
@@ -136,7 +129,6 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(id__in=processing_status_app_ids)
             customer_status = customer_status.lower() if customer_status else 'all'
             if customer_status != 'all':
-                customer_status = customer_status.lower()
                 customer_status_app_ids = []
                 for application in queryset:
                     if customer_status in application.customer_status.lower():
@@ -147,8 +139,64 @@ class ApplicationFilterBackend(DatatablesFilterBackend):
             if date_to:
                 date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
                 queryset = queryset.filter(lodgement_date__lte=date_to)
-            if submitter and submitter != 'All':
+            submitter = submitter.lower() if submitter else 'all'
+            if submitter != 'all':
                 queryset = queryset.filter(submitter__email__iexact=submitter)
+
+        if queryset.model is Assessment:
+            # search_text filter, join all custom search columns
+            # where ('searchable: false' in the datatable definition)
+            if search_text:
+                search_text = search_text.lower()
+                # join queries for the search_text search
+                search_text_ass_ids = []
+                for assessment in queryset:
+                    if (search_text in assessment.application.licence_category.lower()
+                        or search_text in assessment.licence_activity.short_name.lower()
+                        or search_text in assessment.application.applicant.lower()
+                        or search_text in assessment.get_status_display().lower()
+                    ):
+                        search_text_ass_ids.append(assessment.id)
+                    # if applicant is not an organisation, also search against the user's email address
+                    if (assessment.application.applicant_type == Application.APPLICANT_TYPE_PROXY and
+                        search_text in assessment.application.proxy_applicant.email.lower()):
+                            search_text_ass_ids.append(assessment.id)
+                    if (assessment.application.applicant_type == Application.APPLICANT_TYPE_SUBMITTER and
+                        search_text in assessment.application.submitter.email.lower()):
+                            search_text_ass_ids.append(assessment.id)
+                # use pipe to join both custom and built-in DRF datatables querysets (returned by super call above)
+                # (otherwise they will filter on top of each other)
+                queryset = queryset.filter(id__in=search_text_ass_ids).distinct() | super_queryset
+
+            # apply user selected filters
+            category_name = category_name.lower() if category_name else 'all'
+            if category_name != 'all':
+                category_name_app_ids = []
+                for assessment in queryset:
+                    if category_name in assessment.application.licence_category_name.lower():
+                        category_name_app_ids.append(assessment.id)
+                queryset = queryset.filter(id__in=category_name_app_ids)
+            status_filter = status_filter.lower() if status_filter else 'all'
+            if status_filter != 'all':
+                queryset = queryset.filter(status=status_filter)
+            if date_from:
+                queryset = queryset.filter(application__lodgement_date__gte=date_from)
+            if date_to:
+                date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
+                queryset = queryset.filter(application__lodgement_date__lte=date_to)
+            submitter = submitter.lower() if submitter else 'all'
+            if submitter != 'all':
+                queryset = queryset.filter(application__submitter__email__iexact=submitter)
+
+        # override queryset ordering, required because the ordering is usually handled
+        # in the super call, but is then clobbered by the custom queryset joining above
+        # also needed to disable ordering for all fields for which data is not an
+        # Application model field, as property functions will not work with order_by
+        getter = request.query_params.get
+        fields = self.get_fields(getter)
+        ordering = self.get_ordering(getter, fields)
+        if len(ordering):
+            queryset = queryset.order_by(*ordering)
 
         setattr(view, '_datatables_total_count', total_count)
         return queryset
@@ -182,6 +230,7 @@ class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['GET', ])
     def internal_datatable_list(self, request, *args, **kwargs):
+        self.serializer_class = DTInternalApplicationSerializer
         queryset = self.get_queryset()
         queryset = self.filter_queryset(queryset)
         self.paginator.page_size = queryset.count()
@@ -191,6 +240,7 @@ class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['GET', ])
     def external_datatable_list(self, request, *args, **kwargs):
+        self.serializer_class = DTExternalApplicationSerializer
         user_orgs = [
             org.id for org in request.user.wildlifecompliance_organisations.all()]
         queryset = self.get_queryset().filter(
@@ -394,6 +444,19 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @list_route(methods=['POST', ])
+    def estimate_price(self, request, *args, **kwargs):
+        purpose_ids = request.data.get('purpose_ids', [])
+        application_id = request.data.get('application_id')
+        if application_id is not None:
+            application = Application.objects.get(id=application_id)
+            return Response({
+                'fees': application.calculate_fees(request.data.get('field_data', {}))
+            })
+        return Response({
+            'fees': Application.calculate_base_fees(purpose_ids)
+        })
 
     @list_route(methods=['GET', ])
     def internal_datatable_list(self, request, *args, **kwargs):
@@ -788,10 +851,31 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
+    def officer_comments(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            ApplicationFormDataRecord.process_form(
+                request,
+                instance,
+                request.data,
+                action=ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT
+            )
+            return Response({'success': True})
+        except Exception as e:
+            print(traceback.print_exc())
+        raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
     def form_data(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            ApplicationFormDataRecord.process_form(instance, request.data)
+            ApplicationFormDataRecord.process_form(
+                request,
+                instance,
+                request.data,
+                action=ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_VALUE
+            )
             return redirect(reverse('external'))
         except MissingFieldsException as e:
             return Response({
@@ -844,16 +928,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             licence_category_data = app_data.get('licence_category_data')
             org_applicant = request.data.get('org_applicant')
             proxy_applicant = request.data.get('proxy_applicant')
-            application_fee = request.data.get('application_fee')
-            licence_fee = request.data.get('licence_fee')
             licence_purposes = request.data.get('licence_purposes')
             data = {
                 'submitter': request.user.id,
                 'licence_type_data': licence_category_data,
                 'org_applicant': org_applicant,
                 'proxy_applicant': proxy_applicant,
-                'application_fee': application_fee,
-                'licence_fee': licence_fee,
                 'licence_purposes': licence_purposes,
             }
 
@@ -861,6 +941,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             serializer = CreateExternalApplicationSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+            serializer.instance.update_fees()
 
             return Response(serializer.data)
         except Exception as e:
@@ -1049,6 +1130,32 @@ class ApplicationStandardConditionViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(text__icontains=search)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+class AssessmentPaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (ApplicationFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (ApplicationRenderer,)
+    queryset = Assessment.objects.none()
+    serializer_class = DTAssessmentSerializer
+    page_size = 10
+
+    def get_queryset(self):
+        if is_internal(self.request):
+            return Assessment.objects.all()
+        elif is_customer(self.request):
+            return Assessment.objects.none()
+        return Assessment.objects.none()
+
+    @list_route(methods=['GET', ])
+    def datatable_list(self, request, *args, **kwargs):
+        self.serializer_class = DTAssessmentSerializer
+        queryset = self.get_queryset()
+        queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = DTAssessmentSerializer(result_page, context={'request': request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
 
 
 class AssessmentViewSet(viewsets.ModelViewSet):
@@ -1286,43 +1393,3 @@ class AmendmentRequestReasonChoicesView(views.APIView):
                 choices_list.append({'key': c[0], 'value': c[1]})
 
         return Response(choices_list)
-
-
-class SearchKeywordsView(views.APIView):
-    renderer_classes = [JSONRenderer]
-
-    def post(self, request, format=None):
-        qs = []
-        search_words = request.data.get('searchKeywords')
-        search_application = request.data.get('searchApplication')
-        search_licence = request.data.get('searchLicence')
-        search_returns = request.data.get('searchReturn')
-        if search_words:
-            qs = search_keywords(search_words, search_application, search_licence, search_returns)
-        serializer = SearchKeywordSerializer(qs, many=True)
-        return Response(serializer.data)
-
-
-class SearchReferenceView(views.APIView):
-    renderer_classes = [JSONRenderer]
-
-    def post(self, request, format=None):
-        try:
-            qs = []
-            reference_number = request.data.get('reference_number')
-            if reference_number:
-                qs = search_reference(reference_number)
-            serializer = SearchReferenceSerializer(qs)
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            if hasattr(e, 'error_dict'):
-                raise serializers.ValidationError(repr(e.error_dict))
-            else:
-                print e
-                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))

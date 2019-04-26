@@ -29,8 +29,14 @@ export const userStore = {
                 (!tab_id || tab_id == activity.id)
             );
         },
-        canViewComments: (state, getters) => {
+        canViewDeficiencies: (state, getters) => {
+            return getters.hasRole('licensing_officer') || getters.application.can_current_user_edit;
+        },
+        canEditDeficiencies: (state, getters) => {
             return getters.hasRole('licensing_officer');
+        },
+        canViewComments: (state, getters) => {
+            return getters.hasRole('licensing_officer') || getters.hasRole('assessor');
         },
     },
     mutations: {
@@ -41,7 +47,7 @@ export const userStore = {
             state.selected_activity_tab_name = tab_name;
         },
         [UPDATE_CURRENT_USER] (state, user) {
-            Vue.set(state, 'user', {...user});
+            Vue.set(state, 'current_user', {...user});
         },
     },
     actions: {

@@ -214,7 +214,7 @@ import { api_endpoints, helpers } from '@/utils/hooks'
 import datatable from '@vue-utils/datatable.vue'
 import utils from '../utils'
 import api from '../api'
-import AddContact from '@common-utils/add_contact.vue'
+import AddContact from '@common-components/add_contact.vue'
 export default {
     name: 'Organisation',
     data () {
