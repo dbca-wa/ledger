@@ -1,6 +1,6 @@
 import InternalDashboard from '../dashboard.vue'
 import Search from '../search.vue'
-import OrgAccessTable from '../organisations/dashboard.vue'
+import OrgAccessTable from '../organisations/access_dashboard.vue'
 import OrgAccess from '../organisations/access.vue'
 import Organisation from '../organisations/manage.vue'
 import UserDashTable from '../users/dashboard.vue'
