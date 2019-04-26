@@ -57,10 +57,14 @@
                 </div>
             </div>
         </div>
+        <div>
+            <MapLocation/>
+        </div>
     </div>
 </template>
 <script>
     import Application from '../../form.vue'
+    import MapLocation from './map_location.vue'
     import Vue from 'vue'
     import {
         api_endpoints,
@@ -91,7 +95,8 @@
             }
         },
         components: {
-            Application
+            Application,
+            MapLocation
         },
         computed: {
             isLoading: function () {
