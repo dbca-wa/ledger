@@ -1563,10 +1563,12 @@ class ProposalOtherDetails(models.Model):
     nominated_start_date= models.DateField(blank=True, null=True)
     insurance_expiry= models.DateField(blank=True, null=True)
     other_comments=models.TextField(blank=True)
+    mooring = JSONField(default=[''])
     #if credit facilities for payment of fees is required
     credit_fees=models.BooleanField(default=False)
     #if credit/ cash payment docket books are required
     credit_docket_books=models.BooleanField(default=False)
+    docket_books_number=models.CharField('Docket books number', max_length=20, blank=True )
     proposal = models.OneToOneField(Proposal, related_name='other_details', null=True)
 
     class Meta:
@@ -1903,6 +1905,23 @@ class ProposalUserAction(UserAction):
     ACTION_EXPIRED_APPROVAL_ = "Expire Approval for proposal {}"
     ACTION_DISCARD_PROPOSAL = "Discard proposal {}"
     ACTION_APPROVAL_LEVEL_DOCUMENT = "Assign Approval level document {}"
+    #T-Class licence
+    ACTION_LINK_PARK = "Link park {} to proposal {}"
+    ACTION_UNLINK_PARK = "Unlink park {} from proposal {}"
+    ACTION_LINK_ACCESS = "Link access {} to park {}"
+    ACTION_UNLINK_ACCESS = "Unlink access {} from park {}"
+    ACTION_LINK_ACTIVITY = "Link activity {} to park {}"
+    ACTION_UNLINK_ACTIVITY = "Unlink activity {} from park {}"
+    ACTION_LINK_ACTIVITY_SECTION = "Link activity {} to section {} of trail {}"
+    ACTION_UNLINK_ACTIVITY_SECTION = "Unlink activity {} from section {} of trail {}"
+    ACTION_LINK_ACTIVITY_ZONE = "Link activity {} to zone {} of park {}"
+    ACTION_UNLINK_ACTIVITY_ZONE = "Unlink activity {} from zone {} of park {}"
+    ACTION_LINK_TRAIL = "Link trail {} to proposal {}"
+    ACTION_UNLINK_TRAIL = "Unlink trail {} from proposal {}"
+    ACTION_LINK_SECTION = "Link section {} to trail {}"
+    ACTION_UNLINK_SECTION = "Unlink section {} from trail {}"
+    ACTION_LINK_ZONE = "Link zone {} to park {}"
+    ACTION_UNLINK_ZONE = "Unlink zone {} from park {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"

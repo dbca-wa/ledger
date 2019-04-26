@@ -125,7 +125,9 @@ export default {
       //vm.form=document.forms.new_proposal;
       let formData = new FormData(vm.form);
 
-      //console.log('marine activities', vm.proposal.marine_parks_activities);
+      //console.log('land activities', vm.proposal.selected_parks_activities);
+      formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
+      formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
       formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
 
       vm.$http.post(vm.proposal_form_url,formData).then(res=>{
@@ -151,6 +153,8 @@ export default {
     save_wo_confirm: function(e) {
       let vm = this;
       let formData = new FormData(vm.form);
+      formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
+      formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
       formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
       vm.$http.post(vm.proposal_form_url,formData);
     },
@@ -295,6 +299,8 @@ export default {
     submit: function(){
         let vm = this;
         let formData = new FormData(vm.form);
+        formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
+      formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
         formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
 
         var num_missing_fields = vm.validate()
