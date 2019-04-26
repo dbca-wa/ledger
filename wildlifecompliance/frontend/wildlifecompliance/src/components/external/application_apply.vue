@@ -91,11 +91,10 @@ export default {
   methods: {
     submit: function() {
         let vm = this;
-         vm.$router.push({
-                      name:"apply_application_organisation",
-                      params:{licence_select:vm.licence_select}
-                  });
-         console.log(vm.licence_select);
+        vm.$router.push({
+            name: "apply_application_organisation",
+            params: { licence_select:vm.licence_select }
+        });
     },
     createApplication:function () {
         let vm = this;

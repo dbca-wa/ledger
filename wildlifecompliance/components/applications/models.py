@@ -224,7 +224,7 @@ class Application(RevisionedMixin):
     APPLICATION_TYPE_AMENDMENT = 'amendment'
     APPLICATION_TYPE_RENEWAL = 'renewal'
     APPLICATION_TYPE_CHOICES = (
-        (APPLICATION_TYPE_NEW_LICENCE, 'New Licence'),
+        (APPLICATION_TYPE_NEW_LICENCE, 'New'),
         (APPLICATION_TYPE_AMENDMENT, 'Amendment'),
         (APPLICATION_TYPE_RENEWAL, 'Renewal'),
     )
@@ -310,8 +310,8 @@ class Application(RevisionedMixin):
     def save(self, *args, **kwargs):
         super(Application, self).save(*args, **kwargs)
         if self.lodgement_number == '':
-            new_lodgment_id = 'A{0:06d}'.format(self.pk)
-            self.lodgement_number = new_lodgment_id
+            new_lodgement_id = 'A{0:06d}'.format(self.pk)
+            self.lodgement_number = new_lodgement_id
             self.save()
 
     @property
@@ -515,7 +515,7 @@ class Application(RevisionedMixin):
 
     @property
     def licence_purpose_names(self):
-        return ', '.join([purpose.licence_activity.short_name + ' - ' + purpose.short_name
+        return ', '.join([purpose.short_name
                           for purpose in self.licence_purposes.all().order_by('licence_activity','short_name')])
 
     @property
@@ -1794,89 +1794,3 @@ class ApplicationUserAction(UserAction):
 def delete_documents(sender, instance, *args, **kwargs):
     for document in instance.documents.all():
         document.delete()
-
-
-def search_keywords(search_words, search_application, search_licence, search_return, is_internal=True):
-    from wildlifecompliance.utils import search, search_licences, search_returns
-    from wildlifecompliance.components.licences.models import WildlifeLicence
-    from wildlifecompliance.components.returns.models import Return
-    qs = []
-    if is_internal:
-        application_list = Application.objects.all().computed_exclude(processing_status__in=[
-            Application.PROCESSING_STATUS_DISCARDED,
-            Application.PROCESSING_STATUS_DRAFT
-        ])
-        licence_list = WildlifeLicence.objects.all()\
-            .order_by('licence_number', '-id')\
-            .distinct('licence_number')
-        return_list = Return.objects.all()
-    if search_words:
-        if search_application:
-            for a in application_list:
-                if a.data:
-                    try:
-                        results = search(a.data[0], search_words)
-                        final_results = {}
-                        if results:
-                            for r in results:
-                                for key, value in r.iteritems():
-                                    final_results.update({'key': key, 'value': value})
-                            res = {
-                                'number': a.lodgement_number,
-                                'id': a.id,
-                                'type': 'Application',
-                                'applicant': a.applicant.name,
-                                'text': final_results,
-                            }
-                            qs.append(res)
-                    except BaseException:
-                        raise
-        # TODO: fix search_licences (missing fields in wildlifecompliance)
-        """
-        if search_licence:
-            for l in licence_list:
-                try:
-                    results = search_licences(l, search_words)
-                    qs.extend(results)
-                except BaseException:
-                    raise
-        """
-        if search_return:
-            for r in return_list:
-                try:
-                    results = search_returns(r, search_words)
-                    qs.extend(results)
-                except BaseException:
-                    raise
-        return qs
-
-
-def search_reference(reference_number):
-    from wildlifecompliance.components.licences.models import WildlifeLicence
-    from wildlifecompliance.components.returns.models import Return
-    application_list = Application.objects.all().computed_exclude(processing_status__in=[
-        Application.PROCESSING_STATUS_DISCARDED])
-    licence_list = WildlifeLicence.objects.all().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
-    returns_list = Return.objects.all().exclude(processing_status__in=[Return.RETURN_PROCESSING_STATUS_FUTURE])
-    record = {}
-    try:
-        result = application_list.get(lodgement_number=reference_number)
-        record = {'id': result.id,
-                  'type': 'application'}
-    except Application.DoesNotExist:
-        try:
-            result = licence_list.get(lodgement_number=reference_number)
-            record = {'id': result.id,
-                      'type': 'licence'}
-        except WildlifeLicence.DoesNotExist:
-            try:
-                for r in returns_list:
-                    if r.reference == reference_number:
-                        record = {'id': r.id,
-                                  'type': 'compliance'}
-            except BaseException:
-                raise ValidationError('Record with provided reference number does not exist')
-    if record:
-        return record
-    else:
-        raise ValidationError('Record with provided reference number does not exist')

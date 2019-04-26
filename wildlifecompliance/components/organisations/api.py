@@ -87,8 +87,8 @@ class OrganisationFilterBackend(DatatablesFilterBackend):
 
         total_count = queryset.count()
         search_text = request.GET.get('search[value]')
-        if queryset.model is Organisation:
 
+        if queryset.model is Organisation:
             # search_text filter, join all custom search columns
             # where ('searchable: false' in the datatable definition)
             if search_text:
@@ -102,10 +102,24 @@ class OrganisationFilterBackend(DatatablesFilterBackend):
                 # (otherwise they will filter on top of each other)
                 queryset = queryset.filter(id__in=search_text_org_ids).distinct() | super_queryset
 
+        if queryset.model is OrganisationRequest:
+            # search_text filter, join all custom search columns
+            # where ('searchable: false' in the datatable definition)
+            if search_text:
+                search_text = search_text.lower()
+                # join queries for the search_text search
+                search_text_org_request_ids = []
+                # for organisation_request in queryset:
+                #     if search_text in organisation_request.address_string.lower():
+                #         search_text_org_request_ids.append(organisation_request.id)
+                # use pipe to join both custom and built-in DRF datatables querysets (returned by super call above)
+                # (otherwise they will filter on top of each other)
+                queryset = queryset.filter(id__in=search_text_org_request_ids).distinct() | super_queryset
+
         # override queryset ordering, required because the ordering is usually handled
         # in the super call, but is then clobbered by the custom queryset joining above
         # also needed to disable ordering for all fields for which data is not an
-        # Assessment model field, as property functions will not work with order_by
+        # Organisation model field, as property functions will not work with order_by
         getter = request.query_params.get
         fields = self.get_fields(getter)
         ordering = self.get_ordering(getter, fields)
@@ -127,7 +141,7 @@ class OrganisationPaginatedViewSet(viewsets.ModelViewSet):
     filter_backends = (OrganisationFilterBackend,)
     pagination_class = DatatablesPageNumberPagination
     renderer_classes = (OrganisationRenderer,)
-    queryset = Assessment.objects.none()
+    queryset = Organisation.objects.none()
     serializer_class = DTOrganisationSerializer
     page_size = 10
 
@@ -618,6 +632,32 @@ class OrganisationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+class OrganisationRequestsPaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (OrganisationFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (OrganisationRenderer,)
+    queryset = OrganisationRequest.objects.none()
+    serializer_class = OrganisationRequestDTSerializer
+    page_size = 10
+
+    def get_queryset(self):
+        if is_internal(self.request):
+            return OrganisationRequest.objects.all()
+        elif is_customer(self.request):
+            return OrganisationRequest.objects.none()
+        return OrganisationRequest.objects.none()
+
+    @list_route(methods=['GET', ])
+    def datatable_list(self, request, *args, **kwargs):
+        self.serializer_class = OrganisationRequestDTSerializer
+        queryset = self.get_queryset()
+        queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = OrganisationRequestDTSerializer(result_page, context={'request': request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
 
 
 class OrganisationRequestsViewSet(viewsets.ModelViewSet):

@@ -9,6 +9,7 @@ from wildlifecompliance import views
 from wildlifecompliance.components.applications.views import ApplicationSuccessView
 from wildlifecompliance.admin import wildlifecompliance_admin_site
 
+from wildlifecompliance.components.main.views import SearchKeywordsView, SearchReferenceView
 from wildlifecompliance.components.applications import views as application_views
 from wildlifecompliance.components.users import api as users_api
 from wildlifecompliance.components.organisations import api as org_api
@@ -44,6 +45,7 @@ router.register(r'return_types', return_api.ReturnTypeViewSet)
 router.register(r'organisations', org_api.OrganisationViewSet)
 router.register(r'organisations_paginated', org_api.OrganisationPaginatedViewSet)
 router.register(r'organisation_requests', org_api.OrganisationRequestsViewSet)
+router.register(r'organisation_requests_paginated', org_api.OrganisationRequestsPaginatedViewSet)
 router.register(r'organisation_contacts', org_api.OrganisationContactViewSet)
 router.register(r'my_organisations', org_api.MyOrganisationsViewSet)
 router.register(r'users', users_api.UserViewSet)
@@ -71,10 +73,10 @@ api_patterns = [url(r'^api/my_user_details/$',
                     org_api.OrganisationAccessGroupMembers.as_view(),
                     name='organisation-access-group-members'),
                 url(r'^api/search_keywords',
-                    application_api.SearchKeywordsView.as_view(),
+                    SearchKeywordsView.as_view(),
                     name='search_keywords'),
                 url(r'^api/search_reference',
-                    application_api.SearchReferenceView.as_view(),
+                    SearchReferenceView.as_view(),
                     name='search_reference'),
                 url(r'^api/',
                     include(router.urls))]

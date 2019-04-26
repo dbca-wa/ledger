@@ -120,6 +120,14 @@ class Return(models.Model):
     class Meta:
         app_label = 'wildlifecompliance'
 
+    # Append 'R' to Return id to generate Return lodgement number.
+    def save(self, *args, **kwargs):
+        super(Return, self).save(*args, **kwargs)
+        if self.lodgement_number == '':
+            new_lodgement_id = 'R{0:06d}'.format(self.pk)
+            self.lodgement_number = new_lodgement_id
+            self.save()
+
     @property
     def regions(self):
         return self.application.regions_list
