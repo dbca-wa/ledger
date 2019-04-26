@@ -1720,7 +1720,7 @@ class ApplicationFormDataRecord(models.Model):
         return "Application {id} record {field}: {value}".format(
             id=self.application_id,
             field=self.field_name,
-            value=self.value[:8]
+            value=self.value[:8] if self.value else ''
         )
 
     class Meta:

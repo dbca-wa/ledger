@@ -180,7 +180,7 @@ def search_keywords(search_words, search_application, search_licence, search_ret
     :return:
     '''
     from wildlifecompliance.utils import search
-    from wildlifecompliance.components.applications.models import Application
+    from wildlifecompliance.components.applications.models import Application, ApplicationFormDataRecord
     from wildlifecompliance.components.licences.models import WildlifeLicence
     from wildlifecompliance.components.returns.models import Return
     qs = []
@@ -201,9 +201,15 @@ def search_keywords(search_words, search_application, search_licence, search_ret
     if search_words:
         if search_application:
             for app in application_list:
-                if app.licence_type_data:
+                if ApplicationFormDataRecord.objects.filter(application=app):
                     try:
-                        results = search(app.licence_type_data, search_words)
+                        app_data = {'data':
+                                        [{'value': record.value}
+                                         for record
+                                         in ApplicationFormDataRecord.objects.filter(application=app)
+                                        ]
+                                   }
+                        results = search(app_data, search_words)
                         final_results = {}
                         if results:
                             for r in results:
