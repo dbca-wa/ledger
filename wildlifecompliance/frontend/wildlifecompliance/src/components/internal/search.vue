@@ -143,7 +143,9 @@ export default {
                     {data: "number"},
                     {data:"record_type"},
                     {data: "applicant"},
-                    {data: "text",
+                    {
+                        data: "text",
+                        className: "normal-white-space",
                         mRender: function (data,type,full) {
                             if(data.value) {
                                 return data.value;
