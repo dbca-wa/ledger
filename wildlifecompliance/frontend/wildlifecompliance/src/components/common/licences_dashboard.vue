@@ -195,10 +195,10 @@ export default {
                     var holdersColumn = vm.$refs.licence_datatable.vmDataTable.columns(vm.getColumnIndex('holder'));
                     holdersColumn.data().unique().sort().each( function ( d, j ) {
                         var holders = [];
-                        $.each(d,(index, h) => {
-                            if (!holders.find(holder => holder == h) || holders.length == 0){
+                        $.each(d,(index, holder) => {
+                            if (!holders.find(item => item.holder_name == holder) || holders.length == 0){
                                 holders.push({
-                                    'holder_name': h,
+                                    'holder_name': holder,
                                 });
                             }
                         });
