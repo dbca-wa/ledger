@@ -200,6 +200,8 @@ class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
                 'other_comments',
                 'credit_fees',
                 'credit_docket_books',
+                'docket_books_number',
+                'mooring'
                 )
     # def get_accreditation_type(self,obj):
     #     return obj.get_accreditation_type_display()
@@ -616,7 +618,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'lodgement_sequence',
                 'can_officer_process',
                 'proposal_type',
-                'qaofficer_referrals'
+                'qaofficer_referrals',
                 # tab field models
                 'applicant_details',
                 'other_details',

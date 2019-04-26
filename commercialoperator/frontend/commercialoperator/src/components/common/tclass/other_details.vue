@@ -116,13 +116,18 @@
                                     <label>Provide the mooring number for any mooring within a marine reseve your operation will use</label>
                                 </div>   
                             </div>
-                            <div class="row">
+                            <div class="row" v-for="(m, index) in proposal.other_details.mooring">
                                 <div class="col-sm-3">
                                     <label class="control-label pull-left"  for="Name">Mooring number</label>
                                 </div>
-                                <div class="col-sm-9">
-                                    <input type="text" class="form-control" name="Mooring number" placeholder="" :disabled="proposal.readonly">
+                                <div class="col-sm-9" style="margin-bottom: 5px">
+                                    <input type="text" class="form-control" name="Mooring number" placeholder="" :disabled="proposal.readonly" v-model="proposal.other_details.mooring[index]">
                                 </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <span><a @click="addMooring()" target="_blank" class="control-label pull-left" v-if="!proposal.readonly">Add another mooring</a></span>
+                                </div>   
                             </div>
                         </div>
                    </div>
@@ -247,13 +252,23 @@
                             </div>
                             <div class="col-sm-3">
                                 <label>
-                                    <input type="radio" v-model="proposal.other_details.credit_docket_books" value="true" :disabled="proposal.readonly"/>Yes
+                                    <input type="radio" v-model="proposal.other_details.credit_docket_books" value="true" @change="handleRadioChange" ref="docket_books_yes" :disabled="proposal.readonly"/>Yes
                                 </label>
                             </div>
                             <div class="col-sm-3">
                                 <label>
-                                    <input type="radio" v-model="proposal.other_details.credit_docket_books" value="false" :disabled="proposal.readonly"/>No
+                                    <input type="radio" v-model="proposal.other_details.credit_docket_books" value="false" @change="handleRadioChange" :disabled="proposal.readonly"/>No
                                 </label>
+                            </div>
+                        </div>
+                        <div>
+                            <div id="show_docket" class="hidden">
+                            <div class="col-sm-6" >
+                                <label class="control-label pull-left"  for="Name">Number of docket books</label>
+                            </div>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" name="docket_books_number" placeholder="" :disabled="proposal.readonly" v-model="proposal.other_details.docket_books_number">
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -326,12 +341,14 @@ export default {
                 accreditation_type:[],
                 selected_accreditations:[],
                 licence_period_choices:[],
+                mooring: [''],
+                //mooring:[{'value':''}],
                 datepickerOptions:{
                 format: 'DD/MM/YYYY',
                 showClear:true,
                 useCurrent:false,
                 keepInvalid:true,
-                allowInputToggle:true
+                allowInputToggle:true,
             },
             }
         },
@@ -343,11 +360,50 @@ export default {
             
         },
         watch:{
+            
             accreditation_type: function(){
                 this.proposal.other_details.accreditation_type=this.accreditation_type.key;
             },
         },
         methods:{
+            handleRadioChange: function(e){
+                    if(e.target.value=="true"){
+                        console.log(e.target.value);
+                        $('#show_docket').removeClass('hidden')
+                    }
+                    else{
+                        $('#show_docket').addClass('hidden')
+                    }
+                
+            },
+            showDockteNumber: function(){
+                let vm=this;
+                if(vm.proposal && vm.proposal.other_details.credit_docket_books){
+                    var input = this.$refs.docket_books_yes;
+                    var e = document.createEvent('HTMLEvents');
+                    e.initEvent('change', true, true);
+                    var disabledStatus = input.disabled;
+                    try {
+                        /* Firefox will not fire events for disabled widgets, so (temporarily) enabling them */
+                        if(disabledStatus) {
+                            input.disabled = false;
+                        }
+                        input.dispatchEvent(e);
+                    } finally {
+                        if(disabledStatus) {
+                            input.disabled = true;
+                        }
+                    }
+                }
+            },
+            addMooring: function(){
+                let vm=this;
+                //var new_mooring= helpers.copyObject(vm.mooring)
+                var new_mooring= helpers.copyObject(vm.proposal.other_details.mooring)
+                new_mooring.push('');
+                vm.proposal.other_details.mooring=new_mooring;
+                console.log(vm.proposal.other_details.mooring);
+            },
             fetchAccreditationChoices: function(){
                 let vm = this;
                 vm.$http.get('/api/accreditation_choices.json').then((response) => {
@@ -488,6 +544,7 @@ export default {
             vm.fetchAccreditationChoices();
             vm.fetchLicencePeriodChoices();
             vm.checkProposalAccreditation();
+            vm.showDockteNumber();
             this.$nextTick(()=>{
                 vm.eventListeners();
             });

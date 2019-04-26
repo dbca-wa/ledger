@@ -76,7 +76,7 @@
               <div class="list-group list-group-root well">
               <div class="" v-for="r in api_regions">
                 <div class="form-check col-sm-12 list-group-item" style="">
-                  <input @click="clickRegion($event, r)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" :disabled="!canEditActivities" data-parsley-required />
+                  <input @click="clickRegion($event, r)" :inderminate.prop="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" :disabled="!canEditActivities" data-parsley-required />
                   {{ r.name }}
                   <a data-toggle="collapse" :href="'#'+'r'+r.id" role="button" aria-expanded="true" aria controls="r.id" ><span class="glyphicon glyphicon-chevron-up pull-right "></span></a>
                 </div>

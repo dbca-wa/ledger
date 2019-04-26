@@ -3,11 +3,11 @@
 {% load users %}
 /static/common/
 {% block extra_css %}
-    <link href="/static/common/css/dataTables.bootstrap.min.css" rel="stylesheet"/>
-    <link href="/static/common/css/select2.min.css" rel="stylesheet"/>
-    <link href="/static/common/css/select2-bootstrap.css" rel="stylesheet"/>
-    <link href="/static/common/css/font-awesome.css" rel="stylesheet"/>
-    <link rel="stylesheet" href="{% static 'mooring/css/dashboard.css' %}">
+    <link href="/static/common/css/dataTables.bootstrap.min.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link href="/static/common/css/select2.min.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link href="/static/common/css/select2-bootstrap.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link href="/static/common/css/font-awesome.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link rel="stylesheet" href="{% static 'mooring/css/dashboard.css' %}?ver={{ GIT_COMMIT_HASH }}">
 {% endblock %}
 {% block extra_js %}
 {% endblock %}

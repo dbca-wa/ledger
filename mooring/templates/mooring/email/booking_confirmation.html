@@ -1,0 +1,21 @@
+<p>Dear {{booking.details.first_name}} {{booking.details.last_name}},</p>
+
+{% if booking.admission_payment %}
+    <p>Please find attached the confirmation for your booking PS{{ booking.id }} and the confirmation for your admission fees AD{{ booking.admission_payment.id }}.</p>
+{% else %}
+    <p>Please find attached the confirmation for your booking PS{{ booking.id }}.</p>
+{% endif %}
+
+<p>Print or save the attached confirmation for presentation on arrival and at any time during your stay.</p>
+
+<p>Contact us about your booking</p>
+{% for contact in contact_list %}
+    <p>{{ contact.moorings }}<br/>
+        {{ contact.phone }}<br/>
+        {{ contact.email }}</p>
+{% endfor %}
+<br/>
+
+
+<a href="{{my_bookings}}">View my bookings</a>
+

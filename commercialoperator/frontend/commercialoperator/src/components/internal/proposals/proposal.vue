@@ -319,6 +319,7 @@
                     <Requirements :proposal="proposal"/>
                 </template>
                 <template v-if="canSeeSubmission || (!canSeeSubmission && showingProposal)">
+                    <!---
                     <div class="col-md-12">
                         <div class="row">
                             <div class="panel panel-default">
@@ -688,7 +689,9 @@ export default {
         save: function(e) {
           let vm = this;
           let formData = new FormData(vm.form);
-          formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
+            formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
+            formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
+            formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
           vm.$http.post(vm.proposal_form_url,formData).then(res=>{
               swal(
                 'Saved',
@@ -699,14 +702,16 @@ export default {
           });
         },
         save_wo: function() {
-          let vm = this;
-          let formData = new FormData(vm.form);
-          formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
-          vm.$http.post(vm.proposal_form_url,formData).then(res=>{
+            let vm = this;
+            let formData = new FormData(vm.form);
+            formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
+            formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
+            formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
+            vm.$http.post(vm.proposal_form_url,formData).then(res=>{
 
               
-          },err=>{
-          });
+                },err=>{
+            });
         },
 
         toggleProposal:function(){
