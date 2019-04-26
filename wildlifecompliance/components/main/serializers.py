@@ -32,8 +32,8 @@ class CommunicationLogEntrySerializer(serializers.ModelSerializer):
 
 class SearchKeywordSerializer(serializers.Serializer):
     number = serializers.CharField()
-    id = serializers.IntegerField()
-    type = serializers.CharField()
+    record_id = serializers.IntegerField()
+    record_type = serializers.CharField()
     applicant = serializers.CharField()
     text = serializers.JSONField(required=False)
     licence_document = serializers.CharField(
@@ -43,5 +43,5 @@ class SearchKeywordSerializer(serializers.Serializer):
 
 
 class SearchReferenceSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    type = serializers.CharField()
+    record_id = serializers.IntegerField()
+    record_type = serializers.CharField()

@@ -211,8 +211,8 @@ def search_keywords(search_words, search_application, search_licence, search_ret
                                     final_results.update({'key': key, 'value': value})
                             res = {
                                 'number': app.lodgement_number,
-                                'id': app.id,
-                                'type': 'Application',
+                                'record_id': app.id,
+                                'record_type': 'Application',
                                 'applicant': app.applicant,
                                 'text': final_results,
                                 'licence_document': None
@@ -236,8 +236,8 @@ def search_keywords(search_words, search_application, search_licence, search_ret
                                 final_results.update({'key': key, 'value': value})
                         res = {
                             'number': lic.licence_number,
-                            'id': lic.id,
-                            'type': 'Licence',
+                            'record_id': lic.id,
+                            'record_type': 'Licence',
                             'applicant': lic.current_application.applicant,
                             'text': final_results,
                             'licence_document': lic.licence_document
@@ -261,8 +261,8 @@ def search_keywords(search_words, search_application, search_licence, search_ret
                                 final_results.update({'key': key, 'value': value})
                         res = {
                             'number': ret.lodgement_number,
-                            'id': ret.id,
-                            'type': 'Return',
+                            'record_id': ret.id,
+                            'record_type': 'Return',
                             'applicant': ret.application.applicant,
                             'text': final_results,
                             'licence_document': None
@@ -284,19 +284,19 @@ def search_reference(reference_number):
     record = {}
     try:
         result = application_list.get(lodgement_number=reference_number)
-        record = {'id': result.id,
-                  'type': 'application'}
+        record = {'record_id': result.id,
+                  'record_type': 'application'}
     except Application.DoesNotExist:
         try:
             result = licence_list.get(lodgement_number=reference_number)
-            record = {'id': result.id,
-                      'type': 'licence'}
+            record = {'record_id': result.id,
+                      'record_type': 'licence'}
         except WildlifeLicence.DoesNotExist:
             try:
                 for r in returns_list:
                     if r.reference == reference_number:
-                        record = {'id': r.id,
-                                  'type': 'compliance'}
+                        record = {'record_id': r.id,
+                                  'record_type': 'return'}
             except BaseException:
                 raise ValidationError('Record with provided reference number does not exist')
     if record:

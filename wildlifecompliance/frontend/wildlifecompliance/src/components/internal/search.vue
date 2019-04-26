@@ -141,7 +141,7 @@ export default {
                 data: vm.results,
                 columns: [
                     {data: "number"},
-                    {data:"type"},
+                    {data:"record_type"},
                     {data: "applicant"},
                     {data: "text",
                         mRender: function (data,type,full) {
@@ -153,7 +153,7 @@ export default {
                             }
                         }
                     },
-                    {data: "id",
+                    {data: "record_id",
                         mRender:function (data,type,full) {
                             let links = '';
                             if(full.type == 'Application') {
