@@ -163,6 +163,14 @@ class Return(models.Model):
         return self.return_type.data_format
 
     @property
+    def template(self):
+        """
+        Return data spreadsheet template for uploading information.
+        :return: spreadsheet template format.
+        """
+        return self.return_type.data_template.url if self.return_type.data_template else None
+
+    @property
     def table(self):
         """
         Return data presented in table format with column headers.
