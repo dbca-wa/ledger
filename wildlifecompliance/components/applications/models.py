@@ -1048,6 +1048,7 @@ class Application(RevisionedMixin):
                     if children_key in fields[name]:
                         del fields[name][children_key]
                         iterate_children(item[children_key], fields, fields[name], children_key, condition)
+                condition = {}
 
         iterate_children(self.schema, fields)
         return fields
