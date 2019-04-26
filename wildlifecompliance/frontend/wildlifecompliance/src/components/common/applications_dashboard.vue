@@ -100,7 +100,6 @@ export default {
     },
     data() {
         let vm = this;
-        let external_application_headers = ["Number","Category","Activity","Type","Submitter","Applicant","Status","Lodged on","Action"];
         let internal_application_headers = ["Number","Category","Activity","Type","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"];
         let internal_columns = [
             {
@@ -295,7 +294,7 @@ export default {
             application_licence_types : [],
             application_submitters: [],
             application_status: [],
-            application_ex_headers: this.external_application_headers,
+            application_ex_headers: ["Number","Category","Activity","Type","Submitter","Applicant","Status","Lodged on","Action"],
             application_ex_options:{
                 serverSide: true,
                 searchDelay: 1000,
