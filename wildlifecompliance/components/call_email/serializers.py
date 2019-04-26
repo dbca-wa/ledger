@@ -6,6 +6,7 @@ from wildlifecompliance.components.call_email.models import (
     ComplianceFormDataRecord,
     ComplianceLogEntry,
     Location,
+    ComplianceUserAction,
 )
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers
@@ -86,7 +87,7 @@ class LocationSerializer(serializers.ModelSerializer):
             'town_suburb',
             'state',
             'postcode',
-            'country',             
+            'country',
         )
 
 
@@ -117,6 +118,21 @@ class CallEmailSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', )
 
 
+class UpdateCallEmailSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CallEmail
+        fields = (
+            'id',
+            'status',
+            'classification',
+            'number',
+            'caller',
+            'assigned_to',
+        )
+        read_only_fields = ('id', )
+
+
 class UpdateRendererDataSerializer(CallEmailSerializer):
     data = ComplianceFormDataRecordSerializer(many=True)
 
@@ -127,12 +143,13 @@ class UpdateRendererDataSerializer(CallEmailSerializer):
             'data',
         )
 
- # class ComplianceUserActionSerializer(serializers.ModelSerializer):
-  #  who = serializers.CharField(source='who.get_full_name')
 
-   # class Meta:
-    #    model = ApplicationUserAction
-     #   fields = '__all__'
+class ComplianceUserActionSerializer(serializers.ModelSerializer):
+    who = serializers.CharField(source='who.get_full_name')
+
+    class Meta:
+        model = ComplianceUserAction
+        fields = '__all__'
 
 
 class ComplianceLogEntrySerializer(CommunicationLogEntrySerializer):

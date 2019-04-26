@@ -18,7 +18,7 @@ export const callemailStore = {
         display_call_email: {},
         count: 1,
         call_classification: '',
-        classification_types: {},
+        classification_types: [],
     },
     getters: {
         call_email: state => state.call_email,
@@ -36,11 +36,6 @@ export const callemailStore = {
                 ...call_email
             });
         },
-        /*
-        updateCallClassification(state, classification) {
-            state.call_email.classification = classification;
-        },
-        */
         updateNumber(state, number) {
             state.call_email.number = number;
         },
@@ -51,16 +46,8 @@ export const callemailStore = {
             state.call_email.assigned_to = assigned_to;
         },
         updateClassification(state, classification_entry) {
-            //let currentValue = state.classification[key] ? {...state.classification[key]} : {};
-            //state.classification
-            /*
-            for(let idx in value) {
-                currentValue[idx] = value[idx];
-            }
-            */
-            Vue.set(state.classification_types, classification_entry.id, classification_entry.name);
-            //state.classification = classification_entries;
-            //state.classification_types += classification_entry;
+            //Vue.set(state.classification_types, classification_entry.id, classification_entry.name);
+            state.classification_types.push(classification_entry);
         }
     },
     actions: {
@@ -77,8 +64,6 @@ export const callemailStore = {
                     helpers.add_endpoint_json(api_endpoints.call_email, call_email_id)
 
                 ).then(res => {
-                        //console.log("res.body");
-                        //console.log(res.body);
                         dispatch("setCallEmail", res.body);
                         for (let form_data_record of res.body.data) {
                             dispatch("setFormValue", {
@@ -103,25 +88,25 @@ export const callemailStore = {
         loadClassification({
             dispatch,
         }) {
-                console.log("loadClassification");
-                return new Promise((resolve, reject) => {
-                    Vue.http.get(api_endpoints.classification)
+            console.log("loadClassification");
+            return new Promise((resolve, reject) => {
+                Vue.http.get(api_endpoints.classification)
                     .then(res => {
-                        console.log(res.body.results);
-                        for (let classification_entry of res.body.results) {
-                            dispatch("setClassificationEntry", classification_entry);
-                            resolve();
-                        }
-                    },
-                err => {
-                    console.log(err);
-                    reject();
-                });
+                            console.log(res.body.results);
+                            for (let classification_entry of res.body.results) {
+                                dispatch("setClassificationEntry", classification_entry);
+                                resolve();
+                            }
+                        },
+                        err => {
+                            console.log(err);
+                            reject();
+                        });
             });
         },
         setClassificationEntry({
-            commit,
-        }, 
+                commit,
+            },
             classification_entry
         ) {
             console.log(classification_entry);
@@ -130,8 +115,7 @@ export const callemailStore = {
 
         setCallEmail({
             commit,
-        }, call_email
-        ) {
+        }, call_email) {
             console.log(call_email);
             commit("updateCallEmail", call_email);
         },
