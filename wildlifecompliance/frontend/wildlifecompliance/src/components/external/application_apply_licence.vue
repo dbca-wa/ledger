@@ -168,15 +168,18 @@ export default {
         }
     },
     handlePurposeCheckboxChange:function(index,index1,index2,event){
-        let vm = this
-        var purpose = vm.licence_categories[index].activity[index1].purpose[index2]
-        if(event.target.checked){
-            vm.application_fee += Number(purpose.base_application_fee);
-            vm.licence_fee += Number(purpose.base_licence_fee);
-        } else {
-            vm.application_fee -= Number(purpose.base_application_fee);
-            vm.licence_fee -= Number(purpose.base_licence_fee);
-        }
+        let purpose_ids = this.licence_categories[index].activity[index1].purpose.filter(
+            purpose => purpose.selected || (purpose.id == event.target.id && event.target.checked)
+        ).map(purpose => purpose.id);
+
+        this.$http.post('/api/application/estimate_price/', {
+                'purpose_ids': purpose_ids
+            }).then(res => {
+                this.application_fee = res.body.fees.application;
+                this.licence_fee = res.body.fees.licence;
+        }, err => {
+            console.log(err);
+        });
     },
     createApplication:function () {
         let vm = this;
