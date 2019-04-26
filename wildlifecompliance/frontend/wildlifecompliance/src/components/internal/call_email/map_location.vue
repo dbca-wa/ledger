@@ -37,7 +37,6 @@
 </template>
 
 <script>
-import MapData from './map_location_store.js';
 import Map from 'ol/Map.js';
 import View from 'ol/View.js';
 import { defaults as defaultControls, ScaleLine} from 'ol/control.js';
@@ -55,11 +54,14 @@ import 'ol/ol.css';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'ol-geocoder/dist/ol-geocoder.css';
 
+
 export default {
     name: "map-openlayers",
     data: function(){
+        const defaultCentre = [13775786.985667605, -2871569.067879858];
+
         return {
-            defaultCenter: MapData.data.defaultCenter,
+            defaultCenter: defaultCentre,
             projection: null,
             map: null,
             popup: null,
@@ -159,6 +161,7 @@ export default {
             this.projection = get('EPSG:3857');
 
             var rasterLayer = new TileLayer({source: new OSM()});
+            //var rasterLayerSat = new TileLayer({source: new MapQuest({layer: 'sat'})});
 
 
             this.map = new Map({
