@@ -26,7 +26,6 @@ class ReturnSerializer(serializers.ModelSerializer):
     processing_status = serializers.CharField(
         source='get_processing_status_display') # TODO: check if this should be changed to use CustomChoice
     submitter = EmailUserSerializer()
-    table = serializers.SerializerMethodField()
     licence_species_list = serializers.SerializerMethodField()
     sheet_activity_list = serializers.SerializerMethodField()
     sheet_species_list = serializers.SerializerMethodField()
@@ -78,14 +77,6 @@ class ReturnSerializer(serializers.ModelSerializer):
         :return: species identifier for a Return Running Sheet.
         """
         return _return.sheet.species if _return.has_sheet else None
-
-    def get_table(self, _return):
-        """
-        Gets the table of data available for the Return.
-        :param _return: Return instance.
-        :return: table of data details.
-        """
-        return _return.sheet.table if _return.has_sheet else _return.table
 
     def get_licence_species_list(self, _return):
         """

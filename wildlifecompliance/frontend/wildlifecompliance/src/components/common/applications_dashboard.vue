@@ -81,6 +81,7 @@ import {
     api_endpoints,
     helpers
 }from '@/utils/hooks'
+import '@/scss/dashboards/application.scss';
 export default {
     name: 'ApplicationTableDash',
     props: {
@@ -99,14 +100,14 @@ export default {
     },
     data() {
         let vm = this;
-        let internal_application_headers = [];
-        internal_application_headers = ["Number","Category","Activity","Type","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"];
+        let internal_application_headers = ["Number","Category","Activity","Type","Submitter","Applicant","Status","Payment Status","Lodged on","Assigned Officer","Action"];
         let internal_columns = [
             {
                 data: "lodgement_number",
             },
             {
                 data: "category_name",
+                className: "normal-white-space",
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
@@ -127,6 +128,7 @@ export default {
             },
             {
                 data: "submitter",
+                className: "normal-white-space",
                 name: "submitter__first_name, submitter__last_name, submitter__email",
                 mRender:function (data,type,full) {
                     if (data) {
@@ -137,11 +139,13 @@ export default {
             },
             {
                 data: "applicant",
+                className: "normal-white-space",
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "processing_status",
+                className: "normal-white-space",
                 mRender:function(data,type,full){
                     return data.name;
                 },
@@ -290,7 +294,7 @@ export default {
             application_licence_types : [],
             application_submitters: [],
             application_status: [],
-            application_ex_headers:["Number","Category","Activity","Type","Submitter","Applicant","Status","Lodged on","Action"],
+            application_ex_headers: ["Number","Category","Activity","Type","Submitter","Applicant","Status","Lodged on","Action"],
             application_ex_options:{
                 serverSide: true,
                 searchDelay: 1000,
@@ -364,7 +368,26 @@ export default {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
-                responsive: true,
+                responsive: {
+                    details: {
+                        type: 'column',
+                        target: 'tr',
+                        renderer: function ( api, rowIdx, columns ) {
+                            var data = $.map( columns, function ( col, i ) {
+                                return col.hidden ?
+                                    '<tr data-dt-row="'+col.rowIndex+'" data-dt-column="'+col.columnIndex+'">'+
+                                        '<td><strong>'+col.title+':&nbsp;'+'</strong></td> '+
+                                        '<td>'+col.data+'</td>'+
+                                    '</tr>' :
+                                    '';
+                            } ).join('');
+
+                            return data ?
+                                $('<table/>').append( data ) :
+                                false;
+                        }
+                    }
+                },
                 ajax: {
                     "url": vm.url,
                     "dataSrc": 'data',
@@ -394,7 +417,7 @@ export default {
                     submittersColumn.data().unique().sort().each( function ( d, j ) {
                         var submitters = [];
                         $.each(d,(index, submitter) => {
-                            if (!submitters.find(submitter => submitter.email) || submitters.length == 0){
+                            if (!submitters.find(item => item.email == submitter.email || submitters.length == 0)){
                                 submitters.push({
                                     'email':submitter.email,
                                     'search_term': `${submitter.first_name} ${submitter.last_name} (${submitter.email})`
@@ -598,15 +621,6 @@ export default {
         getColumnIndex: function(column_name) {
             return this.visibleHeaders.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
         },
-//        filterByColumn: function(column, filterAttribute) {
-//            const column_idx = this.getColumnIndex(column);
-//            const filterValue = typeof(filterAttribute) == 'string' ? filterAttribute : filterAttribute.name;
-//            if (filterValue!= 'All') {
-//                this.visibleDatatable.vmDataTable.columns(column_idx).search('^' + filterValue +'$', true, false).draw();
-//            } else {
-//                this.visibleDatatable.vmDataTable.columns(column_idx).search('').draw();
-//            }
-//        },
     },
     mounted: function(){
         let vm = this;
