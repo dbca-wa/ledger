@@ -15,23 +15,23 @@
 
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">Street</label>
-            <input v-model="street" />
+            <input v-model="call_email.location.properties.street" />
         </div></div>
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">Town/Suburb</label>
-            <input v-model="town_suburb" />
+            <input v-model="call_email.location.properties.town_suburb" />
         </div></div>
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">State</label>
-            <input v-model="state" />
+            <input v-model="call_email.location.properties.state" />
         </div></div>
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">Postcode</label>
-            <input v-model="postcode" />
+            <input v-model="call_email.location.properties.postcode" />
         </div></div>
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">Contry</label>
-            <input v-model="country" />
+            <input v-model="call_email.location.properties.country" />
        </div></div>
     </div>
 </template>
@@ -53,7 +53,7 @@ import Geocoder from 'ol-geocoder/dist/ol-geocoder.js'
 import 'ol/ol.css';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'ol-geocoder/dist/ol-geocoder.css';
-
+import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 
 export default {
     name: "map-openlayers",
@@ -80,31 +80,59 @@ export default {
             town_suburb: null,
         };
     },
+    computed: {
+        
+        ...mapGetters({
+            call_email: "callemailStore/call_email",
+        }),
+        setInitLocation: function() {
+            console.log("importMapData");
+            //this.call_email.location.geometry = new Point(transform([-31, 118], 'EPSG:4326', 'EPSG:3857'));
+            this.call_email.location.geometry = new Point([-31, 118]);
+        },
+        
+    },
     mounted: function(){
         console.debug('Start loading map');
-        this.importMapData();
+        //this.importMapData();
         this.initMap();
         console.debug('End loading map');
     },
+    beforeRouteEnter: function(to, from, next) {
+        console.log("before route enter");
+        let initialisers = [];
+        next(vm => {
+        console.log("before route enter - next");
+        vm.loadCallEmail({ call_email_id: to.params.call_email_id });
+        //vm.loadClassification();
+        });
+    },
     methods: {
-        importMapData: function(){
-            this.$http.get("http://ubuntu-18:8071/api/call_email_location/7/")
-            .then((response)=>{
-                console.log(response.data);
-                var geojson = response.data;
-                this.lat_4326 = geojson.geometry.coordinates[1];
-                this.lng_4326 = geojson.geometry.coordinates[0];
-                this.country = geojson.properties.country;
-                this.postcode = geojson.properties.postcode;
-                this.state = geojson.properties.state;
-                this.street = geojson.properties.street;
-                this.town_suburb = geojson.properties.town_suburb;
-                this.addMarker();
-                this.addGeocoder();
-            })
-            .catch((response)=>{
-                console.log(response);
-            });
+        ...mapActions({
+            loadCallEmail: "callemailStore/loadCallEmail",
+        }),
+        addMarker: function(){
+             var iconFeature = new Feature({
+               //geometry: new Point(transform([this.lng_4326, this.lat_4326], 'EPSG:4326', 'EPSG:3857')),
+               geometry: new Point(transform([-32, 119], 'EPSG:4326', 'EPSG:3857')),
+             });
+             this.feature_marker = iconFeature;
+             var iconStyle = new Style({
+               image: new Icon(/** @type {module:ol/style/Icon~Options} */ ({
+                 anchor: [16, 32],
+                 anchorXUnits: 'pixels',
+                 anchorYUnits: 'pixels',
+                 src: require('./pin_gray.png'),
+               }))
+             });
+             iconFeature.setStyle(iconStyle);
+             var vectorSource = new VectorSource({
+               features: [iconFeature]
+             });
+             var vectorLayer = new VectorLayer({
+               source: vectorSource
+             });
+             this.map.addLayer(vectorLayer);
         },
         addGeocoder: function(){
             console.log(Geocoder);
@@ -130,33 +158,8 @@ export default {
                 self.map.removeLayer(layerAdded);
             });
         },
-        addMarker: function(){
-             var iconFeature = new Feature({
-               geometry: new Point(transform([this.lng_4326, this.lat_4326], 'EPSG:4326', 'EPSG:3857')),
-             });
-             this.feature_marker = iconFeature;
+        
 
-             var iconStyle = new Style({
-               image: new Icon(/** @type {module:ol/style/Icon~Options} */ ({
-                 anchor: [16, 32],
-                 anchorXUnits: 'pixels',
-                 anchorYUnits: 'pixels',
-                 src: require('./pin_gray.png'),
-               }))
-             });
-
-             iconFeature.setStyle(iconStyle);
-
-             var vectorSource = new VectorSource({
-               features: [iconFeature]
-             });
-
-             var vectorLayer = new VectorLayer({
-               source: vectorSource
-             });
-
-             this.map.addLayer(vectorLayer);
-        },
         initMap: function(){
             this.projection = get('EPSG:3857');
 
@@ -193,7 +196,8 @@ export default {
             this.map.addOverlay(this.popup);
         },
         relocateMarker: function(coordinates){
-            this.feature_marker.getGeometry().setCoordinates(coordinates);
+            //this.feature_marker.getGeometry().setCoordinates(coordinates);
+            this.call_email.location.getGeometry().setCoordinates(coordinates);
         },
         mapClickHandler: function(e){
             var coordinate = e.coordinate;
