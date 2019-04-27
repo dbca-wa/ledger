@@ -1,4 +1,7 @@
 import traceback
+
+from rest_framework_gis.serializers import GeoFeatureModelSerializer
+
 from wildlifecompliance.components.call_email.models import (
     CallEmail,
     Classification,
@@ -76,13 +79,13 @@ class ReportTypeSerializer(serializers.ModelSerializer):
         read_only_fields = ('report_type', 'schema')
 
 
-class LocationSerializer(serializers.ModelSerializer):
-
+class LocationSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = Location
+        geo_field = 'wkb_geometry'
         fields = (
-            'latitude',
-            'longitude',
+            'id',
+            'wkb_geometry',
             'street',
             'town_suburb',
             'state',
@@ -94,10 +97,10 @@ class LocationSerializer(serializers.ModelSerializer):
 class CallEmailSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source='get_status_display')
     classification = ClassificationSerializer()
-    location = LocationSerializer()
     lodgement_date = serializers.CharField(
         source='lodged_on')
     report_type = ReportTypeSerializer()
+    location = LocationSerializer()
     data = ComplianceFormDataRecordSerializer(many=True)
 
     class Meta:
