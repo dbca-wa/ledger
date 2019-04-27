@@ -267,12 +267,14 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             # form_data = request.data.get('schema')
             # parsed_json = parser.create_data_from_form(form_data)
             request_data = {
-                    'classification': request_classification_obj.id,
+                    'classification': request_classification_dict,
                     'number': request.data.get('number'),
                     'caller': request.data.get('caller'),
                     'assigned_to': request.data.get('assigned_to'),
-                    # 'data': parsed_json,
+                    'location': request.data.get('location'),
                     }
+            print("request_data")
+            print(request_data)
             serializer = UpdateCallEmailSerializer(instance, data=request_data)
             serializer.is_valid(raise_exception=True)
             if serializer.is_valid():
