@@ -41,7 +41,7 @@ class ReturnType(models.Model):
         max_length=30,
         choices=RETURN_TYPE_CHOICES,
         default=RETURN_TYPE_SHEET)
-    data_template = models.FileField(upload_to=template_directory_path, null=True)
+    data_template = models.FileField(upload_to=template_directory_path, null=True, blank=True)
     replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
     version = models.SmallIntegerField(default=1, blank=False, null=False)
 
@@ -64,7 +64,7 @@ class ReturnType(models.Model):
         return resource.get('schema', {}) if resource else None
 
     def __str__(self):
-        return '{} - v{}'.format(self.name, self.version)
+        return '{0} - v{1}'.format(self.name, self.version)
 
 
 class Return(models.Model):
@@ -496,15 +496,14 @@ class ReturnQuestion(object):
         :return: formatted data.
         """
         tables = []
-        cnt = 0
         for resource in self._return.return_type.resources:
             resource_name = ReturnType.RETURN_TYPE_QUESTION
             schema = Schema(resource.get('schema'))
             headers = []
             for f in schema.fields:
                 header = {
-                    "label": f.name,
-                    "name": f.name,
+                    "label": f.data['label'],
+                    "name": f.data['name'],
                     "required": f.required,
                     "type": f.type.name,
                 }
@@ -521,7 +520,6 @@ class ReturnQuestion(object):
                 return_table = self._return.returntable_set.get(name=resource_name)
                 rows = [
                     return_row.data for return_row in return_table.returnrow_set.all()]
-                #validated_rows = schema.rows_validator(rows)
                 table['data'] = rows
             except ReturnTable.DoesNotExist:
                 result = {}
@@ -616,7 +614,7 @@ class ReturnSheet(object):
             self._species_list.append(_species.name)
             self._species = _species.name
         # build list of Species available on Licence.
-        self._licence_species_list = ['S000001', 'S000002', 'S000003', 'S000004']
+        self._licence_species_list = []
 
     def _get_table_rows(self, _data):
         """
