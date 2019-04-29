@@ -81,7 +81,7 @@
 
               </FormSection>
               <FormSection :label="`Location`" :Index="`1`">
-
+                <MapLocation/>
 
               </FormSection>
               <FormSection :label="`Details`" :Index="`2`">
@@ -100,8 +100,9 @@
 </template>
 <script>
 import Vue from "vue";
-import CommsLogs from "@common-utils/comms_logs.vue";
 import FormSection from "@/components/compliance_forms/section.vue";
+import CommsLogs from '@common-components/comms_logs.vue';
+import MapLocation from './map_location.vue'
 import { api_endpoints, helpers } from "@/utils/hooks";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
@@ -136,14 +137,15 @@ export default {
 
   components: {
     CommsLogs,
-    FormSection
+    FormSection,
+    MapLocation,
   },
   computed: {
     ...mapGetters({
       call_email: "callemailStore/call_email",
       call_id: "callemailStore/call_id",
       classification_types: "callemailStore/classification_types",
-      location: "callemailStore/location",
+      //location: "callemailStore/location",
       report_type: "callemailStore/report_type",
     }),
     csrf_token: function() {
