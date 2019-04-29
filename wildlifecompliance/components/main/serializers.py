@@ -28,3 +28,20 @@ class CommunicationLogEntrySerializer(serializers.ModelSerializer):
 
     def get_documents(self, obj):
         return [[d.name, d._file.url] for d in obj.documents.all()]
+
+
+class SearchKeywordSerializer(serializers.Serializer):
+    number = serializers.CharField()
+    record_id = serializers.IntegerField()
+    record_type = serializers.CharField()
+    applicant = serializers.CharField()
+    text = serializers.JSONField(required=False)
+    licence_document = serializers.CharField(
+        source='licence_document._file.url',
+        required=False
+    )
+
+
+class SearchReferenceSerializer(serializers.Serializer):
+    record_id = serializers.IntegerField()
+    record_type = serializers.CharField()

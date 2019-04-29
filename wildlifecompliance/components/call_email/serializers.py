@@ -1,10 +1,15 @@
 import traceback
+
+from rest_framework_gis.serializers import GeoFeatureModelSerializer, GeometryField
+
 from wildlifecompliance.components.call_email.models import (
     CallEmail,
     Classification,
     ReportType,
     ComplianceFormDataRecord,
     ComplianceLogEntry,
+    Location,
+    ComplianceUserAction,
 )
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers
@@ -74,12 +79,28 @@ class ReportTypeSerializer(serializers.ModelSerializer):
         read_only_fields = ('report_type', 'schema')
 
 
+class LocationSerializer(GeoFeatureModelSerializer):
+    class Meta:
+        model = Location
+        geo_field = 'wkb_geometry'
+        fields = (
+            'id',
+            'street',
+            'town_suburb',
+            'state',
+            'postcode',
+            'country',
+            'wkb_geometry',
+        )
+
+
 class CallEmailSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source='get_status_display')
     classification = ClassificationSerializer()
     lodgement_date = serializers.CharField(
         source='lodged_on')
     report_type = ReportTypeSerializer()
+    location = LocationSerializer()
     data = ComplianceFormDataRecordSerializer(many=True)
 
     class Meta:
@@ -100,6 +121,24 @@ class CallEmailSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', )
 
 
+class UpdateCallEmailSerializer(serializers.ModelSerializer):
+    location = LocationSerializer(read_only=True)
+    classification = ClassificationSerializer(read_only=True)
+
+    class Meta:
+        model = CallEmail
+        fields = (
+            'id',
+            'status',
+            'classification',
+            'number',
+            'caller',
+            'assigned_to',
+            'location',
+        )
+        read_only_fields = ('id', )
+
+
 class UpdateRendererDataSerializer(CallEmailSerializer):
     data = ComplianceFormDataRecordSerializer(many=True)
 
@@ -110,12 +149,13 @@ class UpdateRendererDataSerializer(CallEmailSerializer):
             'data',
         )
 
- # class ComplianceUserActionSerializer(serializers.ModelSerializer):
-  #  who = serializers.CharField(source='who.get_full_name')
 
-   # class Meta:
-    #    model = ApplicationUserAction
-     #   fields = '__all__'
+class ComplianceUserActionSerializer(serializers.ModelSerializer):
+    who = serializers.CharField(source='who.get_full_name')
+
+    class Meta:
+        model = ComplianceUserAction
+        fields = '__all__'
 
 
 class ComplianceLogEntrySerializer(CommunicationLogEntrySerializer):

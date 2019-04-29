@@ -93,7 +93,7 @@ export default {
         },
     },
     mounted: function() {
-        $('.date').datetimepicker({
+        $(`[name=${this.name}]`).datetimepicker({
             format: 'DD/MM/YYYY'
         }).off('dp.change').on('dp.change', (e) => {
             this.value = $(e.target).data('DateTimePicker').date().format('DD/MM/YYYY');

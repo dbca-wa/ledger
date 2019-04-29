@@ -2,7 +2,9 @@ var site_url = location.origin
 
 module.exports = {
     organisations: '/api/organisations/',
+    organisations_paginated: '/api/organisations_paginated/',
     organisation_requests: '/api/organisation_requests/',
+    organisation_requests_paginated: '/api/organisation_requests_paginated/',
     organisation_contacts: '/api/organisation_contacts/',
     organisation_access_group_members: '/api/organisation_access_group_members/',
     users: '/api/users/',
@@ -23,6 +25,7 @@ module.exports = {
     applications_paginated:"/api/application_paginated/",
     licences:"/api/licences/",
     call_email:"/api/call_email/",
+    classification:"/api/classification/",
     licences_paginated:"/api/licences_paginated/",
     returns:"/api/returns/",
     application_standard_conditions:"/api/application_standard_conditions/",
