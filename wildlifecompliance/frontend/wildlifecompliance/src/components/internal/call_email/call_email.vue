@@ -2,7 +2,7 @@
     <div class="container">
     
         <div class="row">
-          <h3>Call/Email: {{ call_id }}</h3>
+          <h3>Call/Email: {{ call_email.id }}</h3>
 
           <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
@@ -67,8 +67,8 @@
               <FormSection :label="`Contact`" :Index="`0`">
                 
                 <template>
-                    <select class="form-control" v-model="call_email.classification.name">
-                        <option v-for="option in classification_types" :value="option.name" v-bind:key="option.id">
+                    <select class="form-control" v-model="call_email.classification_id">
+                        <option v-for="option in classification_types" :value="option.id" v-bind:key="option.id">
                           {{ option.name }} 
                         </option>
                     </select>
@@ -101,8 +101,8 @@
 <script>
 import Vue from "vue";
 import FormSection from "@/components/compliance_forms/section.vue";
-import CommsLogs from '@common-components/comms_logs.vue';
-import MapLocation from './map_location.vue'
+import CommsLogs from "@common-components/comms_logs.vue";
+import MapLocation from "./map_location.vue";
 import { api_endpoints, helpers } from "@/utils/hooks";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
@@ -138,15 +138,16 @@ export default {
   components: {
     CommsLogs,
     FormSection,
-    MapLocation,
+    MapLocation
   },
   computed: {
     ...mapGetters({
       call_email: "callemailStore/call_email",
-      call_id: "callemailStore/call_id",
+      //call_id: "callemailStore/call_id",
       classification_types: "callemailStore/classification_types",
       //location: "callemailStore/location",
       report_type: "callemailStore/report_type",
+      location: "callemailStore/location"
     }),
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
@@ -169,7 +170,8 @@ export default {
     ...mapActions({
       loadCallEmail: "callemailStore/loadCallEmail",
       loadClassification: "callemailStore/loadClassification",
-      saveFormData: "saveFormData"
+      saveFormData: "saveFormData",
+      loadLocation: "callemailStore/loadLocation"
     }),
 
     createCallEmail: function(e) {
@@ -200,35 +202,42 @@ export default {
         .post(
           helpers.add_endpoint_join(
             api_endpoints.call_email,
-            this.call_email.id + '/call_email_save/'
-          ), this.call_email)
-          .then( resOne => {
+            this.call_email.id + "/call_email_save/"
+          ),
+          this.call_email
+        )
+        .then(
+          resOne => {
             console.log(resOne);
-            this.saveFormData({ url: this.call_email_form_url })
-            .then( resTwo => {
-              this.isProcessing = false;
-            }, 
-            errTwo => { 
-            swal("Error", "There was an error saving the record", "error").then(
-              errTwoRes => {
+            this.saveFormData({ url: this.call_email_form_url }).then(
+              resTwo => {
                 this.isProcessing = false;
-                }
-              );
-            });
-            swal("Saved", "The record has been saved", "success").then(result => {
-              this.isProcessing = false;
-            });
+              },
+              errTwo => {
+                swal(
+                  "Error",
+                  "There was an error saving the record",
+                  "error"
+                ).then(errTwoRes => {
+                  this.isProcessing = false;
+                });
+              }
+            );
+            swal("Saved", "The record has been saved", "success").then(
+              result => {
+                this.isProcessing = false;
+              }
+            );
           },
           errOne => {
             swal("Error", "There was an error saving the record", "error").then(
               result => {
                 this.isProcessing = false;
               }
-              );
-            }
-          );
-    },
-        
+            );
+          }
+        );
+    }
   },
   beforeRouteEnter: function(to, from, next) {
     console.log("before route enter");
@@ -237,6 +246,7 @@ export default {
       console.log("before route enter - next");
       vm.loadCallEmail({ call_email_id: to.params.call_email_id });
       vm.loadClassification();
+      vm.loadLocation({ call_email_id: to.params.call_email_id });
     });
   },
 
