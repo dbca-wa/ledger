@@ -1074,6 +1074,8 @@ class Application(RevisionedMixin):
 
         for instance, schemas in data_tree.items():
             for schema_name, item in schemas.items():
+                if schema_name not in schema_fields:
+                    continue
                 schema_data = schema_fields[schema_name]
                 for condition_field, condition_value in schema_data['condition'].items():
                     if condition_field in schemas and schemas[condition_field] != condition_value:
