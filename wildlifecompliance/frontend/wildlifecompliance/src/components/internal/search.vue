@@ -237,7 +237,7 @@ export default {
               console.log(res)
               vm.errors = false;
               vm.errorString = '';
-              vm.$router.push({ path: '/internal/'+res.body.type+'/'+res.body.id });
+              window.location.href = res.body.url_string;
               },
             error => {
               console.log(error);

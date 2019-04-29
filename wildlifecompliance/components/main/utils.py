@@ -286,27 +286,24 @@ def search_reference(reference_number):
     from wildlifecompliance.components.returns.models import Return
     application_list = Application.objects.all().computed_exclude(processing_status__in=[
         Application.PROCESSING_STATUS_DISCARDED])
-    licence_list = WildlifeLicence.objects.all().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
+    licence_list = WildlifeLicence.objects.all().order_by('licence_number').distinct('licence_number')
     returns_list = Return.objects.all().exclude(processing_status__in=[Return.RETURN_PROCESSING_STATUS_FUTURE])
-    record = {}
+    url_string = {}
     try:
         result = application_list.get(lodgement_number=reference_number)
-        record = {'record_id': result.id,
-                  'record_type': 'application'}
+        url_string = {'url_string': '/internal/application/' + str(result.id) }
     except Application.DoesNotExist:
         try:
-            result = licence_list.get(lodgement_number=reference_number)
-            record = {'record_id': result.id,
-                      'record_type': 'licence'}
+            result = licence_list.get(licence_number=reference_number)
+            url_string = {'url_string': result.licence_document._file.url }
         except WildlifeLicence.DoesNotExist:
             try:
                 for r in returns_list:
                     if r.reference == reference_number:
-                        record = {'record_id': r.id,
-                                  'record_type': 'return'}
+                        url_string = {'url_string': '/internal/return/' + str(result.id) }
             except BaseException:
                 raise ValidationError('Record with provided reference number does not exist')
-    if record:
-        return record
+    if url_string:
+        return url_string
     else:
         raise ValidationError('Record with provided reference number does not exist')
