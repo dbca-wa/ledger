@@ -130,10 +130,12 @@ class CallEmail(models.Model):
         default='draft')
     location = models.ForeignKey(
         Location,
-        null=True
+        null=True,
+        related_name="location_call"
     )
     classification = models.ForeignKey(
         Classification,
+        related_name="classification_call"
     )
     # data = JSONField(default=list)
     # _stored_renderer_data = JSONField(default=list)

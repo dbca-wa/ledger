@@ -41,6 +41,10 @@ class ComplianceFormDataRecordSerializer(serializers.ModelSerializer):
 
 class ClassificationSerializer(serializers.ModelSerializer):
     # name = serializers.CharField(source='get_name_display')
+    # classification_call = serializers.PrimaryKeyRelatedField(
+       # many=True, read_only=True)
+    # classification_call = serializers.PrimaryKeyRelatedField(
+     #   queryset=CallEmail.objects.get(id=46))
 
     class Meta:
         model = Classification
@@ -110,6 +114,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'status',
             'location',
             'classification',
+            'classification_id',
             'schema',
             'lodgement_date',
             'number',
@@ -131,6 +136,8 @@ class UpdateCallEmailSerializer(serializers.ModelSerializer):
             'id',
             'status',
             'classification',
+            'classification_id',
+            'location',
             'number',
             'caller',
             'assigned_to',
