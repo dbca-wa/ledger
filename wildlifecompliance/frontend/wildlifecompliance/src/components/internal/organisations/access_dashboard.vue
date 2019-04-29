@@ -94,7 +94,7 @@ export default {
                         data:"role",
                     },
                     {
-                        data:"status",
+                        data:"status.name",
                     },
                     {
                         data:"lodgement_date",
