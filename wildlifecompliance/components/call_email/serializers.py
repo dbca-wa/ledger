@@ -40,7 +40,6 @@ class ComplianceFormDataRecordSerializer(serializers.ModelSerializer):
 
 
 class ClassificationSerializer(serializers.ModelSerializer):
-    # name = serializers.CharField(source='get_name_display')
 
     class Meta:
         model = Classification
@@ -96,7 +95,7 @@ class LocationSerializer(GeoFeatureModelSerializer):
 
 class CallEmailSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source='get_status_display')
-    classification = ClassificationSerializer()
+    classification = ClassificationSerializer(read_only=True)
     lodgement_date = serializers.CharField(
         source='lodged_on')
     report_type = ReportTypeSerializer()
@@ -110,6 +109,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'status',
             'location',
             'classification',
+            'classification_id',
             'schema',
             'lodgement_date',
             'number',
@@ -117,24 +117,31 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'assigned_to',
             'report_type',
             'data',
+            'location_id',
         )
         read_only_fields = ('id', )
 
 
 class UpdateCallEmailSerializer(serializers.ModelSerializer):
-    location = LocationSerializer(read_only=True)
-    classification = ClassificationSerializer(read_only=True)
+    location = LocationSerializer()
+    location_id = serializers.ListField(
+        required=False, write_only=True)
+    #classification = ClassificationSerializer(read_only=True)
+    classification_id = serializers.IntegerField(
+        required=False, write_only=True)
 
     class Meta:
         model = CallEmail
         fields = (
             'id',
             'status',
-            'classification',
+            'classification_id',
+            'location',
             'number',
             'caller',
             'assigned_to',
             'location',
+            'location_id',
         )
         read_only_fields = ('id', )
 
