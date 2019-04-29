@@ -104,10 +104,12 @@ export default {
         let internal_columns = [
             {
                 data: "lodgement_number",
+                responsivePriority: 1,
             },
             {
                 data: "category_name",
                 className: "normal-white-space",
+                responsivePriority: 2,
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
@@ -117,6 +119,7 @@ export default {
                     let output = data.replace(/(?:\r\n|\r|\n|,)/g, '<br>');
                     return output;
                 },
+                responsivePriority: 3,
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
@@ -124,7 +127,8 @@ export default {
                 data: "application_type",
                 mRender:function (data,type,full) {
                     return data.name;
-                }
+                },
+                responsivePriority: 5
             },
             {
                 data: "submitter",
@@ -135,11 +139,13 @@ export default {
                         return `${data.first_name} ${data.last_name}`;
                     }
                     return ''
-                }
+                },
+                responsivePriority: 50
             },
             {
                 data: "applicant",
                 className: "normal-white-space",
+                responsivePriority: 4,
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
@@ -149,16 +155,19 @@ export default {
                 mRender:function(data,type,full){
                     return data.name;
                 },
+                responsivePriority: 6,
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "payment_status",
+                responsivePriority: 7,
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "lodgement_date",
+                responsivePriority: 8,
                 mRender:function (data,type,full) {
                     return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                 },
@@ -166,7 +175,8 @@ export default {
             },
             {
                 data: "assigned_officer",
-                name: "assigned_officer__first_name, assigned_officer__last_name, assigned_officer__email"
+                name: "assigned_officer__first_name, assigned_officer__last_name, assigned_officer__email",
+                responsivePriority: 50
             },
             {
                 // Actions
@@ -187,6 +197,7 @@ export default {
                     }
                     return links;
                 },
+                responsivePriority: 1,
                 orderable: false,
                 searchable: false
             }
@@ -381,7 +392,15 @@ export default {
                                     '</tr>' :
                                     '';
                             } ).join('');
-
+                            data += '<tr>' +
+                                        '<th>Activity</th><th>Purposes</th><th>Status</th>'+
+                                    '</tr>' +
+                                    '<tr>' +
+                                        '<td>asdfasdf</td><td>asdfasdf</td><td>asdfasdf</td>'+
+                                    '</tr>' +
+                                    '<tr>' +
+                                        '<td>asdfasdf</td><td>asdfasdf</td><td>asdfasdf</td>'+
+                                    '</tr>'
                             return data ?
                                 $('<table/>').append( data ) :
                                 false;
