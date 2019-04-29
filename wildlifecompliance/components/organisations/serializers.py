@@ -245,6 +245,7 @@ class OrganisationRequestSerializer(serializers.ModelSerializer):
             'name',
             'abn',
             'role',
+            'lodgement_number',
             'lodgement_date',
             'assigned_officer',
             'can_be_processed',

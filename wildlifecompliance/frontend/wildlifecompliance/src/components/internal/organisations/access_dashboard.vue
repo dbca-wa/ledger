@@ -82,7 +82,7 @@ export default {
                 },
                 columns:[
                     {
-                        data:"id",
+                        data:"lodgement_number",
                     },
                     {
                         data:"name",

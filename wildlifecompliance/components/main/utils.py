@@ -282,27 +282,32 @@ def search_keywords(search_words, search_application, search_licence, search_ret
 
 def search_reference(reference_number):
     from wildlifecompliance.components.applications.models import Application
+    from wildlifecompliance.components.organisations.models import OrganisationRequest
     from wildlifecompliance.components.licences.models import WildlifeLicence
     from wildlifecompliance.components.returns.models import Return
     application_list = Application.objects.all().computed_exclude(processing_status__in=[
         Application.PROCESSING_STATUS_DISCARDED])
     licence_list = WildlifeLicence.objects.all().order_by('licence_number').distinct('licence_number')
     returns_list = Return.objects.all().exclude(processing_status__in=[Return.RETURN_PROCESSING_STATUS_FUTURE])
+    org_access_request_list = OrganisationRequest.objects.all()
     url_string = {}
     try:
         result = application_list.get(lodgement_number=reference_number)
-        url_string = {'url_string': '/internal/application/' + str(result.id) }
+        url_string = {'url_string': '/internal/application/' + str(result.id)}
     except Application.DoesNotExist:
         try:
             result = licence_list.get(licence_number=reference_number)
-            url_string = {'url_string': result.licence_document._file.url }
+            url_string = {'url_string': result.licence_document._file.url}
         except WildlifeLicence.DoesNotExist:
             try:
-                for r in returns_list:
-                    if r.reference == reference_number:
-                        url_string = {'url_string': '/internal/return/' + str(result.id) }
-            except BaseException:
-                raise ValidationError('Record with provided reference number does not exist')
+                result = returns_list.get(lodgement_number=reference_number)
+                url_string = {'url_string': '/internal/return/' + str(result.id)}
+            except Return.DoesNotExist:
+                try:
+                    result = org_access_request_list.get(lodgement_number=reference_number)
+                    url_string = {'url_string': '/internal/organisations/access/' + str(result.id)}
+                except BaseException:
+                    raise ValidationError('Record with provided reference number does not exist')
     if url_string:
         return url_string
     else:

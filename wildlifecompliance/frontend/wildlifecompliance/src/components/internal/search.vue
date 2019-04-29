@@ -79,6 +79,20 @@
                     </h3>
                 </div>
                 <div class="panel-body collapse in" :id="rBody">
+                    <div class="row col-lg-12">
+                        <span>Search on the following items via Reference Number:</span>
+                        <ul>
+                            <li>Applications (e.g. A000001)</li>
+                            <li>Licences (e.g. L000001)</li>
+                            <li>Returns (e.g. R000001)</li>
+                            <li>Tag Purchases (e.g. T000001)</li>
+                            <li>Organisation Access Requests (e.g. OAR000001)</li>
+                            <li>Advices to CEO (e.g. AD000001)</li>
+                            <li>Endorsement Applications (e.g. E000001)</li>
+                            <li>Lawful Authority Applications (e.g. LAA000001)</li>
+                            <li>Lawful Authorities (e.g. LA000001)</li>
+                        </ul>
+                    </div>
                     <div class="row">
                        <label for="" class="control-label col-lg-12">Reference Number</label>
                           <div class="col-md-8">
