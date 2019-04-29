@@ -15,23 +15,23 @@
 
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">Street</label>
-            <input v-model="call_email.location.properties.street" />
+            <input v-model="location.properties.street" />
         </div></div>
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">Town/Suburb</label>
-            <input v-model="call_email.location.properties.town_suburb" />
+            <input v-model="location.properties.town_suburb" />
         </div></div>
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">State</label>
-            <input v-model="call_email.location.properties.state" />
+            <input v-model="location.properties.state" />
         </div></div>
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">Postcode</label>
-            <input v-model="call_email.location.properties.postcode" />
+            <input v-model="location.properties.postcode" />
         </div></div>
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">Contry</label>
-            <input v-model="call_email.location.properties.country" />
+            <input v-model="location.properties.country" />
        </div></div>
     </div>
 </template>
@@ -75,7 +75,6 @@ export default {
       lng_4326_cursor: null,
       marker_locked: false,
 
-      feature_marker: null,
       lat_4326: null,
       lng_4326: null,
       country: null,
@@ -85,50 +84,58 @@ export default {
       town_suburb: null
     };
   },
+  /*
+  props:{
+            location:{
+                type:Object,
+                required: true
+            },
+    },
+  */
   computed: {
+    
     ...mapGetters({
-      call_email: "callemailStore/call_email",
-      location: "callemailStore/location"
+      location: "callemailStore/location",
+      //"callemailStore/call_email"
     }),
+    
     setInitLocation: function() {
       console.log("importMapData");
       //this.call_email.location.geometry = new Point(transform([-31, 118], 'EPSG:4326', 'EPSG:3857'));
-
-      // this is the call_email nested location
-      this.call_email.location.geometry = new Point([-31, 118]);
-
-      //this is the separate location vuex object
-      this.location.geometry = new Point([-32, 119]);
+      //this.location.geometry = new Point([-31, 118]);
+      var iconFeature = new Feature({
+        //geometry: new Point(transform([this.lng_4326, this.lat_4326], 'EPSG:4326', 'EPSG:3857')),
+        geometry: new Point(transform([-32, 119], "EPSG:4326", "EPSG:3857"))
+      });
+      
+      this.location.geometry = iconFeature;
     }
+      /*
+      {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [102.0, 0.5]
+      },
+      "properties": this.location.properties
+      }
+    },
+    */
+
   },
-  /*
-  beforeRouteEnter: function(to, from, next) {
-    console.log("before route enter");
-    let initialisers = [];
-    next(vm => {
-      console.log("before route enter - next");
-      vm.loadLocation({ call_email_id: to.params.call_email_id });
-    });
-  },
-  */
   mounted: function() {
     console.debug("Start loading map");
     //this.importMapData();
-    //this.loadLocation({ call_email_id: this.$route.params.call_email_id });
     this.initMap();
     console.debug("End loading map");
   },
   methods: {
-    ...mapActions({
-      //loadCallEmail: "callemailStore/loadCallEmail",
-      //loadLocation: "callemailStore/loadLocation"
-    }),
     addMarker: function() {
       var iconFeature = new Feature({
         //geometry: new Point(transform([this.lng_4326, this.lat_4326], 'EPSG:4326', 'EPSG:3857')),
         geometry: new Point(transform([-32, 119], "EPSG:4326", "EPSG:3857"))
       });
-      this.feature_marker = iconFeature;
+      this.location.geometry = iconFeature;
       var iconStyle = new Style({
         image: new Icon(
           /** @type {module:ol/style/Icon~Options} */ ({
@@ -206,8 +213,8 @@ export default {
       this.map.addOverlay(this.popup);
     },
     relocateMarker: function(coordinates) {
-      //this.feature_marker.getGeometry().setCoordinates(coordinates);
-      this.call_email.location.getGeometry().setCoordinates(coordinates);
+      //this.location.geometry.getGeometry().setCoordinates(coordinates);
+      this.location.geometry.getGeometry().setCoordinates(coordinates);
     },
     mapClickHandler: function(e) {
       var coordinate = e.coordinate;

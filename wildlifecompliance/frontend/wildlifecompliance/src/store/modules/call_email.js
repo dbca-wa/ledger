@@ -21,16 +21,14 @@ export const callemailStore = {
         count: 1,
         call_classification: '',
         classification_types: [],
-        location: {},
     },
     getters: {
         call_email: state => state.call_email,
         call_id: state => state.call_email.id,
         call_classification: state => state.call_email.classification.name,
-        //location: state => state.call_email.location.street,
+        location: state => state.call_email.location,
         report_type: state => state.call_email.report_type.report_type,
         classification_types: state => state.classification_types,
-        location: state => state.location,
 
     },
     mutations: {
@@ -53,10 +51,7 @@ export const callemailStore = {
             //Vue.set(state.classification_types, classification_entry.id, classification_entry.name);
             state.classification_types.push(classification_entry);
         },
-        updateLocation(state, location) {
-            //Vue.set(state.classification_types, classification_entry.id, classification_entry.name);
-            state.location = location;
-        }
+
     },
     actions: {
 
@@ -114,28 +109,6 @@ export const callemailStore = {
             });
         },
 
-        loadLocation({
-            dispatch,
-        }, {
-            call_email_id
-        }) {
-            console.log("loadLocations");
-            console.log(helpers.add_endpoint_json(api_endpoints.location, '3'));
-            return new Promise((resolve, reject) => {
-                Vue.http.get(
-                    helpers.add_endpoint_json(api_endpoints.location, '3')
-
-                ).then(res => {
-                        console.log(res.body);
-                        dispatch("setLocation", res.body)
-                    },
-                    err => {
-                        console.log(err);
-                        reject();
-                    });
-            });
-        },
-
         setClassificationEntry({
                 commit,
             },
@@ -143,15 +116,6 @@ export const callemailStore = {
         ) {
             console.log(classification_entry);
             commit("updateClassification", classification_entry);
-        },
-
-        setLocation({
-                commit,
-            },
-            location
-        ) {
-            console.log(location);
-            commit("updateLocation", location);
         },
 
         setCallEmail({

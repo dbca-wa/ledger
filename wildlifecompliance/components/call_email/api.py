@@ -245,11 +245,11 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    def update(self, request, *args, **kwargs):
+    def update(self, request, request_data, *args, **kwargs):
         print("update")
         try:
             instance = self.get_object()
-            serializer = UpdateCallEmailSerializer(instance, data=request.data)
+            serializer = UpdateCallEmailSerializer(instance, data=request_data)
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
             return Response(serializer.data)
@@ -277,7 +277,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     'number': request.data.get('number'),
                     'caller': request.data.get('caller'),
                     'assigned_to': request.data.get('assigned_to'),
-                    'location_id': request.data.get('location_id'),
+                    'location': request.data.get('location'),
                     }
             print("request_data")
             print(request_data)
@@ -286,6 +286,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             serializer = UpdateCallEmailSerializer(instance, data=request_data)
             serializer.is_valid(raise_exception=True)
             if serializer.is_valid():
+                print("serializer.validated_data")
+                print(serializer.validated_data)
                 serializer.save()
                 headers = self.get_success_headers(serializer.data)
                 print("headers")
@@ -354,14 +356,3 @@ class ClassificationViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return Classification.objects.all()
         return Classification.objects.none()
-
-
-class LocationViewSet(viewsets.ModelViewSet):
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
-
-    def get_queryset(self):
-        user = self.request.user
-        if is_internal(self.request):
-            return Location.objects.all()
-        return Location.objects.none()

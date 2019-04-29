@@ -146,8 +146,7 @@ export default {
       //call_id: "callemailStore/call_id",
       classification_types: "callemailStore/classification_types",
       //location: "callemailStore/location",
-      report_type: "callemailStore/report_type",
-      location: "callemailStore/location"
+      report_type: "callemailStore/report_type"
     }),
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
@@ -170,8 +169,7 @@ export default {
     ...mapActions({
       loadCallEmail: "callemailStore/loadCallEmail",
       loadClassification: "callemailStore/loadClassification",
-      saveFormData: "saveFormData",
-      loadLocation: "callemailStore/loadLocation"
+      saveFormData: "saveFormData"
     }),
 
     createCallEmail: function(e) {
@@ -246,15 +244,11 @@ export default {
       console.log("before route enter - next");
       vm.loadCallEmail({ call_email_id: to.params.call_email_id });
       vm.loadClassification();
-      vm.loadLocation({ call_email_id: to.params.call_email_id });
     });
   },
 
   mounted: function() {
-    this.renderer_form = document.forms.callEmailUpdate;
-    this.$nextTick(function() {
-      this.renderer_form = document.forms.callEmailUpdate;
-    });
+    this.$nextTick(function() {});
   }
 };
 </script>
