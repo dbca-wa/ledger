@@ -92,11 +92,19 @@
                                 </table>
                                 <MoreReferrals @refreshFromResponse="refreshFromResponse" :proposal="proposal" :canAction="!isFinalised && referral.referral == proposal.current_assessor.id" :isFinalised="isFinalised" :referral_url="referralListURL"/>
                             </div>
-                            {{!isFinalised}}
+                            <!-- {{!isFinalised}}
                             {{referral.referral == proposal.current_assessor.id}}
                             {{referral.can_be_completed}}
                             {{referral.referral}}
-                            {{proposal.current_assessor.id}}
+                            {{proposal.current_assessor.id}} -->
+                            <div class="col-sm-12">
+                                <div class="separator"></div>
+                            </div>
+                            <div class="col-sm-12">
+                                    <strong>Proposal</strong><br/>
+                                    <a class="actionBtn" v-if="!showingProposal" @click.prevent="toggleProposal()">Show Proposal</a>
+                                    <a class="actionBtn" v-else @click.prevent="toggleProposal()">Hide Proposal</a>
+                            </div>
                             <div class="col-sm-12">
                                 <div class="separator"></div>
                             </div>
@@ -134,8 +142,8 @@
 
         <div class="col-md-1"></div>
         <div class="col-md-8">
-            <div class="row">
-                <div v-show="false" class="col-md-12">
+            <div class="row" >
+                <!-- <div v-show="false" class="col-md-12">
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
@@ -145,8 +153,8 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-12">
+                </div> -->
+                <!-- <div class="col-md-12">
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
@@ -174,8 +182,8 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-12">
+                </div> -->
+                <!-- <div class="col-md-12">
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
@@ -219,8 +227,8 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-12">
+                </div> -->
+                <!-- <div class="col-md-12">
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
@@ -236,11 +244,12 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-12">
+                </div> -->
+                <div class="col-md-12" v-if="showingProposal">
                     <div class="row">
                         <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
-                            <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
+                            <!-- <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal"> -->
+                                <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="false" :is_external="false"></ProposalTClass>
                                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                 <input type='hidden' name="proposal_id" :value="1" />
@@ -259,7 +268,7 @@
                                         </div>
                                 </div>      
 
-                            </Proposal>
+                            <!-- </Proposal> -->
                         </form>
                     </div>
                 </div>
@@ -270,6 +279,7 @@
 </template>
 <script>
 import Proposal from '../../form.vue'
+import ProposalTClass from '@/components/form_tclass.vue'
 import Vue from 'vue'
 import datatable from '@vue-utils/datatable.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
@@ -297,6 +307,7 @@ export default {
             referral_text: '',
             referral_comment: '',
             sendingReferral: false,
+            showingProposal:false,
             form: null,
             members: [],
             department_users : [],
@@ -352,6 +363,7 @@ export default {
         CommsLogs,
         MoreReferrals,
         CompleteReferral,
+        ProposalTClass,
     },
     filters: {
         formatDate: function(data){
@@ -395,6 +407,9 @@ export default {
             //}); 
             //this.$refs.amendment_request.amendment.text = values;
             this.$refs.complete_referral.isModalOpen = true;
+        },
+        toggleProposal:function(){
+            this.showingProposal = !this.showingProposal;
         },
         save_wo: function() {
           let vm = this;

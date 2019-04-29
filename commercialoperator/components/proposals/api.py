@@ -1573,7 +1573,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['GET',])
     def resend(self, request, *args, **kwargs):
         try:
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             instance.resend(request)
             serializer = InternalProposalSerializer(instance.proposal,context={'request':request})
