@@ -32,7 +32,7 @@
                         <input type="textarea" name="nilReason" v-model="returns.nilReason">
                       </div>
                       <div v-if="nilReturn === 'no'" class="row">
-                        <label style="width:70%;" class="col-sm-4">Do you want to upload spreadsheet with Return data?<br>(Download <a v-bind:href="url">spreadsheet template</a>)</label>
+                        <label style="width:70%;" class="col-sm-4">Do you want to upload spreadsheet with Return data?<br>(Download <a v-bind:href="returns.template">spreadsheet template</a>)</label>
                         <input type="radio" name="SpreadsheetYes" value="yes" v-model='spreadsheetReturn'>
                         <label style="width:10%;" for="SpreadsheetYes">Yes</label>
                         <input type="radio" name="SpreadsheetNo" value="no" v-model='spreadsheetReturn'>
