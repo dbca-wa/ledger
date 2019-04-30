@@ -114,7 +114,6 @@ class DefaultActivitySerializer(serializers.ModelSerializer):
 
 class PurposeSerializer(serializers.ModelSerializer):
     name = serializers.CharField()
-    purpose_in_current_licence = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = LicencePurpose
