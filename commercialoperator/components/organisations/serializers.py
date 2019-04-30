@@ -27,13 +27,20 @@ class LedgerOrganisationSerializer(serializers.ModelSerializer):
 
 
 class LedgerOrganisationFilterSerializer(serializers.ModelSerializer):
+    #address = serializers.SerializerMethodField(read_only=True)
+    email = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ledger_organisation
         fields = (
             'id',
             'name',
+            'email',
+            #'address',
         )
+
+    def get_email(self, obj):
+        return 'todo'
 
 
 class OrganisationCheckSerializer(serializers.Serializer):

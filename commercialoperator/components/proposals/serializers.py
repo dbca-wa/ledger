@@ -616,7 +616,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'lodgement_sequence',
                 'can_officer_process',
                 'proposal_type',
-                'qaofficer_referrals'
+                'qaofficer_referrals',
                 # tab field models
                 'applicant_details',
                 'other_details',
@@ -652,7 +652,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
         request = self.context['request']
         user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
         return obj.can_edit_activities(user)
-            
+
     def get_readonly(self,obj):
         return True
 

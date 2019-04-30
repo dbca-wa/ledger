@@ -98,6 +98,7 @@ class Approval(RevisionedMixin):
 
     @property
     def applicant(self):
+        #import ipdb; ipdb.set_trace()
         if self.org_applicant:
             return self.org_applicant.organisation.name
         elif self.proxy_applicant:
@@ -109,6 +110,24 @@ class Approval(RevisionedMixin):
 #            return "{} {}".format(
 #                self.submitter.first_name,
 #                self.submitter.last_name)
+    @property
+    def applicant_type(self):
+        if self.org_applicant:
+            return "org_applicant"
+        elif self.proxy_applicant:
+            return "proxy_applicant"
+        else:
+            return None
+
+    @property
+    def applicant_id(self):
+        if self.org_applicant:
+            #return self.org_applicant.organisation.id
+            return self.org_applicant.id
+        elif self.proxy_applicant:
+            return self.proxy_applicant.id
+        else:
+            return None
 
     @property
     def region(self):

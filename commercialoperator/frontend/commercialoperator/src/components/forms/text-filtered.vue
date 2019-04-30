@@ -47,18 +47,18 @@
                   </template>
                 </v-select>
 
-				<span v-show="errors.has('fullname')">{{ errors.first('fullname') }}</span>
+                <span v-show="errors.has('fullname')">{{ errors.first('fullname') }}</span>
 
-			    <span v-show="errors.has('fullname')" class="danger">
-    				{{ errors.first('fullname') }}
-  				</span>
+                <span v-show="errors.has('fullname')" class="danger">
+                    {{ errors.first('fullname') }}
+                </span>
 
-				<validation-provider name="fullname" rules="required|fullname">
-				  <div slot-scope="{ errors }">
-					<input v-model="fullname">
-					<p>{{ errors[0] }}</p>
-				  </div>
-				</validation-provider>
+                <validation-provider name="fullname" rules="required|fullname">
+                  <div slot-scope="{ errors }">
+                    <input v-model="fullname">
+                    <p>{{ errors[0] }}</p>
+                  </div>
+                </validation-provider>
 
             </template>
 
@@ -91,7 +91,7 @@ export default {
         return {
             showingComment: false,
             options: [],
-			fullname: null,
+            fullname: null,
         }
     },
     methods: {

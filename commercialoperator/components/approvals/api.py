@@ -177,36 +177,35 @@ class ApprovalViewSet(viewsets.ModelViewSet):
 
         def raiser(exception): raise serializers.ValidationError(exception)
 
-
         try:
-			#keys = request.data.keys()
-			#file_keys = [key for key in keys if 'file-upload' in i]
-			#import ipdb; ipdb.set_trace()
-			org_applicant = None
-			proxy_applicant = None
+            #keys = request.data.keys()
+            #file_keys = [key for key in keys if 'file-upload' in i]
+            import ipdb; ipdb.set_trace()
+            org_applicant = None
+            proxy_applicant = None
 
-			_file = request.data.get('file-upload-0') if request.data.get('file-upload-0') else raiser('Licence File is required')
-			try:
-				if request.data.get('applicant_type') == 'org':
-					org_applicant = Organisation.objects.get(organisation__name=request.data.get('holder-selected'))
-				else:
-					proxy_applicant = EmailUser.objects.get(email=request.data.get('holder-selected'))
-			except:
-				raise serializers.ValidationError('Licence holder is required')
+            _file = request.data.get('file-upload-0') if request.data.get('file-upload-0') else raiser('Licence File is required')
+            try:
+                if request.data.get('applicant_type') == 'org':
+                    org_applicant = Organisation.objects.get(organisation__name=request.data.get('holder-selected'))
+                else:
+                    proxy_applicant = EmailUser.objects.get(email=request.data.get('holder-selected'))
+            except:
+                raise serializers.ValidationError('Licence holder is required')
 
-			start_date = datetime.strptime(request.data.get('start_date'), '%d/%m/%Y') if request.data.get('start_date') else raiser('Start Date is required')
-			issue_date = datetime.strptime(request.data.get('issue_date'), '%d/%m/%Y') if request.data.get('issue_date') else raiser('Issue Date is required')
-			expiry_date = datetime.strptime(request.data.get('expiry_date'), '%d/%m/%Y') if request.data.get('expiry_date') else raiser('Expiry Date is required')
+            start_date = datetime.strptime(request.data.get('start_date'), '%d/%m/%Y') if request.data.get('start_date') else raiser('Start Date is required')
+            issue_date = datetime.strptime(request.data.get('issue_date'), '%d/%m/%Y') if request.data.get('issue_date') else raiser('Issue Date is required')
+            expiry_date = datetime.strptime(request.data.get('expiry_date'), '%d/%m/%Y') if request.data.get('expiry_date') else raiser('Expiry Date is required')
 
-			#import ipdb; ipdb.set_trace()
-			approval = Approval.objects.create(issue_date=issue_date, expiry_date=expiry_date, start_date=start_date, org_applicant=org_applicant, proxy_applicant=proxy_applicant)
-			approval.current_proposal = Proposal.objects.get(id=0) # Dummy 'E Class' proposal
+            #import ipdb; ipdb.set_trace()
+            approval = Approval.objects.create(issue_date=issue_date, expiry_date=expiry_date, start_date=start_date, org_applicant=org_applicant, proxy_applicant=proxy_applicant)
+            approval.current_proposal = Proposal.objects.get(id=0) # Dummy 'E Class' proposal
 
-			doc = ApprovalDocument.objects.create(approval=approval, _file=_file)
-			approval.licence_document=doc
-			approval.save()
+            doc = ApprovalDocument.objects.create(approval=approval, _file=_file)
+            approval.licence_document=doc
+            approval.save()
 
-			return Response({'approval': approval.lodgement_number})
+            return Response({'approval': approval.lodgement_number})
 
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -231,8 +230,8 @@ class ApprovalViewSet(viewsets.ModelViewSet):
 #        """
 #        Paginated serializer for datatables - used by the external dashboard
 #
-#		To test:
-#        	http://localhost:8000/api/approvals/approvals_paginated/?format=datatables&draw=1&length=2
+#       To test:
+#           http://localhost:8000/api/approvals/approvals_paginated/?format=datatables&draw=1&length=2
 #        """
 #
 #        #import ipdb; ipdb.set_trace()

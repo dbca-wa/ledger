@@ -23,6 +23,8 @@ from commercialoperator.components.proposals.serializers import ProposalSerializ
 class ApprovalSerializer(serializers.ModelSerializer):
     #applicant = serializers.CharField(source='applicant.name')
     applicant = serializers.SerializerMethodField(read_only=True)
+    applicant_type = serializers.SerializerMethodField(read_only=True)
+    applicant_id = serializers.SerializerMethodField(read_only=True)
     #applicant_id = serializers.ReadOnlyField(source='applicant.id')
     licence_document = serializers.CharField(source='licence_document._file.url')
     #renewal_document = serializers.CharField(source='renewal_document._file.url')
@@ -60,6 +62,8 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'surrender_details',
             'suspension_details',
             'applicant',
+            'applicant_type',
+            'applicant_id',
             'extracted_fields',
             'status',
             'reference',
@@ -67,7 +71,6 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'allowed_assessors',
             'cancellation_date',
             'cancellation_details',
-            #'applicant_id',
             'can_action',
             'set_to_cancel',
             'set_to_surrender',
@@ -119,6 +122,12 @@ class ApprovalSerializer(serializers.ModelSerializer):
 
     def get_applicant(self,obj):
         return obj.applicant
+
+    def get_applicant_type(self,obj):
+        return obj.applicant_type
+
+    def get_applicant_id(self,obj):
+        return obj.applicant_id
 
 
 class ApprovalCancellationSerializer(serializers.Serializer):
