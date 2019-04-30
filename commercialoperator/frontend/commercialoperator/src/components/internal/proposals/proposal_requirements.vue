@@ -12,7 +12,7 @@
                 <div class="panel-body panel-collapse collapse in" :id="panelBody">
                     <form class="form-horizontal" action="index.html" method="post">
                         <div class="col-sm-12">
-                            <button v-if="hasAssessorMode" @click.prevent="addRequirement()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Requirement</button>
+                            <button v-if="hasAssessorMode || hasReferralMode" @click.prevent="addRequirement()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Requirement</button>
                         </div>
                         <datatable ref="requirements_datatable" :id="'requirements-datatable-'+_uid" :dtOptions="requirement_options" :dtHeaders="requirement_headers"/>
                     </form>
@@ -167,6 +167,7 @@ export default {
             // reload the table
             this.updatedRequirements();
         }
+
     },
     components:{
         datatable,
@@ -175,7 +176,11 @@ export default {
     computed:{
         hasAssessorMode(){
             return this.proposal.assessor_mode.has_assessor_mode;
+        },
+        hasReferralMode(){
+            return this.proposal.assessor_mode.assessor_level=='referral'? true: false;
         }
+
     },
     methods:{
         addRequirement(){

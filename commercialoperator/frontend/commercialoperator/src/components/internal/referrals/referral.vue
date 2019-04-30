@@ -245,10 +245,12 @@
                         </div>
                     </div>
                 </div> -->
+                <Requirements :proposal="proposal"/>
                 <div class="col-md-12" v-if="showingProposal">
                     <div class="row">
                         <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
-                            <!-- <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal"> -->
+                            <!-- <Proposal form_width="inherit" :withSectionsSelector="false" v-if            ="proposal" :proposal="proposal"> -->
+                                
                                 <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="false" :is_external="false"></ProposalTClass>
                                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
@@ -285,6 +287,7 @@ import datatable from '@vue-utils/datatable.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
 import MoreReferrals from '@common-utils/more_referrals.vue'
 import CompleteReferral from './complete_referral.vue'
+import Requirements from '@/components/internal/proposals/proposal_requirements.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
     api_endpoints,
@@ -364,6 +367,7 @@ export default {
         MoreReferrals,
         CompleteReferral,
         ProposalTClass,
+        Requirements
     },
     filters: {
         formatDate: function(data){
