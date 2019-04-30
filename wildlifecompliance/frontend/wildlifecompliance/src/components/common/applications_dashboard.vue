@@ -583,45 +583,44 @@ export default {
                     if (!vm.is_external){
                         var activity_rows = ''
                         row.data()['activities'].forEach(function(activity) {
-                            activity_rows += '<tr>' +
-                                                '<td>' + activity['activity_name_str'] + '</td>' +
-                                                '<td>' + activity['activity_purpose_names'].
-                                                    replace(/(?:\r\n|\r|\n|,)/g, '<br>') + '</td>' +
-                                                '<td>' + activity['processing_status']['name'] + '</td>' +
-                                             '</tr>'
+                            activity_rows += `<tr>
+                                                <td>${activity['activity_name_str']}</td>
+                                                <td>${activity['activity_purpose_names'].
+                                                    replace(/(?:\r\n|\r|\n|,)/g, '<br>')}</td>
+                                                <td>${activity['processing_status']['name']}</td>
+                                             </tr>`;
                         });
                     }
                     // Generate html for child row
-                    child_row += '<table class="table table-striped table-bordered child-row-table">' +
-                                    '<tr>' +
-                                        '<td class="width_20pc"><strong>Submitter:&nbsp;</strong></td>' +
-                                        '<td>' + row.data()['submitter']['first_name'] + ' ' +
-                                            row.data()['submitter']['last_name'] + '</td>' +
-                                    '</tr>'
-                        if (!vm.is_external){
-                            child_row += '' +
-                                '<tr>' +
-                                    '<td><strong>Payment Status:&nbsp;</strong></td>' +
-                                    '<td>' + row.data()['payment_status'] +
-                                '</tr>' +
-                                '<tr>' +
-                                    '<td><strong>Assigned Officer:&nbsp;</strong></td>' +
-                                    '<td>' + row.data()['assigned_officer'] + '</td>' +
-                                '</tr>'
-                        }
-                        child_row += '</table>'
-
-                        if (!vm.is_external){
-                            child_row += '' +
-                                '<table class="table table-striped table-bordered child-row-table">' +
-                                    '<tr>' +
-                                        '<th>Activity</th>' +
-                                        '<th class="width_55pc">Purposes</th>' +
-                                        '<th class="width_20pc">Status</th>' +
-                                    '</tr>' +
-                                    activity_rows +
-                                '</table>'
-                        }
+                    child_row += `<table class="table table-striped table-bordered child-row-table">
+                                    <tr>
+                                        <td class="width_20pc"><strong>Submitter:&nbsp;</strong></td>
+                                        <td>${row.data()['submitter']['first_name']}&nbsp;
+                                            ${row.data()['submitter']['last_name']}</td>
+                                    </tr>`;
+                    if (!vm.is_external){
+                        child_row += `
+                            <tr>
+                                <td><strong>Payment Status:&nbsp;</strong></td>
+                                <td>${row.data()['payment_status']}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Assigned Officer:&nbsp;</strong></td>
+                                <td>${row.data()['assigned_officer']}</td>
+                            </tr>`;
+                    }
+                    child_row += `</table>`
+                    if (!vm.is_external){
+                        child_row += `
+                            <table class="table table-striped table-bordered child-row-table">
+                                <tr>
+                                    <th>Activity</th>
+                                    <th class="width_55pc">Purposes</th>
+                                    <th class="width_20pc">Status</th>
+                                </tr>
+                                ${activity_rows}
+                            </table>`;
+                    }
                     // Show child row, dark-row className CSS applied from application.scss
                     row.child(
                         child_row
