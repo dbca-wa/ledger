@@ -43,5 +43,4 @@ class SearchKeywordSerializer(serializers.Serializer):
 
 
 class SearchReferenceSerializer(serializers.Serializer):
-    record_id = serializers.IntegerField()
-    record_type = serializers.CharField()
+    url_string = serializers.CharField()

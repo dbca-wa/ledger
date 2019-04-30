@@ -32,6 +32,8 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     expiry_date = serializers.SerializerMethodField(read_only=True)
     approve_options = serializers.SerializerMethodField(read_only=True)
     purposes = serializers.SerializerMethodField(read_only=True)
+    activity_purpose_names = serializers.SerializerMethodField(read_only=True)
+    processing_status = CustomChoiceField(read_only=True)
 
     class Meta:
         model = ApplicationSelectedActivity
@@ -55,6 +57,9 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     def get_purposes(self, obj):
         from wildlifecompliance.components.licences.serializers import PurposeSerializer
         return PurposeSerializer(obj.purposes, many=True).data
+
+    def get_activity_purpose_names(self, obj):
+        return ','.join([p.short_name for p in obj.purposes])
 
 
 class EmailUserSerializer(serializers.ModelSerializer):
@@ -383,7 +388,8 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
             'assigned_officer',
             'can_be_processed',
             'user_in_officers_and_assessors',
-            'application_type'
+            'application_type',
+            'activities'
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render
