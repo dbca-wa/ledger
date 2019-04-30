@@ -597,7 +597,7 @@ export default {
                         <table class="table table-striped table-bordered child-row-table">
                             <tr>
                                 <td class="width_20pc"><strong>Submitter:&nbsp;</strong></td>
-                                <td>${row.data()['submitter']['first_name']}&nbsp;
+                                <td>${row.data()['submitter']['first_name']} 
                                     ${row.data()['submitter']['last_name']}</td>
                             </tr>`;
                     if (!vm.is_external){
