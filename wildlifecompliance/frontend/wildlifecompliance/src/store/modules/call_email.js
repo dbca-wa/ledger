@@ -11,16 +11,28 @@ export const callemailStore = {
         call_email: {
             schema: [],
             classification: {},
-            location: {
+            GeoJSONData: {
+                type: null,
+                geometry: {
+                    type: null,
+                    coordinates: [],
+                },
                 properties: {},
             },
+            location: {
+                geometry: {},
+                properties: {},
+                },
             report_type: {},
         },
+        /*
         call_id: '',
         display_call_email: {},
         count: 1,
         call_classification: '',
+        */
         classification_types: [],
+
     },
     getters: {
         call_email: state => state.call_email,
@@ -50,6 +62,11 @@ export const callemailStore = {
         updateClassification(state, classification_entry) {
             //Vue.set(state.classification_types, classification_entry.id, classification_entry.name);
             state.classification_types.push(classification_entry);
+        },
+        updateLocation(state, location) {
+            console.log("location");
+            console.log(location);
+            Vue.set(state.call_email.GeoJSONData, 'location', location);
         },
 
     },
@@ -125,6 +142,82 @@ export const callemailStore = {
             commit("updateCallEmail", call_email);
         },
 
+        saveCallEmail({ dispatch, state}) {
+            console.log("saveCallEmail");
+            const instance = {...state.call_email};
+            return new Promise((resolve, reject) => {
+                Vue.http.post(helpers.add_endpoint_join(
+                    api_endpoints.call_email, 
+                    this.call_email.id + "/call_email_save/"
+                    ), 
+                    {
+                        classification_id: this.call_email.classification.id,
+                        number: this.call_email.number,
+                        caller: this.call_email.caller,
+                        assigned_to: this.call_email.assigned_to,
+                    }
+                    )
+                    .then(res => {
+                        dispatch("saveLocation");
+                        },
+                        err => {
+                            console.log(err);
+                            reject();
+                        });
+            });
+        },
+
+        saveLocation({
+            state
+        }, ) {
+            const instance = {...state.call_email.location};
+            //const instance_GeoJSONData = {...state.call_email.GeoJSONData};
+            const call_instance = state.call_email;
+            const instance_GeoJSONData = {...call_instance.GeoJSONData};
+            console.log("instance_GeoJSONData");
+            console.log(instance_GeoJSONData);
+            console.log("instance");
+            console.log(instance);
+            console.log("state.call_email.GeoJSONData");
+            console.log({...state.call_email.GeoJSONData});
+            return new Promise((resolve, reject) => {
+                Vue.http.post(helpers.add_endpoint_join(
+                    api_endpoints.call_email, 
+                    state.call_email.id + "/update_location/"
+                    ), 
+                    {   
+                        town_suburb: state.call_email.location.properties.town_suburb,
+                        street: instance.properties.street,
+                        state: instance.properties.state,
+                        postcode: instance.properties.postcode,
+                        wkb_geometry: instance_GeoJSONData,
+                        //geometry: instance_GeoJSONData,
+                    }
+                    )
+                    .then(res => {
+                            console.log(res.body.results);
+                            console.log("success");
+                            resolve();
+                        },
+                        err => {
+                            console.log(err);
+                            reject();
+                        });
+            });
+        },
+        
+
+        setLocation({
+            commit,
+        }, location) {
+            console.log("setLocation");
+            commit("updateLocation", location);
+        },
     },
+        /*
+        saveAllRecords() {
+
+        },
+        */
 
 };

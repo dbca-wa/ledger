@@ -169,9 +169,14 @@ export default {
     ...mapActions({
       loadCallEmail: "callemailStore/loadCallEmail",
       loadClassification: "callemailStore/loadClassification",
-      saveFormData: "saveFormData"
+      saveFormData: "saveFormData",
+      //saveLocation: "callemailStore/saveLocation"
     }),
-
+    /*
+    updateLocation: function() {
+      this.saveLocation({ call_email_id: this.call_id });
+    },
+    */
     createCallEmail: function(e) {
       let formData = new FormData(this.renderer_form);
       this.$http

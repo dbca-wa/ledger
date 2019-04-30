@@ -1,6 +1,6 @@
 <template lang="html">
     <div class="container">
-        <div id="mapOL"></div>
+        <div id="mapOL" v-model="location.properties.geometry"></div>
         <div style="display: none;">
             <div id="popup"></div>
         </div>
@@ -12,7 +12,6 @@
 
         <div id="lon">Lat: {{ lat_4326_cursor }}</div>
         <div id="lon">Lng: {{ lng_4326_cursor }}</div>
-
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">Street</label>
             <input v-model="location.properties.street" />
@@ -33,6 +32,8 @@
             <label class="col-sm-4">Contry</label>
             <input v-model="location.properties.country" />
        </div></div>
+      <button @click.prevent="updateLocation"
+        class="btn btn-primary pull-right">Update</button>
     </div>
 </template>
 
@@ -81,7 +82,8 @@ export default {
       postcode: null,
       state: null,
       street: null,
-      town_suburb: null
+      town_suburb: null,
+      newGeo: null,
     };
   },
   /*
@@ -95,10 +97,25 @@ export default {
   computed: {
     
     ...mapGetters({
+      call_email: "callemailStore/call_email",
+      call_id: "callemailStore/call_id",
       location: "callemailStore/location",
       //"callemailStore/call_email"
     }),
     
+   /*
+    ...mapState({
+      call_email: state => state.call_email "callemailStore/call_email",
+      call_id: "callemailStore/call_id",
+      location: "callemailStore/location",
+      //"callemailStore/call_email"
+    }),
+    */
+    /*
+    setlocation: function() {
+      location = this.call_email.location;
+    },
+    */
     setInitLocation: function() {
       console.log("importMapData");
       //this.call_email.location.geometry = new Point(transform([-31, 118], 'EPSG:4326', 'EPSG:3857'));
@@ -108,28 +125,42 @@ export default {
         geometry: new Point(transform([-32, 119], "EPSG:4326", "EPSG:3857"))
       });
       
-      this.location.geometry = iconFeature;
-    }
-      /*
-      {
+      //this.location.geometry = iconFeature.geometry;
+      //this.location.geometry = new Point(transform([-32, 119], "EPSG:4326", "EPSG:3857"));
+      this.location.geometry = new Point([-32, 119]);
+      this.call_email.GeoJSONData =     {
       "type": "Feature",
       "geometry": {
         "type": "Point",
         "coordinates": [102.0, 0.5]
-      },
-      "properties": this.location.properties
+        },
+        "properties": {
+          "prop0": "value0"
+        }
       }
-    },
-    */
+      
 
+    },
   },
   mounted: function() {
     console.debug("Start loading map");
     //this.importMapData();
     this.initMap();
+    //this.GeoJSON();
     console.debug("End loading map");
   },
   methods: {
+    ...mapActions({
+      saveLocation: "callemailStore/saveLocation",
+      setLocation: "callemailStore/setLocation",
+      setCallEmail: "callemailStore/setCallEmail",
+    }),
+    updateLocation: function() {
+      console.log("this.call_email");
+      console.log(this.call_email);
+      this.setCallEmail(this.call_email);
+      this.saveLocation();
+    },
     addMarker: function() {
       var iconFeature = new Feature({
         //geometry: new Point(transform([this.lng_4326, this.lat_4326], 'EPSG:4326', 'EPSG:3857')),
@@ -179,8 +210,8 @@ export default {
         self.map.removeLayer(layerAdded);
       });
     },
-
     initMap: function() {
+      
       this.projection = get("EPSG:3857");
 
       var rasterLayer = new TileLayer({ source: new OSM() });

@@ -92,21 +92,6 @@ class LocationSerializer(GeoFeatureModelSerializer):
             'wkb_geometry',
         )
 
-    # def update(self, request, validated_data):
-    #     print("location serializer update")
-    #     # print(validated_data.pop('location'))
-    #     print("serializer.validated_data")
-    #     print(validated_data)
-    #     location_data = validated_data.pop('location')
-    #     updated_location, created = Location.objects.get_or_create(**location_data)
-                
-    #     print("location_data")
-    #     print(location_data)
-    #     call_email, created = CallEmail.objects.get_or_create(location_call=updated_location, **validated_data)
-    #     print("call_email")
-    #     print(call_email)
-        
-    #     return call_email
 
 class CallEmailSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source='get_status_display')
@@ -159,25 +144,7 @@ class UpdateCallEmailSerializer(serializers.ModelSerializer):
             'location',
         )
         read_only_fields = ('id', )
-    
-    def update(self, request, validated_data):
-        print("location serializer update")
-        # print(validated_data.pop('location'))
-        print("serializer.validated_data")
-        print(validated_data)
-        location_data = validated_data.pop('location')
-        print("location_data")
-        print(location_data)
-        updated_location, created = Location.objects.get_or_create(**location_data)
-        # call_email, created = CallEmail.objects.update(**validated_data)
-        # call_email, created = CallEmail.objects.get_or_create(location=updated_location, **validated_data)
-        call_email = CallEmail.objects.get(id=id)
-        print("call_email.location")
-        print(call_email.location)
-        # updated_location, created = Location.objects.update(location_call=call_email, **location_data)
-        # call_email.save()
-        return call_email
-        
+
 
 class UpdateRendererDataSerializer(CallEmailSerializer):
     data = ComplianceFormDataRecordSerializer(many=True)

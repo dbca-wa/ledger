@@ -277,7 +277,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     'number': request.data.get('number'),
                     'caller': request.data.get('caller'),
                     'assigned_to': request.data.get('assigned_to'),
-                    'location': request.data.get('location'),
+                    # 'location': request.data.get('location'),
                     }
             print("request_data")
             print(request_data)
@@ -346,6 +346,33 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST', ])
+    def update_location(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            location_instance = instance.location
+            serializer = LocationSerializer(instance=location_instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            if serializer.is_valid():
+                serializer.save()
+                headers = self.get_success_headers(serializer.data)
+                return Response(
+                    serializer.data,
+                    status=status.HTTP_201_CREATED,
+                    headers=headers
+                    )
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 class ClassificationViewSet(viewsets.ModelViewSet):
     queryset = Classification.objects.all()
@@ -356,3 +383,9 @@ class ClassificationViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return Classification.objects.all()
         return Classification.objects.none()
+
+
+# class CallEmailViewSet(viewsets.ModelViewSet):
+#     queryset = Location.objects.all()
+#     serializer_class = CallEmailSerializer
+
