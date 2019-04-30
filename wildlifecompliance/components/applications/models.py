@@ -1048,6 +1048,7 @@ class Application(RevisionedMixin):
                     if children_key in fields[name]:
                         del fields[name][children_key]
                         iterate_children(item[children_key], fields, fields[name], children_key, condition)
+                condition = {}
 
         iterate_children(self.schema, fields)
         return fields
@@ -1073,6 +1074,8 @@ class Application(RevisionedMixin):
 
         for instance, schemas in data_tree.items():
             for schema_name, item in schemas.items():
+                if schema_name not in schema_fields:
+                    continue
                 schema_data = schema_fields[schema_name]
                 for condition_field, condition_value in schema_data['condition'].items():
                     if condition_field in schemas and schemas[condition_field] != condition_value:
@@ -1641,7 +1644,6 @@ class ApplicationSelectedActivity(models.Model):
     proposed_start_date = models.DateField(null=True, blank=True)
     proposed_end_date = models.DateField(null=True, blank=True)
     is_activity_renewable = models.BooleanField(default=False)
-    purpose = models.TextField(blank=True, null=True)
     additional_info = models.TextField(blank=True, null=True)
     conditions = models.TextField(blank=True, null=True)
     original_issue_date = models.DateTimeField(blank=True, null=True)
@@ -1654,6 +1656,14 @@ class ApplicationSelectedActivity(models.Model):
     def is_valid_status(status):
         return filter(lambda x: x[0] == status,
                       ApplicationSelectedActivity.PROCESSING_STATUS_CHOICES)
+
+    @property
+    def purposes(self):
+        from wildlifecompliance.components.licences.models import LicencePurpose
+        return LicencePurpose.objects.filter(
+            application__id=self.application_id,
+            licence_activity_id=self.licence_activity_id
+        )
 
     class Meta:
         app_label = 'wildlifecompliance'

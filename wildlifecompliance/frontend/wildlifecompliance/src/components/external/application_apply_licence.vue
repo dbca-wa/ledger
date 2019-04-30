@@ -38,7 +38,7 @@
                                                             <div v-for="(purpose,index2) in type.purpose" class="checkbox purpose-clear-left">
 
                                                                 <div class ="col-sm-12">
-                                                                    <input type="checkbox" :value="purpose.id" :id="purpose.id" v-model="type.purpose[index2].selected" @click="handlePurposeCheckboxChange(index,index1,index2,$event)">{{purpose.name}}<span> ({{purpose.base_application_fee}} + {{purpose.base_licence_fee}})</span>
+                                                                    <input type="checkbox" :value="purpose.id" :id="purpose.id" v-model="type.purpose[index2].selected" @click="handlePurposeCheckboxChange(index,$event)">{{purpose.name}}<span> ({{purpose.base_application_fee}} + {{purpose.base_licence_fee}})</span>
                                                                 </div>
 
                                                             </div>
@@ -167,11 +167,11 @@ export default {
                             }
         }
     },
-    handlePurposeCheckboxChange:function(index,index1,index2,event){
-        let purpose_ids = this.licence_categories[index].activity[index1].purpose.filter(
-            purpose => purpose.selected || (purpose.id == event.target.id && event.target.checked)
-        ).map(purpose => purpose.id);
-
+    handlePurposeCheckboxChange:function(index, event){
+        const purpose_ids = [].concat.apply([], this.licence_categories[index].activity.map(
+            activity => activity.purpose.filter(
+                purpose => purpose.selected || (purpose.id == event.target.id && event.target.checked)
+            ))).map(purpose => purpose.id);
         this.$http.post('/api/application/estimate_price/', {
                 'purpose_ids': purpose_ids
             }).then(res => {

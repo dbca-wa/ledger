@@ -31,6 +31,7 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     start_date = serializers.SerializerMethodField(read_only=True)
     expiry_date = serializers.SerializerMethodField(read_only=True)
     approve_options = serializers.SerializerMethodField(read_only=True)
+    purposes = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ApplicationSelectedActivity
@@ -50,6 +51,10 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
 
     def get_approve_options(self, obj):
         return [{'label': 'Approved', 'value': 'approved'}, {'label': 'Declined', 'value': 'declined'}]
+
+    def get_purposes(self, obj):
+        from wildlifecompliance.components.licences.serializers import PurposeSerializer
+        return PurposeSerializer(obj.purposes, many=True).data
 
 
 class EmailUserSerializer(serializers.ModelSerializer):
