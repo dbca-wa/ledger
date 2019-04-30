@@ -1644,7 +1644,6 @@ class ApplicationSelectedActivity(models.Model):
     proposed_start_date = models.DateField(null=True, blank=True)
     proposed_end_date = models.DateField(null=True, blank=True)
     is_activity_renewable = models.BooleanField(default=False)
-    purpose = models.TextField(blank=True, null=True)
     additional_info = models.TextField(blank=True, null=True)
     conditions = models.TextField(blank=True, null=True)
     original_issue_date = models.DateTimeField(blank=True, null=True)
@@ -1657,6 +1656,14 @@ class ApplicationSelectedActivity(models.Model):
     def is_valid_status(status):
         return filter(lambda x: x[0] == status,
                       ApplicationSelectedActivity.PROCESSING_STATUS_CHOICES)
+
+    @property
+    def purposes(self):
+        from wildlifecompliance.components.licences.models import LicencePurpose
+        return LicencePurpose.objects.filter(
+            application__id=self.application_id,
+            licence_activity_id=self.licence_activity_id
+        )
 
     class Meta:
         app_label = 'wildlifecompliance'
