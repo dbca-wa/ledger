@@ -229,6 +229,8 @@ class OrgRequestRequesterSerializer(serializers.ModelSerializer):
 
 
 class OrganisationRequestSerializer(serializers.ModelSerializer):
+    assigned_officer = serializers.CharField(
+        source='assigned_officer.get_full_name')
     identification = serializers.FileField()
     requester = OrgRequestRequesterSerializer(read_only=True)
     status = CustomChoiceField(read_only=True)
@@ -245,6 +247,7 @@ class OrganisationRequestSerializer(serializers.ModelSerializer):
             'name',
             'abn',
             'role',
+            'lodgement_number',
             'lodgement_date',
             'assigned_officer',
             'can_be_processed',
@@ -263,19 +266,31 @@ class OrganisationRequestSerializer(serializers.ModelSerializer):
 
 
 class OrganisationRequestDTSerializer(OrganisationRequestSerializer):
-    assigned_officer = serializers.CharField(
-        source='assigned_officer.get_full_name')
     requester = serializers.SerializerMethodField()
-    user_can_process_org_access_requests = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrganisationRequest
+        fields = (
+            'id',
+            'identification',
+            'requester',
+            'status',
+            'name',
+            'abn',
+            'role',
+            'lodgement_number',
+            'lodgement_date',
+            'assigned_officer',
+            'can_be_processed',
+            'user_can_process_org_access_requests'
+        )
+        # the serverSide functionality of datatables is such that only columns that have field 'data'
+        # defined are requested from the serializer. Use datatables_always_serialize to force render
+        # of fields that are not listed as 'data' in the datatable columns
+        datatables_always_serialize = fields
 
     def get_requester(self, obj):
         return obj.requester.get_full_name()
-
-    def get_user_can_process_org_access_requests(self, obj):
-        if self.context['request'].user and self.context['request'].\
-                user.has_perm('wildlifecompliance.organisation_access_request'):
-                    return True
-        return False
 
 
 class UserOrganisationSerializer(serializers.ModelSerializer):
