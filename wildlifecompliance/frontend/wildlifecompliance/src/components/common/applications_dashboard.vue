@@ -104,10 +104,12 @@ export default {
         let internal_columns = [
             {
                 data: "lodgement_number",
+                width: "10%",
                 responsivePriority: 1,
             },
             {
                 data: "category_name",
+                width: "20%",
                 className: "normal-white-space",
                 responsivePriority: 2,
                 orderable: false,
@@ -115,6 +117,7 @@ export default {
             },
             {
                 data: "purpose_string",
+                width: "30%",
                 mRender:function (data,type,full) {
                     let output = data.replace(/(?:\r\n|\r|\n|,)/g, '<br>');
                     return output;
@@ -125,6 +128,7 @@ export default {
             },
             {
                 data: "application_type",
+                width: "10%",
                 mRender:function (data,type,full) {
                     return data.name;
                 },
@@ -132,6 +136,7 @@ export default {
             },
             {
                 data: "submitter",
+                visible: false,
                 className: "normal-white-space",
                 name: "submitter__first_name, submitter__last_name, submitter__email",
                 mRender:function (data,type,full) {
@@ -144,6 +149,7 @@ export default {
             },
             {
                 data: "applicant",
+                width: "10%",
                 className: "normal-white-space",
                 responsivePriority: 4,
                 orderable: false,
@@ -151,6 +157,7 @@ export default {
             },
             {
                 data: "processing_status",
+                width: "10%",
                 className: "normal-white-space",
                 mRender:function(data,type,full){
                     return data.name;
@@ -161,12 +168,14 @@ export default {
             },
             {
                 data: "payment_status",
+                visible: false,
                 responsivePriority: 7,
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "lodgement_date",
+                visible: false,
                 responsivePriority: 8,
                 mRender:function (data,type,full) {
                     return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
@@ -175,11 +184,13 @@ export default {
             },
             {
                 data: "assigned_officer",
+                visible: false,
                 name: "assigned_officer__first_name, assigned_officer__last_name, assigned_officer__email",
                 responsivePriority: 50
             },
             {
                 // Actions
+                width: "10%",
                 mRender:function (data,type,full) {
                     let links = '';
                     if (!vm.is_external){
@@ -379,34 +390,10 @@ export default {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
-                responsive: {
-                    details: {
-                        type: 'column',
-                        target: 'tr',
-                        renderer: function ( api, rowIdx, columns ) {
-                            var data = $.map( columns, function ( col, i ) {
-                                return col.hidden ?
-                                    '<tr data-dt-row="'+col.rowIndex+'" data-dt-column="'+col.columnIndex+'">'+
-                                        '<td><strong>'+col.title+':&nbsp;'+'</strong></td> '+
-                                        '<td>'+col.data+'</td>'+
-                                    '</tr>' :
-                                    '';
-                            } ).join('');
-                            data += '<tr>' +
-                                        '<th>Activity</th><th>Purposes</th><th>Status</th>'+
-                                    '</tr>' +
-                                    '<tr>' +
-                                        '<td>asdfasdf</td><td>asdfasdf</td><td>asdfasdf</td>'+
-                                    '</tr>' +
-                                    '<tr>' +
-                                        '<td>asdfasdf</td><td>asdfasdf</td><td>asdfasdf</td>'+
-                                    '</tr>'
-                            return data ?
-                                $('<table/>').append( data ) :
-                                false;
-                        }
-                    }
+                rowCallback: function (row, data){
+                    $(row).addClass('appRecordRow');
                 },
+                responsive: false,
                 ajax: {
                     "url": vm.url,
                     "dataSrc": 'data',
@@ -572,6 +559,34 @@ export default {
                 e.preventDefault();
                 var id = $(this).attr('data-pay-application-fee');
                 vm.payApplicationFee(id);
+            });
+            // Child row listener
+            vm.visibleDatatable.vmDataTable.on('click', 'tr.appRecordRow', function() {
+                var tr = $(this);
+                var row = vm.visibleDatatable.vmDataTable.row(tr);
+
+                if (row.child.isShown()) {
+                    // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('shown');
+                }
+                else {
+                    // Open this row (the format() function would return the data to be shown)
+                    console.log(row.data());
+                    row.child(
+                        '<table class="child-row-table">' +
+                            '<tr>' +
+                                '<th>Activity</th><th>Purposes</th><th>Status</th>'+
+                            '</tr>' +
+                            '<tr>' +
+                                '<td>asdfasdf</td><td>asdfasdf</td><td>asdfasdf</td>'+
+                            '</tr>' +
+                            '<tr>' +
+                                '<td>asdfasdf</td><td>asdfasdf</td><td>asdfasdf</td>'+
+                            '</tr>' +
+                        '</table>').show();
+                    tr.addClass('shown');
+                }
             });
             // Initialise select2 for submitter
             $(vm.$refs.submitter_select).select2({
