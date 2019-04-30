@@ -48,6 +48,7 @@ class ReturnSerializer(serializers.ModelSerializer):
             'condition',
             'text',
             'format',
+            'template',
             'licence_species_list',
             'sheet_activity_list',
             'sheet_species_list',
