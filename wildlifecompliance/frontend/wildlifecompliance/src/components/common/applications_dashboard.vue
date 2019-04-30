@@ -108,7 +108,7 @@ export default {
             },
             {
                 data: "category_name",
-                width: "20%",
+                width: "10%",
                 className: "normal-white-space",
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
@@ -167,6 +167,7 @@ export default {
             },
             {
                 data: "lodgement_date",
+                width: "10%",
                 mRender:function (data,type,full) {
                     return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                 },
@@ -205,14 +206,17 @@ export default {
         let external_columns = [
             {
                 data: "lodgement_number",
+                width: "10%",
             },
             {
                 data: "category_name",
+                width: "10%",
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "purpose_string",
+                width: "30%",
                 mRender:function (data,type,full) {
                     let output = data.replace(/(?:\r\n|\r|\n|,)/g, '<br>');
                     return output;
@@ -222,12 +226,14 @@ export default {
             },
             {
                 data: "application_type",
+                width: "10%",
                 mRender:function (data,type,full) {
                     return data.name;
                 }
             },
             {
                 data: "submitter",
+                visible: false,
                 name: "submitter__first_name, submitter__last_name, submitter__email",
                 mRender:function (data,type,full) {
                     if (data) {
@@ -238,11 +244,13 @@ export default {
             },
             {
                 data: "applicant",
+                width: "10%",
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "customer_status",
+                width: "10%",
                 mRender:function(data,type,full){
                     return data.name;
                 },
@@ -251,6 +259,7 @@ export default {
             },
             {
                 data: "lodgement_date",
+                width: "10%",
                 mRender:function (data,type,full) {
                     return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                 },
@@ -258,6 +267,7 @@ export default {
             },
             {
                 // Actions
+                width: "10%",
                 mRender:function (data,type,full) {
                     let links = '';
                     if (!vm.is_external){
@@ -316,7 +326,10 @@ export default {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
-                responsive: true,
+                rowCallback: function (row, data){
+                    $(row).addClass('appRecordRow');
+                },
+                responsive: false,
                 ajax: {
                     "url": vm.url,
                     "dataSrc": 'data',
@@ -549,7 +562,11 @@ export default {
                 vm.payApplicationFee(id);
             });
             // Child row listener
-            vm.visibleDatatable.vmDataTable.on('click', 'tr.appRecordRow', function() {
+            vm.visibleDatatable.vmDataTable.on('click', 'tr.appRecordRow', function(e) {
+                // If a link is clicked, ignore
+                if($(e.target).is('a')){
+                    return;
+                }
                 // Generate child row for application
                 var tr = $(this);
                 var row = vm.visibleDatatable.vmDataTable.row(tr);
@@ -561,41 +578,54 @@ export default {
                 }
                 else {
                     // Open this row (the format() function would return the data to be shown)
-                    // Generate rows for each activity
-                    var activity_rows = ''
-                    row.data()['activities'].forEach(function(activity) {
-                        activity_rows += '<tr>' +
-                                            '<td>' + activity['activity_name_str'] + '</td>' +
-                                            '<td>' + activity['activity_purpose_names'].
-                                                replace(/(?:\r\n|\r|\n|,)/g, '<br>') + '</td>' +
-                                            '<td>' + activity['processing_status']['name'] + '</td>' +
-                                         '</tr>'
-                    });
-                    // Show child row
+                    var child_row = ''
+                    // Generate rows for each activity if internal
+                    if (!vm.is_external){
+                        var activity_rows = ''
+                        row.data()['activities'].forEach(function(activity) {
+                            activity_rows += '<tr>' +
+                                                '<td>' + activity['activity_name_str'] + '</td>' +
+                                                '<td>' + activity['activity_purpose_names'].
+                                                    replace(/(?:\r\n|\r|\n|,)/g, '<br>') + '</td>' +
+                                                '<td>' + activity['processing_status']['name'] + '</td>' +
+                                             '</tr>'
+                        });
+                    }
+                    // Generate html for child row
+                    child_row += '<table class="table table-striped table-bordered child-row-table">' +
+                                    '<tr>' +
+                                        '<td class="width_20pc"><strong>Submitter:&nbsp;</strong></td>' +
+                                        '<td>' + row.data()['submitter']['first_name'] + ' ' +
+                                            row.data()['submitter']['last_name'] + '</td>' +
+                                    '</tr>'
+                        if (!vm.is_external){
+                            child_row += '' +
+                                '<tr>' +
+                                    '<td><strong>Payment Status:&nbsp;</strong></td>' +
+                                    '<td>' + row.data()['payment_status'] +
+                                '</tr>' +
+                                '<tr>' +
+                                    '<td><strong>Assigned Officer:&nbsp;</strong></td>' +
+                                    '<td>' + row.data()['assigned_officer'] + '</td>' +
+                                '</tr>'
+                        }
+                        child_row += '</table>'
+
+                        if (!vm.is_external){
+                            child_row += '' +
+                                '<table class="table table-striped table-bordered child-row-table">' +
+                                    '<tr>' +
+                                        '<th>Activity</th>' +
+                                        '<th class="width_55pc">Purposes</th>' +
+                                        '<th class="width_20pc">Status</th>' +
+                                    '</tr>' +
+                                    activity_rows +
+                                '</table>'
+                        }
+                    // Show child row, dark-row className CSS applied from application.scss
                     row.child(
-                        '<table class="table table-striped table-bordered child-row-table">' +
-                            '<tr>' +
-                                '<td class="width_20pc"><strong>Submitter:&nbsp;</strong></td>' +
-                                '<td>' + row.data()['submitter']['first_name'] + ' ' +
-                                    row.data()['submitter']['last_name'] + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                                '<td><strong>Payment Status:&nbsp;</strong></td>' +
-                                '<td>' + row.data()['payment_status'] +
-                            '</tr>' +
-                            '<tr>' +
-                                '<td><strong>Assigned Officer:&nbsp;</strong></td>' +
-                                '<td>' + row.data()['assigned_officer'] + '</td>' +
-                            '</tr>' +
-                        '</table>' +
-                        '<table class="table table-striped table-bordered child-row-table">' +
-                            '<tr>' +
-                                '<th>Activity</th>' +
-                                '<th class="width_55pc">Purposes</th>' +
-                                '<th class="width_20pc">Status</th>' +
-                            '</tr>' +
-                            activity_rows +
-                        '</table>', 'dark-row').show();
+                        child_row
+                        , 'dark-row').show();
                     tr.addClass('shown');
                 }
             });
