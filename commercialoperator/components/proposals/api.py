@@ -93,6 +93,8 @@ from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
 from rest_framework.filters import BaseFilterBackend
+import reversion
+from reversion.models import Version
 
 import logging
 logger = logging.getLogger(__name__)
@@ -203,6 +205,8 @@ class ProposalRenderer(DatatablesRenderer):
             #data.pop('recordsTotal')
             #data.pop('recordsFiltered')
         return super(ProposalRenderer, self).render(data, accepted_media_type, renderer_context)
+
+
 
 #from django.utils.decorators import method_decorator
 #from django.views.decorators.cache import cache_page
@@ -341,7 +345,45 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         return self.paginator.get_paginated_response(serializer.data)
 
 
-class ProposalViewSet(viewsets.ModelViewSet):
+class VersionableModelViewSetMixin(viewsets.ModelViewSet):
+    #@detail_route()
+    #def history(self, request, pk=None):
+    @detail_route(methods=['GET',])
+    def _history(self, request, *args, **kwargs):
+        import ipdb; ipdb.set_trace()
+        _object = self.get_object()
+        _versions = reversion.get_for_object(_object)
+
+        _context = {
+            'request': request
+        }
+
+        _version_serializer = VersionSerializer(_versions, many=True, context=_context)
+        # TODO
+        # check pagination
+        return Response(_version_serializer.data)
+
+    @detail_route(methods=['GET',])
+    def history(self, request, *args, **kwargs):
+        import ipdb; ipdb.set_trace()
+        _object = self.get_object()
+        #_versions = reversion.get_for_object(_object)
+        _versions = Version.objects.get_for_object(_object)
+
+        _context = {
+            'request': request
+        }
+
+        #_version_serializer = VersionSerializer(_versions, many=True, context=_context)
+        _version_serializer = ProposalSerializer([v.object for v in _versions], many=True, context=_context)
+        # TODO
+        # check pagination
+        return Response(_version_serializer.data)
+
+
+
+#class ProposalViewSet(viewsets.ModelViewSet):
+class ProposalViewSet(VersionableModelViewSetMixin):
     #import ipdb; ipdb.set_trace()
     #queryset = Proposal.objects.all()
     queryset = Proposal.objects.none()

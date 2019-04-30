@@ -6,7 +6,7 @@ from wsgiref.util import FileWrapper
 from django.utils import timezone
 from django.core.mail import EmailMessage 
 from django.conf import settings
-from mooring.models import Booking, BookingInvoice, OutstandingBookingRecipient, BookingHistory
+from mooring.models import Booking, BookingInvoice, OutstandingBookingRecipient, BookingHistory, AdmissionsBooking
 from ledger.payments.models import OracleParser,OracleParserInvoice, CashTransaction, BpointTransaction, BpayTransaction,Invoice, TrackRefund
 
 
@@ -58,7 +58,7 @@ def booking_refunds(start,end):
         # Get the required invoices
         for e in cash:
             booking, invoice = None, None
-            if e.invoice.system == '0019':
+            if e.invoice.system == '0516':
                 try:
                     booking = BookingInvoice.objects.get(invoice_reference=e.invoice.reference).booking
                     invoice = e.invoice
@@ -87,7 +87,7 @@ def booking_refunds(start,end):
             booking, invoice = None, None
             try:
                 invoice = Invoice.objects.get(reference=b.crn1)
-                if invoice.system == '0019':
+                if invoice.system == '0516':
                     try:
                         booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
                     except BookingInvoice.DoesNotExist:
@@ -177,19 +177,41 @@ def bookings_report(_date):
     try:
         bpoint, cash = [], []
         bookings = Booking.objects.filter(created__date=_date)
+        admission_bookings = AdmissionsBooking.objects.filter(created__date=_date)
+
         history_bookings = BookingHistory.objects.filter(created__date=_date)
 
         strIO = StringIO()
-        fieldnames = ['Date','Confirmation Number','Name','Amount','Invoice','Booking Type']
+        fieldnames = ['Date','Confirmation Number','Name','Amount','Override Price','Override Reason','Override Details','Invoice','Booking Type','Created By']
         writer = csv.writer(strIO)
         writer.writerow(fieldnames)
 
         types = dict(Booking.BOOKING_TYPE_CHOICES)
 
         for b in bookings:
-            b_name = u'{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))
+            b_name = 'No Name'
+            if b.details:
+                b_name = u'{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))
+            created = timezone.localtime(b.created, pytz.timezone('Australia/Perth')) 
+            created_by =''
+            if b.created_by is not None: 
+                 created_by = b.created_by
+ 
+            writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.confirmation_number,b_name.encode('utf-8'),b.active_invoice.amount if b.active_invoice else '',b.override_price,b.override_reason,b.override_reason_info,b.active_invoice.reference if b.active_invoice else '', types[b.booking_type] if b.booking_type in types else b.booking_type, created_by])
+
+        for b in admission_bookings:
+            b_name = 'No Name'
+            if b.customer:
+                b_name = u'{}'.format(b.customer)
             created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
-            writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.confirmation_number,b_name.encode('utf-8'),b.active_invoice.amount if b.active_invoice else '',b.active_invoice.reference if b.active_invoice else '', types[b.booking_type] if b.booking_type in types else b.booking_type])
+            created_by =''
+            if b.created_by is not None:
+                 created_by = b.created_by
+
+            writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.confirmation_number,b_name.encode('utf-8'),b.active_invoice.amount if b.active_invoice else '','','','',b.active_invoice.reference if b.active_invoice else '', types[b.booking_type] if b.booking_type in types else b.booking_type, created_by])
+
+
+
 
         #for b in history_bookings:
         #    b_name = '{} {}'.format(b.details.get('first_name',''),b.details.get('last_name',''))

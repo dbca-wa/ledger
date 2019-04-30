@@ -362,7 +362,7 @@ class TestLifeCycle(TestCase):
         # issue licence
         # use a one year licence with a monthly return
         start_date = today = date.today()
-        end_date = start_date + timedelta(days=365)
+        end_date = start_date + timedelta(days=366)
         licence_data = {
             'return_frequency': 1,
             'start_date': str(start_date),
