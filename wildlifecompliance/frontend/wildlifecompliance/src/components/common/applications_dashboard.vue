@@ -105,13 +105,11 @@ export default {
             {
                 data: "lodgement_number",
                 width: "10%",
-                responsivePriority: 1,
             },
             {
                 data: "category_name",
                 width: "20%",
                 className: "normal-white-space",
-                responsivePriority: 2,
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
@@ -122,7 +120,6 @@ export default {
                     let output = data.replace(/(?:\r\n|\r|\n|,)/g, '<br>');
                     return output;
                 },
-                responsivePriority: 3,
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
@@ -132,7 +129,6 @@ export default {
                 mRender:function (data,type,full) {
                     return data.name;
                 },
-                responsivePriority: 5
             },
             {
                 data: "submitter",
@@ -145,13 +141,11 @@ export default {
                     }
                     return ''
                 },
-                responsivePriority: 50
             },
             {
                 data: "applicant",
                 width: "10%",
                 className: "normal-white-space",
-                responsivePriority: 4,
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
@@ -162,21 +156,17 @@ export default {
                 mRender:function(data,type,full){
                     return data.name;
                 },
-                responsivePriority: 6,
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "payment_status",
                 visible: false,
-                responsivePriority: 7,
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "lodgement_date",
-                visible: false,
-                responsivePriority: 8,
                 mRender:function (data,type,full) {
                     return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                 },
@@ -185,8 +175,7 @@ export default {
             {
                 data: "assigned_officer",
                 visible: false,
-                name: "assigned_officer__first_name, assigned_officer__last_name, assigned_officer__email",
-                responsivePriority: 50
+                name: "assigned_officer__first_name, assigned_officer__last_name, assigned_officer__email"
             },
             {
                 // Actions
@@ -208,7 +197,6 @@ export default {
                     }
                     return links;
                 },
-                responsivePriority: 1,
                 orderable: false,
                 searchable: false
             }
@@ -562,6 +550,7 @@ export default {
             });
             // Child row listener
             vm.visibleDatatable.vmDataTable.on('click', 'tr.appRecordRow', function() {
+                // Generate child row for application
                 var tr = $(this);
                 var row = vm.visibleDatatable.vmDataTable.row(tr);
 
@@ -572,19 +561,41 @@ export default {
                 }
                 else {
                     // Open this row (the format() function would return the data to be shown)
-                    console.log(row.data());
+                    // Generate rows for each activity
+                    var activity_rows = ''
+                    row.data()['activities'].forEach(function(activity) {
+                        activity_rows += '<tr>' +
+                                            '<td>' + activity['activity_name_str'] + '</td>' +
+                                            '<td>' + activity['activity_purpose_names'].
+                                                replace(/(?:\r\n|\r|\n|,)/g, '<br>') + '</td>' +
+                                            '<td>' + activity['processing_status']['name'] + '</td>' +
+                                         '</tr>'
+                    });
+                    // Show child row
                     row.child(
-                        '<table class="child-row-table">' +
+                        '<table class="table table-striped table-bordered child-row-table">' +
                             '<tr>' +
-                                '<th>Activity</th><th>Purposes</th><th>Status</th>'+
+                                '<td class="width_20pc"><strong>Submitter:&nbsp;</strong></td>' +
+                                '<td>' + row.data()['submitter']['first_name'] + ' ' +
+                                    row.data()['submitter']['last_name'] + '</td>' +
                             '</tr>' +
                             '<tr>' +
-                                '<td>asdfasdf</td><td>asdfasdf</td><td>asdfasdf</td>'+
+                                '<td><strong>Payment Status:&nbsp;</strong></td>' +
+                                '<td>' + row.data()['payment_status'] +
                             '</tr>' +
                             '<tr>' +
-                                '<td>asdfasdf</td><td>asdfasdf</td><td>asdfasdf</td>'+
+                                '<td><strong>Assigned Officer:&nbsp;</strong></td>' +
+                                '<td>' + row.data()['assigned_officer'] + '</td>' +
                             '</tr>' +
-                        '</table>').show();
+                        '</table>' +
+                        '<table class="table table-striped table-bordered child-row-table">' +
+                            '<tr>' +
+                                '<th>Activity</th>' +
+                                '<th class="width_55pc">Purposes</th>' +
+                                '<th class="width_20pc">Status</th>' +
+                            '</tr>' +
+                            activity_rows +
+                        '</table>', 'dark-row').show();
                     tr.addClass('shown');
                 }
             });

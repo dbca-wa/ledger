@@ -4,13 +4,25 @@ td {
     }
 }
 tr {
-    :not(.child) {
+    &:not(.child) {
         cursor: pointer;
+    }
+
+    &.dark-row {
+        background-color: #eeeeee;
     }
 }
 table {
-    .child-row-table {
+    &.child-row-table {
         width: 90%;
         float: right;
     }
+}
+
+.width_55pc {
+    width: 55%;
+}
+
+.width_20pc {
+    width: 20%;
 }
