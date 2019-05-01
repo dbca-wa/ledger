@@ -1201,16 +1201,15 @@ class Application(RevisionedMixin):
                                 licence_category=self.get_licence_category()
                             )
 
-                        start_date = item['start_date']
-                        expiry_date = item['end_date']
-
                         selected_activity.issue_date = timezone.now()
                         selected_activity.officer = request.user
                         selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
                         selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
-                        selected_activity.original_issue_date = start_date
-                        selected_activity.start_date = start_date
-                        selected_activity.expiry_date = expiry_date
+                        selected_activity.original_issue_date = item['start_date']
+                        selected_activity.start_date = item['start_date']
+                        selected_activity.expiry_date = item['end_date']
+                        selected_activity.cc_email = item['cc_email']
+                        selected_activity.reason = item['reason']
                         selected_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
                         selected_activity.save()
 
@@ -1238,6 +1237,8 @@ class Application(RevisionedMixin):
                         selected_activity.officer = request.user
                         selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED
                         selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
+                        selected_activity.cc_email = item['cc_email']
+                        selected_activity.reason = item['reason']
                         selected_activity.save()
                         # Log application action
                         self.log_user_action(
