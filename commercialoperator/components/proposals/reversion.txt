@@ -1,0 +1,71 @@
+import reversion
+#---------------------------------------------------------------------------------------------------
+# proposals/models.py
+
+reversion.register(Referral, follow=['referral_documents',])
+reversion.register(ReferralDocument, follow=['referral_document'])
+
+reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_log','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails_set', 'proposedonhold_set', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals'])
+reversion.register(ProposalDocument, follow=['onhold_documents'])
+reversion.register(OnHoldDocument)
+reversion.register(ProposalRequiredDocument)
+reversion.register(QAOfficerDocument)
+reversion.register(ProposalApplicantDetails)
+reversion.register(ProposalActivitiesLand)
+reversion.register(ProposalActivitiesMarine)
+reversion.register(ProposalOtherDetails, follow=['accreditations'])
+
+reversion.register(ProposalLogEntry, follow=['documents',])
+reversion.register(ProposalLogDocument)
+
+reversion.register(Park, follow=['proposals',])
+reversion.register(ProposalPark, follow=['activities','access_types', 'zones'])
+
+reversion.register(Park, follow=['proposals',])
+reversion.register(AccessType, follow=['proposals','proposalparkaccess_set', 'vehicles'])
+
+reversion.register(Activity, follow=['proposalparkactivity_set','proposalparkzoneactivity_set', 'proposaltrailsectionactivity_set'])
+reversion.register(ProposalParkActivity)
+
+reversion.register(Zone, follow=['proposal_zones'])
+reversion.register(ProposalParkZone, follow=['park_activities'])
+reversion.register(ProposalParkZoneActivity, follow=['proposalparkzoneactivity_set'])
+
+reversion.register(Trail, follow=['proposals'])
+reversion.register(ProposalTrail, follow=['sections'])
+
+reversion.register(ProposalTrailSection, follow=['trail_activities'])
+reversion.register(Section, follow=['proposal_trails'])
+
+reversion.register(ProposalTrailSectionActivity)
+reversion.register(AmendmentReason, follow=['amendmentrequest_set'])
+reversion.register(AmendmentRequest)
+reversion.register(Assessment)
+reversion.register(ProposalDeclinedDetails)
+reversion.register(ProposalOnHold)
+reversion.register(ProposalStandardRequirement, follow=['proposalrequirement_set'])
+reversion.register(ProposalRequirement, follow=['compliance_requirement'])
+reversion.register(ReferralRecipientGroups, follow=['commercialoperator_referral_groups'])
+reversion.register(QAOfficerGroup, follow=['qaofficer_groups'])
+reversion.register(QAOfficerReferral)
+reversion.register(QAOfficerDocument, follow=['qaofficer_referral_document'])
+reversion.register(ApplicationType, follow=['helppage_set'])
+reversion.register(HelpPage)
+
+#---------------------------------------------------------------------------------------------------
+# compliances/models.py
+
+reversion.register(Compliance, follow=['documents', 'action_logs', 'comms_logs', 'comprequest_set'])
+reversion.register(ComplianceDocument)
+reversion.register(ComplianceUserAction)
+reversion.register(ComplianceLogEntry, follow=['documents'])
+reversion.register(ComplianceLogDocument)
+reversion.register(CompRequest)
+reversion.register(ComplianceAmendmentReason, follow=['complianceamendmentrequest_set'])
+reversion.register(ComplianceAmendmentRequest)
+
+#---------------------------------------------------------------------------------------------------
+# approvals/models.py
+
+reversion.register(Approval, follow=['compliances'])
+

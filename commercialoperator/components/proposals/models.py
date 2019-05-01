@@ -280,7 +280,6 @@ class ProposalActivitiesMarine(models.Model):
     class Meta:
         app_label = 'commercialoperator'
 
-
 class Proposal(RevisionedMixin):
 #class Proposal(models.Model):
 
@@ -674,7 +673,7 @@ class Proposal(RevisionedMixin):
             return False
 
     #To allow/ prevent internal user to edit activities (Land and Marine) for T-class licence
-    #still need to check to assessor mode in on or not 
+    #still need to check to assessor mode in on or not
     def can_edit_activities(self,user):
         if self.processing_status == 'with_assessor' or self.processing_status == 'with_assessor_requirements':
             return self.__assessor_group() in user.proposalassessorgroup_set.all()
@@ -1507,7 +1506,6 @@ class Proposal(RevisionedMixin):
                 #proposal.save()
             return proposal
 
-
 class ProposalLogDocument(Document):
     log_entry = models.ForeignKey('ProposalLogEntry',related_name='documents')
     _file = models.FileField(upload_to=update_proposal_comms_log_filename)
@@ -1574,6 +1572,7 @@ class ProposalOtherDetails(models.Model):
     class Meta:
         app_label = 'commercialoperator'
 
+
 class ProposalAccreditation(models.Model):
     #activities_land = models.CharField(max_length=24, blank=True, default='')
     ACCREDITATION_TYPE_CHOICES = (
@@ -1592,7 +1591,6 @@ class ProposalAccreditation(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
-
 
 
 class ProposalPark(models.Model):
@@ -1616,7 +1614,6 @@ class ProposalPark(models.Model):
         categories=ActivityCategory.objects.filter(activity_type='marine')
         activities=qs.filter(Q(activity__activity_category__in = categories)& Q(activity__visible=True))
         return activities
-
 
 #To store Park activities related to Proposal T class land parks
 class ProposalParkActivity(models.Model):
@@ -1714,6 +1711,7 @@ class Vehicle(models.Model):
 
     def __str__(self):
         return self.rego
+
 
 @python_2_unicode_compatible
 class Vessel(models.Model):
@@ -2666,8 +2664,27 @@ class HelpPage(models.Model):
         unique_together = ('application_type', 'help_type', 'version')
 
 
+#class Author(models.Model):
+#    name = models.CharField(max_length=256)
+#
+#    def __str__(self):
+#        return self.name
+#
+#    class Meta:
+#        app_label = 'commercialoperator'
+#
+#class Publisher(models.Model):
+#    name = models.CharField(max_length=256)
+#    author = models.ForeignKey(Author, related_name='publishers')
+#
+#    def __str__(self):
+#        return self.name
+#
+#    class Meta:
+#        app_label = 'commercialoperator'
+
 import reversion
-reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals', 'approvals',])
+reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals', 'approvals','parks',])
 reversion.register(ProposalType)
 reversion.register(ProposalRequirement)            # related_name=requirements
 reversion.register(ProposalStandardRequirement)    # related_name=proposal_requirements
@@ -2682,5 +2699,60 @@ reversion.register(HelpPage)
 reversion.register(ApplicationType)
 reversion.register(ReferralRecipientGroup)
 reversion.register(QAOfficerGroup)
+reversion.register(ProposalPark, follow=['activities',])
+reversion.register(ProposalParkActivity)
+
+#reversion.register(Author, follow=['publishers',])
+#reversion.register(Publisher)
+
+reversion.register(Referral, follow=['referral_documents',])
+reversion.register(ReferralDocument, follow=['referral_document'])
+
+reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_log','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails_set', 'proposedonhold_set', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals'])
+reversion.register(ProposalDocument, follow=['onhold_documents'])
+reversion.register(OnHoldDocument)
+reversion.register(ProposalRequiredDocument)
+reversion.register(QAOfficerDocument)
+reversion.register(ProposalApplicantDetails)
+reversion.register(ProposalActivitiesLand)
+reversion.register(ProposalActivitiesMarine)
+reversion.register(ProposalOtherDetails, follow=['accreditations'])
+
+reversion.register(ProposalLogEntry, follow=['documents',])
+reversion.register(ProposalLogDocument)
+
+reversion.register(Park, follow=['proposals',])
+reversion.register(ProposalPark, follow=['activities','access_types', 'zones'])
+
+reversion.register(Park, follow=['proposals',])
+reversion.register(AccessType, follow=['proposals','proposalparkaccess_set', 'vehicles'])
+
+reversion.register(Activity, follow=['proposalparkactivity_set','proposalparkzoneactivity_set', 'proposaltrailsectionactivity_set'])
+reversion.register(ProposalParkActivity)
+
+reversion.register(Zone, follow=['proposal_zones'])
+reversion.register(ProposalParkZone, follow=['park_activities'])
+reversion.register(ProposalParkZoneActivity, follow=['proposalparkzoneactivity_set'])
+
+reversion.register(Trail, follow=['proposals'])
+reversion.register(ProposalTrail, follow=['sections'])
+
+reversion.register(ProposalTrailSection, follow=['trail_activities'])
+reversion.register(Section, follow=['proposal_trails'])
+
+reversion.register(ProposalTrailSectionActivity)
+reversion.register(AmendmentReason, follow=['amendmentrequest_set'])
+reversion.register(AmendmentRequest)
+reversion.register(Assessment)
+reversion.register(ProposalDeclinedDetails)
+reversion.register(ProposalOnHold)
+reversion.register(ProposalStandardRequirement, follow=['proposalrequirement_set'])
+reversion.register(ProposalRequirement)
+reversion.register(ReferralRecipientGroups, follow=['commercialoperator_referral_groups'])
+reversion.register(QAOfficerGroup, follow=['qaofficer_groups'])
+reversion.register(QAOfficerReferral)
+reversion.register(QAOfficerDocument, follow=['qaofficer_referral_document'])
+reversion.register(ApplicationType, follow=['helppage_set'])
+reversion.register(HelpPage)
 
 
