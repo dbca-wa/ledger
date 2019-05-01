@@ -9,8 +9,8 @@
           </template>
           <div class="grid-container">
               <div v-for="(grid,index) in component">
-                  <label v-if="grid.headers" v-for="header in grid.headers" >
-                      {{ header.label }}
+                  <label v-if="grid.headers" v-for="header in grid.headers">
+                      <input class="form-control" v-model="header.label"  disabled="disabled">
                   </label>
               </div>
               <div v-for="(grid,index) in component">
