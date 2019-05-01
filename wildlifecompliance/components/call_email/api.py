@@ -348,12 +348,16 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     def update_location(self, request, *args, **kwargs):
+        print("request.data")
+        print(request.data)
         try:
             instance = self.get_object()
             location_instance = instance.location
             serializer = LocationSerializer(instance=location_instance, data=request.data)
             serializer.is_valid(raise_exception=True)
             if serializer.is_valid():
+                print("serializer.validated_data")
+                print(serializer.validated_data)
                 serializer.save()
                 headers = self.get_success_headers(serializer.data)
                 return Response(

@@ -12,13 +12,16 @@ export const callemailStore = {
             schema: [],
             classification: {},
             GeoJSONData: {
-                type: null,
-                geometry: {
-                    type: null,
-                    coordinates: [],
+                "id": 1,
+                "type": "Feature",
+                "geometry": {
+                  "type": "Point",
+                  "coordinates": []
+                  },
+                  "properties": {
+                    //"prop0": "value0"
+                  }
                 },
-                properties: {},
-            },
             location: {
                 geometry: {},
                 properties: {},
@@ -45,7 +48,6 @@ export const callemailStore = {
     },
     mutations: {
         updateCallEmail(state, call_email) {
-            console.log(call_email);
             Vue.set(state, 'call_email', {
                 ...call_email
             });
@@ -66,12 +68,20 @@ export const callemailStore = {
         updateLocation(state, location) {
             console.log("location");
             console.log(location);
-            Vue.set(state.call_email.GeoJSONData, 'location', location);
+            Vue.set(state.call_email, 'location', location);
         },
-
+        updateLocationPoint(state, point) {
+            console.log("point");
+            console.log(point);
+            Vue.set(state.call_email.location, 'geometry', point);
+        },
+        updateGeoJSONData(state, GeoJSONData) {
+            console.log("GeoJSONData");
+            console.log(GeoJSONData);
+            Vue.set(state.call_email, 'GeoJSONData', GeoJSONData);
+        },
     },
     actions: {
-
         loadCallEmail({
             dispatch,
         }, {
@@ -131,14 +141,12 @@ export const callemailStore = {
             },
             classification_entry
         ) {
-            console.log(classification_entry);
             commit("updateClassification", classification_entry);
         },
 
         setCallEmail({
             commit,
         }, call_email) {
-            console.log(call_email);
             commit("updateCallEmail", call_email);
         },
 
@@ -169,32 +177,28 @@ export const callemailStore = {
 
         saveLocation({
             state
-        }, ) {
+        } ) {
             const instance = {...state.call_email.location};
             //const instance_GeoJSONData = {...state.call_email.GeoJSONData};
+            const instance_GeoJSONData = state.call_email.GeoJSONData;
             const call_instance = state.call_email;
-            const instance_GeoJSONData = {...call_instance.GeoJSONData};
+            //const instance_GeoJSONData = {...call_instance.GeoJSONData};
             console.log("instance_GeoJSONData");
-            console.log(instance_GeoJSONData);
-            console.log("instance");
-            console.log(instance);
-            console.log("state.call_email.GeoJSONData");
-            console.log({...state.call_email.GeoJSONData});
+            console.log({...instance_GeoJSONData});
+            console.log("instance.geometry");
+            console.log({...instance.geometry});
+            console.log(instance.geometry);
             return new Promise((resolve, reject) => {
                 Vue.http.post(helpers.add_endpoint_join(
                     api_endpoints.call_email, 
                     state.call_email.id + "/update_location/"
-                    ), 
-                    {   
+                    ), {
                         town_suburb: state.call_email.location.properties.town_suburb,
                         street: instance.properties.street,
                         state: instance.properties.state,
                         postcode: instance.properties.postcode,
-                        wkb_geometry: instance_GeoJSONData,
-                        //geometry: instance_GeoJSONData,
-                    }
-                    )
-                    .then(res => {
+                        //wkb_geometry: instance_GeoJSONData,
+                    }).then(res => {
                             console.log(res.body.results);
                             console.log("success");
                             resolve();
@@ -205,13 +209,23 @@ export const callemailStore = {
                         });
             });
         },
-        
-
         setLocation({
             commit,
         }, location) {
             console.log("setLocation");
             commit("updateLocation", location);
+        },
+        setLocationPoint({
+            commit,
+        }, point) {
+            console.log("setLocationPoint");
+            commit("updateLocationPoint", point);
+        },
+        setGeoJSONData({
+            commit,
+        }, GeoJSONData) {
+            console.log("setGeoJSONData");
+            commit("updateGeoJSONData", GeoJSONData);
         },
     },
         /*

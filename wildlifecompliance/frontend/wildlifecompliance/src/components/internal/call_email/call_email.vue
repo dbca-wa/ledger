@@ -106,6 +106,25 @@ import MapLocation from "./map_location.vue";
 import { api_endpoints, helpers } from "@/utils/hooks";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
+
+import Map from "ol/Map.js";
+import View from "ol/View.js";
+import { defaults as defaultControls, ScaleLine } from "ol/control.js";
+import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer.js";
+import { XYZ, OSM, WMTS } from "ol/source";
+import {
+  get,
+  addProjection,
+  addCoordinateTransforms,
+  transform
+} from "ol/proj.js";
+import Feature from "ol/Feature.js";
+import Overlay from "ol/Overlay";
+import Point from "ol/geom/Point.js";
+import VectorSource from "ol/source/Vector.js";
+import { Icon, Style } from "ol/style.js";
+import Geocoder from "ol-geocoder/dist/ol-geocoder.js";
+
 export default {
   name: "ViewCallEmail",
   data: function() {
@@ -130,7 +149,18 @@ export default {
       logs_url: helpers.add_endpoint_json(
         api_endpoints.call_email,
         this.$route.params.call_email_id + "/action_log"
-      )
+      ),
+      dummyGeoJSON: {
+      "id": 1,
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [102.0, 0.5]
+        },
+        "properties": {
+          "prop0": "value0"
+        }
+      },
       //panelClickersInitialised: false
     };
   },
@@ -141,12 +171,12 @@ export default {
     MapLocation
   },
   computed: {
-    ...mapGetters({
-      call_email: "callemailStore/call_email",
+    ...mapGetters('callemailStore', {
+      call_email: "call_email",
       //call_id: "callemailStore/call_id",
-      classification_types: "callemailStore/classification_types",
+      classification_types: "classification_types",
       //location: "callemailStore/location",
-      report_type: "callemailStore/report_type"
+      report_type: "report_type"
     }),
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
@@ -158,7 +188,33 @@ export default {
       return this.call_email
         ? `/api/call_email/${this.call_email.id}/form_data.json`
         : "";
-    }
+    },
+    dummyPoint: function() {
+      return new Point(transform([-32, 119], "EPSG:4326", "EPSG:3857"))
+    }, 
+    GeoJSONData: {
+      get: function() {
+        if (this.call_email.GeoJSONData == null) {
+          this.setGeoJSONData(this.dummyGeoJSON);
+        }
+        return this.call_email.GeoJSONData;
+      },
+      set: function(value) {
+        this.setGeoJSONData(value);
+      }
+    },
+    location: {
+      get: function() {
+        if (this.call_email.location.geometry == null) {
+          this.setLocationPoint(this.dummyPoint);
+        }
+        return this.call_email.location;
+      },
+      set: function(value) {
+        this.setLocation(value);
+      }
+    },
+
   },
   filters: {
     formatDate: function(data) {
@@ -166,12 +222,31 @@ export default {
     }
   },
   methods: {
-    ...mapActions({
-      loadCallEmail: "callemailStore/loadCallEmail",
-      loadClassification: "callemailStore/loadClassification",
-      saveFormData: "saveFormData",
+    ...mapActions('callemailStore', {
+      //saveLocation: 'saveLocation',
+      //setLocation: 'setLocation',
+      setCallEmail: 'setCallEmail',
+      //setGeoJSONData: 'setGeoJSONData',
+      loadCallEmail: "loadCallEmail",
+      loadClassification: "loadClassification",
+      setGeoJSONData: 'setGeoJSONData',
+      setLocation: 'setLocation',
+
       //saveLocation: "callemailStore/saveLocation"
     }),
+    ...mapActions({
+      saveFormData: "saveFormData",
+    }),
+    initLocation: function() {
+      console.log("initLocation");
+      console.log(this.dummyPoint);
+      if (this.call_email.location.geometry == null) {
+          this.setLocationPoint(this.dummyPoint);
+        }
+      if (this.call_email.GeoJSONData == null) {
+          this.setGeoJSONData(this.dummyGeoJSON);
+        }
+    },
     /*
     updateLocation: function() {
       this.saveLocation({ call_email_id: this.call_id });
@@ -249,6 +324,7 @@ export default {
       console.log("before route enter - next");
       vm.loadCallEmail({ call_email_id: to.params.call_email_id });
       vm.loadClassification();
+      vm.initLocation();
     });
   },
 

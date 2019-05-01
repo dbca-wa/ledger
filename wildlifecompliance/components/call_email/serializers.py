@@ -82,6 +82,7 @@ class LocationSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = Location
         geo_field = 'wkb_geometry'
+        
         fields = (
             'id',
             'street',

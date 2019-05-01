@@ -1,6 +1,6 @@
 <template lang="html">
     <div class="container">
-        <div id="mapOL" v-model="location.properties.geometry"></div>
+        <div id="mapOL" ></div>
         <div style="display: none;">
             <div id="popup"></div>
         </div>
@@ -14,25 +14,25 @@
         <div id="lon">Lng: {{ lng_4326_cursor }}</div>
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">Street</label>
-            <input v-model="location.properties.street" />
+            <input v-model="call_email.location.properties.street" />
         </div></div>
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">Town/Suburb</label>
-            <input v-model="location.properties.town_suburb" />
+            <input v-model="call_email.location.properties.town_suburb" />
         </div></div>
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">State</label>
-            <input v-model="location.properties.state" />
+            <input v-model="call_email.location.properties.state" />
         </div></div>
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">Postcode</label>
-            <input v-model="location.properties.postcode" />
+            <input v-model="call_email.location.properties.postcode" />
         </div></div>
         <div class="col-sm-12"><div class="row">
             <label class="col-sm-4">Contry</label>
-            <input v-model="location.properties.country" />
+            <input v-model="call_email.location.properties.country" />
        </div></div>
-      <button @click.prevent="updateLocation"
+      <button @click.prevent="saveInstanceLocation"
         class="btn btn-primary pull-right">Update</button>
     </div>
 </template>
@@ -65,7 +65,6 @@ export default {
   name: "map-openlayers",
   data: function() {
     const defaultCentre = [13775786.985667605, -2871569.067879858];
-
     return {
       defaultCenter: defaultCentre,
       projection: null,
@@ -84,51 +83,9 @@ export default {
       street: null,
       town_suburb: null,
       newGeo: null,
-    };
-  },
-  /*
-  props:{
-            location:{
-                type:Object,
-                required: true
-            },
-    },
-  */
-  computed: {
-    
-    ...mapGetters({
-      call_email: "callemailStore/call_email",
-      call_id: "callemailStore/call_id",
-      location: "callemailStore/location",
-      //"callemailStore/call_email"
-    }),
-    
-   /*
-    ...mapState({
-      call_email: state => state.call_email "callemailStore/call_email",
-      call_id: "callemailStore/call_id",
-      location: "callemailStore/location",
-      //"callemailStore/call_email"
-    }),
-    */
-    /*
-    setlocation: function() {
-      location = this.call_email.location;
-    },
-    */
-    setInitLocation: function() {
-      console.log("importMapData");
-      //this.call_email.location.geometry = new Point(transform([-31, 118], 'EPSG:4326', 'EPSG:3857'));
-      //this.location.geometry = new Point([-31, 118]);
-      var iconFeature = new Feature({
-        //geometry: new Point(transform([this.lng_4326, this.lat_4326], 'EPSG:4326', 'EPSG:3857')),
-        geometry: new Point(transform([-32, 119], "EPSG:4326", "EPSG:3857"))
-      });
-      
-      //this.location.geometry = iconFeature.geometry;
-      //this.location.geometry = new Point(transform([-32, 119], "EPSG:4326", "EPSG:3857"));
-      this.location.geometry = new Point([-32, 119]);
-      this.call_email.GeoJSONData =     {
+      /*
+      dummyGeoJSON: {
+      "id": 1,
       "type": "Feature",
       "geometry": {
         "type": "Point",
@@ -137,33 +94,89 @@ export default {
         "properties": {
           "prop0": "value0"
         }
+      },
+      */
+    };
+  },
+  computed: {
+    
+    ...mapGetters('callemailStore', {
+      call_email: 'call_email',
+      //call_id: "callemailStore/call_id",
+      //location: 'location',
+      //"callemailStore/call_email"
+    }),
+    /*
+    dummyPoint: function() {
+      return new Point(transform([-32, 119], "EPSG:4326", "EPSG:3857"))
+    }, 
+    
+    GeoJSONData: {
+      get: function() {
+        if (this.call_email.GeoJSONData == null) {
+          this.setGeoJSONData(this.dummyGeoJSON);
+        }
+        return this.call_email.GeoJSONData;
+      },
+      set: function(value) {
+        this.setGeoJSONData(value);
       }
-      
-
     },
+    
+
+    location: {
+      get: function() {
+        if (this.call_email.location.geometry == null) {
+          this.setLocationPoint(this.dummyPoint);
+        }
+        return this.call_email.location;
+      },
+      set: function(value) {
+        this.setLocation(value);
+      }
+    },
+    */
+    /*
+    setInitLocation: function() {
+      console.log("importMapData");
+      //this.call_email.location.geometry = new Point(transform([-31, 118], 'EPSG:4326', 'EPSG:3857'));
+      //this.location.geometry = new Point([-31, 118]);
+      var iconFeature = new Feature({
+        //geometry: new Point(transform([this.lng_4326, this.lat_4326], 'EPSG:4326', 'EPSG:3857')),
+        geometry: new Point(transform([-32, 119], "EPSG:4326", "EPSG:3857"))
+      });
+    },
+    */
   },
   mounted: function() {
     console.debug("Start loading map");
-    //this.importMapData();
+    //this.initLocation();
     this.initMap();
-    //this.GeoJSON();
     console.debug("End loading map");
   },
   methods: {
-    ...mapActions({
-      saveLocation: "callemailStore/saveLocation",
-      setLocation: "callemailStore/setLocation",
-      setCallEmail: "callemailStore/setCallEmail",
+    ...mapActions('callemailStore', {
+      saveLocation: 'saveLocation',
+      setLocation: 'setLocation',
+      setCallEmail: 'setCallEmail',
+      setGeoJSONData: 'setGeoJSONData',
+      setLocationPoint: 'setLocationPoint',
     }),
-    updateLocation: function() {
-      console.log("this.call_email");
-      console.log(this.call_email);
-      this.setCallEmail(this.call_email);
+    /*
+    initLocation: function() {
+      if (this.call_email.location.geometry == null) {
+          this.setLocationPoint(this.dummyPoint);
+        }
+      if (this.call_email.GeoJSONData == null) {
+          this.setGeoJSONData(this.dummyGeoJSON);
+        }
+    },
+    */
+    saveInstanceLocation: function() {
       this.saveLocation();
     },
     addMarker: function() {
       var iconFeature = new Feature({
-        //geometry: new Point(transform([this.lng_4326, this.lat_4326], 'EPSG:4326', 'EPSG:3857')),
         geometry: new Point(transform([-32, 119], "EPSG:4326", "EPSG:3857"))
       });
       this.location.geometry = iconFeature;
@@ -211,7 +224,7 @@ export default {
       });
     },
     initMap: function() {
-      
+      console.log("initMap");
       this.projection = get("EPSG:3857");
 
       var rasterLayer = new TileLayer({ source: new OSM() });
