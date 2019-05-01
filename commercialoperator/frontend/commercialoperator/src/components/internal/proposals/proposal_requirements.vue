@@ -33,7 +33,11 @@ import RequirementDetail from './proposal_add_requirement.vue'
 export default {
     name: 'InternalProposalRequirements',
     props: {
-        proposal: Object
+        proposal: Object,
+        hasReferralMode:{
+            type:Boolean,
+            default: false
+        }
     },
     data: function() {
         let vm = this;
@@ -129,6 +133,16 @@ export default {
                                 //links +=  `<a href='#' class="editRequirement" data-id="${full.id}">Edit</a><br/>`;
                                 links +=  `<a href='#' class="deleteRequirement" data-id="${full.id}">Delete</a><br/>`;
                             }
+                            else{
+                                if(vm.hasReferralMode){
+                                    if(full.copied_from==null)
+                                {
+                                    links +=  `<a href='#' class="editRequirement" data-id="${full.id}">Edit</a><br/>`;
+                                }
+                                //links +=  `<a href='#' class="editRequirement" data-id="${full.id}">Edit</a><br/>`;
+                                links +=  `<a href='#' class="deleteRequirement" data-id="${full.id}">Delete</a><br/>`;
+                                }
+                            }
                             return links;
                         },
                         orderable: false
@@ -177,9 +191,6 @@ export default {
         hasAssessorMode(){
             return this.proposal.assessor_mode.has_assessor_mode;
         },
-        hasReferralMode(){
-            return this.proposal.assessor_mode.assessor_level=='referral'? true: false;
-        }
 
     },
     methods:{

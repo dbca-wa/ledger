@@ -688,6 +688,9 @@ class ReferralSerializer(serializers.ModelSerializer):
     processing_status = serializers.CharField(source='get_processing_status_display')
     latest_referrals = ProposalReferralSerializer(many=True)
     can_be_completed = serializers.BooleanField()
+    can_process=serializers.SerializerMethodField()
+
+
     class Meta:
         model = Referral
         fields = '__all__'
@@ -695,6 +698,12 @@ class ReferralSerializer(serializers.ModelSerializer):
     def __init__(self,*args,**kwargs):
         super(ReferralSerializer, self).__init__(*args, **kwargs)
         self.fields['proposal'] = ReferralProposalSerializer(context={'request':self.context['request']})
+
+    def get_can_process(self,obj):
+        # TODO check if the proposal has been accepted or declined
+        request = self.context['request']
+        user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
+        return obj.can_process(user)
 
 class ProposalUserActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')

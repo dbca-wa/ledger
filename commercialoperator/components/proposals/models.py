@@ -2115,6 +2115,17 @@ class Referral(RevisionedMixin):
         else:
             return True
 
+    def can_process(self, user):
+        if self.processing_status=='with_referral':
+            group =  ReferralRecipientGroup.objects.filter(id=self.referral_group.id)
+            #user=request.user
+            if group and group[0] in user.referralrecipientgroup_set.all():
+                return True
+            else:
+                return False
+        return False
+
+
     def recall(self,request):
         with transaction.atomic():
             if not self.proposal.can_assess(request.user):
@@ -2162,9 +2173,12 @@ class Referral(RevisionedMixin):
         with transaction.atomic():
             try:
                 #if request.user != self.referral:
-                group =  ReferralRecipientGroup.objects.filter(name=self.referral_group)
-                if group and group[0] in u.referralrecipientgroup_set.all():
+                group =  ReferralRecipientGroup.objects.filter(id=self.referral_group.id)
+                #print u.referralrecipientgroup_set.all()
+                user=request.user
+                if group and group[0] not in user.referralrecipientgroup_set.all():
                     raise exceptions.ReferralNotAuthorized()
+                #import ipdb; ipdb.set_trace()
                 self.processing_status = 'completed'
                 self.referral = request.user
                 self.referral_text = request.user.get_full_name() + ': ' + request.data.get('referral_comment')

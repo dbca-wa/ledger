@@ -111,7 +111,8 @@
                             <!--
                             <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && referral.referral == proposal.current_assessor.id && referral.can_be_completed">
                             -->
-                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && referral.can_be_completed">
+                            <!-- <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && referral.can_be_completed && referral.can_process"> -->
+                            <div class="col-sm-12 top-buffer-s" v-if="referral.can_process && referral.can_be_completed">
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <strong>Action</strong><br/>
@@ -126,7 +127,7 @@
                                     </div>
                                     -->
 
-                                    <div class="row">
+                                    <div class="">
                                         <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="completeReferral2()">Complete Referral Task</button><br/>
                                         </div>
@@ -245,7 +246,7 @@
                         </div>
                     </div>
                 </div> -->
-                <Requirements :proposal="proposal"/>
+                <Requirements :proposal="proposal" :hasReferralMode="hasReferralMode"/>
                 <div class="col-md-12" v-if="showingProposal">
                     <div class="row">
                         <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
@@ -379,6 +380,9 @@ export default {
     computed: {
         proposal: function(){
             return this.referral != null && this.referall != 'undefined' ? this.referral.proposal : null;
+        },
+        hasReferralMode: function(){
+            return this.referral && this.referral.can_process? true: false;
         },
         contactsURL: function(){
             return this.proposal!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.proposal.applicant.id+'/contacts') : '';
