@@ -246,7 +246,7 @@
                         </div>
                     </div>
                 </div> -->
-                <Requirements :proposal="proposal" :hasReferralMode="hasReferralMode"/>
+                <Requirements :proposal="proposal" :hasReferralMode="hasReferralMode" :referral_group="referral.referral_group"/>
                 <div class="col-md-12" v-if="showingProposal">
                     <div class="row">
                         <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">

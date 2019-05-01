@@ -19,7 +19,7 @@
                 </div>
             </div>
         </div>
-        <RequirementDetail ref="requirement_detail" :proposal_id="proposal.id" :requirements="requirements"/>
+        <RequirementDetail ref="requirement_detail" :proposal_id="proposal.id" :requirements="requirements" :hasReferralMode="hasReferralMode" :referral_group="referral_group"/>
     </div>
 </template>
 <script>
@@ -37,6 +37,10 @@ export default {
         hasReferralMode:{
             type:Boolean,
             default: false
+        },
+        referral_group:{
+            type:Number,
+            default: null
         }
     },
     data: function() {
@@ -134,7 +138,7 @@ export default {
                                 links +=  `<a href='#' class="deleteRequirement" data-id="${full.id}">Delete</a><br/>`;
                             }
                             else{
-                                if(vm.hasReferralMode){
+                                if(vm.hasReferralMode && full.can_referral_edit){
                                     if(full.copied_from==null)
                                 {
                                     links +=  `<a href='#' class="editRequirement" data-id="${full.id}">Edit</a><br/>`;
@@ -154,6 +158,12 @@ export default {
                             if (vm.proposal.assessor_mode.has_assessor_mode){
                                 links +=  `<a class="dtMoveUp" data-id="${full.id}" href='#'><i class="fa fa-angle-up fa-2x"></i></a><br/>`;
                                 links +=  `<a class="dtMoveDown" data-id="${full.id}" href='#'><i class="fa fa-angle-down fa-2x"></i></a><br/>`;
+                            }
+                            else{
+                                if(vm.hasReferralMode && full.can_referral_edit){
+                                    links +=  `<a class="dtMoveUp" data-id="${full.id}" href='#'><i class="fa fa-angle-up fa-2x"></i></a><br/>`;
+                                    links +=  `<a class="dtMoveDown" data-id="${full.id}" href='#'><i class="fa fa-angle-down fa-2x"></i></a><br/>`;
+                                }
                             }
                             return links;
                         },
@@ -239,6 +249,7 @@ export default {
                 this.$refs.requirement_detail.requirement = response.body;
                 this.$refs.requirement_detail.requirement.due_date =  response.body.due_date != null && response.body.due_date != undefined ? moment(response.body.due_date).format('DD/MM/YYYY'): '';
                 response.body.standard ? $(this.$refs.requirement_detail.$refs.standard_req).val(response.body.standard_requirement).trigger('change'): '';
+                this.$refs.requirement_detail.requirement.referral_group=response.body.referral_group;
                 this.addRequirement();
             },(error) => {
                 console.log(error);

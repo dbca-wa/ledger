@@ -700,7 +700,6 @@ class ReferralSerializer(serializers.ModelSerializer):
         self.fields['proposal'] = ReferralProposalSerializer(context={'request':self.context['request']})
 
     def get_can_process(self,obj):
-        # TODO check if the proposal has been accepted or declined
         request = self.context['request']
         user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
         return obj.can_process(user)
@@ -768,10 +767,16 @@ class DTReferralSerializer(serializers.ModelSerializer):
 
 class ProposalRequirementSerializer(serializers.ModelSerializer):
     due_date = serializers.DateField(input_formats=['%d/%m/%Y'],required=False,allow_null=True)
+    can_referral_edit=serializers.SerializerMethodField()
     class Meta:
         model = ProposalRequirement
-        fields = ('id','due_date','free_requirement','standard_requirement','standard','order','proposal','recurrence','recurrence_schedule','recurrence_pattern','requirement','is_deleted','copied_from')
+        fields = ('id','due_date','free_requirement','standard_requirement','standard','order','proposal','recurrence','recurrence_schedule','recurrence_pattern','requirement','is_deleted','copied_from', 'referral_group', 'can_referral_edit')
         read_only_fields = ('order','requirement', 'copied_from')
+
+    def get_can_referral_edit(self,obj):
+        request = self.context['request']
+        user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
+        return obj.can_referral_edit(user)
 
 class ProposalStandardRequirementSerializer(serializers.ModelSerializer):
     class Meta:

@@ -2310,6 +2310,17 @@ class ProposalRequirement(OrderedModel):
     def requirement(self):
         return self.standard_requirement.text if self.standard else self.free_requirement
 
+    def can_referral_edit(self,user):
+        if self.proposal.processing_status=='with_referral':
+            if self.referral_group:
+                group =  ReferralRecipientGroup.objects.filter(id=self.referral_group.id)
+                #user=request.user
+                if group and group[0] in user.referralrecipientgroup_set.all():
+                    return True
+                else:
+                    return False
+        return False
+
 
 class QAOfficerReferral(RevisionedMixin):
     SENT_CHOICES = (
