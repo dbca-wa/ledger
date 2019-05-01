@@ -1857,27 +1857,6 @@ class ProposalStandardRequirement(RevisionedMixin):
     class Meta:
         app_label = 'commercialoperator'
 
-class ProposalRequirement(OrderedModel):
-    RECURRENCE_PATTERNS = [(1, 'Weekly'), (2, 'Monthly'), (3, 'Yearly')]
-    standard_requirement = models.ForeignKey(ProposalStandardRequirement,null=True,blank=True)
-    free_requirement = models.TextField(null=True,blank=True)
-    standard = models.BooleanField(default=True)
-    proposal = models.ForeignKey(Proposal,related_name='requirements')
-    due_date = models.DateField(null=True,blank=True)
-    recurrence = models.BooleanField(default=False)
-    recurrence_pattern = models.SmallIntegerField(choices=RECURRENCE_PATTERNS,default=1)
-    recurrence_schedule = models.IntegerField(null=True,blank=True)
-    copied_from = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    #order = models.IntegerField(default=1)
-
-    class Meta:
-        app_label = 'commercialoperator'
-
-
-    @property
-    def requirement(self):
-        return self.standard_requirement.text if self.standard else self.free_requirement
 
 class ProposalUserAction(UserAction):
     ACTION_CREATE_CUSTOMER_ = "Create customer {}"
@@ -2304,6 +2283,33 @@ class Referral(RevisionedMixin):
 
     def can_assess_referral(self,user):
         return self.processing_status == 'with_referral'
+
+class ProposalRequirement(OrderedModel):
+    RECURRENCE_PATTERNS = [(1, 'Weekly'), (2, 'Monthly'), (3, 'Yearly')]
+    standard_requirement = models.ForeignKey(ProposalStandardRequirement,null=True,blank=True)
+    free_requirement = models.TextField(null=True,blank=True)
+    standard = models.BooleanField(default=True)
+    proposal = models.ForeignKey(Proposal,related_name='requirements')
+    due_date = models.DateField(null=True,blank=True)
+    recurrence = models.BooleanField(default=False)
+    recurrence_pattern = models.SmallIntegerField(choices=RECURRENCE_PATTERNS,default=1)
+    recurrence_schedule = models.IntegerField(null=True,blank=True)
+    copied_from = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    #To determine if requirement has been added by referral and the group of referral who added it
+    #Null if added by an assessor
+    referral_group = models.ForeignKey(ReferralRecipientGroup,null=True,blank=True,related_name='requirement_referral_groups')
+    #order = models.IntegerField(default=1)
+
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+
+    @property
+    def requirement(self):
+        return self.standard_requirement.text if self.standard else self.free_requirement
+
 
 class QAOfficerReferral(RevisionedMixin):
     SENT_CHOICES = (
