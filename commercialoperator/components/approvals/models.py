@@ -457,10 +457,17 @@ def delete_documents(sender, instance, *args, **kwargs):
         except:
             pass
 
+#import reversion
+#reversion.register(Approval, follow=['documents', 'approval_set', 'action_logs'])
+#reversion.register(ApprovalDocument)
+#reversion.register(ApprovalLogDocument, follow=['documents'])
+#reversion.register(ApprovalLogEntry)
+#reversion.register(ApprovalUserAction)
+
 import reversion
-reversion.register(Approval, follow=['documents', 'approval_set', 'action_logs'])
-reversion.register(ApprovalDocument)
-reversion.register(ApprovalLogDocument, follow=['documents'])
-reversion.register(ApprovalLogEntry)
+reversion.register(Approval, follow=['compliances', 'documents', 'comms_logs', 'action_logs'])
+reversion.register(ApprovalDocument, follow=['licence_document', 'cover_letter_document', 'renewal_document'])
+reversion.register(ApprovalLogEntry, follow=['documents'])
+reversion.register(ApprovalLogDocument)
 reversion.register(ApprovalUserAction)
 

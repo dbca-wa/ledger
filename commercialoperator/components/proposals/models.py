@@ -15,10 +15,11 @@ from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin
+#from ledger.accounts.models import EmailUser
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument#, RevisionedMixin
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
@@ -280,8 +281,9 @@ class ProposalActivitiesMarine(models.Model):
     class Meta:
         app_label = 'commercialoperator'
 
-class Proposal(RevisionedMixin):
-#class Proposal(models.Model):
+from dirtyfields import DirtyFieldsMixin
+class Proposal(DirtyFieldsMixin, RevisionedMixin):
+#class Proposal(DirtyFieldsMixin, models.Model):
 
     CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'),
                                ('with_assessor', 'Under Review'),
@@ -461,12 +463,16 @@ class Proposal(RevisionedMixin):
 
     #Append 'P' to Proposal id to generate Lodgement number. Lodgement number and lodgement sequence are used to generate Reference.
     def save(self, *args, **kwargs):
+        orig_processing_status = self._original_state['processing_status']
         super(Proposal, self).save(*args,**kwargs)
-        #import ipdb; ipdb.set_trace()
+        if self.processing_status != orig_processing_status:
+            #import ipdb; ipdb.set_trace()
+            self.save(version_comment='processing_status: {}'.format(self.processing_status))
+
         if self.lodgement_number == '' and self.application_type.name != 'E Class':
             new_lodgment_id = 'P{0:06d}'.format(self.pk)
             self.lodgement_number = new_lodgment_id
-            self.save()
+            self.save(version_comment='processing_status: {}'.format(self.processing_status))
 
     @property
     def reference(self):
@@ -1516,6 +1522,9 @@ class ProposalLogDocument(Document):
 class ProposalLogEntry(CommunicationsLogEntry):
     proposal = models.ForeignKey(Proposal, related_name='comms_logs')
 
+    def __str__(self):
+        return '{} - {}'.format(self.reference, self.subject)
+
     class Meta:
         app_label = 'commercialoperator'
 
@@ -1589,6 +1598,9 @@ class ProposalAccreditation(models.Model):
     comments=models.TextField(blank=True)
     proposal_other_details = models.ForeignKey(ProposalOtherDetails, related_name='accreditations', null=True)
 
+    def __str__(self):
+        return '{} - {}'.format(self.accreditation_type, self.comments)
+
     class Meta:
         app_label = 'commercialoperator'
 
@@ -1596,6 +1608,9 @@ class ProposalAccreditation(models.Model):
 class ProposalPark(models.Model):
     park = models.ForeignKey(Park, blank=True, null=True, related_name='proposals')
     proposal = models.ForeignKey(Proposal, blank=True, null=True, related_name='parks')
+
+    def __str__(self):
+        return self.park.name
 
     class Meta:
         app_label = 'commercialoperator'
@@ -1620,6 +1635,9 @@ class ProposalParkActivity(models.Model):
     proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='activities')
     activity = models.ForeignKey(Activity, blank=True, null=True)
 
+    def __str__(self):
+        return self.activity.name
+
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('proposal_park', 'activity')
@@ -1628,6 +1646,9 @@ class ProposalParkActivity(models.Model):
 class ProposalParkAccess(models.Model):
     proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='access_types')
     access_type = models.ForeignKey(AccessType, blank=True, null=True)
+
+    def __str__(self):
+        return self.access_type.name
 
     class Meta:
         app_label = 'commercialoperator'
@@ -1639,6 +1660,8 @@ class ProposalParkZone(models.Model):
     zone = models.ForeignKey(Zone, blank=True, null=True, related_name='proposal_zones')
     access_point = models.CharField(max_length=200, blank=True)
 
+    def __str__(self):
+        return self.zone.name
 
     class Meta:
         app_label = 'commercialoperator'
@@ -1649,6 +1672,9 @@ class ProposalParkZoneActivity(models.Model):
     activity = models.ForeignKey(Activity, blank=True, null=True)
     #section=models.ForeignKey(Section, blank=True, null= True)
 
+    def __str__(self):
+        return '{} - {}'.format(self.activity.name, self.park_zone.zone.name)
+
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('park_zone', 'activity')
@@ -1658,6 +1684,9 @@ class ProposalTrail(models.Model):
     trail = models.ForeignKey(Trail, blank=True, null=True, related_name='proposals')
     proposal = models.ForeignKey(Proposal, blank=True, null=True, related_name='trails')
 
+    def __str__(self):
+        return self.trail.name
+    
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('trail', 'proposal')
@@ -1673,6 +1702,9 @@ class ProposalTrailSection(models.Model):
     proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='sections')
     section = models.ForeignKey(Section, blank=True, null=True, related_name='proposal_trails')
 
+    def __str__(self):
+        return '{} - {}'.format(self.proposal_trail, self.section.name)
+    
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('section', 'proposal_trail')
@@ -1692,6 +1724,9 @@ class ProposalTrailSectionActivity(models.Model):
     activity = models.ForeignKey(Activity, blank=True, null=True)
     #section=models.ForeignKey(Section, blank=True, null= True)
 
+    def __str__(self):
+        return '{} - {}'.format(self.trail_section, self.activity.name)
+    
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('trail_section', 'activity')
@@ -1706,6 +1741,9 @@ class Vehicle(models.Model):
     rego_expiry= models.DateField(blank=True, null=True)
     proposal = models.ForeignKey(Proposal, related_name='vehicles')
 
+    def __str__(self):
+        return '{} - {}'.format(self.rego, self.access_type)
+    
     class Meta:
         app_label = 'commercialoperator'
 
@@ -1723,6 +1761,9 @@ class Vessel(models.Model):
     #rego_expiry= models.DateField(blank=True, null=True)
     proposal = models.ForeignKey(Proposal, related_name='vessels')
 
+    def __str__(self):
+        return '{} - {}'.format(self.spv_no, self.nominated_vessel)
+    
     class Meta:
         app_label = 'commercialoperator'
 
@@ -1735,6 +1776,9 @@ class ProposalRequest(models.Model):
     text = models.TextField(blank=True)
     officer = models.ForeignKey(EmailUser, null=True)
 
+    def __str__(self):
+        return '{} - {}'.format(self.subject, self.text)
+    
     class Meta:
         app_label = 'commercialoperator'
 
@@ -1824,7 +1868,7 @@ class Assessment(ProposalRequest):
         app_label = 'commercialoperator'
 
 class ProposalDeclinedDetails(models.Model):
-    proposal = models.OneToOneField(Proposal)
+    proposal = models.OneToOneField(Proposal, related_name='declined_details')
     officer = models.ForeignKey(EmailUser, null=False)
     reason = models.TextField(blank=True)
     cc_email = models.TextField(null=True)
@@ -1833,7 +1877,7 @@ class ProposalDeclinedDetails(models.Model):
         app_label = 'commercialoperator'
 
 class ProposalOnHold(models.Model):
-    proposal = models.OneToOneField(Proposal)
+    proposal = models.OneToOneField(Proposal, related_name='onhold')
     officer = models.ForeignKey(EmailUser, null=False)
     comment = models.TextField(blank=True)
     documents = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='onhold_documents')
@@ -2683,36 +2727,37 @@ class HelpPage(models.Model):
 #    class Meta:
 #        app_label = 'commercialoperator'
 
-import reversion
-reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals', 'approvals','parks',])
-reversion.register(ProposalType)
-reversion.register(ProposalRequirement)            # related_name=requirements
-reversion.register(ProposalStandardRequirement)    # related_name=proposal_requirements
-reversion.register(ProposalDocument)               # related_name=documents
-reversion.register(ProposalLogEntry)
-reversion.register(ProposalUserAction)
-reversion.register(ComplianceRequest)
-reversion.register(AmendmentRequest)
-reversion.register(Assessment)
-reversion.register(Referral)
-reversion.register(HelpPage)
-reversion.register(ApplicationType)
-reversion.register(ReferralRecipientGroup)
-reversion.register(QAOfficerGroup)
-reversion.register(ProposalPark, follow=['activities',])
-reversion.register(ProposalParkActivity)
+#import reversion
+#reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals', 'approvals','parks',])
+#reversion.register(ProposalType)
+#reversion.register(ProposalRequirement)            # related_name=requirements
+#reversion.register(ProposalStandardRequirement)    # related_name=proposal_requirements
+#reversion.register(ProposalDocument)               # related_name=documents
+#reversion.register(ProposalLogEntry)
+#reversion.register(ProposalUserAction)
+#reversion.register(ComplianceRequest)
+#reversion.register(AmendmentRequest)
+#reversion.register(Assessment)
+#reversion.register(Referral)
+#reversion.register(HelpPage)
+#reversion.register(ApplicationType)
+#reversion.register(ReferralRecipientGroup)
+#reversion.register(QAOfficerGroup)
+#reversion.register(ProposalPark, follow=['activities',])
+#reversion.register(ProposalParkActivity)
 
 #reversion.register(Author, follow=['publishers',])
 #reversion.register(Publisher)
 
+import reversion
 reversion.register(Referral, follow=['referral_documents',])
 reversion.register(ReferralDocument, follow=['referral_document'])
 
-reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_log','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails_set', 'proposedonhold_set', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals'])
+reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_logs','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','declined_details', 'onhold', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals'])
 reversion.register(ProposalDocument, follow=['onhold_documents'])
 reversion.register(OnHoldDocument)
+reversion.register(ProposalRequest)
 reversion.register(ProposalRequiredDocument)
-reversion.register(QAOfficerDocument)
 reversion.register(ProposalApplicantDetails)
 reversion.register(ProposalActivitiesLand)
 reversion.register(ProposalActivitiesMarine)
@@ -2721,24 +2766,24 @@ reversion.register(ProposalOtherDetails, follow=['accreditations'])
 reversion.register(ProposalLogEntry, follow=['documents',])
 reversion.register(ProposalLogDocument)
 
-reversion.register(Park, follow=['proposals',])
+#reversion.register(Park, follow=['proposals',])
 reversion.register(ProposalPark, follow=['activities','access_types', 'zones'])
+reversion.register(ProposalParkAccess)
 
-reversion.register(Park, follow=['proposals',])
-reversion.register(AccessType, follow=['proposals','proposalparkaccess_set', 'vehicles'])
+#reversion.register(AccessType, follow=['proposals','proposalparkaccess_set', 'vehicles'])
 
-reversion.register(Activity, follow=['proposalparkactivity_set','proposalparkzoneactivity_set', 'proposaltrailsectionactivity_set'])
+#reversion.register(Activity, follow=['proposalparkactivity_set','proposalparkzoneactivity_set', 'proposaltrailsectionactivity_set'])
 reversion.register(ProposalParkActivity)
 
-reversion.register(Zone, follow=['proposal_zones'])
 reversion.register(ProposalParkZone, follow=['park_activities'])
-reversion.register(ProposalParkZoneActivity, follow=['proposalparkzoneactivity_set'])
+reversion.register(ProposalParkZoneActivity)
 
-reversion.register(Trail, follow=['proposals'])
 reversion.register(ProposalTrail, follow=['sections'])
+reversion.register(Vehicle)
+reversion.register(Vessel)
+reversion.register(ProposalUserAction)
 
 reversion.register(ProposalTrailSection, follow=['trail_activities'])
-reversion.register(Section, follow=['proposal_trails'])
 
 reversion.register(ProposalTrailSectionActivity)
 reversion.register(AmendmentReason, follow=['amendmentrequest_set'])
@@ -2747,12 +2792,12 @@ reversion.register(Assessment)
 reversion.register(ProposalDeclinedDetails)
 reversion.register(ProposalOnHold)
 reversion.register(ProposalStandardRequirement, follow=['proposalrequirement_set'])
-reversion.register(ProposalRequirement)
-reversion.register(ReferralRecipientGroups, follow=['commercialoperator_referral_groups'])
+reversion.register(ProposalRequirement, follow=['compliance_requirement'])
+reversion.register(ReferralRecipientGroup, follow=['commercialoperator_referral_groups'])
 reversion.register(QAOfficerGroup, follow=['qaofficer_groups'])
 reversion.register(QAOfficerReferral)
 reversion.register(QAOfficerDocument, follow=['qaofficer_referral_document'])
-reversion.register(ApplicationType, follow=['helppage_set'])
+reversion.register(ProposalAccreditation)
 reversion.register(HelpPage)
 
 

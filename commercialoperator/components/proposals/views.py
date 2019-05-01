@@ -7,6 +7,8 @@ from commercialoperator.components.proposals.models import Proposal, Referral, P
 from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.compliances.models import Compliance
 import json,traceback
+from reversion_compare.views import HistoryCompareDetailView
+from reversion.models import Version
 
 class ProposalView(TemplateView):
     template_name = 'commercialoperator/proposal.html'
@@ -28,13 +30,30 @@ class ProposalView(TemplateView):
             return JsonResponse({error:"something went wrong"},safe=False,status=400)
 
 
-from reversion_compare.views import HistoryCompareDetailView
 class ProposalHistoryCompareView(HistoryCompareDetailView):
     """
     View for reversion_compare
     """
     model = Proposal
     template_name = 'commercialoperator/reversion_history.html'
+
+
+class ProposalFilteredHistoryCompareView(HistoryCompareDetailView):
+    """
+    View for reversion_compare - with 'status' in the comment field only'
+    """
+    model = Proposal
+    template_name = 'commercialoperator/reversion_history.html'
+
+    def _get_action_list(self,):
+        action_list = [
+            {"version": version, "revision": version.revision}
+            for version in self._order_version_queryset(
+                Version.objects.get_for_object(self.get_object()).select_related("revision__user").filter(revision__comment__icontains='status')
+            )
+        ]
+        return action_list
+
 
 class ReferralHistoryCompareView(HistoryCompareDetailView):
     """

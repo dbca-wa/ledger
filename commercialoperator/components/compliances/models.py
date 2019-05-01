@@ -342,13 +342,24 @@ def update_proposal_complaince_filename(instance, filename):
 
 
 
+#import reversion
+#reversion.register(Compliance, follow=['documents', 'action_logs', 'comms_logs'])
+#reversion.register(ComplianceDocument)
+#reversion.register(ComplianceUserAction)
+#reversion.register(ComplianceLogEntry)
+#reversion.register(ComplianceLogDocument)
+#reversion.register(CompRequest)
+#reversion.register(ComplianceAmendmentReason)
+#reversion.register(ComplianceAmendmentRequest)
+
 import reversion
-reversion.register(Compliance, follow=['documents', 'action_logs', 'comms_logs'])
+reversion.register(Compliance, follow=['documents', 'action_logs', 'comms_logs', 'comprequest_set'])
 reversion.register(ComplianceDocument)
 reversion.register(ComplianceUserAction)
-reversion.register(ComplianceLogEntry)
+reversion.register(ComplianceLogEntry, follow=['documents'])
 reversion.register(ComplianceLogDocument)
 reversion.register(CompRequest)
-reversion.register(ComplianceAmendmentReason)
+reversion.register(ComplianceAmendmentReason, follow=['complianceamendmentrequest_set'])
 reversion.register(ComplianceAmendmentRequest)
+
 

@@ -1,7 +1,7 @@
-import reversion
 #---------------------------------------------------------------------------------------------------
 # proposals/models.py
 
+import reversion
 reversion.register(Referral, follow=['referral_documents',])
 reversion.register(ReferralDocument, follow=['referral_document'])
 
@@ -55,6 +55,7 @@ reversion.register(HelpPage)
 #---------------------------------------------------------------------------------------------------
 # compliances/models.py
 
+import reversion
 reversion.register(Compliance, follow=['documents', 'action_logs', 'comms_logs', 'comprequest_set'])
 reversion.register(ComplianceDocument)
 reversion.register(ComplianceUserAction)
@@ -67,5 +68,51 @@ reversion.register(ComplianceAmendmentRequest)
 #---------------------------------------------------------------------------------------------------
 # approvals/models.py
 
-reversion.register(Approval, follow=['compliances'])
+import reversion
+reversion.register(Approval, follow=['compliances', 'documents', 'comms_logs', 'action_logs'])
+reversion.register(ApprovalDocument, follow=['licence_document', 'cover_letter_document', 'renewal_document'])
+reversion.register(ApprovalLogEntry, follow=['documents'])
+reversion.register(ApprovalLogDocument)
+reversion.register(ApprovalUserAction)
 
+#---------------------------------------------------------------------------------------------------
+# organisations/models.py
+
+import reversion
+reversion.register(ledger_organisation, follow=['organisation_set'])
+reversion.register(Organisation, follow=['org_approvals', 'contacts', 'userdelegation_set', 'action_logs', 'comms_logs'])
+reversion.register(OrganisationContact)
+reversion.register(OrganisationAction)
+reversion.register(OrganisationLogEntry, follow=['documents'])
+reversion.register(OrganisationLogDocument)
+reversion.register(OrganisationRequest, follow=['action_logs', 'organisationrequestdeclineddetails_set', 'comms_logs'])
+reversion.register(OrganisationAccessGroup)
+reversion.register(OrganisationRequestUserAction)
+reversion.register(OrganisationRequestDeclinedDetails)
+reversion.register(OrganisationRequestLogDocument)
+reversion.register(OrganisationRequestLogEntry, follow=['documents'])
+reversion.register(UserDelegation)
+
+#---------------------------------------------------------------------------------------------------
+# main/models.py
+
+import reversion
+reversion.register(Region)
+reversion.register(District, follow=['districts', 'parks'])
+reversion.register(AccessType)
+reversion.register(ActivityType)
+reversion.register(ActivityCategory, follow=['activities'])
+reversion.register(Activity, follow=['park_set', 'zone_set', 'trail_set', 'requireddocument_set'])
+reversion.register(Park, follow=['zones', 'requireddocument_set'])
+reversion.register(Zone)
+reversion.register(Trail, follow=['sections'])
+reversion.register(Section)
+reversion.register(RequiredDocument)
+reversion.register(ApplicationType, follow=['tenure_app_types])
+reversion.register(ActivityMatrix)
+reversion.register(Tenure)
+reversion.register(Question)
+reversion.register(UserAction)
+reversion.register(CommunicationsLogEntry)
+reversion.register(Document)
+reversion.register(SystemMaintenance)

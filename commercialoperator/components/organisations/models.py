@@ -782,12 +782,27 @@ class OrganisationRequestLogEntry(CommunicationsLogEntry):
 
 
 
+#import reversion
+#reversion.register(Organisation, follow=['contacts', 'action_logs', 'comms_logs'])
+#reversion.register(OrganisationContact)
+#reversion.register(OrganisationAction)
+#reversion.register(OrganisationLogEntry)
+#reversion.register(OrganisationLogDocument)
+#reversion.register(OrganisationRequest)
+#reversion.register(UserDelegation)
+
 import reversion
-reversion.register(Organisation, follow=['contacts', 'action_logs', 'comms_logs'])
+reversion.register(ledger_organisation, follow=['organisation_set'])
+reversion.register(Organisation, follow=['org_approvals', 'contacts', 'userdelegation_set', 'action_logs', 'comms_logs'])
 reversion.register(OrganisationContact)
 reversion.register(OrganisationAction)
-reversion.register(OrganisationLogEntry)
+reversion.register(OrganisationLogEntry, follow=['documents'])
 reversion.register(OrganisationLogDocument)
-reversion.register(OrganisationRequest)
+reversion.register(OrganisationRequest, follow=['action_logs', 'organisationrequestdeclineddetails_set', 'comms_logs'])
+reversion.register(OrganisationAccessGroup)
+reversion.register(OrganisationRequestUserAction)
+reversion.register(OrganisationRequestDeclinedDetails)
+reversion.register(OrganisationRequestLogDocument)
+reversion.register(OrganisationRequestLogEntry, follow=['documents'])
 reversion.register(UserDelegation)
 

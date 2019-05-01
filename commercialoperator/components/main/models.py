@@ -8,7 +8,6 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 from ledger.accounts.models import EmailUser, Document, RevisionedMixin
 from django.contrib.postgres.fields.jsonb import JSONField
-#from commercialoperator.components.proposals.models import Proposal
 
 
 @python_2_unicode_compatible
@@ -67,84 +66,6 @@ class AccessType(models.Model):
 
     def __str__(self):
         return self.name
-
-# @python_2_unicode_compatible
-# class Vehicle(models.Model):
-#     capacity = models.CharField(max_length=200, blank=True)
-#     rego = models.CharField(max_length=200, blank=True)
-#     license = models.CharField(max_length=200, blank=True)
-#     access_type= models.ForeignKey(AccessType,null=True, related_name='vehicles')
-#     rego_expiry= models.DateField(blank=True, null=True)
-
-#     class Meta:
-#         app_label = 'commercialoperator'
-
-#     def __str__(self):
-#         return self.rego
-
-# @python_2_unicode_compatible
-# class Park(models.Model):
-#     PARK_TYPE_CHOICES = (
-#         ('land', 'Land'),
-#         ('marine', 'Marine'),
-#         ('Film', 'Film'),
-#     )
-#     district = models.ForeignKey(District, related_name='parks')
-#     name = models.CharField(max_length=200, unique=True)
-#     code = models.CharField(max_length=10, blank=True)
-#     park_type = models.CharField('Park Type', max_length=40, choices=PARK_TYPE_CHOICES,
-#                                         default=PARK_TYPE_CHOICES[0][0])
-#     allowed_activities = models.ManyToManyField(Activity)
-#     #proposal = models.ForeignKey(Proposal, related_name='parks')
-
-
-#     class Meta:
-#         ordering = ['name']
-#         app_label = 'commercialoperator'
-#         #unique_together = ('id', 'proposal',)
-
-#     def __str__(self):
-#         return self.name
-
-@python_2_unicode_compatible
-class Trail(models.Model):
-    name = models.CharField(max_length=200, unique=True)
-    code = models.CharField(max_length=10, blank=True)
-
-    def __str__(self):
-        return self.name
-
-#
-# @python_2_unicode_compatible
-# class Trail(models.Model):
-#     name = models.CharField(max_length=200, unique=True)
-#     code = models.CharField(max_length=10, blank=True)
-#     allowed_activities = models.ManyToManyField(Activity, blank=True)
-
-#     class Meta:
-#         ordering = ['name']
-#         app_label = 'commercialoperator'
-#         #unique_together = ('id', 'proposal',)
-
-#     def __str__(self):
-#         return self.name
-
-#     @property
-#     def section_ids(self):
-#         return [i.id for i in self.sections.all()]
-
-# @python_2_unicode_compatible
-# class Section(models.Model):
-#     name = models.CharField(max_length=200, blank=True)
-#     visible = models.BooleanField(default=True)
-#     trail = models.ForeignKey(Trail, related_name='sections')
-
-#     class Meta:
-#         ordering = ['name']
-#         app_label = 'commercialoperator'
-
-#     def __str__(self):
-#         return self.name
 
 @python_2_unicode_compatible
 class ActivityType(models.Model):
@@ -228,14 +149,6 @@ class Park(models.Model):
     def zone_ids(self):
         return [i.id for i in self.zones.all()]
 
-
-# class ParkActivity(models.Model):
-#     park = models.ForeignKey(Park, blank=True, null=True, related_name='activities')
-#     activity = models.ForeignKey(Activity, blank=True, null=True, related_name='parks')
-
-#     class Meta:
-#         app_label = 'commercialoperator'
-#         unique_together = ('park', 'activity')
 
 @python_2_unicode_compatible
 class Zone(models.Model):
@@ -474,4 +387,27 @@ class SystemMaintenance(models.Model):
 
     def __str__(self):
         return 'System Maintenance: {} ({}) - starting {}, ending {}'.format(self.name, self.description, self.start_date, self.end_date)
+
+import reversion
+reversion.register(Region, follow=['districts'])
+reversion.register(District, follow=['parks'])
+#reversion.register(AccessType)
+reversion.register(AccessType, follow=['proposalparkaccess_set', 'vehicles'])
+reversion.register(ActivityType)
+reversion.register(ActivityCategory, follow=['activities'])
+#reversion.register(Activity, follow=['park_set', 'zone_set', 'trail_set', 'requireddocument_set'])
+reversion.register(Activity, follow=['park_set', 'zone_set', 'trail_set', 'requireddocument_set', 'proposalparkactivity_set','proposalparkzoneactivity_set', 'proposaltrailsectionactivity_set'])
+reversion.register(Park, follow=['zones', 'requireddocument_set', 'proposals'])
+reversion.register(Zone, follow=['proposal_zones'])
+reversion.register(Trail, follow=['sections', 'proposals'])
+reversion.register(Section, follow=['proposal_trails'])
+reversion.register(RequiredDocument)
+reversion.register(ApplicationType, follow=['tenure_app_types', 'helppage_set'])
+reversion.register(ActivityMatrix)
+reversion.register(Tenure)
+reversion.register(Question)
+reversion.register(UserAction)
+reversion.register(CommunicationsLogEntry)
+reversion.register(Document)
+reversion.register(SystemMaintenance)
 
