@@ -373,7 +373,8 @@ class ReturnData(object):
                 headers.append(header)
             table = {
                 'name': resource_name,
-                'title': resource.get('title', resource.get('name')),
+                'label': resource.get('title', resource.get('name')),
+                'type': 'grid',
                 'headers': headers,
                 'data': None
             }
