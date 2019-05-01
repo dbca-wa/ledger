@@ -106,7 +106,7 @@ import MapLocation from "./map_location.vue";
 import { api_endpoints, helpers } from "@/utils/hooks";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
-
+/*
 import Map from "ol/Map.js";
 import View from "ol/View.js";
 import { defaults as defaultControls, ScaleLine } from "ol/control.js";
@@ -124,7 +124,7 @@ import Point from "ol/geom/Point.js";
 import VectorSource from "ol/source/Vector.js";
 import { Icon, Style } from "ol/style.js";
 import Geocoder from "ol-geocoder/dist/ol-geocoder.js";
-
+*/
 export default {
   name: "ViewCallEmail",
   data: function() {
@@ -150,17 +150,23 @@ export default {
         api_endpoints.call_email,
         this.$route.params.call_email_id + "/action_log"
       ),
+      // dummyGeoJSON: {
+      // "id": 1,
+      // "type": "Feature",
+      // "geometry": {
+      //   "type": "Point",
+      //   "coordinates": [102.0, 0.5]
+      //   },
+      //   "properties": {
+      //     "prop0": "value0"
+      //   }
+      // },
+      /*
       dummyGeoJSON: {
-      "id": 1,
-      "type": "Feature",
-      "geometry": {
         "type": "Point",
-        "coordinates": [102.0, 0.5]
+        "coordinates": [120, -31]
         },
-        "properties": {
-          "prop0": "value0"
-        }
-      },
+      */
       //panelClickersInitialised: false
     };
   },
@@ -189,9 +195,12 @@ export default {
         ? `/api/call_email/${this.call_email.id}/form_data.json`
         : "";
     },
+    /*
     dummyPoint: function() {
       return new Point(transform([-32, 119], "EPSG:4326", "EPSG:3857"))
-    }, 
+    },
+    */ 
+    /*
     GeoJSONData: {
       get: function() {
         if (this.call_email.GeoJSONData == null) {
@@ -214,6 +223,7 @@ export default {
         this.setLocation(value);
       }
     },
+    */
 
   },
   filters: {
@@ -237,6 +247,7 @@ export default {
     ...mapActions({
       saveFormData: "saveFormData",
     }),
+    /*
     initLocation: function() {
       console.log("initLocation");
       console.log(this.dummyPoint);
@@ -247,6 +258,7 @@ export default {
           this.setGeoJSONData(this.dummyGeoJSON);
         }
     },
+    */
     /*
     updateLocation: function() {
       this.saveLocation({ call_email_id: this.call_id });
@@ -324,7 +336,7 @@ export default {
       console.log("before route enter - next");
       vm.loadCallEmail({ call_email_id: to.params.call_email_id });
       vm.loadClassification();
-      vm.initLocation();
+      //vm.initLocation();
     });
   },
 

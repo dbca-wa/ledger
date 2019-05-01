@@ -347,6 +347,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
     def update_location(self, request, *args, **kwargs):
         print("request.data")
         print(request.data)

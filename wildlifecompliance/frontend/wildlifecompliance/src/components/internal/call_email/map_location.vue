@@ -102,15 +102,22 @@ export default {
     
     ...mapGetters('callemailStore', {
       call_email: 'call_email',
-      //call_id: "callemailStore/call_id",
-      //location: 'location',
-      //"callemailStore/call_email"
     }),
-    /*
-    dummyPoint: function() {
-      return new Point(transform([-32, 119], "EPSG:4326", "EPSG:3857"))
-    }, 
     
+    callemailPoint: {
+      get: function() {
+        if (this.call_email.location.geometry == null) {
+          //return new Point(transform([119, -32], "EPSG:4326", "EPSG:3857"))
+          return [119, -32];
+        } else {
+          return this.call_email.location.geometry.coordinates;
+        }
+      }, 
+      set: function(value) {
+          this.setLocationPoint(value);
+      }
+    },
+    /*
     GeoJSONData: {
       get: function() {
         if (this.call_email.GeoJSONData == null) {
@@ -122,29 +129,16 @@ export default {
         this.setGeoJSONData(value);
       }
     },
-    
-
     location: {
       get: function() {
         if (this.call_email.location.geometry == null) {
-          this.setLocationPoint(this.dummyPoint);
+          this.setLocationPoint(this.callemailPoint);
         }
         return this.call_email.location;
       },
       set: function(value) {
         this.setLocation(value);
       }
-    },
-    */
-    /*
-    setInitLocation: function() {
-      console.log("importMapData");
-      //this.call_email.location.geometry = new Point(transform([-31, 118], 'EPSG:4326', 'EPSG:3857'));
-      //this.location.geometry = new Point([-31, 118]);
-      var iconFeature = new Feature({
-        //geometry: new Point(transform([this.lng_4326, this.lat_4326], 'EPSG:4326', 'EPSG:3857')),
-        geometry: new Point(transform([-32, 119], "EPSG:4326", "EPSG:3857"))
-      });
     },
     */
   },
@@ -157,22 +151,20 @@ export default {
   methods: {
     ...mapActions('callemailStore', {
       saveLocation: 'saveLocation',
-      setLocation: 'setLocation',
-      setCallEmail: 'setCallEmail',
-      setGeoJSONData: 'setGeoJSONData',
+      //setLocation: 'setLocation',
+      //setCallEmail: 'setCallEmail',
+      //setGeoJSONData: 'setGeoJSONData',
       setLocationPoint: 'setLocationPoint',
     }),
-    /*
+    
     initLocation: function() {
       if (this.call_email.location.geometry == null) {
-          this.setLocationPoint(this.dummyPoint);
-        }
-      if (this.call_email.GeoJSONData == null) {
-          this.setGeoJSONData(this.dummyGeoJSON);
+          this.setLocationPoint(this.callemailPoint);
         }
     },
-    */
+
     saveInstanceLocation: function() {
+      //this.setLocation();
       this.saveLocation();
     },
     addMarker: function() {
@@ -258,7 +250,7 @@ export default {
     },
     relocateMarker: function(coordinates) {
       //this.location.geometry.getGeometry().setCoordinates(coordinates);
-      this.location.geometry.getGeometry().setCoordinates(coordinates);
+      this.call_email.location.geometry.setCoordinates(coordinates);
     },
     mapClickHandler: function(e) {
       var coordinate = e.coordinate;

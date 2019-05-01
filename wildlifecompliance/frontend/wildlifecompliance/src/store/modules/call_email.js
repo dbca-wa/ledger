@@ -11,19 +11,17 @@ export const callemailStore = {
         call_email: {
             schema: [],
             classification: {},
+            /*
             GeoJSONData: {
-                "id": 1,
-                "type": "Feature",
-                "geometry": {
                   "type": "Point",
                   "coordinates": []
                   },
-                  "properties": {
-                    //"prop0": "value0"
-                  }
-                },
+                  */
             location: {
-                geometry: {},
+                geometry: {
+                    "type": "Point",
+                    "coordinates": []
+                },
                 properties: {},
                 },
             report_type: {},
@@ -73,7 +71,8 @@ export const callemailStore = {
         updateLocationPoint(state, point) {
             console.log("point");
             console.log(point);
-            Vue.set(state.call_email.location, 'geometry', point);
+            //
+            state.call_email.location.geometry.coordinates = point;
         },
         updateGeoJSONData(state, GeoJSONData) {
             console.log("GeoJSONData");
@@ -177,17 +176,17 @@ export const callemailStore = {
 
         saveLocation({
             state
-        } ) {
+        }) {
             const instance = {...state.call_email.location};
             //const instance_GeoJSONData = {...state.call_email.GeoJSONData};
-            const instance_GeoJSONData = state.call_email.GeoJSONData;
-            const call_instance = state.call_email;
+            //const instance_GeoJSONData = state.call_email.GeoJSONData;
+            //const call_instance = state.call_email;
             //const instance_GeoJSONData = {...call_instance.GeoJSONData};
-            console.log("instance_GeoJSONData");
-            console.log({...instance_GeoJSONData});
-            console.log("instance.geometry");
-            console.log({...instance.geometry});
-            console.log(instance.geometry);
+            // console.log("instance_GeoJSONData");
+            // console.log({...instance_GeoJSONData});
+            // console.log("instance.geometry");
+            console.log("instance");
+            console.log(instance);
             return new Promise((resolve, reject) => {
                 Vue.http.post(helpers.add_endpoint_join(
                     api_endpoints.call_email, 
@@ -197,7 +196,7 @@ export const callemailStore = {
                         street: instance.properties.street,
                         state: instance.properties.state,
                         postcode: instance.properties.postcode,
-                        //wkb_geometry: instance_GeoJSONData,
+                        wkb_geometry: instance.geometry,
                     }).then(res => {
                             console.log(res.body.results);
                             console.log("success");
