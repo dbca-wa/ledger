@@ -54,19 +54,13 @@ from wildlifecompliance.components.call_email.serializers import (
     LocationSerializer,
     ComplianceUserActionSerializer,
     UpdateCallEmailSerializer,
-
+    LocationSerializer,
 )
 from utils import SchemaParser
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
-
-
-
-class LocationViewSet(viewsets.ModelViewSet):
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
 
 
 class CallEmailViewSet(viewsets.ModelViewSet):
@@ -251,6 +245,18 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    def update(self, request, *args, **kwargs):
+        print("update")
+        try:
+            instance = self.get_object()
+            serializer = UpdateCallEmailSerializer(instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+    
     @detail_route(methods=['POST', ])
     def call_email_save(self, request, *args, **kwargs):
         # import ipdb; ipdb.set_trace()
@@ -267,14 +273,16 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             # form_data = request.data.get('schema')
             # parsed_json = parser.create_data_from_form(form_data)
             request_data = {
-                    'classification': request_classification_dict,
+                    'classification_id': request.data.get('classification_id'),
                     'number': request.data.get('number'),
                     'caller': request.data.get('caller'),
                     'assigned_to': request.data.get('assigned_to'),
-                    'location': request.data.get('location'),
+                    'location_id': request.data.get('location_id'),
                     }
             print("request_data")
             print(request_data)
+            print("instance")
+            print(instance)
             serializer = UpdateCallEmailSerializer(instance, data=request_data)
             serializer.is_valid(raise_exception=True)
             if serializer.is_valid():
@@ -346,3 +354,14 @@ class ClassificationViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return Classification.objects.all()
         return Classification.objects.none()
+
+
+class LocationViewSet(viewsets.ModelViewSet):
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return Location.objects.all()
+        return Location.objects.none()

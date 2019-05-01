@@ -28,13 +28,15 @@ logger = logging.getLogger(__name__)
 # API patterns
 router = routers.DefaultRouter()
 router.register(r'application', application_api.ApplicationViewSet)
-router.register(r'application_paginated', application_api.ApplicationPaginatedViewSet)
+router.register(r'application_paginated',
+                application_api.ApplicationPaginatedViewSet)
 router.register(r'application_conditions',
                 application_api.ApplicationConditionViewSet)
 router.register(r'application_standard_conditions',
                 application_api.ApplicationStandardConditionViewSet)
 router.register(r'assessment', application_api.AssessmentViewSet)
-router.register(r'assessment_paginated', application_api.AssessmentPaginatedViewSet)
+router.register(r'assessment_paginated',
+                application_api.AssessmentPaginatedViewSet)
 router.register(r'amendment', application_api.AmendmentRequestViewSet)
 router.register(r'assessor_group', application_api.AssessorGroupViewSet)
 router.register(r'licences', licence_api.LicenceViewSet)
@@ -45,9 +47,11 @@ router.register(r'licence_available_purposes',
 router.register(r'returns', return_api.ReturnViewSet)
 router.register(r'return_types', return_api.ReturnTypeViewSet)
 router.register(r'organisations', org_api.OrganisationViewSet)
-router.register(r'organisations_paginated', org_api.OrganisationPaginatedViewSet)
+router.register(r'organisations_paginated',
+                org_api.OrganisationPaginatedViewSet)
 router.register(r'organisation_requests', org_api.OrganisationRequestsViewSet)
-router.register(r'organisation_requests_paginated', org_api.OrganisationRequestsPaginatedViewSet)
+router.register(r'organisation_requests_paginated',
+                org_api.OrganisationRequestsPaginatedViewSet)
 router.register(r'organisation_contacts', org_api.OrganisationContactViewSet)
 router.register(r'my_organisations', org_api.MyOrganisationsViewSet)
 router.register(r'users', users_api.UserViewSet)
@@ -56,8 +60,8 @@ router.register(r'profiles', users_api.ProfileViewSet)
 router.register(r'my_profiles', users_api.MyProfilesViewSet)
 router.register(r'emailidentities', users_api.EmailIdentityViewSet)
 router.register(r'call_email', call_email_api.CallEmailViewSet)
-router.register(r'call_email_location', call_email_api.LocationViewSet)
 router.register(r'classification', call_email_api.ClassificationViewSet)
+router.register(r'location', call_email_api.LocationViewSet)
 
 api_patterns = [url(r'^api/my_user_details/$',
                     users_api.GetMyUserDetails.as_view(),
