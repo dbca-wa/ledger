@@ -1868,7 +1868,8 @@ class Assessment(ProposalRequest):
         app_label = 'commercialoperator'
 
 class ProposalDeclinedDetails(models.Model):
-    proposal = models.OneToOneField(Proposal, related_name='declined_details')
+    #proposal = models.OneToOneField(Proposal, related_name='declined_details')
+    proposal = models.OneToOneField(Proposal)
     officer = models.ForeignKey(EmailUser, null=False)
     reason = models.TextField(blank=True)
     cc_email = models.TextField(null=True)
@@ -1877,7 +1878,8 @@ class ProposalDeclinedDetails(models.Model):
         app_label = 'commercialoperator'
 
 class ProposalOnHold(models.Model):
-    proposal = models.OneToOneField(Proposal, related_name='onhold')
+    #proposal = models.OneToOneField(Proposal, related_name='onhold')
+    proposal = models.OneToOneField(Proposal)
     officer = models.ForeignKey(EmailUser, null=False)
     comment = models.TextField(blank=True)
     documents = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='onhold_documents')
@@ -2753,7 +2755,7 @@ import reversion
 reversion.register(Referral, follow=['referral_documents',])
 reversion.register(ReferralDocument, follow=['referral_document'])
 
-reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_logs','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','declined_details', 'onhold', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals'])
+reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_logs','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails', 'proposalonhold', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals'])
 reversion.register(ProposalDocument, follow=['onhold_documents'])
 reversion.register(OnHoldDocument)
 reversion.register(ProposalRequest)

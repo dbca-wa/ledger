@@ -350,7 +350,6 @@ class VersionableModelViewSetMixin(viewsets.ModelViewSet):
     #def history(self, request, pk=None):
     @detail_route(methods=['GET',])
     def _history(self, request, *args, **kwargs):
-        import ipdb; ipdb.set_trace()
         _object = self.get_object()
         _versions = reversion.get_for_object(_object)
 
@@ -365,7 +364,7 @@ class VersionableModelViewSetMixin(viewsets.ModelViewSet):
 
     @detail_route(methods=['GET',])
     def history(self, request, *args, **kwargs):
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         _object = self.get_object()
         #_versions = reversion.get_for_object(_object)
         _versions = Version.objects.get_for_object(_object)
@@ -382,8 +381,8 @@ class VersionableModelViewSetMixin(viewsets.ModelViewSet):
 
 
 
-#class ProposalViewSet(viewsets.ModelViewSet):
-class ProposalViewSet(VersionableModelViewSetMixin):
+class ProposalViewSet(viewsets.ModelViewSet):
+#class ProposalViewSet(VersionableModelViewSetMixin):
     #import ipdb; ipdb.set_trace()
     #queryset = Proposal.objects.all()
     queryset = Proposal.objects.none()
