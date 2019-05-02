@@ -208,6 +208,8 @@ class ApplicationFormDataRecordSerializer(serializers.ModelSerializer):
 
 
 class BaseApplicationSerializer(serializers.ModelSerializer):
+    org_applicant = OrganisationSerializer()
+    proxy_applicant = EmailUserAppViewSerializer()
     readonly = serializers.SerializerMethodField(read_only=True)
     licence_type_short_name = serializers.ReadOnlyField()
     documents_url = serializers.SerializerMethodField()
