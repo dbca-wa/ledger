@@ -117,7 +117,7 @@ export default {
         console.debug('Start loading map');
         //this.importMapData();
         this.initLocation();
-        await this.$nextTick();
+        this.$nextTick();
         this.initMap();
         this.setBaseLayer('osm');
         this.initAwesomplete();

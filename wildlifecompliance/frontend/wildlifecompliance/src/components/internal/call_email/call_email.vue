@@ -242,13 +242,13 @@ export default {
         );
     }
   },
-  beforeRouteEnter: async function(to, from, next) {
+  beforeRouteEnter: function(to, from, next) {
     console.log("before route enter");
     let initialisers = [];
     next(vm => {
       console.log("before route enter - next");
-      await vm.loadCallEmail({ call_email_id: to.params.call_email_id });
-      await vm.loadClassification();
+      vm.loadCallEmail({ call_email_id: to.params.call_email_id });
+      vm.loadClassification();
     });
   },
 
