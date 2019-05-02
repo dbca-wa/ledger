@@ -11,12 +11,6 @@ export const callemailStore = {
         call_email: {
             schema: [],
             classification: {},
-            /*
-            GeoJSONData: {
-                  "type": "Point",
-                  "coordinates": []
-                  },
-                  */
             location: {
                 geometry: {
                     "type": "Point",
@@ -26,14 +20,7 @@ export const callemailStore = {
                 },
             report_type: {},
         },
-        /*
-        call_id: '',
-        display_call_email: {},
-        count: 1,
-        call_classification: '',
-        */
         classification_types: [],
-
     },
     getters: {
         call_email: state => state.call_email,
@@ -42,6 +29,7 @@ export const callemailStore = {
         location: state => state.call_email.location,
         report_type: state => state.call_email.report_type.report_type,
         classification_types: state => state.classification_types,
+        call_coordinates: state => state.call_email.location.geometry.coordinates,
 
     },
     mutations: {
@@ -178,13 +166,7 @@ export const callemailStore = {
             state
         }) {
             const instance = {...state.call_email.location};
-            //const instance_GeoJSONData = {...state.call_email.GeoJSONData};
-            //const instance_GeoJSONData = state.call_email.GeoJSONData;
-            //const call_instance = state.call_email;
-            //const instance_GeoJSONData = {...call_instance.GeoJSONData};
-            // console.log("instance_GeoJSONData");
-            // console.log({...instance_GeoJSONData});
-            // console.log("instance.geometry");
+            
             console.log("instance");
             console.log(instance);
             return new Promise((resolve, reject) => {
@@ -227,10 +209,5 @@ export const callemailStore = {
             commit("updateGeoJSONData", GeoJSONData);
         },
     },
-        /*
-        saveAllRecords() {
-
-        },
-        */
-
+        
 };
