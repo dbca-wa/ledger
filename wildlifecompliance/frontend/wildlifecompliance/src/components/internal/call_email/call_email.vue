@@ -106,11 +106,10 @@ import MapLocation from "./map_location.vue";
 import { api_endpoints, helpers } from "@/utils/hooks";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
+
 export default {
   name: "ViewCallEmail",
   data: function() {
-    //let vm = this;
-    //console.log(classification);
     return {
       sectionLabel: "Details",
       sectionIndex: 1,
@@ -130,8 +129,8 @@ export default {
       logs_url: helpers.add_endpoint_json(
         api_endpoints.call_email,
         this.$route.params.call_email_id + "/action_log"
-      )
-      //panelClickersInitialised: false
+      ),
+      dummyPoint: [-32, 119],
     };
   },
 
@@ -141,13 +140,12 @@ export default {
     MapLocation
   },
   computed: {
-    ...mapGetters({
-      call_email: "callemailStore/call_email",
+    ...mapGetters('callemailStore', {
+      call_email: "call_email",
       //call_id: "callemailStore/call_id",
-      classification_types: "callemailStore/classification_types",
+      classification_types: "classification_types",
       //location: "callemailStore/location",
-      report_type: "callemailStore/report_type",
-      location: "callemailStore/location"
+      report_type: "report_type"
     }),
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
@@ -159,7 +157,8 @@ export default {
       return this.call_email
         ? `/api/call_email/${this.call_email.id}/form_data.json`
         : "";
-    }
+    },
+
   },
   filters: {
     formatDate: function(data) {
@@ -167,13 +166,17 @@ export default {
     }
   },
   methods: {
-    ...mapActions({
-      loadCallEmail: "callemailStore/loadCallEmail",
-      loadClassification: "callemailStore/loadClassification",
-      saveFormData: "saveFormData",
-      loadLocation: "callemailStore/loadLocation"
+    ...mapActions('callemailStore', {
+      setCallEmail: 'setCallEmail',
+      loadCallEmail: "loadCallEmail",
+      loadClassification: "loadClassification",
+      setLocation: 'setLocation',
+      setLocationPoint: 'setLocationPoint',
     }),
-
+    ...mapActions({
+      saveFormData: "saveFormData",
+    }),
+    
     createCallEmail: function(e) {
       let formData = new FormData(this.renderer_form);
       this.$http
@@ -246,15 +249,11 @@ export default {
       console.log("before route enter - next");
       vm.loadCallEmail({ call_email_id: to.params.call_email_id });
       vm.loadClassification();
-      vm.loadLocation({ call_email_id: to.params.call_email_id });
     });
   },
 
   mounted: function() {
-    this.renderer_form = document.forms.callEmailUpdate;
-    this.$nextTick(function() {
-      this.renderer_form = document.forms.callEmailUpdate;
-    });
+    this.$nextTick(function() {});
   }
 };
 </script>
