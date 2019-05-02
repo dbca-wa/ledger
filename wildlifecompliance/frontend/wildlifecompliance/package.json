@@ -14,6 +14,7 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
   },
   "dependencies": {
+    "awesomplete": "^1.1.4",
     "bootstrap": "^3.3.7",
     "datatables.net": "^1.10.15",
     "datatables.net-bs": "^1.10.15",

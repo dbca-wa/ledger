@@ -245,11 +245,11 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    def update(self, request, *args, **kwargs):
+    def update(self, request, request_data, *args, **kwargs):
         print("update")
         try:
             instance = self.get_object()
-            serializer = UpdateCallEmailSerializer(instance, data=request.data)
+            serializer = UpdateCallEmailSerializer(instance, data=request_data)
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
             return Response(serializer.data)
@@ -277,7 +277,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     'number': request.data.get('number'),
                     'caller': request.data.get('caller'),
                     'assigned_to': request.data.get('assigned_to'),
-                    'location_id': request.data.get('location_id'),
+                    # 'location': request.data.get('location'),
                     }
             print("request_data")
             print(request_data)
@@ -286,6 +286,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             serializer = UpdateCallEmailSerializer(instance, data=request_data)
             serializer.is_valid(raise_exception=True)
             if serializer.is_valid():
+                print("serializer.validated_data")
+                print(serializer.validated_data)
                 serializer.save()
                 headers = self.get_success_headers(serializer.data)
                 print("headers")
@@ -344,6 +346,38 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
+    def update_location(self, request, *args, **kwargs):
+        print("request.data")
+        print(request.data)
+        try:
+            instance = self.get_object()
+            location_instance = instance.location
+            serializer = LocationSerializer(instance=location_instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            if serializer.is_valid():
+                print("serializer.validated_data")
+                print(serializer.validated_data)
+                serializer.save()
+                headers = self.get_success_headers(serializer.data)
+                return Response(
+                    serializer.data,
+                    status=status.HTTP_201_CREATED,
+                    headers=headers
+                    )
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 class ClassificationViewSet(viewsets.ModelViewSet):
     queryset = Classification.objects.all()
@@ -356,12 +390,7 @@ class ClassificationViewSet(viewsets.ModelViewSet):
         return Classification.objects.none()
 
 
-class LocationViewSet(viewsets.ModelViewSet):
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
+# class CallEmailViewSet(viewsets.ModelViewSet):
+#     queryset = Location.objects.all()
+#     serializer_class = CallEmailSerializer
 
-    def get_queryset(self):
-        user = self.request.user
-        if is_internal(self.request):
-            return Location.objects.all()
-        return Location.objects.none()
