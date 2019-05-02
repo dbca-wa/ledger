@@ -82,6 +82,7 @@ class LocationSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = Location
         geo_field = 'wkb_geometry'
+        
         fields = (
             'id',
             'street',
@@ -117,16 +118,16 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'assigned_to',
             'report_type',
             'data',
-            'location_id',
+            'location',
         )
         read_only_fields = ('id', )
 
 
 class UpdateCallEmailSerializer(serializers.ModelSerializer):
     location = LocationSerializer()
-    location_id = serializers.ListField(
-        required=False, write_only=True)
-    #classification = ClassificationSerializer(read_only=True)
+    #location_id = serializers.IntegerField(
+     #   required=False, write_only=True)
+    classification = ClassificationSerializer(read_only=True)
     classification_id = serializers.IntegerField(
         required=False, write_only=True)
 
@@ -135,13 +136,13 @@ class UpdateCallEmailSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'status',
+            'classification',
             'classification_id',
             'location',
             'number',
             'caller',
             'assigned_to',
             'location',
-            'location_id',
         )
         read_only_fields = ('id', )
 

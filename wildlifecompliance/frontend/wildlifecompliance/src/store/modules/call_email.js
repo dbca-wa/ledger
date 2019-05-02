@@ -12,30 +12,28 @@ export const callemailStore = {
             schema: [],
             classification: {},
             location: {
+                geometry: {
+                    "type": "Point",
+                    "coordinates": []
+                },
                 properties: {},
-            },
+                },
             report_type: {},
         },
-        call_id: '',
-        display_call_email: {},
-        count: 1,
-        call_classification: '',
         classification_types: [],
-        location: {},
     },
     getters: {
         call_email: state => state.call_email,
         call_id: state => state.call_email.id,
         call_classification: state => state.call_email.classification.name,
-        //location: state => state.call_email.location.street,
+        location: state => state.call_email.location,
         report_type: state => state.call_email.report_type.report_type,
         classification_types: state => state.classification_types,
-        location: state => state.location,
+        call_coordinates: state => state.call_email.location.geometry.coordinates,
 
     },
     mutations: {
         updateCallEmail(state, call_email) {
-            console.log(call_email);
             Vue.set(state, 'call_email', {
                 ...call_email
             });
@@ -54,12 +52,23 @@ export const callemailStore = {
             state.classification_types.push(classification_entry);
         },
         updateLocation(state, location) {
-            //Vue.set(state.classification_types, classification_entry.id, classification_entry.name);
-            state.location = location;
-        }
+            console.log("location");
+            console.log(location);
+            Vue.set(state.call_email, 'location', location);
+        },
+        updateLocationPoint(state, point) {
+            console.log("point");
+            console.log(point);
+            //
+            state.call_email.location.geometry.coordinates = point;
+        },
+        updateGeoJSONData(state, GeoJSONData) {
+            console.log("GeoJSONData");
+            console.log(GeoJSONData);
+            Vue.set(state.call_email, 'GeoJSONData', GeoJSONData);
+        },
     },
     actions: {
-
         loadCallEmail({
             dispatch,
         }, {
@@ -114,53 +123,91 @@ export const callemailStore = {
             });
         },
 
-        loadLocation({
-            dispatch,
-        }, {
-            call_email_id
-        }) {
-            console.log("loadLocations");
-            console.log(helpers.add_endpoint_json(api_endpoints.location, '3'));
-            return new Promise((resolve, reject) => {
-                Vue.http.get(
-                    helpers.add_endpoint_json(api_endpoints.location, '3')
-
-                ).then(res => {
-                        console.log(res.body);
-                        dispatch("setLocation", res.body)
-                    },
-                    err => {
-                        console.log(err);
-                        reject();
-                    });
-            });
-        },
-
         setClassificationEntry({
                 commit,
             },
             classification_entry
         ) {
-            console.log(classification_entry);
             commit("updateClassification", classification_entry);
-        },
-
-        setLocation({
-                commit,
-            },
-            location
-        ) {
-            console.log(location);
-            commit("updateLocation", location);
         },
 
         setCallEmail({
             commit,
         }, call_email) {
-            console.log(call_email);
             commit("updateCallEmail", call_email);
         },
 
-    },
+        saveCallEmail({ dispatch, state}) {
+            console.log("saveCallEmail");
+            const instance = {...state.call_email};
+            return new Promise((resolve, reject) => {
+                Vue.http.post(helpers.add_endpoint_join(
+                    api_endpoints.call_email, 
+                    this.call_email.id + "/call_email_save/"
+                    ), 
+                    {
+                        classification_id: this.call_email.classification.id,
+                        number: this.call_email.number,
+                        caller: this.call_email.caller,
+                        assigned_to: this.call_email.assigned_to,
+                    }
+                    )
+                    .then(res => {
+                        dispatch("saveLocation");
+                        },
+                        err => {
+                            console.log(err);
+                            reject();
+                        });
+            });
+        },
 
+        saveLocation({
+            state
+        }) {
+            const instance = {...state.call_email.location};
+            
+            console.log("instance");
+            console.log(instance);
+            return new Promise((resolve, reject) => {
+                Vue.http.post(helpers.add_endpoint_join(
+                    api_endpoints.call_email, 
+                    state.call_email.id + "/update_location/"
+                    ), {
+                        town_suburb: state.call_email.location.properties.town_suburb,
+                        street: instance.properties.street,
+                        state: instance.properties.state,
+                        postcode: instance.properties.postcode,
+                        wkb_geometry: instance.geometry,
+                    }).then(res => {
+                            console.log(res.body.results);
+                            console.log("success");
+                            resolve();
+                        },
+                        err => {
+                            console.log(err);
+                            reject();
+                        });
+            });
+        },
+        setLocation({
+            commit,
+        }, location) {
+            console.log("setLocation");
+            commit("updateLocation", location);
+        },
+        setLocationPoint({
+            commit,
+        }, point) {
+            console.log("setLocationPoint");
+            commit("updateLocationPoint", point);
+        },
+        setGeoJSONData({
+            commit,
+        }, GeoJSONData) {
+            console.log("setGeoJSONData");
+            commit("updateGeoJSONData", GeoJSONData);
+        },
+    },
+        
 };
