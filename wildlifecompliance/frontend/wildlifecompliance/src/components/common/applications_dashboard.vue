@@ -608,7 +608,8 @@ export default {
                             </tr>
                             <tr>
                                 <td><strong>Assigned Officer:&nbsp;</strong></td>
-                                <td>${row.data()['assigned_officer']}</td>
+                                <td>${row.data()['assigned_officer'] === null
+                                    ? '' : row.data()['assigned_officer']}</td>
                             </tr>`;
                     }
                     child_row += `</table>`

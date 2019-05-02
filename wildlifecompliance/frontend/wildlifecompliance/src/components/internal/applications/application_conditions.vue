@@ -13,7 +13,7 @@
                             <div class="panel-body panel-collapse collapse in" :id="panelBody">
                                 <form class="form-horizontal" name="assessment_form" method="put">
                                     <div class="col-sm-12">
-                                        <div class="form-group">
+                                        <div class="form-group" v-if="assessment.is_inspection_required">
                                             <div class="row">
                                                 <div class="col-sm-3">
                                                     <label class="control-label pull-left">Inspection Date</label>
@@ -39,17 +39,27 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-sm-3">
-                                                    <label class="control-label pull-left">Comments</label>
+                                                    <label class="control-label pull-left">Inspection Comments</label>
                                                 </div>
                                                 <div class="col-sm-9">
-                                                    <textarea class="form-control" v-model="assessment.comment" style="width: 100%; max-width: 100%;" />
+                                                    <textarea class="form-control" v-model="assessment.inspection_comment" style="width: 100%; max-width: 100%;" />
                                                 </div>
                                             </div>
+                                        </div>
+                                        <div class="form-group">
                                             <div class="row">
-                                                <div class="col-sm-12">
-                                                    <button v-if="!savingAssessment" @click.prevent="saveAssessment()" style="margin-top:10px" class="btn btn-primary pull-right">Save Assessment</button>
-                                                    <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Saving</button>
+                                                <div class="col-sm-3">
+                                                    <label class="control-label pull-left">Final Comments</label>
                                                 </div>
+                                                <div class="col-sm-9">
+                                                    <textarea class="form-control" v-model="assessment.final_comment" style="width: 100%; max-width: 100%;" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-12">
+                                                <button v-if="!savingAssessment" @click.prevent="saveAssessment()" style="margin-top:10px" class="btn btn-primary pull-right">Save Assessment</button>
+                                                <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Saving</button>
                                             </div>
                                         </div>
                                     </div>
@@ -250,7 +260,8 @@ export default {
         saveAssessment: function(e) {
             this.savingAssessment = true;
             let formData = new FormData(this.form);
-            formData.append('comment', this.assessment.comment);
+            formData.append('inspection_comment', this.assessment.inspection_comment);
+            formData.append('final_comment', this.assessment.final_comment);
             if (this.assessment.inspection_report) {
                 formData.append('inspection_report', this.assessment.inspection_report);
             }

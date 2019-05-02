@@ -126,9 +126,11 @@ class AssessmentSerializer(serializers.ModelSerializer):
             'date_last_reminded',
             'status',
             'licence_activity',
-            'comment',
+            'inspection_comment',
+            'final_comment',
             'inspection_date',
-            'inspection_report'
+            'inspection_report',
+            'is_inspection_required',
         )
 
 
@@ -138,9 +140,12 @@ class SimpleSaveAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assessment
         fields = (
-            'comment',
+            'inspection_comment',
+            'final_comment',
             'inspection_date',
-            'inspection_report')
+            'inspection_report',
+            'is_inspection_required',
+            )
 
 
 class SaveAssessmentSerializer(serializers.ModelSerializer):
