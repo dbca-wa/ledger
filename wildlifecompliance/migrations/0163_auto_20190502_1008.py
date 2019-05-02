@@ -28,9 +28,4 @@ class Migration(migrations.Migration):
             name='inspection_comment',
             field=models.TextField(blank=True),
         ),
-        migrations.AlterField(
-            model_name='returntype',
-            name='data_template',
-            field=models.FileField(blank=True, null=True, upload_to=wildlifecompliance.components.returns.models.template_directory_path),
-        ),
     ]
