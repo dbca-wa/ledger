@@ -523,8 +523,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             product_lines = []
-            application_submission = u'Application submitted by {} confirmation WC{}'.format(
-                u'{} {}'.format(instance.submitter.first_name, instance.submitter.last_name), instance.id)
+            application_submission = u'Application submitted by {} confirmation {}'.format(
+                u'{} {}'.format(instance.submitter.first_name, instance.submitter.last_name), instance.lodgement_number)
             set_session_application(request.session, instance)
             product_lines.append({
                 'ledger_description': '{}'.format(instance.licence_type_name),
