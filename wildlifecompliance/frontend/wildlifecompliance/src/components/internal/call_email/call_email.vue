@@ -81,7 +81,7 @@
 
               </FormSection>
               <FormSection :label="`Location`" :Index="`1`">
-                <MapLocation/>
+                  <MapLocation/>
 
               </FormSection>
               <FormSection :label="`Details`" :Index="`2`">
@@ -130,7 +130,7 @@ export default {
         api_endpoints.call_email,
         this.$route.params.call_email_id + "/action_log"
       ),
-      dummyPoint: [-32, 119],
+      
     };
   },
 
@@ -248,7 +248,9 @@ export default {
     next(vm => {
       console.log("before route enter - next");
       vm.loadCallEmail({ call_email_id: to.params.call_email_id });
+      console.log("call_email loaded"); 
       vm.loadClassification();
+      console.log("vuex loaded");
     });
   },
 

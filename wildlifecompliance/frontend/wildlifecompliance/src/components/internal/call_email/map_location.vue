@@ -91,22 +91,33 @@ export default {
             suggest_list: [],
 
             feature_marker: null,
-            //lat_4326: -32,
-            //lng_4326: 121,
+            lat_4326: -32,
+            lng_4326: 121,
             country: null,
             postcode: null,
             state: null,
             street: null,
             town_suburb: null,
+            //dummyPoint: [-32, 119],
+            dummyPoint: [119, -32],
         };
     },
     computed: {
     
+    
     ...mapGetters('callemailStore', {
       call_email: 'call_email',
-      //call_coordinates: 'call_coordinates',
+      call_coordinates: 'call_coordinates',
     }),
-    /*
+    
+   /*
+    updateFeatureMarker: function() {
+        this.feature_marker.getGeometry().setCoordinates(
+            this.call_email.location.geometry.coordinates
+            );
+    },
+    */
+   /*
     ...mapState('callemailStore', {
         call_email: state => state.call_email,
 
@@ -114,29 +125,44 @@ export default {
     */
     },
     mounted: function(){
-        console.debug('Start loading map');
-        //this.importMapData();
         this.initLocation();
-        this.$nextTick();
+        //this.call_coordinates = [122, -32];
+        console.log("this.call_coordinates");
+        console.log(this.call_coordinates);
+        this.$nextTick(function() {
+        console.debug('Start loading map');
         this.initMap();
         this.setBaseLayer('osm');
         this.initAwesomplete();
         this.addMarker();
         console.debug('End loading map');
+        });
     },
-
+    /*
+    updated: function() {
+        this.$nextTick(function() {
+        console.log("this.call_email");
+        console.log(this.call_email);
+        this.addMarker();
+        });
+    },
+    */
     methods: {
         ...mapActions('callemailStore', {
             saveLocation: 'saveLocation',
             setLocationPoint: 'setLocationPoint',
         }),
+        
         initLocation: function() {
             console.log("initLocation");
             console.log(this.dummyPoint);
-            if (this.call_email.location.geometry.coordinates == null) {
+            if (!(this.call_email.location.geometry.coordinates.length > 0)) {
+                console.log("initLocation");
                 this.setLocationPoint(this.dummyPoint);
+                //this.setLocationPoint(coordinates);
             }
         },
+        
         saveInstanceLocation: async function() {
             await this.$nextTick();
             this.saveLocation();
@@ -273,7 +299,11 @@ export default {
                    ], 'EPSG:4326', 'EPSG:3857')),
              });
              this.feature_marker = iconFeature;
-
+             
+            console.log("this.call_email.location.geometry.coordinates");
+            console.log(this.call_email.location.geometry.coordinates);
+            console.log("this.feature_marker.getGeometry().getCoordinates()");
+            console.log(this.feature_marker.getGeometry().getCoordinates());
              var iconStyle = new Style({
                 image: new Icon({
                     anchor: [16, 32],

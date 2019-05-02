@@ -24,9 +24,9 @@ export const callemailStore = {
     },
     getters: {
         call_email: state => state.call_email,
-        call_id: state => state.call_email.id,
-        call_classification: state => state.call_email.classification.name,
-        location: state => state.call_email.location,
+        //call_id: state => state.call_email.id,
+        //call_classification: state => state.call_email.classification.name,
+        //location: state => state.call_email.location,
         report_type: state => state.call_email.report_type.report_type,
         classification_types: state => state.classification_types,
         call_coordinates: state => state.call_email.location.geometry.coordinates,
