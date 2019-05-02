@@ -56,6 +56,24 @@
             </div>
             -->
 
+            <div class="row" v-if="canSeeSubmission">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                       History
+                    </div>
+                                    <table class="table small-table">
+                                        <tr>
+                                            <th>Last Modified</th>
+                                            <th></th>
+                                        </tr>
+                                        <tr v-for="p in proposal.reversion_ids">
+                                            <td>{{ p.created | formatDate }}</td>
+                                            <td><a id="history_id" :href="history_url+'version_id2='+ p.cur_version_id +'&version_id1='+ p.prev_version_id" target="_blank">compare</a></td>
+                                        </tr>
+                                    </table>
+                </div>
+            </div>
+
             <div class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -411,6 +429,7 @@
                             </div>
                         </div>
                     </div>
+                    -->
                     <div class="col-md-12">
                         <div class="row">
                             <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
@@ -561,6 +580,9 @@ export default {
 
     },
     computed: {
+        history_url: function(){
+            return api_endpoints.site_url + '/history/filtered/' + this.proposal.id + '/?';
+        },
         contactsURL: function(){
             return this.proposal!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.proposal.applicant.id+'/contacts') : '';
         },

@@ -430,6 +430,16 @@ class ProposalViewSet(viewsets.ModelViewSet):
         )
         return Response(data)
 
+    @detail_route(methods=['GET',])
+    def compare_list(self, request, *args, **kwargs):
+        """ Returns the reversion-compare urls --> list"""
+        current_revision_id = Version.objects.get_for_object(self.get_object()).first().revision_id
+        versions = Version.objects.get_for_object(self.get_object()).select_related("revision__user").filter(Q(revision__comment__icontains='status') | Q(revision_id=current_revision_id))
+        version_ids = [i.id for i in versions]
+        urls = ['?version_id2={}&version_id1={}'.format(version_ids[0], version_ids[i+1]) for i in range(len(version_ids)-1)]
+        return Response(urls)
+
+
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
     def process_document(self, request, *args, **kwargs):

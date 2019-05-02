@@ -33,6 +33,8 @@ from commercialoperator.components.organisations.models import (
                             )
 from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer, ParkSerializer, ActivitySerializer, AccessTypeSerializer, TrailSerializer
 from rest_framework import serializers
+from django.db.models import Q
+from reversion.models import Version
 
 class ProposalTypeSerializer(serializers.ModelSerializer):
     activities = serializers.SerializerMethodField()
@@ -569,6 +571,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     district = serializers.CharField(source='district.name', read_only=True)
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
     qaofficer_referrals = QAOfficerReferralSerializer(many=True)
+    reversion_ids = serializers.SerializerMethodField()
 
     class Meta:
         model = Proposal
@@ -628,7 +631,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'marine_parks',
                 'trails',
                 'training_completed',
-                'can_edit_activities'
+                'can_edit_activities',
+                'reversion_ids'
                 )
         read_only_fields=('documents','requirements')
 
@@ -667,6 +671,9 @@ class InternalProposalSerializer(BaseProposalSerializer):
 
     def get_assessor_data(self,obj):
         return obj.assessor_data
+
+    def get_reversion_ids(self,obj):
+        return obj.reversion_ids
 
 class ReferralProposalSerializer(InternalProposalSerializer):
     def get_assessor_mode(self,obj):
