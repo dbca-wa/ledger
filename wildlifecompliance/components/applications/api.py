@@ -941,7 +941,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             serializer = CreateExternalApplicationSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            serializer.instance.update_fees()
+            serializer.instance.update_dynamic_attributes()
 
             return Response(serializer.data)
         except Exception as e:
