@@ -179,7 +179,9 @@ export default {
                 for (var i=0; i<self.suggest_list.length; i++){
                     if (self.suggest_list[i].value == ev.target.value){
                         self.moveMapCentre(self.suggest_list[i].geometry.coordinates);
-                        self.relocateMarker4326(self.suggest_list[i].geometry.coordinates);
+                        if(!self.marker_locked){
+                            self.relocateMarker4326(self.suggest_list[i].geometry.coordinates);
+                        }
                     }
                 }
             });
