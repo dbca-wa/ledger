@@ -48,7 +48,8 @@ from commercialoperator.components.proposals.models import (
     Vehicle,
     Vessel,
     ProposalOtherDetails,
-    ProposalAccreditation
+    ProposalAccreditation,
+    ChecklistQuestion
 )
 from commercialoperator.components.proposals.serializers import (
     SendReferralSerializer,
@@ -79,6 +80,7 @@ from commercialoperator.components.proposals.serializers import (
     OnHoldSerializer,
     ProposalOtherDetailsSerializer,
     SaveProposalOtherDetailsSerializer,
+    ChecklistQuestionSerializer,
 )
 from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.approvals.serializers import ApprovalSerializer
@@ -1883,3 +1885,10 @@ class VesselViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+class AssessorChecklistViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ChecklistQuestion.objects.none()
+    serializer_class = ChecklistQuestionSerializer
+
+    def get_queryset(self):
+        qs=ChecklistQuestion.objects.filter(Q(list_type = 'assessor_list')& Q(obsolete=False))
+        return qs

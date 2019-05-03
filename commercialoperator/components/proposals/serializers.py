@@ -26,7 +26,8 @@ from commercialoperator.components.proposals.models import (
                                     ProposalParkZoneActivity,
                                     ProposalParkZone,
                                     ProposalOtherDetails,
-                                    ProposalAccreditation
+                                    ProposalAccreditation,
+                                    ChecklistQuestion
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
@@ -178,6 +179,7 @@ class ProposalAccreditationSerializer(serializers.ModelSerializer):
     def get_accreditation_type_value(self,obj):
         return obj.get_accreditation_type_display()
 
+
 class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
     #park=ParkSerializer()
     #accreditation_type= serializers.SerializerMethodField()
@@ -221,6 +223,15 @@ class SaveProposalOtherDetailsSerializer(serializers.ModelSerializer):
                 'credit_fees',
                 'credit_docket_books',
                 'proposal',
+                )
+class ChecklistQuestionSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = ChecklistQuestion
+        #fields = '__all__'
+        fields=('id',
+                'text',
+                'correct_answer',
                 )
 
 class BaseProposalSerializer(serializers.ModelSerializer):

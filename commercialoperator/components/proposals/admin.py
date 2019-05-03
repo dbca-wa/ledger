@@ -86,6 +86,10 @@ class HelpPageAdmin(admin.ModelAdmin):
         create_helppage_object(application_type='T Class', help_type=models.HelpPage.HELP_TEXT_INTERNAL)
         return HttpResponseRedirect("../")
 
+@admin.register(models.ChecklistQuestion)
+class ChecklistQuestionAdmin(admin.ModelAdmin):
+    list_display = ['text', 'correct_answer', 'list_type', 'obsolete',]
+    ordering = ('list_type',)
 
 @admin.register(ActivityMatrix)
 class ActivityMatrixAdmin(admin.ModelAdmin):

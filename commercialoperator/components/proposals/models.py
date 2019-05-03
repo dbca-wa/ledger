@@ -1759,7 +1759,7 @@ class AmendmentReason(models.Model):
 
     def __str__(self):
         return self.reason
-
+                                                                      
 
 class AmendmentRequest(ProposalRequest):
     STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
@@ -2320,6 +2320,53 @@ class ProposalRequirement(OrderedModel):
                 else:
                     return False
         return False
+
+@python_2_unicode_compatible
+#class ProposalStandardRequirement(models.Model):
+class ChecklistQuestion(RevisionedMixin):
+    TYPE_CHOICES = (
+        ('assessor_list','Assessor Checklist'),
+        ('referral_list','Referral Checklist')
+    )
+    text = models.TextField()
+    list_type = models.CharField('Checklist type', max_length=30, choices=TYPE_CHOICES,
+                                         default=TYPE_CHOICES[0][0])
+    correct_answer= models.BooleanField(default=False)
+    obsolete = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.text
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+
+class ProposalAssessment(RevisionedMixin):
+    proposal=models.ForeignKey(Proposal, related_name='assessment')
+    completed = models.BooleanField(default=False)
+    submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='proposal_assessment')
+    referral_assessment=models.BooleanField(default=False)
+    referral_group = models.ForeignKey(ReferralRecipientGroup,null=True,blank=True,related_name='referral_assessment')
+
+    def __str__(self):
+        return self.proposal
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+
+class ProposalAssessmentAnswer(RevisionedMixin):
+    question=models.ForeignKey(ChecklistQuestion)
+    answer = models.BooleanField()
+    assessment=models.ForeignKey(ProposalAssessment, related_name='answers', null=True, blank=True)
+
+    def __str__(self):
+        return self.question
+
+    class Meta:
+        app_label = 'commercialoperator'
+    
+    
 
 
 class QAOfficerReferral(RevisionedMixin):
