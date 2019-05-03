@@ -16,34 +16,41 @@
         </div>
 
         <div class="col-sm-12"><div class="row">
-            <label class="col-sm-2">Lock Marker Location</label>
+            
             <input type="checkbox" v-model="marker_locked" />
+            <label class="col-sm-2">Lock Marker Location</label>
+        </div></div>
+        <div id="lat" class="col-sm-4 form-group"><div class="row">
+            <label class="col-sm-4">Latitude:</label>
+            <input class="form-control" v-model="call_email.location.geometry.coordinates[1]" />
+        </div></div>
+        <div id="lon" class="col-sm-4 form-group"><div class="row">
+            <label class="col-sm-4">Longitude:</label>
+            <input class="form-control" v-model="call_email.location.geometry.coordinates[0]" />
         </div></div>
 
-
-        <div id="lon">Lat: {{ lat_4326_cursor }}</div>
-        <div id="lon">Lng: {{ lng_4326_cursor }}</div>
-        {{ call_email.location.geometry.coordinates }}
-        <div class="col-sm-12"><div class="row">
+        <div class="col-sm-12 form-group"><div class="row">
             <label class="col-sm-4">Street</label>
-            <input v-model="call_email.location.properties.street" />
+            <input class="form-control" v-model="call_email.location.properties.street" />
         </div></div>
-        <div class="col-sm-12"><div class="row">
+        <div class="col-sm-12 form-group"><div class="row">
             <label class="col-sm-4">Town/Suburb</label>
-            <input v-model="call_email.location.properties.town_suburb" />
+            <input class="form-control" v-model="call_email.location.properties.town_suburb" />
         </div></div>
-        <div class="col-sm-12"><div class="row">
+        <div class="col-sm-12 form-group"><div class="row">
             <label class="col-sm-4">State</label>
-            <input v-model="call_email.location.properties.state" />
+            <input class="form-control" v-model="call_email.location.properties.state" />
         </div></div>
-        <div class="col-sm-12"><div class="row">
+        <div class="col-sm-12 form-group"><div class="row">
             <label class="col-sm-4">Postcode</label>
-            <input v-model="call_email.location.properties.postcode" />
+            <input class="form-control" v-model="call_email.location.properties.postcode" />
         </div></div>
-        <div class="col-sm-12"><div class="row">
-            <label class="col-sm-4">Contry</label>
-            <input v-model="call_email.location.properties.country" />
+        <div class="col-sm-12 form-group"><div class="row">
+            <label class="col-sm-4">Country</label>
+            <input class="form-control" v-model="call_email.location.properties.country" />
        </div></div>
+       <button @click.prevent="saveInstanceLocation"
+            class="btn btn-primary pull-right">update</button>
     </div>
 </template>
 
@@ -91,38 +98,36 @@ export default {
             suggest_list: [],
 
             feature_marker: null,
-            //lat_4326: -32,
-            //lng_4326: 121,
+            lat_4326: -32,
+            lng_4326: 121,
             country: null,
             postcode: null,
             state: null,
             street: null,
             town_suburb: null,
+            //dummyPoint: [-32, 119],
+            dummyPoint: [119, -32],
         };
     },
     computed: {
     
+    
     ...mapGetters('callemailStore', {
       call_email: 'call_email',
-      //call_coordinates: 'call_coordinates',
     }),
-    /*
-    ...mapState('callemailStore', {
-        call_email: state => state.call_email,
 
-    }),
-    */
     },
     mounted: function(){
+        console.log("this.call_email.location.geometry.coordinates");
+        console.log(this.call_email.location.geometry.coordinates);
+        this.$nextTick(function() {
         console.debug('Start loading map');
-        //this.importMapData();
-        this.initLocation();
-        this.$nextTick();
         this.initMap();
         this.setBaseLayer('osm');
         this.initAwesomplete();
         this.addMarker();
         console.debug('End loading map');
+        });
     },
 
     methods: {
@@ -130,13 +135,7 @@ export default {
             saveLocation: 'saveLocation',
             setLocationPoint: 'setLocationPoint',
         }),
-        initLocation: function() {
-            console.log("initLocation");
-            console.log(this.dummyPoint);
-            if (this.call_email.location.geometry.coordinates == null) {
-                this.setLocationPoint(this.dummyPoint);
-            }
-        },
+
         saveInstanceLocation: async function() {
             await this.$nextTick();
             this.saveLocation();
@@ -217,27 +216,7 @@ export default {
                 $('#basemap_sat').show();
             }
         },
-        /*
-        importMapData: function(){
-            this.$http.get("http://ubuntu-18:8071/api/call_email_location/7/")
-            .then((response)=>{
-                console.log(response.data);
-                var geojson = response.data;
-                this.lat_4326 = geojson.geometry.coordinates[1];
-                this.lng_4326 = geojson.geometry.coordinates[0];
-                this.country = geojson.properties.country;
-                this.postcode = geojson.properties.postcode;
-                this.state = geojson.properties.state;
-                this.street = geojson.properties.street;
-                this.town_suburb = geojson.properties.town_suburb;
-                this.addMarker();
-                //this.addGeocoder();
-            })
-            .catch((response)=>{
-                console.log(response);
-            });
-        },
-        */
+
         addGeocoder: function(){
             console.log(Geocoder);
             var geocoder = new Geocoder('nominatim', {
@@ -263,17 +242,21 @@ export default {
             });
         },
         addMarker: function(){
-            console.log(this.call_email);
              var iconFeature = new Feature({
-               geometry: new Point(transform([
-                   //this.call_coordinates[1], 
-                   //this.call_coordinates[0], 
-                   this.call_email.location.geometry.coordinates[1], 
-                   this.call_email.location.geometry.coordinates[0], 
-                   ], 'EPSG:4326', 'EPSG:3857')),
-             });
-             this.feature_marker = iconFeature;
+                    geometry: new Point(transform([
+                    null, null
+                    ], 'EPSG:4326', 'EPSG:3857')),
+                    });
+            this.feature_marker = iconFeature;
 
+            if (this.call_email.location.geometry.coordinates.length > 0) {
+                    this.feature_marker.getGeometry().setCoordinates(
+                        transform([
+                    this.call_email.location.geometry.coordinates[0], 
+                    this.call_email.location.geometry.coordinates[1], 
+                    ], 'EPSG:4326', 'EPSG:3857'));
+             } 
+             
              var iconStyle = new Style({
                 image: new Icon({
                     anchor: [16, 32],
@@ -298,6 +281,7 @@ export default {
              this.map.addLayer(vectorLayer);
              
         },
+
         initMap: function(){
             this.projection = get('EPSG:3857');
             this.matrixSet = 'mercator';
@@ -365,7 +349,9 @@ export default {
         },
         relocateMarker: function(coordinates){
             this.feature_marker.getGeometry().setCoordinates(coordinates);
-            this.setLocationPoint(coordinates);
+            this.setLocationPoint(
+                transform([coordinates[0], coordinates[1]], 'EPSG:3857', 'EPSG:4326')
+                );
         },
         mapClickHandler: function(e){
             var coordinate = e.coordinate;
