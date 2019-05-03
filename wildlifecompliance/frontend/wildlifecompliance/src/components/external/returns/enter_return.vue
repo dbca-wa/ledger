@@ -140,7 +140,7 @@ export default {
       this.form=document.forms.enter_return
       let data = new FormData(this.form);
       if (this.spreadsheetReturn === 'no') {
-          this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/update_details'),data,{
+          this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/save'),data,{
       		  emulateJSON:true,
 	        }).then((response)=>{
 		        swal( 'Sent',

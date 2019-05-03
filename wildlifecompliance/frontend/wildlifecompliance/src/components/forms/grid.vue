@@ -86,7 +86,6 @@ const GridBlock = {
 		  }
           input.dispatchEvent(e);
       }
-      console.log(vm)
   }
 }
 
