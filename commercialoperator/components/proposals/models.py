@@ -557,6 +557,15 @@ class Proposal(RevisionedMixin):
         return [self.region.name] if self.region else []
 
     @property
+    def assessor_assessment(self):
+        qs=self.assessment.filter(referral_assessment=False, referral_group=None)
+        if qs:
+            return qs[0]
+        else:
+            return None
+
+
+    @property
     def permit(self):
         return self.approval.licence_document._file.url if self.approval else None
 
@@ -756,6 +765,19 @@ class Proposal(RevisionedMixin):
                     self.save()
                 else:
                     raise ValidationError('An error occurred while submitting proposal (Submit email notifications failed)')
+                #Create assessor checklist with the current assessor_list type questions
+                #Assessment instance already exits then skip.
+                try:
+                    assessor_assessment=ProposalAssessment.objects.get(proposal=self,referral_group=None, referral_assessment=False)
+                except ProposalAssessment.DoesNotExist:
+                    assessor_assessment=ProposalAssessment.objects.create(proposal=self,referral_group=None, referral_assessment=False)
+                    checklist=ChecklistQuestion.objects.filter(list_type='assessor_list', obsolete=False)
+                    for chk in checklist:
+                        try:
+                            chk_instance=ProposalAssessmentAnswer.objects.get(question=chk, assessment=assessor_assessment)
+                        except ProposalAssessmentAnswer.DoesNotExist:
+                            chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=assessor_assessment)  
+
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
@@ -2353,11 +2375,17 @@ class ProposalAssessment(RevisionedMixin):
 
     class Meta:
         app_label = 'commercialoperator'
+        unique_together = ('proposal', 'referral_group',)
+
+    @property
+    def checklist(self):
+        return self.answers.all()
+    
 
 
 class ProposalAssessmentAnswer(RevisionedMixin):
     question=models.ForeignKey(ChecklistQuestion)
-    answer = models.BooleanField()
+    answer = models.NullBooleanField()
     assessment=models.ForeignKey(ProposalAssessment, related_name='answers', null=True, blank=True)
 
     def __str__(self):

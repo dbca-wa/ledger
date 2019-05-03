@@ -27,7 +27,9 @@ from commercialoperator.components.proposals.models import (
                                     ProposalParkZone,
                                     ProposalOtherDetails,
                                     ProposalAccreditation,
-                                    ChecklistQuestion
+                                    ChecklistQuestion,
+                                    ProposalAssessmentAnswer,
+                                    ProposalAssessment,
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
@@ -233,6 +235,28 @@ class ChecklistQuestionSerializer(serializers.ModelSerializer):
                 'text',
                 'correct_answer',
                 )
+class ProposalAssessementAnswerSerializer(serializers.ModelSerializer):
+    question=ChecklistQuestionSerializer(read_only=True)
+    class Meta:
+        model = ProposalAssessmentAnswer
+        fields = ('id',
+                'question',
+                'answer',
+                )
+
+class ProposalAssessementSerializer(serializers.ModelSerializer):
+    checklist=ProposalAssessementAnswerSerializer(many=True)
+
+    class Meta:
+        model = ProposalAssessment
+        fields = ('id',
+                'completed',
+                #'submitter',
+                'referral_assessment',
+                'referral_group',
+                'checklist'
+                )
+       
 
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
@@ -580,6 +604,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     district = serializers.CharField(source='district.name', read_only=True)
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
     qaofficer_referrals = QAOfficerReferralSerializer(many=True)
+    assessor_assessment=ProposalAssessementSerializer(read_only=True)
 
     class Meta:
         model = Proposal
@@ -639,7 +664,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'marine_parks',
                 'trails',
                 'training_completed',
-                'can_edit_activities'
+                'can_edit_activities',
+                'assessor_assessment'
                 )
         read_only_fields=('documents','requirements')
 
