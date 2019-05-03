@@ -81,7 +81,9 @@
 
               </FormSection>
               <FormSection :label="`Location`" :Index="`1`">
-                  <MapLocation/>
+                  <div v-if="call_email.location">
+                    <MapLocation :key="call_email.location.id"/>
+                  </div>
 
               </FormSection>
               <FormSection :label="`Details`" :Index="`2`">
@@ -242,6 +244,15 @@ export default {
         );
     }
   },
+  created: function() {
+    console.log("call_email.vue created");
+    this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
+    console.log("call_email loaded"); 
+    this.loadClassification();
+    console.log("vuex loaded");
+  },
+  
+  /*
   beforeRouteEnter: function(to, from, next) {
     console.log("before route enter");
     let initialisers = [];
@@ -253,7 +264,7 @@ export default {
       console.log("vuex loaded");
     });
   },
-
+*/
   mounted: function() {
     this.$nextTick(function() {});
   }
