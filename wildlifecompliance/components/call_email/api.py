@@ -267,6 +267,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             request_classification_dict = request.data.get(
                         'classification')
             # request_classification_name = request_classification_obj.name
+            print("request_classification_dict['id']")
+            print(request_classification_dict['id'])
             request_classification_obj = Classification.objects.get(
                     id=request_classification_dict['id'])
             # parser = SchemaParser()

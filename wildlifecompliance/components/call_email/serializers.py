@@ -124,8 +124,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
 
 
 class UpdateCallEmailSerializer(serializers.ModelSerializer):
-    location = LocationSerializer()
-    #location_id = serializers.IntegerField(
+    # location = LocationSerializer()
+    # location_id = serializers.IntegerField(
      #   required=False, write_only=True)
     classification = ClassificationSerializer(read_only=True)
     classification_id = serializers.IntegerField(
@@ -138,11 +138,10 @@ class UpdateCallEmailSerializer(serializers.ModelSerializer):
             'status',
             'classification',
             'classification_id',
-            'location',
+            # 'location',
             'number',
             'caller',
             'assigned_to',
-            'location',
         )
         read_only_fields = ('id', )
 
