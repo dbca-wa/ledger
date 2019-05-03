@@ -336,7 +336,7 @@ class ReturnData(object):
         Data Table of record information for Species.
         :return: formatted data.
         """
-        return self._get_raw_table()
+        return self._get_formatted_table()
 
     def store(self, request):
         """
@@ -344,19 +344,19 @@ class ReturnData(object):
         :param request:
         :return:
         """
-        for key in request.POST.keys():
+        for key in request.data.keys():
             if key == "nilYes":
                 self._return.nil_return = True
                 self._return.comments = request.data.get('nilReason')
                 self._return.save()
             if key == "nilNo":
-                returns_tables = request.data.get('table_name')
-                if self._is_post_data_valid(returns_tables.encode('utf-8'), request.POST):
-                    self._create_return_data_from_post_data(returns_tables.encode('utf-8'), request.POST)
+                returns_tables = request.data.get('table_name');
+                if self._is_post_data_valid(returns_tables.encode('utf-8'), request.data):
+                    self._create_return_data_from_post_data(returns_tables.encode('utf-8'), request.data)
                 else:
                     raise FieldError('Enter data in correct format.')
 
-    def _get_raw_table(self):
+    def _get_formatted_table(self):
         tables = []
         for resource in self._return.return_type.resources:
             resource_name = resource.get('name')
@@ -394,24 +394,6 @@ class ReturnData(object):
                 results.append(result)
                 table['data'] = results
         tables.append(table)
-
-        return tables
-
-    def _get_formatted_table(self):
-        headers = {}
-        tables = {}
-        #tables = {
-        #    "type": "table",
-        #    "headers": "{\"Species\": \"text\", \"Quantity\": \"number\", \"Date\": \"date\", \"Taken\": \"checkbox\"}",
-        #    "name": "Section2-0",
-        #    "label": "The first table in section 2"
-        #}
-
-        tables['headers'] = 'Quantity'
-        tables['type'] = 'table'
-        tables['label'] = 'first table'
-        tables['name'] = 'table-example'
-        tables['data'] = '100'
 
         return tables
 
@@ -615,7 +597,7 @@ class ReturnSheet(object):
             self._species_list.append(_species.name)
             self._species = _species.name
         # build list of Species available on Licence.
-        self._licence_species_list = []
+        self._licence_species_list = ['S000001', 'S000002', 'S000003', 'S000004']
 
     def _get_table_rows(self, _data):
         """

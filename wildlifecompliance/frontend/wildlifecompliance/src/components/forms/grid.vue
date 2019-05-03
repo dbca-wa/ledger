@@ -8,16 +8,16 @@
               <HelpTextUrl :help_text_url="help_text_url" />
           </template>
           <div class="grid-container">
-              <div v-for="(grid,index) in component">
-                  <label v-if="grid.headers" v-for="header in grid.headers">
+              <div>
+                  <label v-if="headers" v-for="header in headers">
                       <input class="form-control" v-model="header.label"  disabled="disabled">
                   </label>
               </div>
-              <div v-for="(grid,index) in component">
-                  <label v-if="grid.headers" v-for="header in grid.headers">
-                      <div v-for ="field in grid.data">
+              <div>
+                  <label v-if="headers" v-for="header in headers">
+                      <div v-for ="field in field_data">
                           <input v-for="(title,key) in field" v-if="key == header.label" class="form-control"
-                              :name="`${grid.name}::${header.label}`" v-model="title.value" >
+                              :name="`${name}::${header.label}`" v-model="title.value" >
                       </div>
                   </label>
               </div>
@@ -37,7 +37,7 @@ const GridBlock = {
       "label": "Returns Data"
      }
   */
-  props: ['name', 'label', 'value', 'component', 'id', 'help_text', 'help_text_url', "readonly", "isRequired"],
+  props: ['field_data','headers','name', 'label', 'value', 'id', 'help_text', 'help_text_url', "readonly", "isRequired"],
   components: {HelpText, HelpTextUrl},
   data: function() {
     let vm = this;
@@ -49,10 +49,14 @@ const GridBlock = {
   },
   methods: {
     addRow: function(e) {
-      var component_data = this._props['component'][0]['data'];
-      let dataObj = Object.assign({}, component_data[0]);
-      for(let key in dataObj) { dataObj[key] = '' };
-      component_data.push(dataObj);
+      var grid_data = this._props['field_data'];
+      let index = grid_data.length
+      let dataObj = Object.assign({}, grid_data[0]);
+
+      // schema data type on each field is validated - error value required.
+      for(let key in dataObj) { dataObj[key] = {'value':'', 'error':''}};
+
+      grid_data.push(dataObj);
     },
     addColumn: function(e) {
     },
@@ -99,21 +103,11 @@ export default GridBlock;
         grid-template-columns: [labels] 2048px;
         overflow: scroll;
     }
-    .grid-container > div {
-
-    }
     .grid-container > label {
         grid-column: labels;
         grid-row: auto;
         border: 5px solid #000000;
         background-color: #ffffff;
-    }
-    .grid-container > head {
-        grid-column: col-start;
-    }
-    .header {
-        background-color: yellow;
-        grid-area: hd;
     }
 </style>
 
