@@ -9,14 +9,13 @@
                 <img id="basemap_sat" src="../../../assets/img/satellite_icon.jpg" @click="setBaseLayer('sat')" />
                 <img id="basemap_osm" src="../../../assets/img/map_icon.png" @click="setBaseLayer('osm')" />
             </div>
+            <div style="display: none;">
+                <div id="popup"></div>
+            </div>
         </div>
 
-        <div style="display: none;">
-            <div id="popup"></div>
-        </div>
 
         <div class="col-sm-12"><div class="row">
-            
             <input type="checkbox" v-model="marker_locked" />
             <label class="col-sm-2">Lock Marker Location</label>
         </div></div>
@@ -376,7 +375,13 @@ export default {
                 $(this.element).popover({
                     placement: 'top',
                     html: true,
-                    content: '<p>' + this.street + ' ' + this.town_suburb + '<br />' + this.state + ' ' + this.postcode + ' ' + this.country + '</p>',
+                    content: '<p>' 
+                    + this.call_email.location.properties.street + ' ' 
+                    + this.call_email.location.properties.town_suburb + '<br />'
+                    + this.call_email.location.properties.state + ' ' 
+                    + this.call_email.location.properties.postcode + ' ' 
+                    + this.call_email.location.properties.country 
+                    + '</p>',
                 });
                 $(this.element).popover('show');
             } else {
