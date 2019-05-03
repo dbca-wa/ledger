@@ -1,5 +1,5 @@
 <template lang="html">
-    <div class="container">
+    <div>
         <div id="mapOL">
             <div id="search-box">
                 <input id="search-input" />
