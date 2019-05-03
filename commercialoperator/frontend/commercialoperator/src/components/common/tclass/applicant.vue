@@ -1,7 +1,7 @@
 <template lang="html">
     <div class="row">
         <div class="col-sm-12">
-      <div class="col-md-12">
+            <div class="col-md-12">
                         <div class="row">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
@@ -93,10 +93,12 @@
                         </div>
                     </div>
                 </div>
+        <Assessment :proposal="proposal" :assessment="proposal.assessor_assessment" :hasAssessorMode="hasAssessorMode"></Assessment>
     </div>
 </template>
 
 <script>
+import Assessment from './assessment.vue'
 import {
     api_endpoints,
     helpers
@@ -158,9 +160,15 @@ from '@/utils/hooks'
                 contacts_table: null,
             }
         },
+        components: {
+          Assessment
+        },
         computed:{
         contactsURL: function(){
             return this.proposal!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.proposal.applicant.id+'/contacts') : '';
+        },
+        hasAssessorMode:function(){
+            return this.proposal && this.proposal.assessor_mode.has_assessor_mode ? true : false;
         },
         },
         methods:{
