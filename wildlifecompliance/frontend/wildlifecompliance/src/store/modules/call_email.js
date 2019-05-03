@@ -30,7 +30,21 @@ export const callemailStore = {
         report_type: state => state.call_email.report_type.report_type,
         classification_types: state => state.classification_types,
         call_coordinates: state => state.call_email.location.geometry.coordinates,
-
+        
+        call_email_form_url: state => {
+            return state.call_email
+              ? `/api/call_email/${state.call_email.id}/form_data.json`
+              : "";
+          },
+          
+         /*
+         call_email_form_url: state => {
+            if (state.call_email) {
+                return `/api/call_email/${state.call_email.id}/form_data.json`;
+            }
+            return "";
+          },
+          */
     },
     mutations: {
         updateCallEmail(state, call_email) {
@@ -76,11 +90,13 @@ export const callemailStore = {
         }) {
             console.log("loadCallEmail");
             console.log(call_email_id);
+            
             return new Promise((resolve, reject) => {
                 Vue.http.get(
                     helpers.add_endpoint_json(api_endpoints.call_email, call_email_id)
 
                 ).then(res => {
+                        console.log("setCallEmail");
                         dispatch("setCallEmail", res.body);
                         for (let form_data_record of res.body.data) {
                             dispatch("setFormValue", {
@@ -137,25 +153,44 @@ export const callemailStore = {
             commit("updateCallEmail", call_email);
         },
 
-        saveCallEmail({ dispatch, state}) {
+        saveCallEmail({ dispatch, state, getters}, {location, renderer, route}) {
             console.log("saveCallEmail");
-            const instance = {...state.call_email};
+
+            if (location) {
+                console.log("saveLocation");
+                dispatch("saveLocation");
+            }
+            if (renderer) {
+                console.log("saveFormData");
+                console.log(getters.call_email_form_url);
+                dispatch("saveFormData", {
+                    url: getters.call_email_form_url,
+                    }
+                , {
+                    root: true
+                });
+            }
             return new Promise((resolve, reject) => {
                 Vue.http.post(helpers.add_endpoint_join(
                     api_endpoints.call_email, 
-                    this.call_email.id + "/call_email_save/"
+                    state.call_email.id + "/call_email_save/"
                     ), 
+                    /*
                     {
-                        classification_id: this.call_email.classification.id,
-                        number: this.call_email.number,
-                        caller: this.call_email.caller,
-                        assigned_to: this.call_email.assigned_to,
+                        classification_id: state.call_email.classification.id,
+                        number: state.call_email.number,
+                        caller: state.call_email.caller,
+                        assigned_to: state.call_email.assigned_to,
                     }
+                    */
+                    {...state.call_email}
+                   
                     )
                     .then(res => {
-                        dispatch("saveLocation");
+                        resolve();
                         },
                         err => {
+                            //swal("Error", "There was an error saving the record", "error");
                             console.log(err);
                             reject();
                         });
@@ -165,7 +200,7 @@ export const callemailStore = {
         saveLocation({
             state
         }) {
-            const instance = {...state.call_email.location};
+            const instance = state.call_email.location;
             
             console.log("instance");
             console.log(instance);

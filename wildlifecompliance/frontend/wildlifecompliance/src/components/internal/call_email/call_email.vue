@@ -97,7 +97,27 @@
             </div>          
               
           </div>
-        </div>            
+        </div>  
+        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+                        <div class="navbar-inner">
+                            <div class="container">
+                                <p class="pull-right" style="margin-top:5px;">
+                                    <!--
+                                    <span v-if="requiresCheckout" style="margin-right: 5px; font-size: 18px; display: block;">
+                                        <strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong>
+                                        <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
+                                    </span>
+                                    -->
+                                    <input v-if="!isProcessing && canDiscardActivity" type="button" @click.prevent="discardActivity" class="btn btn-danger" value="Discard Activity"/>
+                                    <input v-if="!isProcessing" type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
+                                    <input v-if="!isProcessing" type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
+                                    <input v-if="!isProcessing && !requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+                                    <input v-if="!isProcessing && requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
+                                    <button v-if="isProcessing" disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Processing</button>
+                                </p>
+                            </div>
+                        </div>
+                    </div>          
     </div>
 </template>
 <script>
@@ -147,7 +167,8 @@ export default {
       //call_id: "callemailStore/call_id",
       classification_types: "classification_types",
       //location: "callemailStore/location",
-      report_type: "report_type"
+      report_type: "report_type",
+      call_email_form_url: "call_email_form_url",
     }),
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
@@ -155,11 +176,13 @@ export default {
     isLoading: function() {
       return this.loading.length > 0;
     },
+    /*
     call_email_form_url: function() {
       return this.call_email
         ? `/api/call_email/${this.call_email.id}/form_data.json`
         : "";
     },
+    */
 
   },
   filters: {
@@ -174,6 +197,7 @@ export default {
       loadClassification: "loadClassification",
       setLocation: 'setLocation',
       setLocationPoint: 'setLocationPoint',
+      saveCallEmail: 'saveCallEmail',
     }),
     ...mapActions({
       saveFormData: "saveFormData",
@@ -195,12 +219,35 @@ export default {
           },
           err => {}
         );
-      /*
-                this.$router.push({
-                    name: 'internal-call-email-dash'
-                });
-                */
+
     },
+    save: function() {
+      this.saveCallEmail({location: true, renderer: true})
+      .then(res => {
+        swal("Saved", "The record has been saved", "success");
+      },
+      err => {
+        swal("Error", "There was an error saving the record", "error");
+        console.log(err);
+      });
+    
+    },
+
+    saveExit: function() {
+      this.saveCallEmail({location: true, renderer: true})
+      .then(res => {
+        swal("Saved", "The record has been saved", "success");
+        // this.$router.push({
+        //   name: 'internal-call-email-dash'
+        // });
+        window.location.href = "internal-call-email-dash";
+      },
+      err => {
+        swal("Error", "There was an error saving the record", "error");
+        console.log(err);
+      });
+    },
+    /*
     save: function(e) {
       this.isProcessing = true;
       this.$http
@@ -243,6 +290,7 @@ export default {
           }
         );
     }
+    */
   },
   created: function() {
     console.log("call_email.vue created");
