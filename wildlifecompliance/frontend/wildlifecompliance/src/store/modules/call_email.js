@@ -175,22 +175,19 @@ export const callemailStore = {
                     api_endpoints.call_email, 
                     state.call_email.id + "/call_email_save/"
                     ), 
-                    /*
-                    {
-                        classification_id: state.call_email.classification.id,
-                        number: state.call_email.number,
-                        caller: state.call_email.caller,
-                        assigned_to: state.call_email.assigned_to,
-                    }
-                    */
                     {...state.call_email}
-                   
                     )
                     .then(res => {
+                        swal("Saved", "The record has been saved", "success")
+                            .then(result => {
+                                if (route) {
+                                window.location.href = "/internal/call_email";
+                                }
+                            });
                         resolve();
                         },
                         err => {
-                            //swal("Error", "There was an error saving the record", "error");
+                            swal("Error", "There was an error saving the record", "error");
                             console.log(err);
                             reject();
                         });

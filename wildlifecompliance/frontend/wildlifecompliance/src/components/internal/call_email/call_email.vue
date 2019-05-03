@@ -108,12 +108,11 @@
                                         <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
                                     </span>
                                     -->
-                                    <input v-if="!isProcessing && canDiscardActivity" type="button" @click.prevent="discardActivity" class="btn btn-danger" value="Discard Activity"/>
-                                    <input v-if="!isProcessing" type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
-                                    <input v-if="!isProcessing" type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                    <input v-if="!isProcessing && !requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
-                                    <input v-if="!isProcessing && requiresCheckout" type="button" @click.prevent="submit" class="btn btn-primary" value="Submit and Checkout"/>
-                                    <button v-if="isProcessing" disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Processing</button>
+                                    
+                                    <input type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
+                                    <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
+                                    
+                                    
                                 </p>
                             </div>
                         </div>
@@ -234,18 +233,7 @@ export default {
     },
 
     saveExit: function() {
-      this.saveCallEmail({location: true, renderer: true})
-      .then(res => {
-        swal("Saved", "The record has been saved", "success");
-        // this.$router.push({
-        //   name: 'internal-call-email-dash'
-        // });
-        window.location.href = "internal-call-email-dash";
-      },
-      err => {
-        swal("Error", "There was an error saving the record", "error");
-        console.log(err);
-      });
+      this.saveCallEmail({location: true, renderer: true, route: 'internal-call-email-dash'})
     },
     /*
     save: function(e) {
