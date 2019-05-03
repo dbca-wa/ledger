@@ -149,12 +149,13 @@ export default {
                     country: 'au',
                     proximity: ''+centre[0]+','+centre[1],
                     bbox: '112.920934,-35.191991,129.0019283,-11.9662455',
-                    types: 'region,postcode,place,locality,neighborhood,address'
+                    types: 'region,postcode,district,place,locality,neighborhood,address,poi'
                 }),
                 dataType: 'json',
                 success: function(data, status, xhr) {
                     self.suggest_list = [];
                     if (data.features && data.features.length > 0){
+                        console.log(data);
                         for (var i = 0; i < data.features.length; i++){
                             self.suggest_list.push({ label: data.features[i].place_name, value: data.features[i].place_name, geometry: data.features[i].geometry });
                         }
@@ -178,8 +179,8 @@ export default {
             }).on('awesomplete-selectcomplete', function(ev){
                 for (var i=0; i<self.suggest_list.length; i++){
                     if (self.suggest_list[i].value == ev.target.value){
-
                         self.moveMapCentre(self.suggest_list[i].geometry.coordinates);
+                        self.relocateMarker4326(self.suggest_list[i].geometry.coordinates);
                     }
                 }
             });
@@ -241,23 +242,25 @@ export default {
                 self.map.removeLayer(layerAdded);
             });
         },
-        addMarker: function(){
-             var iconFeature = new Feature({
-                    geometry: new Point(transform([
-                    null, null
-                    ], 'EPSG:4326', 'EPSG:3857')),
-                    });
-            this.feature_marker = iconFeature;
-
+        refreshMarkerLocation: function(){
             if (this.call_email.location.geometry.coordinates.length > 0) {
                     this.feature_marker.getGeometry().setCoordinates(
                         transform([
                     this.call_email.location.geometry.coordinates[0], 
                     this.call_email.location.geometry.coordinates[1], 
                     ], 'EPSG:4326', 'EPSG:3857'));
-             } 
-             
-             var iconStyle = new Style({
+            } 
+        },
+        addMarker: function(){
+            var iconFeature = new Feature({
+                geometry: new Point(transform([
+                    null, null
+                    ], 'EPSG:4326', 'EPSG:3857')),
+                });
+            this.feature_marker = iconFeature;
+            this.refreshMarkerLocation();
+
+            var iconStyle = new Style({
                 image: new Icon({
                     anchor: [16, 32],
                     anchorXUnits: 'pixels',
@@ -266,20 +269,19 @@ export default {
                     src: pin,
                     scale: 1
                 })
-             });
+            });
 
-             iconFeature.setStyle(iconStyle);
+            iconFeature.setStyle(iconStyle);
 
-             var vectorSource = new VectorSource({
+            var vectorSource = new VectorSource({
                features: [iconFeature]
-             });
+            });
 
-             var vectorLayer = new VectorLayer({
+            var vectorLayer = new VectorLayer({
                source: vectorSource
-             });
+            });
 
-             this.map.addLayer(vectorLayer);
-             
+            this.map.addLayer(vectorLayer);
         },
 
         initMap: function(){
@@ -347,11 +349,12 @@ export default {
             });
             this.map.addOverlay(this.popup);
         },
-        relocateMarker: function(coordinates){
-            this.feature_marker.getGeometry().setCoordinates(coordinates);
-            this.setLocationPoint(
-                transform([coordinates[0], coordinates[1]], 'EPSG:3857', 'EPSG:4326')
-                );
+        relocateMarker: function(coords_3857){ 
+            this.setLocationPoint(transform([coords_3857[0], coords_3857[1]], 'EPSG:3857', 'EPSG:4326'));
+            this.refreshMarkerLocation();
+        },
+        relocateMarker4326: function(coords_4326){
+            this.relocateMarker(transform([coords_4326[0], coords_4326[1]], 'EPSG:4326', 'EPSG:3857'));
         },
         mapClickHandler: function(e){
             var coordinate = e.coordinate;
