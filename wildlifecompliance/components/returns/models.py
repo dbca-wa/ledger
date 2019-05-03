@@ -350,7 +350,7 @@ class ReturnData(object):
                 self._return.comments = request.data.get('nilReason')
                 self._return.save()
             if key == "nilNo":
-                returns_tables = request.data.get('table_name');
+                returns_tables = request.data.get('table_name')
                 if self._is_post_data_valid(returns_tables.encode('utf-8'), request.data):
                     self._create_return_data_from_post_data(returns_tables.encode('utf-8'), request.data)
                 else:
@@ -597,7 +597,7 @@ class ReturnSheet(object):
             self._species_list.append(_species.name)
             self._species = _species.name
         # build list of Species available on Licence.
-        self._licence_species_list = ['S000001', 'S000002', 'S000003', 'S000004']
+        self._licence_species_list = []
 
     def _get_table_rows(self, _data):
         """
