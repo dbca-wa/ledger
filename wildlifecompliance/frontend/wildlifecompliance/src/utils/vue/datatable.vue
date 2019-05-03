@@ -27,6 +27,10 @@ module.exports = {
      },
      id:{
          required:true
+     },
+     onMount: {
+         type: Function,
+         default: () => {}
      }
    },
    data : function () {
@@ -74,10 +78,10 @@ module.exports = {
        }
    },
    mounted:function () {
-      let vm = this;
-      vm.table =$('#'+vm.id);
+      this.table =$(`#${this.id}`);
       $.fn.dataTable.ext.errMode = 'throw';
-      vm.initEvents();
+      this.initEvents();
+      this.onMount()
    }
 };
 </script>

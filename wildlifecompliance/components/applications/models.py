@@ -918,55 +918,62 @@ class Application(RevisionedMixin):
     def complete_assessment(self, request):
         with transaction.atomic():
             try:
-                # Get the assessor groups the current user is member of for the
-                # selected activity tab
-                qs = request.user.get_wildlifelicence_permission_group(
+                assessment_id = request.data.get('assessment_id')
+                activity_id = int(request.data.get('selected_assessment_tab', 0))
+
+                assessment = Assessment.objects.filter(
+                    id=assessment_id,
+                    licence_activity_id=activity_id,
+                    status=Assessment.STATUS_AWAITING_ASSESSMENT,
+                    application=self
+                ).first()
+
+                if not assessment:
+                    raise Exception("Assessment record ID %s (activity: %s) does not exist!" % (
+                        assessment_id, activity_id))
+
+                assessor_group = request.user.get_wildlifelicence_permission_group(
                     permission_codename='assessor',
-                    activity_id=request.data.get('selected_assessment_tab'),
-                    first=False
+                    activity_id=assessment.licence_activity_id,
+                    first=True
                 )
+                if not assessor_group:
+                    raise Exception("Missing assessor permissions for Activity ID: %s" % (
+                        assessment.licence_activity_id))
 
-                # For each assessor groups get the assessments of current
-                # application whose status is awaiting_assessment and mark it
-                # as complete
-                for q in qs:
-                    assessments = Assessment.objects.filter(
-                        licence_activity_id=request.data.get('selected_assessment_tab'),
-                        assessor_group=q,
-                        status=Assessment.STATUS_AWAITING_ASSESSMENT,
-                        application=self)
+                assessment.status = Assessment.STATUS_COMPLETED
+                assessment.actioned_by = request.user
+                assessment.save()
+                # Log application action
+                self.log_user_action(
+                    ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(assessor_group), request)
+                # Log entry for organisation
+                if self.org_applicant:
+                    self.org_applicant.log_user_action(
+                        ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(assessor_group), request)
+                elif self.proxy_applicant:
+                    self.proxy_applicant.log_user_action(
+                        ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(assessor_group), request)
+                else:
+                    self.submitter.log_user_action(
+                        ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(assessor_group), request)
 
-                    for q1 in assessments:
-                        q1.status = Assessment.STATUS_COMPLETED
-                        q1.save()
-                        # Log application action
-                        self.log_user_action(
-                            ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q), request)
-                        # Log entry for organisation
-                        if self.org_applicant:
-                            self.org_applicant.log_user_action(
-                                ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q), request)
-                        elif self.proxy_applicant:
-                            self.proxy_applicant.log_user_action(
-                                ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q), request)
-                        else:
-                            self.submitter.log_user_action(
-                                ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q), request)
-                # check if this is the last assessment for current
-                # application, Change the processing status only if it is the
-                # last assessment
-                if not Assessment.objects.filter(
-                        application=self,
-                        licence_activity=request.data.get('selected_assessment_tab'),
-                        status=Assessment.STATUS_AWAITING_ASSESSMENT).exists():
-                    for activity in self.licence_type_data['activity']:
-                        if int(
-                                request.data.get('selected_assessment_tab')) == activity["id"]:
-                            self.set_activity_processing_status(
-                                activity["id"], ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_CONDITIONS)
-
+                self.check_assessment_complete(activity_id)
             except BaseException:
                 raise
+
+    def check_assessment_complete(self, activity_id):
+        # check if this is the last assessment for current
+        # application, Change the processing status only if it is the
+        # last assessment
+        if not Assessment.objects.filter(
+                application=self,
+                licence_activity=activity_id,
+                status=Assessment.STATUS_AWAITING_ASSESSMENT).exists():
+            for activity in self.licence_type_data['activity']:
+                if activity_id == activity["id"]:
+                    self.set_activity_processing_status(
+                        activity["id"], ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_CONDITIONS)
 
     def proposed_decline(self, request, details):
         with transaction.atomic():
@@ -1551,6 +1558,7 @@ class Assessment(ApplicationRequest):
     purpose = models.TextField(blank=True)
     inspection_date = models.DateField(null=True, blank=True)
     inspection_report = models.FileField(upload_to=update_assessment_inspection_report_filename, blank=True, null=True)
+    actioned_by = models.ForeignKey(EmailUser, null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -1597,13 +1605,33 @@ class Assessment(ApplicationRequest):
         with transaction.atomic():
             try:
                 self.status = Assessment.STATUS_RECALLED
-                self.application.set_activity_processing_status(
-                    self.licence_activity_id, ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER)
+                self.actioned_by = request.user
                 self.save()
-                # Create a log entry for the application
-                self.application.log_user_action(
-                    ApplicationUserAction.ACTION_ASSESSMENT_RECALLED.format(
-                        self.assessor_group), request)
+
+                if not Assessment.objects.filter(
+                    application_id=self.application_id,
+                    licence_activity=self.licence_activity_id,
+                    status=Assessment.STATUS_AWAITING_ASSESSMENT
+                ).exists():
+                    # Create a log entry for the application
+                    self.application.log_user_action(
+                        ApplicationUserAction.ACTION_ASSESSMENT_RECALLED.format(
+                            self.assessor_group), request)
+
+                    last_complete_assessment = Assessment.objects.filter(
+                        application_id=self.application_id,
+                        licence_activity=self.licence_activity_id,
+                        status=Assessment.STATUS_COMPLETED,
+                        actioned_by__isnull=False
+                    ).order_by('-id').first()
+                    if last_complete_assessment:
+                        last_complete_assessment.application.check_assessment_complete(self.licence_activity_id)
+                    else:
+                        self.application.set_activity_processing_status(
+                            self.licence_activity_id,
+                            ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER
+                        )
+
             except BaseException:
                 raise
 

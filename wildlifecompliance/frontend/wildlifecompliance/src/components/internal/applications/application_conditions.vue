@@ -4,73 +4,6 @@
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h3 class="panel-title">Assessment Details
-                                    <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
-                                        <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                    </a>
-                                </h3>
-                            </div>
-                            <div class="panel-body panel-collapse collapse in" :id="panelBody">
-                                <form class="form-horizontal" name="assessment_form" method="put">
-                                    <div class="col-sm-12">
-                                        <div class="form-group" v-if="assessment.is_inspection_required">
-                                            <div class="row">
-                                                <div class="col-sm-3">
-                                                    <label class="control-label pull-left">Inspection Date</label>
-                                                </div>
-                                                <div class="col-sm-9">
-                                                    <div class="input-group date" ref="inspection_date" style="width: 30%;">
-                                                        <input type="text" class="form-control" name="inspection_date" placeholder="DD/MM/YYYY" v-model="assessment.inspection_date">
-                                                        <span class="input-group-addon">
-                                                            <span class="glyphicon glyphicon-calendar"></span>
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-3">
-                                                    <label class="control-label pull-left">Inspection Report</label>
-                                                </div>
-                                                <div class="col-sm-9" style="margin-bottom:10px; margin-top:10px;">
-                                                    <div v-if="assessment.inspection_report && !inspection_report_file_name" style="margin-bottom: 10px;"><a :href="assessment.inspection_report" target="_blank">Download</a></div>
-                                                    <div v-if="inspection_report_file_name" style="margin-bottom: 10px;">{{ inspection_report_file_name }}</div>
-                                                    <span class="btn btn-primary btn-file"> Select Inspection Report to Upload <input type="file" ref="inspection_report" @change="readFileInspectionReport()"/></span>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-sm-3">
-                                                    <label class="control-label pull-left">Inspection Comments</label>
-                                                </div>
-                                                <div class="col-sm-9">
-                                                    <textarea class="form-control" v-model="assessment.inspection_comment" style="width: 100%; max-width: 100%;" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <div class="row">
-                                                <div class="col-sm-3">
-                                                    <label class="control-label pull-left">Final Comments</label>
-                                                </div>
-                                                <div class="col-sm-9">
-                                                    <textarea class="form-control" v-model="assessment.final_comment" style="width: 100%; max-width: 100%;" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-sm-12">
-                                                <button v-if="!savingAssessment" @click.prevent="saveAssessment()" style="margin-top:10px" class="btn btn-primary pull-right">Save Assessment</button>
-                                                <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Saving</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
                                 <h3 class="panel-title">Proposed Conditions
                                     <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
                                         <span class="glyphicon glyphicon-chevron-down pull-right "></span>
@@ -211,9 +144,6 @@ export default {
             'application',
             'selected_activity_tab_id',
         ]),
-        inspection_report_file_name: function() {
-            return this.assessment.inspection_report != null ? this.assessment.inspection_report.name: '';
-        },
     },
     methods:{
         addCondition(){
@@ -248,43 +178,6 @@ export default {
             },(error) => {
                 console.log(error);
             })
-        },
-        fetchAssessment(){
-            this.$http.get(helpers.add_endpoint_join(api_endpoints.assessment,'get_latest_for_application_activity/?application_id='+
-                this.application.id + '&activity_id=' + this.selected_activity_tab_id)).then((response) => {
-                    this.assessment = response.body
-            },(error) => {
-                console.log(error);
-            })
-        },
-        saveAssessment: function(e) {
-            this.savingAssessment = true;
-            let formData = new FormData(this.form);
-            formData.append('inspection_comment', this.assessment.inspection_comment);
-            formData.append('final_comment', this.assessment.final_comment);
-            if (this.assessment.inspection_report) {
-                formData.append('inspection_report', this.assessment.inspection_report);
-            }
-            this.$http.put(helpers.add_endpoint_json(api_endpoints.assessment,this.assessment.id+'/update_assessment'),formData,{
-                    emulateJSON:true
-                }).then(res=>{
-                swal(
-                    'Save Assessment',
-                    'Your assessment has been saved.',
-                    'success'
-                ).then((result) => {
-                    this.savingAssessment = false;
-                    this.fetchAssessment();
-                });
-            },err=>{
-                swal(
-                    'Error',
-                    'There was an error saving your assessment',
-                    'error'
-                ).then((result) => {
-                    this.savingAssessment = false;
-                })
-            });
         },
         editCondition(_id){
             let vm = this;
@@ -355,7 +248,7 @@ export default {
         },
         //Initialise Date Picker
         initDatePicker: function() {
-            if(this.datepickerInitialised || this.$refs === undefined) {
+            if(this.datepickerInitialised || this.$refs === undefined || !this.assessment.is_inspection_required) {
                 return;
             }
             const inspection_date = this.$refs.inspection_date;
@@ -388,7 +281,6 @@ export default {
     },
     mounted: function(){
         this.fetchConditions();
-        this.fetchAssessment();
         this.$nextTick(() => {
             this.eventListeners();
             this.form = document.forms.assessment_form;
