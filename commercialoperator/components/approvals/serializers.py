@@ -8,8 +8,8 @@ from commercialoperator.components.approvals.models import (
     ApprovalUserAction
 )
 from commercialoperator.components.organisations.models import (
-                                Organisation
-                            )
+    Organisation
+)
 from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers
 
@@ -39,6 +39,8 @@ class ApprovalSerializer(serializers.ModelSerializer):
     #current_proposal = InternalProposalSerializer(many=False)
     #application_type = ApplicationTypeSerializer(many=True)
     application_type = serializers.SerializerMethodField(read_only=True)
+    can_renew = serializers.SerializerMethodField()
+    can_extend = serializers.SerializerMethodField()
 
     class Meta:
         model = Approval
@@ -76,6 +78,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'set_to_surrender',
             'set_to_suspend',
             'can_renew',
+            'can_extend',
             'can_amend',
             'can_reinstate',
             'application_type'
@@ -99,6 +102,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'can_reinstate',
             'can_amend',
             'can_renew',
+            'can_extend',
             'set_to_cancel',
             'set_to_suspend',
             'set_to_surrender',
@@ -115,13 +119,12 @@ class ApprovalSerializer(serializers.ModelSerializer):
         return None
 
     def get_application_type(self,obj):
-        #import ipdb; ipdb.set_trace()
         if obj.current_proposal.application_type:
             return obj.current_proposal.application_type.name
         return None
 
     def get_applicant(self,obj):
-        return obj.applicant
+        return obj.applicant.name if isinstance(obj.applicant, Organisation) else obj.applicant
 
     def get_applicant_type(self,obj):
         return obj.applicant_type
@@ -129,6 +132,15 @@ class ApprovalSerializer(serializers.ModelSerializer):
     def get_applicant_id(self,obj):
         return obj.applicant_id
 
+    def get_can_renew(self,obj):
+        return obj.can_renew
+
+    def get_can_extend(self,obj):
+        return obj.can_extend
+
+
+class ApprovalExtendSerializer(serializers.Serializer):
+    extend_details = serializers.CharField()
 
 class ApprovalCancellationSerializer(serializers.Serializer):
     cancellation_date = serializers.DateField(input_formats=['%d/%m/%Y'])

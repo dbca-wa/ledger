@@ -58,7 +58,8 @@ class Approval(RevisionedMixin):
         ('expired','Expired'),
         ('cancelled','Cancelled'),
         ('surrendered','Surrendered'),
-        ('suspended','Suspended')
+        ('suspended','Suspended'),
+        ('extended','extended'),
     )
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     status = models.CharField(max_length=40, choices=STATUS_CHOICES,
@@ -84,6 +85,7 @@ class Approval(RevisionedMixin):
     proxy_applicant = models.ForeignKey(EmailUser,on_delete=models.PROTECT, blank=True, null=True, related_name='proxy_approvals')
     extracted_fields = JSONField(blank=True, null=True)
     cancellation_details = models.TextField(blank=True)
+    extend_details = models.TextField(blank=True)
     cancellation_date = models.DateField(blank=True, null=True)
     set_to_cancel = models.BooleanField(default=False)
     set_to_suspend = models.BooleanField(default=False)
@@ -99,17 +101,18 @@ class Approval(RevisionedMixin):
     @property
     def applicant(self):
         #import ipdb; ipdb.set_trace()
-        if self.org_applicant:
-            return self.org_applicant.organisation.name
-        elif self.proxy_applicant:
-            return "{} {}".format(
-                self.proxy_applicant.first_name,
-                self.proxy_applicant.last_name)
+        if self.current_proposal.applicant:
+            return self.current_proposal.applicant
         else:
-            return None
-#            return "{} {}".format(
-#                self.submitter.first_name,
-#                self.submitter.last_name)
+            if self.org_applicant:
+                return self.org_applicant.organisation.name
+            elif self.proxy_applicant:
+                return "{} {}".format(
+                    self.proxy_applicant.first_name,
+                    self.proxy_applicant.last_name)
+            else:
+                return None
+
     @property
     def applicant_type(self):
         if self.org_applicant:
@@ -192,19 +195,27 @@ class Approval(RevisionedMixin):
             return False
 
     @property
+    def can_extend(self):
+        if self.current_proposal.application_type.name == 'E Class':
+            return self.current_proposal.application_type.max_renewals > self.renewal_count
+        return False
+
+
+    @property
     def can_renew(self):
         try:
-            if self.application_type.name == 'E Class':
-                return self.application_type.max_renewals > self.renewal_count
-                #pass
-            else:
-                renew_conditions = {
-                        'previous_application': self.current_proposal,
-                        'proposal_type': 'renewal'
-                        }
-                proposal=Proposal.objects.get(**renew_conditions)
-                if proposal:
-                    return False
+#            if self.current_proposal.application_type.name == 'E Class':
+#                #return (self.current_proposal.application_type.max_renewals is not None and self.current_proposal.application_type.max_renewals > self.renewal_count)
+#                return self.current_proposal.application_type.max_renewals > self.renewal_count
+#                #pass
+#            else:
+            renew_conditions = {
+                'previous_application': self.current_proposal,
+                'proposal_type': 'renewal'
+            }
+            proposal=Proposal.objects.get(**renew_conditions)
+            if proposal:
+                return False
         except Proposal.DoesNotExist:
             return True
 
@@ -277,6 +288,31 @@ class Approval(RevisionedMixin):
             except:
                 raise
 
+    def approval_extend(self,request,details):
+        with transaction.atomic():
+            try:
+                if not request.user in self.allowed_assessors:
+                    raise ValidationError('You do not have access to extend this approval')
+                if not self.can_extend and self.can_action:
+                    raise ValidationError('You cannot extend approval any further')
+                self.renewal_count += 1
+                self.extend_details = details.get('extend_details')
+                self.expiry_date = datetime.date(self.expiry_date.year + self.current_proposal.application_type.max_renewal_period, self.expiry_date.month, self.expiry_date.day)
+                #import ipdb; ipdb.set_trace()
+                today = timezone.now().date()
+                if self.expiry_date <= today:
+                    if not self.status == 'extended':
+                        self.status = 'extended'
+                        #send_approval_extend_email_notification(self)
+                self.save()
+                # Log proposal action
+                self.log_user_action(ApprovalUserAction.ACTION_EXTEND_APPROVAL.format(self.id),request)
+                # Log entry for organisation
+                self.current_proposal.log_user_action(ProposalUserAction.ACTION_EXTEND_APPROVAL.format(self.current_proposal.id),request)
+            except:
+                raise
+
+
     def approval_cancellation(self,request,details):
         with transaction.atomic():
             try:
@@ -288,6 +324,7 @@ class Approval(RevisionedMixin):
                 self.cancellation_details = details.get('cancellation_details')
                 cancellation_date = datetime.datetime.strptime(self.cancellation_date,'%Y-%m-%d')
                 cancellation_date = cancellation_date.date()
+                self.cancellation_date = cancellation_date # test hack
                 today = timezone.now().date()
                 if cancellation_date <= today:
                     if not self.status == 'cancelled':
@@ -373,7 +410,7 @@ class Approval(RevisionedMixin):
     def approval_surrender(self,request,details):
         with transaction.atomic():
             try:
-                if not request.user.commercialoperator_organisations.filter(organisation_id = self.applicant.id):
+                if not request.user.commercialoperator_organisations.filter(organisation_id = self.applicant_id):
                     if not request.user in self.allowed_assessors:
                         raise ValidationError('You do not have access to surrender this approval')
                 if not self.can_reissue and self.can_action:
@@ -428,6 +465,7 @@ class ApprovalUserAction(UserAction):
     ACTION_UPDATE_APPROVAL = "Create approval {}"
     ACTION_EXPIRE_APPROVAL = "Expire approval {}"
     ACTION_CANCEL_APPROVAL = "Cancel approval {}"
+    ACTION_EXTEND_APPROVAL = "Extend approval {}"
     ACTION_SUSPEND_APPROVAL = "Suspend approval {}"
     ACTION_REINSTATE_APPROVAL = "Reinstate approval {}"
     ACTION_SURRENDER_APPROVAL = "surrender approval {}"

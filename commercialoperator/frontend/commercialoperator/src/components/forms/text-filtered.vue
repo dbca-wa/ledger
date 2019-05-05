@@ -34,15 +34,23 @@
                       type to search users/organisations.
                   </template>
                   <template slot="option" slot-scope="option">
-                      <div class="d-center">
+                      <div v-if="option.email==''" class="d-center">
                           {{ option.name }}
+                      </div>
+                      <div v-else class="d-center">
+                          {{ option.name }} ({{ option.email }})
                       </div>
                   </template>
 
                   <template slot="selected-option" slot-scope="option">
                      <div class="selected d-center"  :user_id="option.id">
-                        <input type="hidden" class="form-control" :name="name+'-selected'" :value="option.email" />
-                        {{ option.name }} ({{ option.email }})
+                        <input type="hidden" class="form-control" :name="name+'-selected'" :value="option.id" />
+                        <span v-if="option.email==''">
+                          {{ option.name }}
+                        </span>
+                        <span v-else>
+                          {{ option.name }} ({{ option.email }})
+                        </span>
                     </div>
                   </template>
                 </v-select>

@@ -40,7 +40,7 @@ class LedgerOrganisationFilterSerializer(serializers.ModelSerializer):
         )
 
     def get_email(self, obj):
-        return 'todo'
+        return ''
 
 
 class OrganisationCheckSerializer(serializers.Serializer):

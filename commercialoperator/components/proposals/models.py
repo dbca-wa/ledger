@@ -1287,6 +1287,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                 previous_approval.replaced_by = approval
                                 previous_approval.save()
                     else:
+                        #import ipdb; ipdb.set_trace()
                         approval,created = Approval.objects.update_or_create(
                             current_proposal = checking_proposal,
                             defaults = {
@@ -1297,7 +1298,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                 'issue_date' : timezone.now(),
                                 'expiry_date' : details.get('expiry_date'),
                                 'start_date' : details.get('start_date'),
-                                'applicant' : self.applicant
+                                'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
                                 #'extracted_fields' = JSONField(blank=True, null=True)
                             }
                         )
@@ -1694,7 +1696,7 @@ class ProposalTrail(models.Model):
 
     def __str__(self):
         return self.trail.name
-    
+
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('trail', 'proposal')
@@ -1712,7 +1714,7 @@ class ProposalTrailSection(models.Model):
 
     def __str__(self):
         return '{} - {}'.format(self.proposal_trail, self.section.name)
-    
+
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('section', 'proposal_trail')
@@ -1734,7 +1736,7 @@ class ProposalTrailSectionActivity(models.Model):
 
     def __str__(self):
         return '{} - {}'.format(self.trail_section, self.activity.name)
-    
+
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('trail_section', 'activity')
@@ -1751,7 +1753,7 @@ class Vehicle(models.Model):
 
     def __str__(self):
         return '{} - {}'.format(self.rego, self.access_type)
-    
+
     class Meta:
         app_label = 'commercialoperator'
 
@@ -1771,7 +1773,7 @@ class Vessel(models.Model):
 
     def __str__(self):
         return '{} - {}'.format(self.spv_no, self.nominated_vessel)
-    
+
     class Meta:
         app_label = 'commercialoperator'
 
@@ -1786,7 +1788,7 @@ class ProposalRequest(models.Model):
 
     def __str__(self):
         return '{} - {}'.format(self.subject, self.text)
-    
+
     class Meta:
         app_label = 'commercialoperator'
 
@@ -1991,6 +1993,7 @@ class ProposalUserAction(UserAction):
     #Approval
     ACTION_REISSUE_APPROVAL = "Reissue approval for proposal {}"
     ACTION_CANCEL_APPROVAL = "Cancel approval for proposal {}"
+    ACTION_EXTEND_APPROVAL = "Extend approval"
     ACTION_SUSPEND_APPROVAL = "Suspend approval for proposal {}"
     ACTION_REINSTATE_APPROVAL = "Reinstate approval for proposal {}"
     ACTION_SURRENDER_APPROVAL = "Surrender approval for proposal {}"

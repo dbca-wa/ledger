@@ -37,11 +37,13 @@ from commercialoperator.components.approvals.models import (
 from commercialoperator.components.approvals.serializers import (
     ApprovalSerializer,
     ApprovalCancellationSerializer,
+    ApprovalExtendSerializer,
     ApprovalSuspensionSerializer,
     ApprovalSurrenderSerializer,
     ApprovalUserActionSerializer,
     ApprovalLogEntrySerializer
 )
+from commercialoperator.components.organisations.models import Organisation
 from commercialoperator.helpers import is_customer, is_internal
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from commercialoperator.components.proposals.api import ProposalFilterBackend, ProposalRenderer
@@ -180,16 +182,15 @@ class ApprovalViewSet(viewsets.ModelViewSet):
         try:
             #keys = request.data.keys()
             #file_keys = [key for key in keys if 'file-upload' in i]
-            import ipdb; ipdb.set_trace()
             org_applicant = None
             proxy_applicant = None
 
             _file = request.data.get('file-upload-0') if request.data.get('file-upload-0') else raiser('Licence File is required')
             try:
                 if request.data.get('applicant_type') == 'org':
-                    org_applicant = Organisation.objects.get(organisation__name=request.data.get('holder-selected'))
+                    org_applicant = Organisation.objects.get(organisation_id=request.data.get('holder-selected'))
                 else:
-                    proxy_applicant = EmailUser.objects.get(email=request.data.get('holder-selected'))
+                    proxy_applicant = EmailUser.objects.get(id=request.data.get('holder-selected'))
             except:
                 raise serializers.ValidationError('Licence holder is required')
 
@@ -197,7 +198,6 @@ class ApprovalViewSet(viewsets.ModelViewSet):
             issue_date = datetime.strptime(request.data.get('issue_date'), '%d/%m/%Y') if request.data.get('issue_date') else raiser('Issue Date is required')
             expiry_date = datetime.strptime(request.data.get('expiry_date'), '%d/%m/%Y') if request.data.get('expiry_date') else raiser('Expiry Date is required')
 
-            #import ipdb; ipdb.set_trace()
             approval = Approval.objects.create(issue_date=issue_date, expiry_date=expiry_date, start_date=start_date, org_applicant=org_applicant, proxy_applicant=proxy_applicant)
             approval.current_proposal = Proposal.objects.get(id=0) # Dummy 'E Class' proposal
 
@@ -281,7 +281,26 @@ class ApprovalViewSet(viewsets.ModelViewSet):
 #        serializer = self.get_serializer(result_page, context={'request':request}, many=True)
 #        return paginator.get_paginated_response(serializer.data)
 
-
+    @detail_route(methods=['POST',])
+    def approval_extend(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = ApprovalExtendSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance.approval_extend(request,serializer.validated_data)
+            serializer = ApprovalSerializer(instance,context={'request':request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST',])
     def approval_cancellation(self, request, *args, **kwargs):
@@ -412,7 +431,6 @@ class ApprovalViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 comms = serializer.save()
                 # Save the files
-                import ipdb; ipdb.set_trace()
                 for f in request.FILES:
                     document = comms.documents.create()
                     document.name = str(request.FILES[f])
