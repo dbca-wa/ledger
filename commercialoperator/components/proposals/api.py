@@ -295,6 +295,21 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         return self.paginator.get_paginated_response(serializer.data)
 
     @list_route(methods=['GET',])
+    def qaofficer_info(self, request, *args, **kwargs):
+        """
+        Used by the internal dashboard
+
+        http://localhost:8499/api/proposal_paginated/qaofficer_internal/?format=datatables&draw=1&length=2
+        """
+        #import ipdb; ipdb.set_trace()
+        qa_officers = QAOfficerGroup.objects.get(default=True).members.all().values_list('email', flat=True)
+        if request.user.email in qa_officers:
+            return Response({'QA_Officer': True})
+        else:
+            return Response({'QA_Officer': False})
+
+
+    @list_route(methods=['GET',])
     def qaofficer_internal(self, request, *args, **kwargs):
         """
         Used by the internal dashboard
