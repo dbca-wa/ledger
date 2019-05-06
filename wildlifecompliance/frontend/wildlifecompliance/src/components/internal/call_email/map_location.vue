@@ -14,10 +14,9 @@
             </div>
         </div>
 
-
         <div class="col-sm-12"><div class="row">
             <input type="checkbox" v-model="marker_locked" />
-            <label class="col-sm-2">Lock Marker Location</label>
+            <label class="col-sm-4">Lock Marker Location</label>
         </div></div>
         <div id="lat" class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Latitude:</label>
@@ -28,28 +27,37 @@
             <input class="form-control" v-model="call_email.location.geometry.coordinates[0]" />
         </div></div>
 
-        <div class="col-sm-12 form-group"><div class="row">
-            <label class="col-sm-4">Street</label>
-            <input class="form-control" v-model="call_email.location.properties.street" />
-        </div></div>
-        <div class="col-sm-12 form-group"><div class="row">
-            <label class="col-sm-4">Town/Suburb</label>
-            <input class="form-control" v-model="call_email.location.properties.town_suburb" />
-        </div></div>
-        <div class="col-sm-12 form-group"><div class="row">
-            <label class="col-sm-4">State</label>
-            <input class="form-control" v-model="call_email.location.properties.state" />
-        </div></div>
-        <div class="col-sm-12 form-group"><div class="row">
-            <label class="col-sm-4">Postcode</label>
-            <input class="form-control" v-model="call_email.location.properties.postcode" />
-        </div></div>
-        <div class="col-sm-12 form-group"><div class="row">
-            <label class="col-sm-4">Country</label>
-            <input class="form-control" v-model="call_email.location.properties.country" />
-       </div></div>
-       <button @click.prevent="saveInstanceLocation"
-            class="btn btn-primary pull-right">update</button>
+        <div id="location_fields_address">
+            <div class="col-sm-12 form-group"><div class="row">
+                <label class="col-sm-4">Street</label>
+                <input class="form-control" v-model="call_email.location.properties.street" />
+            </div></div>
+            <div class="col-sm-12 form-group"><div class="row">
+                <label class="col-sm-4">Town/Suburb</label>
+                <input class="form-control" v-model="call_email.location.properties.town_suburb" />
+            </div></div>
+            <div class="col-sm-12 form-group"><div class="row">
+                <label class="col-sm-4">State</label>
+                <input class="form-control" v-model="call_email.location.properties.state" />
+            </div></div>
+            <div class="col-sm-12 form-group"><div class="row">
+                <label class="col-sm-4">Postcode</label>
+                <input class="form-control" v-model="call_email.location.properties.postcode" />
+            </div></div>
+            <div class="col-sm-12 form-group"><div class="row">
+                <label class="col-sm-4">Country</label>
+                <input class="form-control" v-model="call_email.location.properties.country" />
+            </div></div>
+        </div>
+
+        <div id="location_fields_details">
+            <div class="col-sm-12 form-group"><div class="row">
+                <label class="col-sm-4">Details</label>
+                <textarea id="location_address_field" class="form-control" v-model="call_email.location.properties.country" />
+            </div></div>
+        </div>
+    
+       <button @click.prevent="saveInstanceLocation" class="btn btn-primary pull-right">update</button>
     </div>
 </template>
 
@@ -69,8 +77,6 @@ import Overlay from 'ol/Overlay';
 import Point from 'ol/geom/Point.js';
 import VectorSource from 'ol/source/Vector.js';
 import { Icon, Style } from 'ol/style.js';
-//import Geocoder from 'ol-geocoder/dist/ol-geocoder.js';
-//import pin_gray from '../../../assets/map_pins/pin_gray.png';
 
 import 'ol/ol.css';
 import 'bootstrap/dist/css/bootstrap.css';
@@ -89,36 +95,27 @@ export default {
             map: null,
             popup: null,
             element: null,
-            lat_4326_cursor: null,
-            lng_4326_cursor: null,
             marker_locked: false,
             base_layer: 'osm',
             awe: null,
             suggest_list: [],
 
             feature_marker: null,
-            lat_4326: -32,
-            lng_4326: 121,
             country: null,
             postcode: null,
             state: null,
             street: null,
             town_suburb: null,
-            //dummyPoint: [-32, 119],
-            dummyPoint: [119, -32],
         };
     },
     computed: {
-    
-    
-    ...mapGetters('callemailStore', {
-      call_email: 'call_email',
-    }),
-
+        ...mapGetters('callemailStore', {
+            call_email: 'call_email',
+        }),
     },
     mounted: function(){
-        console.log("this.call_email.location.geometry.coordinates");
-        console.log(this.call_email.location.geometry.coordinates);
+        console.log("this.call_email.location");
+        console.log(this.call_email.location);
         this.$nextTick(function() {
         console.debug('Start loading map');
         this.initMap();
@@ -134,7 +131,6 @@ export default {
             saveLocation: 'saveLocation',
             setLocationPoint: 'setLocationPoint',
         }),
-
         saveInstanceLocation: async function() {
             await this.$nextTick();
             this.saveLocation();
@@ -152,11 +148,14 @@ export default {
                 }),
                 dataType: 'json',
                 success: function(data, status, xhr) {
-                    self.suggest_list = [];
+                    self.suggest_list = [];  // Clear the list first
                     if (data.features && data.features.length > 0){
                         console.log(data);
                         for (var i = 0; i < data.features.length; i++){
-                            self.suggest_list.push({ label: data.features[i].place_name, value: data.features[i].place_name, geometry: data.features[i].geometry });
+                            self.suggest_list.push({ label: data.features[i].place_name,
+                                                     value: data.features[i].place_name, 
+                                                     feature: data.features[i]
+                                                     });
                         }
                     }
 
@@ -176,15 +175,38 @@ export default {
                     return false;
                 }
             }).on('awesomplete-selectcomplete', function(ev){
+                /* User selected one of the search results */
                 for (var i=0; i<self.suggest_list.length; i++){
                     if (self.suggest_list[i].value == ev.target.value){
-                        self.moveMapCentre(self.suggest_list[i].geometry.coordinates);
+                        self.moveMapCentre(self.suggest_list[i].feature.geometry.coordinates);
                         if(!self.marker_locked){
-                            self.relocateMarker4326(self.suggest_list[i].geometry.coordinates);
+                            self.relocateMarker4326(self.suggest_list[i].feature.geometry.coordinates);
+                            if(self.suggest_list[i].feature.place_type.includes('address')){
+                                /* Selection has address ==> Update address fields */
+                                self.updateAddressFields(self.suggest_list[i].feature);
+                            }
                         }
                     }
                 }
             });
+        },
+        updateAddressFields(feature){
+            var address_arr = feature.place_name.split(',');
+
+            /* street */
+            this.call_email.location.properties.street = address_arr[0];
+
+            /* suburb, state */
+            let reg = /^([a-zA-Z0-9\s]*)\s(New South Wales|Queensland|South Australia|Tasmania|Victoria|Western Australia|Northern Territory|Australian Capital Territory)\s(\d{4})$/gi;
+            var result = reg.exec(address_arr[1]);
+            console.log(result);
+
+            this.call_email.location.properties.town_suburb = result[1].trim();
+            this.call_email.location.properties.state = result[2].trim();
+            this.call_email.location.properties.postcode = result[3].trim();
+
+
+
         },
         moveMapCentre: function(coordinates){
             var self = this;
@@ -207,18 +229,34 @@ export default {
                     }
                 }
             });
-            if (selected_layer_name == 'sat')
-            {
-                $('#basemap_osm').show();
+            if (selected_layer_name == 'sat') {
                 $('#basemap_sat').hide();
+                $('#basemap_osm').show();
             }
-            else
-            {
+            else {
                 $('#basemap_osm').hide();
                 $('#basemap_sat').show();
             }
         },
-
+        refreshAddressDetailsFields: function(){
+            if(this.call_email.location.geometry.properties.street){
+                this.showHideAddressDetailsFields(true, false);
+            } else {
+                this.showHideAddressDetailsFields(false, true);
+            }
+        },
+        showHideAddressDetailsFields: function(showAddressFields, showDetailsFields){
+            if(showAddressFields){
+                $("#location_fields_address").fadeIn();
+            } else {
+                $("#location_fields_address").fadeOut();
+            }
+            if(showDetailsFields){
+                $("#location_fields_details").fadeIn();
+            } else {
+                $("#location_fields_details").fadeOut();
+            }
+        },
         addGeocoder: function(){
             console.log(Geocoder);
             var geocoder = new Geocoder('nominatim', {
@@ -243,6 +281,7 @@ export default {
                 self.map.removeLayer(layerAdded);
             });
         },
+        /* this function retrieve the coordinates from vuex and applys it to the marker */
         refreshMarkerLocation: function(){
             if (this.call_email.location.geometry.coordinates.length > 0) {
                     this.feature_marker.getGeometry().setCoordinates(
@@ -350,6 +389,10 @@ export default {
             });
             this.map.addOverlay(this.popup);
         },
+        getMarkerAddress: function(){
+
+        },
+        /* this function stores the coordinates into the vuex, then call refresh marker function */
         relocateMarker: function(coords_3857){ 
             this.setLocationPoint(transform([coords_3857[0], coords_3857[1]], 'EPSG:3857', 'EPSG:4326'));
             this.refreshMarkerLocation();
@@ -360,12 +403,8 @@ export default {
         mapClickHandler: function(e){
             var coordinate = e.coordinate;
             console.debug(coordinate);
-            this.lng_4326_cursor = coordinate[0];
-            this.lat_4326_cursor = coordinate[1];
 
             var lnglat_4326 = transform([coordinate[0], coordinate[1]], 'EPSG:3857', 'EPSG:4326')
-            this.lng_4326_cursor = lnglat_4326[0];
-            this.lat_4326_cursor = lnglat_4326[1];
 
             var feature = this.map.forEachFeatureAtPixel(e.pixel,
                 function(feature) {
@@ -378,11 +417,8 @@ export default {
                     placement: 'top',
                     html: true,
                     content: '<p>' 
-                    + this.call_email.location.properties.street + ' ' 
-                    + this.call_email.location.properties.town_suburb + '<br />'
-                    + this.call_email.location.properties.state + ' ' 
-                    + this.call_email.location.properties.postcode + ' ' 
-                    + this.call_email.location.properties.country 
+                    + this.call_email.location.properties.street + ' ' + this.call_email.location.properties.town_suburb + '<br />'
+                    + this.call_email.location.properties.state + ' ' + this.call_email.location.properties.postcode + ' ' + this.call_email.location.properties.country 
                     + '</p>',
                 });
                 $(this.element).popover('show');
@@ -400,7 +436,7 @@ export default {
 <style lang="css">
 #mapOL {
     position: relative;
-    height: 400px;
+    height: 500px;
 }
 .popover {
     position: relative;
@@ -448,5 +484,8 @@ export default {
     -moz-filter: brightness(0.8);
     -webkit-filter: brightness(0.8);
     filter: brightness(0.8);
+}
+#location_address_field {
+    resize: vertical;
 }
 </style>
