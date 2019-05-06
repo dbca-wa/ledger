@@ -26,6 +26,7 @@ class ReturnSerializer(serializers.ModelSerializer):
     processing_status = serializers.CharField(
         source='get_processing_status_display') # TODO: check if this should be changed to use CustomChoice
     submitter = EmailUserSerializer()
+    lodgement_number = serializers.SerializerMethodField()
     licence_species_list = serializers.SerializerMethodField()
     sheet_activity_list = serializers.SerializerMethodField()
     sheet_species_list = serializers.SerializerMethodField()
@@ -40,6 +41,7 @@ class ReturnSerializer(serializers.ModelSerializer):
             'processing_status',
             'submitter',
             'assigned_to',
+            'lodgement_number',
             'lodgement_date',
             'nil_return',
             'licence',
@@ -86,6 +88,14 @@ class ReturnSerializer(serializers.ModelSerializer):
         :return: species identifiers for a Return Licence.
         """
         return _return.sheet.licence_species_list if _return.has_sheet else None
+
+    def get_lodgement_number(self, _return):
+        """
+        Gets the lodgement number for a submitted Return.
+        :param _return: Return instance.
+        :return: lodgement number.
+        """
+        return _return.lodgement_number if _return.lodgement_date else '{0} (Pending)'.format(_return.id)
 
 
 class ReturnTypeSerializer(serializers.ModelSerializer):

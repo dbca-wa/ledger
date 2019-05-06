@@ -240,6 +240,17 @@
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
+        <GridBlock v-if="component.type === 'grid'"
+            :name="component.name"
+            :headers="component.headers"
+            :field_data="component.data"
+            :id="element_id()"
+            :label="component.label"
+            :help_text="help_text"
+            :readonly="is_readonly"
+            :isRequired="component.isRequired"
+            :help_text_url="help_text_url"/>
+
     </span>
 </template>
 
@@ -269,6 +280,7 @@ import HelpTextUrl from '@/components/forms/help_text_url.vue'
 import CommentRadioCheckBox from '@/components/forms/comment_icon_checkbox_radio.vue'
 import TableBlock from '@/components/forms/table.vue'
 import ExpanderTable from '@/components/forms/expander_table.vue'
+import GridBlock from '@/components/forms/grid.vue'
 
 const RendererBlock = {
   name: 'renderer-block',
@@ -290,6 +302,7 @@ const RendererBlock = {
       LabelBlock,
       TableBlock,
       ExpanderTable,
+      GridBlock,
   },
   data: function() {
     return {
