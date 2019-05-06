@@ -93,7 +93,7 @@
                         </div>
                     </div>
                 </div>
-        <Assessment :proposal="proposal" :assessment="proposal.assessor_assessment" :hasAssessorMode="hasAssessorMode"></Assessment>
+        <!-- <Assessment :proposal="proposal" :assessment="proposal.assessor_assessment" :hasAssessorMode="hasAssessorMode" :is_internal="is_internal" :is_referral="is_referral"></Assessment> -->
     </div>
 </template>
 
@@ -167,9 +167,9 @@ from '@/utils/hooks'
         contactsURL: function(){
             return this.proposal!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.proposal.applicant.id+'/contacts') : '';
         },
-        hasAssessorMode:function(){
-            return this.proposal && this.proposal.assessor_mode.has_assessor_mode ? true : false;
-        },
+        // hasAssessorMode:function(){
+        //     return this.proposal && this.proposal.assessor_mode.has_assessor_mode ? true : false;
+        // },
         },
         methods:{
             initialiseOrgContactTable: function(){

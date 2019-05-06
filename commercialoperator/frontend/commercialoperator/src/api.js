@@ -29,6 +29,7 @@ module.exports = {
     parks:"/api/parks.json",
     vehicles:"/api/vehicles.json",
     vessels:"/api/vessels.json",
+    assessments:"/api/assessments.json",
 
     // used in internal and external dashboards
     proposals_paginated_external:   "/api/proposal_paginated/proposals_external/?format=datatables",

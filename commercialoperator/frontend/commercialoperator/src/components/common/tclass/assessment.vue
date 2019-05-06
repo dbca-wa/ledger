@@ -6,7 +6,7 @@
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <h3 class="panel-title">Workflow - Checklist
-                                <a class="panelClicker" :href="'#'+detailsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="detailsBody">
+                                <a class="panelClicker" :href="'#'+detailsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="detailsBody">
                                     <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                                 </a>
                             </h3> 
@@ -60,7 +60,19 @@ from '@/utils/hooks'
             hasAssessorMode:{
                 type:Boolean,
                 default: false
-            }
+            },
+            is_internal:{
+              type: Boolean,
+              default: false
+            },
+            is_referral:{
+              type: Boolean,
+              default: false
+            },
+            hasReferralMode:{
+                type:Boolean,
+                default: false
+            },
         },
         data:function () {
             let vm=this;
@@ -78,6 +90,25 @@ from '@/utils/hooks'
         methods:{
             update: function(){
                 let vm=this;
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessments,vm.assessment.id+'/update_assessment'),JSON.stringify(vm.assessment),{
+                        emulateJSON:true,
+                    }).then((response)=>{
+                        vm.assessment=helpers.copyObject(response.body)
+                        swal(
+                        'Checklist update',
+                        'Checklist has been updated',
+                        'success'
+                        )
+
+                    },(error)=>{
+                        
+                        vm.errorString = helpers.apiVueResourceError(error);
+                        swal(
+                        'Checklist Error',
+                        helpers.apiVueResourceError(error),
+                        'error'
+                        )
+                    });
             },
         },
         mounted: function(){

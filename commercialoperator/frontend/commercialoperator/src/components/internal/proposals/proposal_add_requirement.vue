@@ -123,8 +123,8 @@ export default {
                 required: true
             },
             hasReferralMode:{
-            type:Boolean,
-            default: false
+                type:Boolean,
+                default: false
             },
             referral_group:{
                 type:Number,

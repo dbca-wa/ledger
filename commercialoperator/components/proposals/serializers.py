@@ -235,7 +235,7 @@ class ChecklistQuestionSerializer(serializers.ModelSerializer):
                 'text',
                 'correct_answer',
                 )
-class ProposalAssessementAnswerSerializer(serializers.ModelSerializer):
+class ProposalAssessmentAnswerSerializer(serializers.ModelSerializer):
     question=ChecklistQuestionSerializer(read_only=True)
     class Meta:
         model = ProposalAssessmentAnswer
@@ -244,8 +244,8 @@ class ProposalAssessementAnswerSerializer(serializers.ModelSerializer):
                 'answer',
                 )
 
-class ProposalAssessementSerializer(serializers.ModelSerializer):
-    checklist=ProposalAssessementAnswerSerializer(many=True)
+class ProposalAssessmentSerializer(serializers.ModelSerializer):
+    checklist=ProposalAssessmentAnswerSerializer(many=True, read_only=True)
 
     class Meta:
         model = ProposalAssessment
@@ -604,7 +604,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     district = serializers.CharField(source='district.name', read_only=True)
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
     qaofficer_referrals = QAOfficerReferralSerializer(many=True)
-    assessor_assessment=ProposalAssessementSerializer(read_only=True)
+    assessor_assessment=ProposalAssessmentSerializer(read_only=True)
 
     class Meta:
         model = Proposal

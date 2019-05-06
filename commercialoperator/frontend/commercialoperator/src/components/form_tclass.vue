@@ -68,6 +68,7 @@
                   </div>
                   <div v-else>
                     <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant>
+                    <Assessment :proposal="proposal" :assessment="proposal.assessor_assessment" :hasAssessorMode="hasAssessorMode" :is_internal="is_internal" :is_referral="is_referral"></Assessment>
                   </div>
               </div>
               <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">
@@ -97,6 +98,7 @@
     import Profile from '@/components/user/profile.vue'
     import Organisation from '@/components/external/organisations/manage.vue'
     import Applicant from '@/components/common/tclass/applicant.vue'
+    import Assessment from '@/components/common/tclass/assessment.vue'
     import ActivitiesLand from '@/components/common/tclass/activities_land.vue'
     import ActivitiesMarine from '@/components/common/tclass/activities_marine.vue'
     import OtherDetails from '@/components/common/tclass/other_details.vue'
@@ -109,14 +111,6 @@
                 type: Object,
                 required:true
             },
-            withSectionsSelector:{
-                type: Boolean,
-                default: true
-            },
-            form_width: {
-                type: String,
-                default: 'col-md-9'
-            },
             canEditActivities:{
               type: Boolean,
               default: true
@@ -124,7 +118,23 @@
             is_external:{
               type: Boolean,
               default: false
-            }
+            },
+            is_internal:{
+              type: Boolean,
+              default: false
+            },
+            is_referral:{
+              type: Boolean,
+              default: false
+            },
+            hasReferralMode:{
+                type:Boolean,
+                default: false
+            },
+            hasAssessorMode:{
+                type:Boolean,
+                default: false
+            },
         },
         data:function () {
             return{
@@ -141,6 +151,7 @@
             Confirmation,
             Profile,
             Organisation,
+            Assessment
         },
         methods:{
         },

@@ -252,7 +252,7 @@
                         <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
                             <!-- <Proposal form_width="inherit" :withSectionsSelector="false" v-if            ="proposal" :proposal="proposal"> -->
                                 
-                                <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="false" :is_external="false"></ProposalTClass>
+                                <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="false" :is_external="false" :is_referral="false"></ProposalTClass>
                                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                 <input type='hidden' name="proposal_id" :value="1" />
