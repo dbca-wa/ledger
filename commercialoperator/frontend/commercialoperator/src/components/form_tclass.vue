@@ -68,7 +68,17 @@
                   </div>
                   <div v-else>
                     <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant>
-                    <Assessment :proposal="proposal" :assessment="proposal.assessor_assessment" :hasAssessorMode="hasAssessorMode" :is_internal="is_internal" :is_referral="is_referral"></Assessment>
+                    <div v-if="is_internal">
+                      <Assessment :proposal="proposal" :assessment="proposal.assessor_assessment" :hasAssessorMode="hasAssessorMode" :is_internal="is_internal" :is_referral="is_referral"></Assessment>
+                      <div v-for="assess in proposal.referral_assessments">
+                        <Assessment :proposal="proposal" :assessment="assess"></Assessment>
+                      </div>
+                    </div>
+                    <div v-if="is_referral">
+                      <Assessment :proposal="proposal" :assessment="referral.referral_assessment" :hasReferralMode="hasReferralMode" :is_internal="is_internal" :is_referral="is_referral"></Assessment>
+                    </div>
+                    
+
                   </div>
               </div>
               <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">
@@ -134,6 +144,10 @@
             hasAssessorMode:{
                 type:Boolean,
                 default: false
+            },
+            referral:{
+                type: Object,
+                required:false
             },
         },
         data:function () {

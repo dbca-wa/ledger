@@ -605,6 +605,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
     qaofficer_referrals = QAOfficerReferralSerializer(many=True)
     assessor_assessment=ProposalAssessmentSerializer(read_only=True)
+    referral_assessments=ProposalAssessmentSerializer(read_only=True, many=True)
 
     class Meta:
         model = Proposal
@@ -665,7 +666,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'trails',
                 'training_completed',
                 'can_edit_activities',
-                'assessor_assessment'
+                'assessor_assessment',
+                'referral_assessments'
                 )
         read_only_fields=('documents','requirements')
 
@@ -726,6 +728,7 @@ class ReferralSerializer(serializers.ModelSerializer):
     latest_referrals = ProposalReferralSerializer(many=True)
     can_be_completed = serializers.BooleanField()
     can_process=serializers.SerializerMethodField()
+    referral_assessment=ProposalAssessmentSerializer(read_only=True)
 
 
     class Meta:

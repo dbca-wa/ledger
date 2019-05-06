@@ -1,11 +1,11 @@
 <template lang="html">
     <div class="row">
-        <div class="col-sm-12">
+        <div class="">
             <div class="col-md-12">
                 <div class="">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <h3 class="panel-title">Workflow - Checklist
+                            <h3 class="panel-title">Workflow - Checklist<small v-if="assessment.referral_group">   Referral Group: {{assessment.referral_group}}</small>
                                 <a class="panelClicker" :href="'#'+detailsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="detailsBody">
                                     <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                                 </a>
@@ -28,7 +28,7 @@
                                     </div>
                                 </div>
                                 </ul>
-                                <div v-if="hasAssessorMode" class="form-group col-sm-12">             
+                                <div v-if="hasAssessorMode || hasReferralMode" class="form-group col-sm-12">             
                                         <button class="btn btn-primary pull-right" style="margin-top:5px;" @click.prevent="update()">Update</button>                     
                                 </div> 
                             </form>
@@ -90,7 +90,8 @@ from '@/utils/hooks'
         methods:{
             update: function(){
                 let vm=this;
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessments,vm.assessment.id+'/update_assessment'),JSON.stringify(vm.assessment),{
+                let assessment = JSON.parse(JSON.stringify(vm.assessment));
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.assessments,vm.assessment.id+'/update_assessment'),JSON.stringify(assessment),{
                         emulateJSON:true,
                     }).then((response)=>{
                         vm.assessment=helpers.copyObject(response.body)

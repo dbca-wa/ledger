@@ -564,6 +564,14 @@ class Proposal(RevisionedMixin):
         else:
             return None
 
+    @property
+    def referral_assessments(self):
+        qs=self.assessment.filter(referral_assessment=True, referral_group__isnull=False)
+        if qs:
+            return qs
+        else:
+            return None
+
 
     @property
     def permit(self):
@@ -859,6 +867,18 @@ class Proposal(RevisionedMixin):
                             sent_by=request.user,
                             text=referral_text
                         )
+                        #Create assessor checklist with the current assessor_list type questions
+                        #Assessment instance already exits then skip.
+                        try:
+                            referral_assessment=ProposalAssessment.objects.get(proposal=self,referral_group=referral_group, referral_assessment=True)
+                        except ProposalAssessment.DoesNotExist:
+                            referral_assessment=ProposalAssessment.objects.create(proposal=self,referral_group=referral_group, referral_assessment=True)
+                            checklist=ChecklistQuestion.objects.filter(list_type='referral_list', obsolete=False)
+                            for chk in checklist:
+                                try:
+                                    chk_instance=ProposalAssessmentAnswer.objects.get(question=chk, assessment=referral_assessment)
+                                except ProposalAssessmentAnswer.DoesNotExist:
+                                    chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=referral_assessment) 
                     # Create a log entry for the proposal
                     #self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
                     self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}'.format(referral_group.name)),request)
@@ -1978,7 +1998,8 @@ class ReferralRecipientGroup(models.Model):
     members = models.ManyToManyField(EmailUser)
 
     def __str__(self):
-        return 'Referral Recipient Group'
+        #return 'Referral Recipient Group'
+        return self.name
 
     @property
     def all_members(self):
@@ -2105,6 +2126,15 @@ class Referral(RevisionedMixin):
     @property
     def latest_referrals(self):
         return Referral.objects.filter(sent_by=self.referral, proposal=self.proposal)[:2]
+
+    @property
+    def referral_assessment(self):
+        qs=self.assessment.filter(referral_assessment=True, referral_group=self.referral_group)
+        if qs:
+            return qs[0]
+        else:
+            return None
+
 
     @property
     def can_be_completed(self):
@@ -2369,9 +2399,9 @@ class ProposalAssessment(RevisionedMixin):
     submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='proposal_assessment')
     referral_assessment=models.BooleanField(default=False)
     referral_group = models.ForeignKey(ReferralRecipientGroup,null=True,blank=True,related_name='referral_assessment')
-
-    def __str__(self):
-        return self.proposal
+    referral=models.ForeignKey(Referral, related_name='assessment',blank=True, null=True )
+    # def __str__(self):
+    #     return self.proposal
 
     class Meta:
         app_label = 'commercialoperator'
@@ -2389,7 +2419,7 @@ class ProposalAssessmentAnswer(RevisionedMixin):
     assessment=models.ForeignKey(ProposalAssessment, related_name='answers', null=True, blank=True)
 
     def __str__(self):
-        return self.question
+        return self.question.text
 
     class Meta:
         app_label = 'commercialoperator'
