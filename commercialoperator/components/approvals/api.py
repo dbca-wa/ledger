@@ -29,7 +29,7 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from commercialoperator.components.proposals.models import Proposal
+from commercialoperator.components.proposals.models import Proposal, ApplicationType
 from commercialoperator.components.approvals.models import (
     Approval,
     ApprovalDocument
@@ -180,32 +180,50 @@ class ApprovalViewSet(viewsets.ModelViewSet):
         def raiser(exception): raise serializers.ValidationError(exception)
 
         try:
-            #keys = request.data.keys()
-            #file_keys = [key for key in keys if 'file-upload' in i]
-            org_applicant = None
-            proxy_applicant = None
+            with transaction.atomic():
+                #keys = request.data.keys()
+                #file_keys = [key for key in keys if 'file-upload' in i]
+                org_applicant = None
+                proxy_applicant = None
 
-            _file = request.data.get('file-upload-0') if request.data.get('file-upload-0') else raiser('Licence File is required')
-            try:
-                if request.data.get('applicant_type') == 'org':
-                    org_applicant = Organisation.objects.get(organisation_id=request.data.get('holder-selected'))
-                else:
-                    proxy_applicant = EmailUser.objects.get(id=request.data.get('holder-selected'))
-            except:
-                raise serializers.ValidationError('Licence holder is required')
+                _file = request.data.get('file-upload-0') if request.data.get('file-upload-0') else raiser('Licence File is required')
+                try:
+                    #import ipdb; ipdb.set_trace()
+                    if request.data.get('applicant_type') == 'org':
+                        org_applicant = Organisation.objects.get(organisation_id=request.data.get('holder-selected'))
+                    else:
+                        proxy_applicant = EmailUser.objects.get(id=request.data.get('holder-selected'))
+                except:
+                    raise serializers.ValidationError('Licence holder is required')
 
-            start_date = datetime.strptime(request.data.get('start_date'), '%d/%m/%Y') if request.data.get('start_date') else raiser('Start Date is required')
-            issue_date = datetime.strptime(request.data.get('issue_date'), '%d/%m/%Y') if request.data.get('issue_date') else raiser('Issue Date is required')
-            expiry_date = datetime.strptime(request.data.get('expiry_date'), '%d/%m/%Y') if request.data.get('expiry_date') else raiser('Expiry Date is required')
+                start_date = datetime.strptime(request.data.get('start_date'), '%d/%m/%Y') if request.data.get('start_date') else raiser('Start Date is required')
+                issue_date = datetime.strptime(request.data.get('issue_date'), '%d/%m/%Y') if request.data.get('issue_date') else raiser('Issue Date is required')
+                expiry_date = datetime.strptime(request.data.get('expiry_date'), '%d/%m/%Y') if request.data.get('expiry_date') else raiser('Expiry Date is required')
 
-            approval = Approval.objects.create(issue_date=issue_date, expiry_date=expiry_date, start_date=start_date, org_applicant=org_applicant, proxy_applicant=proxy_applicant)
-            approval.current_proposal = Proposal.objects.get(id=0) # Dummy 'E Class' proposal
+                application_type, app_type_created = ApplicationType.objects.get_or_create(
+                    name='E Class',
+                    defaults={'visible':False, 'max_renewals':1, 'max_renewal_period':5}
+                )
 
-            doc = ApprovalDocument.objects.create(approval=approval, _file=_file)
-            approval.licence_document=doc
-            approval.save()
+                proposal, proposal_created = Proposal.objects.get_or_create( # Dummy 'E Class' proposal
+                    id=0,
+                    defaults={'application_type':application_type, 'submitter':request.user, 'schema':[]}
+                )
 
-            return Response({'approval': approval.lodgement_number})
+                approval = Approval.objects.create(
+                    issue_date=issue_date,
+                    expiry_date=expiry_date,
+                    start_date=start_date,
+                    org_applicant=org_applicant,
+                    proxy_applicant=proxy_applicant,
+                    current_proposal=proposal
+                )
+
+                doc = ApprovalDocument.objects.create(approval=approval, _file=_file)
+                approval.licence_document=doc
+                approval.save()
+
+                return Response({'approval': approval.lodgement_number})
 
         except serializers.ValidationError:
             print(traceback.print_exc())

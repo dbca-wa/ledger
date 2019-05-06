@@ -61,16 +61,16 @@
                     <div class="panel-heading">
                        History
                     </div>
-                                    <table class="table small-table">
-                                        <tr>
-                                            <th>Last Modified</th>
-                                            <th></th>
-                                        </tr>
-                                        <tr v-for="p in proposal.reversion_ids">
-                                            <td>{{ p.created | formatDate }}</td>
-                                            <td><a id="history_id" :href="history_url+'version_id2='+ p.cur_version_id +'&version_id1='+ p.prev_version_id" target="_blank">compare</a></td>
-                                        </tr>
-                                    </table>
+                    <table class="table small-table">
+                        <tr>
+                            <th>Last Modified</th>
+                            <th></th>
+                        </tr>
+                        <tr v-for="p in proposal.reversion_ids">
+                            <td>{{ p.created | formatDate }}</td>
+                            <td><a id="history_id" :href="history_url+'version_id2='+ p.cur_version_id +'&version_id1='+ p.prev_version_id" target="_blank">compare</a></td>
+                        </tr>
+                    </table>
                 </div>
             </div>
 

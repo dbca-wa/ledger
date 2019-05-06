@@ -157,7 +157,7 @@
                             <label for="" class="col-sm-3 control-label">Expiry Date</label>
                             <div class="col-sm-3">
                                 <label for="" class="control-label pull-left">{{approval.expiry_date | formatDate}}</label>
-                                <label v-if="extended" for="" class="control-label pull-left">(Extended)</label>
+                                <label v-if="extended" for="" class="control-label pull-left" style="color: green;">(Extended)</label>
                             </div>
                             
                           </div>
@@ -196,14 +196,14 @@ export default {
             applicant_id: null,
             applicant_type: null,
         },
+        applicant: {
+            address: {},
+        },
         DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
         adBody: 'adBody'+vm._uid,
         pBody: 'pBody'+vm._uid,
         cBody: 'cBody'+vm._uid,
         oBody: 'oBody'+vm._uid,
-        applicant: {
-            address: {}
-        },
         extended: false,
         
         // Filters
@@ -241,7 +241,15 @@ export default {
     isLoading: function () {
       return this.loading.length > 0;
     },
-
+    address_default: function () {
+        return {
+            line1: 'Is address saved?',
+            locality: '',
+            state: '',
+            postcode: '',
+            country: '',
+        }
+    }
   },
   methods: {
     commaToNewline(s){
@@ -252,7 +260,13 @@ export default {
         Vue.http.get(helpers.add_endpoint_json(api_endpoints.organisations,applicant_id)).then((response) => {
 
             vm.applicant = response.body;
-            vm.applicant.address = response.body.address;
+            vm.applicant.name = response.body.name;
+            vm.applicant.abn = response.body.abn;
+            if (response.body.address==null) {
+                vm.applicant.address = vm.address_default;
+            } else {
+                vm.applicant.address = response.body.address;
+            }
         },(error) => {
             console.log(error);
         })
@@ -263,7 +277,11 @@ export default {
 
             vm.applicant = response.body;
             vm.applicant.name = response.body.full_name;
-            vm.applicant.address = response.body.residential_address;
+            if (response.body.residential_address==null) {
+                vm.applicant.address = vm.address_default;
+            } else {
+                vm.applicant.address = response.body.residential_address;
+            }
         },(error) => {
             console.log(error);
         })
