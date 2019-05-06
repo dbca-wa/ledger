@@ -249,13 +249,15 @@ export default {
                     });
             this.feature_marker = iconFeature;
 
-            if (this.call_email.location.geometry.coordinates.length > 0) {
-                    this.feature_marker.getGeometry().setCoordinates(
-                        transform([
-                    this.call_email.location.geometry.coordinates[0], 
-                    this.call_email.location.geometry.coordinates[1], 
-                    ], 'EPSG:4326', 'EPSG:3857'));
-             } 
+            if (this.call_email.location) {
+                if (this.call_email.location.geometry.coordinates.length > 0) {
+                        this.feature_marker.getGeometry().setCoordinates(
+                            transform([
+                        this.call_email.location.geometry.coordinates[0], 
+                        this.call_email.location.geometry.coordinates[1], 
+                        ], 'EPSG:4326', 'EPSG:3857'));
+                } 
+            }
              
              var iconStyle = new Style({
                 image: new Icon({

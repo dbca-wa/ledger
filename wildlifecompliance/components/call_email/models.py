@@ -140,11 +140,12 @@ class CallEmail(RevisionedMixin):
     )
     classification = models.ForeignKey(
         Classification,
+        null=True,
         related_name="classification_call"
     )
     schema = JSONField(default=list)
     lodged_on = models.DateField(auto_now_add=True)
-    number = models.CharField(max_length=50, blank=True, null=True)
+    # number = models.CharField(max_length=50, blank=True, null=True)
     caller = models.CharField(max_length=100, blank=True, null=True)
     assigned_to = models.CharField(max_length=100, blank=True, null=True)
     anonymous_call = models.BooleanField(default=False)
@@ -168,16 +169,27 @@ class CallEmail(RevisionedMixin):
             .format(self.id, self.status, self.number, self.caller, self.assigned_to)
 
     # Prefix Classification type char to CallEmail number.
-    def save(self, *args, **kwargs):
-        classification_instance = Classification.objects.get(id=self.classification_id)
-        classification_prefix = classification_instance.name[0]
+    # def save(self, *args, **kwargs):
+    #     print("self")
+    #     print(self)
+    #     classification_instance = Classification.objects.get(id=self.classification_id)
+    #     classification_prefix = classification_instance.name[0]
         
-        super(CallEmail, self).save(*args,**kwargs)
-        if self.number is None:
-            new_number_id = '{0}{1:06d}'.format(classification_prefix, self.pk)
-            self.number = new_number_id
-            self.save()
+    #     super(CallEmail, self).save(*args,**kwargs)
+    #     if self.number is None:
+    #         new_number_id = '{0}{1:06d}'.format(classification_prefix, self.pk)
+    #         self.number = new_number_id
+    #         self.save()
         
+    @property
+    def number(self):
+        if self.classification_id:
+            classification_instance = Classification.objects.get(id=self.classification_id)
+            classification_prefix = classification_instance.name[0]
+            return '{0}{1:06d}'.format(classification_prefix, self.pk)
+        else:
+            return ''
+    
     @property
     def data(self):
         """ returns a queryset of form data records attached to CallEmail (shortcut to ComplianceFormDataRecord related_name). """

@@ -51,7 +51,6 @@ class ClassificationSerializer(serializers.ModelSerializer):
 
 
 class LocationSerializer(GeoFeatureModelSerializer):
-    
     class Meta:
         model = Location
         geo_field = 'wkb_geometry'
@@ -65,35 +64,31 @@ class LocationSerializer(GeoFeatureModelSerializer):
             'country',
             'wkb_geometry',
         )
-        read_only_fields = (
-            'id',
-            'street',
-            'town_suburb',
-            'state',
-            'postcode',
-            'country',
-            'wkb_geometry',
-        )
         
 
 class CreateCallEmailSerializer(serializers.ModelSerializer):
     #data = ComplianceFormDataRecordSerializer(many=True)
-    number = serializers.CharField(required=False, allow_null=True)
-    caller = serializers.CharField(required=False, allow_null=True)
-    assigned_to = serializers.CharField(required=False, allow_null=True)
+    #caller = serializers.CharField(required=False, allow_null=True)
+    #assigned_to = serializers.CharField(required=False, allow_null=True)
+    classification_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    report_type_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)        
+    location_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)        
 
     class Meta:
         model = CallEmail
         fields = (
-            'id',
             # 'status',
-            'classification',
-            'report_type',
-            'number',
+            'id',
+            'location_id',
+            'classification_id',
+            'report_type_id',
             'caller',
             'assigned_to',
         )
-        #read_only_fields = ('id', )
+        read_only_fields = ('id', )
 
 
 class ReportTypeSerializer(serializers.ModelSerializer):
@@ -139,21 +134,25 @@ class CallEmailSerializer(serializers.ModelSerializer):
 
 
 class UpdateCallEmailSerializer(serializers.ModelSerializer):
-    location = LocationSerializer()
+    # location = LocationSerializer()
     # location_id = serializers.IntegerField(
      #   required=False, write_only=True)
-    classification = ClassificationSerializer(read_only=True)
+    #classification = ClassificationSerializer(read_only=True)
     classification_id = serializers.IntegerField(
-        required=False, write_only=True)
+        required=False, write_only=True, allow_null=True)
+    report_type_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)        
+    location_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)        
 
     class Meta:
         model = CallEmail
         fields = (
             'id',
             'status',
-            'classification',
+            #'classification',
             'classification_id',
-            'location',
+            'location_id',
             'number',
             'caller',
             'assigned_to',

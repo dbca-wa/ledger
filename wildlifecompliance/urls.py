@@ -62,6 +62,7 @@ router.register(r'emailidentities', users_api.EmailIdentityViewSet)
 router.register(r'call_email', call_email_api.CallEmailViewSet)
 router.register(r'classification', call_email_api.ClassificationViewSet)
 router.register(r'report_types', call_email_api.ReportTypeViewSet)
+router.register(r'location', call_email_api.LocationViewSet)
 
 api_patterns = [url(r'^api/my_user_details/$',
                     users_api.GetMyUserDetails.as_view(),

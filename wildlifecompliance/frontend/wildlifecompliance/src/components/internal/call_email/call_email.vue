@@ -85,7 +85,10 @@
               </FormSection>
               <FormSection :label="`Location`" :Index="`1`">
                   <div v-if="call_email.location">
-                    <MapLocation :key="call_email.location.id"/>
+                    <MapLocation v-bind:key="call_email.location.id"/>
+                  </div>
+                  <div v-else>
+                    <MapLocation v-bind:key="call_email.id"/>
                   </div>
 
               </FormSection>

@@ -110,7 +110,11 @@
                         {
                             data: "classification",
                             mRender: function (data, type, full) {
-                                return data.name
+                                if (data) {
+                                    return data.name;
+                                } else {
+                                    return '';
+                                }
                             }
                         },
                         {
@@ -221,6 +225,9 @@
         computed: {
             isLoading: function () {
                 return this.loading.length == 0;
+            },
+            callEmailList: function() {
+                //return this.$refs.call_email_table;
             },
             
         },
