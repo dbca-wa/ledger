@@ -173,7 +173,6 @@
                                     <div class ="row">
                                         <form class="form-horizontal" action="index.html" method="post">
                                             <div class="col-sm-6">
-
                                                 <div class="form-group">
                                                     <label for="" class="col-sm-6 control-label"> Organisation User Pin Code 1:</label>
                                                     <div class="col-sm-6">
@@ -186,11 +185,8 @@
                                                         <label class="control-label">{{org.pins.four}}</label>
                                                     </div>
                                                 </div>
-                                       
-                              
                                              </div>
                                              <div class="col-sm-6">
-                                  
                                                 <div class="form-group" :disabled ='!myorgperms.is_admin'>
                                                     <label for="" class="col-sm-6 control-label"> Organisation Administrator Pin Code 1:</label>
                                                     <div class="col-sm-6">
@@ -206,7 +202,6 @@
                                             </div>
                                         </form>
                                     </div>
-
                                     <div class="row">
                                         <div class="col-sm-8">
                                             <div class="row">
@@ -215,17 +210,10 @@
                                                 </div>
                                             </div> 
                                         </div>
-                       
                                     </div>
                                     <div>
                                         <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref" v-model="filterOrgContactStatus"/>
-                                        <!-- <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref"/> -->
                                     </div>
-
-
-
-
-                                    
                                   </div>
                                 </div>
                             </div>
