@@ -48,7 +48,7 @@
         </form>
                 
         <p></p>
-        
+
         <div class="row">
             <div class="col-lg-12">
                 <datatable ref="call_email_table" id="call-email-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders" />
@@ -230,7 +230,7 @@
                 //return `<a href="/api/call_email/create_call_email"/>`;
                 this.$router.push({
                     //name: 'external-proposals-dash'
-                    name: 'internal-create-call-email' // defined in ../src/components/internal/routes/index.js
+                    name: 'new-call-email' // defined in ../src/components/internal/routes/index.js
                 });
             },
             addEventListeners: function () {

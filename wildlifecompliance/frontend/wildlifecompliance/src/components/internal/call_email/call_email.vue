@@ -2,7 +2,7 @@
     <div class="container">
     
         <div class="row">
-          <h3>Call/Email: {{ call_email.id }}</h3>
+          <h3>Call/Email: {{ call_email.number }}</h3>
 
           <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
@@ -72,12 +72,15 @@
                           {{ option.name }} 
                         </option>
                     </select>
-                <input class="form-control" v-model="call_email.number"/>
-                <input class="form-control" v-model="call_email.caller"/>
+                <div class="col-sm-12 form-group"><div class="row">
+                  <label class="col-sm-4">Caller</label>
+                  <input class="form-control" v-model="call_email.caller"/>
+                </div></div>
+                <div class="col-sm-12 form-group"><div class="row">
+                  <label class="col-sm-4">Assigned To</label>
                 <input class="form-control" v-model="call_email.assigned_to"/>
-
+                </div></div>
                 </template>
-
 
               </FormSection>
               <FormSection :label="`Location`" :Index="`1`">
@@ -87,10 +90,20 @@
 
               </FormSection>
               <FormSection :label="`Details`" :Index="`2`">
-                <input readonly v-model="report_type"/>
-                <div v-for="item in call_email.schema">
+                <div class="col-sm-12 form-group"><div class="row">
+                  <label class="col-sm-4">Report Type</label>
+                
+                  <select class="form-control" v-model="call_email.report_type_id">
+                          <option v-for="option in report_types" :value="option.id" v-bind:key="option.id">
+                            {{ option.report_type }} 
+                          </option>
+                  </select>
+                </div></div>
+                
+                <div v-for="(item, index) in call_email.schema">
                   <compliance-renderer-block
-                    :component="item" 
+                    :component="item"
+                    v-bind:key="`compliance_renderer_block_${index}`"
                     />
                 </div>
               </FormSection>
@@ -165,8 +178,9 @@ export default {
       call_email: "call_email",
       //call_id: "callemailStore/call_id",
       classification_types: "classification_types",
+      report_types: "report_types",
       //location: "callemailStore/location",
-      report_type: "report_type",
+      //report_type: "report_type",
       call_email_form_url: "call_email_form_url",
     }),
     csrf_token: function() {
@@ -194,14 +208,16 @@ export default {
       setCallEmail: 'setCallEmail',
       loadCallEmail: "loadCallEmail",
       loadClassification: "loadClassification",
+      loadReportTypes: "loadReportTypes",
       setLocation: 'setLocation',
       setLocationPoint: 'setLocationPoint',
       saveCallEmail: 'saveCallEmail',
+      createCallEmail: "createCallEmail",
     }),
     ...mapActions({
       saveFormData: "saveFormData",
     }),
-    
+    /*
     createCallEmail: function(e) {
       let formData = new FormData(this.renderer_form);
       this.$http
@@ -220,6 +236,42 @@ export default {
         );
 
     },
+    */
+    /*
+    save: function() {
+      if (this.call_email.id) {
+      console.log("this.saveCallEmail");
+      this.saveCallEmail({location: this.call_email.location, renderer: this.call_email.schema});
+      } else {
+        if (this.call_email.location.geometry.coordinates > 0 && this.call_email.schema.length > 0) {
+          console.log("there is location and schema");
+          this.createCallEmail({location: this.call_email.location, renderer: this.call_email.schema});
+        } else if (this.call_email.location.geometry.coordinates > 0) {
+            console.log("just location");
+            this.createCallEmail({location: this.call_email.location});
+        } else if (this.call_email.schema.length > 0) {
+          console.log("just schema");
+          this.createCallEmail({renderer: this.call_email.schema});
+        } else {
+          console.log("bare call/email");
+          this.createCallEmail({location: null, renderer: null, route: null});
+        }
+      }
+          
+    },
+    */
+    save: function() {
+      if (this.call_email.id) {
+        console.log("this.saveCallEmail");
+        this.saveCallEmail({ route: null });
+      } else {
+        console.log("this.createCallEmail");
+        this.createCallEmail();
+      }
+    },
+  
+  
+  /*
     save: function() {
       this.saveCallEmail({location: true, renderer: true})
       .then(res => {
@@ -231,9 +283,9 @@ export default {
       });
     
     },
-
+*/
     saveExit: function() {
-      this.saveCallEmail({location: true, renderer: true, route: 'internal-call-email-dash'})
+      this.saveCallEmail({route: "/internal/call_email"});
     },
     /*
     save: function(e) {
@@ -281,11 +333,12 @@ export default {
     */
   },
   created: function() {
-    console.log("call_email.vue created");
-    this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
-    console.log("call_email loaded"); 
+    
+    if (this.$route.params.call_email_id) {
+      this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
+    }
     this.loadClassification();
-    console.log("vuex loaded");
+    this.loadReportTypes();
   },
   
   /*

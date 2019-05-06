@@ -50,35 +50,8 @@ class ClassificationSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'name', )
 
 
-class CreateCallEmailSerializer(serializers.ModelSerializer):
-    data = ComplianceFormDataRecordSerializer(many=True)
-
-    class Meta:
-        model = CallEmail
-        fields = (
-            'id',
-            'status',
-            'classification',
-            'number',
-            'caller',
-            'assigned_to',
-            'data',
-        )
-        read_only_fields = ('id', )
-
-
-class ReportTypeSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ReportType
-        fields = (
-            'report_type',
-            'schema',
-        )
-        read_only_fields = ('report_type', 'schema')
-
-
 class LocationSerializer(GeoFeatureModelSerializer):
+    
     class Meta:
         model = Location
         geo_field = 'wkb_geometry'
@@ -92,6 +65,47 @@ class LocationSerializer(GeoFeatureModelSerializer):
             'country',
             'wkb_geometry',
         )
+        read_only_fields = (
+            'id',
+            'street',
+            'town_suburb',
+            'state',
+            'postcode',
+            'country',
+            'wkb_geometry',
+        )
+        
+
+class CreateCallEmailSerializer(serializers.ModelSerializer):
+    #data = ComplianceFormDataRecordSerializer(many=True)
+    number = serializers.CharField(required=False, allow_null=True)
+    caller = serializers.CharField(required=False, allow_null=True)
+    assigned_to = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = CallEmail
+        fields = (
+            'id',
+            # 'status',
+            'classification',
+            'report_type',
+            'number',
+            'caller',
+            'assigned_to',
+        )
+        #read_only_fields = ('id', )
+
+
+class ReportTypeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ReportType
+        fields = (
+            'id',
+            'report_type',
+            'schema',
+        )
+        read_only_fields = ('id', 'report_type', 'schema')
 
 
 class CallEmailSerializer(serializers.ModelSerializer):
@@ -117,14 +131,15 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'caller',
             'assigned_to',
             'report_type',
+            'report_type_id',
             'data',
-            'location',
         )
         read_only_fields = ('id', )
 
 
+
 class UpdateCallEmailSerializer(serializers.ModelSerializer):
-    # location = LocationSerializer()
+    location = LocationSerializer()
     # location_id = serializers.IntegerField(
      #   required=False, write_only=True)
     classification = ClassificationSerializer(read_only=True)
@@ -138,7 +153,7 @@ class UpdateCallEmailSerializer(serializers.ModelSerializer):
             'status',
             'classification',
             'classification_id',
-            # 'location',
+            'location',
             'number',
             'caller',
             'assigned_to',

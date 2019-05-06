@@ -9,6 +9,7 @@ export const callemailStore = {
     namespaced: true,
     state: {
         call_email: {
+            //id: 0,
             schema: [],
             classification: {},
             location: {
@@ -21,30 +22,20 @@ export const callemailStore = {
             report_type: {},
         },
         classification_types: [],
+        report_types: [],
     },
     getters: {
         call_email: state => state.call_email,
-        //call_id: state => state.call_email.id,
-        //call_classification: state => state.call_email.classification.name,
-        //location: state => state.call_email.location,
         report_type: state => state.call_email.report_type.report_type,
         classification_types: state => state.classification_types,
+        report_types: state => state.report_types,
         call_coordinates: state => state.call_email.location.geometry.coordinates,
-        
         call_email_form_url: state => {
             return state.call_email
               ? `/api/call_email/${state.call_email.id}/form_data.json`
               : "";
           },
           
-         /*
-         call_email_form_url: state => {
-            if (state.call_email) {
-                return `/api/call_email/${state.call_email.id}/form_data.json`;
-            }
-            return "";
-          },
-          */
     },
     mutations: {
         updateCallEmail(state, call_email) {
@@ -55,6 +46,10 @@ export const callemailStore = {
         updateNumber(state, number) {
             state.call_email.number = number;
         },
+        updateCallID(state, id) {
+            //state.call_email.id = id;
+            Vue.set(state.call_email, 'id', id);
+        },
         updateCaller(state, caller) {
             state.call_email.caller = caller;
         },
@@ -64,6 +59,10 @@ export const callemailStore = {
         updateClassification(state, classification_entry) {
             //Vue.set(state.classification_types, classification_entry.id, classification_entry.name);
             state.classification_types.push(classification_entry);
+        },
+        updateReportType(state, report_type_entry) {
+            //Vue.set(state.classification_types, classification_entry.id, classification_entry.name);
+            state.report_types.push(report_type_entry);
         },
         updateLocation(state, location) {
             console.log("location");
@@ -83,60 +82,76 @@ export const callemailStore = {
         },
     },
     actions: {
-        loadCallEmail({
+        async loadCallEmail({
             dispatch,
         }, {
             call_email_id
         }) {
             console.log("loadCallEmail");
             console.log(call_email_id);
-            
-            return new Promise((resolve, reject) => {
-                Vue.http.get(
-                    helpers.add_endpoint_json(api_endpoints.call_email, call_email_id)
+            try {
 
-                ).then(res => {
-                        console.log("setCallEmail");
-                        dispatch("setCallEmail", res.body);
-                        for (let form_data_record of res.body.data) {
-                            dispatch("setFormValue", {
-                                key: form_data_record.field_name,
-                                value: {
-                                    "value": form_data_record.value,
-                                    "comment_value": form_data_record.comment,
-                                    "deficiency_value": form_data_record.deficiency,
-                                }
-                            }, {
-                                root: true
-                            });
+                const returnedCallEmail = await Vue.http.get(
+                    helpers.add_endpoint_json(
+                        api_endpoints.call_email, 
+                        call_email_id)
+                        );
+                        
+                console.log("returnedCallEmail.body");
+                console.log(returnedCallEmail.body);
+                dispatch("setCallEmail", returnedCallEmail.body);
+                
+                for (let form_data_record of returnedCallEmail.body.data) {
+                    dispatch("setFormValue", {
+                        key: form_data_record.field_name,
+                        value: {
+                            "value": form_data_record.value,
+                            "comment_value": form_data_record.comment,
+                            "deficiency_value": form_data_record.deficiency,
                         }
-                        resolve();
-                    },
-                    err => {
-                        console.log(err);
-                        reject();
+                    }, {
+                        root: true
                     });
-            });
+                }
+                dispatch("setLocation", returnedCallEmail.body);
+
+            } catch (err) {
+                console.error(err);
+            }
         },
 
-        loadClassification({
+        async loadClassification({
             dispatch,
         }) {
             console.log("loadClassification");
-            return new Promise((resolve, reject) => {
-                Vue.http.get(api_endpoints.classification)
-                    .then(res => {
-                            console.log(res.body.results);
-                            for (let classification_entry of res.body.results) {
-                                dispatch("setClassificationEntry", classification_entry);
-                                resolve();
-                            }
-                        },
-                        err => {
-                            console.log(err);
-                            reject();
-                        });
-            });
+            try {
+            const returnedClassification = await Vue.http.get(
+                api_endpoints.classification
+                );
+            
+            for (let classification_entry of returnedClassification.body.results) {
+                dispatch("setClassificationEntry", classification_entry);
+            }
+            } catch (err) {
+                console.error(err);
+            }
+        },
+
+        async loadReportTypes({
+            dispatch,
+        }) {
+            console.log("loadReportTypes");
+            try {
+            const returnedReportTypes = await Vue.http.get(
+                api_endpoints.report_types
+                );
+            
+            for (let report_type_entry of returnedReportTypes.body.results) {
+                dispatch("setReportTypeEntry", report_type_entry);
+            }
+            } catch (err) {
+                console.error(err);
+            }
         },
 
         setClassificationEntry({
@@ -146,6 +161,15 @@ export const callemailStore = {
         ) {
             commit("updateClassification", classification_entry);
         },
+        
+        setReportTypeEntry({
+            commit,
+        },
+        report_type_entry
+        ) {
+            commit("updateReportType", report_type_entry);
+        },
+
 
         setCallEmail({
             commit,
@@ -153,75 +177,118 @@ export const callemailStore = {
             commit("updateCallEmail", call_email);
         },
 
-        saveCallEmail({ dispatch, state, getters}, {location, renderer, route}) {
+        async saveCallEmail({ dispatch, state, getters}, {route}) {
             console.log("saveCallEmail");
 
-            if (location) {
-                console.log("saveLocation");
-                dispatch("saveLocation");
-            }
-            if (renderer) {
-                console.log("saveFormData");
-                console.log(getters.call_email_form_url);
-                dispatch("saveFormData", {
-                    url: getters.call_email_form_url,
-                    }
-                , {
-                    root: true
-                });
-            }
-            return new Promise((resolve, reject) => {
-                Vue.http.post(helpers.add_endpoint_join(
+            try {
+                const savedCallEmail = await Vue.http.post(helpers.add_endpoint_join(
                     api_endpoints.call_email, 
                     state.call_email.id + "/call_email_save/"
                     ), 
                     {...state.call_email}
                     )
-                    .then(res => {
-                        swal("Saved", "The record has been saved", "success")
-                            .then(result => {
-                                if (route) {
-                                window.location.href = "/internal/call_email";
-                                }
-                            });
-                        resolve();
-                        },
-                        err => {
-                            swal("Error", "There was an error saving the record", "error");
-                            console.log(err);
-                            reject();
-                        });
-            });
+
+                if (state.call_email.location.geometry.coordinates > 0) {
+                    dispatch("saveLocation");
+                    console.log("saveLocation - done");
+                }
+                if (state.call_email.schema.length > 0) {
+                    dispatch("saveFormData", { url: getters.call_email_form_url }
+                    , {
+                        root: true
+                    });
+                    console.log("saveFormData - done");
+                }
+                
+            } catch (err) {
+                console.error(err);
+            }
+            await swal("Saved", "The record has been saved", "success");
+                if (route) {
+                    window.location.href = route;
+                    }
         },
 
-        saveLocation({
+        async createCallEmail({ dispatch, state, getters}) {
+            console.log("createCallEmail");
+            console.log({...state.call_email});
+            
+            try {
+                const newCallEmail = await Vue.http.post(api_endpoints.call_email, 
+                    {...state.call_email});
+                await dispatch("setCallID", newCallEmail.body.id);
+                    // Call/Email pk must be loaded into Vuex before Location and Renderer data is sent to db
+                    //await dispatch("loadCallEmail", { call_email_id: newCallEmail.body.id });
+                    //console.log("loadCallEmail - pk loaded");
+                if (state.call_email.location.geometry.coordinates > 0) {
+                    await dispatch("saveLocation");
+                    console.log("saveLocation - done");
+                }
+                if (state.call_email.schema.length > 0) {
+                    await dispatch("saveFormData", { url: getters.call_email_form_url }
+                    , {
+                        root: true
+                    });
+                    console.log("saveFormData - done");
+                }
+
+            } catch (err) {
+                console.log(err);
+                swal("Error", "There was an error saving the record", "error");
+            }
+            await swal("Saved", "The record has been saved", "success");
+                    window.location.href = "/internal/call_email/" + state.call_email.id;
+        },
+          
+        async createLocation({
             state
         }) {
-            const instance = state.call_email.location;
+            console.log("createLocation");
             
-            console.log("instance");
-            console.log(instance);
-            return new Promise((resolve, reject) => {
-                Vue.http.post(helpers.add_endpoint_join(
+            try {
+                const newLocation = await Vue.http.post(helpers.add_endpoint_join(
                     api_endpoints.call_email, 
-                    state.call_email.id + "/update_location/"
+                    state.call_email.id + "/new_location/"
                     ), {
                         town_suburb: state.call_email.location.properties.town_suburb,
                         street: instance.properties.street,
                         state: instance.properties.state,
                         postcode: instance.properties.postcode,
                         wkb_geometry: instance.geometry,
-                    }).then(res => {
-                            console.log(res.body.results);
-                            console.log("success");
-                            resolve();
-                        },
-                        err => {
-                            console.log(err);
-                            reject();
-                        });
-            });
+                    });
+                newLocation
+                
+            } catch (err) {
+                console.error(err);
+            }
         },
+        async saveLocation({
+            state
+        }) {
+            console.log("saveLocation");
+            
+            try {
+                const savedLocation = await Vue.http.post(helpers.add_endpoint_join(
+                api_endpoints.call_email, 
+                state.call_email.id + "/update_location/"
+                ), {
+                    town_suburb: state.call_email.location.properties.town_suburb,
+                    street: instance.properties.street,
+                    state: instance.properties.state,
+                    postcode: instance.properties.postcode,
+                    wkb_geometry: instance.geometry,
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        },
+        setCallID({
+            commit,
+        }, id) {
+            console.log("setCallID");
+            commit("updateCallID", id);
+        },
+
         setLocation({
             commit,
         }, location) {

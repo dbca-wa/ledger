@@ -5,7 +5,7 @@ from django.contrib.gis.db import models
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.db.models import Max
 from django.utils.encoding import python_2_unicode_compatible
-from ledger.accounts.models import EmailUser
+from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import LicenceType
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
 from wildlifecompliance.components.organisations.models import Organisation
@@ -49,39 +49,6 @@ class Classification(models.Model):
         return self.get_name_display()
 
 
-class Location(models.Model):
-
-    STATE_CHOICES = (
-        ('WA', 'Western Australia'),
-        ('VIC', 'Victoria'),
-        ('QLD', 'Queensland'),
-        ('NSW', 'New South Wales'),
-        ('TAS', 'Tasmania'),
-        ('NT', 'Northern Territory'),
-        ('ACT', 'Australian Capital Territory')
-    )
-
-    latitude = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    longitude = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
-    street = models.CharField(max_length=100)
-    town_suburb = models.CharField(max_length=100)
-    state = models.CharField(
-        max_length=50, choices=STATE_CHOICES, default='WA')
-    postcode = models.IntegerField()
-    country = models.CharField(max_length=100, default='Australia')
-    objects = models.GeoManager()
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-        verbose_name = 'CM_Location'
-        verbose_name_plural = 'CM_Locations'
-
-    def __str__(self):
-        return '{0}, {1}, {2}, {3}, {4}' \
-            .format(self.latitude, self.longitude, self.street, self.town_suburb, self.state)
-
-
 class ReportType(models.Model):
 
     report_type = models.CharField(max_length=50)
@@ -114,7 +81,45 @@ class Referrer(models.Model):
         return self.name
 
 
-class CallEmail(models.Model):
+class Location(models.Model):
+
+    STATE_CHOICES = (
+        ('WA', 'Western Australia'),
+        ('VIC', 'Victoria'),
+        ('QLD', 'Queensland'),
+        ('NSW', 'New South Wales'),
+        ('TAS', 'Tasmania'),
+        ('NT', 'Northern Territory'),
+        ('ACT', 'Australian Capital Territory')
+    )
+
+    # latitude = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    # longitude = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
+    street = models.CharField(max_length=100, null=True, blank=True)
+    town_suburb = models.CharField(max_length=100, null=True, blank=True)
+    state = models.CharField(
+        max_length=50, choices=STATE_CHOICES, null=True, blank=True, default='WA')
+    postcode = models.IntegerField(null=True)
+    country = models.CharField(max_length=100, null=True, blank=True, default='Australia')
+    objects = models.GeoManager()
+    # call_email = models.ForeignKey(
+    #     CallEmail,
+    #     null=True,
+    #     related_name="call_location"
+    # )
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_Location'
+        verbose_name_plural = 'CM_Locations'
+
+    def __str__(self):
+        return '{0}, {1}, {2}' \
+            .format(self.street, self.town_suburb, self.state)
+
+
+class CallEmail(RevisionedMixin):
     STATUS_CHOICES = (
         ('draft', 'Draft'),
         ('open', 'Open'),
@@ -137,13 +142,11 @@ class CallEmail(models.Model):
         Classification,
         related_name="classification_call"
     )
-    # data = JSONField(default=list)
-    # _stored_renderer_data = JSONField(default=list)
     schema = JSONField(default=list)
     lodged_on = models.DateField(auto_now_add=True)
-    number = models.CharField(max_length=50)
-    caller = models.CharField(max_length=100)
-    assigned_to = models.CharField(max_length=100)
+    number = models.CharField(max_length=50, blank=True, null=True)
+    caller = models.CharField(max_length=100, blank=True, null=True)
+    assigned_to = models.CharField(max_length=100, blank=True, null=True)
     anonymous_call = models.BooleanField(default=False)
     caller_wishes_to_remain_anonymous = models.BooleanField(default=False)
     occurrence_date_from = models.DateField(null=True)
@@ -160,25 +163,26 @@ class CallEmail(models.Model):
         verbose_name = 'CM_Call/Email'
         verbose_name_plural = 'CM_Calls/Emails'
 
-    # def __init__(self):
-     #   self.stored_renderer_data = stored_renderer_data
-
     def __str__(self):
         return 'ID: {0}, Status: {1}, Number: {2}, Caller: {3}, Assigned To: {4}' \
             .format(self.id, self.status, self.number, self.caller, self.assigned_to)
 
-    # @property
-    # def stored_renderer_data(self):
-        # if self._stored_renderer_data:
-        #   return self._stored_renderer_data
-        # else:
-        #   return None
-
+    # Prefix Classification type char to CallEmail number.
+    def save(self, *args, **kwargs):
+        classification_instance = Classification.objects.get(id=self.classification_id)
+        classification_prefix = classification_instance.name[0]
+        
+        super(CallEmail, self).save(*args,**kwargs)
+        if self.number is None:
+            new_number_id = '{0}{1:06d}'.format(classification_prefix, self.pk)
+            self.number = new_number_id
+            self.save()
+        
     @property
     def data(self):
         """ returns a queryset of form data records attached to CallEmail (shortcut to ComplianceFormDataRecord related_name). """
         return self.form_data_records.all()
-
+    
     def log_user_action(self, action, request):
         return ComplianceUserAction.log_action(self, action, request.user)
 
