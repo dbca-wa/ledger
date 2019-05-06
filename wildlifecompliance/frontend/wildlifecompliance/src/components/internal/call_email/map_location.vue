@@ -122,6 +122,7 @@ export default {
         this.setBaseLayer('osm');
         this.initAwesomplete();
         this.addMarker();
+        this.refreshMarkerLocation();
         console.debug('End loading map');
         });
     },
@@ -134,6 +135,32 @@ export default {
         saveInstanceLocation: async function() {
             await this.$nextTick();
             this.saveLocation();
+        },
+        reverseGeocoding: function(coordinates_4326){
+            var self = this;
+
+            $.ajax({
+                url: 'https://mapbox.dpaw.wa.gov.au/geocoding/v5/mapbox.places/'+coordinates_4326[0] + ',' + coordinates_4326[1] +'.json?',
+                dataType: 'json',
+                success: function(data, status, xhr) {
+                    let address_found = false;
+                    if (data.features && data.features.length > 0){
+                        for (var i = 0; i < data.features.length; i++){
+                            if(data.features[i].place_type.includes('address')){
+                                self.updateAddressFields(data.features[i]);
+                                address_found = true;
+                            }
+                        }
+                    }
+                    if(address_found){
+                        console.log("address found");
+                        self.showHideAddressDetailsFields(true, false);
+                    } else {
+                        console.log("address not found");
+                        self.showHideAddressDetailsFields(false, true);
+                    }
+                }
+            });
         },
         search: function(place){
             var self = this;
@@ -179,12 +206,17 @@ export default {
                 for (var i=0; i<self.suggest_list.length; i++){
                     if (self.suggest_list[i].value == ev.target.value){
                         self.moveMapCentre(self.suggest_list[i].feature.geometry.coordinates);
-                        if(!self.marker_locked){
-                            self.relocateMarker4326(self.suggest_list[i].feature.geometry.coordinates);
-                            if(self.suggest_list[i].feature.place_type.includes('address')){
-                                /* Selection has address ==> Update address fields */
-                                self.updateAddressFields(self.suggest_list[i].feature);
-                            }
+
+                        /* Do nothing if the marker is locked */
+                        if(self.marker_locked){ return; }
+
+                        self.relocateMarker4326(self.suggest_list[i].feature.geometry.coordinates);
+                        if(self.suggest_list[i].feature.place_type.includes('address')){
+                            /* Selection has address ==> Update address fields */
+                            self.showHideAddressDetailsFields(true, false);
+                            self.updateAddressFields(self.suggest_list[i].feature);
+                        } else {
+                            self.showHideAddressDetailsFields(false, true);
                         }
                     }
                 }
@@ -196,17 +228,18 @@ export default {
             /* street */
             this.call_email.location.properties.street = address_arr[0];
 
-            /* suburb, state */
-            let reg = /^([a-zA-Z0-9\s]*)\s(New South Wales|Queensland|South Australia|Tasmania|Victoria|Western Australia|Northern Territory|Australian Capital Territory)\s(\d{4})$/gi;
+            /*
+             * Split the string into suburb, state and postcode
+             */
+            let reg = /^([a-zA-Z0-9\s]*)\s(New South Wales|Queensland|South Australia|Tasmania|Victoria|Western Australia|Northern Territory|Australian Capital Territory){1}\s+(\d{4})$/gi;
             var result = reg.exec(address_arr[1]);
-            console.log(result);
 
+            /* suburb */
             this.call_email.location.properties.town_suburb = result[1].trim();
+            /* state */
             this.call_email.location.properties.state = result[2].trim();
+            /* postcode */
             this.call_email.location.properties.postcode = result[3].trim();
-
-
-
         },
         moveMapCentre: function(coordinates){
             var self = this;
@@ -236,13 +269,6 @@ export default {
             else {
                 $('#basemap_osm').hide();
                 $('#basemap_sat').show();
-            }
-        },
-        refreshAddressDetailsFields: function(){
-            if(this.call_email.location.geometry.properties.street){
-                this.showHideAddressDetailsFields(true, false);
-            } else {
-                this.showHideAddressDetailsFields(false, true);
             }
         },
         showHideAddressDetailsFields: function(showAddressFields, showDetailsFields){
@@ -284,11 +310,10 @@ export default {
         /* this function retrieve the coordinates from vuex and applys it to the marker */
         refreshMarkerLocation: function(){
             if (this.call_email.location.geometry.coordinates.length > 0) {
-                    this.feature_marker.getGeometry().setCoordinates(
-                        transform([
-                    this.call_email.location.geometry.coordinates[0], 
-                    this.call_email.location.geometry.coordinates[1], 
-                    ], 'EPSG:4326', 'EPSG:3857'));
+                this.feature_marker.getGeometry().setCoordinates(
+                    transform([this.call_email.location.geometry.coordinates[0], this.call_email.location.geometry.coordinates[1]], 'EPSG:4326', 'EPSG:3857')
+                );
+                this.reverseGeocoding(this.call_email.location.geometry);
             } 
         },
         addMarker: function(){
@@ -298,7 +323,6 @@ export default {
                     ], 'EPSG:4326', 'EPSG:3857')),
                 });
             this.feature_marker = iconFeature;
-            this.refreshMarkerLocation();
 
             var iconStyle = new Style({
                 image: new Icon({
@@ -394,8 +418,10 @@ export default {
         },
         /* this function stores the coordinates into the vuex, then call refresh marker function */
         relocateMarker: function(coords_3857){ 
-            this.setLocationPoint(transform([coords_3857[0], coords_3857[1]], 'EPSG:3857', 'EPSG:4326'));
+            let coords_4326 = transform([coords_3857[0], coords_3857[1]], 'EPSG:3857', 'EPSG:4326');
+            this.setLocationPoint(coords_4326);
             this.refreshMarkerLocation();
+            this.reverseGeocoding(coords_4326);
         },
         relocateMarker4326: function(coords_4326){
             this.relocateMarker(transform([coords_4326[0], coords_4326[1]], 'EPSG:4326', 'EPSG:3857'));
@@ -411,6 +437,7 @@ export default {
                     return feature;
             });
             if (feature) {
+                /* User clicked on a feature, such as a marker */
                 var coordinates = feature.getGeometry().getCoordinates();
                 this.popup.setPosition(coordinates);
                 $(this.element).popover({
@@ -423,6 +450,7 @@ export default {
                 });
                 $(this.element).popover('show');
             } else {
+                /* User clicked on a map, not on any feature */
                 if(!this.marker_locked){
                     this.relocateMarker(coordinate);
                 }
