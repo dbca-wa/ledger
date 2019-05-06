@@ -244,13 +244,10 @@ class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
         submitter_id = request.GET.get('submitter_id', None)
         if submitter_id:
             queryset = queryset.filter(submitter_id=submitter_id)
-        # Filter by user
+        # Filter by user (submitter or proxy_applicant)
         user_id = request.GET.get('user_id', None)
         if user_id:
-            user_orgs = [
-                org.id for org in request.user.wildlifecompliance_organisations.all()]
             queryset = Application.objects.filter(
-                Q(org_applicant_id__in=user_orgs) |
                 Q(proxy_applicant=user_id) |
                 Q(submitter=user_id)
             )

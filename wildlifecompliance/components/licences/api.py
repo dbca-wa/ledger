@@ -150,13 +150,10 @@ class LicencePaginatedViewSet(viewsets.ModelViewSet):
         submitter_id = request.GET.get('submitter_id', None)
         if submitter_id:
             queryset = queryset.filter(current_application__submitter_id=submitter_id)
-        # Filter by user
+        # Filter by user (submitter or proxy_applicant)
         user_id = request.GET.get('user_id', None)
         if user_id:
-            user_orgs = [
-                org.id for org in request.user.wildlifecompliance_organisations.all()]
             queryset = WildlifeLicence.objects.filter(
-                Q(current_application__org_applicant_id__in=user_orgs) |
                 Q(current_application__proxy_applicant=user_id) |
                 Q(current_application__submitter=user_id)
             )
