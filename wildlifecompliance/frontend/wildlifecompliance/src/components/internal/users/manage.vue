@@ -279,8 +279,8 @@ export default {
             activate_tables: false,
             comms_url: helpers.add_endpoint_json(api_endpoints.users,vm.$route.params.user_id+'/comms_log'),
             logs_url: helpers.add_endpoint_json(api_endpoints.users,vm.$route.params.user_id+'/action_log'),
-            applications_url: helpers.add_endpoint_json(api_endpoints.users,vm.$route.params.user_id+'/applications'),
-            licences_url: api_endpoints.licences+'?user_id='+vm.$route.params.user_id,
+            applications_url: api_endpoints.applications_paginated+'internal_datatable_list?user_id='+vm.$route.params.user_id,
+            licences_url: api_endpoints.licences_paginated+'internal_datatable_list?user_id='+vm.$route.params.user_id,
             returns_url: api_endpoints.returns+'?user_id='+vm.$route.params.user_id,
             orgRequest_pending: [],
         }

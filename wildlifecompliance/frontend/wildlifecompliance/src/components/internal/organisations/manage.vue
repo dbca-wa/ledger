@@ -279,8 +279,8 @@ export default {
             logs_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/action_log'),
             contacts_headers:["Name","Phone","Mobile","Fax","Email","Action"],
             contacts_headers_ref:["Name","Role","Email","Status"],
-            applications_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/applications'),
-            licences_url: api_endpoints.licences+'?org_id='+vm.$route.params.org_id,
+            applications_url: api_endpoints.applications_paginated+'internal_datatable_list?org_id='+vm.$route.params.org_id,
+            licences_url: api_endpoints.licences_paginated+'internal_datatable_list?org_id='+vm.$route.params.org_id,
             returns_url: api_endpoints.returns+'?org_id='+vm.$route.params.org_id,
             contacts_options:{
                 language: {

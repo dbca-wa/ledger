@@ -138,6 +138,28 @@ class LicencePaginatedViewSet(viewsets.ModelViewSet):
     def internal_datatable_list(self, request, *args, **kwargs):
         self.serializer_class = DTInternalWildlifeLicenceSerializer
         queryset = self.get_queryset()
+        # Filter by org
+        org_id = request.GET.get('org_id', None)
+        if org_id:
+            queryset = queryset.filter(current_application__org_applicant_id=org_id)
+        # Filter by proxy_applicant
+        proxy_applicant_id = request.GET.get('proxy_applicant_id', None)
+        if proxy_applicant_id:
+            queryset = queryset.filter(current_application__proxy_applicant_id=proxy_applicant_id)
+        # Filter by submitter
+        submitter_id = request.GET.get('submitter_id', None)
+        if submitter_id:
+            queryset = queryset.filter(current_application__submitter_id=submitter_id)
+        # Filter by user
+        user_id = request.GET.get('user_id', None)
+        if user_id:
+            user_orgs = [
+                org.id for org in request.user.wildlifecompliance_organisations.all()]
+            queryset = WildlifeLicence.objects.filter(
+                Q(current_application__org_applicant_id__in=user_orgs) |
+                Q(current_application__proxy_applicant=user_id) |
+                Q(current_application__submitter=user_id)
+            )
         queryset = self.filter_queryset(queryset)
         self.paginator.page_size = queryset.count()
         result_page = self.paginator.paginate_queryset(queryset, request)
@@ -154,6 +176,18 @@ class LicencePaginatedViewSet(viewsets.ModelViewSet):
             Q(current_application__proxy_applicant=request.user) |
             Q(current_application__submitter=request.user)
         )
+        # Filter by org
+        org_id = request.GET.get('org_id', None)
+        if org_id:
+            queryset = queryset.filter(current_application__org_applicant_id=org_id)
+        # Filter by proxy_applicant
+        proxy_applicant_id = request.GET.get('proxy_applicant_id', None)
+        if proxy_applicant_id:
+            queryset = queryset.filter(current_application__proxy_applicant_id=proxy_applicant_id)
+        # Filter by submitter
+        submitter_id = request.GET.get('submitter_id', None)
+        if submitter_id:
+            queryset = queryset.filter(current_application__submitter_id=submitter_id)
         queryset = self.filter_queryset(queryset)
         self.paginator.page_size = queryset.count()
         result_page = self.paginator.paginate_queryset(queryset, request)
