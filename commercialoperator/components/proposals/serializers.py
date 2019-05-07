@@ -251,7 +251,7 @@ class ProposalAssessmentSerializer(serializers.ModelSerializer):
         model = ProposalAssessment
         fields = ('id',
                 'completed',
-                #'submitter',
+                'submitter',
                 'referral_assessment',
                 'referral_group',
                 'checklist'

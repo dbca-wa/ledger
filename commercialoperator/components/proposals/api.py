@@ -1907,6 +1907,8 @@ class ProposalAssessmentViewSet(viewsets.ModelViewSet):
     def update_assessment(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            #import ipdb; ipdb.set_trace()
+            request.data['submitter']= request.user.id
             serializer = ProposalAssessmentSerializer(instance, data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
@@ -1915,7 +1917,7 @@ class ProposalAssessmentViewSet(viewsets.ModelViewSet):
             if checklist:
                 for chk in checklist:
                     try: 
-                        #import ipdb; ipdb.set_trace()
+                        #import ipdb; ipdb.set_trace()    
                         chk_instance=ProposalAssessmentAnswer.objects.get(id=chk['id'])
                         serializer_chk = ProposalAssessmentAnswerSerializer(chk_instance, data=chk)
                         serializer_chk.is_valid(raise_exception=True)
