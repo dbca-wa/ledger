@@ -53,7 +53,7 @@
         <div id="location_fields_details">
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Details</label>
-                <textarea id="location_address_field" class="form-control" v-model="call_email.location.properties.country" />
+                <textarea id="location_address_field" class="form-control" v-model="call_email.location.properties.details" />
             </div></div>
         </div>
     
@@ -86,6 +86,18 @@ import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 
 export default {
     name: "map-openlayers",
+    local: {
+        state_abbr: {
+            "New South Wales": "NSW",
+            "Queensland": "QLD",
+            "South Australia": "SA",
+            "Tasmania": "TAS",
+            "Victoria": "VIC",
+            "Western Australia": "WA",
+            "Northern Territory": "NT",
+            "Australian Capital Territory": "ACT",
+        }
+    },
     data: function(){
         const defaultCentre = [13775786.985667605, -2871569.067879858];
 
@@ -99,13 +111,7 @@ export default {
             base_layer: 'osm',
             awe: null,
             suggest_list: [],
-
             feature_marker: null,
-            country: null,
-            postcode: null,
-            state: null,
-            street: null,
-            town_suburb: null,
         };
     },
     computed: {
@@ -140,9 +146,14 @@ export default {
             var self = this;
 
             $.ajax({
-                url: 'https://mapbox.dpaw.wa.gov.au/geocoding/v5/mapbox.places/'+coordinates_4326[0] + ',' + coordinates_4326[1] +'.json?',
+                url: 'https://mapbox.dpaw.wa.gov.au/geocoding/v5/mapbox.places/'+coordinates_4326[0] + ',' + coordinates_4326[1] +'.json?'+ $.param({
+                    limit: 1,
+                    types: 'address'
+                }),
                 dataType: 'json',
                 success: function(data, status, xhr) {
+                    console.log('reverse results: ');
+                    console.log(data);
                     let address_found = false;
                     if (data.features && data.features.length > 0){
                         for (var i = 0; i < data.features.length; i++){
@@ -169,6 +180,7 @@ export default {
             $.ajax({
                 url: 'https://mapbox.dpaw.wa.gov.au/geocoding/v5/mapbox.places/'+encodeURIComponent(place)+'.json?'+ $.param({
                     country: 'au',
+                    limit: 10,
                     proximity: ''+centre[0]+','+centre[1],
                     bbox: '112.920934,-35.191991,129.0019283,-11.9662455',
                     types: 'region,postcode,district,place,locality,neighborhood,address,poi'
@@ -177,7 +189,6 @@ export default {
                 success: function(data, status, xhr) {
                     self.suggest_list = [];  // Clear the list first
                     if (data.features && data.features.length > 0){
-                        console.log(data);
                         for (var i = 0; i < data.features.length; i++){
                             self.suggest_list.push({ label: data.features[i].place_name,
                                                      value: data.features[i].place_name, 
@@ -237,7 +248,8 @@ export default {
             /* suburb */
             this.call_email.location.properties.town_suburb = result[1].trim();
             /* state */
-            this.call_email.location.properties.state = result[2].trim();
+        //    let state_abbr = this.local.state_abbr[result[2].trim()]
+            //this.call_email.location.properties.state = state_abbr;
             /* postcode */
             this.call_email.location.properties.postcode = result[3].trim();
         },
