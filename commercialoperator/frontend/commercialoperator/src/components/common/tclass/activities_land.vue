@@ -112,6 +112,7 @@
               </div>
           </div>
           <div class="borderDecoration col-sm-12">
+            <label class="control-label">Provide details of every vehicle you plan to use when accessing the parks</label>
               <VehicleTable :url="vehicles_url" :proposal="proposal"></VehicleTable>
           </div>
         </div>
@@ -233,6 +234,9 @@ export default {
           editParkActivities,
           editTrailActivities,
           FileField,
+        },
+        computed:{
+
         },
         watch:{
           selected_regions: function(val){
@@ -857,10 +861,19 @@ export default {
             }); 
 
             //check why this is not working for list items
-            $('.list-group-item').on('click', function() {
-
-              $('.glyphicon', this).toggleClass('glyphicon-chevron-up').toggleClass('glyphicon-chevron-down');
-            });
+            // var list_item=$('.list-group-item')
+            // var a_item=list_item.children[ 1 ]
+            // $(a_item).on( 'click', function () {
+            //   console.log(this);
+            //   var chev2 = $( this ).children()[ 0 ];
+            //   window.setTimeout( function () {
+            //       $( chev2 ).toggleClass( "glyphicon-chevron-up glyphicon-chevron-down" );
+            // }, 100 );
+            // }); 
+            // $('.list-group-item').on('click', function(){
+            //   console.log(this);
+            //   $('.glyphicon', this).toggleClass('glyphicon-chevron-up').toggleClass('glyphicon-chevron-down');
+            // })
         }
     }
 </script>

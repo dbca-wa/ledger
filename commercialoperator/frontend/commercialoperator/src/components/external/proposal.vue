@@ -50,7 +50,7 @@
 						  <p class="pull-right" style="margin-top:5px;">
 							<input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
 							<input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-							<input type="button" @click.prevent="submit" class="btn btn-primary" value="Submit"/>
+							<input type="button" @click.prevent="submit" class="btn btn-primary" value="Pay and Submit" :disabled="!proposal.training_completed"/>
 
 							<input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
 						  </p>
