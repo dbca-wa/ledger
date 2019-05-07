@@ -91,6 +91,7 @@ class LocationSerializer(GeoFeatureModelSerializer):
             'postcode',
             'country',
             'wkb_geometry',
+            'details',
         )
 
 
