@@ -55,11 +55,15 @@
             </div>
         </div>
 
+              <FormSection :label="`Location`" :Index="`1`">
+                    <MapLocations />
+              </FormSection>
     </div>
 </template>
 <script>
     import $ from 'jquery'
     import datatable from '@vue-utils/datatable.vue'
+    import MapLocations from "./map_locations.vue";
     import Vue from 'vue'
     import {
         api_endpoints,
@@ -216,7 +220,8 @@
             });
         },
         components: {
-            datatable
+            datatable,
+            MapLocations
         },
         computed: {
             isLoading: function () {
