@@ -75,7 +75,7 @@
                       </div>
                     </div>
                     <div v-if="is_referral">
-                      <Assessment :proposal="proposal" :assessment="referral.referral_assessment" :hasReferralMode="hasReferralMode" :is_internal="is_internal" :is_referral="is_referral"></Assessment>
+                      <!-- <Assessment :proposal="proposal" :assessment="referral.referral_assessment" :hasReferralMode="hasReferralMode" :is_internal="is_internal" :is_referral="is_referral"></Assessment> -->
                     </div>
                     
 

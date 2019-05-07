@@ -247,6 +247,7 @@
                     </div>
                 </div> -->
                 <Requirements :proposal="proposal" :hasReferralMode="hasReferralMode" :referral_group="referral.referral_group"/>
+                <Assessment :proposal="proposal" :assessment="referral.referral_assessment" :hasReferralMode="hasReferralMode" :is_internal="is_internal" :is_referral="is_referral"></Assessment>
                 <div class="col-md-12" v-if="showingProposal">
                     <div class="row">
                         <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
@@ -289,6 +290,7 @@ import CommsLogs from '@common-utils/comms_logs.vue'
 import MoreReferrals from '@common-utils/more_referrals.vue'
 import CompleteReferral from './complete_referral.vue'
 import Requirements from '@/components/internal/proposals/proposal_requirements.vue'
+import Assessment from '@/components/common/tclass/assessment.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
     api_endpoints,
@@ -368,7 +370,8 @@ export default {
         MoreReferrals,
         CompleteReferral,
         ProposalTClass,
-        Requirements
+        Requirements,
+        Assessment
     },
     filters: {
         formatDate: function(data){
