@@ -49,6 +49,13 @@ class Basket(CoreAbstractBasket):
 
 @python_2_unicode_compatible
 class Line(CoreAbstractLine):
+
+    LINE_STATUS = (
+        (1, 'New'),
+        (2, 'Existing'),
+        (3, 'Removed')
+    )
+
     basket = models.ForeignKey(Basket,on_delete=models.CASCADE,related_name='lines',verbose_name=_("Basket"))
     product = models.ForeignKey(Product, related_name='basket_lines', on_delete=models.SET_NULL, verbose_name='Product', blank=True, null=True)
     stockrecord = models.ForeignKey('partner.StockRecord', on_delete=models.SET_NULL,related_name='basket_lines',blank=True, null=True)
@@ -56,6 +63,7 @@ class Line(CoreAbstractLine):
     ledger_description = models.TextField(blank=True,null=True)
     oracle_code = models.CharField("Oracle Code",max_length=50,null=True,blank=True)
     price_excl_tax = models.DecimalField(_('Price excl. Tax'), decimal_places=12, max_digits=22,null=True)
+    line_status = models.SmallIntegerField(choices=LINE_STATUS, default=1, null=True)
 
 
     def __str__(self):
