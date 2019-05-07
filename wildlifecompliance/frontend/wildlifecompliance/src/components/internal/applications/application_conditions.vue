@@ -13,7 +13,7 @@
                             <div class="panel-body panel-collapse collapse in" :id="panelBody">
                                 <form class="form-horizontal" action="index.html" method="post">
                                     <div class="col-sm-12">
-                                        <button @click.prevent="addCondition()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Condition</button>
+                                        <button v-if="!final_view_conditions" @click.prevent="addCondition()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Condition</button>
                                     </div>
                                     <datatable ref="conditions_datatable" :id="'conditions-datatable-'+_uid" :dtOptions="condition_options" :dtHeaders="condition_headers"/>
                                 </form>
@@ -37,6 +37,10 @@ import { mapGetters } from 'vuex'
 export default {
     name: 'InternalApplicationConditions',
     props: {
+        final_view_conditions: {
+            type: Boolean,
+            default: false,
+        },
     },
     data: function() {
         let vm = this;
@@ -48,7 +52,6 @@ export default {
                 inspection_report: null,
             },
             form: null,
-            datepickerInitialised: false,
             savingAssessment: false,
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -121,8 +124,10 @@ export default {
                 ],
                 processing: true,
                 drawCallback: function (settings) {
-                    $(vm.$refs.conditions_datatable.table).find('tr:last .dtMoveDown').remove();
-                    $(vm.$refs.conditions_datatable.table).children('tbody').find('tr:first .dtMoveUp').remove();
+                    if(vm.$refs.conditions_datatable) {
+                        $(vm.$refs.conditions_datatable.table).find('tr:last .dtMoveDown').remove();
+                        $(vm.$refs.conditions_datatable.table).children('tbody').find('tr:first .dtMoveUp').remove();
+                    }
                     // Remove previous binding before adding it
                     $('.dtMoveUp').unbind('click');
                     $('.dtMoveDown').unbind('click');
@@ -246,38 +251,6 @@ export default {
             table.row(index + order).data(data1);
             table.page(0).draw(false);
         },
-        //Initialise Date Picker
-        initDatePicker: function() {
-            if(this.datepickerInitialised || this.$refs === undefined || !this.assessment.is_inspection_required) {
-                return;
-            }
-            const inspection_date = this.$refs.inspection_date;
-
-            const inspectionDate = new Date(this.assessment.inspection_date);
-
-            $(inspection_date).datetimepicker(this.datepickerOptions);
-            $(inspection_date).data('DateTimePicker').date(inspectionDate);
-            $(inspection_date).off('dp.change').on('dp.change', (e) => {
-                const selected_inspection_date = $(inspection_date).data('DateTimePicker').date().format('YYYY-MM-DD');
-                if (selected_inspection_date && selected_inspection_date != this.assessment.inspection_date) {
-                    this.assessment.inspection_date = selected_inspection_date;
-                }
-            });
-            this.datepickerInitialised = true;
-        },
-        readFileInspectionReport: function() {
-            let _file = null;
-            var input = $(this.$refs.inspection_report)[0];
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-                reader.readAsDataURL(input.files[0]);
-                reader.onload = function(e) {
-                    _file = e.target.result;
-                };
-                _file = input.files[0];
-            }
-            this.assessment.inspection_report = _file;
-        },
     },
     mounted: function(){
         this.fetchConditions();
@@ -287,9 +260,6 @@ export default {
         });
     },
     updated: function() {
-        this.$nextTick(() => {
-            this.initDatePicker();
-        });
     }
 }
 </script>

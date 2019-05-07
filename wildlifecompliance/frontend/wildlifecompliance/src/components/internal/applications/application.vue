@@ -145,7 +145,7 @@
                 <template v-if="canIssueDecline && isofficerfinalisation">
                     <IssueLicence :application="application" :licence_activity_tab="selected_activity_tab_id"/>
                 </template>
-                <template v-if="isOfficerConditions">
+                <!--<template v-if="isOfficerConditions">
                     <div>
                         <ul class="nav nav-tabs" id="conditiontabs">
                             <li v-for="activity in getVisibleConditionsFor('licensing_officer', 'with_officer_conditions')"><a data-toggle="tab" :data-target="`#${activity.id}`">{{activity.name}}</a></li>
@@ -168,8 +168,10 @@
                             <OfficerConditions :application="application" :licence_activity_tab="activity.id" :final_view_conditions="true" :key="`final_condition_${selected_activity_tab_id}`"/>
                         </div>
                     </div>
-                </template>
-                <ApplicationAssessments v-if="isSendingToAssessor"/>
+                </template>-->
+                <ApplicationAssessments
+                    v-if="isSendingToAssessor || isFinalViewConditions || isOfficerConditions"
+                    :final_view_conditions="isFinalViewConditions"/>
                 <template v-if="applicationDetailsVisible">
                     <div>
                     <ul class="nav nav-tabs" id="tabs-main">
@@ -531,7 +533,7 @@
                                                 <div class="container">
                                                     <p class="pull-right" style="margin-top:5px;">
                                                         <button v-if="canReturnToConditions" class="btn btn-primary" @click.prevent="returnToOfficerConditions()">Return to Officer - Conditions</button>
-                                                        <button v-if="!applicationIsDraft && canRequestAmendment" class="btn btn-primary" @click.prevent="save()">Save Changes</button>
+                                                        <button v-if="!applicationIsDraft && canSaveApplication" class="btn btn-primary" @click.prevent="save()">Save Changes</button>
                                                     </p>
                                                 </div>
                                             </div>
@@ -563,8 +565,6 @@ import ProposedDecline from './application_proposed_decline.vue';
 import AmendmentRequest from './amendment_request.vue';
 import ApplicationAssessments from './application_assessments.vue';
 import datatable from '@vue-utils/datatable.vue';
-import Conditions from './application_conditions.vue';
-import OfficerConditions from './application_officer_conditions.vue';
 import ProposedLicence from './proposed_issuance.vue';
 import IssueLicence from './application_issuance.vue';
 import LicenceScreen from './application_licence.vue';
@@ -652,8 +652,6 @@ export default {
         ProposedDecline,
         AmendmentRequest,
         ApplicationAssessments,
-        Conditions,
-        OfficerConditions,
         ProposedLicence,
         IssueLicence,
         LicenceScreen,
@@ -707,6 +705,17 @@ export default {
                 }
             }
             return false;
+        },
+        canSaveApplication: function() {
+            // Assessors can save the Assessor Comments field.
+            if(this.selected_activity_tab_id &&
+                this.userHasRole('assessor', this.selected_activity_tab_id) &&
+                this.selectedActivity.processing_status.id == 'with_assessor') {
+                    return true;
+            }
+
+            // Licensing officers can save officer comments.
+            return this.canRequestAmendment;
         },
         canRequestAmendment: function(){
             var activities_list = this.licence_type_data.activity
@@ -824,11 +833,10 @@ export default {
         },
         proposedDecline: function(){
             this.save_wo();
-//            this.$refs.proposed_decline.decline = this.application.applicationdeclineddetails != null ? helpers.copyObject(this.application.applicationdeclineddetails): {};
             this.$refs.proposed_decline.isModalOpen = true;
         },
         isActivityVisible: function(activity_id) {
-            return this.isApplicationActivityVisible(activity_id);
+            return this.isApplicationActivityVisible({activity_id: activity_id});
         },
         hasActivityStatus: function(status_list, status_count=1, required_role=null) {
             return this.checkActivityStatus(status_list, status_count, required_role);
@@ -1016,9 +1024,6 @@ export default {
             this.isSendingToAssessor=false;
             this.isOfficerConditions=true;
             this.isFinalViewConditions=false;
-            setTimeout(function(){
-                $('#conditiontabs li a')[0].click();
-            }, 50);
 
         },
         toggleFinalViewConditions:function(){
@@ -1027,10 +1032,6 @@ export default {
             this.isSendingToAssessor=false;
             this.isOfficerConditions=false;
             this.isFinalViewConditions=true;
-            setTimeout(function(){
-                $('#conditiontabs li a')[0].click();
-            }, 50);
-
         },
         updateAssignedOfficerSelect:function(){
             let vm = this;

@@ -22,11 +22,11 @@
                                     <div class="col-sm-12">
                                         <div class="form-group" v-if="assessment.is_inspection_required">
                                             <div class="row">
-                                                <div class="col-sm-3">
+                                                <div class="col-xs-3">
                                                     <label class="control-label pull-left">Inspection Date</label>
                                                 </div>
-                                                <div class="col-sm-9">
-                                                    <div class="input-group date" ref="inspection_date" style="width: 30%;">
+                                                <div class="col-xs-9">
+                                                    <div class="input-group date" ref="inspection_date">
                                                         <input type="text" class="form-control" name="inspection_date" placeholder="DD/MM/YYYY" v-model="assessment.inspection_date">
                                                         <span class="input-group-addon">
                                                             <span class="glyphicon glyphicon-calendar"></span>
@@ -41,7 +41,7 @@
                                                 <div class="col-sm-9" style="margin-bottom:10px; margin-top:10px;">
                                                     <div v-if="assessment.inspection_report && !inspection_report_file_name" style="margin-bottom: 10px;"><a :href="assessment.inspection_report" target="_blank">Download</a></div>
                                                     <div v-if="inspection_report_file_name" style="margin-bottom: 10px;">{{ inspection_report_file_name }}</div>
-                                                    <span class="btn btn-primary btn-file"> Select Inspection Report to Upload <input type="file" ref="inspection_report" @change="readFileInspectionReport()"/></span>
+                                                    <span v-if="canCompleteAssessment" class="btn btn-primary btn-file"> Select Inspection Report to Upload <input type="file" ref="inspection_report" @change="readFileInspectionReport()"/></span>
                                                 </div>
                                             </div>
                                             <div class="row">
@@ -49,7 +49,7 @@
                                                     <label class="control-label pull-left">Inspection Comments</label>
                                                 </div>
                                                 <div class="col-sm-9">
-                                                    <textarea class="form-control" v-model="assessment.inspection_comment" style="width: 100%; max-width: 100%;" />
+                                                    <textarea class="form-control" v-model="assessment.inspection_comment" :readonly="!canCompleteAssessment" style="width: 100%; max-width: 100%;" />
                                                 </div>
                                             </div>
                                         </div>
@@ -59,7 +59,7 @@
                                                     <label class="control-label pull-left">Final Comments</label>
                                                 </div>
                                                 <div class="col-sm-9">
-                                                    <textarea class="form-control" v-model="assessment.final_comment" style="width: 100%; max-width: 100%;" />
+                                                    <textarea class="form-control" v-model="assessment.final_comment" :readonly="!canCompleteAssessment" style="width: 100%; max-width: 100%;" />
                                                 </div>
                                             </div>
                                         </div>
@@ -126,7 +126,9 @@
                                 </div>
                             </div>
                             <div :id="`${selectedActivity.id}`" class="tab-pane fade in">
-                                <Conditions :key="`assessor_condition_${selected_activity_tab_id}`"/>
+                                <Conditions
+                                    :key="`assessor_condition_${selected_activity_tab_id}`"
+                                    :final_view_conditions="final_view_conditions"/>
                             </div>
                         </div>
                     </div>
@@ -161,13 +163,14 @@ export default {
                 inspection_date: "",
                 inspection_report: null,
             },
+            datepickerInitialised: false,
             isModalOpen: false,
             assessorsBody: `assessorsBody${vm._uid}`,
             assessorGroup: [],
             panelBody: `assessment-details-${vm._uid}`,
             "selectedAssessor": {},
             application_assessor_datatable: `${vm._uid}assessment-table`,
-            assessors_headers: ["Assessor Group","Date Sent","Status","Action"],
+            assessors_headers: ["Assessor Group","Date Sent","Status","Final Comments","Action"],
             assessors_options: {},
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
             viewingAssessmentId: null,
@@ -182,6 +185,10 @@ export default {
         SendToAssessor,
     },
     props:{
+        final_view_conditions: {
+            type: Boolean,
+            default: false,
+        },
     },
     filters: {
         formatDate: function(data){
@@ -226,7 +233,10 @@ export default {
             }
             return null;
         },
-        canCompleteAssessment: function(){
+        isLicensingOfficer: function() {
+            return this.userHasRole('licensing_officer', this.selected_activity_tab_id);
+        },
+        canCompleteAssessment: function() {
             if(!this.userHasRole('assessor', this.selected_activity_tab_id)) {
                 return false;
             }
@@ -366,6 +376,7 @@ export default {
             return new Promise((resolve, reject) => {
                 let formData = new FormData(this.form);
                 formData.append('inspection_comment', this.assessment.inspection_comment);
+                formData.append('inspection_date', this.assessment.inspection_date);
                 formData.append('final_comment', this.assessment.final_comment);
                 if (this.assessment.inspection_report) {
                     formData.append('inspection_report', this.assessment.inspection_report);
@@ -418,7 +429,7 @@ export default {
             return this.assessorGroup.filter(assessor => assessor.id == assessor_id).length;
         },
         isActivityVisible: function(activity_id) {
-            return this.isApplicationActivityVisible(activity_id);
+            return this.isApplicationActivityVisible({ activity_id: activity_id });
         },
         isAssessorRelevant(assessor, activity_id) {
             if(!activity_id) {
@@ -518,7 +529,7 @@ export default {
             if(!this.isApplicationLoaded) {
                 return false;
             }
-
+            const vm = this;
             for (let activity of this.licence_type_data.activity) {
                 //Check for permissions
                 if(this.assessors_options[activity.id] != null) {
@@ -537,26 +548,24 @@ export default {
                         {data:'assessor_group.display_name'},
                         {data:'date_last_reminded'},
                         {data:'status.name'},
+                        {data:'final_comment'},
                         {
                             mRender:function (data,type,full) {
                                 let links = '';
-                                    if(full.status.id == 'completed'){
-                                        links +=  `
-                                            <a data-assessmentid='${full.id}' class="assessment-action assessment_resend">Resend</a>
-                                            <a data-assessmentid='${full.id}' class="assessment-action assessment_view">View</a>
-                                        `;
-                                    } else if(full.status.id == 'awaiting_assessment'){
-                                        links +=  `
-                                            <a data-assessmentid='${full.id}' class="assessment-action assessment_remind">Remind</a>
-                                            <a data-assessmentid='${full.id}' class="assessment-action assessment_recall">Recall</a>
-                                            <a data-assessmentid='${full.id}' class="assessment-action assessment_view">Edit</a>
-                                        `;
-                                    }
-                                    else {
-                                        links +=  `
-                                            <a data-assessmentid='${full.id}' class="assessment-action assessment_view">View</a>
-                                        `;
-                                    }
+                                const pending = full.status.id === 'awaiting_assessment';
+                                if(full.status.id == 'completed' && vm.isLicensingOfficer){
+                                    links +=  `
+                                        <a data-assessmentid='${full.id}' class="assessment-action assessment_resend">Resend</a>
+                                    `;
+                                } else if(pending && vm.isLicensingOfficer){
+                                    links +=  `
+                                        <a data-assessmentid='${full.id}' class="assessment-action assessment_remind">Remind</a>
+                                        <a data-assessmentid='${full.id}' class="assessment-action assessment_recall">Recall</a>
+                                    `;
+                                }
+                                links +=  `
+                                    <a data-assessmentid='${full.id}' class="assessment-action assessment_view">${pending && vm.canCompleteAssessment? 'Edit' : 'View'}</a>
+                                `;
                                 return links;
                             }}
                     ],
@@ -568,7 +577,39 @@ export default {
         },
         optionsLoadedForActivity(activity) {
             return this.assessors_options[activity.id] != null;
-        }
+        },
+        readFileInspectionReport: function() {
+            let _file = null;
+            var input = $(this.$refs.inspection_report)[0];
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.readAsDataURL(input.files[0]);
+                reader.onload = function(e) {
+                    _file = e.target.result;
+                };
+                _file = input.files[0];
+            }
+            this.assessment.inspection_report = _file;
+        },
+        //Initialise Date Picker
+        initDatePicker: function() {
+            if(this.datepickerInitialised || this.$refs === undefined || !this.assessment.is_inspection_required) {
+                return;
+            }
+            const inspection_date = this.$refs.inspection_date;
+
+            const inspectionDate = new Date(this.assessment.inspection_date);
+
+            $(inspection_date).datetimepicker(this.datepickerOptions);
+            $(inspection_date).data('DateTimePicker').date(inspectionDate);
+            $(inspection_date).off('dp.change').on('dp.change', (e) => {
+                const selected_inspection_date = $(inspection_date).data('DateTimePicker').date().format('YYYY-MM-DD');
+                if (selected_inspection_date && selected_inspection_date != this.assessment.inspection_date) {
+                    this.assessment.inspection_date = selected_inspection_date;
+                }
+            });
+            this.datepickerInitialised = true;
+        },
     },
     mounted: function() {
         this.fetchAssessorGroup();
@@ -577,6 +618,7 @@ export default {
     updated: function(){
         this.$nextTick(() => {
             this.eventListeners();
+            this.initDatePicker();
         });
     },
     beforeRouteEnter: function(to, from, next) {

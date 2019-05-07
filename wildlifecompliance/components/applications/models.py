@@ -1822,7 +1822,8 @@ class ApplicationFormDataRecord(models.Model):
         choices=COMPONENT_TYPE_CHOICES,
         default=COMPONENT_TYPE_TEXT)
     value = JSONField(blank=True, null=True)
-    comment = models.TextField(blank=True)
+    officer_comment = models.TextField(blank=True)
+    assessor_comment = models.TextField(blank=True)
     deficiency = models.TextField(blank=True)
 
     def __str__(self):
@@ -1838,11 +1839,13 @@ class ApplicationFormDataRecord(models.Model):
     @staticmethod
     def process_form(request, application, form_data, action=ACTION_TYPE_ASSIGN_VALUE):
         from wildlifecompliance.components.applications.utils import MissingFieldsException
-        can_edit_comments = request.user.has_perm(
+        can_edit_officer_comments = request.user.has_perm(
             'wildlifecompliance.licensing_officer'
-        ) or request.user.has_perm(
+        )
+        can_edit_assessor_comments = request.user.has_perm(
             'wildlifecompliance.assessor'
         )
+        can_edit_comments = can_edit_officer_comments or can_edit_assessor_comments
         can_edit_deficiencies = request.user.has_perm(
             'wildlifecompliance.licensing_officer'
         )
@@ -1862,7 +1865,8 @@ class ApplicationFormDataRecord(models.Model):
             instance_name = field_data.get('instance_name', '')
             component_type = field_data.get('component_type', '')
             value = field_data.get('value', '')
-            comment = field_data.get('comment_value', '')
+            officer_comment = field_data.get('officer_comment', '')
+            assessor_comment = field_data.get('assessor_comment', '')
             deficiency = field_data.get('deficiency_value', '')
 
             if ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR in field_name:
@@ -1898,8 +1902,10 @@ class ApplicationFormDataRecord(models.Model):
                     continue
                 form_data_record.value = value
             elif action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT:
-                if can_edit_comments:
-                    form_data_record.comment = comment
+                if can_edit_officer_comments:
+                    form_data_record.officer_comment = officer_comment
+                if can_edit_assessor_comments:
+                    form_data_record.assessor_comment = assessor_comment
                 if can_edit_deficiencies:
                     form_data_record.deficiency = deficiency
             form_data_record.save()
