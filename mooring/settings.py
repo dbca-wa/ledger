@@ -1,5 +1,6 @@
 from ledger.settings_base import *
 from decimal import Decimal
+import os
 
 ROOT_URLCONF = 'mooring.urls'
 SITE_ID = 1
@@ -113,3 +114,5 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GIT_COMMIT_DATE = os.popen('cd '+BASE_DIR+' ; git log -1 --format=%cd').read()
 GIT_COMMIT_HASH = os.popen('cd  '+BASE_DIR+' ; git log -1 --format=%H').read()
 VERSION_NO = '2.02'
+os.environ['UPDATE_PAYMENT_ALLOCATION'] = 'True' 
+#os.environ.setdefault("UPDATE_PAYMENT_ALLOCATION", True)

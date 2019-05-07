@@ -1822,8 +1822,9 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
   #      if request.session['ps_booking_old']:
 #            sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius))).filter(**context).exclude()
  #       else:
-        sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius))).filter(**context)
-
+#        sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius))).filter(**context)
+        sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius)))
+        
         # # If the pen type has been included in filtering and is not 'all' then loop through the sites selected.
         # if pen_type != 'all':
         #     sites = Mooringsite.objects.filter(pk__in=sites_qs)
