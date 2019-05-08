@@ -78,7 +78,7 @@ module.exports = {
        }
    },
    mounted:function () {
-      this.table =$(`#${this.id}`);
+      this.table = $(`#${this.id}`);
       $.fn.dataTable.ext.errMode = 'throw';
       this.initEvents();
       this.onMount()

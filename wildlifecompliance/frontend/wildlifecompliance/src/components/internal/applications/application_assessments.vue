@@ -128,7 +128,8 @@
                             <div :id="`${selectedActivity.id}`" class="tab-pane fade in">
                                 <Conditions
                                     :key="`assessor_condition_${selected_activity_tab_id}`"
-                                    :final_view_conditions="final_view_conditions"/>
+                                    :final_view_conditions="final_view_conditions"
+                                    :activity="selectedActivity"/>
                             </div>
                         </div>
                     </div>
@@ -225,7 +226,7 @@ export default {
             return this.licenceActivities(['with_officer', 'with_officer_conditions', 'with_assessor'], 'licensing_officer');
         },
         selectedActivity: function(){
-            var activities_list = this.licence_type_data.activity
+            const activities_list = this.licence_type_data.activity;
             for(let activity of activities_list){
                 if(activity.id == this.selected_activity_tab_id){
                     return activity;
