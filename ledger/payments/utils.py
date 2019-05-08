@@ -324,7 +324,7 @@ def oracle_parser(date,system,system_name,override=False):
         raise e
 
 def oracle_parser_on_invoice(date,system,system_name,override=False):
-    "Oracle parse uses invoices to build a total of allocated payments, refund and money that needs to be rellocated to alternative oracle codes."
+    '''Oracle parse uses invoices to build a total of allocated payments, refund and money that needs to be rellocated to alternative oracle codes.'''
     invoices = []
     invoice_list = []
     oracle_codes = {}
