@@ -118,6 +118,22 @@ class Activity(models.Model):
         return self.name
 
 @python_2_unicode_compatible
+class ParkPrice(models.Model):
+    park = models.ForeignKey('Park', related_name='park_prices')
+    adult = models.DecimalField('Adult (price per adult)', max_digits=5, decimal_places=2, null=True, blank=True)
+    child = models.DecimalField('Child (price per child)', max_digits=5, decimal_places=2, null=True, blank=True)
+    senior = models.DecimalField('Senior (price per senior)', max_digits=5, decimal_places=2, null=True, blank=True)
+
+    class Meta:
+        ordering = ['park__name']
+        app_label = 'commercialoperator'
+        #unique_together = ('id', 'proposal',)
+
+    def __str__(self):
+        return self.park.name
+
+
+@python_2_unicode_compatible
 class Park(models.Model):
     PARK_TYPE_CHOICES = (
         ('land', 'Land'),

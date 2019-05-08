@@ -19,7 +19,7 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument#, RevisionedMixin
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, ParkPrice, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument#, RevisionedMixin
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
@@ -28,6 +28,7 @@ import copy
 import subprocess
 from django.db.models import Q
 from reversion.models import Version
+from dirtyfields import DirtyFieldsMixin
 
 import logging
 logger = logging.getLogger(__name__)
@@ -282,7 +283,45 @@ class ProposalActivitiesMarine(models.Model):
     class Meta:
         app_label = 'commercialoperator'
 
-from dirtyfields import DirtyFieldsMixin
+
+@python_2_unicode_compatible
+class ParkEntry(models.Model):
+    park = models.ForeignKey('Park', related_name='park_entries')
+    proposal = models.ForeignKey('Proposal', related_name='parks_entries')
+    arrival_date = models.DateField()
+    number_adults = models.PositiveSmallIntegerField('No. of Adults', null=True, blank=True)
+    number_children = models.PositiveSmallIntegerField('No. of Children', null=True, blank=True)
+    number_seniors = models.PositiveSmallIntegerField('No. of Senior Citizens', null=True, blank=True)
+    number_free_of_charge = models.PositiveSmallIntegerField('No. of Individuals Free of Charge', null=True, blank=True)
+
+    class Meta:
+        ordering = ['park__name']
+        app_label = 'commercialoperator'
+        #unique_together = ('id', 'proposal',)
+
+    def __str__(self):
+        return self.park.name
+
+    @property
+    def park_prices(self):
+        return self.park.park_prices
+
+    @property
+    def price_adult(self):
+        return (self.park_prices.adult * self.number_adults)
+
+    @property
+    def price_child(self):
+        return (self.park_prices.child * self.number_children)
+
+    @property
+    def price_senior(self):
+        return (self.park_prices.senior * self.number_senior)
+
+    @property
+    def price_net(self):
+        return (self.price_adult + self.price_child + self.price_senior)
+
 class Proposal(DirtyFieldsMixin, RevisionedMixin):
 #class Proposal(DirtyFieldsMixin, models.Model):
 
