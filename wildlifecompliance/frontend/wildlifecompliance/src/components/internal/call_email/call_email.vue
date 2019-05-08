@@ -116,12 +116,6 @@
                         <div class="navbar-inner">
                             <div class="container">
                                 <p class="pull-right" style="margin-top:5px;">
-                                    <!--
-                                    <span v-if="requiresCheckout" style="margin-right: 5px; font-size: 18px; display: block;">
-                                        <strong>Estimated application fee: {{application.application_fee | toCurrency}}</strong>
-                                        <strong>Estimated licence fee: {{application.licence_fee | toCurrency}}</strong>
-                                    </span>
-                                    -->
                                     
                                     <input type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
@@ -130,7 +124,7 @@
                                 </p>
                             </div>
                         </div>
-                    </div>          
+        </div>          
     </div>
 </template>
 <script>
@@ -148,7 +142,6 @@ export default {
     return {
       sectionLabel: "Details",
       sectionIndex: 1,
-
       pBody: "pBody" + this._uid,
       loading: [],
       renderer_form: null,
@@ -165,7 +158,6 @@ export default {
         api_endpoints.call_email,
         this.$route.params.call_email_id + "/action_log"
       ),
-      
     };
   },
 
@@ -177,12 +169,8 @@ export default {
   computed: {
     ...mapGetters('callemailStore', {
       call_email: "call_email",
-      //call_id: "callemailStore/call_id",
       classification_types: "classification_types",
       report_types: "report_types",
-      //location: "callemailStore/location",
-      //report_type: "report_type",
-      call_email_form_url: "call_email_form_url",
     }),
     ...mapGetters({
       renderer_form_data: 'renderer_form_data',
@@ -194,20 +182,14 @@ export default {
     isLoading: function() {
       return this.loading.length > 0;
     },
-    /*
-    call_email_form_url: function() {
-      return this.call_email
-        ? `/api/call_email/${this.call_email.id}/form_data.json`
-        : "";
-    },
-    */
-
   },
+  
   filters: {
     formatDate: function(data) {
       return data ? moment(data).format("DD/MM/YYYY HH:mm:ss") : "";
     }
   },
+
   methods: {
     ...mapActions('callemailStore', {
       setCallEmail: 'setCallEmail',
@@ -222,49 +204,6 @@ export default {
     ...mapActions({
       saveFormData: "saveFormData",
     }),
-    /*
-    createCallEmail: function(e) {
-      let formData = new FormData(this.renderer_form);
-      this.$http
-        .post(
-          helpers.add_endpoint_join(
-            api_endpoints.call_email,
-            this.call_email.id + "/update_renderer_form/"
-          ),
-          formData
-        )
-        .then(
-          res => {
-            swal("Saved", "Your Call/Email has been saved", "success");
-          },
-          err => {}
-        );
-
-    },
-    */
-    /*
-    save: function() {
-      if (this.call_email.id) {
-      console.log("this.saveCallEmail");
-      this.saveCallEmail({location: this.call_email.location, renderer: this.call_email.schema});
-      } else {
-        if (this.call_email.location.geometry.coordinates > 0 && this.call_email.schema.length > 0) {
-          console.log("there is location and schema");
-          this.createCallEmail({location: this.call_email.location, renderer: this.call_email.schema});
-        } else if (this.call_email.location.geometry.coordinates > 0) {
-            console.log("just location");
-            this.createCallEmail({location: this.call_email.location});
-        } else if (this.call_email.schema.length > 0) {
-          console.log("just schema");
-          this.createCallEmail({renderer: this.call_email.schema});
-        } else {
-          console.log("bare call/email");
-          this.createCallEmail({location: null, renderer: null, route: null});
-        }
-      }
-          
-    },
-    */
     save: async function() {
       if (this.call_email.id) {
         //console.log("this.saveCallEmail");
@@ -277,21 +216,6 @@ export default {
         });
       }
     },
-  
-  
-  /*
-    save: function() {
-      this.saveCallEmail({location: true, renderer: true})
-      .then(res => {
-        swal("Saved", "The record has been saved", "success");
-      },
-      err => {
-        swal("Error", "There was an error saving the record", "error");
-        console.log(err);
-      });
-    
-    },
-*/
     saveExit: function() {
       if (this.call_email.id) {
         console.log("this.saveCallEmail");
@@ -301,51 +225,8 @@ export default {
         this.saveCallEmail({ route: true, crud: 'create'});
       }
     },
-    /*
-    save: function(e) {
-      this.isProcessing = true;
-      this.$http
-        .post(
-          helpers.add_endpoint_join(
-            api_endpoints.call_email,
-            this.call_email.id + "/call_email_save/"
-          ),
-          this.call_email
-        )
-        .then(
-          resOne => {
-            console.log(resOne);
-            this.saveFormData({ url: this.call_email_form_url }).then(
-              resTwo => {
-                this.isProcessing = false;
-              },
-              errTwo => {
-                swal(
-                  "Error",
-                  "There was an error saving the record",
-                  "error"
-                ).then(errTwoRes => {
-                  this.isProcessing = false;
-                });
-              }
-            );
-            swal("Saved", "The record has been saved", "success").then(
-              result => {
-                this.isProcessing = false;
-              }
-            );
-          },
-          errOne => {
-            swal("Error", "There was an error saving the record", "error").then(
-              result => {
-                this.isProcessing = false;
-              }
-            );
-          }
-        );
-    }
-    */
   },
+
   created: function() {
     
     if (this.$route.params.call_email_id) {
@@ -354,20 +235,7 @@ export default {
     this.loadClassification();
     this.loadReportTypes();
   },
-  
-  /*
-  beforeRouteEnter: function(to, from, next) {
-    console.log("before route enter");
-    let initialisers = [];
-    next(vm => {
-      console.log("before route enter - next");
-      vm.loadCallEmail({ call_email_id: to.params.call_email_id });
-      console.log("call_email loaded"); 
-      vm.loadClassification();
-      console.log("vuex loaded");
-    });
-  },
-*/
+
   mounted: function() {
     this.$nextTick(function() {});
   }

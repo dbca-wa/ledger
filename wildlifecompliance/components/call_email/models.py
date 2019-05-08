@@ -93,8 +93,6 @@ class Location(models.Model):
         ('ACT', 'Australian Capital Territory')
     )
 
-    # latitude = models.DecimalField(max_digits=10, decimal_places=2, null=True)
-    # longitude = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
     street = models.CharField(max_length=100, null=True, blank=True)
     town_suburb = models.CharField(max_length=100, null=True, blank=True)
@@ -103,11 +101,6 @@ class Location(models.Model):
     postcode = models.IntegerField(null=True)
     country = models.CharField(max_length=100, null=True, blank=True, default='Australia')
     objects = models.GeoManager()
-    # call_email = models.ForeignKey(
-    #     CallEmail,
-    #     null=True,
-    #     related_name="call_location"
-    # )
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -144,8 +137,6 @@ class CallEmail(RevisionedMixin):
         related_name="call_classification"
     )
     
-    # schema_name = models.CharField(max_length=50, blank=True, null=True)
-    # schema = JSONField(default=list)
     lodged_on = models.DateField(auto_now_add=True)
     number = models.CharField(max_length=50, blank=True, null=True)
     caller = models.CharField(max_length=100, blank=True, null=True)
@@ -170,17 +161,6 @@ class CallEmail(RevisionedMixin):
     def __str__(self):
         return 'ID: {0}, Status: {1}, Number: {2}, Caller: {3}, Assigned To: {4}' \
             .format(self.id, self.status, self.number, self.caller, self.assigned_to)
-
-    # def __init__(self, *args, **kwargs):
-    #     super(CallEmail, self).__init__(*args, **kwargs)
-    #     self._original_report_type_id = self.report_type_id
-    #     if self.report_type_id:
-    #         new_report_type = ReportType.objects.get(id=self.report_type_id)
-    #         self.schema = new_report_type.schema
-        
-        # self._original_report_type_id = None
-        # if self.report_type_id:
-        #     self._original_report_type_id = self.report_type_id
     
     # Prefix "C" char to CallEmail number.
     def save(self, *args, **kwargs):
@@ -191,24 +171,6 @@ class CallEmail(RevisionedMixin):
             self.number = new_number_id
             self.save()
         
-        # if self.report_type_id != self._original_report_type_id:
-        #     print("new report type id")
-        #     new_report_type = ReportType.objects.get(id=self.report_type_id)
-        #     print("new_report_type")
-        #     print(new_report_type)
-        #     self.schema = new_report_type.schema
-        #     self._original_report_type_id = self.report_type_id
-        #     self.save()
-        
-    # @property
-    # def number(self):
-    #     if self.classification_id:
-    #         classification_instance = Classification.objects.get(id=self.classification_id)
-    #         classification_prefix = classification_instance.name[0]
-    #         return '{0}{1:06d}'.format(classification_prefix, self.pk)
-    #     else:
-    #         return ''
-    
     @property
     def data(self):
         """ returns a queryset of form data records attached to CallEmail (shortcut to ComplianceFormDataRecord related_name). """
@@ -222,24 +184,6 @@ class CallEmail(RevisionedMixin):
     
     def log_user_action(self, action, request):
         return ComplianceUserAction.log_action(self, action, request.user)
-
-
-# class CallEmailSchema(models.Model):
-
-#     schema = JSONField(default=list)
-#     call_email = models.ForeignKey(CallEmail, related_name='call_schema')
-#     origin_report_type = models.CharField(max_length=50)
-#     origin_version = models.SmallIntegerField(default=1, blank=False, null=False)
-#     date_created = models.DateTimeField(auto_now_add=True, null=True)
-
-#     class Meta:
-#         app_label = 'wildlifecompliance'
-#         verbose_name = 'CM_CallEmailSchema'
-#         verbose_name_plural = 'CM_CallEmailSchemas'
-#         # unique_together = ('call_email', 'field_name',)
-
-#     def __str__(self):
-#         return '{0}, v.{1}'.format(self.report_type_name, self.version)
 
 
 @python_2_unicode_compatible
@@ -394,12 +338,6 @@ class ComplianceLogEntry(CommunicationsLogEntry):
 
     class Meta:
         app_label = 'wildlifecompliance'
-
-    # def save(self, **kwargs):
-        # save the application reference if the reference not provided
-        # if not self.reference:
-        #   self.reference = self.application.reference
-        # super(ComplianceLogEntry, self).save(**kwargs)
 
 
 class ComplianceUserAction(UserAction):
