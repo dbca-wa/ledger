@@ -8,6 +8,8 @@
 <script>
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { api_endpoints, helpers } from '@/utils/hooks'
+import pin from '../../../assets/pin.svg';
 
 L.TileLayer.WMTS = L.TileLayer.extend({
     defaultWmtsParams: {
@@ -104,10 +106,18 @@ L.TileLayer.WMTS = L.TileLayer.extend({
         return matrixIds3857;
     }
 });
-
 L.tileLayer.wmts = function (url, options) {
     return new L.TileLayer.WMTS(url, options);
 };
+
+/* To make default marker work with webpack */
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+});
+/********************************************/
 
 module.exports = {
     data: function(){
@@ -119,9 +129,14 @@ module.exports = {
             popup: null,
         }
     },
+    created() {
+            this.vars = {
+                    pin_green: '<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="32" height="32" viewBox="0 0 32 32.000001" id="svg4513" version="1.1" inkscape:version="0.92.1 r" sodipodi:docname="pin.svg"> <defs id="defs4515" /> <sodipodi:namedview id="base" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1.0" inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:zoom="1" inkscape:cx="-213.23428" inkscape:cy="-88.560157" inkscape:document-units="px" inkscape:current-layer="layer1" showgrid="true" units="px" inkscape:window-width="1452" inkscape:window-height="1093" inkscape:window-x="281" inkscape:window-y="81" inkscape:window-maximized="0" inkscape:snap-global="true"> <inkscape:grid type="xygrid" id="grid5061" /> </sodipodi:namedview> <metadata id="metadata4518"> <rdf:RDF> <cc:Work rdf:about=""> <dc:format>image/svg+xml</dc:format> <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" /> <dc:title /> </cc:Work> </rdf:RDF> </metadata> <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1" transform="translate(0,-1020.3622)"> <g id="g3726" transform="translate(-33)"> <path transform="translate(0,1020.3622)" sodipodi:nodetypes="csccccc" inkscape:connector-curvature="0" id="path3680" d="M 61,12 C 61,5.372583 55.627417,0 49,0 42.372583,0 37,5.372583 37,12 c 0.0053,2.513648 0.799861,4.962162 2.260742,7 L 49,32 58.742185,19 C 60.203913,16.961457 60.996382,14.513003 61,12 Z" style="fill:#4e9a06;fill-opacity:1;stroke:none;stroke-width:1.26315784" /> <path id="path3680-3" transform="translate(0,1020.3622)" d="m 49,0.98046875 c -6.096539,0 -11.018456,4.92127815 -11.019531,11.01757825 0.0049,2.3084 0.734093,4.557587 2.076172,6.429687 L 49,30.365234 57.945312,18.427734 C 59.287721,16.555634 60.015801,14.307 60.019531,12 60.019531,5.9028 55.097205,0.98046875 49,0.98046875 Z" style="fill:#8be233;fill-opacity:1;stroke:none;stroke-width:1.26315784" inkscape:connector-curvature="0" /> <circle r="6" cy="1032.3622" cx="49" id="path3704" style="fill:#4e9a06;fill-opacity:1;stroke:none;stroke-width:1.5" /> <circle r="5" cy="1032.3622" cx="49" id="path3704-6" style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.25" /> </g> </g> </svg>'
+            }
+    },
     mounted(){
         this.initMap();
-        this.initLayers();
+        this.addMarkers();
     },
     methods: {
         onClick(e){
@@ -146,26 +161,38 @@ module.exports = {
                 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                 {
                     layer: 'public:mapbox-satellite',
-                    //jstyle: 'normal',
-                    //tilematrixSet: 'EPSG:3857',
                     tilematrixSet: 'mercator',
                     format: 'image/png',
                 }
             );
 
-
-            //this.tileLayer.addTo(this.map);
-            //this.tileLayerSat.addTo(this.map);
-
             var basemaps = {"OSM": this.tileLayer, "SAT": this.tileLayerSat};
             L.control.layers(basemaps).addTo(this.map);
-
 
             this.popup = L.popup();
             this.map.on('click', this.onClick);
         },
-        initLayers(){
-
+        addMarkers(){
+            var self = this;
+            $.ajax({
+                url: '/api/call_email_location/',
+                dataType: 'json',
+                success: function(data, status, xhr){
+                    if (data.results && data.results.features && data.results.features.length > 0){
+                        for (var i = 0; i < data.results.features.length; i++){
+                            if(data.results.features[i].geometry){
+                                let coords = data.results.features[i].geometry.coordinates;
+                                var myIcon = L.icon({
+                                    iconUrl: 'data:image/svg+xml;base64,' + btoa(self.vars.pin_green),
+                                    iconSize: [32, 32],
+                                    iconAnchor: [16, 32],
+                                });
+                                var marker = L.marker([coords[1], coords[0]], {icon: myIcon}).addTo(self.map);
+                            }
+                        }
+                    }
+                }
+            });
         },
     },
 }
