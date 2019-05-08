@@ -324,6 +324,7 @@ def oracle_parser(date,system,system_name,override=False):
         raise e
 
 def oracle_parser_on_invoice(date,system,system_name,override=False):
+    "Oracle parse uses invoices to build a total of allocated payments, refund and money that needs to be rellocated to alternative oracle codes."
     invoices = []
     invoice_list = []
     oracle_codes = {}
@@ -339,15 +340,15 @@ def oracle_parser_on_invoice(date,system,system_name,override=False):
         with transaction.atomic():
             op,created = OracleParser.objects.get_or_create(date_parsed=date)
             op_invoices = OracleParserInvoice.objects.filter(parser=op)
+
+            #Build a list of invoices already in the oracle parse for parse date query
             for opi in op_invoices:
                oracle_parser_invoices.append(opi.reference)
-            bpoint_txns = []
-            bpay_txns = []
-            bpoint_txns.extend([x for x in BpointTransaction.objects.filter(settlement_date=date,response_code=0).exclude(crn1__endswith='_test')])
-            bpay_txns.extend([x for x in BpayTransaction.objects.filter(p_date__contains=date, service_code=0)])
             invoices = Invoice.objects.filter(created__date=date, system=system)
 
+            #Loop through invoices
             for invoice in invoices:
+                # If invoice already exists in the parse date than skip and move to next invoice.
                 if invoice.reference in oracle_parser_invoices:
                      continue
 
@@ -449,14 +450,6 @@ def oracle_parser_on_invoice(date,system,system_name,override=False):
                 can_add = False
                 if k not in oracle_parser_invoices:
                     can_add = True
-                #for g,h in v.items():
-                #    print ("what is K")
-                #    print (k)
-                #    print ("what is H")
-                #    print (h)
-                #    print (h['order'])
-                #    if h['payment'] != 0 or h['refund'] != 0 or h['deductions'] != 0 or h['order'] != 0:
-                #        can_add = True
                 if can_add:
                     OracleParserInvoice.objects.create(reference=k,details=json.dumps(v),parser=op)
             # Add items to oracle interface table
@@ -733,18 +726,14 @@ def update_payments_allocation(invoice_reference):
             deductions = D(0.0)
             oracle_code_totals = {}
 
-            # Bpoint Transactions
+            # Get Order Information
             if i.order:
                 # total amount based on oracle code to get a negiative / positive value.
-                # Get oracle total per order
                 for line in i.order.lines.all():
                     if line.oracle_code not in oracle_code_totals:
                             oracle_code_totals[line.oracle_code] = Decimal('0.00')
-
                     oracle_code_totals[line.oracle_code] = oracle_code_totals[line.oracle_code] + line.line_price_incl_tax
 
-                    #if line_status == 3:
-                    #   oracle_code_totals[line.oracle_code] = oracle_code_totals[line.oracle_code] + line.line_price_incl_tax
                 # assign payment or refund based on oracle code
                 for line in i.order.lines.all():
                     paid_amount = line.paid
@@ -759,11 +748,7 @@ def update_payments_allocation(invoice_reference):
                     refunded += refunded_amount
                     deductions += deducted_amount
                     if line:
-                    #for bpoint in i.bpoint_transactions:
-                        #print (bpoint)
                         if line.id:
-                        #if bpoint.approved:
-                              #print (bpoint)
                               line.deduction_details['cash'] = {}
                               line.refund_details['cash'] = {}
                               line.payment_details['cash'] = {}
@@ -772,16 +757,18 @@ def update_payments_allocation(invoice_reference):
                               line.payment_details['order']  = {}
                               line.deduction_details['order']  = {}
 
+                              
                               if line is not None:
-                                 #if bpoint.action == 'payment':
+                                 # look for lines under invoice --> order that are new line  
                                  if line.line_price_incl_tax > 0 and line.line_status == 1:
                                          if oracle_code_totals[line.oracle_code] >= line.line_price_incl_tax:
                                              line.payment_details['order'][str(line.id)] = str(line.line_price_incl_tax)
                                              oracle_code_totals[line.oracle_code] = oracle_code_totals[line.oracle_code] - line.line_price_incl_tax
-                                 #if bpoint.action == 'refund':
+                                 # look for lines under invoice --> order that are have been removed 
                                  if line.line_price_incl_tax < 0 and line.line_status == 3:
                                          line.payment_details['order'][str(line.id)] = str(oracle_code_totals[line.oracle_code])
                                          oracle_code_totals[line.oracle_code] =  oracle_code_totals[line.oracle_code] - oracle_code_totals[line.oracle_code]
+
 
                     line.save()
         except:
