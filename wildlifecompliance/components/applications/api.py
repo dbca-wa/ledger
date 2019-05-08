@@ -694,7 +694,34 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST', ])
+    def return_to_officer(self, request, *args, **kwargs):
+
+        try:
+            instance = self.get_object()
+            activity_id = request.data.get('activity_id')
+            if not activity_id:
+                raise serializers.ValidationError(
+                    'Activity ID is required!')
+
+            instance.return_to_officer_conditions(request, activity_id)
+            serializer = InternalApplicationSerializer(
+                instance, context={'request': request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
     def update_activity_status(self, request, *args, **kwargs):
+
         try:
             instance = self.get_object()
             activity_id = request.data.get('activity_id')

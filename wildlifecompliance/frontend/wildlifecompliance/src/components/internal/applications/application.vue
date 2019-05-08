@@ -1001,13 +1001,46 @@ export default {
             this.isOfficerConditions=false;
         },
         returnToOfficerConditions: function(){
-            let id = this.selectedActivity.id;
-            this.updateActivityStatus(id, 'with_officer_conditions');
-            swal(
-                 'Return to Officer - Conditions',
-                 'The licenced activity has been returned to Officer - Conditions.',
-                 'success'
-            );
+
+            swal({
+                title: 'Return to Officer - Conditions',
+                html:`
+                    Please provide the reason for returning this licensed activity back to officer for review. <br>This will be emailed to the licensing officer
+                `,
+                input: 'text',
+                inputAttributes: {
+                    autocapitalize: 'off'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Return',
+                allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    if(!result.value) {
+                        return;
+                    }
+                    const text = result.value;
+                    const data = {
+                        "activity_id" : this.selectedActivity.id,
+                        "text": text
+                    }
+                    this.$http.post(helpers.add_endpoint_json(
+                            api_endpoints.applications, (this.application.id+'/return_to_officer')
+                        ), JSON.stringify(data)).then((response) => {
+                        swal(
+                            'Return to Officer - Conditions',
+                            'The licenced activity has been returned to Officer - Conditions.',
+                            'success'
+                        );
+                        this.refreshFromResponse(response);
+                    }, (error) => {
+                        this.revert();
+                        swal(
+                            'Application Error',
+                            helpers.apiVueResourceError(error),
+                            'error'
+                        )
+                    });
+                })
         },
         toggleOfficerConditions:function(){
             this.save_wo();

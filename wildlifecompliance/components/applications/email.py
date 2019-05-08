@@ -80,6 +80,12 @@ class ApplicationIdUpdatedEmail(TemplateEmailBase):
     txt_template = 'wildlifecompliance/emails/send_id_updated_notification.txt'
 
 
+class ApplicationReturnedToOfficerEmail(TemplateEmailBase):
+    subject = 'An application has been sent to you for assessment'
+    html_template = 'wildlifecompliance/emails/send_application_return_to_officer_conditions.html'
+    txt_template = 'wildlifecompliance/emails/send_application_return_to_officer_conditions.txt'
+
+
 def send_assessment_reminder_email(select_group, assessment, request=None):
     # An email reminding assessors of a pending assessment request
     application = assessment.application
@@ -322,6 +328,26 @@ def send_id_updated_notification(user, applications, assigned_officers, request)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     for application in applications:
         _log_application_email(msg, application, sender=sender)
+
+
+def send_application_return_to_officer_conditions_notification(
+        email_list, application, text, request):
+    # An email to internal users notifying about an application returning to the officer - conditions stage
+    email = ApplicationReturnedToOfficerEmail()
+    url = request.build_absolute_uri(
+        reverse(
+            'internal-application-detail',
+            kwargs={
+                'application_pk': application.id}))
+
+    context = {
+        'application': application,
+        'text': text,
+        'url': url
+    }
+    msg = email.send(email_list, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_application_email(msg, application, sender=sender)
 
 
 def _log_application_email(email_message, application, sender=None):

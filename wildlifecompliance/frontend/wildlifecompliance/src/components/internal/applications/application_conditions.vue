@@ -167,9 +167,6 @@ export default {
                 case 'with_officer_conditions':
                     required_role = 'licensing_officer';
                 break;
-                case 'with_officer_finalisation':
-                    required_role = 'issuing_officer';
-                break;
             }
             return required_role && this.hasRole(required_role, this.selected_activity_tab_id);
         },

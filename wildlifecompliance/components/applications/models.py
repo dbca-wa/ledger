@@ -29,7 +29,8 @@ from wildlifecompliance.components.applications.email import (
     send_amendment_submit_email_notification,
     send_application_issue_notification,
     send_application_decline_notification,
-    send_id_update_request_notification
+    send_id_update_request_notification,
+    send_application_return_to_officer_conditions_notification,
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
@@ -914,6 +915,31 @@ class Application(RevisionedMixin):
                             self.id), request)
             except BaseException:
                 raise
+
+    def return_to_officer_conditions(self, request, activity_id):
+        text = request.data.get('text', '')
+        if self.assigned_officer:
+            email_list = [self.assigned_officer.email]
+        else:
+            officer_groups = ActivityPermissionGroup.objects.filter(
+                permissions__codename='licensing_officer',
+                licence_activities__id=activity_id
+            )
+            group_users = EmailUser.objects.filter(
+                groups__id__in=officer_groups.values_list('id', flat=True)
+            ).distinct()
+            email_list = [user.email for user in group_users]
+
+        self.set_activity_processing_status(
+            activity_id,
+            ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_CONDITIONS
+        )
+        send_application_return_to_officer_conditions_notification(
+            email_list=email_list,
+            application=self,
+            text=text,
+            request=request
+        )
 
     def complete_assessment(self, request):
         with transaction.atomic():
