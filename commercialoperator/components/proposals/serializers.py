@@ -70,8 +70,14 @@ class ProposalActivitiesMarineSerializer(serializers.ModelSerializer):
         model = ProposalActivitiesMarine
         fields = ('id','activities_marine')
 
+#class ParkEntrySerializer(serializers.ModelSerializer):
+#    class Meta:
+#        model = ParkEntry
+#        fields = '__all__'
+
 class ProposalParkActivitySerializer(serializers.ModelSerializer):
     activity=ActivitySerializer()
+    #park_entry=ParkEntrySerializer()
     class Meta:
         model = ProposalParkActivity
         fields = '__all__'
@@ -107,7 +113,6 @@ class ProposalParkSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProposalPark
         fields = '__all__'
-
 
 class SaveProposalParkSerializer(serializers.ModelSerializer):
     #park=ParkSerializer()

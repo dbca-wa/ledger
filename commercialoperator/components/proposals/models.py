@@ -322,6 +322,7 @@ class ParkEntry(models.Model):
     def price_net(self):
         return (self.price_adult + self.price_child + self.price_senior)
 
+ 
 class Proposal(DirtyFieldsMixin, RevisionedMixin):
 #class Proposal(DirtyFieldsMixin, models.Model):
 

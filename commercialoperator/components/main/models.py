@@ -235,12 +235,17 @@ class RequiredDocument(models.Model):
 
 @python_2_unicode_compatible
 class ApplicationType(models.Model):
+    """
+    for park in Park.objects.all().order_by('id'):
+        ParkPrice.objects.create(park=park, adult=10.0, child=7.50, senior=5.00)
+    """
     name = models.CharField(max_length=64, unique=True)
     order = models.PositiveSmallIntegerField(default=0)
     visible = models.BooleanField(default=True)
 
     max_renewals = models.PositiveSmallIntegerField('Maximum number of times an Approval can be renewed', null=True, blank=True)
     max_renewal_period = models.PositiveSmallIntegerField('Maximum period of each Approval renewal (Years)', null=True, blank=True)
+    application_fee = models.DecimalField(max_digits=5, decimal_places=2)
 
     class Meta:
         ordering = ['order', 'name']

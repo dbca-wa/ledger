@@ -117,7 +117,7 @@ class SystemMaintenanceAdmin(admin.ModelAdmin):
 
 @admin.register(ApplicationType)
 class ApplicationTypeAdmin(admin.ModelAdmin):
-    list_display = ['name', 'order', 'visible']
+    list_display = ['name', 'order', 'visible', 'max_renewals', 'max_renewal_period', 'application_fee']
     ordering = ('order',)
 
 @admin.register(ParkPrice)

@@ -39,31 +39,20 @@
 
                 <tbody>
                   <tr v-for="row in table.tbody">
-                    <td v-for="(value, index) in row">
-                        <!-- <input type="text" v-model="row[index]" /> -->
-                        <div v-if="col_types[index]=='select'">
-                            <select id="id_select" name="select_park" :required="isRequired" :onclick="isClickable">
-                                <option value="">Select...</option>
-                                <option v-for="op in options"  :value="op.value" :selected="op.value == value" class="tbl_input" v-model="row[index]">{{ op.label }}</option>
-                            </select>
-
-                            <!--
-                            <Select :options="options" id="id_park"/>
-                                <option v-for="op in options"  :value="op.value" @change="handleChange" :selected="op.value == value" class="tbl_input" v-model="row[index]">{{ op.label }}</option>
-                            -->
-                        </div>
-                        <div v-else>
-                            <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" v-model="row[index]" :required="isRequired" :onclick="isClickable"/>
-                        </div>
-                    </td>
-                    <td v-if="!readonly">
-                        <a class="fa fa-trash-o" v-on:click="deleteRow(row)" title="Delete row" style="cursor: pointer; color:red;"></a>
-                    </td>
+                      <td v-if="col_types[index]=='select'" width="30%" v-for="(value, index) in row">
+                          <v-select :options="options" v-model="row[index]" />
+                      </td>
+                      <td v-else>
+                          <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" v-model="row[index]" :required="isRequired" :onclick="isClickable"/>
+                      </td>
+                      <td v-if="!readonly">
+                          <a class="fa fa-trash-o" v-on:click="deleteRow(row)" title="Delete row" style="cursor: pointer; color:red;"></a>
+                      </td>
                   </tr>
 
                   <tr>
-                    <td v-if="!readonly">
-                      <button class="btn btn-primary" type="button" v-on:click="addRow()" title="Add Row">+</button>
+                    <td v-if="!readonly" colspan="100%">
+                      <span><button class="btn btn-primary" type="button" v-on:click="addRow()">+</button>Add another park and/or date</span>
                     </td>
                   </tr>
                 </tbody>
@@ -72,17 +61,18 @@
 
               <!-- for debugging -->
               <!--
+              -->
               <pre class="output">
                 {{ value }}
               </pre>
               <pre class="output">
                 {{ headers }}
               </pre>
-              -->
             </div>
 
         </div>
         <!--<Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> -->
+        <input type="hidden" class="form-control" :name="name" :value="value"/>
     </div>
 </template>
 
@@ -91,10 +81,16 @@ import Comment from './comment.vue'
 import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
 import Select from './select.vue'
+
+import Vue from 'vue'
+import vSelect from "vue-select"
+Vue.component('v-select', vSelect)
+
 export default {
     //props:["name","value", "id", "isRequired", "help_text","help_text_assessor","assessorMode","label","readonly","comment_value","assessor_readonly", "help_text_url", "help_text_assessor_url"],
     props:{
         headers: [],
+        options: [],
         name: String,
         label: String,
         id: String,
@@ -154,7 +150,7 @@ export default {
         var col_headers = Object.keys(headers);
         vm.col_types = Object.values(headers);
 
-        vm.options = [
+        vm._options = [
             {'label': 'Nungarin', 'value': 'Nungarin'},
             {'label': 'Ngaanyatjarraku', 'value': 'Ngaanyatjarraku'},
             {'label': 'Cuballing', 'value': 'Cuballing'}
@@ -187,7 +183,7 @@ export default {
         }
 
         return {
-            showingComment: false
+            showingComment: false,
         }
 
     },
@@ -195,6 +191,7 @@ export default {
         toggleComment(){
             this.showingComment = ! this.showingComment;
         },
+
 
         updateTableJSON: function() {
           let vm = this;
@@ -275,10 +272,7 @@ export default {
 
     .editable-table
         input[type=number]{
-            width: 30%;
-        }
-        input[type=text]{
-            width: 100%;
+            width: 40%;
         }
 
     .output {
