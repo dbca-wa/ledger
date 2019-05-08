@@ -64,8 +64,8 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'dpaw_utils.middleware.SSOLoginMiddleware',
-    'dpaw_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
+    'dbca_utils.middleware.SSOLoginMiddleware',
+    'dbca_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
     'ledger.basket.middleware.BasketMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
 ]
