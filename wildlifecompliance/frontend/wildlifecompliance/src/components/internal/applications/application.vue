@@ -110,9 +110,6 @@
                                     </div>
                                     <div v-if="canIssueDecline" class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleFinalViewConditions()">View Final Conditions</button>
-                                        </div>
-                                        <div class="col-sm-12">
                                             <button v-if="!userIsAssignedOfficer" style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
                                             <button v-else disabled style="width:80%;" class="btn btn-success top-buffer-s">Issue/Decline</button>
                                         </div>
@@ -124,7 +121,7 @@
                                             <strong>Action</strong><br/>
                                         </div>
                                     </div>
-                                    <div v-if="!isFinalised && (isSendingToAssessor || isOfficerConditions || isFinalViewConditions || isofficerfinalisation)" class="row">
+                                    <div v-if="!isFinalised && (isSendingToAssessor || isOfficerConditions || isofficerfinalisation)" class="row">
                                         <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication({show: true})">Back to Application</button><br/>
                                         </div>
@@ -170,8 +167,9 @@
                     </div>
                 </template>-->
                 <ApplicationAssessments
-                    v-if="isSendingToAssessor || isFinalViewConditions || isOfficerConditions"
-                    :final_view_conditions="isFinalViewConditions"/>
+                    v-if="isSendingToAssessor || isOfficerConditions"
+                    />
+
                 <template v-if="applicationDetailsVisible">
                     <div>
                     <ul class="nav nav-tabs" id="tabs-main">
@@ -597,7 +595,6 @@ export default {
             initialisedSelects: false,
             showingApplication:true,
             isOfficerConditions:false,
-            isFinalViewConditions:false,
             isofficerfinalisation:false,
             contacts_table_id: vm._uid+'contacts-table',
             application_assessor_datatable:vm._uid+'assessment-table',
@@ -682,7 +679,7 @@ export default {
             'current_user',
         ]),
         applicationDetailsVisible: function() {
-            return !this.isSendingToAssessor && !this.isofficerfinalisation && this.unfinishedActivities.length && !this.isOfficerConditions && !this.isFinalViewConditions;
+            return !this.isSendingToAssessor && !this.isofficerfinalisation && this.unfinishedActivities.length && !this.isOfficerConditions;
         },
         applicationIsDraft: function(){
             return this.application.processing_status.id == 'draft';
@@ -854,7 +851,6 @@ export default {
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.isOfficerConditions=false;
-            this.isFinalViewConditions=false;
             this.isofficerfinalisation=true;
         },
         acceptIdRequest: function() {
@@ -986,9 +982,6 @@ export default {
             if(this.isOfficerConditions){
                 this.isOfficerConditions = !show;
             }
-            if(this.isFinalViewConditions){
-                this.isFinalViewConditions = !show;
-            }
             if(this.isofficerfinalisation){
                 this.isofficerfinalisation = !show;
             }
@@ -1006,12 +999,10 @@ export default {
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.isOfficerConditions=false;
-            this.isFinalViewConditions=false;
         },
         returnToOfficerConditions: function(){
-            let vm = this;
-            let id = vm.selectedActivity.id;
-            vm.updateActivityStatus(id,'with_officer_conditions');
+            let id = this.selectedActivity.id;
+            this.updateActivityStatus(id, 'with_officer_conditions');
             swal(
                  'Return to Officer - Conditions',
                  'The licenced activity has been returned to Officer - Conditions.',
@@ -1023,15 +1014,7 @@ export default {
             this.showingApplication = false;
             this.isSendingToAssessor=false;
             this.isOfficerConditions=true;
-            this.isFinalViewConditions=false;
 
-        },
-        toggleFinalViewConditions:function(){
-            this.save_wo();
-            this.showingApplication = false;
-            this.isSendingToAssessor=false;
-            this.isOfficerConditions=false;
-            this.isFinalViewConditions=true;
         },
         updateAssignedOfficerSelect:function(){
             let vm = this;

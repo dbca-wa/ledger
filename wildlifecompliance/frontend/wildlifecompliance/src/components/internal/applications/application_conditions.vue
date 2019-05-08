@@ -13,7 +13,7 @@
                             <div class="panel-body panel-collapse collapse in" :id="panelBody">
                                 <form class="form-horizontal" action="index.html" method="post">
                                     <div class="col-sm-12">
-                                        <button v-if="!final_view_conditions && canEditConditons" @click.prevent="addCondition()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Condition</button>
+                                        <button v-if="canEditConditons" @click.prevent="addCondition()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Condition</button>
                                     </div>
                                     <datatable ref="conditions_datatable" :id="'conditions-datatable-'+_uid" :dtOptions="condition_options" :dtHeaders="condition_headers"/>
                                 </form>
@@ -39,10 +39,6 @@ import { mapGetters } from 'vuex';
 export default {
     name: 'InternalApplicationConditions',
     props: {
-        final_view_conditions: {
-            type: Boolean,
-            default: false,
-        },
         activity: {
             type: Object | null,
             required: true
