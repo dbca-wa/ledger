@@ -1,7 +1,11 @@
 <template lang="html">
     <div class="container">
-        <div id="map"></div>
-
+        <div id="map">
+            <div id="basemap-button">
+                <img id="basemap_sat" src="../../../assets/img/satellite_icon.jpg" @click="setBaseLayer('sat')" />
+                <img id="basemap_osm" src="../../../assets/img/map_icon.png" @click="setBaseLayer('osm')" />
+            </div>
+        </div>
     </div>
 </template>
 
@@ -139,11 +143,22 @@ module.exports = {
         this.addMarkers();
     },
     methods: {
+        setBaseLayer: function(selected_layer_name){
+            if (selected_layer_name == 'sat') {
+                this.map.removeLayer(this.tileLayer);
+                this.map.addLayer(this.tileLayerSat);
+                $('#basemap_sat').hide();
+                $('#basemap_osm').show();
+            }
+            else {
+                this.map.removeLayer(this.tileLayerSat);
+                this.map.addLayer(this.tileLayer);
+                $('#basemap_osm').hide();
+                $('#basemap_sat').show();
+            }
+        },
         onClick(e){
-            this.popup
-            .setLatLng(e.latlng)
-            .setContent(e.latlng.toString())
-            .openOn(this.map);
+            console.log(e.latlng.toString());
         },
         initMap(){
             console.log('Start initMap()');
@@ -155,7 +170,6 @@ module.exports = {
                     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, contributiors',
                 }
             );
-            this.tileLayer.addTo(this.map);
 
             this.tileLayerSat = L.tileLayer.wmts(
                 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
@@ -166,14 +180,12 @@ module.exports = {
                 }
             );
 
-            var basemaps = {"OSM": this.tileLayer, "SAT": this.tileLayerSat};
-            L.control.layers(basemaps).addTo(this.map);
-
             this.popup = L.popup();
             this.map.on('click', this.onClick);
+            this.setBaseLayer('osm');
         },
         addMarkers(){
-            var self = this;
+            let self = this;
             $.ajax({
                 url: '/api/call_email_location/',
                 dataType: 'json',
@@ -181,13 +193,39 @@ module.exports = {
                     if (data.results && data.results.features && data.results.features.length > 0){
                         for (var i = 0; i < data.results.features.length; i++){
                             if(data.results.features[i].geometry){
-                                let coords = data.results.features[i].geometry.coordinates;
-                                var myIcon = L.icon({
+                                let feature = data.results.features[i];
+                                let coords = feature.geometry.coordinates;
+
+                                /* create marker */
+                                let myIcon = L.icon({
                                     iconUrl: 'data:image/svg+xml;base64,' + btoa(self.vars.pin_green),
                                     iconSize: [32, 32],
                                     iconAnchor: [16, 32],
+                                    popupAnchor: [0, -20]
                                 });
-                                var marker = L.marker([coords[1], coords[0]], {icon: myIcon}).addTo(self.map);
+                                let myMarker = L.marker([coords[1], coords[0]], {icon: myIcon});
+
+                                /* construct popup */
+                                let myPopup = L.popup().setContent(
+                                      '<div class="popup-coords">'
+                                    + 'Lat: ' + coords[1] + '<br />'
+                                    + 'Lng: ' + coords[0] 
+                                    + '</div>'
+
+                                    + '<div class="popup-address">'
+                                    + feature.properties.street + '<br />'
+                                    + feature.properties.town_suburb + '<br />'
+                                    + feature.properties.state + '<br />'
+                                    + feature.properties.postcode
+                                    + '</div>'
+
+                                    + '<div class="popup-link">'
+                                    + '<a src="">Link (not implemented yet)</a>'
+                                    + '</div>'
+                                    );
+
+                                myMarker.bindPopup(myPopup);
+                                myMarker.addTo(self.map);
                             }
                         }
                     }
@@ -200,7 +238,47 @@ module.exports = {
 
 <style lang="css">
 #map {
-    height: 500px;
+    height: 600px;
     margin-bottom: 50px;
+}
+#basemap-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    -moz-box-shadow: 5px 5px 5px #555;
+    -webkit-box-shadow: 5px 5px 5px #555;
+    box-shadow: 5px 5px 5px #555;
+    -moz-filter: brightness(1.0);
+    -webkit-filter: brightness(1.0);
+    filter: brightness(1.0);
+}
+#basemap_sat,#basemap_osm {
+    border-radius: 5px;
+}
+#basemap-button:hover {
+    cursor: pointer;
+    -moz-filter: brightness(0.9);
+    -webkit-filter: brightness(0.9);
+    filter: brightness(0.9);
+}
+#basemap-button:active {
+    top: 11px;
+    right: 9px;
+    -moz-box-shadow: 2px 2px 2px #555;
+    -webkit-box-shadow: 2px 2px 2px #555;
+    box-shadow: 2px 2px 2px #555;
+    -moz-filter: brightness(0.8);
+    -webkit-filter: brightness(0.8);
+    filter: brightness(0.8);
+}
+.popup-coords {
+    margin: 10px;
+}
+.popup-address {
+    margin: 10px;
+}
+.popup-link {
+    margin: 10px;
 }
 </style>
