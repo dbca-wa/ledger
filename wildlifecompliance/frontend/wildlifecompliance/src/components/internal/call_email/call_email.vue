@@ -84,11 +84,9 @@
 
               </FormSection>
               <FormSection :label="`Location`" :Index="`1`">
+                  
                   <div v-if="call_email.location">
                     <MapLocation v-bind:key="call_email.location.id"/>
-                  </div>
-                  <div v-else>
-                    <MapLocation v-bind:key="call_email.id"/>
                   </div>
 
               </FormSection>
@@ -98,7 +96,7 @@
                 
                   <select class="form-control" v-model="call_email.report_type_id">
                           <option v-for="option in report_types" :value="option.id" v-bind:key="option.id">
-                            {{ option.report_type }} 
+                            {{ option.report_type }} v{{ option.version }} 
                           </option>
                   </select>
                 </div></div>
@@ -185,7 +183,12 @@ export default {
       //location: "callemailStore/location",
       //report_type: "report_type",
       call_email_form_url: "call_email_form_url",
+      call_payload: "call_payload",
     }),
+    ...mapGetters({
+      renderer_form_data: 'renderer_form_data',
+    },
+    ),
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
     },
@@ -263,13 +266,16 @@ export default {
           
     },
     */
-    save: function() {
+    save: async function() {
       if (this.call_email.id) {
-        console.log("this.saveCallEmail");
-        this.saveCallEmail({ route: null });
+        //console.log("this.saveCallEmail");
+        await this.saveCallEmail({ route: false, crud: 'save' });
       } else {
-        console.log("this.createCallEmail");
-        this.createCallEmail();
+        //console.log("this.createCallEmail");
+        await this.saveCallEmail({ route: false, crud: 'create'});
+        this.$nextTick(function() {
+          this.$router.push({name: 'view-call-email', params: {call_email_id: this.call_email.id}});
+        });
       }
     },
   
@@ -288,7 +294,13 @@ export default {
     },
 */
     saveExit: function() {
-      this.saveCallEmail({route: "/internal/call_email"});
+      if (this.call_email.id) {
+        console.log("this.saveCallEmail");
+        this.saveCallEmail({ route: true, crud: 'save' });
+      } else {
+        console.log("this.createCallEmail");
+        this.saveCallEmail({ route: true, crud: 'create'});
+      }
     },
     /*
     save: function(e) {

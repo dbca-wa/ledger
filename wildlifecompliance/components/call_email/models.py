@@ -136,16 +136,18 @@ class CallEmail(RevisionedMixin):
     location = models.ForeignKey(
         Location,
         null=True,
-        related_name="location_call"
+        related_name="call_location"
     )
     classification = models.ForeignKey(
         Classification,
         null=True,
-        related_name="classification_call"
+        related_name="call_classification"
     )
-    schema = JSONField(default=list)
+    
+    # schema_name = models.CharField(max_length=50, blank=True, null=True)
+    # schema = JSONField(default=list)
     lodged_on = models.DateField(auto_now_add=True)
-    # number = models.CharField(max_length=50, blank=True, null=True)
+    number = models.CharField(max_length=50, blank=True, null=True)
     caller = models.CharField(max_length=100, blank=True, null=True)
     assigned_to = models.CharField(max_length=100, blank=True, null=True)
     anonymous_call = models.BooleanField(default=False)
@@ -156,7 +158,8 @@ class CallEmail(RevisionedMixin):
     occurrence_time_to = models.TimeField(null=True)
     report_type = models.ForeignKey(
         ReportType,
-        null=True
+        null=True,
+        related_name='call_schema',
     )
 
     class Meta:
@@ -168,35 +171,75 @@ class CallEmail(RevisionedMixin):
         return 'ID: {0}, Status: {1}, Number: {2}, Caller: {3}, Assigned To: {4}' \
             .format(self.id, self.status, self.number, self.caller, self.assigned_to)
 
-    # Prefix Classification type char to CallEmail number.
-    # def save(self, *args, **kwargs):
-    #     print("self")
-    #     print(self)
-    #     classification_instance = Classification.objects.get(id=self.classification_id)
-    #     classification_prefix = classification_instance.name[0]
+    # def __init__(self, *args, **kwargs):
+    #     super(CallEmail, self).__init__(*args, **kwargs)
+    #     self._original_report_type_id = self.report_type_id
+    #     if self.report_type_id:
+    #         new_report_type = ReportType.objects.get(id=self.report_type_id)
+    #         self.schema = new_report_type.schema
         
-    #     super(CallEmail, self).save(*args,**kwargs)
-    #     if self.number is None:
-    #         new_number_id = '{0}{1:06d}'.format(classification_prefix, self.pk)
-    #         self.number = new_number_id
-    #         self.save()
+        # self._original_report_type_id = None
+        # if self.report_type_id:
+        #     self._original_report_type_id = self.report_type_id
+    
+    # Prefix "C" char to CallEmail number.
+    def save(self, *args, **kwargs):
         
-    @property
-    def number(self):
-        if self.classification_id:
-            classification_instance = Classification.objects.get(id=self.classification_id)
-            classification_prefix = classification_instance.name[0]
-            return '{0}{1:06d}'.format(classification_prefix, self.pk)
-        else:
-            return ''
+        super(CallEmail, self).save(*args,**kwargs)
+        if self.number is None:
+            new_number_id = 'C{0:06d}'.format(self.pk)
+            self.number = new_number_id
+            self.save()
+        
+        # if self.report_type_id != self._original_report_type_id:
+        #     print("new report type id")
+        #     new_report_type = ReportType.objects.get(id=self.report_type_id)
+        #     print("new_report_type")
+        #     print(new_report_type)
+        #     self.schema = new_report_type.schema
+        #     self._original_report_type_id = self.report_type_id
+        #     self.save()
+        
+    # @property
+    # def number(self):
+    #     if self.classification_id:
+    #         classification_instance = Classification.objects.get(id=self.classification_id)
+    #         classification_prefix = classification_instance.name[0]
+    #         return '{0}{1:06d}'.format(classification_prefix, self.pk)
+    #     else:
+    #         return ''
     
     @property
     def data(self):
         """ returns a queryset of form data records attached to CallEmail (shortcut to ComplianceFormDataRecord related_name). """
         return self.form_data_records.all()
+
+    @property
+    def schema(self):
+        
+        if self.report_type:
+            return self.report_type.schema
     
     def log_user_action(self, action, request):
         return ComplianceUserAction.log_action(self, action, request.user)
+
+
+# class CallEmailSchema(models.Model):
+
+#     schema = JSONField(default=list)
+#     call_email = models.ForeignKey(CallEmail, related_name='call_schema')
+#     origin_report_type = models.CharField(max_length=50)
+#     origin_version = models.SmallIntegerField(default=1, blank=False, null=False)
+#     date_created = models.DateTimeField(auto_now_add=True, null=True)
+
+#     class Meta:
+#         app_label = 'wildlifecompliance'
+#         verbose_name = 'CM_CallEmailSchema'
+#         verbose_name_plural = 'CM_CallEmailSchemas'
+#         # unique_together = ('call_email', 'field_name',)
+
+#     def __str__(self):
+#         return '{0}, v.{1}'.format(self.report_type_name, self.version)
 
 
 @python_2_unicode_compatible

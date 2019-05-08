@@ -22,13 +22,16 @@
         </div></div>
         <div id="lat" class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Latitude:</label>
-            <input class="form-control" v-model="call_email.location.geometry.coordinates[1]" />
+            <div v-if="call_email.location">
+                <input class="form-control" v-model="call_email.location.geometry.coordinates[1]" />
+            </div>
         </div></div>
         <div id="lon" class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Longitude:</label>
-            <input class="form-control" v-model="call_email.location.geometry.coordinates[0]" />
+            <div v-if="call_email.location">
+                <input class="form-control" v-model="call_email.location.geometry.coordinates[0]" />
+            </div>
         </div></div>
-
         <div class="col-sm-12 form-group"><div class="row">
             <label class="col-sm-4">Street</label>
             <input class="form-control" v-model="call_email.location.properties.street" />
@@ -49,6 +52,7 @@
             <label class="col-sm-4">Country</label>
             <input class="form-control" v-model="call_email.location.properties.country" />
        </div></div>
+       
        <button @click.prevent="saveInstanceLocation"
             class="btn btn-primary pull-right">update</button>
     </div>
@@ -114,12 +118,12 @@ export default {
     
     ...mapGetters('callemailStore', {
       call_email: 'call_email',
+      //call_coordinates: 'call_coordinates',
+      //call_location_properties: 'call_location_properties',
     }),
 
     },
     mounted: function(){
-        console.log("this.call_email.location.geometry.coordinates");
-        console.log(this.call_email.location.geometry.coordinates);
         this.$nextTick(function() {
         console.debug('Start loading map');
         this.initMap();

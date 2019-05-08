@@ -47,16 +47,17 @@ from wildlifecompliance.components.call_email.models import (
 from wildlifecompliance.components.call_email.serializers import (
     CallEmailSerializer,
     ClassificationSerializer,
-    CreateCallEmailSerializer,
+    # CreateCallEmailSerializer,
     UpdateRendererDataSerializer,
     ComplianceFormDataRecordSerializer,
     UpdateRendererDataSerializer,
     ComplianceLogEntrySerializer,
     LocationSerializer,
     ComplianceUserActionSerializer,
-    UpdateCallEmailSerializer,
+    # UpdateCallEmailSerializer,
     LocationSerializer,
     ReportTypeSerializer,
+    SaveCallEmailSerializer,
 )
 from utils import SchemaParser
 
@@ -250,39 +251,43 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     # def create_call_location_renderer(self, request, *args, **kwargs):
     def create(self, request, *args, **kwargs):
         print("create")
-        print(request.data)
+        #print(request.data)
         try:
             with transaction.atomic():
-                #import LocationViewSet as location
+                # request_data = {
+                #     'classification': request.data.get('classification'),
+                #     'report_type': request.data.get('report_type'),
+                #     'classification_id': request.data.get('classification_id'),
+                #     'report_type_id': request.data.get('report_type_id'),
+                #     'caller': request.data.get('caller'),
+                #     'assigned_to': request.data.get('assigned_to'),
+                #     }
+                request_data = request.data
+                print(request_data)
                 location_request_data = request.data.get('location')
-                location_serializer = LocationSerializer(data=location_request_data, partial=True)
-                location_serializer.is_valid(raise_exception=True)
-                if location_serializer.is_valid():
-                    print("location_serializer.validated_data")
-                    print(location_serializer.validated_data)
-                    location_instance = location_serializer.save()
-                    print("location_instance")
-                    print(location_instance)
 
-                request_data = {
-                        'location_id': location_instance.id,
-                        'classification_id': request.data.get('classification_id'),
-                        'report_type_id': request.data.get('report_type_id'),
-                        'caller': request.data.get('caller'),
-                        'assigned_to': request.data.get('assigned_to'),
-                        }
+                if (
+                        location_request_data.get('geometry', {}).get('coordinates', {})[0] or
+                        location_request_data.get('properties', {}).get('postcode', {})
+                    ):
+                    location_serializer = LocationSerializer(data=location_request_data, partial=True)
+                    location_serializer.is_valid(raise_exception=True)
+                    if location_serializer.is_valid():
+                        location_instance = location_serializer.save()
+                        request_data.update({'location_id': location_instance.id})
 
-                serializer = CreateCallEmailSerializer(data=request_data, partial=True)
+                serializer = SaveCallEmailSerializer(data=request_data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
-                    print("serializer.validated_data")
-                    print(serializer.validated_data)
                     serializer.save()
                     headers = self.get_success_headers(serializer.data)
-                    print("headers")
-                    print(headers)
+                    returned_data = serializer.data
+                    returned_data.update({'classification_id': request_data.get('classification_id')})
+                    returned_data.update({'report_type_id': request_data.get('report_type_id')})
+                    print("returned_data")
+                    print(returned_data)
                     return Response(
-                        serializer.data,
+                        returned_data,
                         status=status.HTTP_201_CREATED,
                         headers=headers
                         )
@@ -298,43 +303,65 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     
     @detail_route(methods=['POST', ])
     def call_email_save(self, request, *args, **kwargs):
-        # import ipdb; ipdb.set_trace()
         print("call_email_save")
-        print(request.data)
+        #print(request.data)
         instance = self.get_object()
         try:
-            request_classification_dict = request.data.get(
-                        'classification')
-            # request_classification_name = request_classification_obj.name
-            print("request_classification_dict['id']")
-            print(request_classification_dict['id'])
-            request_classification_obj = Classification.objects.get(
-                    id=request_classification_dict['id'])
-            # parser = SchemaParser()
-            # form_data = request.data.get('schema')
-            # parsed_json = parser.create_data_from_form(form_data)
-            request_data = {
-                    'classification_id': request.data.get('classification_id'),
-                    'number': request.data.get('number'),
-                    'caller': request.data.get('caller'),
-                    'assigned_to': request.data.get('assigned_to'),
-                    # 'location': request.data.get('location'),
-                    }
-            print("request_data")
-            print(request_data)
-            print("instance")
-            print(instance)
-            serializer = UpdateCallEmailSerializer(instance, data=request_data)
+            with transaction.atomic():
+                # request_data = {
+                #     'classification': request.data.get('classification'),
+                #     'report_type': request.data.get('report_type'),
+                #     'classification_id': request.data.get('classification_id'),
+                #     'report_type_id': request.data.get('report_type_id'),
+                #     'caller': request.data.get('caller'),
+                #     'assigned_to': request.data.get('assigned_to'),
+                #     }
+                request_data = request.data
+                print(request_data)
+
+                location_request_data = request.data.get('location')
+                
+                if (
+                        location_request_data.get('geometry', {}).get('coordinates', {})[0] or
+                        location_request_data.get('properties', {}).get('postcode', {})
+                    ):
+                    if location_request_data.get('id'):
+                        location_instance = instance.location
+                        location_serializer = LocationSerializer(instance=location_instance, data=request.data, partial=True)
+                        location_serializer.is_valid(raise_exception=True)
+                        if location_serializer.is_valid():
+                            location_serializer.save()
+                    else:
+                        location_serializer = LocationSerializer(data=location_request_data, partial=True)
+                        location_serializer.is_valid(raise_exception=True)
+                        if location_serializer.is_valid():
+                            location_instance = location_serializer.save()
+                            request_data.update({'location_id': location_instance.id})
+                
+                if request_data.get('renderer_data'):
+                    # post_data = {'user': request.user, 'data': request_data.get('renderer_data')}
+                    # print("request")
+                    # print(request)
+                    # print("post_data")
+                    # print(post_data)
+                    request.data = request_data.get('renderer_data')
+                    form_data_response = self.form_data(instance, request)
+                    print("form_data_response")
+                    print(form_data_response)
+                    request_data.update({'data': form_data_response})
+
+            serializer = SaveCallEmailSerializer(instance, data=request_data)
             serializer.is_valid(raise_exception=True)
             if serializer.is_valid():
-                print("serializer.validated_data")
-                print(serializer.validated_data)
                 serializer.save()
                 headers = self.get_success_headers(serializer.data)
-                print("headers")
-                print(headers)
+                returned_data = serializer.data
+                returned_data.update({'classification_id': request_data.get('classification_id')})
+                returned_data.update({'report_type_id': request_data.get('report_type_id')})
+                print("returned_data")
+                print(returned_data)
                 return Response(
-                    serializer.data,
+                    returned_data,
                     status=status.HTTP_201_CREATED,
                     headers=headers
                     )
