@@ -10,10 +10,13 @@
 </template>
 
 <script>
-import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { api_endpoints, helpers } from '@/utils/hooks'
 import pin from '../../../assets/pin.svg';
+import 'leaflet.markercluster';  /* This should be imported after leaflet */
+
+import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 L.TileLayer.WMTS = L.TileLayer.extend({
     defaultWmtsParams: {
@@ -186,6 +189,8 @@ module.exports = {
         },
         addMarkers(){
             let self = this;
+            var markers = L.markerClusterGroup();
+
             $.ajax({
                 url: '/api/call_email_location/',
                 dataType: 'json',
@@ -225,9 +230,11 @@ module.exports = {
                                     );
 
                                 myMarker.bindPopup(myPopup);
-                                myMarker.addTo(self.map);
+                                //myMarker.addTo(self.map);
+                                markers.addLayer(myMarker);
                             }
                         }
+                        self.map.addLayer(markers);
                     }
                 }
             });
