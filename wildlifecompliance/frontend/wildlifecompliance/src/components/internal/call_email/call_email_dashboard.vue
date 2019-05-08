@@ -1,6 +1,6 @@
 <template>
     <div class="container" id="internalCallEmailDash">
-        <FormSection :label="`Location`" :Index="`0`">
+        <FormSection :label="`Call/Emails`" :Index="`0`">
                   
               
         <form class="form-horizontal" name="createForm" method="get">
@@ -56,6 +56,9 @@
                 <datatable ref="call_email_table" id="call-email-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders" />
             </div>
         </div>
+        </FormSection>
+        <FormSection :label="`Location`" :Index="`1`">
+        
         </FormSection>
 
     </div>

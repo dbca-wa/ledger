@@ -49,26 +49,6 @@ class Classification(models.Model):
         return self.get_name_display()
 
 
-class ReportType(models.Model):
-
-    report_type = models.CharField(max_length=50)
-    schema = JSONField(null=True)
-    version = models.SmallIntegerField(default=1, blank=False, null=False)
-    description = models.CharField(max_length=256, blank=True, null=True)
-    replaced_by = models.ForeignKey(
-        'self', on_delete=models.PROTECT, blank=True, null=True)
-    date_created = models.DateTimeField(auto_now_add=True, null=True)
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-        verbose_name = 'CM_ReportType'
-        verbose_name_plural = 'CM_ReportTypes'
-        unique_together = ('report_type', 'version')
-
-    def __str__(self):
-        return '{0}, v.{1}'.format(self.report_type, self.version)
-
-
 class Referrer(models.Model):
     name = models.CharField(max_length=50, blank=True)
 
@@ -79,6 +59,37 @@ class Referrer(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ReportType(models.Model):
+
+    report_type = models.CharField(max_length=50)
+    schema = JSONField(null=True)
+    version = models.SmallIntegerField(default=1, blank=False, null=False)
+    description = models.CharField(max_length=256, blank=True, null=True)
+    replaced_by = models.ForeignKey(
+        'self', on_delete=models.PROTECT, blank=True, null=True)
+    date_created = models.DateTimeField(auto_now_add=True, null=True)
+    referrer = models.ForeignKey(
+        Referrer,
+        null=True,
+        related_name="report_referrer"
+    )
+    advice_given = models.BooleanField(default=False)
+    advice_details = models.CharField(max_length=256, blank=True, null=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_ReportType'
+        verbose_name_plural = 'CM_ReportTypes'
+        unique_together = ('report_type', 'version')
+
+    def __str__(self):
+        return '{0}, v.{1}'.format(self.report_type, self.version)
+
+    def referred_to(self):
+        if self.referrer:
+            return self.referrer.name
 
 
 class Location(models.Model):
@@ -140,9 +151,11 @@ class CallEmail(RevisionedMixin):
     lodged_on = models.DateField(auto_now_add=True)
     number = models.CharField(max_length=50, blank=True, null=True)
     caller = models.CharField(max_length=100, blank=True, null=True)
+    caller_phone_number = models.CharField(max_length=50, blank=True, null=True)
     assigned_to = models.CharField(max_length=100, blank=True, null=True)
     anonymous_call = models.BooleanField(default=False)
     caller_wishes_to_remain_anonymous = models.BooleanField(default=False)
+    occurrence_from_to = models.BooleanField(default=False)
     occurrence_date_from = models.DateField(null=True)
     occurrence_time_from = models.TimeField(null=True)
     occurrence_date_to = models.DateField(null=True)
