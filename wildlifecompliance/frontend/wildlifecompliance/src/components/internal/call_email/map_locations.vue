@@ -16,6 +16,7 @@ import pin from '../../../assets/pin.svg';
 import 'leaflet.markercluster';  /* This should be imported after leaflet */
 
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 L.TileLayer.WMTS = L.TileLayer.extend({
@@ -245,7 +246,7 @@ module.exports = {
 
 <style lang="css">
 #map {
-    height: 600px;
+    height: 700px;
     margin-bottom: 50px;
 }
 #basemap-button {
