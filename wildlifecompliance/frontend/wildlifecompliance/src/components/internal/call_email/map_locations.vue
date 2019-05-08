@@ -205,6 +205,14 @@ module.exports = {
                                 /* create marker */
                                 let myIcon = L.icon({
                                     iconUrl: 'data:image/svg+xml;base64,' + btoa(self.vars.pin_green),
+                                    //shadowUrl: './assets/marker_shadow.png',
+                                    //shadowUrl: './leaflet/dist/images/marker-shadow.png',
+                                    //shadowUrl: 'data:image/svg+xml;base64,' + btoa(self.vars.pin_green),
+
+                                    /* Accessing external file for now, but this should point to the local file */
+                                    shadowUrl: 'https://unpkg.com/leaflet@1.5.0/dist/images/marker-shadow.png',
+                                    shadowSize: [41, 41],
+                                    shadowAnchor: [12, 41],
                                     iconSize: [32, 32],
                                     iconAnchor: [16, 32],
                                     popupAnchor: [0, -20]
@@ -231,7 +239,6 @@ module.exports = {
                                     );
 
                                 myMarker.bindPopup(myPopup);
-                                //myMarker.addTo(self.map);
                                 markers.addLayer(myMarker);
                             }
                         }
