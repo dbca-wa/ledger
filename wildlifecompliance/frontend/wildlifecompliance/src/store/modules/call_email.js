@@ -9,7 +9,6 @@ export const callemailStore = {
     namespaced: true,
     state: {
         call_email: {
-            //id: null,
             schema: [],
             classification: {
                 id: null,
@@ -39,37 +38,12 @@ export const callemailStore = {
         report_type: state => state.call_email.report_type.report_type,
         classification_types: state => state.classification_types,
         report_types: state => state.report_types,
-        //call_coordinates: state => state.call_email.location.geometry.coordinates,
         call_email_form_url: state => {
             return state.call_email
               ? `/api/call_email/${state.call_email.id}/form_data.json`
               : "";
           },
-        /*
-          call_payload (state, rootGetters, rootState) {
-            let payload = new Object();
-            Object.assign(payload, state.call_email);
-            delete payload.report_type;
-            delete payload.schema;
-            // payload.renderer_data = rootGetters.renderer_form_data;
-            // console.log("rootGetters.renderer_form_data");
-            // console.log(rootGetters.renderer_form_data);
-            payload.renderer_data = rootState.form_data;
-            console.log("rootState.form_data");
-            console.log(rootState.form_data);
-            return payload;
-        },
-        */
-          /*
-        call_coordinates: state => {
-            return state.call_email.location.geometry.coordinates 
-            ? state.call_email.location.geometry.coordinates : [null, null];
-        },
-        call_location_properties: state => {
-            return state.call_email.location.properties
-            ? state.call_email.location.properties : {};
-        },
-        */
+
     },
     mutations: {
         updateCallEmail(state, call_email) {
@@ -81,7 +55,6 @@ export const callemailStore = {
             state.call_email.number = number;
         },
         updateCallID(state, id) {
-            //state.call_email.id = id;
             Vue.set(state.call_email, 'id', id);
         },
         updateCaller(state, caller) {
@@ -91,19 +64,11 @@ export const callemailStore = {
             state.call_email.assigned_to = assigned_to;
         },
         updateClassification(state, classification_entry) {
-            //Vue.set(state.classification_types, classification_entry.id, classification_entry.name);
             state.classification_types.push(classification_entry);
         },
         updateReportType(state, report_type_entry) {
-            //Vue.set(state.classification_types, classification_entry.id, classification_entry.name);
             state.report_types.push(report_type_entry);
         },
-        /*
-        updateCallReportTypeID(state, call_report_type) {
-            //Vue.set(state.classification_types, classification_entry.id, classification_entry.name);
-            state.call_email.report_type_id = call_report_type;
-        },
-        */
         updateLocation(state, location) {
             console.log("location");
             console.log(location);
@@ -179,7 +144,6 @@ export const callemailStore = {
                         root: true
                     });
                 }
-                //dispatch("setLocation", returnedCallEmail.body);
 
             } catch (err) {
                 console.error(err);
@@ -227,16 +191,7 @@ export const callemailStore = {
         ) {
             commit("updateClassification", classification_entry);
         },
-        /*
-
-        setCallReportTypeID({
-            commit,
-        },
-        call_report_type
-        ) {
-            commit("updateCallReportTypeID", call_report_type);
-        },
-        */
+        
         setReportTypeEntry({
             commit,
         },
@@ -252,41 +207,7 @@ export const callemailStore = {
             commit("updateCallEmail", call_email);
         },
 
-/*
-        async saveCallEmail({ dispatch, state, getters}, {route}) {
-            console.log("saveCallEmail");
-
-            try {
-                const savedCallEmail = await Vue.http.post(helpers.add_endpoint_join(
-                    api_endpoints.call_email, 
-                    state.call_email.id + "/call_email_save/"
-                    ), 
-                    {...state.call_email}
-                    )
-
-                if (state.call_email.location.geometry.coordinates.length > 0) {
-                    dispatch("saveLocation");
-                    console.log("saveLocation - done");
-                }
-                if (state.call_email.schema.length > 0) {
-                    dispatch("saveFormData", { url: getters.call_email_form_url }
-                    , {
-                        root: true
-                    });
-                    console.log("saveFormData - done");
-                }
-                
-            } catch (err) {
-                console.error(err);
-            }
-            await swal("Saved", "The record has been saved", "success");
-            if (route) {
-                //return window.location.href = "/internal/call_email/" + state.call_email.id;
-                return window.location.href = "/internal/call_email/";
-            }
-        },
-*/
-        async saveCallEmail({ dispatch, state, getters, rootGetters}, { route, crud }) {
+        async saveCallEmail({ dispatch, state, rootGetters}, { route, crud }) {
             console.log("saveCallEmail");
             
             try {
@@ -312,41 +233,12 @@ export const callemailStore = {
                 }
                 
                 const savedCallEmail = await Vue.http.post(fetchUrl, 
-                    //JSON.stringify({...state.call_email})
                     payload
                     )
                 console.log("savedCallEmail.body");
                 console.log(savedCallEmail.body);
-                //await dispatch("setCallID", newCallEmail.body.id);
                 await dispatch("setCallEmail", savedCallEmail.body);
                 
-                /*
-                for (let form_data_record of savedCallEmail.body.data) {
-                    dispatch("setFormValue", {
-                        key: form_data_record.field_name,
-                        value: {
-                            "value": form_data_record.value,
-                            "comment_value": form_data_record.comment,
-                            "deficiency_value": form_data_record.deficiency,
-                        }
-                    }, {
-                        root: true
-                    });
-                }
-*/
-
-/*
-                if (state.call_email.schema) {
-                    if (state.call_email.schema.length > 0) {
-                        await dispatch("saveFormData", { url: getters.call_email_form_url }
-                        , {
-                            root: true
-                        });
-                        console.log("saveFormData - done");
-                    }
-                }
-  */              
-
                 // Set empty (not null) location to force map display
                 if (!savedCallEmail.body.location) {
                     
@@ -383,105 +275,6 @@ export const callemailStore = {
             }
         },
 
-/*
-        async createCallEmail({ dispatch, state, getters}, { route }) {
-            console.log("createCallEmail");
-            //console.log({...state.call_email});
-            
-            try {
-                
-                const newCallEmail = await Vue.http.post(api_endpoints.call_email, 
-                    {...state.call_email});
-                console.log("newCallEmail.body");
-                console.log(newCallEmail.body);
-                //await dispatch("setCallID", newCallEmail.body.id);
-                await dispatch("setCallEmail", newCallEmail.body);
-                
-                if (state.call_email.schema) {
-                    if (state.call_email.schema.length > 0) {
-                        await dispatch("saveFormData", { url: getters.call_email_form_url }
-                        , {
-                            root: true
-                        });
-                        console.log("saveFormData - done");
-                    }
-                }
-
-            } catch (err) {
-                console.log(err);
-                await swal("Error", "There was an error saving the record", "error");
-                return window.location.href = "/internal/call_email/";
-            }
-            await swal("Saved", "The record has been saved", "success");
-            if (route) {
-                //return window.location.href = "/internal/call_email/" + state.call_email.id;
-                return window.location.href = "/internal/call_email/";
-            }
-        },
-*/
-        async createLocation({
-            state, dispatch
-        }) {
-            console.log("createLocation");
-            try {
-                let callLocation = null;
-                if (state.call_email.location) {
-                    callLocation = await Vue.http.post(
-                        api_endpoints.location, 
-                        {...state.call_email.location}
-                        );
-                    } else {
-                        callLocation = await Vue.http.post(
-                            api_endpoints.location, 
-                            {
-                                town_suburb: null,
-                                street: null,
-                                state: null,
-                                postcode: null,
-                                country: null,
-                                wkb_geometry: null,
-                            }
-                            );
-                    }
-
-                console.log(callLocation.body.id);
-                await dispatch("setLocationID", callLocation.body.id);
-            } catch (err) {
-                console.error(err);
-            }
-            console.log("createLocation - done");
-
-        },
-
-        async saveLocation({
-            state
-        }) {
-            console.log("saveLocation");
-            try {
-                if (state.call_email.location) {
-                    await Vue.http.post(helpers.add_endpoint_join(
-                    api_endpoints.call_email, 
-                    state.call_email.id + "update_location/"
-                    ),        
-                    {...state.call_email.location}
-                    );
-                } else {
-                    await Vue.http.post(
-                        api_endpoints.location, 
-                        {
-                            town_suburb: null,
-                            street: null,
-                            state: null,
-                            postcode: null,
-                            country: null,
-                            wkb_geometry: null,
-                        }
-                        );
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        },
         setCallID({
             commit,
         }, id) {

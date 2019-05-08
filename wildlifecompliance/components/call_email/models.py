@@ -312,7 +312,6 @@ class ComplianceFormDataRecord(models.Model):
 
     @staticmethod
     def process_form(request, CallEmail, form_data, action=ACTION_TYPE_ASSIGN_VALUE):
-        print(form_data)
         can_edit_comments = request.user.has_perm(
             'wildlifecompliance.licensing_officer'
         ) or request.user.has_perm(
@@ -326,7 +325,7 @@ class ComplianceFormDataRecord(models.Model):
                 not can_edit_comments and not can_edit_deficiencies:
             raise Exception(
                 'You are not authorised to perform this action!')
-
+        
         for field_name, field_data in form_data.items():
             schema_name = field_data.get('schema_name', '')
             component_type = field_data.get('component_type', '')

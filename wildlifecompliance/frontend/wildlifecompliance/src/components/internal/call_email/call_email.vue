@@ -183,7 +183,6 @@ export default {
       //location: "callemailStore/location",
       //report_type: "report_type",
       call_email_form_url: "call_email_form_url",
-      call_payload: "call_payload",
     }),
     ...mapGetters({
       renderer_form_data: 'renderer_form_data',

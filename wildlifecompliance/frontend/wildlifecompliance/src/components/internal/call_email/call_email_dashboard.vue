@@ -15,9 +15,10 @@
                     <div class="form-group">
                         <label for="">Call/Email classification</label>
                         <select class="form-control" v-model="filterClassification">
-                            <option value="All">All</option>
-                            <option v-for="i in classificationChoices" :value="i">{{ i }}</option>
-                        </select>
+                        <option v-for="option in classification_types" :value="option.id" v-bind:key="option.id">
+                          {{ option.name }} 
+                        </option>
+                    </select>
                     </div>
                 </div>
             </div>
@@ -66,7 +67,8 @@
         helpers
     }
     from '@/utils/hooks'
-    
+    import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
+
     export default {
         name: 'CallEmailTableDash',
         data() {
@@ -223,6 +225,10 @@
             datatable
         },
         computed: {
+            ...mapGetters('callemailStore', {
+                classification_types: "classification_types",
+                report_types: "report_types",
+            }),
             isLoading: function () {
                 return this.loading.length == 0;
             },
