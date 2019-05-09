@@ -1232,7 +1232,7 @@ class Application(RevisionedMixin):
                     licence_activity_id__in=activity_list
                 ).update(
                     officer=request.user,
-                    proposed_action=ApplicationSelectedActivity.PROPOSED_ACTION_DECLINE,
+                    proposed_action=ApplicationSelectedActivity.PROPOSED_ACTION_ISSUE,
                     processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION,
                     reason=details.get('reason'),
                     cc_email=details.get('cc_email', None),
