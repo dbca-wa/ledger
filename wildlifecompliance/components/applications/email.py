@@ -246,9 +246,7 @@ def send_application_amendment_notification(amendment_data, application, request
 
 
 def send_application_issue_notification(
-        activity_name,
-        expiry_date,
-        start_date,
+        activities,
         application,
         request,
         licence):
@@ -260,11 +258,16 @@ def send_application_issue_notification(
             'external-application-detail',
             kwargs={
                 'application_pk': application.id}))
+
     context = {
         'application': application,
-        'activity_name': activity_name,
-        'expiry_date': expiry_date,
-        'start_date': start_date,
+        'activity_details': "<br>".join(
+            ['{name}<br>Start Date: {start}<br>Expiry Date: {end}<br>'.format(
+                name=activity.licence_activity.name,
+                start=activity.start_date,
+                end=activity.expiry_date,
+            ) for activity in activities]
+        ),
         'url': url
     }
 
