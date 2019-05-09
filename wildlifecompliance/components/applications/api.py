@@ -1409,7 +1409,10 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             application_id = amend_data.pop('application')
             text = amend_data.pop('text')
             activity_list = amend_data.pop('activity_list')
+            if not activity_list:
+                raise serializers.ValidationError('Please select at least once activity to amend!')
 
+            data = {}
             application = Application.objects.get(id=application_id)
             for activity_id in activity_list:
                 data = {
