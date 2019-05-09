@@ -109,7 +109,7 @@ class Location(models.Model):
     town_suburb = models.CharField(max_length=100, null=True, blank=True)
     state = models.CharField(
         max_length=50, choices=STATE_CHOICES, null=True, blank=True, default='WA')
-    postcode = models.IntegerField(null=True)
+    postcode = models.CharField(max_length=10, null=True, blank=True)
     country = models.CharField(max_length=100, null=True, blank=True, default='Australia')
     objects = models.GeoManager()
     details = models.TextField(blank=True)
