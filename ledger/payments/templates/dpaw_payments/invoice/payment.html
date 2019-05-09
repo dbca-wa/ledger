@@ -5,23 +5,22 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Payments - Department of Parks and Wildlife</title>
+    <title>Payments - Department of Biodiversity, Conservation and Attractions</title>
     <meta name="description" content="" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.0/jquery.min.js"></script>
-    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/localforage/1.3.1/localforage.min.js"></script>
-    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
-    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation/6.3.0/js/foundation.min.js"></script>
-    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/js/foundation-datepicker.min.js"></script>
-    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/js/egg.js"></script>
-    <link rel="icon" href="//static.dpaw.wa.gov.au/images/favicon.svg" sizes="any" type="image/svg+xml" />
-    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/fonts/Lato2OFLWeb/Lato/latofonts.css" />
-    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.3.0/css/foundation-flex.css">
-    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
-    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/css/foundation-datepicker.min.css" />
-    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/css/dataTables.foundation.css" />
-    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/localforage/1.3.1/localforage.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/foundation/6.3.0/foundation.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/foundation-datepicker/1.5.0/js/foundation-datepicker.min.js"></script>
+    <link rel="icon" href="{% static 'favicon.ico' %}"/>
+    <link rel="stylesheet" type="text/css" media="all" href="{% static 'ledger/css/latofonts.css' %}" />
+    <link rel="stylesheet" type="text/css" media="all" href="//cdnjs.cloudflare.com/ajax/libs/foundation/6.3.0/css/foundation-flex.css">
+    <link rel="stylesheet" type="text/css" media="all" href="//cdnjs.cloudflare.com/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="//cdnjs.cloudflare.com/ajax/libs/foundation-datepicker/1.5.0/css/foundation-datepicker.min.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.13/css/dataTables.foundation.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
     {% block extra_css %}
     <style>
         .voided_invoice {
@@ -51,7 +50,7 @@
             <div class="row align-center logo">
                 <div class="align-center columns hide-for-print">
                     <a target="_blank" href="/">
-                        <img class="align-right" src="//static.dpaw.wa.gov.au/images/oimlogo_left.svg" alt="Department of Parks and Wildlife"></a>
+                        <img class="align-right" src="{% static 'ledger/images/oimlogo_left.svg' %}" alt="Department of Parks and Wildlife"></a>
                 </div>
             </div>
             <div class="row align-justify">
@@ -528,8 +527,8 @@
             </div>
         </div>
     </div>
-    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/js/dataTables.foundation.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.13/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/datatables/1.10.13/js/dataTables.foundation.min.js"></script>
     <script type="text/javascript" src="{% static 'payments/js/jquery.glob.js'%}"></script>
     <script type="text/javascript" src="{% static 'payments/js/jQuery.glob.en-AU.js'%}"></script>
     <script type="text/javascript" src="{% static 'payments/js/moneyInput.js'%}"></script>
