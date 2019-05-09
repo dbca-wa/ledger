@@ -250,7 +250,8 @@ def send_application_issue_notification(
         expiry_date,
         start_date,
         application,
-        request):
+        request,
+        licence):
     # An email to internal users notifying about an application activity being issued
     email = ApplicationIssueNotificationEmail()
 
@@ -267,7 +268,8 @@ def send_application_issue_notification(
         'url': url
     }
 
-    msg = email.send(application.submitter.email, context=context)
+    msg = email.send(application.submitter.email, context=context, attachments=[
+                     (licence.licence_document.name, licence.licence_document._file.read(), 'application/pdf')])
 
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, application, sender=sender)

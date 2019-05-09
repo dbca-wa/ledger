@@ -1265,6 +1265,7 @@ class Application(RevisionedMixin):
         with transaction.atomic():
             try:
                 parent_licence = None
+                issued_activities = []
                 for item in request.data.get('activity'):
                     licence_activity_id = item['id']
                     selected_activity = self.activities.filter(
@@ -1291,6 +1292,7 @@ class Application(RevisionedMixin):
                                 licence_category=self.get_licence_category()
                             )
 
+                        issued_activities.append(item)
                         selected_activity.issue_date = timezone.now()
                         selected_activity.officer = request.user
                         selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
@@ -1321,8 +1323,6 @@ class Application(RevisionedMixin):
                             self.submitter.log_user_action(
                                 ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
                                     item['name']), request)
-                        send_application_issue_notification(
-                            item['name'], item['end_date'], item['start_date'], self, request)
                     elif item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_DECLINED:
                         selected_activity.officer = request.user
                         selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED
@@ -1353,6 +1353,10 @@ class Application(RevisionedMixin):
                 # If any activities were issued - re-generate PDF
                 if parent_licence is not None:
                     parent_licence.generate_doc()
+                    for item in issued_activities:
+                        send_application_issue_notification(
+                            item['name'], item['end_date'], item['start_date'], self, request,
+                            parent_licence)
 
             except BaseException:
                 raise
