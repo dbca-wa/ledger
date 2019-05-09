@@ -1,24 +1,25 @@
 <template>
     <div class="container" id="internalCallEmailDash">
+        <FormSection :label="`Call/Emails`" :Index="`0`">
+                  
+              
         <form class="form-horizontal" name="createForm" method="get">
             <div class="row">
                 <div class="col-md-3">
-                    <div class="form-group">
-                        <label for="">Call/Email status</label>
-                        <select class="form-control" v-model="filterCall">
+                        <label for="">Call/Email Status</label>
+                        <select class="form-control" v-model="filterStatus">
                             <option value="All">All</option>
-                            <option v-for="c in callChoices" :value="c">{{ c }}</option>
+                            <option v-for="c in statusChoices" :value="c">{{ c }}</option>
                         </select>
-                    </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="form-group">
-                        <label for="">Call/Email classification</label>
+                        <label for="">Call/Email Classification</label>
                         <select class="form-control" v-model="filterClassification">
-                            <option value="All">All</option>
-                            <option v-for="i in classificationChoices" :value="i">{{ i }}</option>
-                        </select>
-                    </div>
+                        <option value="All">All</option>
+                        <option v-for="option in classification_types" :value="option.name" v-bind:key="option.name">
+                          {{ option.name }} 
+                        </option>
+                    </select>
                 </div>
             </div>
             <div class="row">
@@ -40,24 +41,26 @@
                         </span>
                     </div>
                 </div>
-                <div class="col-sm-12">
+                <div class="col-md-3 pull-right">
                     <button @click.prevent="createCallEmailUrl"
                         class="btn btn-primary pull-right">New Call/Email</button>
-                </div>
+                </div>    
             </div>
+            
         </form>
-                
-        <p></p>
         
+                
+
         <div class="row">
             <div class="col-lg-12">
                 <datatable ref="call_email_table" id="call-email-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders" />
             </div>
         </div>
+        </FormSection>
 
-              <FormSection :label="`Location`" :Index="`1`">
-                    <MapLocations />
-              </FormSection>
+        <FormSection :label="`Location`" :Index="`1`">
+            <MapLocations />
+        </FormSection>
     </div>
 </template>
 <script>
@@ -70,17 +73,18 @@
         helpers
     }
     from '@/utils/hooks'
-    
+    import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
+    import FormSection from "@/components/compliance_forms/section.vue";
     export default {
         name: 'CallEmailTableDash',
         data() {
             let vm = this;
             return {
                 // Filters
-                filterCall: 'All',
+                filterStatus: 'All',
                 filterClassification: 'All',
                 //filterLodgmentDate: null,
-                callChoices: [],
+                statusChoices: [],
                 classificationChoices: [],
                 filterLodgedFrom: '',
                 filterLodgedTo: '',
@@ -114,7 +118,11 @@
                         {
                             data: "classification",
                             mRender: function (data, type, full) {
-                                return data.name
+                                if (data) {
+                                    return data.name;
+                                } else {
+                                    return '';
+                                }
                             }
                         },
                         {
@@ -140,21 +148,16 @@
                     ],
 
                     initComplete: function () {
-                        var callColumn = vm.$refs.call_email_table.vmDataTable.columns(0);
-                        //vm.bbVar = callColumn;
-                        //console.log(vm.bbVar);
+                        var callColumn = vm.$refs.call_email_table.vmDataTable.columns(1);
                         callColumn.data().unique().sort().each(function (d, j) {
-                            let call_choices = [];
+                            let status_choices = [];
                             $.each(d, (index, a) => {
-                                a != null && call_choices.indexOf(a) < 0 ? call_choices.push(a) :
+                                a != null && status_choices.indexOf(a) < 0 ? status_choices.push(a) :
                                 '';
                             })
-                            vm.callChoices = call_choices;
-                            //console.log(vm.classificationChoices);
+                            vm.statusChoices = status_choices;
                         });
-                        var classificationColumn = vm.$refs.call_email_table.vmDataTable.columns(1);
-                        //vm.bbVar = classificationColumn.data().eq(2);
-                        //console.log(vm.bbVar);
+                        var classificationColumn = vm.$refs.call_email_table.vmDataTable.columns(2);
                         classificationColumn.data().unique().sort().each(function (d, j) {
                             let classification_choices = [];
                             $.each(d, (index, a) => {
@@ -162,7 +165,6 @@
                                     classification_choices.push(a['name']) : '';
                             })
                             vm.classificationChoices = classification_choices;
-                            //console.log(vm.classificationChoices);
                         });
                     }
 
@@ -183,20 +185,20 @@
         watch: {
             filterCall: function () {
                 let vm = this;
-                let regexSearch = helpers.datatableExactStringMatch(vm.filterCall);
-                if (vm.filterCall != 'All') {
-                    vm.$refs.call_email_table.vmDataTable.columns(0).search(regexSearch, true, false).draw();
+                let regexSearch = helpers.datatableExactStringMatch(vm.filterStatus);
+                if (vm.filterStatus != 'All') {
+                    vm.$refs.call_email_table.vmDataTable.columns(1).search(regexSearch, true, false).draw();
                 } else {
-                    vm.$refs.call_email_table.vmDataTable.columns(0).search('').draw();
+                    vm.$refs.call_email_table.vmDataTable.columns(1).search('').draw();
                 }
             },
             filterClassification: function () {
                 let vm = this;
                 let regexSearch = helpers.datatableExactStringMatch(vm.filterClassification);
                 if (vm.filterClassification != 'All') {
-                    vm.$refs.call_email_table.vmDataTable.columns(1).search(regexSearch, true, false).draw();
+                    vm.$refs.call_email_table.vmDataTable.columns(2).search(regexSearch, true, false).draw();
                 } else {
-                    vm.$refs.call_email_table.vmDataTable.columns(1).search('').draw();
+                    vm.$refs.call_email_table.vmDataTable.columns(2).search('').draw();
                 }
             },
             filterLodgedFrom: function () {
@@ -206,36 +208,30 @@
                 this.$refs.call_email_table.vmDataTable.draw();
             },
         },
-        beforeRouteEnter: function (to, from, next) {
-            console.log('BEFORE-ROUTE func()')
-            //Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
-            Vue.http.get(`/api/call_email/datatable_list.json`).then(res => {
-                next(vm => {
-                    vm.table = res.body;
-                    console.log(vm);
-                    console.log(vm.table);
-                });
-            }, err => {
-                console.log(err);
-            });
+
+        created: function() {
+            this.loadClassification();
+            this.loadReportTypes();
         },
         components: {
             datatable,
-            MapLocations
+            FormSection,
         },
         computed: {
-            isLoading: function () {
-                return this.loading.length == 0;
-            },
-            
+            ...mapGetters('callemailStore', {
+                classification_types: "classification_types",
+                report_types: "report_types",
+            }),
         },
         methods: {
+            ...mapActions('callemailStore', {
+                loadClassification: "loadClassification",
+                loadReportTypes: "loadReportTypes",
+            }),
             
             createCallEmailUrl: function () {
-                //return `<a href="/api/call_email/create_call_email"/>`;
                 this.$router.push({
-                    //name: 'external-proposals-dash'
-                    name: 'internal-create-call-email' // defined in ../src/components/internal/routes/index.js
+                    name: 'new-call-email' 
                 });
             },
             addEventListeners: function () {

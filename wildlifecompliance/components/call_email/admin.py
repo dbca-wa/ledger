@@ -23,3 +23,7 @@ class ReferrerAdmin(admin.ModelAdmin):
 @admin.register(models.CallEmail)
 class CallEmailAdmin(admin.ModelAdmin):
     pass
+
+# @admin.register(models.CallEmailSchema)
+# class CallEmailSchema(admin.ModelAdmin):
+#     pass
