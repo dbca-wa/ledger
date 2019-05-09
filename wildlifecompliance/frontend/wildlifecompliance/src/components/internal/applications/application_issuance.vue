@@ -1,108 +1,113 @@
 <template id="application_issuance">
                 <div class="col-md-12">
-                    <div class="row" v-for="(item, index) in visibleLicenceActivities" v-bind:key="`issue_activity_${index}`">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3 class="panel-title">Issue/Decline - {{item.name}}
-                                    <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
-                                        <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                    </a>
-                                </h3>
-                            </div>
-                            <div class="panel-body panel-collapse collapse in" :id="panelBody">
-                                <form class="form-horizontal" action="index.html" method="post">
-                                    <div class="col-sm-12">
-                                        <div class="form-group">
-                                            <div class="row">
-                                                <div class="col-sm-3">
-                                                    <input type="radio"  id="issue" name="licence_category" v-model="getActivity(item.id).final_status"  value="issued" > Issue
-                                                </div>
-                                                <div class="col-sm-3">
-                                                    <input type="radio"  id="decline" name="licence_category" v-model="getActivity(item.id).final_status"  value="declined" > Decline
-                                                </div>
-                                            </div>
-                                            <div class="row" v-if="finalStatus(item.id) === 'issued'">
-                                                <div class="col-sm-3">
-                                                    
-                                                    <label class="control-label pull-left">Proposed Start Date</label>
-                                                </div>
-                                                <div class="col-sm-9">
-                                                    <div class="input-group date" ref="start_date" style="width: 70%;" :data-init="false" :data-activity="item.id">
-                                                        <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY" v-model="getActivity(item.id).start_date">
-                                                        <span class="input-group-addon">
-                                                            <span class="glyphicon glyphicon-calendar"></span>
-                                                        </span>
+
+                    <ul class="nav nav-tabs" id="tabs-section" data-tabs="tabs">
+                        <li v-for="(activity, index) in visibleLicenceActivities" v-bind:key="`issue_activity_tab_${index}`">
+                            <a data-toggle="tab" v-on:click="selectTab(activity)">{{activity.name}}</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="row" v-for="(item, index) in selectedActivity" v-bind:key="`issue_activity_content_${index}`">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">Issue/Decline - {{item.name}}
+                                        <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
+                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                        </a>
+                                    </h3>
+                                </div>
+                                <div class="panel-body panel-collapse collapse in" :id="panelBody">
+                                    <form class="form-horizontal" action="index.html" method="post">
+                                        <div class="col-sm-12">
+                                            <div class="form-group">
+                                                <div class="row">
+                                                    <div class="col-sm-3">
+                                                        <input type="radio"  id="issue" name="licence_category" v-model="getActivity(item.id).final_status"  value="issued" > Issue
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <input type="radio"  id="decline" name="licence_category" v-model="getActivity(item.id).final_status"  value="declined" > Decline
                                                     </div>
                                                 </div>
-
-                                            </div>
-                                            <div class="row" v-if="finalStatus(item.id) === 'issued'">
-                                                <div class="col-sm-3">
-                                                    <label class="control-label pull-left">Proposed Expiry Date</label>
+                                                <div class="row">
+                                                    <div class="col-sm-3">
+                                                        <label class="control-label pull-left">Ready for finalisation?</label>
+                                                    </div>
+                                                    <div class="col-sm-9">
+                                                        <input type="checkbox" class="confirmation-checkbox" v-model="getActivity(item.id).confirmed">
+                                                    </div>
                                                 </div>
-                                                <div class="col-sm-9">
-                                                    <div class="input-group date" ref="end_date" style="width: 70%;" :data-activity="item.id">
-                                                        <input type="text" class="form-control" name="end_date" placeholder="DD/MM/YYYY">
-                                                        <span class="input-group-addon">
-                                                            <span class="glyphicon glyphicon-calendar"></span>
-                                                        </span>
+                                                <div class="row" v-if="finalStatus(item.id) === 'issued'">
+                                                    <div class="col-sm-3">
+                                                        <label class="control-label pull-left">Proposed Start Date</label>
+                                                    </div>
+                                                    <div class="col-sm-9">
+                                                        <div class="input-group date" ref="start_date" style="width: 70%;" :data-init="false" :data-activity="item.id">
+                                                            <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY" v-model="getActivity(item.id).start_date">
+                                                            <span class="input-group-addon">
+                                                                <span class="glyphicon glyphicon-calendar"></span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                                <div class="row" v-if="finalStatus(item.id) === 'issued'">
+                                                    <div class="col-sm-3">
+                                                        <label class="control-label pull-left">Proposed Expiry Date</label>
+                                                    </div>
+                                                    <div class="col-sm-9">
+                                                        <div class="input-group date" ref="end_date" style="width: 70%;" :data-activity="item.id">
+                                                            <input type="text" class="form-control" name="end_date" placeholder="DD/MM/YYYY">
+                                                            <span class="input-group-addon">
+                                                                <span class="glyphicon glyphicon-calendar"></span>
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
+                                        
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">Emailing
+                                        <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
+                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                                        </a>
+                                    </h3>
+                                </div>
+                                <div class="panel-body panel-collapse collapse in" :id="panelBody">
+                                    <div class="row">
+                                        <div class="col-sm-3">
+                                            
+                                            <label class="control-label pull-left"  for="details">Details</label>
+                                        </div>
+                                        <div class="col-sm-9">
+                                            <div class="input-group date" ref="details" style="width: 70%;">
+                                                <input type="text" class="form-control" name="details" v-model="getActivity(item.id).reason">
+                                            </div>
+                                        </div>
                                     </div>
-                                    
-                                </form>
+                                    <div class="row">
+                                        <div class="col-sm-3">
+                                            <label class="control-label pull-left"  for="details">CC Email</label>
+                                        </div>
+                                        <div class="col-sm-9">
+                                            <div class="input-group date" ref="cc_email" style="width: 70%;">
+                                                <input type="text" class="form-control" name="cc_email" v-model="getActivity(item.id).cc_email">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-3">
+                                            <label class="control-label pull-left"  for="details">Files to be attached to email</label>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3 class="panel-title">Emailing
-                                    <a class="panelClicker" :href="'#'+panelBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="panelBody">
-                                        <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                    </a>
-                                </h3>
-                            </div>
-                            <div class="panel-body panel-collapse collapse in" :id="panelBody">
-                                <div class="row">
-                                    <div class="col-sm-3">
-                                        
-                                        <label class="control-label pull-left"  for="details">Details</label>
-                                    </div>
-                                    <div class="col-sm-9">
-                                        <div class="input-group date" ref="details" style="width: 70%;">
-                                            <input type="text" class="form-control" name="details">
-                                            
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-sm-3">
-                                        
-                                        <label class="control-label pull-left"  for="details">CC Email</label>
-                                    </div>
-                                    <div class="col-sm-9">
-                                        <div class="input-group date" ref="cc_email" style="width: 70%;">
-                                            <input type="text" class="form-control" name="cc_email">
-                                            
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-sm-3">
-                                        
-                                        <label class="control-label pull-left"  for="details">Files to be attached to email</label>
-                                    </div>
-                                    
-                                </div>
-
-
-                            </div>
-                        </div>
-                    </div>
-
 
                     <div class="row" v-if="licence.activity.some(activity => activity.final_status === 'issued')">
                         <div class="panel panel-default">
@@ -178,7 +183,7 @@ import {
     helpers
 }
 from '@/utils/hooks'
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 
 export default {
     name: 'InternalApplicationIssuance',
@@ -209,12 +214,19 @@ export default {
     },
     computed:{
         ...mapGetters([
+            'selected_activity_tab_id',
             'licenceActivities',
             'filterActivityList',
         ]),
         canIssueOrDecline: function() {
-            return this.licence.id_check && this.licence.character_check &&
-                this.licence.return_check && this.visibleLicenceActivities.length;
+            return (this.allActivitiesDeclined || (
+                this.licence.id_check && this.licence.character_check && this.licence.return_check)
+            ) && this.visibleLicenceActivities.length;
+        },
+        selectedActivity: function() {
+            return this.visibleLicenceActivities.filter(
+                activity => activity.id == this.selected_activity_tab_id
+            );
         },
         visibleLicenceActivities: function() {
             return this.filterActivityList({
@@ -252,18 +264,50 @@ export default {
             return (id) => {
                 return this.getActivity(id).final_status;
             }
-        }
+        },
+        allActivitiesDeclined: function() {
+            return this.licence && !this.licence.activity.filter(
+                activity => activity.final_status !== 'declined'
+            ).length;
+        },
+        canSubmit: function() {
+            const missingConfirmations = this.licence.activity.filter(
+                activity => !activity.confirmed
+            ).length;
+            return missingConfirmations === 0;
+        },
     },
     methods:{
+        ...mapActions([
+            'setActivityTab'
+        ]),
+        selectTab: function(component) {
+            this.setActivityTab({id: component.id, name: component.name});
+        },
         ok: function () {
             let vm = this;
+
+            if(!this.canSubmit) {
+                return swal(
+                    'Cannot issue/decline',
+                    "One or more activity tabs hasn't been marked as ready for finalisation!",
+                    'error'
+                );
+            }
             let licence = JSON.parse(JSON.stringify(vm.licence));
+            licence.activity = this.licence.activity.map(activity => {
+                return {
+                    ...activity,
+                    start_date: activity.start_date ? moment(activity.start_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : null,
+                    end_date: activity.end_date ? moment(activity.end_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : null,
+                }
+            });
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/final_decision'),JSON.stringify(licence),{
                         emulateJSON:true,
                     }).then((response)=>{
                         swal(
-                             'Issue activity',
-                             'The activity is successfully issued',
+                             'Activities Finalised',
+                             'The selected activities have been successfully finalised!',
                              'success'
                         );
                         vm.$parent.refreshFromResponse(response);
@@ -301,6 +345,7 @@ export default {
                     reason: proposal.reason,
                     cc_email: proposal.cc_email,
                     final_status: final_status,
+                    confirmed: false,
                 });
             }
             if(this.application.id_check_status.id == 'accepted'){
@@ -373,7 +418,7 @@ export default {
                 $(end_date).datetimepicker(this.datepickerOptions);
                 $(end_date).data('DateTimePicker').date(proposedEndDate);
                 $(end_date).off('dp.change').on('dp.change', (e) => {
-                    const selected_end_date = $(end_date).data('DateTimePicker').date().format('YYYY-MM-DD');
+                    const selected_end_date = $(end_date).data('DateTimePicker').date().format('DD/MM/YYYY');
                     if (selected_end_date && selected_end_date != activity.end_date) {
                         activity.end_date = selected_end_date;
                     }
@@ -382,7 +427,7 @@ export default {
                 $(start_date).datetimepicker(this.datepickerOptions);
                 $(start_date).data('DateTimePicker').date(proposedStartDate);
                 $(start_date).off('dp.change').on('dp.change', (e) => {
-                    const selected_start_date = $(start_date).data('DateTimePicker').date().format('YYYY-MM-DD');
+                    const selected_start_date = $(start_date).data('DateTimePicker').date().format('DD/MM/YYYY');
                     if (selected_start_date && selected_start_date != activity.start_date) {
                         activity.start_date = selected_start_date;
                     }
@@ -396,6 +441,7 @@ export default {
 
         this.$nextTick(() => {
             vm.eventListeners();
+            $('#tabs-section li:first-child a').click();
         });
     },
     updated: function() {
@@ -407,4 +453,7 @@ export default {
 }
 </script>
 <style scoped>
+    .confirmation-checkbox {
+        margin-top: 10px;
+    }
 </style>
