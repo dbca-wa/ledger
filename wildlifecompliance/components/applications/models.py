@@ -497,6 +497,8 @@ class Application(RevisionedMixin):
                     ApplicationSelectedActivity.PROCESSING_STATUS_CHOICES
                 )
             }
+            activity['start_date'] = selected_activity.start_date
+            activity['expiry_date'] = selected_activity.expiry_date
         return licence_data
 
     @property

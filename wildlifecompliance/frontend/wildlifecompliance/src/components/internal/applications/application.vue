@@ -94,7 +94,7 @@
                                     </div>
                                     <div v-if="!applicationIsDraft" class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="togglesendtoAssessor()">Assessments</button><br/>
+                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="togglesendtoAssessor()">Assessments &amp; Conditions</button><br/>
                                         </div>
                                     </div>
                                     <div v-if="canOfficerReviewConditions" class="row">
