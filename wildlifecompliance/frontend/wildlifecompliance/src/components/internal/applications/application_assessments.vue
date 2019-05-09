@@ -597,14 +597,13 @@ export default {
             if(this.datepickerInitialised || this.$refs === undefined || !this.assessment.is_inspection_required) {
                 return;
             }
-            const inspection_date = this.$refs.inspection_date;
+            const inspection_date_element = this.$refs.inspection_date;
+            const inspection_date_object = new Date(this.assessment.inspection_date);
 
-            const inspectionDate = new Date(this.assessment.inspection_date);
-
-            $(inspection_date).datetimepicker(this.datepickerOptions);
-            $(inspection_date).data('DateTimePicker').date(inspectionDate);
-            $(inspection_date).off('dp.change').on('dp.change', (e) => {
-                const selected_inspection_date = $(inspection_date).data('DateTimePicker').date().format('YYYY-MM-DD');
+            $(inspection_date_element).datetimepicker(this.datepickerOptions);
+            $(inspection_date_element).data('DateTimePicker').date(inspection_date_object);
+            $(inspection_date_element).off('dp.change').on('dp.change', (e) => {
+                const selected_inspection_date = $(inspection_date_element).data('DateTimePicker').date().format('YYYY-MM-DD');
                 if (selected_inspection_date && selected_inspection_date != this.assessment.inspection_date) {
                     this.assessment.inspection_date = selected_inspection_date;
                 }
@@ -622,14 +621,6 @@ export default {
             this.initDatePicker();
         });
     },
-    beforeRouteEnter: function(to, from, next) {
-        next(vm => {
-        });
-    },
-    beforeRouteUpdate: function(to, from, next) {
-        next(vm => {
-        });
-    }
 }
 
 </script>
