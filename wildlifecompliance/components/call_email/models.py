@@ -70,6 +70,7 @@ class Location(models.Model):
         max_length=50, choices=STATE_CHOICES, default='WA')
     postcode = models.IntegerField()
     country = models.CharField(max_length=100, default='Australia')
+    details = models.TextField(blank=True)
     objects = models.GeoManager()
 
     class Meta:
