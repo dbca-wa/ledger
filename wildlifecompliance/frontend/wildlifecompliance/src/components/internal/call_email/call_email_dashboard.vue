@@ -57,15 +57,16 @@
             </div>
         </div>
         </FormSection>
-        <FormSection :label="`Location`" :Index="`1`">
-        
-        </FormSection>
 
+        <FormSection :label="`Location`" :Index="`1`">
+            <MapLocations />
+        </FormSection>
     </div>
 </template>
 <script>
     import $ from 'jquery'
     import datatable from '@vue-utils/datatable.vue'
+    import MapLocations from "./map_locations.vue";
     import Vue from 'vue'
     import {
         api_endpoints,
@@ -74,7 +75,6 @@
     from '@/utils/hooks'
     import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
     import FormSection from "@/components/compliance_forms/section.vue";
-
     export default {
         name: 'CallEmailTableDash',
         data() {
