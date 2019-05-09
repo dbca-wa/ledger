@@ -23,13 +23,13 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry, Us
 from wildlifecompliance.components.applications.email import (
     send_application_submitter_email_notification,
     send_application_submit_email_notification,
-    send_application_amendment_notification,
     send_assessment_email_notification,
     send_assessment_reminder_email,
     send_amendment_submit_email_notification,
     send_application_issue_notification,
     send_application_decline_notification,
-    send_id_update_request_notification
+    send_id_update_request_notification,
+    send_application_return_to_officer_conditions_notification,
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
@@ -497,6 +497,8 @@ class Application(RevisionedMixin):
                     ApplicationSelectedActivity.PROCESSING_STATUS_CHOICES
                 )
             }
+            activity['start_date'] = selected_activity.start_date
+            activity['expiry_date'] = selected_activity.expiry_date
         return licence_data
 
     @property
@@ -915,58 +917,90 @@ class Application(RevisionedMixin):
             except BaseException:
                 raise
 
+    def return_to_officer_conditions(self, request, activity_id):
+        text = request.data.get('text', '')
+        if self.assigned_officer:
+            email_list = [self.assigned_officer.email]
+        else:
+            officer_groups = ActivityPermissionGroup.objects.filter(
+                permissions__codename='licensing_officer',
+                licence_activities__id=activity_id
+            )
+            group_users = EmailUser.objects.filter(
+                groups__id__in=officer_groups.values_list('id', flat=True)
+            ).distinct()
+            email_list = [user.email for user in group_users]
+
+        self.set_activity_processing_status(
+            activity_id,
+            ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_CONDITIONS
+        )
+        send_application_return_to_officer_conditions_notification(
+            email_list=email_list,
+            application=self,
+            text=text,
+            request=request
+        )
+
     def complete_assessment(self, request):
         with transaction.atomic():
             try:
-                # Get the assessor groups the current user is member of for the
-                # selected activity tab
-                qs = request.user.get_wildlifelicence_permission_group(
+                assessment_id = request.data.get('assessment_id')
+                activity_id = int(request.data.get('selected_assessment_tab', 0))
+
+                assessment = Assessment.objects.filter(
+                    id=assessment_id,
+                    licence_activity_id=activity_id,
+                    status=Assessment.STATUS_AWAITING_ASSESSMENT,
+                    application=self
+                ).first()
+
+                if not assessment:
+                    raise Exception("Assessment record ID %s (activity: %s) does not exist!" % (
+                        assessment_id, activity_id))
+
+                assessor_group = request.user.get_wildlifelicence_permission_group(
                     permission_codename='assessor',
-                    activity_id=request.data.get('selected_assessment_tab'),
-                    first=False
+                    activity_id=assessment.licence_activity_id,
+                    first=True
                 )
+                if not assessor_group:
+                    raise Exception("Missing assessor permissions for Activity ID: %s" % (
+                        assessment.licence_activity_id))
 
-                # For each assessor groups get the assessments of current
-                # application whose status is awaiting_assessment and mark it
-                # as complete
-                for q in qs:
-                    assessments = Assessment.objects.filter(
-                        licence_activity_id=request.data.get('selected_assessment_tab'),
-                        assessor_group=q,
-                        status=Assessment.STATUS_AWAITING_ASSESSMENT,
-                        application=self)
+                assessment.status = Assessment.STATUS_COMPLETED
+                assessment.actioned_by = request.user
+                assessment.save()
+                # Log application action
+                self.log_user_action(
+                    ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(assessor_group), request)
+                # Log entry for organisation
+                if self.org_applicant:
+                    self.org_applicant.log_user_action(
+                        ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(assessor_group), request)
+                elif self.proxy_applicant:
+                    self.proxy_applicant.log_user_action(
+                        ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(assessor_group), request)
+                else:
+                    self.submitter.log_user_action(
+                        ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(assessor_group), request)
 
-                    for q1 in assessments:
-                        q1.status = Assessment.STATUS_COMPLETED
-                        q1.save()
-                        # Log application action
-                        self.log_user_action(
-                            ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q), request)
-                        # Log entry for organisation
-                        if self.org_applicant:
-                            self.org_applicant.log_user_action(
-                                ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q), request)
-                        elif self.proxy_applicant:
-                            self.proxy_applicant.log_user_action(
-                                ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q), request)
-                        else:
-                            self.submitter.log_user_action(
-                                ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q), request)
-                # check if this is the last assessment for current
-                # application, Change the processing status only if it is the
-                # last assessment
-                if not Assessment.objects.filter(
-                        application=self,
-                        licence_activity=request.data.get('selected_assessment_tab'),
-                        status=Assessment.STATUS_AWAITING_ASSESSMENT).exists():
-                    for activity in self.licence_type_data['activity']:
-                        if int(
-                                request.data.get('selected_assessment_tab')) == activity["id"]:
-                            self.set_activity_processing_status(
-                                activity["id"], ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_CONDITIONS)
-
+                self.check_assessment_complete(activity_id)
             except BaseException:
                 raise
+
+    def check_assessment_complete(self, activity_id):
+        # check if this is the last assessment for current
+        # application, Change the processing status only if it is the
+        # last assessment
+        if not Assessment.objects.filter(
+                application=self,
+                licence_activity=activity_id,
+                status=Assessment.STATUS_AWAITING_ASSESSMENT).exists():
+            for activity in self.licence_type_data['activity']:
+                if activity_id == activity["id"]:
+                    self.set_activity_processing_status(
+                        activity["id"], ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_CONDITIONS)
 
     def proposed_decline(self, request, details):
         with transaction.atomic():
@@ -1200,7 +1234,7 @@ class Application(RevisionedMixin):
                     licence_activity_id__in=activity_list
                 ).update(
                     officer=request.user,
-                    proposed_action=ApplicationSelectedActivity.PROPOSED_ACTION_DECLINE,
+                    proposed_action=ApplicationSelectedActivity.PROPOSED_ACTION_ISSUE,
                     processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION,
                     reason=details.get('reason'),
                     cc_email=details.get('cc_email', None),
@@ -1233,6 +1267,7 @@ class Application(RevisionedMixin):
         with transaction.atomic():
             try:
                 parent_licence = None
+                issued_activities = []
                 for item in request.data.get('activity'):
                     licence_activity_id = item['id']
                     selected_activity = self.activities.filter(
@@ -1270,6 +1305,7 @@ class Application(RevisionedMixin):
                         selected_activity.reason = item['reason']
                         selected_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
                         selected_activity.save()
+                        issued_activities.append(selected_activity)
 
                         self.generate_returns(parent_licence, selected_activity, request)
                         # Log application action
@@ -1289,8 +1325,6 @@ class Application(RevisionedMixin):
                             self.submitter.log_user_action(
                                 ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
                                     item['name']), request)
-                        send_application_issue_notification(
-                            item['name'], item['end_date'], item['start_date'], self, request)
                     elif item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_DECLINED:
                         selected_activity.officer = request.user
                         selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED
@@ -1321,6 +1355,12 @@ class Application(RevisionedMixin):
                 # If any activities were issued - re-generate PDF
                 if parent_licence is not None:
                     parent_licence.generate_doc()
+                    send_application_issue_notification(
+                        activities=issued_activities,
+                        application=self,
+                        request=request,
+                        licence=parent_licence
+                    )
 
             except BaseException:
                 raise
@@ -1517,9 +1557,6 @@ class AmendmentRequest(ApplicationRequest):
                 # Create a log entry for the application
                 self.application.log_user_action(
                     ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS, request)
-                # send email
-                send_application_amendment_notification(
-                    self, self.application, request)
                 self.save()
             except BaseException:
                 raise
@@ -1551,6 +1588,7 @@ class Assessment(ApplicationRequest):
     purpose = models.TextField(blank=True)
     inspection_date = models.DateField(null=True, blank=True)
     inspection_report = models.FileField(upload_to=update_assessment_inspection_report_filename, blank=True, null=True)
+    actioned_by = models.ForeignKey(EmailUser, null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -1597,13 +1635,33 @@ class Assessment(ApplicationRequest):
         with transaction.atomic():
             try:
                 self.status = Assessment.STATUS_RECALLED
-                self.application.set_activity_processing_status(
-                    self.licence_activity_id, ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER)
+                self.actioned_by = request.user
                 self.save()
-                # Create a log entry for the application
-                self.application.log_user_action(
-                    ApplicationUserAction.ACTION_ASSESSMENT_RECALLED.format(
-                        self.assessor_group), request)
+
+                if not Assessment.objects.filter(
+                    application_id=self.application_id,
+                    licence_activity=self.licence_activity_id,
+                    status=Assessment.STATUS_AWAITING_ASSESSMENT
+                ).exists():
+                    # Create a log entry for the application
+                    self.application.log_user_action(
+                        ApplicationUserAction.ACTION_ASSESSMENT_RECALLED.format(
+                            self.assessor_group), request)
+
+                    last_complete_assessment = Assessment.objects.filter(
+                        application_id=self.application_id,
+                        licence_activity=self.licence_activity_id,
+                        status=Assessment.STATUS_COMPLETED,
+                        actioned_by__isnull=False
+                    ).order_by('-id').first()
+                    if last_complete_assessment:
+                        last_complete_assessment.application.check_assessment_complete(self.licence_activity_id)
+                    else:
+                        self.application.set_activity_processing_status(
+                            self.licence_activity_id,
+                            ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER
+                        )
+
             except BaseException:
                 raise
 
@@ -1794,7 +1852,8 @@ class ApplicationFormDataRecord(models.Model):
         choices=COMPONENT_TYPE_CHOICES,
         default=COMPONENT_TYPE_TEXT)
     value = JSONField(blank=True, null=True)
-    comment = models.TextField(blank=True)
+    officer_comment = models.TextField(blank=True)
+    assessor_comment = models.TextField(blank=True)
     deficiency = models.TextField(blank=True)
 
     def __str__(self):
@@ -1810,11 +1869,13 @@ class ApplicationFormDataRecord(models.Model):
     @staticmethod
     def process_form(request, application, form_data, action=ACTION_TYPE_ASSIGN_VALUE):
         from wildlifecompliance.components.applications.utils import MissingFieldsException
-        can_edit_comments = request.user.has_perm(
+        can_edit_officer_comments = request.user.has_perm(
             'wildlifecompliance.licensing_officer'
-        ) or request.user.has_perm(
+        )
+        can_edit_assessor_comments = request.user.has_perm(
             'wildlifecompliance.assessor'
         )
+        can_edit_comments = can_edit_officer_comments or can_edit_assessor_comments
         can_edit_deficiencies = request.user.has_perm(
             'wildlifecompliance.licensing_officer'
         )
@@ -1834,7 +1895,8 @@ class ApplicationFormDataRecord(models.Model):
             instance_name = field_data.get('instance_name', '')
             component_type = field_data.get('component_type', '')
             value = field_data.get('value', '')
-            comment = field_data.get('comment_value', '')
+            officer_comment = field_data.get('officer_comment', '')
+            assessor_comment = field_data.get('assessor_comment', '')
             deficiency = field_data.get('deficiency_value', '')
 
             if ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR in field_name:
@@ -1870,8 +1932,10 @@ class ApplicationFormDataRecord(models.Model):
                     continue
                 form_data_record.value = value
             elif action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT:
-                if can_edit_comments:
-                    form_data_record.comment = comment
+                if can_edit_officer_comments:
+                    form_data_record.officer_comment = officer_comment
+                if can_edit_assessor_comments:
+                    form_data_record.assessor_comment = assessor_comment
                 if can_edit_deficiencies:
                     form_data_record.deficiency = deficiency
             form_data_record.save()

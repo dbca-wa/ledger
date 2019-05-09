@@ -197,7 +197,8 @@ class ApplicationFormDataRecordSerializer(serializers.ModelSerializer):
             'schema_name',
             'component_type',
             'instance_name',
-            'comment',
+            'officer_comment',
+            'assessor_comment',
             'deficiency',
             'value',
         )
@@ -206,7 +207,8 @@ class ApplicationFormDataRecordSerializer(serializers.ModelSerializer):
             'schema_name',
             'component_type',
             'instance_name',
-            'comment',
+            'officer_comment',
+            'assessor_comment',
             'deficiency',
             'value',
         )

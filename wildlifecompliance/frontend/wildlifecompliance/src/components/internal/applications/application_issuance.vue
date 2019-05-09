@@ -295,6 +295,13 @@ export default {
                 );
             }
             let licence = JSON.parse(JSON.stringify(vm.licence));
+            licence.activity = this.licence.activity.map(activity => {
+                return {
+                    ...activity,
+                    start_date: activity.start_date ? moment(activity.start_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : null,
+                    end_date: activity.end_date ? moment(activity.end_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : null,
+                }
+            });
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/final_decision'),JSON.stringify(licence),{
                         emulateJSON:true,
                     }).then((response)=>{
@@ -411,7 +418,7 @@ export default {
                 $(end_date).datetimepicker(this.datepickerOptions);
                 $(end_date).data('DateTimePicker').date(proposedEndDate);
                 $(end_date).off('dp.change').on('dp.change', (e) => {
-                    const selected_end_date = $(end_date).data('DateTimePicker').date().format('YYYY-MM-DD');
+                    const selected_end_date = $(end_date).data('DateTimePicker').date().format('DD/MM/YYYY');
                     if (selected_end_date && selected_end_date != activity.end_date) {
                         activity.end_date = selected_end_date;
                     }
@@ -420,7 +427,7 @@ export default {
                 $(start_date).datetimepicker(this.datepickerOptions);
                 $(start_date).data('DateTimePicker').date(proposedStartDate);
                 $(start_date).off('dp.change').on('dp.change', (e) => {
-                    const selected_start_date = $(start_date).data('DateTimePicker').date().format('YYYY-MM-DD');
+                    const selected_start_date = $(start_date).data('DateTimePicker').date().format('DD/MM/YYYY');
                     if (selected_start_date && selected_start_date != activity.start_date) {
                         activity.start_date = selected_start_date;
                     }

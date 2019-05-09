@@ -20,6 +20,9 @@ from wildlifecompliance.components.applications.utils import (
 )
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
+from wildlifecompliance.components.applications.email import (
+    send_application_amendment_notification,
+)
 from wildlifecompliance.components.applications.models import (
     Application,
     ApplicationSelectedActivity,
@@ -726,7 +729,34 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST', ])
+    def return_to_officer(self, request, *args, **kwargs):
+
+        try:
+            instance = self.get_object()
+            activity_id = request.data.get('activity_id')
+            if not activity_id:
+                raise serializers.ValidationError(
+                    'Activity ID is required!')
+
+            instance.return_to_officer_conditions(request, activity_id)
+            serializer = InternalApplicationSerializer(
+                instance, context={'request': request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
     def update_activity_status(self, request, *args, **kwargs):
+
         try:
             instance = self.get_object()
             activity_id = request.data.get('activity_id')
@@ -1378,17 +1408,21 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             reason = amend_data.pop('reason')
             application_id = amend_data.pop('application')
             text = amend_data.pop('text')
-            activity_id = amend_data.pop('activity_id')
-            for item in activity_id:
+            activity_list = amend_data.pop('activity_list')
+            if not activity_list:
+                raise serializers.ValidationError('Please select at least one activity to amend!')
+
+            data = {}
+            application = Application.objects.get(id=application_id)
+            for activity_id in activity_list:
                 data = {
                     'application': application_id,
                     'reason': reason,
                     'text': text,
-                    'licence_activity': item
+                    'licence_activity': activity_id
                 }
 
-                application = Application.objects.get(id=application_id)
-                selected_activity = application.get_selected_activity(item)
+                selected_activity = application.get_selected_activity(activity_id)
                 if selected_activity.processing_status == ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED:
                     raise serializers.ValidationError('Selected activity has been discarded by the customer!')
 
@@ -1397,6 +1431,10 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
                 instance = serializer.save()
                 instance.reason = reason
                 instance.generate_amendment(request)
+
+            # send email
+            send_application_amendment_notification(
+                data, application, request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:

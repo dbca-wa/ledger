@@ -5,11 +5,14 @@
 
     Application: {{ application.id }}
 
-    Activity: {{application.submitter}}
+    Submitter: {{application.submitter}}
 
-    Expiry Date: {{ expiry_date }}
-
-    Start Date: {{ start_date }}
+    Activities:
+    {% for activity in activities %}
+        {{activity.licence_activity.name}}
+        Start Date: {{activity.start_date}}
+        Expiry Date: {{activity.expiry_date}}
+    {% endfor %}
 
     Link: {{url}}
 
