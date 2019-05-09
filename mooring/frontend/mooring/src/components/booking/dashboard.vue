@@ -175,7 +175,15 @@
 
 <script>
 // Variabled ending with a 2 (except select2) are reused for the admissions fee payment table.
-import {$,bus,datetimepicker,api_endpoints,helpers,Moment,swal,select2} from "../../hooks.js"
+import {$,
+        bus,
+        datetimepicker,
+        api_endpoints,
+        helpers,
+        Moment,
+        swal,
+//        select2
+        } from "../../hooks.js"
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
 import changebooking from "./changebooking.vue"
