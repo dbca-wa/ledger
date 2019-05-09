@@ -184,9 +184,10 @@ export default {
                 mRender:function (data,type,full) {
                     let links = '';
                     if (!vm.is_external){
+                        const finalised = ['approved', 'declined'].includes(full.processing_status.id);
                         links += (full.can_be_processed && full.user_in_officers_and_assessors) ?
                             `<a href='/internal/application/${full.id}'>Process</a><br/>` :
-                            `<a href='/external/application/${full.id}'>View</a><br/>`;
+                            `<a href='/${finalised ? 'internal' : 'external'}/application/${full.id}'>View</a><br/>`;
                     }
                     if (vm.is_external){
                         if (full.can_current_user_edit) {
