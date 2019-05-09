@@ -157,6 +157,7 @@ export default {
                     } else {
                         console.log("address not found");
                         self.showHideAddressDetailsFields(false, true);
+                        self.clearAddressFields();
                     }
                 }
             });
