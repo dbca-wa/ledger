@@ -1410,7 +1410,7 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             text = amend_data.pop('text')
             activity_list = amend_data.pop('activity_list')
             if not activity_list:
-                raise serializers.ValidationError('Please select at least once activity to amend!')
+                raise serializers.ValidationError('Please select at least one activity to amend!')
 
             data = {}
             application = Application.objects.get(id=application_id)
