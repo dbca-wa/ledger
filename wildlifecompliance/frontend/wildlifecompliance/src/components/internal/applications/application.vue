@@ -142,30 +142,7 @@
                 <template v-if="canIssueDecline && isofficerfinalisation">
                     <IssueLicence :application="application" :licence_activity_tab="selected_activity_tab_id"/>
                 </template>
-                <!--<template v-if="isOfficerConditions">
-                    <div>
-                        <ul class="nav nav-tabs" id="conditiontabs">
-                            <li v-for="activity in getVisibleConditionsFor('licensing_officer', 'with_officer_conditions')"><a data-toggle="tab" :data-target="`#${activity.id}`">{{activity.name}}</a></li>
-                        </ul>
-                    </div>
-                    <div class="tab-content">
-                        <div v-for="activity in getVisibleConditionsFor('licensing_officer', 'with_officer_conditions', selected_activity_tab_id)" :id="`${activity.id}`" class="tab-pane fade active in">
-                            <OfficerConditions :application="application" :licence_activity_tab="activity.id" :final_view_conditions="false" :key="`officer_condition_${selected_activity_tab_id}`"/>
-                        </div>
-                    </div>
-                </template>
-                <template v-if="isFinalViewConditions">
-                    <div>
-                        <ul class="nav nav-tabs" id="conditiontabs">
-                            <li v-for="activity in getVisibleConditionsFor('issuing_officer', 'with_officer_finalisation')"><a data-toggle="tab" :data-target="`#${activity.id}`">{{activity.name}}</a></li>
-                        </ul>
-                    </div>
-                    <div class="tab-content">
-                        <div v-for="activity in getVisibleConditionsFor('issuing_officer', 'with_officer_finalisation', selected_activity_tab_id)" :id="`${activity.id}`" class="tab-pane fade active in">
-                            <OfficerConditions :application="application" :licence_activity_tab="activity.id" :final_view_conditions="true" :key="`final_condition_${selected_activity_tab_id}`"/>
-                        </div>
-                    </div>
-                </template>-->
+
                 <ApplicationAssessments
                     v-if="isSendingToAssessor || isOfficerConditions"
                     />
