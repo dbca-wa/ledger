@@ -991,7 +991,6 @@ export default {
                 },
                 showCancelButton: true,
                 confirmButtonText: 'Return',
-                allowOutsideClick: () => !Swal.isLoading()
                 }).then((result) => {
                     if(!result.value) {
                         return;
