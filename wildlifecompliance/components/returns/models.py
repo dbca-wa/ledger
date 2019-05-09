@@ -240,7 +240,7 @@ class Return(models.Model):
         :return: External Status.
         """
         workflow_mapper = {
-            self.RETURN_PROCESSING_STATUS_DUE : self.RETURN_CUSTOMER_STATUS_DUE,
+            self.RETURN_PROCESSING_STATUS_DUE: self.RETURN_CUSTOMER_STATUS_DUE,
             self.RETURN_PROCESSING_STATUS_OVERDUE: self.RETURN_CUSTOMER_STATUS_OVERDUE,
             self.RETURN_PROCESSING_STATUS_DRAFT: self.RETURN_CUSTOMER_STATUS_DRAFT,
             self.RETURN_PROCESSING_STATUS_FUTURE: self.RETURN_CUSTOMER_STATUS_FUTURE,
@@ -333,10 +333,48 @@ class ReturnData(object):
     @property
     def table(self):
         """
-        Data Table of record information for Species.
-        :return: formatted data.
+        Table of return information presented in Grid format.
+        :return: Grid formatted data.
         """
-        return self._get_raw_table()
+        tables = []
+        for resource in self._return.return_type.resources:
+            resource_name = resource.get('name')
+            schema = Schema(resource.get('schema'))
+            headers = []
+            for f in schema.fields:
+                header = {
+                    "label": f.name,
+                    "required": f.required,
+                    "type": f.type.name
+                }
+                if f.is_species:
+                    header["species"] = f.species_type
+                headers.append(header)
+            table = {
+                'name': resource_name,
+                'label': resource.get('title', resource.get('name')),
+                'type': 'grid',
+                'headers': headers,
+                'data': None
+            }
+            try:
+                return_table = self._return.returntable_set.get(name=resource_name)
+                rows = [
+                    return_row.data for return_row in return_table.returnrow_set.all()]
+                validated_rows = schema.rows_validator(rows)
+                table['data'] = validated_rows
+            except ReturnTable.DoesNotExist:
+                result = {}
+                results = []
+                for field_name in schema.fields:
+                    result[field_name.name] = {
+                            'value': None
+                    }
+                results.append(result)
+                table['data'] = results
+        tables.append(table)
+
+        return tables
 
     def store(self, request):
         """
@@ -344,19 +382,19 @@ class ReturnData(object):
         :param request:
         :return:
         """
-        for key in request.POST.keys():
+        for key in request.data.keys():
             if key == "nilYes":
                 self._return.nil_return = True
                 self._return.comments = request.data.get('nilReason')
                 self._return.save()
             if key == "nilNo":
                 returns_tables = request.data.get('table_name')
-                if self._is_post_data_valid(returns_tables.encode('utf-8'), request.POST):
-                    self._create_return_data_from_post_data(returns_tables.encode('utf-8'), request.POST)
+                if self._is_post_data_valid(returns_tables.encode('utf-8'), request.data):
+                    self._create_return_data_from_post_data(returns_tables.encode('utf-8'), request.data)
                 else:
                     raise FieldError('Enter data in correct format.')
 
-    def _get_raw_table(self):
+    def _get_formatted_table(self):
         tables = []
         for resource in self._return.return_type.resources:
             resource_name = resource.get('name')
@@ -394,24 +432,6 @@ class ReturnData(object):
                 results.append(result)
                 table['data'] = results
         tables.append(table)
-
-        return tables
-
-    def _get_formatted_table(self):
-        headers = {}
-        tables = {}
-        #tables = {
-        #    "type": "table",
-        #    "headers": "{\"Species\": \"text\", \"Quantity\": \"number\", \"Date\": \"date\", \"Taken\": \"checkbox\"}",
-        #    "name": "Section2-0",
-        #    "label": "The first table in section 2"
-        #}
-
-        tables['headers'] = 'Quantity'
-        tables['type'] = 'table'
-        tables['label'] = 'first table'
-        tables['name'] = 'table-example'
-        tables['data'] = '100'
 
         return tables
 
@@ -493,7 +513,7 @@ class ReturnQuestion(object):
     @property
     def table(self):
         """
-        Table of questions for Species. Defaults to a Species on the Return if exists.
+        Table of return questions.
         :return: formatted data.
         """
         tables = []

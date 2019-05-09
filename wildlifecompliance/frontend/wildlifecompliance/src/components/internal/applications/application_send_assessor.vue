@@ -40,7 +40,7 @@ import {
     helpers
 } from "@/utils/hooks.js"
 export default {
-    name:'Add-Organisation-Contact',
+    name:'Send-to-Assessor',
     components:{
         modal,
         alert
