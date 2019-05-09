@@ -84,13 +84,20 @@ export default {
         ...mapGetters([
             'application_id',
             'licenceActivities',
+            'hasRole',
         ]),
         showError: function() {
             var vm = this;
             return vm.errors;
         },
         amendableActivities: function() {
-            return this.licenceActivities(['with_officer', 'with_assessor', 'with_officer_conditions'])
+            return this.licenceActivities([
+                'with_officer',
+                'with_assessor',
+                'with_officer_conditions'
+            ]).filter(
+                activity => this.hasRole('licensing_officer', activity.id)
+            );
         }
     },
     methods:{
