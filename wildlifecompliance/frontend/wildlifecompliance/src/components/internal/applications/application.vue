@@ -121,7 +121,7 @@
                                             <strong>Action</strong><br/>
                                         </div>
                                     </div>
-                                    <div v-if="!isFinalised && (isSendingToAssessor || isOfficerConditions || isofficerfinalisation)" class="row">
+                                    <div v-if="isSendingToAssessor || isOfficerConditions || isofficerfinalisation" class="row">
                                         <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication({show: true})">Back to Application</button><br/>
                                         </div>
@@ -650,6 +650,7 @@ export default {
             'checkActivityStatus',
             'isPartiallyFinalised',
             'isFinalised',
+            'licenceActivities',
             'isApplicationLoaded',
             'isApplicationActivityVisible',
             'unfinishedActivities',
@@ -792,6 +793,14 @@ export default {
             const tab = $('#tabs-section li:first-child a')[0];
             if(tab) {
                 tab.click();
+            }
+            else {
+                this.licenceActivities().filter(activity => {
+                    this.setActivityTab({
+                        id: activity.id,
+                        name: activity.name
+                    });
+                })
             }
         },
         initialiseOrgContactTable: function(){
