@@ -385,9 +385,9 @@ export default {
                 this.$http.put(helpers.add_endpoint_json(api_endpoints.assessment,this.assessment.id+'/update_assessment'),formData,{
                     emulateJSON:true
                 }).then(res=>{
-                    resolve();
+                    resolve(res);
                 },err=>{
-                    reject();
+                    reject(err);
                 });
             })
         },
@@ -498,7 +498,7 @@ export default {
                 }, (error) => {
                     this.revert();
                     swal(
-                        'Application Error',
+                        'Error',
                         helpers.apiVueResourceError(error),
                         'error'
                     )
@@ -506,7 +506,7 @@ export default {
             }, error => {
                 swal(
                     'Error',
-                    'There was an error saving your assessment',
+                    helpers.apiVueResourceError(error),
                     'error'
                 );
             });
