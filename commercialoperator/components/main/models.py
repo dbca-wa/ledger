@@ -209,6 +209,8 @@ class Park(models.Model):
     park_type = models.CharField('Park Type', max_length=40, choices=PARK_TYPE_CHOICES,
                                         default=PARK_TYPE_CHOICES[0][0])
     allowed_activities = models.ManyToManyField(Activity, blank=True)
+    allowed_access = models.ManyToManyField(AccessType, blank=True)
+
     #proposal = models.ForeignKey(Proposal, related_name='parks')
 
 
@@ -223,6 +225,10 @@ class Park(models.Model):
     @property
     def allowed_activities_ids(self):
         return [i.id for i in self.allowed_activities.all()]
+
+    @property
+    def allowed_access_ids(self):
+        return [i.id for i in self.allowed_access.all()]
 
     @property
     def zone_ids(self):

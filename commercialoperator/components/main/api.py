@@ -116,6 +116,14 @@ class ParkViewSet(viewsets.ReadOnlyModelViewSet):
         #serializer = ActivitySerializer(qs)
         return Response(serializer.data)
 
+    @detail_route(methods=['GET',])
+    def allowed_access(self, request, *args, **kwargs):
+        instance = self.get_object()
+        qs = instance.allowed_access.all()
+        serializer = AccessTypeSerializer(qs,context={'request':request}, many=True)
+        #serializer = ActivitySerializer(qs)
+        return Response(serializer.data)
+
 class TrailViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Trail.objects.all().order_by('id')
     serializer_class = TrailSerializer

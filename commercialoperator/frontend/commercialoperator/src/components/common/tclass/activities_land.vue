@@ -603,6 +603,7 @@ export default {
             this.$refs.edit_activities.park_id=p_id;
             this.$refs.edit_activities.park_name=p_name;
             this.$refs.edit_activities.fetchAllowedActivities(p_id)
+            this.$refs.edit_activities.fetchAllowedAccessTypes(p_id)
             this. $refs.edit_activities.isModalOpen = true;
           },
           edit_sections: function(trail){

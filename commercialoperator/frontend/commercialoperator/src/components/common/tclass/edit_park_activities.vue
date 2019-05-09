@@ -9,7 +9,7 @@
                             <form>
                                 <div class="form-horizontal col-sm-6">
                                   <label class="control-label">Access</label>
-                                  <div class="" v-for="a in access_types">
+                                  <div class="" v-for="a in allowed_access_types">
                                     <div class="form-check">
                                       <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="park_access" :value="a.id" data-parsley-required   />
                                       {{ a.name }}
@@ -74,6 +74,7 @@ export default {
             park_name: '',
             access_types: null,
             allowed_activities:[],
+            allowed_access_types:[],
             park_access:[],
             park_activities:[],
             vehicle_access_id: null,
@@ -145,6 +146,15 @@ export default {
             let vm=this;
             Vue.http.get(helpers.add_endpoint_json(api_endpoints.parks,park_id+'/allowed_activities')).then((res) => {
                       vm.allowed_activities=res.body;                 
+                },
+              err => { 
+                        console.log(err);
+                  });
+        },
+        fetchAllowedAccessTypes: function(park_id){
+            let vm=this;
+            Vue.http.get(helpers.add_endpoint_json(api_endpoints.parks,park_id+'/allowed_access')).then((res) => {
+                      vm.allowed_access_types=res.body;                 
                 },
               err => { 
                         console.log(err);
