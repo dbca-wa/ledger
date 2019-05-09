@@ -98,8 +98,8 @@
             </div>
             </div>
 
-            <div>{{selected_parks}}</div>
-            <div>{{selected_parks_activities}}</div>             
+            <!-- <div>{{selected_parks}}</div>
+            <div>{{selected_parks_activities}}</div>   -->           
 <!--           </form>
 
  -->      </div> 
@@ -148,10 +148,12 @@
               <form>
                 <div class="form-horizontal col-sm-12">
                   <label class="control-label">Select the long distance trails</label>
-                  <div class="" v-for="t in trails">
-                    <div class="form-check col-sm-12">
-                      <input   name="selected_trails" v-model="selected_trails" :value="{'trail': t.id,'sections': t.section_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities" />
-                      {{ t.name }} <span><a @click="edit_sections(t)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit section and activities</a></span>
+                  <div class="list-group list-group-root well">
+                    <div class="" v-for="t in trails">
+                      <div class="form-check col-sm-12 list-group-item">
+                        <input   name="selected_trails" v-model="selected_trails" :value="{'trail': t.id,'sections': t.section_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities" />
+                        {{ t.name }} <span><a @click="edit_sections(t)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit section and activities</a></span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -161,8 +163,8 @@
           </div>
         </div>
       </div>
-      <div>{{selected_trails}}</div>
-      <div>{{selected_trails_activities}}</div>
+      <!-- <div>{{selected_trails}}</div>
+      <div>{{selected_trails_activities}}</div> -->
       <div>
               <editParkActivities ref="edit_activities" :proposal="proposal" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editParkActivities>
       </div>
