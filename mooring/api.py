@@ -1815,8 +1815,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
 #        sites_qs = Mooringsite.objects.filter(mooringarea=ground).filter(**context)
 #        radius = int(distance_radius)
         radius = int(100)
-        if int(distance_radius) > 0:
-            radius = int(distance_radius)
+        if float(distance_radius) > 0:
+            radius = float(distance_radius)
 #       sites_qs = Mooringsite.objects.all().filter(**context)
         sites_qs = []
   #      if request.session['ps_booking_old']:
