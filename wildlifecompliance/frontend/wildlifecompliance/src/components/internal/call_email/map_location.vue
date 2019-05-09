@@ -9,9 +9,7 @@
                 <img id="basemap_sat" src="../../../assets/img/satellite_icon.jpg" @click="setBaseLayer('sat')" />
                 <img id="basemap_osm" src="../../../assets/img/map_icon.png" @click="setBaseLayer('osm')" />
             </div>
-            <div style="display: none;">
-                <div id="popup"></div>
-            </div>
+            <div id="popup"></div>
         </div>
 
         <div class="col-sm-12"><div class="row">
@@ -21,36 +19,36 @@
         <div id="lat" class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Latitude:</label>
             <div v-if="call_email.location">
-                <input class="form-control" v-model="call_email.location.geometry.coordinates[1]" />
+                <input class="form-control" v-model="call_email.location.geometry.coordinates[1]" readonly />
             </div>
         </div></div>
         <div id="lon" class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Longitude:</label>
             <div v-if="call_email.location">
-                <input class="form-control" v-model="call_email.location.geometry.coordinates[0]" />
+                <input class="form-control" v-model="call_email.location.geometry.coordinates[0]" readonly />
             </div>
         </div></div>
 
         <div id="location_fields_address">
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Street</label>
-                <input class="form-control" v-model="call_email.location.properties.street" />
+                <input class="form-control" v-model="call_email.location.properties.street" readonly />
             </div></div>
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Town/Suburb</label>
-                <input class="form-control" v-model="call_email.location.properties.town_suburb" />
+                <input class="form-control" v-model="call_email.location.properties.town_suburb" readonly />
             </div></div>
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">State</label>
-                <input class="form-control" v-model="call_email.location.properties.state" />
+                <input class="form-control" v-model="call_email.location.properties.state" readonly />
             </div></div>
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Postcode</label>
-                <input class="form-control" v-model="call_email.location.properties.postcode" />
+                <input class="form-control" v-model="call_email.location.properties.postcode" readonly />
             </div></div>
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Country</label>
-                <input class="form-control" v-model="call_email.location.properties.country" />
+                <input class="form-control" v-model="call_email.location.properties.country" readonly />
             </div></div>
         </div>
 
@@ -436,7 +434,7 @@ export default {
                 element: this.element,
                 positioning: 'bottom-center',
                 stopEvent: false,
-                offset: [0, -25]
+                offset: [20, 20]
             });
             this.map.addOverlay(this.popup);
         },
@@ -475,7 +473,7 @@ export default {
                     + this.call_email.location.properties.state + ' ' + this.call_email.location.properties.postcode + ' ' + this.call_email.location.properties.country 
                     + '</p>',
                 });
-                $(this.element).popover('show');
+                //$(this.element).popover('show');
             } else {
                 /* User clicked on a map, not on any feature */
                 if(!this.marker_locked){
