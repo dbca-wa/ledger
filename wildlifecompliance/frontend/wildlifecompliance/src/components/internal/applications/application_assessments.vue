@@ -376,8 +376,10 @@ export default {
         saveAssessmentData: function(e) {
             return new Promise((resolve, reject) => {
                 let formData = new FormData(this.form);
-                formData.append('inspection_comment', this.assessment.inspection_comment);
-                formData.append('inspection_date', this.assessment.inspection_date);
+                if(this.assessment.is_inspection_required) {
+                    formData.append('inspection_comment', this.assessment.inspection_comment);
+                    formData.append('inspection_date', this.assessment.inspection_date);
+                }
                 formData.append('final_comment', this.assessment.final_comment);
                 if (this.assessment.inspection_report) {
                     formData.append('inspection_report', this.assessment.inspection_report);
