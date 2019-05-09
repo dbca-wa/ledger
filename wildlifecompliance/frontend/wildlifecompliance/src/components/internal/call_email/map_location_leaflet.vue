@@ -1,15 +1,17 @@
 <template lang="html">
     <div>
-        <div id="mapOL">
-            <div id="search-box">
+        <div id="map-wrapper">
+        <div id="search-box">
+                <!-- input id="search-input" v-on:click.stop="()=>{}" v-on:dblclick.stop="()=>{}" / -->
                 <input id="search-input" />
             </div>
+        <div id="map">
 
+        </div>
             <div id="basemap-button">
-                <img id="basemap_sat" src="../../../assets/img/satellite_icon.jpg" @click="setBaseLayer('sat')" />
-                <img id="basemap_osm" src="../../../assets/img/map_icon.png" @click="setBaseLayer('osm')" />
+                <img id="basemap_sat" src="../../../assets/img/satellite_icon.jpg" @click.stop="setBaseLayer('sat')" />
+                <img id="basemap_osm" src="../../../assets/img/map_icon.png" @click.stop="setBaseLayer('osm')" />
             </div>
-            <div id="popup"></div>
         </div>
 
         <div class="col-sm-12"><div class="row">
@@ -64,30 +66,16 @@
 </template>
 
 <script>
-import pin from '../../../assets/pin.svg';
 import Awesomplete from 'awesomplete';
-import Map from 'ol/Map.js';
-import tilegridWMTS from 'ol/tilegrid/WMTS.js';
-import { getWidth, getTopLeft } from 'ol/extent.js';
-import View from 'ol/View.js';
-import { defaults as defaultControls, ScaleLine} from 'ol/control.js';
-import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer.js';
-import { XYZ, OSM, WMTS } from 'ol/source';
-import { get, addProjection, addCoordinateTransforms, transform, toLonLat, fromLonLat } from 'ol/proj.js';
-import Feature from 'ol/Feature.js';
-import Overlay from 'ol/Overlay';
-import Point from 'ol/geom/Point.js';
-import VectorSource from 'ol/source/Vector.js';
-import { Icon, Style } from 'ol/style.js';
 
-import 'ol/ol.css';
 import 'bootstrap/dist/css/bootstrap.css';
-import 'ol-geocoder/dist/ol-geocoder.css';
 import 'awesomplete/awesomplete.css';
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 export default {
-    name: "map-openlayers",
+    name: "map-leaflet",
     data: function(){
         const defaultCentre = [13775786.985667605, -2871569.067879858];
 
@@ -113,13 +101,13 @@ export default {
         console.log("this.call_email.location");
         console.log(this.call_email.location);
         this.$nextTick(function() {
-        console.debug('Start loading map');
-        this.initMap();
-        this.setBaseLayer('osm');
-        this.initAwesomplete();
-        this.addMarker();
-        this.refreshMarkerLocation();
-        console.debug('End loading map');
+            console.debug('Start loading map');
+            this.initMap();
+            this.setBaseLayer('osm');
+            this.initAwesomplete();
+            this.addMarker([0, 0]);
+            this.refreshMarkerLocation();
+            console.debug('End loading map');
         });
     },
 
@@ -128,6 +116,23 @@ export default {
             saveLocation: 'saveLocation',
             setLocationPoint: 'setLocationPoint',
         }),
+        addMarker(coord){
+            let self = this;
+
+            let myIcon = L.icon({
+                iconUrl: require('../../../assets/pin.svg'),
+                shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+                shadowSize: [41, 41],
+                shadowAnchor: [12, 41],
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -20]
+            });
+            self.feature_marker = L.marker({lon: coord[1], lat: coord[0]}, {icon: myIcon}).on('click', function(ev){
+                console.log('clicked');
+            });
+            self.feature_marker.addTo(self.map);
+        },
         saveInstanceLocation: async function() {
             await this.$nextTick();
             this.saveLocation();
@@ -167,13 +172,13 @@ export default {
         search: function(place){
             var self = this;
 
-            var centre = toLonLat(this.map.getView().getCenter());
-            console.log(centre);
+            var latlng = this.map.getCenter();
             $.ajax({
                 url: 'https://mapbox.dpaw.wa.gov.au/geocoding/v5/mapbox.places/'+encodeURIComponent(place)+'.json?'+ $.param({
                     country: 'au',
                     limit: 10,
-                    proximity: ''+centre[0]+','+centre[1],
+                    proximity: ''+latlng.lng+','+latlng.lat,
+                    //proximity: ''+centre[0]+','+centre[1],
                     bbox: '112.920934,-35.191991,129.0019283,-11.9662455',
                     types: 'region,postcode,district,place,locality,neighborhood,address,poi'
                 }),
@@ -205,15 +210,22 @@ export default {
                     return false;
                 }
             }).on('awesomplete-selectcomplete', function(ev){
+                ev.preventDefault();
+                ev.stopPropagation();
                 /* User selected one of the search results */
                 for (var i=0; i<self.suggest_list.length; i++){
                     if (self.suggest_list[i].value == ev.target.value){
-                        self.moveMapCentre(self.suggest_list[i].feature.geometry.coordinates);
+                        var latlng = {lat: self.suggest_list[i].feature.geometry.coordinates[1], lng: self.suggest_list[i].feature.geometry.coordinates[0]};
+                        //self.map.setView(latlng, 13);
+                        self.map.flyTo(latlng, 13,{
+                            animate: true,
+                            duration: 1.5
+                        });
 
                         /* Do nothing if the marker is locked */
                         if(self.marker_locked){ return; }
 
-                        self.relocateMarker4326(self.suggest_list[i].feature.geometry.coordinates);
+                        self.relocateMarker(latlng);
                         if(self.suggest_list[i].feature.place_type.includes('address')){
                             /* Selection has address ==> Update address fields */
                             self.showHideAddressDetailsFields(true, false);
@@ -224,6 +236,7 @@ export default {
                         }
                     }
                 }
+                return false;
             });
         },
         clearAddressFields(){
@@ -267,32 +280,16 @@ export default {
             /* postcode */
             this.call_email.location.properties.postcode = result[3].trim();
         },
-        moveMapCentre: function(coordinates){
-            let self = this;
-            let view = self.map.getView();
-            view.animate({
-                center: fromLonLat(coordinates),
-                zoom: 14,
-                duration: 1000
-            });
-        },
         setBaseLayer: function(selected_layer_name){
-            this.map.getLayers().forEach(function(layer){
-                if (layer.type == 'TILE')
-                {
-                    if (layer.get('name') == selected_layer_name){
-                        layer.setVisible(true);
-                    }
-                    else {
-                        layer.setVisible(false);
-                    }
-                }
-            });
             if (selected_layer_name == 'sat') {
+                this.map.removeLayer(this.tileLayer);
+                this.map.addLayer(this.tileLayerSat);
                 $('#basemap_sat').hide();
                 $('#basemap_osm').show();
             }
             else {
+                this.map.removeLayer(this.tileLayerSat);
+                this.map.addLayer(this.tileLayer);
                 $('#basemap_osm').hide();
                 $('#basemap_sat').show();
             }
@@ -312,172 +309,68 @@ export default {
         /* this function retrieve the coordinates from vuex and applys it to the marker */
         refreshMarkerLocation: function(){
             if (this.call_email.location.geometry.coordinates.length > 0) {
-                this.feature_marker.getGeometry().setCoordinates(
-                    transform([this.call_email.location.geometry.coordinates[0], this.call_email.location.geometry.coordinates[1]], 'EPSG:4326', 'EPSG:3857')
-                );
+                this.feature_marker.setLatLng({lat: this.call_email.location.geometry.coordinates[1], lng: this.call_email.location.geometry.coordinates[0]});
                 this.reverseGeocoding(this.call_email.location.geometry);
             } 
         },
-        addMarker: function(){
-            var iconFeature = new Feature({
-                geometry: new Point(transform([
-                    null, null
-                    ], 'EPSG:4326', 'EPSG:3857')),
-                });
-            this.feature_marker = iconFeature;
-
-            var iconStyle = new Style({
-                image: new Icon({
-                    anchor: [16, 32],
-                    anchorXUnits: 'pixels',
-                    anchorYUnits: 'pixels',
-                    opacity: 1,
-                    src: pin,
-                    scale: 1
-                })
-            });
-
-            iconFeature.setStyle(iconStyle);
-
-            var vectorSource = new VectorSource({
-               features: [iconFeature]
-            });
-
-            var vectorLayer = new VectorLayer({
-               source: vectorSource
-            });
-
-            this.map.addLayer(vectorLayer);
-        },
-
         initMap: function(){
-            this.projection = get('EPSG:3857');
-            this.matrixSet = 'mercator';
+            this.map = L.map('map').setView([-31.9505, 115.8605], 4);
+            this.tileLayer = L.tileLayer(
+                'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                {
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, contributiors',
+                }
+            );
 
-            this.projectionExtent = this.projection.getExtent();
-            var size = getWidth(this.projectionExtent) / 256;
-            this.matrixSet = 'mercator';
-            this.resolutions = new Array(21);
-            this.matrixIds = new Array(21);
-            for (var z = 0; z < 21; ++z) {
-                // generate resolutions and matrixIds arrays for this WMTS
-                this.resolutions[z] = size / Math.pow(2, z);
-                this.matrixIds[z] = this.matrixSet + ':' + z;
-            }
-            var tileGrid = new tilegridWMTS({
-                origin: getTopLeft(this.projectionExtent),
-                resolutions: this.resolutions,
-                matrixIds: this.matrixIds
-            });
+            this.tileLayerSat = L.tileLayer.wmts(
+                'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
+                {
+                    layer: 'public:mapbox-satellite',
+                    tilematrixSet: 'mercator',
+                    format: 'image/png',
+                }
+            );
 
-            var rasterLayer = new TileLayer({source: new OSM()});
-            var rasterLayerSat = new TileLayer({
-                    source: new WMTS({
-                        url: 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
-                        format: 'image/png',
-                        layer: 'public:mapbox-satellite',
-                        matrixSet: this.matrixSet,
-                        projection: this.projection,
-                        tileGrid: tileGrid
-                    })
-            });
-            rasterLayer.set('name', 'osm');
-            rasterLayerSat.set('name', 'sat');
-            rasterLayer.set('button_id', 'basemap_osm');
-            rasterLayerSat.set('button_id', 'basemap_satellite');
-
-            this.map = new Map({
-                controls: defaultControls().extend([
-                    new ScaleLine({
-                        units: 'metric'
-                    })
-                ]),
-                target: 'mapOL',
-                layers: [
-                    rasterLayer,
-                    rasterLayerSat,
-                ],
-                view: new View({
-                    center: [0, 0],
-                    zoom: 5
-                })
-            });
-            this.map.getView().setCenter(this.defaultCenter);
-            this.map.on('click', this.mapClickHandler);
-
-            this.element = document.getElementById('popup');
-
-            this.popup = new Overlay({
-                element: this.element,
-                positioning: 'bottom-center',
-                stopEvent: false,
-                offset: [20, 20]
-            });
-            this.map.addOverlay(this.popup);
-        },
-        getMarkerAddress: function(){
-
+            this.map.on('click', this.onClick);
+            this.setBaseLayer('osm');
         },
         /* this function stores the coordinates into the vuex, then call refresh marker function */
-        relocateMarker: function(coords_3857){ 
-            let coords_4326 = transform([coords_3857[0], coords_3857[1]], 'EPSG:3857', 'EPSG:4326');
-            this.setLocationPoint(coords_4326);
+        relocateMarker: function(latlng){ 
+            let lnglat = [latlng.lng, latlng.lat];
+            this.setLocationPoint(lnglat);
             this.refreshMarkerLocation();
-            this.reverseGeocoding(coords_4326);
+            this.reverseGeocoding(lnglat);
         },
-        relocateMarker4326: function(coords_4326){
-            this.relocateMarker(transform([coords_4326[0], coords_4326[1]], 'EPSG:4326', 'EPSG:3857'));
-        },
-        mapClickHandler: function(e){
-            var coordinate = e.coordinate;
-            console.debug(coordinate);
-
-            var lnglat_4326 = transform([coordinate[0], coordinate[1]], 'EPSG:3857', 'EPSG:4326')
-
-            var feature = this.map.forEachFeatureAtPixel(e.pixel,
-                function(feature) {
-                    return feature;
-            });
-            if (feature) {
-                /* User clicked on a feature, such as a marker */
-                var coordinates = feature.getGeometry().getCoordinates();
-                this.popup.setPosition(coordinates);
-                $(this.element).popover({
-                    placement: 'top',
-                    html: true,
-                    content: '<p>' 
-                    + this.call_email.location.properties.street + ' ' + this.call_email.location.properties.town_suburb + '<br />'
-                    + this.call_email.location.properties.state + ' ' + this.call_email.location.properties.postcode + ' ' + this.call_email.location.properties.country 
-                    + '</p>',
-                });
-                //$(this.element).popover('show');
-            } else {
-                /* User clicked on a map, not on any feature */
-                if(!this.marker_locked){
-                    this.relocateMarker(coordinate);
-                }
-                $(this.element).popover('destroy');
-            };
+        onClick: function(e){
+            let self = this;
+            let latlng = this.map.mouseEventToLatLng(e.originalEvent);
+            console.log(latlng);
+            /* User clicked on a map, not on any feature */
+            if(!this.marker_locked){
+                this.relocateMarker(latlng);
+            }
         }
     },
 }
 </script>
 
 <style lang="css">
-#mapOL {
+#map-wrapper {
+    position: relative;
+}
+#map {
     position: relative;
     height: 500px;
-}
-.popover {
-    position: relative;
+    cursor: default;
 }
 #search-box {
-    position: absolute;
     z-index: 1000;
+    position: absolute;
     top: 10px;
     left: 50px;
 }
 #search-input {
+    z-index: 1000;
     width: 300px;
     padding: 5px;
     -moz-border-radius: 5px;

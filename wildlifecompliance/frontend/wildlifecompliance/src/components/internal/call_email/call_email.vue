@@ -131,7 +131,8 @@
 import Vue from "vue";
 import FormSection from "@/components/compliance_forms/section.vue";
 import CommsLogs from "@common-components/comms_logs.vue";
-import MapLocation from "./map_location.vue";
+//import MapLocation from "./map_location.vue";
+import MapLocation from "./map_location_leaflet.vue";
 import { api_endpoints, helpers } from "@/utils/hooks";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
