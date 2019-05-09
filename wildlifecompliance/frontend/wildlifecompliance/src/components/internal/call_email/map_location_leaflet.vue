@@ -119,6 +119,16 @@ export default {
         addMarker(coord){
             let self = this;
 
+            let testIcon = L.icon({
+                iconUrl: require('../../../assets/map_pins/pin_red.png'),
+                shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+                shadowSize: [41, 41],
+                shadowAnchor: [12, 41],
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -20]
+            });
+
             let myIcon = L.icon({
                 iconUrl: require('../../../assets/pin.svg'),
                 shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
@@ -129,7 +139,12 @@ export default {
                 popupAnchor: [0, -20]
             });
             self.feature_marker = L.marker({lon: coord[1], lat: coord[0]}, {icon: myIcon}).on('click', function(ev){
-                console.log('clicked');
+                self.marker_locked = !self.marker_locked;
+                if (self.marker_locked){
+                    self.feature_marker.setIcon(testIcon);
+                }else{
+                    self.feature_marker.setIcon(myIcon);
+                }
             });
             self.feature_marker.addTo(self.map);
         },
