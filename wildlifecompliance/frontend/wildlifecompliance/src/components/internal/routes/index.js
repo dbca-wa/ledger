@@ -8,9 +8,7 @@ import User from '../users/manage.vue'
 import Application from '../applications/application.vue'
 import LicenceDashTable from '../licences/dashboard.vue'
 import CallEmailTableDash from '../call_email/call_email_dashboard.vue'
-import CreateCallEmail from '../call_email/create_call_email.vue'
-import ViewCallEmail from '../call_email/call_email.vue'
-//import ViewCallEmail from '../../common/call_email_renderer.vue'
+import CallEmail from '../call_email/call_email.vue'
 import ReturnDashTable from '../returns/dashboard.vue'
 import Returns from '../returns/access.vue'
 
@@ -48,15 +46,17 @@ export default
                     component: CallEmailTableDash,
                     name:"internal-call-email-dash"
                 },
+                
                 {
                     path: 'create_call_email',
-                    component: CreateCallEmail,
-                    name:"internal-create-call-email"
+                    component: CallEmail,
+                    name:"new-call-email"
                 },
+                
                 {
                     path: ':call_email_id',
-                    component: ViewCallEmail,
-                    name:"internal-call-email"
+                    component: CallEmail,
+                    name:"view-call-email"
                 },
             ]
         },
