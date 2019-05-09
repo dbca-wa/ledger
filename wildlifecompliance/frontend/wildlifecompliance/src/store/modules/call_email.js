@@ -179,6 +179,7 @@ export const callemailStore = {
                         state: instance.properties.state,
                         postcode: instance.properties.postcode,
                         wkb_geometry: instance.geometry,
+                        details: instance.properties.details
                     }).then(res => {
                             console.log(res.body.results);
                             console.log("success");
