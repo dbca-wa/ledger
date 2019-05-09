@@ -1,5 +1,5 @@
 <template lang="html">
-    <div class="container">
+    <div class="">
         <div id="map">
             <div id="basemap-button">
                 <img id="basemap_sat" src="../../../assets/img/satellite_icon.jpg" @click="setBaseLayer('sat')" />
