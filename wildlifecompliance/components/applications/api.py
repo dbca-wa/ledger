@@ -232,6 +232,25 @@ class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
     def internal_datatable_list(self, request, *args, **kwargs):
         self.serializer_class = DTInternalApplicationSerializer
         queryset = self.get_queryset()
+        # Filter by org
+        org_id = request.GET.get('org_id', None)
+        if org_id:
+            queryset = queryset.filter(org_applicant_id=org_id)
+        # Filter by proxy_applicant
+        proxy_applicant_id = request.GET.get('proxy_applicant_id', None)
+        if proxy_applicant_id:
+            queryset = queryset.filter(proxy_applicant_id=proxy_applicant_id)
+        # Filter by submitter
+        submitter_id = request.GET.get('submitter_id', None)
+        if submitter_id:
+            queryset = queryset.filter(submitter_id=submitter_id)
+        # Filter by user (submitter or proxy_applicant)
+        user_id = request.GET.get('user_id', None)
+        if user_id:
+            queryset = Application.objects.filter(
+                Q(proxy_applicant=user_id) |
+                Q(submitter=user_id)
+            )
         queryset = self.filter_queryset(queryset)
         self.paginator.page_size = queryset.count()
         result_page = self.paginator.paginate_queryset(queryset, request)
@@ -240,6 +259,19 @@ class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['GET', ])
     def external_datatable_list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        # Filter by org
+        org_id = request.GET.get('org_id', None)
+        if org_id:
+            queryset = queryset.filter(org_applicant_id=org_id)
+        # Filter by proxy_applicant
+        proxy_applicant_id = request.GET.get('proxy_applicant_id', None)
+        if proxy_applicant_id:
+            queryset = queryset.filter(proxy_applicant_id=proxy_applicant_id)
+        # Filter by submitter
+        submitter_id = request.GET.get('submitter_id', None)
+        if submitter_id:
+            queryset = queryset.filter(submitter_id=submitter_id)
         self.serializer_class = DTExternalApplicationSerializer
         user_orgs = [
             org.id for org in request.user.wildlifecompliance_organisations.all()]

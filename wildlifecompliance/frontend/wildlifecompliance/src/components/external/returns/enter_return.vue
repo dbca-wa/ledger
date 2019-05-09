@@ -47,9 +47,10 @@
                       </div>
                       <div class="row"></div>
                       <div v-if="nilReturn === 'no' && spreadsheetReturn === 'no'" class="row">
-                        <div>
-                          <GridBlock :component="returns.table" v-bind:key="returns-data-grid" />
-                        </div>
+                          <renderer-block v-for="(data, key) in returns.table"
+                              :component="data"
+                              v-bind:key="returns-grid-data"
+                          />
                       </div>
                       <div v-if="nilReturn === 'no' && spreadsheetReturn === 'yes'" class="row">
                         <span class="btn btn-primary btn-file pull-left">Upload File
@@ -89,7 +90,6 @@
 <script>
 import Returns from '../../returns_form.vue'
 import { mapActions, mapGetters } from 'vuex'
-import GridBlock from '@/components/forms/grid.vue'
 import Vue from 'vue'
 import CommsLogs from '@common-components/comms_logs.vue'
 import {
@@ -113,7 +113,6 @@ export default {
   },
   components:{
     Returns,
-    GridBlock,
   },
   computed: {
      ...mapGetters([
@@ -138,11 +137,10 @@ export default {
       });
     },
     save: function(e) {
-      let vm = this;
-      vm.form=document.forms.enter_return
-      let data = new FormData(vm.form);
-      if (vm.returns.spreadsheet == 'no') {
-          vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/update_details'),data,{
+      this.form=document.forms.enter_return
+      let data = new FormData(this.form);
+      if (this.spreadsheetReturn === 'no') {
+          this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/save'),data,{
       		  emulateJSON:true,
 	        }).then((response)=>{
 		        swal( 'Sent',
@@ -156,9 +154,9 @@ export default {
           	);
 	        });
       }
-      if (vm.returns.spreadsheet == 'yes') {
-        data.append('spreadsheet', vm.spreadsheet)
-        vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/upload_details'),data,{
+      if (this.spreadsheetReturn === 'yes') {
+        data.append('spreadsheet', this.spreadsheet)
+        this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/upload_details'),data,{
                     emulateJSON:true,
         }).then((res)=>{
                 swal(
@@ -184,20 +182,6 @@ export default {
         _file = input.files[0];
       }
       vm.spreadsheet = _file;
-    },
-    buildRow: function(e) {
-      let vm = this;
-      let dataObj = vm.returns.table[0].data[0];
-      let dataHdr = vm.returns.table[0].headers[0];
-      for(let key in dataObj) { delete dataObj[key] };
-      for(let key in dataHdr) { delete dataHdr[key] };
-      let data = {
-        LOCATION: '',
-        SITE: '',
-        DATUM: '',
-        LATITUDE: ''
-      };
-      Object.assign(vm.returns.table[0].data[0], data);
     },
     submit: function(e) {
       let vm = this;
@@ -233,8 +217,7 @@ export default {
      });
   },
   mounted: function(){
-    let vm = this;
-    vm.form = document.forms.enter_return;
+    this.form = document.forms.enter_return;
   },
 }
 </script>
