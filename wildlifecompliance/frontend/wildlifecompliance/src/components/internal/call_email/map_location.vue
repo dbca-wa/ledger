@@ -86,18 +86,6 @@ import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 
 export default {
     name: "map-openlayers",
-    local: {
-        state_abbr: {
-            "New South Wales": "NSW",
-            "Queensland": "QLD",
-            "South Australia": "SA",
-            "Tasmania": "TAS",
-            "Victoria": "VIC",
-            "Western Australia": "WA",
-            "Northern Territory": "NT",
-            "Australian Capital Territory": "ACT",
-        }
-    },
     data: function(){
         const defaultCentre = [13775786.985667605, -2871569.067879858];
 
@@ -228,13 +216,26 @@ export default {
                             self.updateAddressFields(self.suggest_list[i].feature);
                         } else {
                             self.showHideAddressDetailsFields(false, true);
+                            self.clearAddressFields();
                         }
                     }
                 }
             });
         },
         updateAddressFields(feature){
-            var address_arr = feature.place_name.split(',');
+            console.log('updateAddressField');
+
+            let state_abbr_list = {
+                    "New South Wales": "NSW",
+                    "Queensland": "QLD",
+                    "South Australia": "SA",
+                    "Tasmania": "TAS",
+                    "Victoria": "VIC",
+                    "Western Australia": "WA",
+                    "Northern Territory": "NT",
+                    "Australian Capital Territory": "ACT",
+            };
+            let address_arr = feature.place_name.split(',');
 
             /* street */
             this.call_email.location.properties.street = address_arr[0];
@@ -243,19 +244,21 @@ export default {
              * Split the string into suburb, state and postcode
              */
             let reg = /^([a-zA-Z0-9\s]*)\s(New South Wales|Queensland|South Australia|Tasmania|Victoria|Western Australia|Northern Territory|Australian Capital Territory){1}\s+(\d{4})$/gi;
-            var result = reg.exec(address_arr[1]);
+            let result = reg.exec(address_arr[1]);
 
             /* suburb */
             this.call_email.location.properties.town_suburb = result[1].trim();
+
             /* state */
-        //    let state_abbr = this.local.state_abbr[result[2].trim()]
-            //this.call_email.location.properties.state = state_abbr;
+            let state_abbr = state_abbr_list[result[2].trim()]
+            this.call_email.location.properties.state = state_abbr;
+
             /* postcode */
             this.call_email.location.properties.postcode = result[3].trim();
         },
         moveMapCentre: function(coordinates){
-            var self = this;
-            var view = self.map.getView();
+            let self = this;
+            let view = self.map.getView();
             view.animate({
                 center: fromLonLat(coordinates),
                 zoom: 14,
