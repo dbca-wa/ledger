@@ -1292,7 +1292,6 @@ class Application(RevisionedMixin):
                                 licence_category=self.get_licence_category()
                             )
 
-                        issued_activities.append(item)
                         selected_activity.issue_date = timezone.now()
                         selected_activity.officer = request.user
                         selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
@@ -1304,6 +1303,7 @@ class Application(RevisionedMixin):
                         selected_activity.reason = item['reason']
                         selected_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
                         selected_activity.save()
+                        issued_activities.append(selected_activity)
 
                         self.generate_returns(parent_licence, selected_activity, request)
                         # Log application action
@@ -1353,10 +1353,12 @@ class Application(RevisionedMixin):
                 # If any activities were issued - re-generate PDF
                 if parent_licence is not None:
                     parent_licence.generate_doc()
-                    for item in issued_activities:
-                        send_application_issue_notification(
-                            item['name'], item['end_date'], item['start_date'], self, request,
-                            parent_licence)
+                    send_application_issue_notification(
+                        activities=issued_activities,
+                        application=self,
+                        request=request,
+                        licence=parent_licence
+                    )
 
             except BaseException:
                 raise
