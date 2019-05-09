@@ -7,7 +7,12 @@
 
     Submitter: {{application.submitter}}
 
-    Activities: {{ activity_details }}
+    Activities:
+    {% for activity in activities %}
+        {{activity.licence_activity.name}}
+        Start Date: {{activity.start_date}}
+        Expiry Date: {{activity.expiry_date}}
+    {% endfor %}
 
     Link: {{url}}
 

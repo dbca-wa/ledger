@@ -3,7 +3,15 @@
 {% block content %}
     A Wildlife Licensing application activity has been approved, with below details.
     <p><strong>Application: {{ application.id }}</strong></p>
-    <p><strong>Activities: {{ activity_details | safe}}</strong></p>
+    <p><strong>Activities:
+        {% for activity in activities %}
+            <br>{{activity.licence_activity.name}}
+            <br>Start Date: {{activity.start_date}}
+            <br>Expiry Date: {{activity.expiry_date}}
+            <br>
+        {% endfor %}
+    </strong></p>
+
     <p><strong>Link: <a href="{{url}}">{{url}}</a></strong></p>
     <p>Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.</p>
 {% endblock %}

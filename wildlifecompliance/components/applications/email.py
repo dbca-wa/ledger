@@ -261,13 +261,7 @@ def send_application_issue_notification(
 
     context = {
         'application': application,
-        'activity_details': "<br>".join(
-            ['{name}<br>Start Date: {start}<br>Expiry Date: {end}<br>'.format(
-                name=activity.licence_activity.name,
-                start=activity.start_date,
-                end=activity.expiry_date,
-            ) for activity in activities]
-        ),
+        'activities': activities,
         'url': url
     }
 
