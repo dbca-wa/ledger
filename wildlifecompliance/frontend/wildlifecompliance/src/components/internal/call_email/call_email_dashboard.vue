@@ -216,6 +216,7 @@
         components: {
             datatable,
             FormSection,
+            MapLocations,
         },
         computed: {
             ...mapGetters('callemailStore', {
