@@ -81,7 +81,7 @@ class ApplicationIdUpdatedEmail(TemplateEmailBase):
 
 
 class ApplicationReturnedToOfficerEmail(TemplateEmailBase):
-    subject = 'An application has been sent to you for assessment'
+    subject = 'A licensed activity has been returned to officer for review'
     html_template = 'wildlifecompliance/emails/send_application_return_to_officer_conditions.html'
     txt_template = 'wildlifecompliance/emails/send_application_return_to_officer_conditions.txt'
 

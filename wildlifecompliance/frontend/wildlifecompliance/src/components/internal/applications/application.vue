@@ -1005,7 +1005,8 @@ export default {
             swal({
                 title: 'Return to Officer - Conditions',
                 html:`
-                    Please provide the reason for returning this licensed activity back to officer for review. <br>This will be emailed to the licensing officer
+                    Please provide the reason for returning this licensed activity back to officer for review.
+                    <br>This will be emailed to the licensing officer.
                 `,
                 input: 'text',
                 inputAttributes: {
