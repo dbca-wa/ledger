@@ -6,7 +6,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from ledger.payments.pdf import create_invoice_pdf_bytes
 from ledger.payments.models import Invoice
-
+from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.components.emails.emails import TemplateEmailBase
 
 logger = logging.getLogger(__name__)
@@ -219,10 +219,15 @@ def send_amendment_submit_email_notification(
     _log_application_email(msg, application, sender=sender)
 
 
-def send_application_amendment_notification(amendment, application, request):
+def send_application_amendment_notification(amendment_data, application, request):
+    from wildlifecompliance.components.applications.models import AmendmentRequest
+
     # An email to submitter notifying about amendment request for an application
     email = ApplicationAmendmentRequestNotificationEmail()
-    reason = amendment.get_reason_display()
+    reason = get_choice_value(
+        amendment_data['reason'],
+        AmendmentRequest.REASON_CHOICES
+    )
     url = request.build_absolute_uri(
         reverse(
             'external-application-detail',
@@ -231,7 +236,7 @@ def send_application_amendment_notification(amendment, application, request):
     context = {
         'application': application,
         'reason': reason,
-        'amendment_details': amendment.text,
+        'amendment_details': amendment_data['text'],
         'url': url
     }
 

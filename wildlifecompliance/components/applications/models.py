@@ -23,7 +23,6 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry, Us
 from wildlifecompliance.components.applications.email import (
     send_application_submitter_email_notification,
     send_application_submit_email_notification,
-    send_application_amendment_notification,
     send_assessment_email_notification,
     send_assessment_reminder_email,
     send_amendment_submit_email_notification,
@@ -1550,9 +1549,6 @@ class AmendmentRequest(ApplicationRequest):
                 # Create a log entry for the application
                 self.application.log_user_action(
                     ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS, request)
-                # send email
-                send_application_amendment_notification(
-                    self, self.application, request)
                 self.save()
             except BaseException:
                 raise

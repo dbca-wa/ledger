@@ -20,6 +20,9 @@ from wildlifecompliance.components.applications.utils import (
 )
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
+from wildlifecompliance.components.applications.email import (
+    send_application_amendment_notification,
+)
 from wildlifecompliance.components.applications.models import (
     Application,
     ApplicationSelectedActivity,
@@ -1406,6 +1409,8 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             application_id = amend_data.pop('application')
             text = amend_data.pop('text')
             activity_list = amend_data.pop('activity_list')
+
+            application = Application.objects.get(id=application_id)
             for activity_id in activity_list:
                 data = {
                     'application': application_id,
@@ -1414,7 +1419,6 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
                     'licence_activity': activity_id
                 }
 
-                application = Application.objects.get(id=application_id)
                 selected_activity = application.get_selected_activity(activity_id)
                 if selected_activity.processing_status == ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED:
                     raise serializers.ValidationError('Selected activity has been discarded by the customer!')
@@ -1424,6 +1428,10 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
                 instance = serializer.save()
                 instance.reason = reason
                 instance.generate_amendment(request)
+
+            # send email
+            send_application_amendment_notification(
+                data, application, request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
