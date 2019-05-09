@@ -6,7 +6,7 @@
                   <div class="col-lg-12 pull-right">
                     <div class="panel panel-default">
                       <div class="panel-heading">
-                        <h3 class="panel-title" style="color:red;">An amendment has been requested for this Proposal
+                        <h3 class="panel-title" style="color:red;">An amendment has been requested for this Application
                           <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                                 <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                           </a>

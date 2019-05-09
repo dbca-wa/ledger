@@ -80,11 +80,11 @@
                         </div>
                         <div class="panel-body collapse in" :id="pBody2">
                             <div>
-                                <label for="" class="control-label" >Proposal Type * <a :href="proposal_type_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></label>
+                                <label for="" class="control-label" >Application Type * <a :href="proposal_type_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></label>
                                 <div class="col-sm-12">
                                     <div class="form-group">
                                         <select class="form-control" style="width:40%" v-model="selected_application_id" @change="chainedSelectAppType(selected_application_id)">
-											<option value="" selected disabled>Select proposal type*</option>
+											<option value="" selected disabled>Select application type*</option>
                                             <option v-for="application_type in application_types" :value="application_type.value">
                                                 {{ application_type.text }}
                                             </option>
@@ -289,7 +289,7 @@ export default {
 			
         swal({
             title: "Create " + vm.selected_application_name,
-            text: "Are you sure you want to create " + this.alertText() + " proposal on behalf of "+vm.org+" ?",
+            text: "Are you sure you want to create " + this.alertText() + " application on behalf of "+vm.org+" ?",
             type: "question",
             showCancelButton: true,
             confirmButtonText: 'Accept'
