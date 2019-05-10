@@ -207,7 +207,6 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(os.path.join(BASE_DIR, 'ledger', 'static')),
     os.path.join(os.path.join(BASE_DIR, 'wildlifelicensing', 'static')),
-    os.path.join(os.path.join(BASE_DIR, 'wildlifecompliance', 'static')),
 ]
 if not os.path.exists(os.path.join(BASE_DIR, 'media')):
     os.mkdir(os.path.join(BASE_DIR, 'media'))
