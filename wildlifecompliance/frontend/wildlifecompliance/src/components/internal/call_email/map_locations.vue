@@ -272,28 +272,15 @@ module.exports = {
                                     popupAnchor: [0, -20]
                                 });
                                 let myMarker = L.marker([coords[1], coords[0]], {icon: myIcon});
-
-                                /* construct popup */
-                                let myPopup = L.popup().setContent(
-                                      '<div class="popup-coords">'
-                                    + 'Lat: ' + coords[1] + '<br />'
-                                    + 'Lng: ' + coords[0] 
-                                    + '</div>'
-
-                                    + '<div class="popup-address">'
-                                    + feature.properties.street + '<br />'
-                                    + feature.properties.town_suburb + '<br />'
-                                    + feature.properties.state + '<br />'
-                                    + feature.properties.postcode
-                                    + '</div>'
-
-                                    + '<div class="popup-link">'
-                                    + '<a src="">Link (not implemented yet)</a>'
-                                    + '</div>'
-                                    );
-
+                                let myPopup = L.popup();
                                 myMarker.bindPopup(myPopup);
                                 markers.addLayer(myMarker);
+
+                                /* dynamically construct content of the popup */
+                                myMarker.on('click', (ev)=>{
+                                    let popup = ev.target.getPopup();
+                                    popup.setContent(self.construct_content(feature, coords));
+                                })
                             }
                         }
                         self.map.addLayer(markers);
@@ -301,11 +288,39 @@ module.exports = {
                 }
             });
         },
+        construct_content: function (feature, coords){
+            let content = '<div class="popup-title popup-title-top">Coordinate</div>'
+                        + '<div class="popup-coords">'
+                        + 'Lat: ' + coords[1] + '<br />'
+                        + 'Lng: ' + coords[0] 
+                        + '</div>'
+            if (feature.properties.street){
+                content += '<div class="popup-title">Address</div>'
+                + '<div class="popup-address">'
+                + feature.properties.street + '<br />'
+                + feature.properties.town_suburb + '<br />'
+                + feature.properties.state + '<br />'
+                + feature.properties.postcode
+                + '</div>'
+
+            }else{
+                content += '<div class="popup-title">Details</div>'
+                + '<div class="popup-address">'
+                + feature.properties.details
+                + '</div>'
+            }
+
+            content += '<div class="popup-link">'
+                + '<a src="">Link (not implemented yet)</a>'
+                + '</div>';
+
+            return content;
+        }
     },
 }
 </script>
 
-<style scoped lang="css">
+<style lang="css">
 #map-wrapper {
     position: relative;
 }
@@ -359,13 +374,29 @@ module.exports = {
     -webkit-filter: brightness(0.8);
     filter: brightness(0.8);
 }
+.popup-title {
+    padding: 5px 5px 5px 10px;
+    background: gray;
+    font-size: 1.3em;
+    font-weight: bold;
+    color: white;
+}
+.popup-title-top {
+    border-radius: 12px 12px 0 0;
+}
 .popup-coords {
-    margin: 10px;
+    padding: 10px;
 }
 .popup-address {
-    margin: 10px;
+    padding: 10px;
 }
 .popup-link {
-    margin: 10px;
+    padding: 10px;
+}
+.leaflet-popup-content {
+    margin: 0px !important;
+}
+.leaflet-popup-content-wrapper {
+    padding: 0px !important;
 }
 </style>
