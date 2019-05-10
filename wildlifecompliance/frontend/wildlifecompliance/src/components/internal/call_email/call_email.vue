@@ -35,8 +35,11 @@
           <div class="col-md-1"/>        
           <div class="col-md-8">  
             <div class="row">
-              <input type="button" @click.prevent="duplicate" class="pull-right btn btn-primary" value="Create Duplicate Call/Email"/>
+              <div class="col-sm-4 pull-right form-group">
+                <input type="button" @click.prevent="duplicate" class="pull-right btn btn-primary" value="Create Duplicate Call/Email"/>
+              </div>
             </div>
+            <div class="row"/>
             <div class="row">
               <FormSection collapse="collapse in" label="Caller" Index="0">
                 
