@@ -24,6 +24,8 @@ class ApprovalPaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Approval
         fields = (
+        )
+        read_only_fields = (
             'lodgement_number',
             'current_proposal',
         )

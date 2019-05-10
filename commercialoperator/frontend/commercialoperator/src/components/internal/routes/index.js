@@ -9,6 +9,7 @@ import ApprovalDash from '../approvals/dashboard.vue'
 import ComplianceDash from '../compliances/dashboard.vue'
 import Compliance from '../compliances/access.vue'
 import Approval from '../approvals/approval.vue'
+import PaymentOrder from '@/components/common/tclass/payment_order.vue'
 export default
 {
     path: '/internal',
@@ -49,6 +50,11 @@ export default
             component: Search,
             name:"internal-search"
         },
+        {
+            path: 'payment',
+            component: PaymentOrder,
+        },
+
         {
             path: 'organisations',
             component: {

@@ -287,7 +287,7 @@ class ProposalActivitiesMarine(models.Model):
 @python_2_unicode_compatible
 class ParkEntry(models.Model):
     park = models.ForeignKey('Park', related_name='park_entries')
-    proposal = models.ForeignKey('Proposal', related_name='parks_entries')
+    proposal = models.ForeignKey('Proposal', related_name='park_entries')
     arrival_date = models.DateField()
     number_adults = models.PositiveSmallIntegerField('No. of Adults', null=True, blank=True)
     number_children = models.PositiveSmallIntegerField('No. of Children', null=True, blank=True)
@@ -2802,11 +2802,13 @@ class HelpPage(models.Model):
 #reversion.register(Author, follow=['publishers',])
 #reversion.register(Publisher)
 
+park = models.ForeignKey('Park', related_name='park_entries')
+
 import reversion
 reversion.register(Referral, follow=['referral_documents',])
 reversion.register(ReferralDocument, follow=['referral_document'])
 
-reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_logs','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails', 'proposalonhold', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals'])
+reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_logs','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails', 'proposalonhold', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals', 'park_entries'])
 reversion.register(ProposalDocument, follow=['onhold_documents'])
 reversion.register(OnHoldDocument)
 reversion.register(ProposalRequest)
@@ -2830,6 +2832,7 @@ reversion.register(ProposalParkActivity)
 
 reversion.register(ProposalParkZone, follow=['park_activities'])
 reversion.register(ProposalParkZoneActivity)
+reversion.register(ParkEntry)
 
 reversion.register(ProposalTrail, follow=['sections'])
 reversion.register(Vehicle)

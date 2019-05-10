@@ -1,13 +1,18 @@
 <template lang="html">
     <div>
+        <!--
         <v-select  :options="licences" @change="proposal_parks()" v-model="selected_licence" />
+        <OrderTable ref="order_table" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="Payment Form" id="id_payment" :value="table_values"/>
+        -->
+        <!--
         <form :action="payment_form_url" method="post" name="new_payment" enctype="multipart/form-data">
-            <Table ref="order_table" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="Payment Form" id="id_payment" :value="table_values"/>
             <div>
+        -->
                 <!--
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="new_payment_id" :value="1" />
                 -->
+        <!--
                 <div class="row" style="margin-bottom: 50px">
                   <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5;">
                     <div class="navbar-inner">
@@ -22,16 +27,19 @@
             </div>
 
         </form>
+        -->
 
         <!--<Select :options="options" name="park" label="Park" id="id_park"/> -->
         <!-- <Table headers='{"Species": "text", "Quantity": "number", "Date": "date", "Taken": "checkbox"}' :readonly="readonly" name="payment" label="Payment Form" id="id_payment" :isRequired="isRequired"/> -->
+        <!--
         <PaymentCalc ref="payment_calc" @refreshFromResponse="refreshFromResponse"/>
+        -->
     </div>
 </template>
 
 <script>
 import TextArea from '@/components/forms/text-area.vue'
-import Table from '@/components/forms/table.vue'
+import OrderTable from './order_table.vue'
 import Select from '@/components/forms/select.vue'
 //import CalcOrder from '@/components/common/payment_order.vue'
 import PaymentCalc from './payment_calc.vue'
@@ -44,7 +52,7 @@ from '@/utils/hooks'
         name:'payment',
         components:{
             TextArea,
-            Table,
+            OrderTable,
             Select,
             PaymentCalc,
         },
@@ -151,6 +159,7 @@ from '@/utils/hooks'
             proposal_parks: function(e) {
                 let vm = this;
                 //let formData = new FormData(vm.form);
+                //vm.$http.get('/api/proposal/49/proposal_parks').then((res)=>{
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,vm.selected_licence.value+'/proposal_parks')).then((res)=>{
                     vm.land_parks = res.body.land_parks;
                     //vm.parks = [];
@@ -176,7 +185,7 @@ from '@/utils/hooks'
         mounted:function () {
             let vm = this;
             //vm.park_options();
-            vm.get_user_approvals();
+            //vm.get_user_approvals();
         }
     }
 </script>

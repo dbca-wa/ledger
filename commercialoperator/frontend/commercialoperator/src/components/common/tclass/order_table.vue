@@ -39,18 +39,20 @@
 
                 <tbody>
                   <tr v-for="row in table.tbody">
-                    <td v-for="(value, index) in row">
-                        <!-- <input type="text" v-model="row[index]" /> -->
-                        <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" v-model="row[index]" :required="isRequired" :onclick="isClickable"/>
-                    </td>
-                    <td v-if="!readonly">
-                        <a class="fa fa-trash-o" v-on:click="deleteRow(row)" title="Delete row" style="cursor: pointer; color:red;"></a>
-                    </td>
+                      <td v-if="col_types[index]=='select'" width="30%" v-for="(value, index) in row">
+                          <v-select :options="options" v-model="row[index]"/>
+                      </td>
+                      <td v-else>
+                          <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="disabled"/>
+                      </td>
+                      <td v-if="!readonly">
+                          <a class="fa fa-trash-o" v-on:click="deleteRow(row)" title="Delete row" style="cursor: pointer; color:red;" :disabled="disabled"></a>
+                      </td>
                   </tr>
 
                   <tr>
-                    <td v-if="!readonly">
-                      <button class="btn btn-primary" type="button" v-on:click="addRow()" title="Add Row">+</button>
+                    <td v-if="!readonly" colspan="100%">
+                      <span><button class="btn btn-primary" type="button" v-on:click="addRow()" :disabled="disabled">+</button>Add another park and/or date</span>
                     </td>
                   </tr>
                 </tbody>
@@ -59,34 +61,43 @@
 
               <!-- for debugging -->
               <!--
+              -->
               <pre class="output">
                 {{ value }}
               </pre>
               <pre class="output">
                 {{ headers }}
               </pre>
-              -->
             </div>
 
         </div>
         <!--<Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> -->
+        <input type="hidden" class="form-control" :name="name" :value="value"/>
     </div>
 </template>
 
 <script>
-import Comment from './comment.vue'
-import HelpText from './help_text.vue'
-import HelpTextUrl from './help_text_url.vue'
+
+import Comment from '@/components/forms/comment.vue'
+import HelpText from '@/components/forms/help_text.vue'
+import HelpTextUrl from '@/components/forms/help_text_url.vue'
+
+import Vue from 'vue'
+import vSelect from "vue-select"
+Vue.component('v-select', vSelect)
+
 export default {
     //props:["name","value", "id", "isRequired", "help_text","help_text_assessor","assessorMode","label","readonly","comment_value","assessor_readonly", "help_text_url", "help_text_assessor_url"],
     props:{
         headers: [],
+        options: [],
         name: String,
         label: String,
         id: String,
         isRequired: String,
         comment_value: String,
         assessor_readonly: Boolean,
+        disabled: Boolean,
         help_text: String,
         help_text_assessor: String,
         help_text_url: String,
@@ -140,6 +151,12 @@ export default {
         var col_headers = Object.keys(headers);
         vm.col_types = Object.values(headers);
 
+        vm._options = [
+            {'label': 'Nungarin', 'value': 'Nungarin'},
+            {'label': 'Ngaanyatjarraku', 'value': 'Ngaanyatjarraku'},
+            {'label': 'Cuballing', 'value': 'Cuballing'}
+        ];
+
         // setup initial empty row for display
         var init_row = [];
         for(var i = 0, length = col_headers.length; i < length; i++) { init_row.push('')  }
@@ -175,6 +192,7 @@ export default {
         toggleComment(){
             this.showingComment = ! this.showingComment;
         },
+
 
         updateTableJSON: function() {
           let vm = this;
@@ -229,6 +247,11 @@ export default {
             $(this).closest("tr").remove();
         });
 
+        //if (vm.disabled) {
+        //    vm.options = [];
+        //    vm.options.push({value:0, label:'No parks available'})
+        //}
+
         if (vm.isChecked) {
             var input = this.$refs.Checkbox;
             var e = document.createEvent('HTMLEvents');
@@ -253,15 +276,10 @@ export default {
       width: 100%;
     }
 
-    .editable-table {
-
-      [type="text"] {
-        background: none;
-        border: none;
-        display: block;
-        width: 100%;
-      }
-    }
+    .editable-table
+        input[type=number]{
+            width: 40%;
+        }
 
     .output {
       white-space: normal;
