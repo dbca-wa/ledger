@@ -23,12 +23,12 @@
                                                 <label class="control-label" >Maximum Vessel Draft (Meters)</label>
                                                 <input type="number" name="vessel_draft_limit" id="vessel_draft_limit" style="margin-top:10px;" class="form-control form-control-input" v-model="campground.vessel_draft_limit" @blur="validateDraft()" required/>
                                             </div>
-                                            <div class="col-md-4" v-if="jettyPen">
+                                            <div class="col-md-4" v-if="campground.mooring_physical_type == 1 || campground.mooring_physical_type == 2">
                                                 <label class="control-label" >Maximum Vessel Beam (Meters)</label>
                                                 <input type="number" name="vessel_beam_limit" id="vessel_beam_limit" style="margin-top:10px;" class="form-control form-control-input" v-model="campground.vessel_beam_limit" @blur="validateBeamWeight()" required/>
                                             </div>
                                             <div class="col-md-4" v-else>
-                                                <label class="control-label" >Maximum Vessel Weight (Tons)</label>
+                                                <label class="control-label" >Maximum Vessel Weight (Ton)</label>
                                                 <input type="number" name="vessel_weight_limit" id="vessel_weight_limit" style="margin-top:10px;" class="form-control form-control-input" v-model="campground.vessel_weight_limit" @blur="validateBeamWeight()" required/>
                                             </div>
                                         </div>
@@ -116,6 +116,8 @@ export default {
             return vm.errors;
         },
         jettyPen: function(){
+            
+
             return this.campground.mooring_physical_type == 1;
         },
     },
@@ -169,7 +171,7 @@ export default {
         validateBeamWeight: function(){
             let vm = this;
             var isValid = true;
-            if(vm.campground.mooring_physical_type == 1) {
+            if(vm.campground.mooring_physical_type == 1 || vm.campground.mooring_physical_type == 2) {
                 if(!parseFloat(vm.campground.vessel_beam_limit) > 0){
                     isValid = false;
                     var error = {

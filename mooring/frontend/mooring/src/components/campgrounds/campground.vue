@@ -865,7 +865,7 @@ export default {
         validateBeamWeight: function(){
             let vm = this;
             var isValid = true;
-            if(vm.campground.mooring_physical_type == 1) {
+            if(vm.campground.mooring_physical_type == 1 || vm.campground.mooring_physical_type == 2) {
                 if(!parseFloat(vm.campground.vessel_beam_limit) > 0){
                     isValid = false;
                     var error = {
