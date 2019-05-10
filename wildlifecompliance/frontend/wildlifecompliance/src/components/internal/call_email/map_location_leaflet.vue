@@ -243,19 +243,12 @@ export default {
                             self.updateAddressFields(self.suggest_list[i].feature);
                         } else {
                             self.showHideAddressDetailsFields(false, true);
-                            self.clearAddressFields();
+                            self.setLocationPropertiesEmpty();
                         }
                     }
                 }
                 return false;
             });
-        },
-        clearAddressFields(){
-            this.call_email.location.properties.street = '';
-            this.call_email.location.properties.town_suburb = '';
-            //this.call_email.location.properties.state = '';
-            this.call_email.location.properties.postcode = '';
-            //this.call_email.location.properties.country = '';
         },
         updateAddressFields(feature){
             console.log('updateAddressField');
