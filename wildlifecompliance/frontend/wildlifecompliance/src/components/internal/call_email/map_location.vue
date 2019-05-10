@@ -110,8 +110,6 @@ export default {
         }),
     },
     mounted: function(){
-        console.log("this.call_email.location");
-        console.log(this.call_email.location);
         this.$nextTick(function() {
         console.debug('Start loading map');
         this.initMap();
@@ -127,6 +125,8 @@ export default {
         ...mapActions('callemailStore', {
             saveLocation: 'saveLocation',
             setLocationPoint: 'setLocationPoint',
+            setLocationProperties: 'setLocationProperties',
+            setLocationPropertiesEmpty: 'setLocationPropertiesEmpty'
         }),
         saveInstanceLocation: async function() {
             await this.$nextTick();
@@ -148,6 +148,8 @@ export default {
                     if (data.features && data.features.length > 0){
                         for (var i = 0; i < data.features.length; i++){
                             if(data.features[i].place_type.includes('address')){
+                                console.log("data.features[i]");
+                                console.log(data.features[i]);
                                 self.updateAddressFields(data.features[i]);
                                 address_found = true;
                             }
@@ -159,7 +161,7 @@ export default {
                     } else {
                         console.log("address not found");
                         self.showHideAddressDetailsFields(false, true);
-                        self.clearAddressFields();
+                        self.setLocationPropertiesEmpty();
                     }
                 }
             });
@@ -217,24 +219,22 @@ export default {
                         if(self.suggest_list[i].feature.place_type.includes('address')){
                             /* Selection has address ==> Update address fields */
                             self.showHideAddressDetailsFields(true, false);
+                            console.log("self.suggest_list[i].feature");
+                            console.log(self.suggest_list[i].feature);
                             self.updateAddressFields(self.suggest_list[i].feature);
                         } else {
                             self.showHideAddressDetailsFields(false, true);
-                            self.clearAddressFields();
+                            self.setLocationPropertiesEmpty();
                         }
                     }
                 }
             });
         },
-        clearAddressFields(){
-            this.call_email.location.properties.street = '';
-            this.call_email.location.properties.town_suburb = '';
-            //this.call_email.location.properties.state = '';
-            this.call_email.location.properties.postcode = '';
-            //this.call_email.location.properties.country = '';
-        },
+        
         updateAddressFields(feature){
             console.log('updateAddressField');
+
+            let properties_for_update = new Object();
 
             let state_abbr_list = {
                     "New South Wales": "NSW",
@@ -249,7 +249,7 @@ export default {
             let address_arr = feature.place_name.split(',');
 
             /* street */
-            this.call_email.location.properties.street = address_arr[0];
+            properties_for_update.street = address_arr[0];
 
             /*
              * Split the string into suburb, state and postcode
@@ -258,14 +258,20 @@ export default {
             let result = reg.exec(address_arr[1]);
 
             /* suburb */
-            this.call_email.location.properties.town_suburb = result[1].trim();
+            properties_for_update.town_suburb = result[1].trim();
 
             /* state */
             let state_abbr = state_abbr_list[result[2].trim()]
-            this.call_email.location.properties.state = state_abbr;
+            properties_for_update.state = state_abbr;
 
             /* postcode */
-            this.call_email.location.properties.postcode = result[3].trim();
+            properties_for_update.postcode = result[3].trim();
+
+            /* country */
+            properties_for_update.country = 'Australia';
+
+            /* update Vuex */
+            this.setLocationProperties(properties_for_update);
         },
         moveMapCentre: function(coordinates){
             let self = this;
