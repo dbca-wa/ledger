@@ -123,6 +123,8 @@ export default {
                 data: null
             }],
         },
+        species: {},
+        sel_spec: [],
         fullSpeciesList: {'': ''},
         //fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
         //                  'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
@@ -275,6 +277,7 @@ export default {
         vm.sheetTitle = 'Please Add Species Type';
         vm.newSpecies = vm.returns.sheet_species
         vm.$refs.return_datatable.vmDataTable.ajax.reload()
+        vm.species[vm.returns.sheet_species] = vm.returns.table;
       });
     }, err => {
       console.log(err);
@@ -308,10 +311,18 @@ export default {
      });
      $('form').on('click', '.change-species', function(e) {
         e.preventDefault();
-        vm.returns.sheet_species = $(this).attr('species_id');
-        vm.$refs.return_datatable.vmDataTable.clear().draw()
-        vm.$refs.return_datatable.vmDataTable.ajax.url = helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
-        vm.$refs.return_datatable.vmDataTable.ajax.reload()
+        let selected_id = $(this).attr('species_id');
+        vm.species[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.ajax.json()
+        if (vm.species[selected_id] != null) {
+          vm.$refs.return_datatable.vmDataTable.clear()
+          vm.$refs.return_datatable.vmDataTable.rows.add(vm.species[selected_id])
+          vm.$refs.return_datatable.vmDataTable.draw()
+        } else {
+          vm.returns.sheet_species = selected_id
+          vm.$refs.return_datatable.vmDataTable.clear().draw()
+          vm.$refs.return_datatable.vmDataTable.ajax.url = helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
+          vm.$refs.return_datatable.vmDataTable.ajax.reload()
+        }
      });
   },
 };

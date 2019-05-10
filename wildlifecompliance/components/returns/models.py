@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 from django.db import models, transaction
+from django.db.models.signals import post_save
 from django.contrib.postgres.fields.jsonb import JSONField
+from django.dispatch import receiver
 from django.utils import timezone
 from django.core.exceptions import FieldError
 from ledger.accounts.models import EmailUser, RevisionedMixin
@@ -321,6 +323,20 @@ class Return(models.Model):
 
     def __str__(self):
         return self.lodgement_number
+
+
+class ReturnListener(object):
+    """
+    Listener object signalling additional processing outside Return model.
+    """
+    @staticmethod
+    @receiver(post_save, sender=Return)
+    def post_create(sender, instance, created, **kwargs):
+        if not created:
+            return
+        if instance.has_sheet:
+            # create default species data for Return running sheets.
+            instance.sheet.set_licence_species
 
 
 class ReturnData(object):
@@ -669,7 +685,7 @@ class ReturnSheet(object):
             # filter empty rows.
             is_empty = True
             for value in row_data.values():
-                if len(value[row_num].strip()) > 0:
+                if value and len(value.strip()) > 0:
                     is_empty = False
                     break
             if not is_empty:
@@ -760,15 +776,15 @@ class ReturnSheet(object):
 
         return self._table
 
-    def set_activity(self, _species_id, _data):
+    def set_activity(self, _species, _data):
         """
         Sets Running Sheet Activity for the movement of Species stock.
-        :param _species_id:
+        :param _species:
         :param _data:
         :return:
         """
-        self._create_return_data(self._return, _species_id, _data)
-        self.set_species(_species_id)
+        self._create_return_data(self._return, _species, _data)
+        self.set_species(_species)
 
     def set_activity_from_previous(self):
         """
@@ -792,6 +808,18 @@ class ReturnSheet(object):
                     self._table = self._NO_ACTIVITY
                 self._create_return_data(self._return, _species_id, _table)
             '''
+
+    @staticmethod
+    def set_licence_species(self):
+        """
+        Sets the species from the licence for the current Running Sheet.
+        :return:
+        """
+        _data = []
+        # TODO: create default entries for each species on the licence.
+        # for _species in self._return.licence:
+        #    self.set_activity(_species, _data)
+        pass
 
     def set_species(self, _species):
         """
