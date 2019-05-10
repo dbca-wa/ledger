@@ -4,7 +4,7 @@
             <div id="search-box">
                 <input id="search-input" />
             </div>
-            <div id="map"></div>
+            <div id="mapLeaf"></div>
             <div id="basemap-button">
                 <img id="basemap_sat" src="../../../assets/img/satellite_icon.jpg" @click.stop="setBaseLayer('sat')" />
                 <img id="basemap_osm" src="../../../assets/img/map_icon.png" @click.stop="setBaseLayer('osm')" />
@@ -316,7 +316,7 @@ export default {
             } 
         },
         initMap: function(){
-            this.map = L.map('map').setView([-31.9505, 115.8605], 4);
+            this.map = L.map('mapLeaf').setView([-31.9505, 115.8605], 4);
             this.tileLayer = L.tileLayer(
                 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 {
@@ -356,11 +356,11 @@ export default {
 }
 </script>
 
-<style lang="css">
+<style scoped lang="css">
 #map-wrapper {
     position: relative;
 }
-#map {
+#mapLeaf {
     position: relative;
     height: 500px;
     cursor: default;
