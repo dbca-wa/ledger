@@ -198,7 +198,7 @@ module.exports = {
 
                                 /* create marker */
                                 let myIcon = L.icon({
-                                    iconUrl: require('../../../assets/pin.svg'),
+                                    iconUrl: require('../../../assets/marker-green-locked.svg'),
                                     shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
                                     shadowSize: [41, 41],
                                     shadowAnchor: [12, 41],

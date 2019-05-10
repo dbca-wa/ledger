@@ -14,10 +14,6 @@
             </div>
         </div>
 
-        <div class="col-sm-12"><div class="row">
-            <input type="checkbox" v-model="marker_locked" />
-            <label class="col-sm-4">Lock Marker Location</label>
-        </div></div>
         <div id="lat" class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Latitude:</label>
             <div v-if="call_email.location">
@@ -120,7 +116,7 @@ export default {
             let self = this;
 
             let testIcon = L.icon({
-                iconUrl: require('../../../assets/map_pins/pin_red.png'),
+                iconUrl: require('../../../assets/marker-green-locked.svg'),
                 shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
                 shadowSize: [41, 41],
                 shadowAnchor: [12, 41],
@@ -130,7 +126,7 @@ export default {
             });
 
             let myIcon = L.icon({
-                iconUrl: require('../../../assets/pin.svg'),
+                iconUrl: require('../../../assets/marker-green-unlocked.svg'),
                 shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
                 shadowSize: [41, 41],
                 shadowAnchor: [12, 41],
