@@ -1,6 +1,6 @@
 <template lang="html">
-    <div id="internal-proposal-onhold">
-        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Put Proposal On-hold" large>
+    <div id="payment_calc">
+        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Payment Calculation" full>
             <div class="container-fluid">
                 <div class="row">
                     <form class="form-horizontal" name="onholdForm">
@@ -50,6 +50,9 @@ export default {
                 type:Number,
             },
             processing_status:{
+                type:String,
+            },
+            order_details:{
                 type:String,
             },
     },

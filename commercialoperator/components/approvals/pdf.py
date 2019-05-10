@@ -177,6 +177,7 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
 
     #Organization details
 
+    import ipdb; ipdb.set_trace()
     address = proposal.applicant.organisation.postal_address
     email = proposal.applicant.organisation.organisation_set.all().first().contacts.all().first().email
     elements.append(Paragraph(email,styles['BoldLeft']))

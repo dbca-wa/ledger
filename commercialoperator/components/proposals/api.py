@@ -79,6 +79,7 @@ from commercialoperator.components.proposals.serializers import (
     OnHoldSerializer,
     ProposalOtherDetailsSerializer,
     SaveProposalOtherDetailsSerializer,
+    ProposalParkSerializer,
 )
 from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.approvals.serializers import ApprovalSerializer
@@ -872,6 +873,13 @@ class ProposalViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = InternalProposalSerializer(instance,context={'request':request})
         return Response(serializer.data)
+
+    @detail_route(methods=['GET',])
+    def proposal_parks(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = ProposalParkSerializer(instance,context={'request':request})
+        return Response(serializer.data)
+
 
 #    @detail_route(methods=['post'])
 #    @renderer_classes((JSONRenderer,))

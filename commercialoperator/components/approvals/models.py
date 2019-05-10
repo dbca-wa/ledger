@@ -100,18 +100,30 @@ class Approval(RevisionedMixin):
 
     @property
     def applicant(self):
-        #import ipdb; ipdb.set_trace()
-        if self.current_proposal.applicant:
-            return self.current_proposal.applicant
+        if self.org_applicant:
+            return self.org_applicant.organisation.name
+        elif self.proxy_applicant:
+            return "{} {}".format(
+                self.proxy_applicant.first_name,
+                self.proxy_applicant.last_name)
         else:
-            if self.org_applicant:
-                return self.org_applicant.organisation.name
-            elif self.proxy_applicant:
-                return "{} {}".format(
-                    self.proxy_applicant.first_name,
-                    self.proxy_applicant.last_name)
-            else:
-                return None
+            return None
+
+
+#    @property
+#    def applicant(self):
+#        #import ipdb; ipdb.set_trace()
+#        if self.current_proposal.applicant:
+#            return self.current_proposal.applicant
+#        else:
+#            if self.org_applicant:
+#                return self.org_applicant.organisation.name
+#            elif self.proxy_applicant:
+#                return "{} {}".format(
+#                    self.proxy_applicant.first_name,
+#                    self.proxy_applicant.last_name)
+#            else:
+#                return None
 
     @property
     def applicant_type(self):

@@ -1,7 +1,8 @@
 <template lang="html">
     <div>
+        <v-select  :options="licences" @change="proposal_parks()" v-model="selected_licence" />
         <form :action="payment_form_url" method="post" name="new_payment" enctype="multipart/form-data">
-            <Table :headers="headers" :options="parks" name="payment" label="Payment Form" id="id_payment" :value="table_value"/>
+            <Table ref="order_table" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="Payment Form" id="id_payment" :value="table_values"/>
             <div>
                 <!--
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
@@ -12,7 +13,7 @@
                     <div class="navbar-inner">
                         <div class="container">
                           <p class="pull-right">
-                            <button class="btn btn-primary pull-right" style="margin-top:5px;" @click.prevent="calc_order()">Next</button>
+                            <button :disabled="!parks_available" class="btn btn-primary pull-right" style="margin-top:5px;" @click.prevent="calc_order()">Next</button>
                           </p>
                         </div>
                     </div>
@@ -24,7 +25,7 @@
 
         <!--<Select :options="options" name="park" label="Park" id="id_park"/> -->
         <!-- <Table headers='{"Species": "text", "Quantity": "number", "Date": "date", "Taken": "checkbox"}' :readonly="readonly" name="payment" label="Payment Form" id="id_payment" :isRequired="isRequired"/> -->
-        <PaymentOrder ref="calc_order" :order_details="order_details" :proposal="proposal" @refreshFromResponse="refreshFromResponse"/>
+        <PaymentCalc ref="payment_calc" @refreshFromResponse="refreshFromResponse"/>
     </div>
 </template>
 
@@ -32,14 +33,20 @@
 import TextArea from '@/components/forms/text-area.vue'
 import Table from '@/components/forms/table.vue'
 import Select from '@/components/forms/select.vue'
-import PaymentOrder from '@/components/common/tclass/payment_order.vue' // need to change this to payment_fee (for application)
+//import CalcOrder from '@/components/common/payment_order.vue'
+import PaymentCalc from './payment_calc.vue'
+import {
+    api_endpoints,
+    helpers
+}
+from '@/utils/hooks'
     export default {
         name:'payment',
         components:{
             TextArea,
             Table,
             Select,
-            PaymentOrder,
+            PaymentCalc,
         },
         props:{
             proposal:{
@@ -70,6 +77,9 @@ import PaymentOrder from '@/components/common/tclass/payment_order.vue' // need 
                     {'label': 'Cuballing', 'value': 'Cuballing'}
                 ],
                 parks: [],
+                land_parks: [],
+                parks_available: false,
+                licences: [],
                 table_values: null,
             }
         },
@@ -85,6 +95,14 @@ import PaymentOrder from '@/components/common/tclass/payment_order.vue' // need 
             "label": "The first table in section 2"
             */
         },
+        watch:{
+            options: function(){
+                if (!vm.parks_available) {
+                    this.$refs.order_table.options.length = 0;
+                    this.$refs.order_table.table_values.length = 0;
+                }
+            }
+        },
         methods:{
             park_options: function() {
                 let vm = this;
@@ -95,7 +113,13 @@ import PaymentOrder from '@/components/common/tclass/payment_order.vue' // need 
             },
             calc_order: function(){
                 //this.save_wo();
-                this.$refs.calc_order.isModalOpen = true;
+                let vm = this;
+                var formData = new FormData(document.forms.new_payment);
+                //vm.order_details = JSON.parse(formData.get('payment'))['tbody']
+                vm.order_details = formData.get('payment')
+                vm.$refs.payment_calc.order_details = vm.order_details;
+                //vm.$refs.payment_calc.land_parks = vm.proposal.land_parks;
+                vm.$refs.payment_calc.isModalOpen = true;
             },
             save: function(e) {
                 let vm = this;
@@ -110,10 +134,49 @@ import PaymentOrder from '@/components/common/tclass/payment_order.vue' // need 
                 },err=>{
                 });
             },
+            get_user_approvals: function(e) {
+                let vm = this;
+                //let formData = new FormData(vm.form);
+                //formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
+                vm.$http.get('/api/filtered_payments').then((res) => {
+                    var licences = res.body;
+                    for (var i in licences) {
+                        vm.licences.push({value:licences[i].current_proposal, label:licences[i].lodgement_number});
+                    }
+                    vm.table_values.length = 0;
+                    console.log(vm.licences);
+                },err=>{
+                });
+            },
+            proposal_parks: function(e) {
+                let vm = this;
+                //let formData = new FormData(vm.form);
+                vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,vm.selected_licence.value+'/proposal_parks')).then((res)=>{
+                    vm.land_parks = res.body.land_parks;
+                    //vm.parks = [];
+                    vm.parks.length = 0;
+                    for (var i in vm.land_parks) {
+                        vm.parks.push({value:vm.land_parks[i].park.id, label:vm.land_parks[i].park.name});
+                    }
+                    if (vm.parks.length==0) {
+                        //document.getElementById("new_payment").reset();
+                        document.forms.new_payment.reset();
+                        vm.parks_available = false;
+                        vm.parks.push({value:0, label:'No parks available'});
+                    } else{
+                        vm.parks_available = true;
+                    }
+                    console.log(vm.land_parks);
+                },err=>{
+                });
+            },
+
+
         },
         mounted:function () {
             let vm = this;
-            vm.park_options();
+            //vm.park_options();
+            vm.get_user_approvals();
         }
     }
 </script>

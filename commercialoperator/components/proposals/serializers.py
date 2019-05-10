@@ -556,6 +556,41 @@ class ProposalDeclinedDetailsSerializer(serializers.ModelSerializer):
         model = ProposalDeclinedDetails
         fields = '__all__'
 
+class ProposalParkSerializer(BaseProposalSerializer):
+    applicant = ApplicantSerializer()
+    processing_status = serializers.SerializerMethodField(read_only=True)
+    customer_status = serializers.SerializerMethodField(read_only=True)
+    submitter = serializers.CharField(source='submitter.get_full_name')
+    application_type = serializers.CharField(source='application_type.name', read_only=True)
+    licence_number = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Proposal
+        fields = (
+                'id',
+                'licence_number',
+                'application_type',
+                'approval_level',
+                'title',
+                'customer_status',
+                'processing_status',
+                'applicant',
+                'proxy_applicant',
+                'submitter',
+                'lodgement_number',
+                #'activities_land',
+                #'activities_marine',
+                'land_parks',
+                #'marine_parks',
+                #'trails',
+                )
+        #read_only_fields=('documents','requirements')
+        #read_only_fields = '__all__'
+
+    def get_licence_number(self,obj):
+        return obj.approval.lodgement_number
+
+
 class InternalProposalSerializer(BaseProposalSerializer):
     applicant = ApplicantSerializer()
     processing_status = serializers.SerializerMethodField(read_only=True)

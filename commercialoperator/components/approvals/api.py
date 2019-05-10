@@ -41,9 +41,10 @@ from commercialoperator.components.approvals.serializers import (
     ApprovalSuspensionSerializer,
     ApprovalSurrenderSerializer,
     ApprovalUserActionSerializer,
-    ApprovalLogEntrySerializer
+    ApprovalLogEntrySerializer,
+    ApprovalPaymentSerializer
 )
-from commercialoperator.components.organisations.models import Organisation
+from commercialoperator.components.organisations.models import Organisation, OrganisationContact
 from commercialoperator.helpers import is_customer, is_internal
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from commercialoperator.components.proposals.api import ProposalFilterBackend, ProposalRenderer
@@ -98,6 +99,33 @@ class ApprovalPaginatedViewSet(viewsets.ModelViewSet):
         result_page = self.paginator.paginate_queryset(qs, request)
         serializer = ApprovalSerializer(result_page, context={'request':request}, many=True)
         return self.paginator.get_paginated_response(serializer.data)
+
+
+from rest_framework import filters
+class ApprovalPaymentFilterViewSet(generics.ListAPIView):
+    """ https://cop-internal.dbca.wa.gov.au/api/filtered_organisations?search=Org1
+    """
+    queryset = Approval.objects.none()
+    serializer_class = ApprovalPaymentSerializer
+    filter_backends = (filters.SearchFilter,)
+    #search_fields = ('applicant', 'applicant_id',)
+    search_fields = ('id',)
+
+    def get_queryset(self):
+        """
+        Return All approvals associated with user (proxy_applicant and org_applicant)
+        """
+        #import ipdb; ipdb.set_trace()
+        #return Approval.objects.filter(proxy_applicant=self.request.user)
+        user = self.request.user
+
+        # get all orgs associated with user
+        user_org_ids = OrganisationContact.objects.filter(email=user.email).values_list('organisation_id', flat=True)
+
+        return Approval.objects.filter(Q(proxy_applicant=user) | Q(org_applicant_id__in=user_org_ids)).exclude(current_proposal__application_type__name='E Class')
+
+    def _list(self, request, *args, **kwargs):
+        return Response(self.get_queryset().values_list('lodgement_number','current_proposal_id'))
 
 
 class ApprovalViewSet(viewsets.ModelViewSet):

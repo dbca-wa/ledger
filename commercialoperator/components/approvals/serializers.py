@@ -1,6 +1,6 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
-from commercialoperator.components.proposals.serializers import ProposalSerializer, InternalProposalSerializer
+from commercialoperator.components.proposals.serializers import ProposalSerializer, InternalProposalSerializer, ProposalParkSerializer
 from commercialoperator.components.main.serializers import ApplicationTypeSerializer
 from commercialoperator.components.approvals.models import (
     Approval,
@@ -11,15 +11,78 @@ from commercialoperator.components.organisations.models import (
     Organisation
 )
 from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer
+from commercialoperator.components.proposals.serializers import ProposalSerializer
 from rest_framework import serializers
-
 
 class EmailUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailUser
         fields = ('id','email','first_name','last_name','title','organisation')
 
-from commercialoperator.components.proposals.serializers import ProposalSerializer
+class ApprovalPaymentSerializer(serializers.ModelSerializer):
+    #proposal = serializers.SerializerMethodField(read_only=True)
+    class Meta:
+        model = Approval
+        fields = (
+            'lodgement_number',
+            'current_proposal',
+        )
+
+    #def get_proposal_id(self,obj):
+    #    return obj.current_proposal_id
+
+
+class _ApprovalPaymentSerializer(serializers.ModelSerializer):
+    applicant = serializers.SerializerMethodField(read_only=True)
+    applicant_type = serializers.SerializerMethodField(read_only=True)
+    applicant_id = serializers.SerializerMethodField(read_only=True)
+    status = serializers.CharField(source='get_status_display')
+    title = serializers.CharField(source='current_proposal.title')
+    application_type = serializers.SerializerMethodField(read_only=True)
+    land_parks = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Approval
+        fields = (
+            'id',
+            'lodgement_number',
+            'current_proposal',
+            'title',
+            'issue_date',
+            'start_date',
+            'expiry_date',
+            'applicant',
+            'applicant_type',
+            'applicant_id',
+            'status',
+            'cancellation_date',
+            'application_type',
+            'land_parks'
+        )
+
+    def get_application_type(self,obj):
+        if obj.current_proposal.application_type:
+            return obj.current_proposal.application_type.name
+        return None
+
+    def get_applicant(self,obj):
+        return obj.applicant.name if isinstance(obj.applicant, Organisation) else obj.applicant
+
+    def get_applicant_type(self,obj):
+        return obj.applicant_type
+
+    def get_applicant_id(self,obj):
+        return obj.applicant_id
+
+    def get_land_parks(self,obj):
+        return None #obj.current_proposal.land_parks
+        #return AuthorSerializer(obj.author).data
+        #import ipdb; ipdb.set_trace()
+        #if obj.current_proposal.land_parks:
+        #    return ProposalParkSerializer(obj.current_proposal.land_parks).data
+        #return None
+
+
 class ApprovalSerializer(serializers.ModelSerializer):
     #applicant = serializers.CharField(source='applicant.name')
     applicant = serializers.SerializerMethodField(read_only=True)

@@ -40,19 +40,19 @@
                 <tbody>
                   <tr v-for="row in table.tbody">
                       <td v-if="col_types[index]=='select'" width="30%" v-for="(value, index) in row">
-                          <v-select :options="options" v-model="row[index]" />
+                          <v-select :options="options" v-model="row[index]"/>
                       </td>
                       <td v-else>
-                          <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" v-model="row[index]" :required="isRequired" :onclick="isClickable"/>
+                          <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="disabled"/>
                       </td>
                       <td v-if="!readonly">
-                          <a class="fa fa-trash-o" v-on:click="deleteRow(row)" title="Delete row" style="cursor: pointer; color:red;"></a>
+                          <a class="fa fa-trash-o" v-on:click="deleteRow(row)" title="Delete row" style="cursor: pointer; color:red;" :disabled="disabled"></a>
                       </td>
                   </tr>
 
                   <tr>
                     <td v-if="!readonly" colspan="100%">
-                      <span><button class="btn btn-primary" type="button" v-on:click="addRow()">+</button>Add another park and/or date</span>
+                      <span><button class="btn btn-primary" type="button" v-on:click="addRow()" :disabled="disabled">+</button>Add another park and/or date</span>
                     </td>
                   </tr>
                 </tbody>
@@ -97,6 +97,7 @@ export default {
         isRequired: String,
         comment_value: String,
         assessor_readonly: Boolean,
+        disabled: Boolean,
         help_text: String,
         help_text_assessor: String,
         help_text_url: String,
@@ -245,6 +246,11 @@ export default {
         $("#content-editable-table").on("click", ".ibtnDel", function (event) {
             $(this).closest("tr").remove();
         });
+
+        //if (vm.disabled) {
+        //    vm.options = [];
+        //    vm.options.push({value:0, label:'No parks available'})
+        //}
 
         if (vm.isChecked) {
             var input = this.$refs.Checkbox;
