@@ -291,7 +291,7 @@ export const callemailStore = {
             let callId = null;
             try {
                 let fetchUrl = null;
-                if (crud == 'create' || crud == 'duplicate') {
+                if (crud == 'create') {
                     fetchUrl = api_endpoints.call_email;
                 } else {
                     fetchUrl = helpers.add_endpoint_join(
@@ -304,8 +304,12 @@ export const callemailStore = {
                 Object.assign(payload, state.call_email);
                 delete payload.report_type;
                 delete payload.schema;
-                payload.occurrence_date_from = moment(payload.occurrence_date_from).format('YYYY-MM-DD');
-                payload.occurrence_date_to = moment(payload.occurrence_date_to).format('YYYY-MM-DD');
+                if (payload.occurrence_date_from) {
+                    payload.occurrence_date_from = moment(payload.occurrence_date_from).format('YYYY-MM-DD');
+                } 
+                if (payload.occurrence_date_to) {
+                    payload.occurrence_date_to = moment(payload.occurrence_date_to).format('YYYY-MM-DD');
+                } 
 
                 if (state.call_email.schema) {
                 if (state.call_email.schema.length > 0) {
@@ -360,6 +364,7 @@ export const callemailStore = {
             }
         },
 
+        
         setCallID({
             commit,
         }, id) {

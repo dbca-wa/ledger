@@ -82,10 +82,10 @@
 
                 <div class="col-sm-12 form-group"><div class="row">
                     <label class="col-sm-3">{{ occurrenceDateLabel }}</label>
-                    <datepicker input-class="col-sm-2" v-model="call_email.occurrence_date_from" name="datefrom"/>
+                    <datepicker placeholder="DD/MM/YYYY" input-class="col-sm-3" v-model="call_email.occurrence_date_from" name="datefrom"/>
                     <div v-if="call_email.occurrence_from_to">
                       <label class="col-sm-3">Occurrence date to</label>
-                      <datepicker input-class="col-sm-2" v-model="call_email.occurrence_date_to" name="dateto"/>
+                      <datepicker placeholder="DD/MM/YYYY" input-class="col-sm-3" v-model="call_email.occurrence_date_to" name="dateto"/>
                     </div>
                 </div></div>
 
@@ -293,11 +293,12 @@ export default {
     this.loadClassification();
     this.loadReportTypes();
     this.loadReferrers();
+    
   },
   
   // mounted: function() {
-  //   this.$nextTick(function() {});
-  // }
+  //  this.$nextTick(function() {});
+  //  }
 };
 </script>
 
