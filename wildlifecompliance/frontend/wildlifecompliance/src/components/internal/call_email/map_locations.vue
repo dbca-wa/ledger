@@ -1,5 +1,5 @@
 <template lang="html">
-    <div class="container">
+    <div class="">
         <div id="map">
             <div id="basemap-button">
                 <img id="basemap_sat" src="../../../assets/img/satellite_icon.jpg" @click="setBaseLayer('sat')" />
@@ -12,7 +12,6 @@
 <script>
 import L from 'leaflet';
 import { api_endpoints, helpers } from '@/utils/hooks'
-import pin from '../../../assets/pin.svg';
 import 'leaflet.markercluster';  /* This should be imported after leaflet */
 
 import 'leaflet/dist/leaflet.css';
@@ -199,10 +198,8 @@ module.exports = {
 
                                 /* create marker */
                                 let myIcon = L.icon({
-                                    iconUrl: require('../../../assets/pin.svg'),
+                                    iconUrl: require('../../../assets/marker-green-locked.svg'),
                                     shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-
-                                    /* Accessing external file for now, but this should point to the local file */
                                     shadowSize: [41, 41],
                                     shadowAnchor: [12, 41],
                                     iconSize: [32, 32],
