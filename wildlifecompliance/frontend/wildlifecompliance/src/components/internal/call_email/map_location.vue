@@ -1,13 +1,10 @@
 <template lang="html">
     <div>
         <div id="map-wrapper">
-        <div id="search-box">
-                <!-- input id="search-input" v-on:click.stop="()=>{}" v-on:dblclick.stop="()=>{}" / -->
+            <div id="search-box">
                 <input id="search-input" />
             </div>
-        <div id="map">
-
-        </div>
+            <div id="map"></div>
             <div id="basemap-button">
                 <img id="basemap_sat" src="../../../assets/img/satellite_icon.jpg" @click.stop="setBaseLayer('sat')" />
                 <img id="basemap_osm" src="../../../assets/img/map_icon.png" @click.stop="setBaseLayer('osm')" />
@@ -63,7 +60,6 @@
 
 <script>
 import Awesomplete from 'awesomplete';
-
 import 'bootstrap/dist/css/bootstrap.css';
 import 'awesomplete/awesomplete.css';
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
@@ -106,7 +102,6 @@ export default {
             console.debug('End loading map');
         });
     },
-
     methods: {
         ...mapActions('callemailStore', {
             saveLocation: 'saveLocation',
@@ -145,7 +140,7 @@ export default {
                     self.feature_marker.setIcon(myIcon);
                 }
             });
-            self.feature_marker.bindTooltip("click to toggle lock/unlock status");
+            self.feature_marker.bindTooltip("click to lock/unlock");
             self.feature_marker.addTo(self.map);
         },
         saveInstanceLocation: async function() {

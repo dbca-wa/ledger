@@ -1,6 +1,10 @@
 <template lang="html">
     <div class="">
-        <div id="map">
+        <div id="map-wrapper">
+            <div id="search-box">
+                <input id="search-input" />
+            </div>
+            <div id="map"> </div>
             <div id="basemap-button">
                 <img id="basemap_sat" src="../../../assets/img/satellite_icon.jpg" @click="setBaseLayer('sat')" />
                 <img id="basemap_osm" src="../../../assets/img/map_icon.png" @click="setBaseLayer('osm')" />
@@ -13,10 +17,13 @@
 import L from 'leaflet';
 import { api_endpoints, helpers } from '@/utils/hooks'
 import 'leaflet.markercluster';  /* This should be imported after leaflet */
+import Awesomplete from 'awesomplete';
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import 'bootstrap/dist/css/bootstrap.css';
+import 'awesomplete/awesomplete.css';
 
 L.TileLayer.WMTS = L.TileLayer.extend({
     defaultWmtsParams: {
@@ -139,8 +146,66 @@ module.exports = {
     mounted(){
         this.initMap();
         this.addMarkers();
+        this.initAwesomplete();
     },
     methods: {
+        initAwesomplete: function(){
+            var self = this;
+            var element_search = document.getElementById('search-input');
+            this.awe = new Awesomplete(element_search);
+            $(element_search).on('keyup', function(ev){
+                var keyCode = ev.keyCode || ev.which;
+                if ((48 <= keyCode && keyCode <= 90)||(96 <= keyCode && keyCode <= 105)){
+                    self.search(ev.target.value);
+                    return false;
+                }
+            }).on('awesomplete-selectcomplete', function(ev){
+                ev.preventDefault();
+                ev.stopPropagation();
+                /* User selected one of the search results */
+                for (var i=0; i<self.suggest_list.length; i++){
+                    if (self.suggest_list[i].value == ev.target.value){
+                        var latlng = {lat: self.suggest_list[i].feature.geometry.coordinates[1], lng: self.suggest_list[i].feature.geometry.coordinates[0]};
+                        //self.map.setView(latlng, 13);
+                        self.map.flyTo(latlng, 13,{
+                            animate: true,
+                            duration: 1.5
+                        });
+                    }
+                }
+                return false;
+            });
+        },
+        search: function(place){
+            var self = this;
+
+            var latlng = this.map.getCenter();
+            $.ajax({
+                url: 'https://mapbox.dpaw.wa.gov.au/geocoding/v5/mapbox.places/'+encodeURIComponent(place)+'.json?'+ $.param({
+                    country: 'au',
+                    limit: 10,
+                    proximity: ''+latlng.lng+','+latlng.lat,
+                    //proximity: ''+centre[0]+','+centre[1],
+                    bbox: '112.920934,-35.191991,129.0019283,-11.9662455',
+                    types: 'region,postcode,district,place,locality,neighborhood,address,poi'
+                }),
+                dataType: 'json',
+                success: function(data, status, xhr) {
+                    self.suggest_list = [];  // Clear the list first
+                    if (data.features && data.features.length > 0){
+                        for (var i = 0; i < data.features.length; i++){
+                            self.suggest_list.push({ label: data.features[i].place_name,
+                                                     value: data.features[i].place_name, 
+                                                     feature: data.features[i]
+                                                     });
+                        }
+                    }
+
+                    self.awe.list = self.suggest_list;
+                    self.awe.evaluate();
+                }
+            });
+        },
         setBaseLayer: function(selected_layer_name){
             if (selected_layer_name == 'sat') {
                 this.map.removeLayer(this.tileLayer);
@@ -241,9 +306,27 @@ module.exports = {
 </script>
 
 <style lang="css">
+#map-wrapper {
+    position: relative;
+}
 #map {
-    height: 700px;
+    position: relative;
+    height: 800px;
     margin-bottom: 50px;
+}
+#search-box {
+    z-index: 1000;
+    position: absolute;
+    top: 10px;
+    left: 50px;
+}
+#search-input {
+    z-index: 1000;
+    width: 300px;
+    padding: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
 }
 #basemap-button {
     position: absolute;
