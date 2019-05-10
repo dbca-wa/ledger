@@ -1350,7 +1350,7 @@ class Application(RevisionedMixin):
                                 ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(
                                     item['name']), request)
                         send_application_decline_notification(
-                            item['name'], self, request)
+                            selected_activity, self, request)
 
                 # If any activities were issued - re-generate PDF
                 if parent_licence is not None:

@@ -42,7 +42,7 @@
                                                     </div>
                                                     <div class="col-sm-9">
                                                         <div class="input-group date" ref="start_date" style="width: 70%;" :data-init="false" :data-activity="item.id">
-                                                            <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY" v-model="getActivity(item.id).start_date">
+                                                            <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY">
                                                             <span class="input-group-addon">
                                                                 <span class="glyphicon glyphicon-calendar"></span>
                                                             </span>
@@ -296,10 +296,13 @@ export default {
             }
             let licence = JSON.parse(JSON.stringify(vm.licence));
             licence.activity = this.licence.activity.map(activity => {
+                const date_formats = ["DD/MM/YYYY", "YYYY-MM-DD"];
                 return {
                     ...activity,
-                    start_date: activity.start_date ? moment(activity.start_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : null,
-                    end_date: activity.end_date ? moment(activity.end_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : null,
+                    start_date: activity.start_date ?
+                        moment(activity.start_date, date_formats).format('YYYY-MM-DD') : null,
+                    end_date: activity.end_date ?
+                        moment(activity.end_date, date_formats).format('YYYY-MM-DD') : null,
                 }
             });
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/final_decision'),JSON.stringify(licence),{

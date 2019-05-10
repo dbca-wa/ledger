@@ -265,15 +265,19 @@ def send_application_issue_notification(
         'url': url
     }
 
-    msg = email.send(application.submitter.email, context=context, attachments=[
-                     (licence.licence_document.name, licence.licence_document._file.read(), 'application/pdf')])
+    msg = email.send(
+        application.submitter.email,
+        context=context, attachments=[
+            (licence.licence_document.name, licence.licence_document._file.read(), 'application/pdf')],
+        bcc=[activities[0].cc_email] if activities[0].cc_email else None
+    )
 
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, application, sender=sender)
 
 
 def send_application_decline_notification(
-        activity_name, application, request):
+        activity, application, request):
     # An email to submitter users notifying about an application activity being declined
     email = ApplicationDeclineNotificationEmail()
 
@@ -284,11 +288,15 @@ def send_application_decline_notification(
                 'application_pk': application.id}))
     context = {
         'application': application,
-        'activity_name': activity_name,
+        'activity_name': activity.licence_activity.name,
         'url': url
     }
 
-    msg = email.send(application.submitter.email, context=context)
+    msg = email.send(
+        application.submitter.email,
+        context=context,
+        bcc=[activity.cc_email] if activity.cc_email else None
+    )
 
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, application, sender=sender)
