@@ -1,10 +1,10 @@
 <template lang="html">
     <div class="container">
-    
-        <div class="row">
-          <h3>Call/Email: {{ call_email.number }}</h3>
 
           <div class="col-md-3">
+            <div class="row">
+              <h3>Call/Email: {{ call_email.number }}</h3>
+            </div>
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
             
             <div class="row">
@@ -26,14 +26,17 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
                              
-                          </div>
-                      </div>
-                  </div>
-              </div>
-        </div>
-        <div class="col-md-1"></div>
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div class="col-md-1"/>        
           <div class="col-md-8">  
+            <div class="row">
+              <input type="button" @click.prevent="duplicate" class="pull-right btn btn-primary" value="Create Duplicate Call/Email"/>
+            </div>
             <div class="row">
               <FormSection collapse="collapse in" label="Caller" Index="0">
                 
@@ -147,7 +150,7 @@
             </div>          
               
           </div>
-        </div>  
+
         <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                         <div class="navbar-inner">
                             <div class="container">
@@ -270,19 +273,22 @@ export default {
         });
       }
     },
-    saveExit: function() {
+    saveExit: async function() {
       if (this.call_email.id) {
         console.log("this.saveCallEmail");
-        this.saveCallEmail({ route: true, crud: 'save' });
+        await this.saveCallEmail({ route: true, crud: 'save' });
       } else {
         console.log("this.createCallEmail");
-        this.saveCallEmail({ route: true, crud: 'create'});
+        await this.saveCallEmail({ route: true, crud: 'create'});
       }
     },
     loadSchema: function() {
       console.log(this.call_email.report_type_id);
       this.updateSchema();
-    }
+    },
+    duplicate: async function() {
+      await this.saveCallEmail({ route: false, crud: 'duplicate'});
+    },
   },
 
   created: function() {

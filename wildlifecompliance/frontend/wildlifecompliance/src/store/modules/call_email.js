@@ -291,7 +291,7 @@ export const callemailStore = {
             let callId = null;
             try {
                 let fetchUrl = null;
-                if (crud == 'create') {
+                if (crud == 'create' || crud == 'duplicate') {
                     fetchUrl = api_endpoints.call_email;
                 } else {
                     fetchUrl = helpers.add_endpoint_join(
@@ -310,6 +310,9 @@ export const callemailStore = {
                 if (payload.occurrence_date_to) {
                     payload.occurrence_date_to = moment(payload.occurrence_date_to).format('YYYY-MM-DD');
                 } 
+                if (crud == 'duplicate') {
+                    payload.id = null;
+                }
 
                 if (state.call_email.schema) {
                 if (state.call_email.schema.length > 0) {
@@ -353,7 +356,11 @@ export const callemailStore = {
                 await swal("Error", "There was an error saving the record", "error");
                 return window.location.href = "/internal/call_email/";
             }
-            if (crud != 'create') {
+            if (crud = 'duplicate') {
+                //await swal("Saved", "The record has been saved", "success");
+                return window.location.href = "/internal/call_email/" + callId;
+            }
+            else if (crud != 'create') {
                 await swal("Saved", "The record has been saved", "success");
             }
             if (route) {
