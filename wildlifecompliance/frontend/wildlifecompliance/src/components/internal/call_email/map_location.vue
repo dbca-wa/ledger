@@ -111,6 +111,8 @@ export default {
         ...mapActions('callemailStore', {
             saveLocation: 'saveLocation',
             setLocationPoint: 'setLocationPoint',
+            setLocationProperties: 'setLocationProperties',
+            setLocationPropertiesEmpty: 'setLocationPropertiesEmpty',
         }),
         addMarker(coord){
             let self = this;
@@ -135,6 +137,7 @@ export default {
                 popupAnchor: [0, -20]
             });
             self.feature_marker = L.marker({lon: coord[1], lat: coord[0]}, {icon: myIcon}).on('click', function(ev){
+                //ev.preventDefault();
                 self.marker_locked = !self.marker_locked;
                 if (self.marker_locked){
                     self.feature_marker.setIcon(testIcon);
@@ -142,6 +145,7 @@ export default {
                     self.feature_marker.setIcon(myIcon);
                 }
             });
+            self.feature_marker.bindTooltip("click to toggle lock/unlock status");
             self.feature_marker.addTo(self.map);
         },
         saveInstanceLocation: async function() {
@@ -175,7 +179,7 @@ export default {
                     } else {
                         console.log("address not found");
                         self.showHideAddressDetailsFields(false, true);
-                        self.clearAddressFields();
+                        self.setLocationPropertiesEmpty();
                     }
                 }
             });
@@ -252,7 +256,7 @@ export default {
         },
         updateAddressFields(feature){
             console.log('updateAddressField');
-
+            let properties_for_update = new Object();
             let state_abbr_list = {
                     "New South Wales": "NSW",
                     "Queensland": "QLD",
@@ -264,25 +268,24 @@ export default {
                     "Australian Capital Territory": "ACT",
             };
             let address_arr = feature.place_name.split(',');
-
             /* street */
-            this.call_email.location.properties.street = address_arr[0];
-
+            properties_for_update.street = address_arr[0];
             /*
              * Split the string into suburb, state and postcode
              */
             let reg = /^([a-zA-Z0-9\s]*)\s(New South Wales|Queensland|South Australia|Tasmania|Victoria|Western Australia|Northern Territory|Australian Capital Territory){1}\s+(\d{4})$/gi;
             let result = reg.exec(address_arr[1]);
-
             /* suburb */
-            this.call_email.location.properties.town_suburb = result[1].trim();
-
+            properties_for_update.town_suburb = result[1].trim();
             /* state */
             let state_abbr = state_abbr_list[result[2].trim()]
-            this.call_email.location.properties.state = state_abbr;
-
+            properties_for_update.state = state_abbr;
             /* postcode */
-            this.call_email.location.properties.postcode = result[3].trim();
+            properties_for_update.postcode = result[3].trim();
+            /* country */
+            properties_for_update.country = 'Australia';
+            /* update Vuex */
+            this.setLocationProperties(properties_for_update);
         },
         setBaseLayer: function(selected_layer_name){
             if (selected_layer_name == 'sat') {
