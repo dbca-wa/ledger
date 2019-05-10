@@ -80,13 +80,20 @@ export const callemailStore = {
             //
             state.call_email.location.geometry.coordinates = point;
         },
+        updateLocationProperties(state, location_properties) {
+            state.call_email.location.properties = location_properties;
+        },
+        updateLocationPropertiesEmpty(state) {
+            state.call_email.location.properties = {
+                town_suburb: null,
+                street: null,
+                state: null,
+                postcode: null,
+                country: null,
+            };
+        },
         updateLocationID(state, locationID) {
             state.call_email.location_id = locationID;
-        },
-        updateGeoJSONData(state, GeoJSONData) {
-            console.log("GeoJSONData");
-            console.log(GeoJSONData);
-            Vue.set(state.call_email, 'GeoJSONData', GeoJSONData);
         },
     },
     actions: {
@@ -118,9 +125,9 @@ export const callemailStore = {
                         properties: {
                             town_suburb: null,
                             street: null,
-                            state: 'WA',
+                            state: null,
                             postcode: null,
-                            country: 'Australia',
+                            country: null,
                         },
                         id: null,
                         geometry: {
@@ -248,9 +255,9 @@ export const callemailStore = {
                         properties: {
                             town_suburb: null,
                             street: null,
-                            state: 'WA',
+                            state: null,
                             postcode: null,
-                            country: 'Australia',
+                            country: null,
                         },
                         id: null,
                         geometry: {
@@ -288,6 +295,18 @@ export const callemailStore = {
             console.log("setLocation");
             commit("updateLocation", location);
         },
+        setLocationProperties({
+            commit,
+        }, location_properties) {
+            console.log("setLocationProperties");
+            commit("updateLocationProperties", location_properties);
+        },
+        setLocationPropertiesEmpty({
+            commit,
+        }) {
+            console.log("setLocationPropertiesEmpty");
+            commit("updateLocationPropertiesEmpty");
+        },
         setLocationID({
             commit,
         }, locationID) {
@@ -300,12 +319,7 @@ export const callemailStore = {
             console.log("setLocationPoint");
             commit("updateLocationPoint", point);
         },
-        setGeoJSONData({
-            commit,
-        }, GeoJSONData) {
-            console.log("setGeoJSONData");
-            commit("updateGeoJSONData", GeoJSONData);
-        },
+
     },
         
 };
