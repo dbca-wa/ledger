@@ -4,4 +4,4 @@ Click this link to sign in: {{ login_url }}
 
 Best regards,
 
-Parks and Wildlife Customer Portal
+Biodiversity, Conservation and Attractions Customer Portal
