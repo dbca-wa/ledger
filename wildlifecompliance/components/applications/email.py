@@ -277,7 +277,7 @@ def send_application_issue_notification(
 
 
 def send_application_decline_notification(
-        activity, application, request):
+        activities, application, request):
     # An email to submitter users notifying about an application activity being declined
     email = ApplicationDeclineNotificationEmail()
 
@@ -288,14 +288,14 @@ def send_application_decline_notification(
                 'application_pk': application.id}))
     context = {
         'application': application,
-        'activity_name': activity.licence_activity.name,
+        'activities': activities,
         'url': url
     }
 
     msg = email.send(
         application.submitter.email,
         context=context,
-        bcc=[activity.cc_email] if activity.cc_email else None
+        bcc=[activities[0].cc_email] if activities[0].cc_email else None
     )
 
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL

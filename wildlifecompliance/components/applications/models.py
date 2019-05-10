@@ -1268,6 +1268,7 @@ class Application(RevisionedMixin):
             try:
                 parent_licence = None
                 issued_activities = []
+                declined_activities = []
                 for item in request.data.get('activity'):
                     licence_activity_id = item['id']
                     selected_activity = self.activities.filter(
@@ -1332,6 +1333,7 @@ class Application(RevisionedMixin):
                         selected_activity.cc_email = item['cc_email']
                         selected_activity.reason = item['reason']
                         selected_activity.save()
+                        declined_activities.append(selected_activity)
                         # Log application action
                         self.log_user_action(
                             ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(
@@ -1349,8 +1351,6 @@ class Application(RevisionedMixin):
                             self.submitter.log_user_action(
                                 ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(
                                     item['name']), request)
-                        send_application_decline_notification(
-                            selected_activity, self, request)
 
                 # If any activities were issued - re-generate PDF
                 if parent_licence is not None:
@@ -1361,6 +1361,9 @@ class Application(RevisionedMixin):
                         request=request,
                         licence=parent_licence
                     )
+                if declined_activities:
+                    send_application_decline_notification(
+                        declined_activities, self, request)
 
             except BaseException:
                 raise
