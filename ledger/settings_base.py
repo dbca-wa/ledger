@@ -11,14 +11,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_DIR = os.path.join(BASE_DIR, 'ledger')
 
 # Application definitions
-SECRET_KEY = env('SECRET_KEY')
+SECRET_KEY = env('SECRET_KEY', 'Placeholder_Secret_Key')
 DEBUG = env('DEBUG', False)
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
-if DEBUG:
-    ALLOWED_HOSTS = ['*']
+if not DEBUG:
+    ALLOWED_HOSTS = env('ALLOWED_DOMAINS', '').split(',')
 else:
-    ALLOWED_HOSTS = env('ALLOWED_HOSTS', [])
+    ALLOWED_HOSTS = ['*']
 WSGI_APPLICATION = 'ledger.wsgi.application'
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -36,16 +36,16 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'django_countries',
     'django_cron',
-    ] + get_core_apps([  # django-oscar overrides
-        'ledger.basket',
-        'ledger.order',
-        'ledger.checkout',
-        'ledger.address',
-        'ledger.catalogue',
-        'ledger.dashboard.catalogue',
-        'ledger.payment'
-    ]) + [
-    'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
+] + get_core_apps([  # django-oscar overrides
+    'ledger.basket',
+    'ledger.order',
+    'ledger.checkout',
+    'ledger.address',
+    'ledger.catalogue',
+    'ledger.dashboard.catalogue',
+    'ledger.payment'
+]) + [
+    'ledger.accounts',  # Defines custom user model, passwordless auth pipeline.
     'ledger.licence',
     'ledger.payments',
     'ledger.payments.bpay',
@@ -115,7 +115,7 @@ if SESSION_COOKIE_DOMAIN:
 
 
 # Email settings
-ADMINS = ('asi@dpaw.wa.gov.au',)
+ADMINS = ('asi@dbca.wa.gov.au',)
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
@@ -254,27 +254,6 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'INFO'
         },
-        'wildlifelicensing': {
-            'handlers': ['file'],
-            'level': 'INFO'
-        },
-        'wildlifecompliance': {
-            'handlers': ['file'],
-            'level': 'INFO'
-        },
-        'disturbance': {
-            'handlers': ['file'],
-            'level': 'INFO',
-            'propagate': True
-        },
-#        'oscar.checkout': {
-#            'handlers': ['file'],
-#            'level': 'INFO'
-#        },
-#        'bpoint_dpaw': {
-#            'handlers': ['file'],
-#            'level': 'INFO'
-#        }
     }
 }
 
@@ -282,45 +261,44 @@ LOGGING = {
 DDF_FILL_NULLABLE_FIELDS = False
 
 # Ledger settings
-CMS_URL=env('CMS_URL',None)
-VALID_SYSTEMS=env('VALID_SYSTEMS', '')
-VALID_SYSTEMS=VALID_SYSTEMS.split(',') if VALID_SYSTEMS else []
-LEDGER_USER=env('LEDGER_USER',None)
-LEDGER_PASS=env('LEDGER_PASS')
-NOTIFICATION_EMAIL=env('NOTIFICATION_EMAIL')
+CMS_URL = env('CMS_URL', None)
+VALID_SYSTEMS = env('VALID_SYSTEMS', '')
+VALID_SYSTEMS = VALID_SYSTEMS.split(',') if VALID_SYSTEMS else []
+LEDGER_USER = env('LEDGER_USER', None)
+LEDGER_PASS = env('LEDGER_PASS', None)
+NOTIFICATION_EMAIL = env('NOTIFICATION_EMAIL', None)
 BPAY_GATEWAY = env('BPAY_GATEWAY', None)
 INVOICE_UNPAID_WARNING = env('INVOICE_UNPAID_WARNING', '')
 # GST Settings
-LEDGER_GST = env('LEDGER_GST',10)
+LEDGER_GST = env('LEDGER_GST', 10)
 # BPAY settings
-BPAY_ALLOWED = env('BPAY_ALLOWED',True)
-BPAY_BILLER_CODE=env('BPAY_BILLER_CODE')
+BPAY_ALLOWED = env('BPAY_ALLOWED', True)
+BPAY_BILLER_CODE = env('BPAY_BILLER_CODE', None)
 # BPOINT settings
-BPOINT_CURRENCY='AUD'
-BPOINT_BILLER_CODE=env('BPOINT_BILLER_CODE')
-BPOINT_USERNAME=env('BPOINT_USERNAME')
-BPOINT_PASSWORD=env('BPOINT_PASSWORD')
-BPOINT_MERCHANT_NUM=env('BPOINT_MERCHANT_NUM')
-BPOINT_TEST=env('BPOINT_TEST',True)
+BPOINT_CURRENCY = 'AUD'
+BPOINT_BILLER_CODE = env('BPOINT_BILLER_CODE', None)
+BPOINT_USERNAME = env('BPOINT_USERNAME', None)
+BPOINT_PASSWORD = env('BPOINT_PASSWORD', None)
+BPOINT_MERCHANT_NUM = env('BPOINT_MERCHANT_NUM', None)
+BPOINT_TEST = env('BPOINT_TEST', True)
 # Custom Email Settings
 EMAIL_BACKEND = 'ledger.ledger_email.LedgerEmailBackend'
 PRODUCTION_EMAIL = env('PRODUCTION_EMAIL', False)
 # Intercept and forward email recipient for non-production instances
 # Send to list of NON_PROD_EMAIL users instead
-EMAIL_INSTANCE = env('EMAIL_INSTANCE','PROD')
-NON_PROD_EMAIL = env('NON_PROD_EMAIL')
+EMAIL_INSTANCE = env('EMAIL_INSTANCE', 'DEV')
+NON_PROD_EMAIL = env('NON_PROD_EMAIL', 'noreply@dbca.wa.gov.au')
 if not PRODUCTION_EMAIL:
     if not NON_PROD_EMAIL:
         raise ImproperlyConfigured('NON_PROD_EMAIL must not be empty if PRODUCTION_EMAIL is set to False')
-    if EMAIL_INSTANCE not in ['PROD','DEV','TEST','UAT']:
+    if EMAIL_INSTANCE not in ['PROD', 'DEV', 'TEST', 'UAT']:
         raise ImproperlyConfigured('EMAIL_INSTANCE must be either "PROD","DEV","TEST","UAT"')
     if EMAIL_INSTANCE == 'PROD':
         raise ImproperlyConfigured('EMAIL_INSTANCE cannot be \'PROD\' if PRODUCTION_EMAIL is set to False')
 
 # Oscar settings
-from oscar.defaults import *
 OSCAR_ALLOW_ANON_CHECKOUT = True
-OSCAR_SHOP_NAME = env('OSCAR_SHOP_NAME')
+OSCAR_SHOP_NAME = env('OSCAR_SHOP_NAME', '')
 OSCAR_DASHBOARD_NAVIGATION.append(
     {
         'label': 'Payments',
@@ -342,4 +320,4 @@ OSCAR_DASHBOARD_NAVIGATION.append(
     }
 )
 OSCAR_DEFAULT_CURRENCY = 'AUD'
-ORACLE_IMPORT_SEQUENCE = env('ORACLE_IMPORT_SEQUENCE',70000)
+ORACLE_IMPORT_SEQUENCE = env('ORACLE_IMPORT_SEQUENCE', 70000)
