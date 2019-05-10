@@ -4,6 +4,7 @@ import {
     helpers
 }
 from '@/utils/hooks';
+import moment from 'moment';
 
 export const callemailStore = {
     namespaced: true,
@@ -32,12 +33,14 @@ export const callemailStore = {
         },
         classification_types: [],
         report_types: [],
+        referrers: [],
     },
     getters: {
         call_email: state => state.call_email,
         report_type: state => state.call_email.report_type.report_type,
         classification_types: state => state.classification_types,
         report_types: state => state.report_types,
+        referrers: state => state.referrers,
         call_email_form_url: state => {
             return state.call_email
               ? `/api/call_email/${state.call_email.id}/form_data.json`
@@ -51,9 +54,10 @@ export const callemailStore = {
                 ...call_email
             });
         },
-        updateNumber(state, number) {
-            state.call_email.number = number;
+        updateSchema(state, schema) {
+            state.call_email.schema = schema;
         },
+        
         updateCallID(state, id) {
             Vue.set(state.call_email, 'id', id);
         },
@@ -63,11 +67,26 @@ export const callemailStore = {
         updateAssignedTo(state, assigned_to) {
             state.call_email.assigned_to = assigned_to;
         },
-        updateClassification(state, classification_entry) {
-            state.classification_types.push(classification_entry);
+        updateClassificationTypes(state, classification_entry) {
+            if (classification_entry) {
+                state.classification_types.push(classification_entry);
+            } else {
+                state.classification_types = [];
+            }
         },
-        updateReportType(state, report_type_entry) {
-            state.report_types.push(report_type_entry);
+        updateReferrers(state, referrer_entry) {
+            if (referrer_entry) {
+                state.referrers.push(referrer_entry);
+            } else {
+                state.referrers = [];
+            }
+        },
+        updateReportTypes(state, report_type_entry) {
+            if (report_type_entry) {
+                state.report_types.push(report_type_entry);
+            } else {
+                state.report_types = [];
+            }
         },
         updateLocation(state, location) {
             console.log("location");
@@ -112,8 +131,6 @@ export const callemailStore = {
                         call_email_id)
                         );
                         
-                console.log("returnedCallEmail.body");
-                console.log(returnedCallEmail.body);
                 await dispatch("setCallEmail", returnedCallEmail.body);
                 // Set empty (not null) location to force map display
                 
@@ -163,11 +180,32 @@ export const callemailStore = {
             console.log("loadClassification");
             try {
             const returnedClassification = await Vue.http.get(
-                api_endpoints.classification
+                api_endpoints.classification 
                 );
-            
+            // Clear existing classification entries
+            await dispatch("setClassificationEntry", null);
+
             for (let classification_entry of returnedClassification.body.results) {
                 dispatch("setClassificationEntry", classification_entry);
+            }
+            } catch (err) {
+                console.error(err);
+            }
+        },
+
+        async loadReferrers({
+            dispatch,
+        }) {
+            console.log("loadReferrers");
+            try {
+            const returnedReferrers = await Vue.http.get(
+                api_endpoints.referrers
+                );
+            // Clear existing classification entries
+            await dispatch("setReferrerEntry", null);
+
+            for (let referrer_entry of returnedReferrers.body.results) {
+                dispatch("setReferrerEntry", referrer_entry);
             }
             } catch (err) {
                 console.error(err);
@@ -180,10 +218,15 @@ export const callemailStore = {
             console.log("loadReportTypes");
             try {
             const returnedReportTypes = await Vue.http.get(
-                api_endpoints.report_types
+                helpers.add_endpoint_json(
+                    api_endpoints.report_types,
+                    'get_distinct_queryset')
+                //api_endpoints.report_types
                 );
+            // Clear existing report_type entries
+            await dispatch("setReportTypeEntry", null);
             
-            for (let report_type_entry of returnedReportTypes.body.results) {
+            for (let report_type_entry of returnedReportTypes.body) {
                 dispatch("setReportTypeEntry", report_type_entry);
             }
             } catch (err) {
@@ -196,17 +239,25 @@ export const callemailStore = {
             },
             classification_entry
         ) {
-            commit("updateClassification", classification_entry);
+            commit("updateClassificationTypes", classification_entry);
         },
+
+        setReferrerEntry({
+            commit,
+        },
+            referrer_entry
+        ) {
+            commit("updateReferrers", referrer_entry);
+        },
+
         
         setReportTypeEntry({
             commit,
         },
         report_type_entry
         ) {
-            commit("updateReportType", report_type_entry);
+            commit("updateReportTypes", report_type_entry);
         },
-
 
         setCallEmail({
             commit,
@@ -214,12 +265,33 @@ export const callemailStore = {
             commit("updateCallEmail", call_email);
         },
 
+        async updateSchema({dispatch, state}) {
+            console.log("updateSchema");
+            try {
+                let payload = new Object();
+                payload.id = state.call_email.id;
+                payload.report_type_id = state.call_email.report_type_id;
+
+                const updatedCallEmail = await Vue.http.post(
+                    helpers.add_endpoint_join(
+                        api_endpoints.call_email, 
+                        state.call_email.id + "/update_schema/"),
+                    payload
+                    );
+
+                await dispatch("setSchema", updatedCallEmail.body.schema);
+
+            } catch (err) {
+                console.error(err);
+            }
+
+        },
         async saveCallEmail({ dispatch, state, rootGetters}, { route, crud }) {
             console.log("saveCallEmail");
-            
+            let callId = null;
             try {
                 let fetchUrl = null;
-                if (crud == 'create') {
+                if (crud == 'create' || crud == 'duplicate') {
                     fetchUrl = api_endpoints.call_email;
                 } else {
                     fetchUrl = helpers.add_endpoint_join(
@@ -232,6 +304,8 @@ export const callemailStore = {
                 Object.assign(payload, state.call_email);
                 delete payload.report_type;
                 delete payload.schema;
+                payload.occurrence_date_from = moment(payload.occurrence_date_from).format('YYYY-MM-DD');
+                payload.occurrence_date_to = moment(payload.occurrence_date_to).format('YYYY-MM-DD');
 
                 if (state.call_email.schema) {
                 if (state.call_email.schema.length > 0) {
@@ -268,17 +342,21 @@ export const callemailStore = {
                     );
                     console.log("empty location loaded");
                 }
-                
+                callId = savedCallEmail.body.id;
 
             } catch (err) {
                 console.log(err);
                 await swal("Error", "There was an error saving the record", "error");
                 return window.location.href = "/internal/call_email/";
             }
-            await swal("Saved", "The record has been saved", "success");
+            if (crud != 'create') {
+                await swal("Saved", "The record has been saved", "success");
+            }
             if (route) {
                 //return window.location.href = "/internal/call_email/" + state.call_email.id;
                 return window.location.href = "/internal/call_email/";
+            } else {
+                return callId;
             }
         },
 
@@ -288,6 +366,14 @@ export const callemailStore = {
             console.log("setCallID");
             commit("updateCallID", id);
         },
+
+        setSchema({
+            commit,
+        }, schema) {
+            console.log("setSchema");
+            commit("updateSchema", schema);
+        },
+
 
         setLocation({
             commit,

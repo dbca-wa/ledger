@@ -48,7 +48,15 @@
             </div>
             
         </form>
-        
+        <div class="col-md-3">
+                    <label for="">Alt Lodged From</label>
+                    <div class="input-group date" ref="lodgementDateFromPicker">
+                        <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedFrom">
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
+                    </div>
+                </div>
                 
 
         <div class="row">
@@ -161,8 +169,10 @@
                         classificationColumn.data().unique().sort().each(function (d, j) {
                             let classification_choices = [];
                             $.each(d, (index, a) => {
-                                a['name'] != null && classification_choices.indexOf(a['name']) < 0 ?
-                                    classification_choices.push(a['name']) : '';
+                                if (a) {
+                                    a['name'] != null && classification_choices.indexOf(a['name']) < 0 ?
+                                        classification_choices.push(a['name']) : '';
+                                }
                             })
                             vm.classificationChoices = classification_choices;
                         });
@@ -228,12 +238,23 @@
             ...mapActions('callemailStore', {
                 loadClassification: "loadClassification",
                 loadReportTypes: "loadReportTypes",
+                saveCallEmail: "saveCallEmail",
             }),
             
-            createCallEmailUrl: function () {
+            createCallEmailUrl: async function () {
+                const newCallId = await this.saveCallEmail({ route: false, crud: 'create'});
+                console.log("newCallId");
+                console.log(newCallId);
+
+                this.$router.push({
+                    name: 'view-call-email', 
+                    params: {call_email_id: newCallId}
+                    });
+                /*
                 this.$router.push({
                     name: 'new-call-email' 
                 });
+                */
             },
             addEventListeners: function () {
                 let vm = this;
