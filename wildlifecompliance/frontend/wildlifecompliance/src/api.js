@@ -27,6 +27,7 @@ module.exports = {
   call_email: "/api/call_email/",
   classification: "/api/classification/",
   report_types: "/api/report_types/",
+  referrers: "/api/referrers/",
   location: "/api/location/",
   licences_paginated: "/api/licences_paginated/",
   returns: "/api/returns/",

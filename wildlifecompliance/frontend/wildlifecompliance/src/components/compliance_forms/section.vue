@@ -7,7 +7,7 @@
             </a>
         </h3>
       </div>
-      <div class="panel-body collapse in" :id="section_id">
+      <div :class="`panel-body ` + collapse" :id="section_id">
           <slot></slot>
       </div>
     </div>
@@ -16,7 +16,7 @@
 <script>
 export default {
     name:"FormSection",
-    props:["label","Index"],
+    props:["label", "Index", "collapse"],
     data:function () {
         return {
             title:"Section title",
