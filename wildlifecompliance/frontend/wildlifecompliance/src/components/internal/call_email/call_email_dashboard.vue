@@ -48,16 +48,6 @@
             </div>
             
         </form>
-        <div class="col-md-3">
-                    <label for="">Alt Lodged From</label>
-                    <div class="input-group date" ref="lodgementDateFromPicker">
-                        <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedFrom">
-                        <span class="input-group-addon">
-                            <span class="glyphicon glyphicon-calendar"></span>
-                        </span>
-                    </div>
-                </div>
-                
 
         <div class="row">
             <div class="col-lg-12">
