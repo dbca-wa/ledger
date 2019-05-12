@@ -91,7 +91,6 @@
                 // Filters
                 filterStatus: 'All',
                 filterClassification: 'All',
-                //filterLodgmentDate: null,
                 statusChoices: [],
                 classificationChoices: [],
                 filterLodgedFrom: '',
@@ -250,11 +249,6 @@
                     name: 'view-call-email', 
                     params: {call_email_id: newCallId}
                     });
-                /*
-                this.$router.push({
-                    name: 'new-call-email' 
-                });
-                */
             },
             addEventListeners: function () {
                 let vm = this;
@@ -271,7 +265,6 @@
                 $(vm.$refs.lodgementDateFromPicker).on('dp.change', function (e) {
                     if ($(vm.$refs.lodgementDateFromPicker).data('DateTimePicker').date()) {
                         vm.filterLodgedFrom = e.date.format('DD/MM/YYYY');
-                        //$(vm.$refs.lodgementDateToPicker).data("DateTimePicker").minDate(e.date);
                     } else if ($(vm.$refs.lodgementDateFromPicker).data('date') === "") {
                         vm.filterLodgedFrom = "";
                     }
@@ -325,7 +318,5 @@
                 vm.addEventListeners();
             });
         }
-
-
     }
 </script>

@@ -1,10 +1,14 @@
 <template lang="html">
     <div class="container">
-
+      <div class="row">
+        <div class="col-md-3">
+          <h3>Call/Email: {{ call_email.number }}</h3>
+        </div>
+        <div class="col-md-3 pull-right">
+          <input type="button" @click.prevent="duplicate" class="pull-right btn btn-primary" value="Create Duplicate Call/Email"/>  
+        </div>
+      </div>
           <div class="col-md-3">
-            <div class="row">
-              <h3>Call/Email: {{ call_email.number }}</h3>
-            </div>
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
             
             <div class="row">
@@ -35,12 +39,7 @@
           <div class="col-md-1"/>        
           <div class="col-md-8">  
             <div class="row">
-              <div class="col-sm-4 pull-right form-group">
-                <input type="button" @click.prevent="duplicate" class="pull-right btn btn-primary" value="Create Duplicate Call/Email"/>
-              </div>
-            </div>
-            <div class="row"/>
-            <div class="row">
+
               <FormSection collapse="collapse in" label="Caller" Index="0">
                 
                 <div class="row"><div class="col-sm-8 form-group">
@@ -67,15 +66,14 @@
                     <label class="col-sm-1">No</label>
                     <input class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
                 </div></div>
-
               </FormSection>
+
               <FormSection collapse="collapse in" label="Location" Index="1">
-                  
                   <div v-if="call_email.location">
                     <MapLocation v-bind:key="call_email.location.id"/>
                   </div>
-
               </FormSection>
+
               <FormSection collapse="collapse" label="Details" Index="2">
 
                 <div class="col-sm-12 form-group"><div class="row">
@@ -128,8 +126,8 @@
                     />
                 </div>
               </FormSection>
+
               <FormSection collapse="collapse" label="Outcome" Index="3">
-                  
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Referrer</label>
                   <select class="col-sm-6" v-model="call_email.referrer_id">
@@ -151,7 +149,6 @@
                 </div></div>
               </FormSection>
             </div>          
-              
           </div>
 
         <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
@@ -161,8 +158,6 @@
                                     
                                     <input type="button" @click.prevent="saveExit" class="btn btn-primary" value="Save and Exit"/>
                                     <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                    
-                                    
                                 </p>
                             </div>
                         </div>
@@ -250,14 +245,10 @@ export default {
 
   methods: {
     ...mapActions('callemailStore', {
-      setCallEmail: 'setCallEmail',
       loadCallEmail: "loadCallEmail",
       loadClassification: "loadClassification",
       loadReportTypes: "loadReportTypes",
-      setLocation: 'setLocation',
-      setLocationPoint: 'setLocationPoint',
       saveCallEmail: 'saveCallEmail',
-      createCallEmail: "createCallEmail",
       updateSchema: "updateSchema",
       loadReferrers: "loadReferrers",
     }),
@@ -266,10 +257,8 @@ export default {
     }),
     save: async function() {
       if (this.call_email.id) {
-        //console.log("this.saveCallEmail");
         await this.saveCallEmail({ route: false, crud: 'save' });
       } else {
-        //console.log("this.createCallEmail");
         await this.saveCallEmail({ route: false, crud: 'create'});
         this.$nextTick(function() {
           this.$router.push({name: 'view-call-email', params: {call_email_id: this.call_email.id}});
@@ -278,15 +267,12 @@ export default {
     },
     saveExit: async function() {
       if (this.call_email.id) {
-        console.log("this.saveCallEmail");
         await this.saveCallEmail({ route: true, crud: 'save' });
       } else {
-        console.log("this.createCallEmail");
         await this.saveCallEmail({ route: true, crud: 'create'});
       }
     },
     loadSchema: function() {
-      console.log(this.call_email.report_type_id);
       this.updateSchema();
     },
     duplicate: async function() {
@@ -304,10 +290,6 @@ export default {
     this.loadReferrers();
     
   },
-  
-  // mounted: function() {
-  //  this.$nextTick(function() {});
-  //  }
 };
 </script>
 

@@ -41,12 +41,6 @@ export const callemailStore = {
         classification_types: state => state.classification_types,
         report_types: state => state.report_types,
         referrers: state => state.referrers,
-        call_email_form_url: state => {
-            return state.call_email
-              ? `/api/call_email/${state.call_email.id}/form_data.json`
-              : "";
-          },
-
     },
     mutations: {
         updateCallEmail(state, call_email) {
@@ -56,17 +50,7 @@ export const callemailStore = {
         },
         updateSchema(state, schema) {
             state.call_email.schema = schema;
-        },
-        
-        updateCallID(state, id) {
-            Vue.set(state.call_email, 'id', id);
-        },
-        updateCaller(state, caller) {
-            state.call_email.caller = caller;
-        },
-        updateAssignedTo(state, assigned_to) {
-            state.call_email.assigned_to = assigned_to;
-        },
+        },        
         updateClassificationTypes(state, classification_entry) {
             if (classification_entry) {
                 state.classification_types.push(classification_entry);
@@ -110,9 +94,6 @@ export const callemailStore = {
                 postcode: null,
                 country: null,
             };
-        },
-        updateLocationID(state, locationID) {
-            state.call_email.location_id = locationID;
         },
     },
     actions: {
@@ -173,7 +154,6 @@ export const callemailStore = {
                 console.error(err);
             }
         },
-
         async loadClassification({
             dispatch,
         }) {
@@ -192,7 +172,6 @@ export const callemailStore = {
                 console.error(err);
             }
         },
-
         async loadReferrers({
             dispatch,
         }) {
@@ -211,7 +190,6 @@ export const callemailStore = {
                 console.error(err);
             }
         },
-
         async loadReportTypes({
             dispatch,
         }) {
@@ -232,39 +210,7 @@ export const callemailStore = {
             } catch (err) {
                 console.error(err);
             }
-        },
-
-        setClassificationEntry({
-                commit,
-            },
-            classification_entry
-        ) {
-            commit("updateClassificationTypes", classification_entry);
-        },
-
-        setReferrerEntry({
-            commit,
-        },
-            referrer_entry
-        ) {
-            commit("updateReferrers", referrer_entry);
-        },
-
-        
-        setReportTypeEntry({
-            commit,
-        },
-        report_type_entry
-        ) {
-            commit("updateReportTypes", report_type_entry);
-        },
-
-        setCallEmail({
-            commit,
-        }, call_email) {
-            commit("updateCallEmail", call_email);
-        },
-
+        },        
         async updateSchema({dispatch, state}) {
             console.log("updateSchema");
             try {
@@ -291,7 +237,7 @@ export const callemailStore = {
             let callId = null;
             try {
                 let fetchUrl = null;
-                if (crud == 'create' || crud == 'duplicate') {
+                if (crud === 'create' || crud === 'duplicate') {
                     fetchUrl = api_endpoints.call_email;
                 } else {
                     fetchUrl = helpers.add_endpoint_join(
@@ -304,6 +250,7 @@ export const callemailStore = {
                 Object.assign(payload, state.call_email);
                 delete payload.report_type;
                 delete payload.schema;
+                //delete payload.location;
                 if (payload.occurrence_date_from) {
                     payload.occurrence_date_from = moment(payload.occurrence_date_from).format('YYYY-MM-DD');
                 } 
@@ -312,6 +259,7 @@ export const callemailStore = {
                 } 
                 if (crud == 'duplicate') {
                     payload.id = null;
+
                 }
 
                 if (state.call_email.schema) {
@@ -356,37 +304,30 @@ export const callemailStore = {
                 await swal("Error", "There was an error saving the record", "error");
                 return window.location.href = "/internal/call_email/";
             }
-            if (crud = 'duplicate') {
-                //await swal("Saved", "The record has been saved", "success");
+            if (crud === 'duplicate') {
                 return window.location.href = "/internal/call_email/" + callId;
             }
-            else if (crud != 'create') {
+            else if (crud !== 'create') {
                 await swal("Saved", "The record has been saved", "success");
             }
             if (route) {
-                //return window.location.href = "/internal/call_email/" + state.call_email.id;
                 return window.location.href = "/internal/call_email/";
             } else {
                 return callId;
             }
         },
-
-        
         setCallID({
             commit,
         }, id) {
             console.log("setCallID");
             commit("updateCallID", id);
         },
-
         setSchema({
             commit,
         }, schema) {
             console.log("setSchema");
             commit("updateSchema", schema);
         },
-
-
         setLocation({
             commit,
         }, location) {
@@ -405,19 +346,37 @@ export const callemailStore = {
             console.log("setLocationPropertiesEmpty");
             commit("updateLocationPropertiesEmpty");
         },
-        setLocationID({
-            commit,
-        }, locationID) {
-            console.log("setLocationID");
-            commit("updateLocationID", locationID);
-        },
         setLocationPoint({
             commit,
         }, point) {
             console.log("setLocationPoint");
             commit("updateLocationPoint", point);
         },
-
+        setClassificationEntry({
+            commit,
+        },
+        classification_entry
+        ) {
+            commit("updateClassificationTypes", classification_entry);
+        },
+        setReferrerEntry({
+            commit,
+        },
+            referrer_entry
+        ) {
+            commit("updateReferrers", referrer_entry);
+        },        
+        setReportTypeEntry({
+            commit,
+        },
+        report_type_entry
+        ) {
+            commit("updateReportTypes", report_type_entry);
+        },
+        setCallEmail({
+            commit,
+        }, call_email) {
+            commit("updateCallEmail", call_email);
+        },
     },
-        
 };

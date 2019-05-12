@@ -44,19 +44,19 @@ from wildlifecompliance.components.call_email.models import (
     ComplianceFormDataRecord,
     ReportType,
     Referrer,
+    ComplianceUserAction,
 )
 from wildlifecompliance.components.call_email.serializers import (
     CallEmailSerializer,
     ClassificationSerializer,
-    UpdateRendererDataSerializer,
     ComplianceFormDataRecordSerializer,
-    UpdateRendererDataSerializer,
     ComplianceLogEntrySerializer,
     LocationSerializer,
     ComplianceUserActionSerializer,
     LocationSerializer,
     ReportTypeSerializer,
     SaveCallEmailSerializer,
+    CreateCallEmailSerializer,
     UpdateSchemaSerializer,
     ReferrerSerializer,
 )
@@ -254,15 +254,33 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
-                serializer = SaveCallEmailSerializer(data=request.data, partial=True)
+                serializer = CreateCallEmailSerializer(data=request.data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
-                    serializer.save()
-                    headers = self.get_success_headers(serializer.data)
-                    return Response(
-                        serializer.data,
-                        status=status.HTTP_201_CREATED,
-                        headers=headers
+                    new_instance = serializer.save()
+        
+                    if request.data.get('renderer_data'):
+                    # option required for duplicated Call/Emails
+                        ComplianceFormDataRecord.process_form(
+                            request,
+                            new_instance,
+                            request.data.get('renderer_data'),
+                            action=ComplianceFormDataRecord.ACTION_TYPE_ASSIGN_VALUE
+                        )
+                        # Serializer returns CallEmail.data for HTTP response
+                        returned_data = CallEmailSerializer(instance=new_instance)
+                        headers = self.get_success_headers(returned_data)
+                        return Response(
+                            returned_data.data,
+                            status=status.HTTP_201_CREATED,
+                            headers=headers
+                            )
+                    else:
+                        headers = self.get_success_headers(serializer.data)
+                        return Response(
+                            serializer.data,
+                            status=status.HTTP_201_CREATED,
+                            headers=headers
                         )
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -297,6 +315,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                         location_serializer.is_valid(raise_exception=True)
                         if location_serializer.is_valid():
                             location_instance = location_serializer.save()
+                            # Required for Call/Email duplication
                             request_data.update({'location_id': location_instance.id})
                 
                 if request_data.get('renderer_data'):
@@ -306,8 +325,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             if serializer.is_valid():
                 serializer.save()
+                instance.log_user_action(
+                    ComplianceUserAction.ACTION_SAVE_CALL_EMAIL_.format(
+                    instance.number), request)
                 headers = self.get_success_headers(serializer.data)
                 returned_data = serializer.data
+                # Required for Call/Email duplication
                 returned_data.update({'classification_id': request_data.get('classification_id')})
                 returned_data.update({'report_type_id': request_data.get('report_type_id')})
                 return Response(

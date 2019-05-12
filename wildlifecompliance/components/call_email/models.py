@@ -355,7 +355,8 @@ class ComplianceLogEntry(CommunicationsLogEntry):
 
 
 class ComplianceUserAction(UserAction):
-    ACTION_CHANGE_CLASSIFICATION_ = "Change Classification {}"
+    #ACTION_CHANGE_CLASSIFICATION_ = "Change Classification {}"
+    ACTION_SAVE_CALL_EMAIL_ = "Save Call/Email {}"
 
     class Meta:
         app_label = 'wildlifecompliance'
