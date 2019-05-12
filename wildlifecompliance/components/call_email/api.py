@@ -315,7 +315,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                         location_serializer.is_valid(raise_exception=True)
                         if location_serializer.is_valid():
                             location_instance = location_serializer.save()
-                            # Required for Call/Email duplication
+                            # Update CallEmail location_id 
                             request_data.update({'location_id': location_instance.id})
                 
                 if request_data.get('renderer_data'):
@@ -330,7 +330,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     instance.number), request)
                 headers = self.get_success_headers(serializer.data)
                 returned_data = serializer.data
-                # Required for Call/Email duplication
+                # Ensure classification_id and report_type_id is returned for Vue template evaluation
                 returned_data.update({'classification_id': request_data.get('classification_id')})
                 returned_data.update({'report_type_id': request_data.get('report_type_id')})
                 return Response(
