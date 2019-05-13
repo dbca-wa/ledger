@@ -179,6 +179,7 @@ class ActivityCategory(models.Model):
     class Meta:
         ordering = ['name']
         app_label = 'commercialoperator'
+        verbose_name_plural= 'Activity Categories'
 
     def __str__(self):
         return self.name
@@ -191,6 +192,7 @@ class Activity(models.Model):
 
     class Meta:
         ordering = ['name']
+        verbose_name_plural = "Activities"
         app_label = 'commercialoperator'
 
     def __str__(self):
