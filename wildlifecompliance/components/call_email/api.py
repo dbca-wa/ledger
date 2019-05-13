@@ -2,7 +2,7 @@ import traceback
 import os
 import base64
 import geojson
-from django.db.models import Q, Min
+from django.db.models import Q, Min, Max
 from django.db import transaction
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
@@ -43,21 +43,22 @@ from wildlifecompliance.components.call_email.models import (
     Location,
     ComplianceFormDataRecord,
     ReportType,
+    Referrer,
+    ComplianceUserAction,
 )
 from wildlifecompliance.components.call_email.serializers import (
     CallEmailSerializer,
     ClassificationSerializer,
-    # CreateCallEmailSerializer,
-    UpdateRendererDataSerializer,
     ComplianceFormDataRecordSerializer,
-    UpdateRendererDataSerializer,
     ComplianceLogEntrySerializer,
     LocationSerializer,
     ComplianceUserActionSerializer,
-    # UpdateCallEmailSerializer,
     LocationSerializer,
     ReportTypeSerializer,
     SaveCallEmailSerializer,
+    CreateCallEmailSerializer,
+    UpdateSchemaSerializer,
+    ReferrerSerializer,
 )
 from utils import SchemaParser
 
@@ -253,34 +254,33 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
-                request_data = request.data
-                location_request_data = request.data.get('location')
-
-                if (
-                        location_request_data.get('geometry', {}).get('coordinates', {})[0] or
-                        location_request_data.get('properties', {}).get('postcode', {})
-                    ):
-                    location_serializer = LocationSerializer(data=location_request_data, partial=True)
-                    location_serializer.is_valid(raise_exception=True)
-                    if location_serializer.is_valid():
-                        location_instance = location_serializer.save()
-                        request_data.update({'location_id': location_instance.id})
-                
-                if request_data.get('renderer_data'):
-                    form_data_response = self.form_data(request)
-
-                serializer = SaveCallEmailSerializer(data=request_data, partial=True)
+                serializer = CreateCallEmailSerializer(data=request.data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
-                    serializer.save()
-                    headers = self.get_success_headers(serializer.data)
-                    returned_data = serializer.data
-                    returned_data.update({'classification_id': request_data.get('classification_id')})
-                    returned_data.update({'report_type_id': request_data.get('report_type_id')})
-                    return Response(
-                        returned_data,
-                        status=status.HTTP_201_CREATED,
-                        headers=headers
+                    new_instance = serializer.save()
+        
+                    if request.data.get('renderer_data'):
+                    # option required for duplicated Call/Emails
+                        ComplianceFormDataRecord.process_form(
+                            request,
+                            new_instance,
+                            request.data.get('renderer_data'),
+                            action=ComplianceFormDataRecord.ACTION_TYPE_ASSIGN_VALUE
+                        )
+                        # Serializer returns CallEmail.data for HTTP response
+                        returned_data = CallEmailSerializer(instance=new_instance)
+                        headers = self.get_success_headers(returned_data)
+                        return Response(
+                            returned_data.data,
+                            status=status.HTTP_201_CREATED,
+                            headers=headers
+                            )
+                    else:
+                        headers = self.get_success_headers(serializer.data)
+                        return Response(
+                            serializer.data,
+                            status=status.HTTP_201_CREATED,
+                            headers=headers
                         )
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -315,6 +315,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                         location_serializer.is_valid(raise_exception=True)
                         if location_serializer.is_valid():
                             location_instance = location_serializer.save()
+                            # Required for Call/Email duplication
                             request_data.update({'location_id': location_instance.id})
                 
                 if request_data.get('renderer_data'):
@@ -324,12 +325,42 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             if serializer.is_valid():
                 serializer.save()
+                instance.log_user_action(
+                    ComplianceUserAction.ACTION_SAVE_CALL_EMAIL_.format(
+                    instance.number), request)
                 headers = self.get_success_headers(serializer.data)
                 returned_data = serializer.data
+                # Required for Call/Email duplication
                 returned_data.update({'classification_id': request_data.get('classification_id')})
                 returned_data.update({'report_type_id': request_data.get('report_type_id')})
                 return Response(
                     returned_data,
+                    status=status.HTTP_201_CREATED,
+                    headers=headers
+                    )
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    
+    @detail_route(methods=['POST', ])
+    def update_schema(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            serializer = UpdateSchemaSerializer(instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            if serializer.is_valid():
+                serializer.save()
+                headers = self.get_success_headers(serializer.data)
+                returned_data = serializer.data
+                return Response(
+                    serializer.data,
                     status=status.HTTP_201_CREATED,
                     headers=headers
                     )
@@ -355,6 +386,17 @@ class ClassificationViewSet(viewsets.ModelViewSet):
         return Classification.objects.none()
 
 
+class ReferrerViewSet(viewsets.ModelViewSet):
+    queryset = Referrer.objects.all()
+    serializer_class = ReferrerSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return Referrer.objects.all()
+        return Referrer.objects.none()
+
+
 class ReportTypeViewSet(viewsets.ModelViewSet):
     queryset = ReportType.objects.all()
     serializer_class = ReportTypeSerializer
@@ -364,6 +406,22 @@ class ReportTypeViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return ReportType.objects.all()
         return ReportType.objects.none()
+
+    @list_route(methods=['GET', ])
+    @renderer_classes((JSONRenderer,))
+    def get_distinct_queryset(self, request, *args, **kwargs):
+        user = self.request.user
+        return_list = []
+        if is_internal(self.request):
+            valid_records = ReportType.objects.values('report_type').annotate(Max('version'))
+            for record in valid_records:
+                qs_record = ReportType.objects \
+                    .filter(report_type=record['report_type']) \
+                    .filter(version=record['version__max']) \
+                    .values('id', 'report_type', 'version')[0]
+
+                return_list.append(qs_record)
+        return Response(return_list)
 
 
 class LocationViewSet(viewsets.ModelViewSet):
