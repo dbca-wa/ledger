@@ -48,14 +48,13 @@ class Organisation(models.Model):
         return OrganisationAction.log_action(self, action, request.user)
 
     def validate_pins(self,pin1,pin2,request):
-        #import ipdb; ipdb.set_trace()
         try:
             val_admin = self.admin_pin_one == pin1 and self.admin_pin_two == pin2
             val_user = self.user_pin_one == pin1 and self.user_pin_two == pin2
             if val_admin:
                 val= val_admin
                 admin_flag= True
-                role = 'organisation_admin' 
+                role = 'organisation_admin'
             elif val_user:
                 val = val_user
                 admin_flag = False
@@ -83,7 +82,7 @@ class Organisation(models.Model):
                 user_role = role,
                 user_status='pending',
                 is_admin = admin_flag
-            
+
             )
             return org
         except Exception:
@@ -103,13 +102,13 @@ class Organisation(models.Model):
                 user_role = role,
                 user_status='pending',
                 is_admin = admin_flag
-            
+
             )
 
             # log linking
             self.log_user_action(OrganisationAction.ACTION_CONTACT_ADDED.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
 
-    
+
     # def link_user(self,user,request):
     #     with transaction.atomic():
     #         try:
@@ -126,14 +125,14 @@ class Organisation(models.Model):
     #             phone_number = user.phone_number,
     #             fax_number = user.fax_number,
     #             email = user.email
-            
+
     #         )
     #         # log linking
     #         self.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
     #         # send email
     #         send_organisation_link_email_notification(user,request.user,self,request)
 
-    #Old unlink user method from Disturbance        
+    #Old unlink user method from Disturbance
     # def unlink_user(self,user,request):
     #     with transaction.atomic():
     #         try:
@@ -145,7 +144,7 @@ class Organisation(models.Model):
     #             '''OrganisationContact.objects.get(
     #                 organisation = self,
     #                 email = delegate.user.email
-                
+
     #             ).delete()'''
     #             org_contact = OrganisationContact.objects.get(organisation = self, email = delegate.user.email)
     #             if OrganisationContact.objects.filter(organisation=self).count()>1:
@@ -207,7 +206,7 @@ class Organisation(models.Model):
             if exists:
                 return {'exists': exists, 'id': org.id,'first_five':org.first_five}
             return {'exists': exists }
-            
+
         except:
             raise
 
@@ -510,14 +509,14 @@ class OrganisationContact(models.Model):
         """
         :return: True if the application is in one of the editable status.
         """
-        return self.is_admin and self.user_status == 'active' and self.user_role =='organisation_admin' 
+        return self.is_admin and self.user_status == 'active' and self.user_role =='organisation_admin'
 
     @property
     def check_consultant(self):
         """
         :return: True if the application is in one of the editable status.
         """
-        return self.user_status == 'active' and self.user_role =='consultant' 
+        return self.user_status == 'active' and self.user_role =='consultant'
 
 class UserDelegation(models.Model):
     organisation = models.ForeignKey(Organisation)
@@ -580,7 +579,7 @@ class OrganisationLogDocument(Document):
     class Meta:
         app_label = 'commercialoperator'
 
-    
+
 class OrganisationLogEntry(CommunicationsLogEntry):
     organisation = models.ForeignKey(Organisation, related_name='comms_logs')
 
@@ -628,7 +627,7 @@ class OrganisationRequest(models.Model):
         # Check if orgsanisation exists in ledger
         ledger_org = None
         try:
-            ledger_org = ledger_organisation.objects.get(abn=self.abn) 
+            ledger_org = ledger_organisation.objects.get(abn=self.abn)
         except ledger_organisation.DoesNotExist:
             ledger_org = ledger_organisation.objects.create(name=self.name,abn=self.abn)
         # Create Organisation in commercialoperator
@@ -676,7 +675,7 @@ class OrganisationRequest(models.Model):
 
     def unassign(self,request):
         with transaction.atomic():
-            self.assigned_officer = None 
+            self.assigned_officer = None
             self.save()
             self.log_user_action(OrganisationRequestUserAction.ACTION_UNASSIGN,request)
 
@@ -704,7 +703,7 @@ class OrganisationRequest(models.Model):
         return OrganisationRequestUserAction.log_action(self, action, request.user)
 
 class OrganisationAccessGroup(models.Model):
-    site = models.OneToOneField(Site, default='1') 
+    site = models.OneToOneField(Site, default='1')
     members = models.ManyToManyField(EmailUser)
 
     def __str__(self):
@@ -725,7 +724,7 @@ class OrganisationAccessGroup(models.Model):
     class Meta:
         app_label = 'commercialoperator'
         verbose_name_plural = "Organisation access group"
-        
+
 class OrganisationRequestUserAction(UserAction):
     ACTION_LODGE_REQUEST = "Lodge request {}"
     ACTION_ASSIGN_TO = "Assign to {}"
@@ -782,12 +781,27 @@ class OrganisationRequestLogEntry(CommunicationsLogEntry):
 
 
 
+#import reversion
+#reversion.register(Organisation, follow=['contacts', 'action_logs', 'comms_logs'])
+#reversion.register(OrganisationContact)
+#reversion.register(OrganisationAction)
+#reversion.register(OrganisationLogEntry)
+#reversion.register(OrganisationLogDocument)
+#reversion.register(OrganisationRequest)
+#reversion.register(UserDelegation)
+
 import reversion
-reversion.register(Organisation, follow=['contacts', 'action_logs', 'comms_logs'])
+reversion.register(ledger_organisation, follow=['organisation_set'])
+reversion.register(Organisation, follow=['org_approvals', 'contacts', 'userdelegation_set', 'action_logs', 'comms_logs'])
 reversion.register(OrganisationContact)
 reversion.register(OrganisationAction)
-reversion.register(OrganisationLogEntry)
+reversion.register(OrganisationLogEntry, follow=['documents'])
 reversion.register(OrganisationLogDocument)
-reversion.register(OrganisationRequest)
+reversion.register(OrganisationRequest, follow=['action_logs', 'organisationrequestdeclineddetails_set', 'comms_logs'])
+reversion.register(OrganisationAccessGroup)
+reversion.register(OrganisationRequestUserAction)
+reversion.register(OrganisationRequestDeclinedDetails)
+reversion.register(OrganisationRequestLogDocument)
+reversion.register(OrganisationRequestLogEntry, follow=['documents'])
 reversion.register(UserDelegation)
 

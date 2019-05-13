@@ -36,6 +36,8 @@ from commercialoperator.components.organisations.models import (
                             )
 from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer, ParkSerializer, ActivitySerializer, AccessTypeSerializer, TrailSerializer
 from rest_framework import serializers
+from django.db.models import Q
+from reversion.models import Version
 
 class ProposalTypeSerializer(serializers.ModelSerializer):
     activities = serializers.SerializerMethodField()
@@ -71,8 +73,14 @@ class ProposalActivitiesMarineSerializer(serializers.ModelSerializer):
         model = ProposalActivitiesMarine
         fields = ('id','activities_marine')
 
+#class ParkEntrySerializer(serializers.ModelSerializer):
+#    class Meta:
+#        model = ParkEntry
+#        fields = '__all__'
+
 class ProposalParkActivitySerializer(serializers.ModelSerializer):
     activity=ActivitySerializer()
+    #park_entry=ParkEntrySerializer()
     class Meta:
         model = ProposalParkActivity
         fields = '__all__'
@@ -108,7 +116,6 @@ class ProposalParkSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProposalPark
         fields = '__all__'
-
 
 class SaveProposalParkSerializer(serializers.ModelSerializer):
     #park=ParkSerializer()
@@ -227,7 +234,7 @@ class SaveProposalOtherDetailsSerializer(serializers.ModelSerializer):
                 'proposal',
                 )
 class ChecklistQuestionSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
         model = ChecklistQuestion
         #fields = '__all__'
@@ -256,7 +263,7 @@ class ProposalAssessmentSerializer(serializers.ModelSerializer):
                 'referral_group',
                 'checklist'
                 )
-       
+
 
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
@@ -584,6 +591,41 @@ class ProposalDeclinedDetailsSerializer(serializers.ModelSerializer):
         model = ProposalDeclinedDetails
         fields = '__all__'
 
+class ProposalParkSerializer(BaseProposalSerializer):
+    applicant = ApplicantSerializer()
+    processing_status = serializers.SerializerMethodField(read_only=True)
+    customer_status = serializers.SerializerMethodField(read_only=True)
+    submitter = serializers.CharField(source='submitter.get_full_name')
+    application_type = serializers.CharField(source='application_type.name', read_only=True)
+    licence_number = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Proposal
+        fields = (
+                'id',
+                'licence_number',
+                'application_type',
+                'approval_level',
+                'title',
+                'customer_status',
+                'processing_status',
+                'applicant',
+                'proxy_applicant',
+                'submitter',
+                'lodgement_number',
+                #'activities_land',
+                #'activities_marine',
+                'land_parks',
+                #'marine_parks',
+                #'trails',
+                )
+        #read_only_fields=('documents','requirements')
+        #read_only_fields = '__all__'
+
+    def get_licence_number(self,obj):
+        return obj.approval.lodgement_number
+
+
 class InternalProposalSerializer(BaseProposalSerializer):
     applicant = ApplicantSerializer()
     processing_status = serializers.SerializerMethodField(read_only=True)
@@ -604,6 +646,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     district = serializers.CharField(source='district.name', read_only=True)
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
     qaofficer_referrals = QAOfficerReferralSerializer(many=True)
+    reversion_ids = serializers.SerializerMethodField()
     assessor_assessment=ProposalAssessmentSerializer(read_only=True)
     referral_assessments=ProposalAssessmentSerializer(read_only=True, many=True)
 
@@ -666,6 +709,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'trails',
                 'training_completed',
                 'can_edit_activities',
+                'reversion_ids'
                 'assessor_assessment',
                 'referral_assessments'
                 )
@@ -693,7 +737,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
         request = self.context['request']
         user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
         return obj.can_edit_activities(user)
-            
+
     def get_readonly(self,obj):
         return True
 
@@ -706,6 +750,9 @@ class InternalProposalSerializer(BaseProposalSerializer):
 
     def get_assessor_data(self,obj):
         return obj.assessor_data
+
+    def get_reversion_ids(self,obj):
+        return obj.reversion_ids
 
 class ReferralProposalSerializer(InternalProposalSerializer):
     def get_assessor_mode(self,obj):

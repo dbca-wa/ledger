@@ -7,6 +7,8 @@ import Organisation from '../organisations/manage.vue'
 import Compliance from '../compliances/access.vue'
 import ComplianceSubmit from '../compliances/submit.vue'
 import Approval from '../approvals/approval.vue'
+import PaymentOrder from '@/components/common/tclass/payment_order.vue'
+import PaymentDash from '@/components/common/payments_dashboard.vue'
 export default
 {
     path: '/external',
@@ -21,7 +23,7 @@ export default
         {
             path: '/',
             component: ExternalDashboard,
-            name: 'external-proposals-dash' 
+            name: 'external-proposals-dash'
         },
         {
             path: 'organisations/manage/:org_id',
@@ -38,8 +40,17 @@ export default
         },
         {
             path: 'approval/:approval_id',
-            component: Approval,           
-        },       
+            component: Approval,
+        },
+        {
+            path: 'payment',
+            component: PaymentDash,
+        },
+        {
+            path: 'payment_order',
+            component: PaymentOrder,
+            name:"payment_order"
+        },
         {
             path: 'proposal',
             component:

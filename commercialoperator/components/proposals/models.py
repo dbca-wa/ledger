@@ -15,10 +15,11 @@ from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin
+#from ledger.accounts.models import EmailUser
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, ParkPrice, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument#, RevisionedMixin
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
@@ -26,6 +27,8 @@ from commercialoperator.components.proposals.email import send_submit_email_noti
 import copy
 import subprocess
 from django.db.models import Q
+from reversion.models import Version
+from dirtyfields import DirtyFieldsMixin
 
 import logging
 logger = logging.getLogger(__name__)
@@ -281,8 +284,47 @@ class ProposalActivitiesMarine(models.Model):
         app_label = 'commercialoperator'
 
 
-class Proposal(RevisionedMixin):
-#class Proposal(models.Model):
+@python_2_unicode_compatible
+class ParkEntry(models.Model):
+    park = models.ForeignKey('Park', related_name='park_entries')
+    proposal = models.ForeignKey('Proposal', related_name='park_entries')
+    arrival_date = models.DateField()
+    number_adults = models.PositiveSmallIntegerField('No. of Adults', null=True, blank=True)
+    number_children = models.PositiveSmallIntegerField('No. of Children', null=True, blank=True)
+    number_seniors = models.PositiveSmallIntegerField('No. of Senior Citizens', null=True, blank=True)
+    number_free_of_charge = models.PositiveSmallIntegerField('No. of Individuals Free of Charge', null=True, blank=True)
+
+    class Meta:
+        ordering = ['park__name']
+        app_label = 'commercialoperator'
+        #unique_together = ('id', 'proposal',)
+
+    def __str__(self):
+        return self.park.name
+
+    @property
+    def park_prices(self):
+        return self.park.park_prices
+
+    @property
+    def price_adult(self):
+        return (self.park_prices.adult * self.number_adults)
+
+    @property
+    def price_child(self):
+        return (self.park_prices.child * self.number_children)
+
+    @property
+    def price_senior(self):
+        return (self.park_prices.senior * self.number_senior)
+
+    @property
+    def price_net(self):
+        return (self.price_adult + self.price_child + self.price_senior)
+
+ 
+class Proposal(DirtyFieldsMixin, RevisionedMixin):
+#class Proposal(DirtyFieldsMixin, models.Model):
 
     CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'),
                                ('with_assessor', 'Under Review'),
@@ -462,16 +504,27 @@ class Proposal(RevisionedMixin):
 
     #Append 'P' to Proposal id to generate Lodgement number. Lodgement number and lodgement sequence are used to generate Reference.
     def save(self, *args, **kwargs):
+        orig_processing_status = self._original_state['processing_status']
         super(Proposal, self).save(*args,**kwargs)
-        #import ipdb; ipdb.set_trace()
+        if self.processing_status != orig_processing_status:
+            #import ipdb; ipdb.set_trace()
+            self.save(version_comment='processing_status: {}'.format(self.processing_status))
+
         if self.lodgement_number == '' and self.application_type.name != 'E Class':
             new_lodgment_id = 'P{0:06d}'.format(self.pk)
             self.lodgement_number = new_lodgment_id
-            self.save()
+            self.save(version_comment='processing_status: {}'.format(self.processing_status))
 
     @property
     def reference(self):
         return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
+
+    @property
+    def reversion_ids(self):
+        current_revision_id = Version.objects.get_for_object(self).first().revision_id
+        versions = Version.objects.get_for_object(self).select_related("revision__user").filter(Q(revision__comment__icontains='status') | Q(revision_id=current_revision_id))
+        version_ids = [[i.id,i.revision.date_created] for i in versions]
+        return [dict(cur_version_id=version_ids[0][0], prev_version_id=version_ids[i+1][0], created=version_ids[i][1]) for i in range(len(version_ids)-1)]
 
     def qa_officers(self, name=None):
         if not name:
@@ -691,7 +744,7 @@ class Proposal(RevisionedMixin):
             return False
 
     #To allow/ prevent internal user to edit activities (Land and Marine) for T-class licence
-    #still need to check to assessor mode in on or not 
+    #still need to check to assessor mode in on or not
     def can_edit_activities(self,user):
         if self.processing_status == 'with_assessor' or self.processing_status == 'with_assessor_requirements':
             return self.__assessor_group() in user.proposalassessorgroup_set.all()
@@ -1316,6 +1369,7 @@ class Proposal(RevisionedMixin):
                                 previous_approval.replaced_by = approval
                                 previous_approval.save()
                     else:
+                        #import ipdb; ipdb.set_trace()
                         approval,created = Approval.objects.update_or_create(
                             current_proposal = checking_proposal,
                             defaults = {
@@ -1326,7 +1380,8 @@ class Proposal(RevisionedMixin):
                                 'issue_date' : timezone.now(),
                                 'expiry_date' : details.get('expiry_date'),
                                 'start_date' : details.get('start_date'),
-                                'applicant' : self.applicant
+                                'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
                                 #'extracted_fields' = JSONField(blank=True, null=True)
                             }
                         )
@@ -1549,7 +1604,6 @@ class Proposal(RevisionedMixin):
                 #proposal.save()
             return proposal
 
-
 class ProposalLogDocument(Document):
     log_entry = models.ForeignKey('ProposalLogEntry',related_name='documents')
     _file = models.FileField(upload_to=update_proposal_comms_log_filename)
@@ -1559,6 +1613,9 @@ class ProposalLogDocument(Document):
 
 class ProposalLogEntry(CommunicationsLogEntry):
     proposal = models.ForeignKey(Proposal, related_name='comms_logs')
+
+    def __str__(self):
+        return '{} - {}'.format(self.reference, self.subject)
 
     class Meta:
         app_label = 'commercialoperator'
@@ -1616,6 +1673,7 @@ class ProposalOtherDetails(models.Model):
     class Meta:
         app_label = 'commercialoperator'
 
+
 class ProposalAccreditation(models.Model):
     #activities_land = models.CharField(max_length=24, blank=True, default='')
     ACCREDITATION_TYPE_CHOICES = (
@@ -1632,14 +1690,19 @@ class ProposalAccreditation(models.Model):
     comments=models.TextField(blank=True)
     proposal_other_details = models.ForeignKey(ProposalOtherDetails, related_name='accreditations', null=True)
 
+    def __str__(self):
+        return '{} - {}'.format(self.accreditation_type, self.comments)
+
     class Meta:
         app_label = 'commercialoperator'
-
 
 
 class ProposalPark(models.Model):
     park = models.ForeignKey(Park, blank=True, null=True, related_name='proposals')
     proposal = models.ForeignKey(Proposal, blank=True, null=True, related_name='parks')
+
+    def __str__(self):
+        return self.park.name
 
     class Meta:
         app_label = 'commercialoperator'
@@ -1659,11 +1722,13 @@ class ProposalPark(models.Model):
         activities=qs.filter(Q(activity__activity_category__in = categories)& Q(activity__visible=True))
         return activities
 
-
 #To store Park activities related to Proposal T class land parks
 class ProposalParkActivity(models.Model):
     proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='activities')
     activity = models.ForeignKey(Activity, blank=True, null=True)
+
+    def __str__(self):
+        return self.activity.name
 
     class Meta:
         app_label = 'commercialoperator'
@@ -1673,6 +1738,9 @@ class ProposalParkActivity(models.Model):
 class ProposalParkAccess(models.Model):
     proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='access_types')
     access_type = models.ForeignKey(AccessType, blank=True, null=True)
+
+    def __str__(self):
+        return self.access_type.name
 
     class Meta:
         app_label = 'commercialoperator'
@@ -1684,6 +1752,8 @@ class ProposalParkZone(models.Model):
     zone = models.ForeignKey(Zone, blank=True, null=True, related_name='proposal_zones')
     access_point = models.CharField(max_length=200, blank=True)
 
+    def __str__(self):
+        return self.zone.name
 
     class Meta:
         app_label = 'commercialoperator'
@@ -1694,6 +1764,9 @@ class ProposalParkZoneActivity(models.Model):
     activity = models.ForeignKey(Activity, blank=True, null=True)
     #section=models.ForeignKey(Section, blank=True, null= True)
 
+    def __str__(self):
+        return '{} - {}'.format(self.activity.name, self.park_zone.zone.name)
+
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('park_zone', 'activity')
@@ -1702,6 +1775,9 @@ class ProposalParkZoneActivity(models.Model):
 class ProposalTrail(models.Model):
     trail = models.ForeignKey(Trail, blank=True, null=True, related_name='proposals')
     proposal = models.ForeignKey(Proposal, blank=True, null=True, related_name='trails')
+
+    def __str__(self):
+        return self.trail.name
 
     class Meta:
         app_label = 'commercialoperator'
@@ -1717,6 +1793,9 @@ class ProposalTrail(models.Model):
 class ProposalTrailSection(models.Model):
     proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='sections')
     section = models.ForeignKey(Section, blank=True, null=True, related_name='proposal_trails')
+
+    def __str__(self):
+        return '{} - {}'.format(self.proposal_trail, self.section.name)
 
     class Meta:
         app_label = 'commercialoperator'
@@ -1737,6 +1816,9 @@ class ProposalTrailSectionActivity(models.Model):
     activity = models.ForeignKey(Activity, blank=True, null=True)
     #section=models.ForeignKey(Section, blank=True, null= True)
 
+    def __str__(self):
+        return '{} - {}'.format(self.trail_section, self.activity.name)
+
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('trail_section', 'activity')
@@ -1751,11 +1833,15 @@ class Vehicle(models.Model):
     rego_expiry= models.DateField(blank=True, null=True)
     proposal = models.ForeignKey(Proposal, related_name='vehicles')
 
+    def __str__(self):
+        return '{} - {}'.format(self.rego, self.access_type)
+
     class Meta:
         app_label = 'commercialoperator'
 
     def __str__(self):
         return self.rego
+
 
 @python_2_unicode_compatible
 class Vessel(models.Model):
@@ -1766,6 +1852,9 @@ class Vessel(models.Model):
     size = models.CharField(max_length=200, blank=True)
     #rego_expiry= models.DateField(blank=True, null=True)
     proposal = models.ForeignKey(Proposal, related_name='vessels')
+
+    def __str__(self):
+        return '{} - {}'.format(self.spv_no, self.nominated_vessel)
 
     class Meta:
         app_label = 'commercialoperator'
@@ -1778,6 +1867,9 @@ class ProposalRequest(models.Model):
     subject = models.CharField(max_length=200, blank=True)
     text = models.TextField(blank=True)
     officer = models.ForeignKey(EmailUser, null=True)
+
+    def __str__(self):
+        return '{} - {}'.format(self.subject, self.text)
 
     class Meta:
         app_label = 'commercialoperator'
@@ -1868,6 +1960,7 @@ class Assessment(ProposalRequest):
         app_label = 'commercialoperator'
 
 class ProposalDeclinedDetails(models.Model):
+    #proposal = models.OneToOneField(Proposal, related_name='declined_details')
     proposal = models.OneToOneField(Proposal)
     officer = models.ForeignKey(EmailUser, null=False)
     reason = models.TextField(blank=True)
@@ -1877,6 +1970,7 @@ class ProposalDeclinedDetails(models.Model):
         app_label = 'commercialoperator'
 
 class ProposalOnHold(models.Model):
+    #proposal = models.OneToOneField(Proposal, related_name='onhold')
     proposal = models.OneToOneField(Proposal)
     officer = models.ForeignKey(EmailUser, null=False)
     comment = models.TextField(blank=True)
@@ -1960,6 +2054,7 @@ class ProposalUserAction(UserAction):
     #Approval
     ACTION_REISSUE_APPROVAL = "Reissue approval for proposal {}"
     ACTION_CANCEL_APPROVAL = "Cancel approval for proposal {}"
+    ACTION_EXTEND_APPROVAL = "Extend approval"
     ACTION_SUSPEND_APPROVAL = "Suspend approval for proposal {}"
     ACTION_REINSTATE_APPROVAL = "Reinstate approval for proposal {}"
     ACTION_SURRENDER_APPROVAL = "Surrender approval for proposal {}"
@@ -2802,21 +2897,99 @@ class HelpPage(models.Model):
         unique_together = ('application_type', 'help_type', 'version')
 
 
+#class Author(models.Model):
+#    name = models.CharField(max_length=256)
+#
+#    def __str__(self):
+#        return self.name
+#
+#    class Meta:
+#        app_label = 'commercialoperator'
+#
+#class Publisher(models.Model):
+#    name = models.CharField(max_length=256)
+#    author = models.ForeignKey(Author, related_name='publishers')
+#
+#    def __str__(self):
+#        return self.name
+#
+#    class Meta:
+#        app_label = 'commercialoperator'
+
+#import reversion
+#reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals', 'approvals','parks',])
+#reversion.register(ProposalType)
+#reversion.register(ProposalRequirement)            # related_name=requirements
+#reversion.register(ProposalStandardRequirement)    # related_name=proposal_requirements
+#reversion.register(ProposalDocument)               # related_name=documents
+#reversion.register(ProposalLogEntry)
+#reversion.register(ProposalUserAction)
+#reversion.register(ComplianceRequest)
+#reversion.register(AmendmentRequest)
+#reversion.register(Assessment)
+#reversion.register(Referral)
+#reversion.register(HelpPage)
+#reversion.register(ApplicationType)
+#reversion.register(ReferralRecipientGroup)
+#reversion.register(QAOfficerGroup)
+#reversion.register(ProposalPark, follow=['activities',])
+#reversion.register(ProposalParkActivity)
+
+#reversion.register(Author, follow=['publishers',])
+#reversion.register(Publisher)
+
+park = models.ForeignKey('Park', related_name='park_entries')
+
 import reversion
-reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals', 'approvals',])
-reversion.register(ProposalType)
-reversion.register(ProposalRequirement)            # related_name=requirements
-reversion.register(ProposalStandardRequirement)    # related_name=proposal_requirements
-reversion.register(ProposalDocument)               # related_name=documents
-reversion.register(ProposalLogEntry)
+reversion.register(Referral, follow=['referral_documents',])
+reversion.register(ReferralDocument, follow=['referral_document'])
+
+reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_logs','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails', 'proposalonhold', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals', 'park_entries'])
+reversion.register(ProposalDocument, follow=['onhold_documents'])
+reversion.register(OnHoldDocument)
+reversion.register(ProposalRequest)
+reversion.register(ProposalRequiredDocument)
+reversion.register(ProposalApplicantDetails)
+reversion.register(ProposalActivitiesLand)
+reversion.register(ProposalActivitiesMarine)
+reversion.register(ProposalOtherDetails, follow=['accreditations'])
+
+reversion.register(ProposalLogEntry, follow=['documents',])
+reversion.register(ProposalLogDocument)
+
+#reversion.register(Park, follow=['proposals',])
+reversion.register(ProposalPark, follow=['activities','access_types', 'zones'])
+reversion.register(ProposalParkAccess)
+
+#reversion.register(AccessType, follow=['proposals','proposalparkaccess_set', 'vehicles'])
+
+#reversion.register(Activity, follow=['proposalparkactivity_set','proposalparkzoneactivity_set', 'proposaltrailsectionactivity_set'])
+reversion.register(ProposalParkActivity)
+
+reversion.register(ProposalParkZone, follow=['park_activities'])
+reversion.register(ProposalParkZoneActivity)
+reversion.register(ParkEntry)
+
+reversion.register(ProposalTrail, follow=['sections'])
+reversion.register(Vehicle)
+reversion.register(Vessel)
 reversion.register(ProposalUserAction)
-reversion.register(ComplianceRequest)
+
+reversion.register(ProposalTrailSection, follow=['trail_activities'])
+
+reversion.register(ProposalTrailSectionActivity)
+reversion.register(AmendmentReason, follow=['amendmentrequest_set'])
 reversion.register(AmendmentRequest)
 reversion.register(Assessment)
-reversion.register(Referral)
+reversion.register(ProposalDeclinedDetails)
+reversion.register(ProposalOnHold)
+reversion.register(ProposalStandardRequirement, follow=['proposalrequirement_set'])
+reversion.register(ProposalRequirement, follow=['compliance_requirement'])
+reversion.register(ReferralRecipientGroup, follow=['commercialoperator_referral_groups'])
+reversion.register(QAOfficerGroup, follow=['qaofficer_groups'])
+reversion.register(QAOfficerReferral)
+reversion.register(QAOfficerDocument, follow=['qaofficer_referral_document'])
+reversion.register(ProposalAccreditation)
 reversion.register(HelpPage)
-reversion.register(ApplicationType)
-reversion.register(ReferralRecipientGroup)
-reversion.register(QAOfficerGroup)
 
 

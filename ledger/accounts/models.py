@@ -539,8 +539,10 @@ class RevisionedMixin(models.Model):
             super(RevisionedMixin, self).save(**kwargs)
         else:
             with revisions.create_revision():
-                revisions.set_user(kwargs.pop('version_user', None))
-                revisions.set_comment(kwargs.pop('version_comment', ''))
+                if 'version_user' in kwargs:
+                    revisions.set_user(kwargs.pop('version_user', None))
+                if 'version_comment' in kwargs:
+                    revisions.set_comment(kwargs.pop('version_comment', ''))
                 super(RevisionedMixin, self).save(**kwargs)
 
     @property

@@ -82,10 +82,10 @@ from commercialoperator.components.proposals.serializers import (
     OnHoldSerializer,
     ProposalOtherDetailsSerializer,
     SaveProposalOtherDetailsSerializer,
+    ProposalParkSerializer,
     ChecklistQuestionSerializer,
     ProposalAssessmentSerializer,
     ProposalAssessmentAnswerSerializer
-
 )
 from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.approvals.serializers import ApprovalSerializer
@@ -100,6 +100,8 @@ from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
 from rest_framework.filters import BaseFilterBackend
+import reversion
+from reversion.models import Version
 
 import logging
 logger = logging.getLogger(__name__)
@@ -211,6 +213,8 @@ class ProposalRenderer(DatatablesRenderer):
             #data.pop('recordsFiltered')
         return super(ProposalRenderer, self).render(data, accepted_media_type, renderer_context)
 
+
+
 #from django.utils.decorators import method_decorator
 #from django.views.decorators.cache import cache_page
 class ProposalPaginatedViewSet(viewsets.ModelViewSet):
@@ -298,6 +302,21 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         return self.paginator.get_paginated_response(serializer.data)
 
     @list_route(methods=['GET',])
+    def qaofficer_info(self, request, *args, **kwargs):
+        """
+        Used by the internal dashboard
+
+        http://localhost:8499/api/proposal_paginated/qaofficer_internal/?format=datatables&draw=1&length=2
+        """
+        #import ipdb; ipdb.set_trace()
+        qa_officers = QAOfficerGroup.objects.get(default=True).members.all().values_list('email', flat=True)
+        if request.user.email in qa_officers:
+            return Response({'QA_Officer': True})
+        else:
+            return Response({'QA_Officer': False})
+
+
+    @list_route(methods=['GET',])
     def qaofficer_internal(self, request, *args, **kwargs):
         """
         Used by the internal dashboard
@@ -348,7 +367,44 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         return self.paginator.get_paginated_response(serializer.data)
 
 
+class VersionableModelViewSetMixin(viewsets.ModelViewSet):
+    #@detail_route()
+    #def history(self, request, pk=None):
+    @detail_route(methods=['GET',])
+    def _history(self, request, *args, **kwargs):
+        _object = self.get_object()
+        _versions = reversion.get_for_object(_object)
+
+        _context = {
+            'request': request
+        }
+
+        _version_serializer = VersionSerializer(_versions, many=True, context=_context)
+        # TODO
+        # check pagination
+        return Response(_version_serializer.data)
+
+    @detail_route(methods=['GET',])
+    def history(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
+        _object = self.get_object()
+        #_versions = reversion.get_for_object(_object)
+        _versions = Version.objects.get_for_object(_object)
+
+        _context = {
+            'request': request
+        }
+
+        #_version_serializer = VersionSerializer(_versions, many=True, context=_context)
+        _version_serializer = ProposalSerializer([v.object for v in _versions], many=True, context=_context)
+        # TODO
+        # check pagination
+        return Response(_version_serializer.data)
+
+
+
 class ProposalViewSet(viewsets.ModelViewSet):
+#class ProposalViewSet(VersionableModelViewSetMixin):
     #import ipdb; ipdb.set_trace()
     #queryset = Proposal.objects.all()
     queryset = Proposal.objects.none()
@@ -395,6 +451,16 @@ class ProposalViewSet(viewsets.ModelViewSet):
             approval_status_choices = [i[1] for i in Approval.STATUS_CHOICES],
         )
         return Response(data)
+
+    @detail_route(methods=['GET',])
+    def compare_list(self, request, *args, **kwargs):
+        """ Returns the reversion-compare urls --> list"""
+        current_revision_id = Version.objects.get_for_object(self.get_object()).first().revision_id
+        versions = Version.objects.get_for_object(self.get_object()).select_related("revision__user").filter(Q(revision__comment__icontains='status') | Q(revision_id=current_revision_id))
+        version_ids = [i.id for i in versions]
+        urls = ['?version_id2={}&version_id1={}'.format(version_ids[0], version_ids[i+1]) for i in range(len(version_ids)-1)]
+        return Response(urls)
+
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
@@ -813,6 +879,13 @@ class ProposalViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = InternalProposalSerializer(instance,context={'request':request})
         return Response(serializer.data)
+
+    @detail_route(methods=['GET',])
+    def proposal_parks(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = ProposalParkSerializer(instance,context={'request':request})
+        return Response(serializer.data)
+
 
 #    @detail_route(methods=['post'])
 #    @renderer_classes((JSONRenderer,))
@@ -1580,7 +1653,6 @@ class ReferralViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['GET',])
     def resend(self, request, *args, **kwargs):
         try:
-            #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             instance.resend(request)
             serializer = InternalProposalSerializer(instance.proposal,context={'request':request})
@@ -1598,7 +1670,6 @@ class ReferralViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def send_referral(self, request, *args, **kwargs):
         try:
-            import ipdb; ipdb.set_trace()
             instance = self.get_object()
             serializer = SendReferralSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -1916,8 +1987,8 @@ class ProposalAssessmentViewSet(viewsets.ModelViewSet):
             checklist=request.data['checklist']
             if checklist:
                 for chk in checklist:
-                    try: 
-                        #import ipdb; ipdb.set_trace()    
+                    try:
+                        #import ipdb; ipdb.set_trace()
                         chk_instance=ProposalAssessmentAnswer.objects.get(id=chk['id'])
                         serializer_chk = ProposalAssessmentAnswerSerializer(chk_instance, data=chk)
                         serializer_chk.is_valid(raise_exception=True)
