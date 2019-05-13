@@ -4229,7 +4229,7 @@ def get_current_booking(ongoing_booking):
      cb['total_price'] = str(total_price)
      cb['ongoing_booking'] = True if ongoing_booking else False,
      cb['ongoing_booking_id'] = ongoing_booking.id if ongoing_booking else None,
-     cb['details'] = ongoing_booking.details if ongoing_booking else None,
+     cb['details'] = ongoing_booking.details if ongoing_booking else [],
      cb['expiry'] = expiry
      cb['timer'] = timer
 
