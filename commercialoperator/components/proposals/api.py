@@ -48,7 +48,10 @@ from commercialoperator.components.proposals.models import (
     Vehicle,
     Vessel,
     ProposalOtherDetails,
-    ProposalAccreditation
+    ProposalAccreditation,
+    ChecklistQuestion,
+    ProposalAssessment,
+    ProposalAssessmentAnswer
 )
 from commercialoperator.components.proposals.serializers import (
     SendReferralSerializer,
@@ -80,6 +83,9 @@ from commercialoperator.components.proposals.serializers import (
     ProposalOtherDetailsSerializer,
     SaveProposalOtherDetailsSerializer,
     ProposalParkSerializer,
+    ChecklistQuestionSerializer,
+    ProposalAssessmentSerializer,
+    ProposalAssessmentAnswerSerializer
 )
 from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.approvals.serializers import ApprovalSerializer
@@ -709,7 +715,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             #qs = instance.requirements.all()
             qs = instance.requirements.all().exclude(is_deleted=True)
-            serializer = ProposalRequirementSerializer(qs,many=True)
+            serializer = ProposalRequirementSerializer(qs,many=True, context={'request':request})
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -1955,3 +1961,50 @@ class VesselViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+class AssessorChecklistViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ChecklistQuestion.objects.none()
+    serializer_class = ChecklistQuestionSerializer
+
+    def get_queryset(self):
+        qs=ChecklistQuestion.objects.filter(Q(list_type = 'assessor_list')& Q(obsolete=False))
+        return qs
+
+class ProposalAssessmentViewSet(viewsets.ModelViewSet):
+    #queryset = ProposalRequirement.objects.all()
+    queryset = ProposalAssessment.objects.all()
+    serializer_class = ProposalAssessmentSerializer
+
+    @detail_route(methods=['post'])
+    def update_assessment(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            #import ipdb; ipdb.set_trace()
+            request.data['submitter']= request.user.id
+            serializer = ProposalAssessmentSerializer(instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            #import ipdb; ipdb.set_trace()
+            checklist=request.data['checklist']
+            if checklist:
+                for chk in checklist:
+                    try:
+                        #import ipdb; ipdb.set_trace()
+                        chk_instance=ProposalAssessmentAnswer.objects.get(id=chk['id'])
+                        serializer_chk = ProposalAssessmentAnswerSerializer(chk_instance, data=chk)
+                        serializer_chk.is_valid(raise_exception=True)
+                        serializer_chk.save()
+                    except:
+                        raise
+            #instance.proposal.log_user_action(ProposalUserAction.ACTION_EDIT_VESSEL.format(instance.id),request)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))

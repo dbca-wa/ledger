@@ -610,6 +610,23 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         return [self.region.name] if self.region else []
 
     @property
+    def assessor_assessment(self):
+        qs=self.assessment.filter(referral_assessment=False, referral_group=None)
+        if qs:
+            return qs[0]
+        else:
+            return None
+
+    @property
+    def referral_assessments(self):
+        qs=self.assessment.filter(referral_assessment=True, referral_group__isnull=False)
+        if qs:
+            return qs
+        else:
+            return None
+
+
+    @property
     def permit(self):
         return self.approval.licence_document._file.url if self.approval else None
 
@@ -809,6 +826,19 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                     self.save()
                 else:
                     raise ValidationError('An error occurred while submitting proposal (Submit email notifications failed)')
+                #Create assessor checklist with the current assessor_list type questions
+                #Assessment instance already exits then skip.
+                try:
+                    assessor_assessment=ProposalAssessment.objects.get(proposal=self,referral_group=None, referral_assessment=False)
+                except ProposalAssessment.DoesNotExist:
+                    assessor_assessment=ProposalAssessment.objects.create(proposal=self,referral_group=None, referral_assessment=False)
+                    checklist=ChecklistQuestion.objects.filter(list_type='assessor_list', obsolete=False)
+                    for chk in checklist:
+                        try:
+                            chk_instance=ProposalAssessmentAnswer.objects.get(question=chk, assessment=assessor_assessment)
+                        except ProposalAssessmentAnswer.DoesNotExist:
+                            chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=assessor_assessment)  
+
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
@@ -890,6 +920,18 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                             sent_by=request.user,
                             text=referral_text
                         )
+                        #Create assessor checklist with the current assessor_list type questions
+                        #Assessment instance already exits then skip.
+                        try:
+                            referral_assessment=ProposalAssessment.objects.get(proposal=self,referral_group=referral_group, referral_assessment=True)
+                        except ProposalAssessment.DoesNotExist:
+                            referral_assessment=ProposalAssessment.objects.create(proposal=self,referral_group=referral_group, referral_assessment=True)
+                            checklist=ChecklistQuestion.objects.filter(list_type='referral_list', obsolete=False)
+                            for chk in checklist:
+                                try:
+                                    chk_instance=ProposalAssessmentAnswer.objects.get(question=chk, assessment=referral_assessment)
+                                except ProposalAssessmentAnswer.DoesNotExist:
+                                    chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=referral_assessment) 
                     # Create a log entry for the proposal
                     #self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
                     self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}'.format(referral_group.name)),request)
@@ -1851,7 +1893,7 @@ class AmendmentReason(models.Model):
 
     def __str__(self):
         return self.reason
-
+                                                                      
 
 class AmendmentRequest(ProposalRequest):
     STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
@@ -1951,27 +1993,6 @@ class ProposalStandardRequirement(RevisionedMixin):
     class Meta:
         app_label = 'commercialoperator'
 
-class ProposalRequirement(OrderedModel):
-    RECURRENCE_PATTERNS = [(1, 'Weekly'), (2, 'Monthly'), (3, 'Yearly')]
-    standard_requirement = models.ForeignKey(ProposalStandardRequirement,null=True,blank=True)
-    free_requirement = models.TextField(null=True,blank=True)
-    standard = models.BooleanField(default=True)
-    proposal = models.ForeignKey(Proposal,related_name='requirements')
-    due_date = models.DateField(null=True,blank=True)
-    recurrence = models.BooleanField(default=False)
-    recurrence_pattern = models.SmallIntegerField(choices=RECURRENCE_PATTERNS,default=1)
-    recurrence_schedule = models.IntegerField(null=True,blank=True)
-    copied_from = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True)
-    is_deleted = models.BooleanField(default=False)
-    #order = models.IntegerField(default=1)
-
-    class Meta:
-        app_label = 'commercialoperator'
-
-
-    @property
-    def requirement(self):
-        return self.standard_requirement.text if self.standard else self.free_requirement
 
 class ProposalUserAction(UserAction):
     ACTION_CREATE_CUSTOMER_ = "Create customer {}"
@@ -2072,7 +2093,8 @@ class ReferralRecipientGroup(models.Model):
     members = models.ManyToManyField(EmailUser)
 
     def __str__(self):
-        return 'Referral Recipient Group'
+        #return 'Referral Recipient Group'
+        return self.name
 
     @property
     def all_members(self):
@@ -2201,6 +2223,15 @@ class Referral(RevisionedMixin):
         return Referral.objects.filter(sent_by=self.referral, proposal=self.proposal)[:2]
 
     @property
+    def referral_assessment(self):
+        qs=self.assessment.filter(referral_assessment=True, referral_group=self.referral_group)
+        if qs:
+            return qs[0]
+        else:
+            return None
+
+
+    @property
     def can_be_completed(self):
         return True
         #Referral cannot be completed until second level referral sent by referral has been completed/recalled
@@ -2209,6 +2240,17 @@ class Referral(RevisionedMixin):
             return False
         else:
             return True
+
+    def can_process(self, user):
+        if self.processing_status=='with_referral':
+            group =  ReferralRecipientGroup.objects.filter(id=self.referral_group.id)
+            #user=request.user
+            if group and group[0] in user.referralrecipientgroup_set.all():
+                return True
+            else:
+                return False
+        return False
+
 
     def recall(self,request):
         with transaction.atomic():
@@ -2257,9 +2299,12 @@ class Referral(RevisionedMixin):
         with transaction.atomic():
             try:
                 #if request.user != self.referral:
-                group =  ReferralRecipientGroup.objects.filter(name=self.referral_group)
-                if group and group[0] in u.referralrecipientgroup_set.all():
+                group =  ReferralRecipientGroup.objects.filter(id=self.referral_group.id)
+                #print u.referralrecipientgroup_set.all()
+                user=request.user
+                if group and group[0] not in user.referralrecipientgroup_set.all():
                     raise exceptions.ReferralNotAuthorized()
+                #import ipdb; ipdb.set_trace()
                 self.processing_status = 'completed'
                 self.referral = request.user
                 self.referral_text = request.user.get_full_name() + ': ' + request.data.get('referral_comment')
@@ -2385,6 +2430,97 @@ class Referral(RevisionedMixin):
 
     def can_assess_referral(self,user):
         return self.processing_status == 'with_referral'
+
+class ProposalRequirement(OrderedModel):
+    RECURRENCE_PATTERNS = [(1, 'Weekly'), (2, 'Monthly'), (3, 'Yearly')]
+    standard_requirement = models.ForeignKey(ProposalStandardRequirement,null=True,blank=True)
+    free_requirement = models.TextField(null=True,blank=True)
+    standard = models.BooleanField(default=True)
+    proposal = models.ForeignKey(Proposal,related_name='requirements')
+    due_date = models.DateField(null=True,blank=True)
+    recurrence = models.BooleanField(default=False)
+    recurrence_pattern = models.SmallIntegerField(choices=RECURRENCE_PATTERNS,default=1)
+    recurrence_schedule = models.IntegerField(null=True,blank=True)
+    copied_from = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    #To determine if requirement has been added by referral and the group of referral who added it
+    #Null if added by an assessor
+    referral_group = models.ForeignKey(ReferralRecipientGroup,null=True,blank=True,related_name='requirement_referral_groups')
+    #order = models.IntegerField(default=1)
+
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+
+    @property
+    def requirement(self):
+        return self.standard_requirement.text if self.standard else self.free_requirement
+
+    def can_referral_edit(self,user):
+        if self.proposal.processing_status=='with_referral':
+            if self.referral_group:
+                group =  ReferralRecipientGroup.objects.filter(id=self.referral_group.id)
+                #user=request.user
+                if group and group[0] in user.referralrecipientgroup_set.all():
+                    return True
+                else:
+                    return False
+        return False
+
+@python_2_unicode_compatible
+#class ProposalStandardRequirement(models.Model):
+class ChecklistQuestion(RevisionedMixin):
+    TYPE_CHOICES = (
+        ('assessor_list','Assessor Checklist'),
+        ('referral_list','Referral Checklist')
+    )
+    text = models.TextField()
+    list_type = models.CharField('Checklist type', max_length=30, choices=TYPE_CHOICES,
+                                         default=TYPE_CHOICES[0][0])
+    correct_answer= models.BooleanField(default=False)
+    obsolete = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.text
+
+    class Meta:
+        app_label = 'commercialoperator'
+
+
+class ProposalAssessment(RevisionedMixin):
+    proposal=models.ForeignKey(Proposal, related_name='assessment')
+    completed = models.BooleanField(default=False)
+    submitter = models.ForeignKey(EmailUser, blank=True, null=True, related_name='proposal_assessment')
+    referral_assessment=models.BooleanField(default=False)
+    referral_group = models.ForeignKey(ReferralRecipientGroup,null=True,blank=True,related_name='referral_assessment')
+    referral=models.ForeignKey(Referral, related_name='assessment',blank=True, null=True )
+    # def __str__(self):
+    #     return self.proposal
+
+    class Meta:
+        app_label = 'commercialoperator'
+        unique_together = ('proposal', 'referral_group',)
+
+    @property
+    def checklist(self):
+        return self.answers.all()
+    
+
+
+class ProposalAssessmentAnswer(RevisionedMixin):
+    question=models.ForeignKey(ChecklistQuestion)
+    answer = models.NullBooleanField()
+    assessment=models.ForeignKey(ProposalAssessment, related_name='answers', null=True, blank=True)
+
+    def __str__(self):
+        return self.question.text
+
+    class Meta:
+        app_label = 'commercialoperator'
+    
+    
+
 
 class QAOfficerReferral(RevisionedMixin):
     SENT_CHOICES = (

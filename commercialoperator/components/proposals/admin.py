@@ -101,11 +101,15 @@ class HelpPageAdmin(admin.ModelAdmin):
         create_helppage_object(application_type='T Class', help_type=models.HelpPage.HELP_TEXT_INTERNAL)
         return HttpResponseRedirect("../")
 
+@admin.register(models.ChecklistQuestion)
+class ChecklistQuestionAdmin(admin.ModelAdmin):
+    list_display = ['text', 'correct_answer', 'list_type', 'obsolete',]
+    ordering = ('list_type',)
 
-@admin.register(ActivityMatrix)
-class ActivityMatrixAdmin(admin.ModelAdmin):
-    list_display = ['name', 'description', 'version']
-    ordering = ('name', '-version')
+# @admin.register(ActivityMatrix)
+# class ActivityMatrixAdmin(admin.ModelAdmin):
+#     list_display = ['name', 'description', 'version']
+#     ordering = ('name', '-version')
 
 
 @admin.register(SystemMaintenance)
@@ -145,9 +149,8 @@ class ParkPriceAdmin(admin.ModelAdmin):
 @admin.register(Park)
 class ParkAdmin(admin.ModelAdmin):
     list_display = ['name', 'district']
-    #list_display = ['name', 'district', 'park_prices']
-    #list_display_links = ['name', 'park_prices']
     filter_horizontal = ('allowed_activities',)
+    #filter_horizontal = ('allowed_activities', 'allowed_access')
     ordering = ('name',)
 
 @admin.register(Trail)

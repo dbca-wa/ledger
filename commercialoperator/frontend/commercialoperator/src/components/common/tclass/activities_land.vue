@@ -98,8 +98,8 @@
             </div>
             </div>
 
-            <div>{{selected_parks}}</div>
-            <div>{{selected_parks_activities}}</div>             
+            <!-- <div>{{selected_parks}}</div>
+            <div>{{selected_parks_activities}}</div>   -->           
 <!--           </form>
 
  -->      </div> 
@@ -112,6 +112,7 @@
               </div>
           </div>
           <div class="borderDecoration col-sm-12">
+            <label class="control-label">Provide details of every vehicle you plan to use when accessing the parks</label>
               <VehicleTable :url="vehicles_url" :proposal="proposal"></VehicleTable>
           </div>
         </div>
@@ -147,10 +148,12 @@
               <form>
                 <div class="form-horizontal col-sm-12">
                   <label class="control-label">Select the long distance trails</label>
-                  <div class="" v-for="t in trails">
-                    <div class="form-check col-sm-12">
-                      <input   name="selected_trails" v-model="selected_trails" :value="{'trail': t.id,'sections': t.section_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities" />
-                      {{ t.name }} <span><a @click="edit_sections(t)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit section and activities</a></span>
+                  <div class="list-group list-group-root well">
+                    <div class="" v-for="t in trails">
+                      <div class="form-check col-sm-12 list-group-item">
+                        <input   name="selected_trails" v-model="selected_trails" :value="{'trail': t.id,'sections': t.section_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities" />
+                        {{ t.name }} <span><a @click="edit_sections(t)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit section and activities</a></span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -160,8 +163,8 @@
           </div>
         </div>
       </div>
-      <div>{{selected_trails}}</div>
-      <div>{{selected_trails_activities}}</div>
+      <!-- <div>{{selected_trails}}</div>
+      <div>{{selected_trails_activities}}</div> -->
       <div>
               <editParkActivities ref="edit_activities" :proposal="proposal" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editParkActivities>
       </div>
@@ -233,6 +236,9 @@ export default {
           editParkActivities,
           editTrailActivities,
           FileField,
+        },
+        computed:{
+
         },
         watch:{
           selected_regions: function(val){
@@ -597,6 +603,7 @@ export default {
             this.$refs.edit_activities.park_id=p_id;
             this.$refs.edit_activities.park_name=p_name;
             this.$refs.edit_activities.fetchAllowedActivities(p_id)
+            this.$refs.edit_activities.fetchAllowedAccessTypes(p_id)
             this. $refs.edit_activities.isModalOpen = true;
           },
           edit_sections: function(trail){
@@ -857,10 +864,19 @@ export default {
             }); 
 
             //check why this is not working for list items
-            $('.list-group-item').on('click', function() {
-
-              $('.glyphicon', this).toggleClass('glyphicon-chevron-up').toggleClass('glyphicon-chevron-down');
-            });
+            // var list_item=$('.list-group-item')
+            // var a_item=list_item.children[ 1 ]
+            // $(a_item).on( 'click', function () {
+            //   console.log(this);
+            //   var chev2 = $( this ).children()[ 0 ];
+            //   window.setTimeout( function () {
+            //       $( chev2 ).toggleClass( "glyphicon-chevron-up glyphicon-chevron-down" );
+            // }, 100 );
+            // }); 
+            // $('.list-group-item').on('click', function(){
+            //   console.log(this);
+            //   $('.glyphicon', this).toggleClass('glyphicon-chevron-up').toggleClass('glyphicon-chevron-down');
+            // })
         }
     }
 </script>

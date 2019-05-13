@@ -332,10 +332,13 @@ def save_park_activity_data(instance,select_parks_activities, request):
                                             pass
                                         else:
                                             try:
-                                                #TODO add logging
-                                                access=AccessType.objects.get(id=a)
-                                                ProposalParkAccess.objects.create(proposal_park=park, access_type=access)
-                                                instance.log_user_action(ProposalUserAction.ACTION_LINK_ACCESS.format(access.id,park.park.id),request)
+                                                if a not in park.park.allowed_access_ids:
+                                                    #raise Exception('Activity not allowed for this park')
+                                                    pass
+                                                else:
+                                                    access=AccessType.objects.get(id=a)
+                                                    ProposalParkAccess.objects.create(proposal_park=park, access_type=access)
+                                                    instance.log_user_action(ProposalUserAction.ACTION_LINK_ACCESS.format(access.id,park.park.id),request)
                                             except:
                                                 raise
                             except ProposalPark.DoesNotExist:
@@ -358,9 +361,13 @@ def save_park_activity_data(instance,select_parks_activities, request):
                                             raise
                                     for a in item['access']:
                                         try:
-                                            access=AccessType.objects.get(id=a)
-                                            ProposalParkAccess.objects.create(proposal_park=park, access_type=access)
-                                            instance.log_user_action(ProposalUserAction.ACTION_LINK_ACCESS.format(access.id,park.park.id),request)
+                                            if a not in park.park.allowed_access_ids:
+                                                    #raise Exception('Activity not allowed for this park')
+                                                    pass
+                                            else:
+                                                access=AccessType.objects.get(id=a)
+                                                ProposalParkAccess.objects.create(proposal_park=park, access_type=access)
+                                                instance.log_user_action(ProposalUserAction.ACTION_LINK_ACCESS.format(access.id,park.park.id),request)
                                         except:
                                             raise
                                 except:
