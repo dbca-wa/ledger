@@ -1,7 +1,7 @@
 <template>
 <div class="container" id="externalApproval">
     <div class="row">
-        <h3>Approval {{ approval.lodgement_number }}</h3>
+        <h3>Licence {{ approval.lodgement_number }}</h3>
       
         
         <div class="col-sm-12">
@@ -88,7 +88,7 @@
                 
                 <div class="panel panel-default">
                   <div class="panel-heading">
-                    <h3 class="panel-title">Approval Details 
+                    <h3 class="panel-title">Licence Details 
                         <a class="panelClicker" :href="'#'+oBody" data-toggle="collapse" expanded="true"  data-parent="#userInfo" :aria-controls="oBody">
                             <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
@@ -121,7 +121,7 @@
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Document</label>
                             <div class="col-sm-4">
-                                <p><a target="_blank" :href="approval.licence_document" class="control-label pull-left">Approval.pdf</a></p>
+                                <p><a target="_blank" :href="approval.licence_document" class="control-label pull-left">Licence.pdf</a></p>
                             </div>
                           </div>
                        </form>
