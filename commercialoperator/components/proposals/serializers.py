@@ -35,6 +35,7 @@ from commercialoperator.components.organisations.models import (
                                 Organisation
                             )
 from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer, ParkSerializer, ActivitySerializer, AccessTypeSerializer, TrailSerializer
+from commercialoperator.components.organisations.serializers import OrganisationSerializer
 from rest_framework import serializers
 from django.db.models import Q
 from reversion.models import Version
@@ -266,6 +267,7 @@ class ProposalAssessmentSerializer(serializers.ModelSerializer):
 
 
 class BaseProposalSerializer(serializers.ModelSerializer):
+    org_applicant = OrganisationSerializer()
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
     proposal_type = serializers.SerializerMethodField()
@@ -273,7 +275,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     #qaofficer_referral = QAOfficerReferralSerializer(required=False)
     qaofficer_referrals = QAOfficerReferralSerializer(many=True)
 
-    applicant_details = ProposalApplicantDetailsSerializer(required=False)
+    #applicant_details = ProposalApplicantDetailsSerializer(required=False)
     activities_land = ProposalActivitiesLandSerializer(required=False)
     activities_marine = ProposalActivitiesMarineSerializer(required=False)
     land_parks=ProposalParkSerializer(many=True)
@@ -310,6 +312,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'review_status',
                 #'hard_copy',
                 'applicant',
+                'org_applicant',
                 'proxy_applicant',
                 'submitter',
                 'assigned_officer',
@@ -367,7 +370,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
         return request.user.email in obj.qa_officers()
 
 
-
+#Not used anymore
 class DTProposalSerializer(BaseProposalSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(source='applicant.organisation.name')
@@ -709,7 +712,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'trails',
                 'training_completed',
                 'can_edit_activities',
-                'reversion_ids'
+                'reversion_ids',
                 'assessor_assessment',
                 'referral_assessments'
                 )

@@ -325,6 +325,9 @@ class ParkEntry(models.Model):
  
 class Proposal(DirtyFieldsMixin, RevisionedMixin):
 #class Proposal(DirtyFieldsMixin, models.Model):
+    APPLICANT_TYPE_ORGANISATION = 'ORG'
+    APPLICANT_TYPE_PROXY = 'PRX'
+    APPLICANT_TYPE_SUBMITTER = 'SUB'
 
     CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'),
                                ('with_assessor', 'Under Review'),
@@ -424,8 +427,12 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
     customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
                                        default=CUSTOMER_STATUS_CHOICES[1][0])
-    applicant = models.ForeignKey(Organisation, blank=True, null=True, related_name='proposals')
-
+    #applicant = models.ForeignKey(Organisation, blank=True, null=True, related_name='proposals')
+    org_applicant = models.ForeignKey(
+        Organisation,
+        blank=True,
+        null=True,
+        related_name='org_applications')
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
     #lodgement_date = models.DateField(blank=True, null=True)
@@ -470,7 +477,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     approval_comment = models.TextField(blank=True)
 
     # common
-    applicant_details = models.OneToOneField(ProposalApplicantDetails, blank=True, null=True) #, related_name='applicant_details')
+    #applicant_details = models.OneToOneField(ProposalApplicantDetails, blank=True, null=True) #, related_name='applicant_details')
     training_completed = models.BooleanField(default=False)
     #payment = models.OneToOneField(ProposalPayment, blank=True, null=True)
     #confirmation = models.OneToOneField(ProposalConfirmation, blank=True, null=True)
@@ -525,6 +532,54 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         versions = Version.objects.get_for_object(self).select_related("revision__user").filter(Q(revision__comment__icontains='status') | Q(revision_id=current_revision_id))
         version_ids = [[i.id,i.revision.date_created] for i in versions]
         return [dict(cur_version_id=version_ids[0][0], prev_version_id=version_ids[i+1][0], created=version_ids[i][1]) for i in range(len(version_ids)-1)]
+
+    @property
+    def applicant(self):
+        if self.org_applicant:
+            return self.org_applicant.organisation.name
+        elif self.proxy_applicant:
+            return "{} {}".format(
+                self.proxy_applicant.first_name,
+                self.proxy_applicant.last_name)
+        else:
+            return "{} {}".format(
+                self.submitter.first_name,
+                self.submitter.last_name)
+
+    @property
+    def applicant_details(self):
+        if self.org_applicant:
+            return '{} \n{}'.format(
+                self.org_applicant.organisation.name,
+                self.org_applicant.address)
+        elif self.proxy_applicant:
+            return "{} {}\n{}".format(
+                self.proxy_applicant.first_name,
+                self.proxy_applicant.last_name,
+                self.proxy_applicant.addresses.all().first())
+        else:
+            return "{} {}\n{}".format(
+                self.submitter.first_name,
+                self.submitter.last_name,
+                self.submitter.addresses.all().first())
+
+    @property
+    def applicant_id(self):
+        if self.org_applicant:
+            return self.org_applicant.id
+        elif self.proxy_applicant:
+            return self.proxy_applicant.id
+        else:
+            return self.submitter.id
+
+    @property
+    def applicant_type(self):
+        if self.org_applicant:
+            return self.APPLICANT_TYPE_ORGANISATION
+        elif self.proxy_applicant:
+            return self.APPLICANT_TYPE_PROXY
+        else:
+            return self.APPLICANT_TYPE_SUBMITTER
 
     def qa_officers(self, name=None):
         if not name:
@@ -842,8 +897,9 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
+    #TODO: remove this function as it is not used anywhere.
     def save_form_tabs(self,request):
-        self.applicant_details = ProposalApplicantDetails.objects.create(first_name=request.data['first_name'])
+        #self.applicant_details = ProposalApplicantDetails.objects.create(first_name=request.data['first_name'])
         self.activities_land = ProposalActivitiesLand.objects.create(activities_land=request.data['activities_land'])
         self.activities_marine = ProposalActivitiesMarine.objects.create(activities_marine=request.data['activities_marine'])
         #self.save()

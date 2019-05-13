@@ -41,7 +41,7 @@
                 </a>
               </li>
               <li class="nav-item">
-                <! --<a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="#pills-payment" role="tab" aria-controls="pills-payment" aria-selected="false">
+                <!--<a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="#pills-payment" role="tab" aria-controls="pills-payment" aria-selected="false">
                   6. Payment
                 </a> -->
 
