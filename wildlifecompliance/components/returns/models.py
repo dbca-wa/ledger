@@ -12,6 +12,8 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry, Us
 from wildlifecompliance.components.returns.email import send_external_submit_email_notification, \
                                                         send_return_accept_email_notification
 
+import json, ast
+
 
 def template_directory_path(instance, filename):
     """
@@ -650,8 +652,6 @@ class ReturnSheet(object):
         for _species in ReturnTable.objects.filter(ret=a_return):
             self._species_list.append(_species.name)
             self._species = _species.name
-        # build list of Species available on Licence.
-        self._licence_species_list = []
 
     def _get_table_rows(self, _data):
         """
@@ -735,14 +735,6 @@ class ReturnSheet(object):
         :return: List of Species.
         """
         return self._species_list
-
-    @property
-    def licence_species_list(self):
-        """
-        List of Species applicable for Running Sheet Return Licence.
-        :return: List of Species.
-        """
-        return self._licence_species_list
 
     @property
     def activity_list(self):
@@ -867,12 +859,13 @@ class ReturnSheet(object):
         :param request:
         :return:
         """
-        try:
-            species = request.data.get('species_id').encode('utf-8')
-            data = eval(request.data.get('species_data').encode('utf-8'))
-            self.set_activity(species, data)
-        except AttributeError:
-            pass
+        for species in self.species_list:
+            try:
+                _data = request.data.get(species).encode('utf-8')
+                _data = tuple(ast.literal_eval(_data))
+                self.set_activity(species, _data)
+            except AttributeError:
+                continue
 
     def __str__(self):
         return self._return.lodgement_number

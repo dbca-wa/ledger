@@ -24,21 +24,11 @@
             <div  class="tab-content">
               <div :id="returnTab" class="tab-pane fade active in">
                 <div class="panel panel-default">
-                  <div class="panel-heading" v-show="!isNewSpecies">
+                  <div class="panel-heading">
                      <h3 class="panel-title">{{ sheetTitle }}
                       <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
                          <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                       </a>
-                    </h3>
-                  </div>
-                  <div class="panel-heading" v-show="isNewSpecies">
-                     <h3 class="panel-title">
-                       <select class="form-control, col-md-9" v-model="returns.sheet_species">
-                         <option v-for="sp in returns.licence_species_list" :value="sp">{{fullSpeciesList[sp]}}</option>
-                       </select>
-                       <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
-                         <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                       </a>
                     </h3>
                   </div>
                   <div class="panel-body panel-collapse in" :id="pdBody">
@@ -79,7 +69,6 @@
           <div class="navbar-inner">
             <div class="container">
               <p class="pull-right" style="margin-top:5px;">
-                <button class="btn btn-primary" name="add_sheet" @click.prevent="addSpecies()">Add Species Type</button>
                 <button class="btn btn-primary" name="save_sheet" @click.prevent="save()">Save</button>
                </p>
             </div>
@@ -133,7 +122,6 @@ export default {
         selectedSpecies: 'selectedSpecies',
         isModalOpen: false,
         returnBtn: 'Submit',
-        isNewSpecies: false,
         newSpecies: null,
         sheetTitle: null,
         sheet_activity_type: [],
@@ -181,9 +169,7 @@ export default {
               }
             ],
             drawCallback: function() {
-              if (vm.returns.sheet_species !== '0000000') {
-                vm.sheetTitle = vm.fullSpeciesList[vm.returns.sheet_species]
-              };
+              vm.sheetTitle = vm.fullSpeciesList[vm.returns.sheet_species]
             },
             processing: true,
             ordering: false,
@@ -191,7 +177,6 @@ export default {
               return _data.rowId
             },
             initComplete: function () {
-              console.log('entered init Function')
               // Populate activity list from the data in the table
               var activityColumn = vm.$refs.return_datatable.vmDataTable.columns(1);
               activityColumn.data().unique().sort().each( function ( d, j ) {
@@ -219,22 +204,21 @@ export default {
   },
   methods: {
     save: function(e) {
-      let vm = this;
-      vm.form=document.forms.enter_return_sheet;
-      let data = new FormData(vm.form);
-      var speciesData = [];
-      vm.$refs.return_datatable.vmDataTable.rows().every(function(rowIdx,tableloop,rowloop) {
-        let _data = this.data();
-        speciesData[rowIdx] = JSON.stringify(_data)
-      });
-      data.append('species_id', vm.returns.sheet_species)
-      data.append('species_data', speciesData);
-      vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/save'),data,{
-                       emulateJSON:true,
+      this.form=document.forms.enter_return_sheet;
+      var data = new FormData(this.form);
+      for (const speciesID in this.species) {
+        let speciesJSON = []
+        for (let i=0;i<this.species[speciesID].length;i++){
+          speciesJSON[i] = JSON.stringify(this.species[speciesID][i])
+        }
+        data.append(speciesID, speciesJSON)
+      };
+      this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/save'),data,{
+                      emulateJSON:true,
                     }).then((response)=>{
-                       vm.returns = response.body;
-                       vm.sheetTitle = vm.fullSpeciesList[vm.returns.sheet_species];
-                       vm.isNewSpecies = false;
+                       let species_id = this.returns.sheet_species;
+                       this.returns = response.body;
+                       this.returns.sheet_species = species_id;
                        swal('Save',
                             'Return Sheet for Species Saved',
                             'success'
@@ -242,17 +226,6 @@ export default {
                     },(error)=>{
                         console.log(error);
                     });
-    },
-    addSpecies: function(e) {
-      let vm = this;
-      vm.form=document.forms.enter_return_sheet;
-      let data = new FormData(vm.form);
-      var speciesData = [];
-      vm.$refs.return_datatable.vmDataTable.clear().draw()
-      vm.speciesTitle = vm.newSpecies
-      data.append('species_id', vm.newSpecies);
-      data.append('species_data', speciesData);
-      vm.isNewSpecies = true;
     },
     addSheetRow: function () {
       let vm = this;
@@ -278,6 +251,7 @@ export default {
         vm.newSpecies = vm.returns.sheet_species
         vm.$refs.return_datatable.vmDataTable.ajax.reload()
         vm.species[vm.returns.sheet_species] = vm.returns.table;
+        console.log(vm.returns)
       });
     }, err => {
       console.log(err);
@@ -312,17 +286,22 @@ export default {
      $('form').on('click', '.change-species', function(e) {
         e.preventDefault();
         let selected_id = $(this).attr('species_id');
-        vm.species[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.ajax.json()
+        if (vm.species[vm.returns.sheet_species] == null) {
+          // save currently displayed species json
+          vm.species[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.ajax.json()
+        }
+        vm.returns.sheet_species = selected_id;
         if (vm.species[selected_id] != null) {
-          vm.$refs.return_datatable.vmDataTable.clear()
+          // species json previously loaded from ajax
+          vm.$refs.return_datatable.vmDataTable.clear().draw()
           vm.$refs.return_datatable.vmDataTable.rows.add(vm.species[selected_id])
           vm.$refs.return_datatable.vmDataTable.draw()
         } else {
-          vm.returns.sheet_species = selected_id
+          // load species json from ajax
           vm.$refs.return_datatable.vmDataTable.clear().draw()
           vm.$refs.return_datatable.vmDataTable.ajax.url = helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
           vm.$refs.return_datatable.vmDataTable.ajax.reload()
-        }
+        };
      });
   },
 };
