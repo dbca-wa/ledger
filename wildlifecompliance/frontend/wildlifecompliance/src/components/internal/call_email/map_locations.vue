@@ -1,6 +1,10 @@
 <template lang="html">
-    <div class="container">
-        <div id="map">
+    <div class="">
+        <div id="map-wrapper">
+            <div id="search-box">
+                <input id="search-input" />
+            </div>
+            <div id="mapLeaf"> </div>
             <div id="basemap-button">
                 <img id="basemap_sat" src="../../../assets/img/satellite_icon.jpg" @click="setBaseLayer('sat')" />
                 <img id="basemap_osm" src="../../../assets/img/map_icon.png" @click="setBaseLayer('osm')" />
@@ -12,12 +16,14 @@
 <script>
 import L from 'leaflet';
 import { api_endpoints, helpers } from '@/utils/hooks'
-import pin from '../../../assets/pin.svg';
 import 'leaflet.markercluster';  /* This should be imported after leaflet */
+import Awesomplete from 'awesomplete';
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import 'bootstrap/dist/css/bootstrap.css';
+import 'awesomplete/awesomplete.css';
 
 L.TileLayer.WMTS = L.TileLayer.extend({
     defaultWmtsParams: {
@@ -140,8 +146,66 @@ module.exports = {
     mounted(){
         this.initMap();
         this.addMarkers();
+        this.initAwesomplete();
     },
     methods: {
+        initAwesomplete: function(){
+            var self = this;
+            var element_search = document.getElementById('search-input');
+            this.awe = new Awesomplete(element_search);
+            $(element_search).on('keyup', function(ev){
+                var keyCode = ev.keyCode || ev.which;
+                if ((48 <= keyCode && keyCode <= 90)||(96 <= keyCode && keyCode <= 105)){
+                    self.search(ev.target.value);
+                    return false;
+                }
+            }).on('awesomplete-selectcomplete', function(ev){
+                ev.preventDefault();
+                ev.stopPropagation();
+                /* User selected one of the search results */
+                for (var i=0; i<self.suggest_list.length; i++){
+                    if (self.suggest_list[i].value == ev.target.value){
+                        var latlng = {lat: self.suggest_list[i].feature.geometry.coordinates[1], lng: self.suggest_list[i].feature.geometry.coordinates[0]};
+                        //self.map.setView(latlng, 13);
+                        self.map.flyTo(latlng, 13,{
+                            animate: true,
+                            duration: 1.5
+                        });
+                    }
+                }
+                return false;
+            });
+        },
+        search: function(place){
+            var self = this;
+
+            var latlng = this.map.getCenter();
+            $.ajax({
+                url: 'https://mapbox.dpaw.wa.gov.au/geocoding/v5/mapbox.places/'+encodeURIComponent(place)+'.json?'+ $.param({
+                    country: 'au',
+                    limit: 10,
+                    proximity: ''+latlng.lng+','+latlng.lat,
+                    //proximity: ''+centre[0]+','+centre[1],
+                    bbox: '112.920934,-35.191991,129.0019283,-11.9662455',
+                    types: 'region,postcode,district,place,locality,neighborhood,address,poi'
+                }),
+                dataType: 'json',
+                success: function(data, status, xhr) {
+                    self.suggest_list = [];  // Clear the list first
+                    if (data.features && data.features.length > 0){
+                        for (var i = 0; i < data.features.length; i++){
+                            self.suggest_list.push({ label: data.features[i].place_name,
+                                                     value: data.features[i].place_name, 
+                                                     feature: data.features[i]
+                                                     });
+                        }
+                    }
+
+                    self.awe.list = self.suggest_list;
+                    self.awe.evaluate();
+                }
+            });
+        },
         setBaseLayer: function(selected_layer_name){
             if (selected_layer_name == 'sat') {
                 this.map.removeLayer(this.tileLayer);
@@ -162,7 +226,7 @@ module.exports = {
         initMap(){
             console.log('Start initMap()');
 
-            this.map = L.map('map').setView([-31.9505, 115.8605], 4);
+            this.map = L.map('mapLeaf').setView([-24.9505, 122.8605], 5);
             this.tileLayer = L.tileLayer(
                 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 {
@@ -199,10 +263,8 @@ module.exports = {
 
                                 /* create marker */
                                 let myIcon = L.icon({
-                                    iconUrl: require('../../../assets/pin.svg'),
+                                    iconUrl: require('../../../assets/marker-green-locked.svg'),
                                     shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-
-                                    /* Accessing external file for now, but this should point to the local file */
                                     shadowSize: [41, 41],
                                     shadowAnchor: [12, 41],
                                     iconSize: [32, 32],
@@ -210,28 +272,15 @@ module.exports = {
                                     popupAnchor: [0, -20]
                                 });
                                 let myMarker = L.marker([coords[1], coords[0]], {icon: myIcon});
-
-                                /* construct popup */
-                                let myPopup = L.popup().setContent(
-                                      '<div class="popup-coords">'
-                                    + 'Lat: ' + coords[1] + '<br />'
-                                    + 'Lng: ' + coords[0] 
-                                    + '</div>'
-
-                                    + '<div class="popup-address">'
-                                    + feature.properties.street + '<br />'
-                                    + feature.properties.town_suburb + '<br />'
-                                    + feature.properties.state + '<br />'
-                                    + feature.properties.postcode
-                                    + '</div>'
-
-                                    + '<div class="popup-link">'
-                                    + '<a src="">Link (not implemented yet)</a>'
-                                    + '</div>'
-                                    );
-
+                                let myPopup = L.popup();
                                 myMarker.bindPopup(myPopup);
                                 markers.addLayer(myMarker);
+
+                                /* dynamically construct content of the popup */
+                                myMarker.on('click', (ev)=>{
+                                    let popup = ev.target.getPopup();
+                                    popup.setContent(self.construct_content(feature, coords));
+                                })
                             }
                         }
                         self.map.addLayer(markers);
@@ -239,14 +288,60 @@ module.exports = {
                 }
             });
         },
+        construct_content: function (feature, coords){
+            let content = '<div class="popup-title popup-title-top">Coordinate</div>'
+                        + '<div class="popup-coords">'
+                        + 'Lat: ' + coords[1] + '<br />'
+                        + 'Lng: ' + coords[0] 
+                        + '</div>'
+            if (feature.properties.street){
+                content += '<div class="popup-title">Address</div>'
+                + '<div class="popup-address">'
+                + feature.properties.street + '<br />'
+                + feature.properties.town_suburb + '<br />'
+                + feature.properties.state + '<br />'
+                + feature.properties.postcode
+                + '</div>'
+
+            }else{
+                content += '<div class="popup-title">Details</div>'
+                + '<div class="popup-address">'
+                + feature.properties.details
+                + '</div>'
+            }
+
+            content += '<div class="popup-link">'
+                + '<a src="">Link (not implemented yet)</a>'
+                + '</div>';
+
+            return content;
+        }
     },
 }
 </script>
 
 <style lang="css">
-#map {
-    height: 700px;
+#map-wrapper {
+    position: relative;
+}
+#mapLeaf {
+    position: relative;
+    height: 800px;
     margin-bottom: 50px;
+}
+#search-box {
+    z-index: 1000;
+    position: absolute;
+    top: 10px;
+    left: 50px;
+}
+#search-input {
+    z-index: 1000;
+    width: 300px;
+    padding: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
 }
 #basemap-button {
     position: absolute;
@@ -279,13 +374,29 @@ module.exports = {
     -webkit-filter: brightness(0.8);
     filter: brightness(0.8);
 }
+.popup-title {
+    padding: 5px 5px 5px 10px;
+    background: gray;
+    font-size: 1.3em;
+    font-weight: bold;
+    color: white;
+}
+.popup-title-top {
+    border-radius: 12px 12px 0 0;
+}
 .popup-coords {
-    margin: 10px;
+    padding: 10px;
 }
 .popup-address {
-    margin: 10px;
+    padding: 10px;
 }
 .popup-link {
-    margin: 10px;
+    padding: 10px;
+}
+.leaflet-popup-content {
+    margin: 0px !important;
+}
+.leaflet-popup-content-wrapper {
+    padding: 0px !important;
 }
 </style>
