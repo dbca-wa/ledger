@@ -1,9 +1,8 @@
 <template lang="html">
     <div>
-        <!--
+        <p> In payment_order </p>
         <v-select  :options="licences" @change="proposal_parks()" v-model="selected_licence" />
-        <OrderTable ref="order_table" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="Payment Form" id="id_payment" :value="table_values"/>
-        -->
+        <OrderTable ref="order_table" :expiry_date="selected_licence.expiry_date" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="Payment Form" id="id_payment" />
         <!--
         <form :action="payment_form_url" method="post" name="new_payment" enctype="multipart/form-data">
             <div>
@@ -89,6 +88,15 @@ from '@/utils/hooks'
                 parks_available: false,
                 licences: [],
                 table_values: null,
+                selected_licence:{
+                    default:function () {
+                        return {
+                            value: String,
+                            label: String,
+                            expiry_date: String,
+                        }
+                    }
+                }
             }
         },
         computed: {
@@ -112,6 +120,17 @@ from '@/utils/hooks'
             }
         },
         methods:{
+            resetTable: function(row) {
+                /* Romes the rows, keeos the first and clears the td contents */
+                let vm = this;
+                //var nrows = $(".editable-table tbody tr").length;
+
+                $(".editable-table tbody").find("tr:not(:first)").remove();
+
+                vm.$refs.order_table.table.tbody = [["","","","",""]];
+                $(".editable-table .selected-tag").text('')
+                $(".tbl_input").val('');
+            },
             park_options: function() {
                 let vm = this;
                 vm.parks = [];
@@ -149,9 +168,9 @@ from '@/utils/hooks'
                 vm.$http.get('/api/filtered_payments').then((res) => {
                     var licences = res.body;
                     for (var i in licences) {
-                        vm.licences.push({value:licences[i].current_proposal, label:licences[i].lodgement_number});
+                        vm.licences.push({value:licences[i].current_proposal, label:licences[i].lodgement_number, expiry_date:licences[i].expiry_date});
                     }
-                    vm.table_values.length = 0;
+                    //vm.table_values = null;
                     console.log(vm.licences);
                 },err=>{
                 });
@@ -161,15 +180,16 @@ from '@/utils/hooks'
                 //let formData = new FormData(vm.form);
                 //vm.$http.get('/api/proposal/49/proposal_parks').then((res)=>{
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,vm.selected_licence.value+'/proposal_parks')).then((res)=>{
+                    vm.resetTable();
                     vm.land_parks = res.body.land_parks;
                     //vm.parks = [];
-                    vm.parks.length = 0;
+                    vm.parks = [];
                     for (var i in vm.land_parks) {
                         vm.parks.push({value:vm.land_parks[i].park.id, label:vm.land_parks[i].park.name});
                     }
                     if (vm.parks.length==0) {
                         //document.getElementById("new_payment").reset();
-                        document.forms.new_payment.reset();
+                        //document.forms.new_payment.reset();
                         vm.parks_available = false;
                         vm.parks.push({value:0, label:'No parks available'});
                     } else{
@@ -185,7 +205,7 @@ from '@/utils/hooks'
         mounted:function () {
             let vm = this;
             //vm.park_options();
-            //vm.get_user_approvals();
+            vm.get_user_approvals();
         }
     }
 </script>

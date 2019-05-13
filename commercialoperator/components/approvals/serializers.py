@@ -24,10 +24,14 @@ class ApprovalPaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Approval
         fields = (
+            'lodgement_number',
+            'current_proposal',
+            'expiry_date',
         )
         read_only_fields = (
             'lodgement_number',
             'current_proposal',
+            'expiry_date',
         )
 
     #def get_proposal_id(self,obj):

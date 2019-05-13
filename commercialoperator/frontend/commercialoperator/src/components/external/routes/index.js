@@ -8,6 +8,7 @@ import Compliance from '../compliances/access.vue'
 import ComplianceSubmit from '../compliances/submit.vue'
 import Approval from '../approvals/approval.vue'
 import PaymentOrder from '@/components/common/tclass/payment_order.vue'
+import PaymentDash from '@/components/common/payments_dashboard.vue'
 export default
 {
     path: '/external',
@@ -43,7 +44,12 @@ export default
         },
         {
             path: 'payment',
+            component: PaymentDash,
+        },
+        {
+            path: 'payment_order',
             component: PaymentOrder,
+            name:"payment_order"
         },
         {
             path: 'proposal',

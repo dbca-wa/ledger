@@ -2,28 +2,6 @@
     <div>
         <div class="form-group">
             <label :id="id" for="label" class="inline">{{ label }}</label>
-            <template v-if="help_text">
-                <HelpText :help_text="help_text" />
-            </template>
-            <template v-if="help_text_assessor && assessorMode">
-                <HelpText :help_text="help_text_assessor" assessorMode={assessorMode} isForAssessor={true} />
-            </template> 
-
-            <template v-if="help_text_url">
-                <HelpTextUrl :help_text_url="help_text_url" />
-            </template>
-            <template v-if="help_text_assessor_url && assessorMode">
-                <HelpTextUrl :help_text_url="help_text_assessor_url" assessorMode={assessorMode} isForAssessor={true} />
-            </template> 
-
-            <template v-if="assessorMode && !assessor_readonly && wc_version != 1.0">
-                <template v-if="!showingComment">
-                    <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
-                    <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
-                </template>
-                <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
-            </template>
-
             <!-- the next line required for saving value JSON-ified table to application.data - creates an invisible field -->
             <textarea readonly="readonly" class="form-control" rows="5" :name="name" style="display:none;">{{ value }}</textarea><br/>
 
@@ -40,22 +18,21 @@
                 <tbody>
                   <tr v-for="row in table.tbody">
                       <td v-if="col_types[index]=='select'" width="30%" v-for="(value, index) in row">
-                          <v-select :options="options" v-model="row[index]"/>
+                          <v-select class="tbl_input2" :options="options" v-model="row[index]"/>
                       </td>
-                      <td v-else>
-                          <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="disabled"/>
+                      <td v-if="col_types[index]=='date'" v-for="(value, index) in row">
+                          <input :readonly="readonly" id="id_arrival_date" class="tbl_input" :type="col_types[index]" :max="expiry_date" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="disabled"/>
+                      </td>
+                      <td v-if="col_types[index]=='text' || col_types[index]=='number'" v-for="(value, index) in row">
+                          <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" value="0" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="disabled"/>
                       </td>
                       <td v-if="!readonly">
                           <a class="fa fa-trash-o" v-on:click="deleteRow(row)" title="Delete row" style="cursor: pointer; color:red;" :disabled="disabled"></a>
                       </td>
                   </tr>
 
-                  <tr>
-                    <td v-if="!readonly" colspan="100%">
-                      <span><button class="btn btn-primary" type="button" v-on:click="addRow()" :disabled="disabled">+</button>Add another park and/or date</span>
-                    </td>
-                  </tr>
                 </tbody>
+                      <span><button class="btn btn-primary" type="button" v-on:click="addRow()" :disabled="disabled">+</button>Add another park and/or date</span>
 
               </table>
 
@@ -68,31 +45,30 @@
               <pre class="output">
                 {{ headers }}
               </pre>
+              <pre class="output">
+                {{ expiry_date }}
+              </pre>
             </div>
 
         </div>
-        <!--<Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value"/> -->
         <input type="hidden" class="form-control" :name="name" :value="value"/>
     </div>
 </template>
 
 <script>
 
-import Comment from '@/components/forms/comment.vue'
-import HelpText from '@/components/forms/help_text.vue'
-import HelpTextUrl from '@/components/forms/help_text_url.vue'
-
 import Vue from 'vue'
 import vSelect from "vue-select"
 Vue.component('v-select', vSelect)
 
 export default {
-    //props:["name","value", "id", "isRequired", "help_text","help_text_assessor","assessorMode","label","readonly","comment_value","assessor_readonly", "help_text_url", "help_text_assessor_url"],
+    //props:["name","value", "expiry_date", "id", "isRequired", "help_text","help_text_assessor","assessorMode","label","readonly","comment_value","assessor_readonly", "help_text_url", "help_text_assessor_url"],
     props:{
         headers: [],
         options: [],
         name: String,
         label: String,
+        expiry_date: String,
         id: String,
         isRequired: String,
         comment_value: String,
@@ -133,7 +109,8 @@ export default {
 
     },
 
-    components: {Comment, HelpText, HelpTextUrl},
+    components: {
+    },
 
     /* Example schema config
        {
@@ -183,17 +160,15 @@ export default {
             return { isClickable: "return true;" }
         }
 
-        return {
-            showingComment: false,
-        }
-
+    },
+    watch:{
+        //table: function(){
+        //    vm.table.tobdy
+        //}
+    },
+    beforeUpdate() {
     },
     methods: {
-        toggleComment(){
-            this.showingComment = ! this.showingComment;
-        },
-
-
         updateTableJSON: function() {
           let vm = this;
           vm.tableJSON = JSON.stringify(vm.table);
@@ -213,7 +188,6 @@ export default {
 
           vm.updateTableJSON();
         },
-
         deleteRow: function(row) {
             let vm = this;
 
@@ -222,8 +196,7 @@ export default {
                 return item !== row
             })
             vm.updateTableJSON();
-        }
-
+        },
     },
 
     computed:{
@@ -266,6 +239,7 @@ export default {
             input.dispatchEvent(e);
         }
 
+        $("#id_arrival_date").keypress(function(event) {event.preventDefault();});
     }
 }
 </script>

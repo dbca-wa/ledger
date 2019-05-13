@@ -122,13 +122,14 @@ class ApprovalPaymentFilterViewSet(generics.ListAPIView):
         # get all orgs associated with user
         user_org_ids = OrganisationContact.objects.filter(email=user.email).values_list('organisation_id', flat=True)
 
-        return Approval.objects.filter(Q(proxy_applicant=user) | Q(org_applicant_id__in=user_org_ids)).exclude(current_proposal__application_type__name='E Class')
+        now = datetime.now().date()
+        return Approval.objects.filter(Q(proxy_applicant=user) | Q(org_applicant_id__in=user_org_ids)).exclude(current_proposal__application_type__name='E Class').exclude(expiry_date__lt=now)
 
     @list_route(methods=['GET',])
-    def list(self, request, *args, **kwargs):
+    def _list(self, request, *args, **kwargs):
         data =  []
         for approval in self.get_queryset():
-            data.append(dict(lodgement_number=approval.lodgement_number, current_proposal=approval.current_proposal_id)) 
+            data.append(dict(lodgement_number=approval.lodgement_number, current_proposal=approval.current_proposal_id))
         return Response(data)
         #return Response(self.get_queryset().values_list('lodgement_number','current_proposal_id'))
 

@@ -9,7 +9,9 @@ import ApprovalDash from '../approvals/dashboard.vue'
 import ComplianceDash from '../compliances/dashboard.vue'
 import Compliance from '../compliances/access.vue'
 import Approval from '../approvals/approval.vue'
+//import PaymentOrder from '@/components/common/tclass/payment_order.vue'
 import PaymentOrder from '@/components/common/tclass/payment_order.vue'
+import PaymentDash from '@/components/common/payments_dashboard.vue'
 export default
 {
     path: '/internal',
@@ -33,7 +35,7 @@ export default
         {
             path: 'approval/:approval_id',
             component: Approval,
-           
+
         },
         {
             path: 'compliances',
@@ -43,7 +45,7 @@ export default
         {
             path: 'compliance/:compliance_id',
             component: Compliance,
-           
+
         },
         {
             path: 'search',
@@ -52,7 +54,12 @@ export default
         },
         {
             path: 'payment',
+            component: PaymentDash,
+        },
+        {
+            path: 'payment_order',
             component: PaymentOrder,
+            name:"payment_order"
         },
 
         {
@@ -79,7 +86,7 @@ export default
                     component: Organisation,
                     name:"internal-org-detail"
                 },
- 
+
             ]
         },
         {
@@ -112,7 +119,7 @@ export default
                         },
                     ]
                 },
- 
+
             ]
         },
         /*{
