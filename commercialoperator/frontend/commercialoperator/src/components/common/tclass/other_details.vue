@@ -291,7 +291,7 @@
                         <div class="form-group">
                            <div class="row">
                                 <div class="col-sm-12">
-                                    <label>Print the deed poll, sign it, have it witnesses and attach it to this application</label>
+                                    <label>Print the deed poll, sign it, have it witnessed and attach it to this application</label>
                                 </div>   
                             </div>
                             <div class="row">

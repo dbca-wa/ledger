@@ -92,18 +92,27 @@
                                 </table>
                                 <MoreReferrals @refreshFromResponse="refreshFromResponse" :proposal="proposal" :canAction="!isFinalised && referral.referral == proposal.current_assessor.id" :isFinalised="isFinalised" :referral_url="referralListURL"/>
                             </div>
-                            {{!isFinalised}}
+                            <!-- {{!isFinalised}}
                             {{referral.referral == proposal.current_assessor.id}}
                             {{referral.can_be_completed}}
                             {{referral.referral}}
-                            {{proposal.current_assessor.id}}
+                            {{proposal.current_assessor.id}} -->
+                            <div class="col-sm-12">
+                                <div class="separator"></div>
+                            </div>
+                            <div class="col-sm-12">
+                                    <strong>Proposal</strong><br/>
+                                    <a class="actionBtn" v-if="!showingProposal" @click.prevent="toggleProposal()">Show Proposal</a>
+                                    <a class="actionBtn" v-else @click.prevent="toggleProposal()">Hide Proposal</a>
+                            </div>
                             <div class="col-sm-12">
                                 <div class="separator"></div>
                             </div>
                             <!--
                             <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && referral.referral == proposal.current_assessor.id && referral.can_be_completed">
                             -->
-                            <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && referral.can_be_completed">
+                            <!-- <div class="col-sm-12 top-buffer-s" v-if="!isFinalised && referral.can_be_completed && referral.can_process"> -->
+                            <div class="col-sm-12 top-buffer-s" v-if="referral.can_process && referral.can_be_completed">
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <strong>Action</strong><br/>
@@ -118,7 +127,7 @@
                                     </div>
                                     -->
 
-                                    <div class="row">
+                                    <div class="">
                                         <div class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="completeReferral2()">Complete Referral Task</button><br/>
                                         </div>
@@ -134,8 +143,8 @@
 
         <div class="col-md-1"></div>
         <div class="col-md-8">
-            <div class="row">
-                <div v-show="false" class="col-md-12">
+            <div class="row" >
+                <!-- <div v-show="false" class="col-md-12">
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
@@ -145,8 +154,8 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-12">
+                </div> -->
+                <!-- <div class="col-md-12">
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
@@ -174,8 +183,8 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-12">
+                </div> -->
+                <!-- <div class="col-md-12">
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
@@ -219,8 +228,8 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-12">
+                </div> -->
+                <!-- <div class="col-md-12">
                     <div class="row">
                         <div class="panel panel-default">
                             <div class="panel-heading">
@@ -236,11 +245,15 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-12">
+                </div> -->
+                <Requirements :proposal="proposal" :hasReferralMode="hasReferralMode" :referral_group="referral.referral_group"/>
+                <Assessment :proposal="proposal" :assessment="referral.referral_assessment" :hasReferralMode="hasReferralMode" :is_internal="is_internal" :is_referral="is_referral"></Assessment>
+                <div class="col-md-12" v-if="showingProposal">
                     <div class="row">
                         <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
-                            <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
+                            <!-- <Proposal form_width="inherit" :withSectionsSelector="false" v-if            ="proposal" :proposal="proposal"> -->
+                                
+                                <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="false" :is_external="false" :is_referral="true" :referral="referral" :hasReferralMode="hasReferralMode"></ProposalTClass>
                                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                 <input type='hidden' name="proposal_id" :value="1" />
@@ -259,7 +272,7 @@
                                         </div>
                                 </div>      
 
-                            </Proposal>
+                            <!-- </Proposal> -->
                         </form>
                     </div>
                 </div>
@@ -270,11 +283,14 @@
 </template>
 <script>
 import Proposal from '../../form.vue'
+import ProposalTClass from '@/components/form_tclass.vue'
 import Vue from 'vue'
 import datatable from '@vue-utils/datatable.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
 import MoreReferrals from '@common-utils/more_referrals.vue'
 import CompleteReferral from './complete_referral.vue'
+import Requirements from '@/components/internal/proposals/proposal_requirements.vue'
+import Assessment from '@/components/common/tclass/assessment.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
     api_endpoints,
@@ -297,6 +313,7 @@ export default {
             referral_text: '',
             referral_comment: '',
             sendingReferral: false,
+            showingProposal:false,
             form: null,
             members: [],
             department_users : [],
@@ -352,6 +369,9 @@ export default {
         CommsLogs,
         MoreReferrals,
         CompleteReferral,
+        ProposalTClass,
+        Requirements,
+        Assessment
     },
     filters: {
         formatDate: function(data){
@@ -363,6 +383,9 @@ export default {
     computed: {
         proposal: function(){
             return this.referral != null && this.referall != 'undefined' ? this.referral.proposal : null;
+        },
+        hasReferralMode: function(){
+            return this.referral && this.referral.can_process? true: false;
         },
         contactsURL: function(){
             return this.proposal!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.proposal.applicant.id+'/contacts') : '';
@@ -395,6 +418,9 @@ export default {
             //}); 
             //this.$refs.amendment_request.amendment.text = values;
             this.$refs.complete_referral.isModalOpen = true;
+        },
+        toggleProposal:function(){
+            this.showingProposal = !this.showingProposal;
         },
         save_wo: function() {
           let vm = this;

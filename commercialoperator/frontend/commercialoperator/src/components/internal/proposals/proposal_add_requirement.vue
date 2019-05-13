@@ -121,6 +121,14 @@ export default {
             requirements: {
                 type: Array,
                 required: true
+            },
+            hasReferralMode:{
+                type:Boolean,
+                default: false
+            },
+            referral_group:{
+                type:Number,
+                default: null
             }
     },
     data:function () {
@@ -133,7 +141,8 @@ export default {
                 standard: true,
                 recurrence: false,
                 recurrence_pattern: '1',
-                proposal: vm.proposal_id
+                proposal: vm.proposal_id,
+                referral_group:vm.referral_group
             },
             addingRequirement: false,
             updatingRequirement: false,
@@ -182,7 +191,8 @@ export default {
                 standard: true,
                 recurrence: false,
                 recurrence_pattern: '1',
-                proposal: vm.proposal_id
+                proposal: vm.proposal_id,
+                referral_group:vm.referral_group
             }
         },
         ok:function () {

@@ -28,15 +28,24 @@
                         </div>
                         <div class="form-horizontal col-sm-12 borderDecoration">
                             <label class="control-label"> Select the parks for which the activities are required</label>
-                            <div class="" v-for="p in marine_parks">
+                            <!-- <div class="" v-for="p in marine_parks">
                                 <div class="form-check col-sm-12">
                                   <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="{'park': p.id,'zones': p.zone_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities"/>
                                 {{ p.name }}
                                   <span><a @click="edit_activities(p)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit access and activities</a></span>
                                 </div>
+                            </div> -->
+                            <div class="list-group list-group-root well">
+                                <div class="" v-for="p in marine_parks">
+                                  <div class="form-check col-sm-12 list-group-item">
+                                    <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="{'park': p.id,'zones': p.zone_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities"/>
+                                  {{ p.name }}
+                                    <span><a @click="edit_activities(p)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit access and activities</a></span>
+                                  </div>
+                                </div>
                             </div>
-                            <div>{{selected_parks}}</div>
-                            <div>{{marine_parks_activities}}</div>
+                            <!-- <div>{{selected_parks}}</div>
+                            <div>{{marine_parks_activities}}</div> -->
                         </div>
                         <div class="row"></div>
                         <div class="row"></div>
@@ -449,6 +458,43 @@ from '@/utils/hooks'
     border-radius: 5px;
     padding: 5px;
     margin-top: 5px;
+}
+.just-padding {
+    padding: 15px;
+}
+
+.list-group {
+  padding: 0;
+}
+
+.list-group.list-group-root {
+    padding: 0;
+    overflow: hidden;
+}
+
+.list-group.list-group-root .list-group {
+    margin-bottom: 0;
+}
+
+.list-group.list-group-root .list-group-item {
+    border-radius: 0;
+    border-width: 1px 0 0 0;
+}
+
+.list-group.list-group-root > .list-group-item:first-child {
+    border-top-width: 0;
+}
+
+.list-group.list-group-root > .list-group > .list-group-item {
+    padding-left: 30px;
+}
+
+.list-group.list-group-root > .list-group > .list-group > .list-group-item {
+    padding-left: 45px;
+}
+
+.list-group-item .glyphicon {
+    margin-right: 5px;
 }
 </style>
 

@@ -26,7 +26,10 @@ from commercialoperator.components.proposals.models import (
                                     ProposalParkZoneActivity,
                                     ProposalParkZone,
                                     ProposalOtherDetails,
-                                    ProposalAccreditation
+                                    ProposalAccreditation,
+                                    ChecklistQuestion,
+                                    ProposalAssessmentAnswer,
+                                    ProposalAssessment,
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
@@ -178,6 +181,7 @@ class ProposalAccreditationSerializer(serializers.ModelSerializer):
     def get_accreditation_type_value(self,obj):
         return obj.get_accreditation_type_display()
 
+
 class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
     #park=ParkSerializer()
     #accreditation_type= serializers.SerializerMethodField()
@@ -222,6 +226,37 @@ class SaveProposalOtherDetailsSerializer(serializers.ModelSerializer):
                 'credit_docket_books',
                 'proposal',
                 )
+class ChecklistQuestionSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = ChecklistQuestion
+        #fields = '__all__'
+        fields=('id',
+                'text',
+                'correct_answer',
+                )
+class ProposalAssessmentAnswerSerializer(serializers.ModelSerializer):
+    question=ChecklistQuestionSerializer(read_only=True)
+    class Meta:
+        model = ProposalAssessmentAnswer
+        fields = ('id',
+                'question',
+                'answer',
+                )
+
+class ProposalAssessmentSerializer(serializers.ModelSerializer):
+    checklist=ProposalAssessmentAnswerSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ProposalAssessment
+        fields = ('id',
+                'completed',
+                'submitter',
+                'referral_assessment',
+                'referral_group',
+                'checklist'
+                )
+       
 
 class BaseProposalSerializer(serializers.ModelSerializer):
     readonly = serializers.SerializerMethodField(read_only=True)
@@ -569,6 +604,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
     district = serializers.CharField(source='district.name', read_only=True)
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
     qaofficer_referrals = QAOfficerReferralSerializer(many=True)
+    assessor_assessment=ProposalAssessmentSerializer(read_only=True)
+    referral_assessments=ProposalAssessmentSerializer(read_only=True, many=True)
 
     class Meta:
         model = Proposal
@@ -628,7 +665,9 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'marine_parks',
                 'trails',
                 'training_completed',
-                'can_edit_activities'
+                'can_edit_activities',
+                'assessor_assessment',
+                'referral_assessments'
                 )
         read_only_fields=('documents','requirements')
 
@@ -688,6 +727,10 @@ class ReferralSerializer(serializers.ModelSerializer):
     processing_status = serializers.CharField(source='get_processing_status_display')
     latest_referrals = ProposalReferralSerializer(many=True)
     can_be_completed = serializers.BooleanField()
+    can_process=serializers.SerializerMethodField()
+    referral_assessment=ProposalAssessmentSerializer(read_only=True)
+
+
     class Meta:
         model = Referral
         fields = '__all__'
@@ -695,6 +738,11 @@ class ReferralSerializer(serializers.ModelSerializer):
     def __init__(self,*args,**kwargs):
         super(ReferralSerializer, self).__init__(*args, **kwargs)
         self.fields['proposal'] = ReferralProposalSerializer(context={'request':self.context['request']})
+
+    def get_can_process(self,obj):
+        request = self.context['request']
+        user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
+        return obj.can_process(user)
 
 class ProposalUserActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
@@ -759,10 +807,16 @@ class DTReferralSerializer(serializers.ModelSerializer):
 
 class ProposalRequirementSerializer(serializers.ModelSerializer):
     due_date = serializers.DateField(input_formats=['%d/%m/%Y'],required=False,allow_null=True)
+    can_referral_edit=serializers.SerializerMethodField()
     class Meta:
         model = ProposalRequirement
-        fields = ('id','due_date','free_requirement','standard_requirement','standard','order','proposal','recurrence','recurrence_schedule','recurrence_pattern','requirement','is_deleted','copied_from')
+        fields = ('id','due_date','free_requirement','standard_requirement','standard','order','proposal','recurrence','recurrence_schedule','recurrence_pattern','requirement','is_deleted','copied_from', 'referral_group', 'can_referral_edit')
         read_only_fields = ('order','requirement', 'copied_from')
+
+    def get_can_referral_edit(self,obj):
+        request = self.context['request']
+        user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
+        return obj.can_referral_edit(user)
 
 class ProposalStandardRequirementSerializer(serializers.ModelSerializer):
     class Meta:

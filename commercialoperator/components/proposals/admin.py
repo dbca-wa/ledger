@@ -2,7 +2,7 @@ from django.contrib import admin
 from ledger.accounts.models import EmailUser
 from commercialoperator.components.proposals import models
 from commercialoperator.components.proposals import forms
-from commercialoperator.components.main.models import ActivityMatrix, SystemMaintenance, ApplicationType, Park, Trail, ActivityType, ActivityCategory, Activity, AccessType, Section, Zone,RequiredDocument, Question
+from commercialoperator.components.main.models import SystemMaintenance, ApplicationType, Park, Trail, ActivityType, ActivityCategory, Activity, AccessType, Section, Zone,RequiredDocument, Question
 #from commercialoperator.components.main.models import Activity, SubActivityLevel1, SubActivityLevel2, SubCategory
 from reversion.admin import VersionAdmin
 from django.conf.urls import url
@@ -86,11 +86,15 @@ class HelpPageAdmin(admin.ModelAdmin):
         create_helppage_object(application_type='T Class', help_type=models.HelpPage.HELP_TEXT_INTERNAL)
         return HttpResponseRedirect("../")
 
+@admin.register(models.ChecklistQuestion)
+class ChecklistQuestionAdmin(admin.ModelAdmin):
+    list_display = ['text', 'correct_answer', 'list_type', 'obsolete',]
+    ordering = ('list_type',)
 
-@admin.register(ActivityMatrix)
-class ActivityMatrixAdmin(admin.ModelAdmin):
-    list_display = ['name', 'description', 'version']
-    ordering = ('name', '-version')
+# @admin.register(ActivityMatrix)
+# class ActivityMatrixAdmin(admin.ModelAdmin):
+#     list_display = ['name', 'description', 'version']
+#     ordering = ('name', '-version')
 
 
 @admin.register(SystemMaintenance)
@@ -108,7 +112,7 @@ class ApplicationTypeAdmin(admin.ModelAdmin):
 @admin.register(Park)
 class ParkAdmin(admin.ModelAdmin):
     list_display = ['name', 'district']
-    filter_horizontal = ('allowed_activities',)
+    filter_horizontal = ('allowed_activities', 'allowed_access')
     ordering = ('name',)
 
 @admin.register(Trail)
