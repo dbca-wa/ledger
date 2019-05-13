@@ -251,14 +251,17 @@ module.exports = {
             let self = this;
             var markers = L.markerClusterGroup();
 
+            console.log('addMarkers')
+
             $.ajax({
-                url: '/api/call_email_location/',
+                //url: '/api/call_email_location/',
+                url: '/api/location/optimised/',
                 dataType: 'json',
                 success: function(data, status, xhr){
-                    if (data.results && data.results.features && data.results.features.length > 0){
-                        for (var i = 0; i < data.results.features.length; i++){
-                            if(data.results.features[i].geometry){
-                                let feature = data.results.features[i];
+                    if (data.features && data.features.length > 0){
+                        for (var i = 0; i < data.features.length; i++){
+                            if(data.features[i].geometry){
+                                let feature = data.features[i];
                                 let coords = feature.geometry.coordinates;
 
                                 /* create marker */
@@ -294,6 +297,7 @@ module.exports = {
                         + 'Lat: ' + coords[1] + '<br />'
                         + 'Lng: ' + coords[0] 
                         + '</div>'
+            /*
             if (feature.properties.street){
                 content += '<div class="popup-title">Address</div>'
                 + '<div class="popup-address">'
@@ -309,9 +313,10 @@ module.exports = {
                 + feature.properties.details
                 + '</div>'
             }
+            */
 
             content += '<div class="popup-link">'
-                + '<a src="">Link (not implemented yet)</a>'
+                + '<a src="">Link to call_email_id: ' + feature.properties.call_email_id + '</a>'
                 + '</div>';
 
             return content;
