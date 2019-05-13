@@ -897,13 +897,6 @@ export default {
                             $("#vesselWeight").val(data[0].vessel_weight);
                             $("#vesselBeam").val(data[0].vessel_beam);
                             $("#vesselDraft").val(data[0].vessel_draft);
-                            console.log("VESSEL REGO 1");
-                            console.log($('#vesselSize').val());
-                            console.log(vm.vesselSize);
-                            console.log(vm.vesselDraft);
-                            console.log(vm.vesselBeam);
-                            console.log(vm.vesselWeight);
-                            console.log("START");
                             vm.removePinAnchors();
                             vm.removePinGroups();
 
@@ -1316,7 +1309,6 @@ export default {
             this.updateViewport(true);
         },
         buildmarkers: function() {
-            console.log("==>buildmarkers<==");
             this.removePinAnchors();
             this.removePinGroups();
             var vm = this;
@@ -1471,7 +1463,7 @@ export default {
                                                             if (response[x][m]['geometry'] != null ) {
                                                                 if (response[x][m]['geometry'].hasOwnProperty('coordinates')) {
                                                                    if (vm.pinsCache[response[x][m]['id']+'-'+vm.markerAvail[response[x][m]['id']]] == null) {
-                                                                   console.log(map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id'])));
+                                                                   map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
                                                                    } else {
 		                                                            var layer2 = vm.pinsCache[response[x][m]['id']+'-'+vm.markerAvail[response[x][m]['id']]];
                 		                                            layer2.setVisible(true);
@@ -1505,7 +1497,7 @@ export default {
                                             if (response[x][m]['geometry'] != null ) {
                                                 if (response[x][m]['geometry'].hasOwnProperty('coordinates')) {
                                                         if (vm.pinsCache[response[x][m]['id']+'-'+vm.markerAvail[response[x][m]['id']]] == null) {
-						                      console.log(map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id'])));
+						                      map.addLayer(vm.buildMarkerBookable(response[x][m]['geometry']['coordinates'][0],response[x][m]['geometry']['coordinates'][1],response[x][m]['properties'],response[x][m]['properties']['name'],response[x][m]['id']));
                                                         } else {
                                                             var layer2 = vm.pinsCache[response[x][m]['id']+'-'+vm.markerAvail[response[x][m]['id']]];
                                                             layer2.setVisible(true);
@@ -1601,7 +1593,6 @@ export default {
             var vectorLayer;
             var vm = this;
             if (vm.pinsCache[marker_id] == null) { 
-            console.log('not cached');
             if (this.groundsIds.has(marker_id)) {
                 if (vm.markerAvail[marker_id] == 'free') { 
                      pin_type=require('assets/map_pins/pin_orange.png');
@@ -1649,11 +1640,8 @@ export default {
                markerGroup: "anchor",
                source: vectorSource
             });
-            console.log('buildMarkerBookable');
-            console.log(vectorLayer);
              vm.pinsCache[marker_id+'-'+vm.markerAvail[marker_id]] = vectorLayer; 
             } else {
-              console.log('cached');
               vectorLayer = vm.pinsCache[marker_id+'-'+vm.markerAvail[marker_id]];
 	    }
             return vectorLayer;
@@ -1696,14 +1684,10 @@ export default {
                markerGroup: "anchor",
 	       source: vectorSource
 	    });
-            console.log('buildMarkerNotBookable');
-            console.log(vectorLayer);
             vm.pinsCache[marker_id+'-'+vm.markerAvail[marker_id]] = vectorLayer;
             } else {
-               console.log('cached');
                  vectorLayer = vm.pinsCache[marker_id+'-'+vm.markerAvail[marker_id]];
             }
-
 	    return vectorLayer;
     },
     buildMarkerGroup:function(lat,lon,text, name, zoom_level) {
@@ -2338,7 +2322,6 @@ export default {
                 return style;
             }
         });
-        console.log("VECTOR 2");
 	// Marker Popup Code
         $('#mapPopupClose').on('click', function(ev) {
             $('#mapPopup').hide();
