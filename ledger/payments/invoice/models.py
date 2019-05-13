@@ -24,7 +24,7 @@ class Invoice(models.Model):
     system = models.CharField(max_length=4,blank=True,null=True)
     token = models.CharField(max_length=80,null=True,blank=True)
     voided = models.BooleanField(default=False)
-    previous_invoice = models.ForeignKey('self',null=True,blank=True)
+    previous_invoice = models.ForeignKey('self',null=True,blank=True, on_delete=models.PROTECT)
 
     def __unicode__(self):
         return 'Invoice #{0}'.format(self.reference)
@@ -332,8 +332,8 @@ class Invoice(models.Model):
 class InvoiceBPAY(models.Model):
     ''' Link between unmatched bpay payments and invoices
     '''
-    invoice = models.ForeignKey(Invoice)
-    bpay = models.ForeignKey('bpay.BpayTransaction')
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
+    bpay = models.ForeignKey('bpay.BpayTransaction', on_delete=models.PROTECT)
 
     class Meta:
         db_table = 'payments_invoicebpay'

@@ -1,14 +1,16 @@
 import re
 import datetime
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 from parkstay.models import Booking
 
+from django.utils.deprecation import MiddlewareMixin
+
 CHECKOUT_PATH = re.compile('^/ledger/checkout/checkout')
 
-class BookingTimerMiddleware(object):
+class BookingTimerMiddleware(MiddlewareMixin):
     def process_request(self, request):
         #print((request.path, request.session.items(), request.COOKIES))
 

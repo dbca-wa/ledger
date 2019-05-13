@@ -42,7 +42,7 @@ def mail_validation(backend, details, is_new=False, *args, **kwargs):
 def logout_previous_session(backend,details,user=None, *args, **kwargs):
     strategy = backend.strategy
     request_data = strategy.request_data()
-    if request_data.get('verification_code') and details.get('email') and user and user.is_authenticated():
+    if request_data.get('verification_code') and details.get('email') and user and user.is_authenticated:
         if user.email != details["email"]:
             #already authenticated with another user, logout before.
             logout(strategy.request)

@@ -7,18 +7,20 @@ from oscar.apps.order.abstract_models import AbstractLine as CoreAbstractLine
 
 class Line(CoreAbstractLine):
 
-    DEFAULT_PAYMENT = {
-        'bpay': {},
-        'cash': {},
+    def get_default_data():
+        return { 
+        'bpay': {}, 
+        'cash': {}, 
         'card': {}
-    }
+        }
+
     oracle_code = models.CharField("Oracle Code",max_length=50,null=True,blank=True)
     partner_name = models.CharField(
         _("Partner name"), max_length=128, blank=True,null=True)
     partner_sku = models.CharField(_("Partner SKU"), max_length=128,null=True)
-    payment_details = JSONField(db_index=True,default=DEFAULT_PAYMENT)
-    refund_details = JSONField(db_index=True,default=DEFAULT_PAYMENT)
-    deduction_details = JSONField(db_index=True,default=DEFAULT_PAYMENT)
+    payment_details = JSONField(db_index=True,default=get_default_data)
+    refund_details = JSONField(db_index=True,default=get_default_data)
+    deduction_details = JSONField(db_index=True,default=get_default_data)
 
     @property
     def paid(self):

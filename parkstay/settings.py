@@ -15,7 +15,7 @@ INSTALLED_APPS += [
     'rest_framework_gis'
 ]
 
-MIDDLEWARE_CLASSES += [
+MIDDLEWARE += [
     'parkstay.middleware.BookingTimerMiddleware'
 ]
 

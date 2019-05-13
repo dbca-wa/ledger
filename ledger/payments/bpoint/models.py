@@ -215,7 +215,7 @@ class BpointToken(models.Model):
         ('MC','MasterCard'),
         ('VC','Visa')
     )
-    user = models.ForeignKey(EmailUser, related_name='stored_cards')
+    user = models.ForeignKey(EmailUser, related_name='stored_cards', on_delete=models.CASCADE)
     DVToken = models.CharField(max_length=128)
     masked_card = models.CharField(max_length=50)
     expiry_date = models.DateField()

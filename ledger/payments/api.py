@@ -4,7 +4,7 @@ from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from wsgiref.util import FileWrapper
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.renderers import JSONRenderer

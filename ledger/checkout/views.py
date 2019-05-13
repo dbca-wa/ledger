@@ -10,7 +10,7 @@ from django.core.validators import URLValidator
 from django.utils import six
 from django.contrib import messages
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse, reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.translation import ugettext as _
 from django.template.loader import get_template
 #
@@ -131,7 +131,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # only load stored cards if the user is an admin or has legitimately logged in
         if self.checkout_session.basket_owner() and is_payment_admin(self.request.user):
             user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
-        elif self.request.user.is_authenticated():
+        elif self.request.user.is_authenticated:
             user = self.request.user
 
         if user:

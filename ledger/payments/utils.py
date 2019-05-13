@@ -10,7 +10,7 @@ from django.core.mail import EmailMessage
 from django.conf import settings
 from django.db import transaction
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import resolve
+from django.urls import resolve
 from six.moves.urllib.parse import urlparse
 #
 from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction, OracleAccountCode, OracleOpenPeriod, OracleInterfaceDeduction 
