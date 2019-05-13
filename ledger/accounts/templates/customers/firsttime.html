@@ -2,8 +2,8 @@
 
 {% block content %}
 
-    <p>Hi. This looks like the first time you've logged into a Parks and Wildlife site as <b>{{ user.email }}</b>! We just need a couple more details before we can continue on.</p>
-    <p class="callout warning">If you already have a Parks and Wildlife customer account under another email address, please <a href="{% url "accounts:logout" %}?link_account=True">sign in again with that account</a> and instead add <b>{{ user.email }}</b> as a secondary email address.</p>
+    <p>Hi. This looks like the first time you've logged into a Biodiversity, Conservation and Attractions site as <b>{{ user.email }}</b>! We just need a couple more details before we can continue on.</p>
+    <p class="callout warning">If you already have a Biodiversity, Conservation and Attractions customer account under another email address, please <a href="{% url "accounts:logout" %}?link_account=True">sign in again with that account</a> and instead add <b>{{ user.email }}</b> as a secondary email address.</p>
 
     <form method="POST" action="{% url 'accounts:first_time' %}">
     {% csrf_token %}

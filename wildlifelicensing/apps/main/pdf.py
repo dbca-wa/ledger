@@ -93,7 +93,7 @@ def _create_licence_header(canvas, doc, draw_page_number=True):
 
     current_y = PAGE_HEIGHT - HEADER_MARGIN
 
-    canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, 'DEPARTMENT OF PARKS AND WILDLIFE')
+    canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, 'DEPARTMENT OF BIODIVERSITY, CONSERVATION AND ATTRACTIONS')
 
     current_y -= 30
 
