@@ -70,13 +70,6 @@ class ReportType(models.Model):
     replaced_by = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
-    referrer = models.ForeignKey(
-        Referrer,
-        null=True,
-        related_name="report_referrer"
-    )
-    advice_given = models.BooleanField(default=False)
-    advice_details = models.CharField(max_length=256, blank=True, null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -105,12 +98,12 @@ class Location(models.Model):
     )
 
     wkb_geometry = models.PointField(srid=4326, blank=True, null=True)
-    street = models.CharField(max_length=100, null=True, blank=True)
-    town_suburb = models.CharField(max_length=100, null=True, blank=True)
+    street = models.CharField(max_length=100, blank=True, null=True)
+    town_suburb = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(
-        max_length=50, choices=STATE_CHOICES, null=True, blank=True, default='WA')
-    postcode = models.CharField(max_length=10, null=True, blank=True)
-    country = models.CharField(max_length=100, null=True, blank=True, default='Australia')
+        max_length=50, choices=STATE_CHOICES, blank=True, null=True, default='WA')
+    postcode = models.CharField(max_length=10, blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True, null=True, default='Australia')
     objects = models.GeoManager()
     details = models.TextField(blank=True)
 
@@ -158,14 +151,21 @@ class CallEmail(RevisionedMixin):
     caller_wishes_to_remain_anonymous = models.BooleanField(default=False)
     occurrence_from_to = models.BooleanField(default=False)
     occurrence_date_from = models.DateField(null=True)
-    occurrence_time_from = models.TimeField(null=True)
+    occurrence_time_from = models.CharField(max_length=20, blank=True, null=True)
     occurrence_date_to = models.DateField(null=True)
-    occurrence_time_to = models.TimeField(null=True)
+    occurrence_time_to = models.CharField(max_length=20, blank=True, null=True)
     report_type = models.ForeignKey(
         ReportType,
         null=True,
         related_name='call_schema',
     )
+    referrer = models.ForeignKey(
+        Referrer,
+        null=True,
+        related_name="report_referrer"
+    )
+    advice_given = models.BooleanField(default=False)
+    advice_details = models.TextField(blank=True, null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -246,16 +246,16 @@ class ComplianceFormDataRecord(models.Model):
     )
 
     call_email = models.ForeignKey(CallEmail, related_name='form_data_records')
-    field_name = models.CharField(max_length=512, null=True, blank=True)
-    schema_name = models.CharField(max_length=256, null=True, blank=True)
-    instance_name = models.CharField(max_length=256, null=True, blank=True)
+    field_name = models.CharField(max_length=512, blank=True, null=True)
+    schema_name = models.CharField(max_length=256, blank=True, null=True)
+    instance_name = models.CharField(max_length=256, blank=True, null=True)
     component_type = models.CharField(
         max_length=64,
         choices=COMPONENT_TYPE_CHOICES,
         default=COMPONENT_TYPE_TEXT)
     value = JSONField(blank=True, null=True)
-    comment = models.TextField(blank=True)
-    deficiency = models.TextField(blank=True)
+    comment = models.TextField(blank=True, null=True)
+    deficiency = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return "CallEmail {id} record {field}: {value}".format(
@@ -319,10 +319,10 @@ class ComplianceFormDataRecord(models.Model):
 class ComplianceDocument(Document):
     call_email = models.ForeignKey('CallEmail', related_name='documents')
     _file = models.FileField(upload_to=update_compliance_doc_filename)
-    input_name = models.CharField(max_length=255, null=True, blank=True)
+    input_name = models.CharField(max_length=255, blank=True, null=True)
     # after initial submit prevent document from being deleted
     can_delete = models.BooleanField(default=True)
-    version_comment = models.CharField(max_length=255, null=True, blank=True)
+    version_comment = models.CharField(max_length=255, blank=True, null=True)
 
     def delete(self):
         if self.can_delete:
@@ -355,7 +355,7 @@ class ComplianceLogEntry(CommunicationsLogEntry):
 
 
 class ComplianceUserAction(UserAction):
-    ACTION_CHANGE_CLASSIFICATION_ = "Change Classification {}"
+    ACTION_SAVE_CALL_EMAIL_ = "Save Call/Email {}"
 
     class Meta:
         app_label = 'wildlifecompliance'

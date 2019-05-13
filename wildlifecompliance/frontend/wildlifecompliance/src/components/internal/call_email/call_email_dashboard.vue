@@ -48,8 +48,6 @@
             </div>
             
         </form>
-        
-                
 
         <div class="row">
             <div class="col-lg-12">
@@ -83,7 +81,6 @@
                 // Filters
                 filterStatus: 'All',
                 filterClassification: 'All',
-                //filterLodgmentDate: null,
                 statusChoices: [],
                 classificationChoices: [],
                 filterLodgedFrom: '',
@@ -161,8 +158,10 @@
                         classificationColumn.data().unique().sort().each(function (d, j) {
                             let classification_choices = [];
                             $.each(d, (index, a) => {
-                                a['name'] != null && classification_choices.indexOf(a['name']) < 0 ?
-                                    classification_choices.push(a['name']) : '';
+                                if (a) {
+                                    a['name'] != null && classification_choices.indexOf(a['name']) < 0 ?
+                                        classification_choices.push(a['name']) : '';
+                                }
                             })
                             vm.classificationChoices = classification_choices;
                         });
@@ -228,12 +227,18 @@
             ...mapActions('callemailStore', {
                 loadClassification: "loadClassification",
                 loadReportTypes: "loadReportTypes",
+                saveCallEmail: "saveCallEmail",
             }),
             
-            createCallEmailUrl: function () {
+            createCallEmailUrl: async function () {
+                const newCallId = await this.saveCallEmail({ route: false, crud: 'create'});
+                console.log("newCallId");
+                console.log(newCallId);
+
                 this.$router.push({
-                    name: 'new-call-email' 
-                });
+                    name: 'view-call-email', 
+                    params: {call_email_id: newCallId}
+                    });
             },
             addEventListeners: function () {
                 let vm = this;
@@ -250,7 +255,6 @@
                 $(vm.$refs.lodgementDateFromPicker).on('dp.change', function (e) {
                     if ($(vm.$refs.lodgementDateFromPicker).data('DateTimePicker').date()) {
                         vm.filterLodgedFrom = e.date.format('DD/MM/YYYY');
-                        //$(vm.$refs.lodgementDateToPicker).data("DateTimePicker").minDate(e.date);
                     } else if ($(vm.$refs.lodgementDateFromPicker).data('date') === "") {
                         vm.filterLodgedFrom = "";
                     }
@@ -304,7 +308,5 @@
                 vm.addEventListeners();
             });
         }
-
-
     }
 </script>

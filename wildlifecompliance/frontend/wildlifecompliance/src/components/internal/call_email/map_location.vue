@@ -57,7 +57,6 @@
             </div></div>
         </div>
     
-       <button @click.prevent="saveInstanceLocation" class="btn btn-primary pull-right">update</button>
     </div>
 </template>
 
