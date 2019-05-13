@@ -72,6 +72,7 @@
                 </div>
             </div>
         </div>
+        <ApprovalExtend ref="approval_extend"  @refreshFromResponse="refreshFromResponse"></ApprovalExtend>
         <ApprovalCancellation ref="approval_cancellation"  @refreshFromResponse="refreshFromResponse"></ApprovalCancellation>
         <ApprovalSuspension ref="approval_suspension"  @refreshFromResponse="refreshFromResponse"></ApprovalSuspension>
         <ApprovalSurrender ref="approval_surrender"  @refreshFromResponse="refreshFromResponse"></ApprovalSurrender>
@@ -84,10 +85,12 @@
 <script>
 import datatable from '@/utils/vue/datatable.vue'
 import Vue from 'vue'
+import ApprovalExtend from '../internal/approvals/approval_extend.vue'
 import ApprovalCancellation from '../internal/approvals/approval_cancellation.vue'
 import ApprovalSuspension from '../internal/approvals/approval_suspension.vue'
 import ApprovalSurrender from '../internal/approvals/approval_surrender.vue'
 import EClassLicence from '../internal/approvals/approval_eclass.vue'
+
 import {
     api_endpoints,
     helpers
@@ -110,6 +113,7 @@ export default {
     },
     components:{
         datatable,
+        ApprovalExtend,
         ApprovalCancellation,
         ApprovalSuspension,
         ApprovalSurrender,
@@ -269,6 +273,11 @@ export default {
                                 if(vm.check_assessor(full)){
                                     if(full.can_reissue){
                                         links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
+                                    }
+                                    if(full.application_type=='E Class' && full.can_extend){
+                                        links +=  `<a href='#${full.id}' data-extend-approval='${full.id}'>Extend</a><br/>`;
+                                    } else if (full.application_type=='E Class'){
+                                        links +=  `<a class='disabled' title='Licence has already been extended' style="color: grey;text-decoration: none;">Extend</a><br/>`;
                                     }
                                     if(full.can_reissue && full.can_action){
                                         links +=  `<a href='#${full.id}' data-cancel-approval='${full.id}'>Cancel</a><br/>`;
@@ -468,6 +477,14 @@ export default {
                 vm.reissueApproval(id);
             });
 
+            // Internal Extend listener
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-extend-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-extend-approval');
+                vm.extendApproval(id);
+            });
+
+
             //Internal Cancel listener
             vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-cancel-approval]', function(e) {
                 e.preventDefault();
@@ -588,26 +605,22 @@ export default {
             let vm = this;
             Vue.http.get(api_endpoints.profile).then((response) => {
                 vm.profile = response.body
-                              
             },(error) => {
                 console.log(error);
-                
             })
         },
 
         check_assessor: function(proposal){
-            let vm = this;         
-            
+            let vm = this;
+
             var assessor = proposal.allowed_assessors.filter(function(elem){
                     return(elem.id=vm.profile.id)
                 });
-                
             if (assessor.length > 0)
                 return true;
             else
-                return false;       
-            
-            return false;       
+                return false;
+            return false;
         },
 
         reissueApproval:function (proposal_id) {
@@ -618,15 +631,13 @@ export default {
                 title: "Reissue Approval",
                 text: "Are you sure you want to reissue this approval?",
                 type: "warning",
-                showCancelButton: true,
                 confirmButtonText: 'Reissue approval',
                 //confirmButtonColor:'#d9534f'
             }).then(() => {
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/reissue_approval')),JSON.stringify(data),{
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/reissue')),JSON.stringify(data),{
                 emulateJSON:true,
                 })
                 .then((response) => {
-                    
                     vm.$router.push({
                     name:"internal-proposal",
                     params:{proposal_id:proposal_id}
@@ -636,12 +647,52 @@ export default {
                     swal({
                     title: "Reissue Approval",
                     text: error.body,
-                    type: "error",                   
+                    type: "error",
                     })
                 });
             },(error) => {
 
             });
+        },
+
+        _extendApproval:function (approval_id) {
+            let vm = this;
+            let status= 'with_approver'
+            let data = {'status': status}
+            swal({
+                title: "Renew Approval",
+                //text: "Are you sure you want to extend this approval?",
+                //type: "warning",
+                text: "<input type='email' class='form-control' name='email' id='email'/>",
+                type: "input",
+                showCancelButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'Extend approval',
+            }).then(() => {
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.approvals,(approval_id+'/approval_extend')),JSON.stringify(data),{
+                emulateJSON:true,
+                })
+                .then((response) => {
+                    vm.$router.push({
+                    name:"internal-proposal",
+                    params:{approval_id:approval_id}
+                    });
+                }, (error) => {
+                    console.log(error);
+                    swal({
+                    title: "Extend Approval",
+                    text: error.body,
+                    type: "error",
+                    })
+                });
+            },(error) => {
+
+            });
+        },
+
+        extendApproval: function(approval_id){
+            this.$refs.approval_extend.approval_id = approval_id;
+            this.$refs.approval_extend.isModalOpen = true;
         },
 
         reinstateApproval:function (approval_id) {
@@ -657,7 +708,6 @@ export default {
                 //confirmButtonColor:'#d9534f'
             }).then(() => {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.approvals,(approval_id+'/approval_reinstate')),{
-                
                 })
                 .then((response) => {
                     swal(
@@ -666,13 +716,12 @@ export default {
                         'success'
                     )
                     vm.$refs.proposal_datatable.vmDataTable.ajax.reload();
-                    
                 }, (error) => {
                     console.log(error);
                     swal({
                     title: "Reinstate Approval",
                     text: error.body,
-                    type: "error",                   
+                    type: "error",
                     })
                 });
             },(error) => {
@@ -752,7 +801,6 @@ export default {
         },
 
         cancelApproval: function(approval_id){
-           
             this.$refs.approval_cancellation.approval_id = approval_id;
             this.$refs.approval_cancellation.isModalOpen = true;
         },
@@ -764,7 +812,6 @@ export default {
         },
 
         surrenderApproval: function(approval_id){
-           
             this.$refs.approval_surrender.approval_id = approval_id;
             this.$refs.approval_surrender.isModalOpen = true;
         },

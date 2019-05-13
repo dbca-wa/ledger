@@ -29,17 +29,22 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
+from commercialoperator.components.proposals.models import Proposal, ApplicationType
 from commercialoperator.components.approvals.models import (
-    Approval
+    Approval,
+    ApprovalDocument
 )
 from commercialoperator.components.approvals.serializers import (
     ApprovalSerializer,
     ApprovalCancellationSerializer,
+    ApprovalExtendSerializer,
     ApprovalSuspensionSerializer,
     ApprovalSurrenderSerializer,
     ApprovalUserActionSerializer,
-    ApprovalLogEntrySerializer
+    ApprovalLogEntrySerializer,
+    ApprovalPaymentSerializer
 )
+from commercialoperator.components.organisations.models import Organisation, OrganisationContact
 from commercialoperator.helpers import is_customer, is_internal
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from commercialoperator.components.proposals.api import ProposalFilterBackend, ProposalRenderer
@@ -94,6 +99,39 @@ class ApprovalPaginatedViewSet(viewsets.ModelViewSet):
         result_page = self.paginator.paginate_queryset(qs, request)
         serializer = ApprovalSerializer(result_page, context={'request':request}, many=True)
         return self.paginator.get_paginated_response(serializer.data)
+
+
+from rest_framework import filters
+class ApprovalPaymentFilterViewSet(generics.ListAPIView):
+    """ https://cop-internal.dbca.wa.gov.au/api/filtered_organisations?search=Org1
+    """
+    queryset = Approval.objects.none()
+    serializer_class = ApprovalPaymentSerializer
+    filter_backends = (filters.SearchFilter,)
+    #search_fields = ('applicant', 'applicant_id',)
+    search_fields = ('id',)
+
+    def get_queryset(self):
+        """
+        Return All approvals associated with user (proxy_applicant and org_applicant)
+        """
+        #import ipdb; ipdb.set_trace()
+        #return Approval.objects.filter(proxy_applicant=self.request.user)
+        user = self.request.user
+
+        # get all orgs associated with user
+        user_org_ids = OrganisationContact.objects.filter(email=user.email).values_list('organisation_id', flat=True)
+
+        now = datetime.now().date()
+        return Approval.objects.filter(Q(proxy_applicant=user) | Q(org_applicant_id__in=user_org_ids)).exclude(current_proposal__application_type__name='E Class').exclude(expiry_date__lt=now)
+
+    @list_route(methods=['GET',])
+    def _list(self, request, *args, **kwargs):
+        data =  []
+        for approval in self.get_queryset():
+            data.append(dict(lodgement_number=approval.lodgement_number, current_proposal=approval.current_proposal_id))
+        return Response(data)
+        #return Response(self.get_queryset().values_list('lodgement_number','current_proposal_id'))
 
 
 class ApprovalViewSet(viewsets.ModelViewSet):
@@ -169,6 +207,72 @@ class ApprovalViewSet(viewsets.ModelViewSet):
 
             return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete) for d in instance.qaofficer_documents.filter(input_name=section, visible=True) if d._file] )
 
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def add_eclass_licence(self, request, *args, **kwargs):
+
+        def raiser(exception): raise serializers.ValidationError(exception)
+
+        try:
+            with transaction.atomic():
+                #keys = request.data.keys()
+                #file_keys = [key for key in keys if 'file-upload' in i]
+                org_applicant = None
+                proxy_applicant = None
+
+                _file = request.data.get('file-upload-0') if request.data.get('file-upload-0') else raiser('Licence File is required')
+                try:
+                    #import ipdb; ipdb.set_trace()
+                    if request.data.get('applicant_type') == 'org':
+                        org_applicant = Organisation.objects.get(organisation_id=request.data.get('holder-selected'))
+                    else:
+                        proxy_applicant = EmailUser.objects.get(id=request.data.get('holder-selected'))
+                except:
+                    raise serializers.ValidationError('Licence holder is required')
+
+                start_date = datetime.strptime(request.data.get('start_date'), '%d/%m/%Y') if request.data.get('start_date') else raiser('Start Date is required')
+                issue_date = datetime.strptime(request.data.get('issue_date'), '%d/%m/%Y') if request.data.get('issue_date') else raiser('Issue Date is required')
+                expiry_date = datetime.strptime(request.data.get('expiry_date'), '%d/%m/%Y') if request.data.get('expiry_date') else raiser('Expiry Date is required')
+
+                application_type, app_type_created = ApplicationType.objects.get_or_create(
+                    name='E Class',
+                    defaults={'visible':False, 'max_renewals':1, 'max_renewal_period':5}
+                )
+
+                proposal, proposal_created = Proposal.objects.get_or_create( # Dummy 'E Class' proposal
+                    id=0,
+                    defaults={'application_type':application_type, 'submitter':request.user, 'schema':[]}
+                )
+
+                approval = Approval.objects.create(
+                    issue_date=issue_date,
+                    expiry_date=expiry_date,
+                    start_date=start_date,
+                    org_applicant=org_applicant,
+                    proxy_applicant=proxy_applicant,
+                    current_proposal=proposal
+                )
+
+                doc = ApprovalDocument.objects.create(approval=approval, _file=_file)
+                approval.licence_document=doc
+                approval.save()
+
+                return Response({'approval': approval.lodgement_number})
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+
 #def update_approval_doc_filename(instance, filename):
 #    return 'approvals/{}/documents/{}'.format(instance.approval.id,filename)
 
@@ -178,8 +282,8 @@ class ApprovalViewSet(viewsets.ModelViewSet):
 #        """
 #        Paginated serializer for datatables - used by the external dashboard
 #
-#		To test:
-#        	http://localhost:8000/api/approvals/approvals_paginated/?format=datatables&draw=1&length=2
+#       To test:
+#           http://localhost:8000/api/approvals/approvals_paginated/?format=datatables&draw=1&length=2
 #        """
 #
 #        #import ipdb; ipdb.set_trace()
@@ -229,7 +333,26 @@ class ApprovalViewSet(viewsets.ModelViewSet):
 #        serializer = self.get_serializer(result_page, context={'request':request}, many=True)
 #        return paginator.get_paginated_response(serializer.data)
 
-
+    @detail_route(methods=['POST',])
+    def approval_extend(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = ApprovalExtendSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance.approval_extend(request,serializer.validated_data)
+            serializer = ApprovalSerializer(instance,context={'request':request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST',])
     def approval_cancellation(self, request, *args, **kwargs):
@@ -360,7 +483,6 @@ class ApprovalViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 comms = serializer.save()
                 # Save the files
-                import ipdb; ipdb.set_trace()
                 for f in request.FILES:
                     document = comms.documents.create()
                     document.name = str(request.FILES[f])

@@ -2,7 +2,7 @@
 <div class="container" id="internalDash">
     <ProposalDashTable level="internal" :url="proposals_url"/>
     <ReferralDashTable :url="referrals_url"/>
-    <QAOfficerDashTable level="internal" :url="qaofficer_url"/>
+    <QAOfficerDashTable v-if="is_qaofficer" level="internal" :url="qaofficer_url"/>
 </div>
 </template>
 <script>
@@ -19,13 +19,10 @@ export default {
     data() {
         let vm = this;
         return {
-            //proposals_url: api_endpoints.proposals,
-            //proposals_url: api_endpoints.proposals_paginated_internal,
-            //proposals_url: '/api/list_proposal/?format=datatables',
-            //proposals_url: api_endpoints.list_proposals,
             proposals_url: api_endpoints.proposals_paginated_internal,
             referrals_url: api_endpoints.referrals_paginated_internal,
             qaofficer_url: api_endpoints.qaofficer_paginated_internal,
+            is_qaofficer: false,
         }
     
     },
@@ -36,9 +33,24 @@ export default {
         QAOfficerDashTable
     },
     computed: {
+        dashboard_url: function(){
+            return '/api/proposal_paginated/qaofficer_info/'
+        },
     },
-    methods: {},
+    methods: {
+        check_qaofficer_membership: function(){
+            let vm = this;
+
+            //vm.$http.get(api_endpoints.filter_list).then((response) => {
+            vm.$http.get(vm.dashboard_url).then((response) => {
+                vm.is_qaofficer = response.body.data['QA_Officer'];
+            },(error) => {
+                console.log(error);
+            })
+        },
+    },
     mounted: function () {
+        this.check_qaofficer_membership();
     }
 }
 </script>

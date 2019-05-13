@@ -56,6 +56,24 @@
             </div>
             -->
 
+            <div class="row" v-if="canSeeSubmission">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                       History
+                    </div>
+                    <table class="table small-table">
+                        <tr>
+                            <th>Last Modified</th>
+                            <th></th>
+                        </tr>
+                        <tr v-for="p in proposal.reversion_ids">
+                            <td>{{ p.created | formatDate }}</td>
+                            <td><a id="history_id" :href="history_url+'version_id2='+ p.cur_version_id +'&version_id1='+ p.prev_version_id" target="_blank">compare</a></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
             <div class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -420,35 +438,16 @@
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                     <input type='hidden' name="proposal_id" :value="1" />
                                     <div class="row" style="margin-bottom: 50px">
-                                    <div class="navbar navbar-fixed-bottom" v-if="hasAssessorMode" style="background-color: #f5f5f5;">
+                                      <div class="navbar navbar-fixed-bottom" v-if="hasAssessorMode" style="background-color: #f5f5f5;">
                                         <div class="navbar-inner">
                                             <div v-if="hasAssessorMode" class="container">
-                                            <p class="pull-right">                       
+                                            <p class="pull-right">
                                             <button class="btn btn-primary pull-right" style="margin-top:5px;" @click.prevent="save()">Save Changes</button>
-                                            </p>                      
-                                            </div>                   
+                                            </p>
+                                            </div>
                                         </div>
-                                    </div>      
+                                      </div>
                                     </div>
-                                </div>
-
-                                <!-- <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
-                                    <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-                                    <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
-                                    <input type='hidden' name="proposal_id" :value="1" />
-                                    <div class="row" style="margin-bottom: 50px">
-                                    <div class="navbar navbar-fixed-bottom" v-if="hasAssessorMode" style="background-color: #f5f5f5;">
-                                        <div class="navbar-inner">
-                                            <div v-if="hasAssessorMode" class="container">
-                                            <p class="pull-right">                       
-                                            <button class="btn btn-primary pull-right" style="margin-top:5px;" @click.prevent="save()">Save Changes</button>
-                                            </p>                      
-                                            </div>                   
-                                        </div>
-                                    </div>      
-                                    </div>
-
-                                </Proposal> -->
                             </form>
                         </div>
                     </div>
@@ -579,6 +578,9 @@ export default {
 
     },
     computed: {
+        history_url: function(){
+            return api_endpoints.site_url + '/history/filtered/' + this.proposal.id + '/?';
+        },
         contactsURL: function(){
             return this.proposal!= null ? helpers.add_endpoint_json(api_endpoints.organisations,this.proposal.applicant.id+'/contacts') : '';
         },

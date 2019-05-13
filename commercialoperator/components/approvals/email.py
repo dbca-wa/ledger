@@ -49,7 +49,7 @@ def send_approval_expire_email_notification(approval):
     context = {
         'approval': approval,
         'proposal': proposal
-    }    
+    }
     msg = email.send(proposal.submitter.email, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     try:
@@ -58,7 +58,7 @@ def send_approval_expire_email_notification(approval):
         EmailUser.objects.create(email=sender, password='')
         sender_user = EmailUser.objects.get(email__icontains=sender)
     _log_approval_email(msg, approval, sender=sender_user)
-    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
+    _log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
 
 def send_approval_cancel_email_notification(approval):
     email = ApprovalCancelNotificationEmail()
@@ -66,18 +66,18 @@ def send_approval_cancel_email_notification(approval):
 
     context = {
         'approval': approval,
-        
+
     }
     sender = settings.DEFAULT_FROM_EMAIL
     try:
         sender_user = EmailUser.objects.get(email__icontains=sender)
     except:
         EmailUser.objects.create(email=sender, password='')
-        sender_user = EmailUser.objects.get(email__icontains=sender)    
+        sender_user = EmailUser.objects.get(email__icontains=sender)
     msg = email.send(proposal.submitter.email, context=context)
-    sender = settings.DEFAULT_FROM_EMAIL    
+    sender = settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender_user)
-    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
+    _log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
 
 
 def send_approval_suspend_email_notification(approval):
@@ -88,18 +88,18 @@ def send_approval_suspend_email_notification(approval):
         'approval': approval,
         'details': approval.suspension_details['details'],
         'from_date': approval.suspension_details['from_date'],
-        'to_date': approval.suspension_details['to_date']        
+        'to_date': approval.suspension_details['to_date']
     }
     sender = settings.DEFAULT_FROM_EMAIL
     try:
         sender_user = EmailUser.objects.get(email__icontains=sender)
     except:
         EmailUser.objects.create(email=sender, password='')
-        sender_user = EmailUser.objects.get(email__icontains=sender)   
+        sender_user = EmailUser.objects.get(email__icontains=sender)
     msg = email.send(proposal.submitter.email, context=context)
-    sender = settings.DEFAULT_FROM_EMAIL    
+    sender = settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender_user)
-    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
+    _log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
 
 
 def send_approval_surrender_email_notification(approval):
@@ -109,18 +109,18 @@ def send_approval_surrender_email_notification(approval):
     context = {
         'approval': approval,
         'details': approval.surrender_details['details'],
-        'surrender_date': approval.surrender_details['surrender_date'],             
+        'surrender_date': approval.surrender_details['surrender_date'],
     }
     sender = settings.DEFAULT_FROM_EMAIL
     try:
         sender_user = EmailUser.objects.get(email__icontains=sender)
     except:
         EmailUser.objects.create(email=sender, password='')
-        sender_user = EmailUser.objects.get(email__icontains=sender)   
+        sender_user = EmailUser.objects.get(email__icontains=sender)
     msg = email.send(proposal.submitter.email, context=context)
-    sender = settings.DEFAULT_FROM_EMAIL    
+    sender = settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender_user)
-    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
+    _log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
 
 #approval renewal notice
 def send_approval_renewal_email_notification(approval):
@@ -130,7 +130,7 @@ def send_approval_renewal_email_notification(approval):
     context = {
         'approval': approval,
         'proposal': approval.current_proposal
-                    
+
     }
     sender = settings.DEFAULT_FROM_EMAIL
     try:
@@ -145,11 +145,11 @@ def send_approval_renewal_email_notification(approval):
         attachment = (file_name, renewal_document.file.read(), 'application/pdf')
         attachment = [attachment]
     else:
-        attachment = []   
+        attachment = []
     msg = email.send(proposal.submitter.email, attachments=attachment, context=context)
-    sender = settings.DEFAULT_FROM_EMAIL    
+    sender = settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender_user)
-    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
+    _log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
 
 
 
@@ -159,12 +159,12 @@ def send_approval_reinstate_email_notification(approval, request):
 
     context = {
         'approval': approval,
-                
-    }    
+
+    }
     msg = email.send(proposal.submitter.email, context=context)
-    sender = request.user if request else settings.DEFAULT_FROM_EMAIL    
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender)
-    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+    _log_org_email(msg, approval.applicant, proposal.submitter, sender=sender)
 
 
 
@@ -217,8 +217,12 @@ def _log_approval_email(email_message, approval, sender=None):
 
 
 
+from commercialoperator.components.organisations.models import OrganisationLogEntry, Organisation
 def _log_org_email(email_message, organisation, customer ,sender=None):
-    from commercialoperator.components.organisations.models import OrganisationLogEntry
+    if not isinstance(organisation, Organisation):
+        # is a proxy_applicant
+        return None
+
     if isinstance(email_message, (EmailMultiAlternatives, EmailMessage,)):
         # TODO this will log the plain text body, should we log the html instead
         text = email_message.body
@@ -261,4 +265,4 @@ def _log_org_email(email_message, organisation, customer ,sender=None):
 
     email_entry = OrganisationLogEntry.objects.create(**kwargs)
 
-    return email_entry 
+    return email_entry

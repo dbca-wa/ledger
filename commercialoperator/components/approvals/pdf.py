@@ -177,6 +177,7 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
 
     #Organization details
 
+    #import ipdb; ipdb.set_trace()
     address = proposal.applicant.organisation.postal_address
     email = proposal.applicant.organisation.organisation_set.all().first().contacts.all().first().email
     elements.append(Paragraph(email,styles['BoldLeft']))
@@ -194,7 +195,6 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     #elements.append(Paragraph(title, styles['InfoTitleVeryLargeCenter']))
     #elements.append(Paragraph(approval.activity, styles['InfoTitleLargeLeft']))
     elements.append(Paragraph('APPROVAL OF PROPOSAL {} {} TO UNDERTAKE Commercial Operator Licensing ACTIVITY IN {}'.format(title, proposal.lodgement_number, region_district), styles['InfoTitleLargeLeft']))
-    #import ipdb; ipdb.set_trace()
     #elements.append(Paragraph(approval.tenure if hasattr(approval, 'tenure') else '', styles['InfoTitleLargeRight']))
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
@@ -321,8 +321,9 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
 
     return approval_buffer
 
-def _format_name(org):
-    return org.name
+def _format_name(applicant):
+    #return org.name
+    return applicant
 
 def _layout_extracted_fields(extracted_fields):
     elements = []
@@ -415,7 +416,7 @@ def create_approval_doc(approval,proposal, copied_to_permit, user):
     approval_buffer = BytesIO()
 
     _create_approval(approval_buffer, approval, proposal, copied_to_permit, user)
-    filename = 'approval-{}.pdf'.format(approval.lodgement_number)
+    filename = 'licence-{}.pdf'.format(approval.lodgement_number)
     document = ApprovalDocument.objects.create(approval=approval,name=filename)
     document._file.save(filename, File(approval_buffer), save=True)
 
