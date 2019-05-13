@@ -59,7 +59,7 @@ from wildlifecompliance.components.call_email.serializers import (
     CreateCallEmailSerializer,
     UpdateSchemaSerializer,
     ReferrerSerializer,
-    )
+    LocationSerializerMinimum)
 from utils import SchemaParser
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
@@ -424,6 +424,13 @@ class LocationViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return Location.objects.all()
         return Location.objects.none()
+
+    @list_route(methods=['GET', ])
+    def minimum(self, request, *args, **kwargs):
+        queryset = self.get_queryset().exclude(call_location__isnull=True)
+        serializer = LocationSerializerMinimum(queryset, many=True)
+
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         try:

@@ -107,6 +107,11 @@ class Location(models.Model):
     objects = models.GeoManager()
     details = models.TextField(blank=True)
 
+    @property
+    def call_email_id(self):
+        if self.call_location.count() > 0:
+            return self.call_location.first().id;
+
     class Meta:
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_Location'

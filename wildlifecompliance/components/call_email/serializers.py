@@ -61,6 +61,18 @@ class ReferrerSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'name', )
 
 
+class LocationSerializerMinimum(GeoFeatureModelSerializer):
+    class Meta:
+        model = Location
+        geo_field = 'wkb_geometry'
+
+        fields = (
+            'id',
+            'wkb_geometry',
+            'call_email_id',
+        )
+
+
 class LocationSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = Location
@@ -75,6 +87,7 @@ class LocationSerializer(GeoFeatureModelSerializer):
             'country',
             'wkb_geometry',
             'details',
+            'call_email_id',
         )
         
 
