@@ -426,7 +426,7 @@ class LocationViewSet(viewsets.ModelViewSet):
         return Location.objects.none()
 
     @list_route(methods=['GET', ])
-    def minimum(self, request, *args, **kwargs):
+    def optimised(self, request, *args, **kwargs):
         queryset = self.get_queryset().exclude(call_location__isnull=True)
         serializer = LocationSerializerMinimum(queryset, many=True)
 
