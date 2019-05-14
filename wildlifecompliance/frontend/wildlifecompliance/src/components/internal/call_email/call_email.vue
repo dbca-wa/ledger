@@ -53,18 +53,18 @@
                 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Anonymous call?</label>
-                    <label class="col-sm-1">Yes</label>
                     <input class="col-sm-1" type="radio" v-model="call_email.anonymous_call" v-bind:value="true">
-                    <label class="col-sm-1">No</label>
+                    <label class="col-sm-1">Yes</label>
                     <input class="col-sm-1" type="radio" v-model="call_email.anonymous_call" v-bind:value="false">
+                    <label class="col-sm-1">No</label>
                 </div></div>
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Caller wishes to remain anonymous?</label>
-                    <label class="col-sm-1">Yes</label>
                     <input class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
-                    <label class="col-sm-1">No</label>
+                    <label class="col-sm-1">Yes</label>
                     <input class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
+                    <label class="col-sm-1">No</label>
                 </div></div>
               </FormSection>
 
@@ -78,28 +78,37 @@
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Use occurrence from/to</label>
-                    <label class="col-sm-1">Yes</label>
                     <input class="col-sm-1" type="radio" v-model="call_email.occurrence_from_to" v-bind:value="true">
-                    <label class="col-sm-1">No</label>
+                    <label class="col-sm-1">Yes</label>
                     <input class="col-sm-1" type="radio" v-model="call_email.occurrence_from_to" v-bind:value="false">
+                    <label class="col-sm-1">No</label>
                 </div></div>
 
                 <div class="col-sm-12 form-group"><div class="row">
                     <label class="col-sm-3">{{ occurrenceDateLabel }}</label>
-                    <datepicker placeholder="DD/MM/YYYY" input-class="col-sm-3" v-model="call_email.occurrence_date_from" name="datefrom"/>
+                    <div class="col-sm-3">
+                      <datepicker input-class="form-control col-sm-3" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_from" name="datefrom"/>
+                    </div>
                     <div v-if="call_email.occurrence_from_to">
                       <label class="col-sm-3">Occurrence date to</label>
-                      <datepicker placeholder="DD/MM/YYYY" input-class="col-sm-3" v-model="call_email.occurrence_date_to" name="dateto"/>
+                      <div class="col-sm-3">
+                        <datepicker input-class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_to" name="dateto"/>
+                      </div>
                     </div>
                 </div></div>
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-3">{{ occurrenceTimeLabel }}</label>
-                  <input type="text" class="col-sm-2" v-model="call_email.occurrence_time_from"/>
-                    <label v-if="call_email.occurrence_from_to" class="col-sm-3">Occurrence time to</label>
-                    <input v-if="call_email.occurrence_from_to" type="text" class="col-sm-2" v-model="call_email.occurrence_time_to"/>
+                  <div class="col-sm-3">
+                    <input class="form-control" v-model="call_email.occurrence_time_from"/>
+                  </div>
+                  <div v-if="call_email.occurrence_from_to">
+                      <label class="col-sm-3">Occurrence time to</label>
+                      <div class="col-sm-3">
+                        <input class="form-control" v-model="call_email.occurrence_time_to"/>
+                      </div>
+                  </div>
                 </div></div>
-
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Classification</label>
@@ -130,7 +139,7 @@
               <FormSection collapse="collapse" label="Outcome" Index="3">
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Referrer</label>
-                  <select class="col-sm-6" v-model="call_email.referrer_id">
+                  <select class="form-control" v-model="call_email.referrer_id">
                           <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
                             {{ option.name }} 
                           </option>

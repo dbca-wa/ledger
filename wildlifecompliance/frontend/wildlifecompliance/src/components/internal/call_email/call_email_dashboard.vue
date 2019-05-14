@@ -107,7 +107,7 @@
                     },
                     columns: [
                         {
-                            data: "id",
+                            data: "number",
                         },
                         {
                             data: "status",
@@ -169,7 +169,7 @@
 
                 },
                 dtHeaders: [
-                    "Call/Email ID",
+                    "Call/Email Number",
                     "Call/Email Status",
                     "Classification",
                     "lodgement_date",
