@@ -177,6 +177,22 @@ class UpdateSchemaSerializer(serializers.ModelSerializer):
             )
 
 
+class CallEmailOptimisedSerializer(serializers.ModelSerializer):
+    classification = ClassificationSerializer(read_only=True)
+    location = LocationSerializerMinimum()
+    report_type = ReportTypeSerializer(read_only=True)
+
+    class Meta:
+        model = CallEmail
+        fields = (
+            'id',
+            'location',
+            'classification',
+            'report_type',
+        )
+        read_only_fields = ('id', )
+
+
 class CallEmailSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source='get_status_display')
     classification = ClassificationSerializer(read_only=True)

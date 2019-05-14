@@ -252,24 +252,30 @@ module.exports = {
             let self = this;
             var markers = L.markerClusterGroup();
 
-            console.log('addMarkers')
-            //opt_url = helpers.add_endpoint_json(api_endpoints.location, "optimised"); 
-            console.log(this.opt_url);
-
             $.ajax({
-                //url: '/api/call_email_location/',
-                url: '/api/location/optimised/',
+                url: '/api/call_email/optimised/',
                 dataType: 'json',
                 success: function(data, status, xhr){
-                    if (data.features && data.features.length > 0){
-                        for (var i = 0; i < data.features.length; i++){
-                            if(data.features[i].geometry){
-                                let feature = data.features[i];
-                                let coords = feature.geometry.coordinates;
+                    if (data && data.length > 0){
+                        for (var i = 0; i < data.length; i++){
+                            if(data[i].location){
+                                let call_email = data[i];
+                                let coords = call_email.location.geometry.coordinates;
+
+                                let filename = 'marker-gray-locked.svg';
+                                if (call_email.classification){
+                                    if (call_email.classification.id == 1){
+                                        filename = 'marker-yellow-locked.svg';
+                                    } else if (call_email.classification.id == 2){
+                                        filename = 'marker-green-locked.svg';
+                                    } else if (call_email.classification.id == 3){
+                                        filename = 'marker-red-locked.svg';
+                                    }
+                                }
 
                                 /* create marker */
                                 let myIcon = L.icon({
-                                    iconUrl: require('../../../assets/marker-green-locked.svg'),
+                                    iconUrl: require('../../../assets/' + filename),
                                     shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
                                     shadowSize: [41, 41],
                                     shadowAnchor: [12, 41],
@@ -285,9 +291,7 @@ module.exports = {
                                 /* dynamically construct content of the popup */
                                 myMarker.on('click', (ev)=>{
                                     let popup = ev.target.getPopup();
-                                    //popup.setContent(self.construct_content(feature, coords));
-
-                                    self.$http.get('/api/call_email/' + feature.properties.call_email_id).then(response => {
+                                    self.$http.get('/api/call_email/' + call_email.id).then(response => {
                                         let call_email = response.body;
                                         popup.setContent(self.construct_content(call_email, coords));
                                     });
