@@ -128,9 +128,7 @@
                                 return data != '' && data != null ? moment(data).format(vm.dateFormat) : '';
                             }
                         },
-                        {
-                            data: "number",
-                        },
+                        
                         {
                             data: "caller",
                         },
@@ -169,13 +167,12 @@
 
                 },
                 dtHeaders: [
-                    "Call/Email Number",
-                    "Call/Email Status",
+                    "Number",
+                    "Status",
                     "Classification",
-                    "lodgement_date",
-                    "number",
-                    "caller",
-                    "assigned_to",
+                    "Lodged on",
+                    "Caller",
+                    "Assigned to",
                     "Action",
                 ],
             }
