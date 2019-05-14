@@ -3,6 +3,7 @@ from ledger.accounts.models import EmailUser,Address, Profile,EmailIdentity,Docu
 from commercialoperator.components.organisations.models import (   
                                     Organisation,
                                 )
+from commercialoperator.components.organisations.utils import can_admin_org, is_consultant
 from rest_framework import serializers
 
 
@@ -27,13 +28,33 @@ class UserAddressSerializer(serializers.ModelSerializer):
 class UserOrganisationSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='organisation.name')
     abn = serializers.CharField(source='organisation.abn')
+    email = serializers.SerializerMethodField()
+    is_consultant = serializers.SerializerMethodField(read_only=True)
+    is_admin = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Organisation
         fields = (
             'id',
             'name',
-            'abn'
+            'abn',
+            'email',
+            'is_consultant',
+            'is_admin'
         )
+
+    def get_is_admin(self, obj):
+        user = EmailUser.objects.get(id=self.context.get('user_id'))
+        return can_admin_org(obj, user)
+
+    def get_is_consultant(self, obj):
+        user = EmailUser.objects.get(id=self.context.get('user_id'))
+        return is_consultant(obj, user)
+
+    def get_email(self, obj):
+        email = EmailUser.objects.get(id=self.context.get('user_id')).email
+        return email
+
 
 class UserFilterSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
@@ -53,7 +74,7 @@ class UserFilterSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    commercialoperator_organisations = UserOrganisationSerializer(many=True)
+    commercialoperator_organisations = serializers.SerializerMethodField()
     residential_address = UserAddressSerializer()
     personal_details = serializers.SerializerMethodField()
     address_details = serializers.SerializerMethodField()
@@ -96,7 +117,12 @@ class UserSerializer(serializers.ModelSerializer):
     def get_full_name(self, obj):
         return obj.get_full_name()
 
-
+    def get_commercialoperator_organisations(self, obj):
+        commercialoperator_organisations = obj.commercialoperator_organisations
+        serialized_orgs = UserOrganisationSerializer(
+            commercialoperator_organisations, many=True, context={
+                'user_id': obj.id}).data
+        return serialized_orgs
 
 
 class PersonalSerializer(serializers.ModelSerializer):

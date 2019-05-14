@@ -1459,7 +1459,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 #'schema': qs_proposal_type.order_by('-version').first().schema,
                 'schema': proposal_type.schema,
                 'submitter': request.user.id,
-                'applicant': request.data.get('behalf_of'),
+                'org_applicant': request.data.get('org_applicant'),
                 'application_type': application_type,
                 'region': region,
                 'district': district,

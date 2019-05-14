@@ -267,7 +267,7 @@ class ProposalAssessmentSerializer(serializers.ModelSerializer):
 
 
 class BaseProposalSerializer(serializers.ModelSerializer):
-    org_applicant = OrganisationSerializer()
+    #org_applicant = OrganisationSerializer()
     readonly = serializers.SerializerMethodField(read_only=True)
     documents_url = serializers.SerializerMethodField()
     proposal_type = serializers.SerializerMethodField()
