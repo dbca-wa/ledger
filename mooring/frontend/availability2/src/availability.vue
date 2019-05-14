@@ -82,7 +82,7 @@
 	<loader :isLoading.sync="isLoading">&nbsp;</loader>
         <div class="row" v-if="name">
             <div class="columns small-12">
-                <h1>Book mooring: {{ name }}</h1>
+                <h1>Book mooring:</h1>
             </div>
         </div>
 
@@ -248,7 +248,7 @@
             </div>           
         </div>
         <div class="row" v-show="status == 'online'"><div class="columns table-scroll">
-             <div v-if="mooring_vessel_size > vesselSize" class="small-12 medium-12 large-12">
+             <div oldvif="mooring_vessel_size > vesselSize" class="small-12 medium-12 large-12">
             <table class="hover">
                 <thead>
                     <tr>
@@ -316,21 +316,16 @@
                     </tr></template>
                 </template></tbody>
             </table>
+            <div class="row" v-if="sites.length == 0 && isLoading == false">
+                <div class="columns small-12 medium-12 large-12">
+                    <div class="callout alert">
+                        Sorry we couldn't find any mooring matching the query entered.
+                    </div>
+                </div>
             </div>
-     <div v-if="mooring_vessel_size < vesselSize" class="small-12 medium-12 large-12">
-          <table class="hover">
-                <tbody>
-                  <tr>
 
-                     <td>
-         Your vessel size does not suit the selected mooring,  Please choose a mooring suited to your vessel. Click <A HREF="/map/">here</A> to go back to map.
-                     </td>
-		  </tr>
-	        </tbody>
-          </table>
-     </div>
-
-     <div v-if="max_advance_booking_days > max_advance_booking" class="small-12 medium-12 large-12">
+            </div>
+     <div oldvif="max_advance_booking_days > max_advance_booking" class="small-12 medium-12 large-12" style='display:none'>
           <table class="hover">
                 <tbody>
                   <tr>
@@ -498,8 +493,6 @@ function getQueryParam(name, fallback) {
     var results = regex.exec(window.location.href);
     if (!results) return fallback;
     if (!results[2]) return fallback;
-    console.log(name);
-    console.log(results[2]);
     return decodeURIComponent(results[2].replace(/\+/g, " "));
 };
 
@@ -579,7 +572,8 @@ export default {
             mooring_book_row: [],
             mooring_book_row_price: [],
             mooring_book_row_disabled: [],
-            mooring_book_row_display: []
+            mooring_book_row_display: [],
+            loadingID: 0 
         };
     },
     computed: {
@@ -706,11 +700,13 @@ export default {
 
 
               var vm = this;
+              vm.loadingID = vm.loadingID + 1;
               var submitData = {
                   booking_item: booking_item_id,
               };
 
               $.ajax({
+                  loadID: vm.loadingID,
                   url: vm.parkstayUrl + '/api/booking/delete',
                   dataType: 'json',
                   method: 'POST',
@@ -765,6 +761,7 @@ export default {
 	},
         addBooking: function (site_id, mooring_id,bp_id,date) {
               var vm = this;
+              vm.loadingID = vm.loadingID + 1;
               vm.isLoading =true;
               $('#spinnerLoader').show();
 
@@ -784,23 +781,28 @@ export default {
               };
 
               $.ajax({
+                  loadID: vm.loadingID,
                   url: vm.parkstayUrl + '/api/booking/create', 
                   dataType: 'json',
                   method: 'POST',
-                  async: false,
+                  // async: false,
                   data: submitData, 
                   success: function(data, stat, xhr) {
-                     vm.update();
-                     vm.isLoading =false;
-                     $('#spinnerLoader').hide();
+                     if (this.loadID == vm.loadingID) { 
+                         vm.isLoading =false;
+                         $('#spinnerLoader').hide();
+	             }
                      if (data.result == 'error') { 
                           vm.createBookingError(data.message); 
                      }
+                     vm.update();
                   },
                   error: function(xhr, stat, err) {
+                       if (this.loadID == vm.loadingID) {
+                           vm.isLoading =false;
+                           $('#spinnerLoader').hide();
+                       }
                        vm.update();
-                       vm.isLoading =false;
-                      $('#spinnerLoader').hide();
                   }
               });
         },
@@ -1015,8 +1017,11 @@ export default {
         },
         update: function() {
             var vm = this;
+            vm.loadingID = vm.loadingID + 1;
+            vm.sites = [];
             var ready = vm.checkDetails(true);
             if (ready){
+                vm.isLoading =true;
                 $('#spinnerLoader').show();
                 debounce(function() {
                     var params = {
@@ -1049,9 +1054,10 @@ export default {
                     // }
                     if (search){
                         $.ajax({
+                            loadID: vm.loadingID,
                             url: url,
                             dataType: 'json',
-                            async: false,
+                            // async: false,
                             success: function(data, stat, xhr) {
                                 vm.name = data.name;
                                 vm.days = data.days;
@@ -1079,8 +1085,8 @@ export default {
                                 }
 
                                 if (data.sites.length == 0) {
-                                    vm.status = 'empty';
-                                    return;
+                                    // vm.status = 'empty';
+                                    // return;
                                 }
 
                                 vm.gearTotals.tent = 0
@@ -1195,7 +1201,11 @@ export default {
                                     vm.parkstayGroundId = data.id;
                                     vm.updateURL();
                                 }
-                                $('#spinnerLoader').hide();
+	                        if (this.loadID == vm.loadingID) {
+          	                  vm.isLoading =false;
+                	          $('#spinnerLoader').hide();
+                                }
+
                             },
                             error: function(xhr, stat, err) {
                                 vm.showSecondErrorLine = true;
@@ -1221,7 +1231,10 @@ export default {
 
                                     vm.status = 'offline';
                                 }
-                                $('#spinnerLoader').hide();
+                                if (this.loadID == vm.loadingID) {
+                                  vm.isLoading =false;
+                                  $('#spinnerLoader').hide();
+                                }
                             }
                         });
                     }

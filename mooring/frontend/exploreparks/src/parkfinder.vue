@@ -237,6 +237,9 @@
 <!-- here -->
             <div class="small-12 medium-9 large-6 columns">
                 <div class="alert alert-warning" style='text-align: center' role="alert" v-if="admissions_key" id="admissions_link"> <strong style='font-size: 16px;' ></span><a :href='"/admissions/" + admissions_key + "/"'>Click here for paying admission fees only</a></strong><br></div>
+                <div style='width: 100%; height: 1px;' align='right'>
+                       <div v-show='mapLoading == true' class='map-loading' style='border: 1px solid #00000' ><img style='width:20px; height: 20px;' src='/static/common/img/ajax-loader-spinner.gif'>&nbsp;&nbsp;Please Wait</div>
+                </div>
                 <div id="map"></div>
                 <div style='width: 100%' align='right'>
 	                <img id='satellite-toggle' class='map-toggle-white'  type='button'  @click="toggleMap('satellite');" src='./assets/img/satellite_icon.png'  >
@@ -266,8 +269,9 @@
                                 <small><span id='vessel_beam_weight_popup'></span></small>
                             </div>
                         </div>
+                        <input id='mapPopupMooringType' type='hidden' >
                         <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;" target="_blank">More info</a>
-                        <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;" v-on:click="BookNow()" >Book now</a>
+                        <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;" v-on:click="BookNowCheck()" >Book now</a>
                     </div>
                 </div>
             </div>
@@ -299,6 +303,7 @@
                                     </div>
                                 </div>
                                 <div class="row">
+
                                     <div class="col-md-6">
                                         <small>Max Draft: {{ f.vessel_draft_limit }}</small>
                                     </div>
@@ -311,8 +316,11 @@
 
                                 <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
                                  
-                                <a v-if="f.mooring_type == 0 && vesselSize > 0 && vesselDraft > 0 && vesselBeam > 0 && vesselWeight > 0 && vesselRego != '' && vesselRego !== ' '" class="button" v-bind:href="parkstayUrl+'/availability2/?site_id='+f.id+'&'+bookingParam">Book now</a>
-                                <a v-else-if="f.mooring_type == 0" class="button" v-on:click="BookNow()">Book now</a>
+                                <a v-if="f.mooring_type == 0 && vesselSize > 0 && vesselDraft > 0 && vesselWeight > 0 && vesselRego != '' && vesselRego !== ' '" class="button" v-bind:href="parkstayUrl+'/availability2/?site_id='+f.id+'&'+bookingParam">Book now</a>
+                                <a v-else-if="f.mooring_type == 1 && vesselSize > 0 && vesselDraft > 0 && vesselBeam > 0 && vesselRego != '' && vesselRego !== ' '" class="button" v-bind:href="parkstayUrl+'/availability2/?site_id='+f.id+'&'+bookingParam">Book now</a>
+				<a v-else-if="f.mooring_type == 2 && vesselSize > 0 && vesselDraft > 0 && vesselBeam > 0 && vesselRego != '' && vesselRego !== ' '" class="button" v-bind:href="parkstayUrl+'/availability2/?site_id='+f.id+'&'+bookingParam">Book now</a>
+                                <a v-else-if="f.mooring_type == 0" class="button" v-on:click="BookNow('mooring')">Book now</a>
+                                <a v-else-if="f.mooring_type == 1 || f.mooring_type == 2 " class="button" v-on:click="BookNow('jettybeach')">Book now</a>
                                 <a v-else /> 
                             </div>
                         </div>
@@ -631,6 +639,19 @@
        border-radius: 2px;
        box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
     }
+    .map-loading {
+       position: relative;
+       top: 14px;
+       background-color: #FFFFFF;
+       border: 1px solid #bab9b9;
+       z-index: 5;
+       width: 110px;
+       text-align: center;
+       opacity: 0.7;
+       margin-right: 8px;
+       font-size: 12px;
+       padding: 4px;
+    }
 }
 
 /* hacks to make awesomeplete play nice with F6 */
@@ -746,7 +767,9 @@ export default {
             booking_expired_notification: false,
             ongoing_booking: false,
             admissions_key: null,
-            pinsCache:{}
+            pinsCache:{},
+            mapLoading: false,
+            loadingID: 0,
         }
     },
     computed: {
@@ -1121,7 +1144,7 @@ export default {
         },
         reload: debounce(function () {
               this.groundsSource.loadSource();
-              this.removePinAnchors();
+              // this.removePinAnchors();
               this.anchorPinLevelChange = true;
               this.buildmarkers();
          //   this.refreshPopup();
@@ -1791,7 +1814,16 @@ export default {
         });
 
       },
-      BookNow: function() { 
+      BookNowCheck: function() {
+         var mooring_type = $('#mapPopupMooringType').val();
+         if (mooring_type == 0) { 
+             this.BookNow('mooring');
+	 } else {
+             this.BookNow('jettybeach');
+	 }
+
+      },
+      BookNow: function(mooring_type) { 
         var vessel_size = $('#vesselSize').val();
         var vessel_draft = $('#vesselDraft').val();
         var vessel_beam = $('#vesselBeam').val();
@@ -1819,6 +1851,7 @@ export default {
             allowOutsideClick: false
             })
         }
+        if (mooring_type == 'jettybeach') {  
         if (!(vessel_beam > 0)){
             swal({
             title: 'Missing Vessel Beam',
@@ -1830,6 +1863,8 @@ export default {
             allowOutsideClick: false
             })
         }
+        }
+        if (mooring_type == 'mooring') {
         if (!(vessel_weight > 0)){
             swal({
             title: 'Missing Vessel Weight',
@@ -1841,7 +1876,7 @@ export default {
             allowOutsideClick: false
             })
         }
-        
+        }
         if (!vessel_rego || vessel_rego == "" || vessel_rego == " "){
             swal({
                 title: 'Missing Vessel Registration',
@@ -1965,47 +2000,47 @@ export default {
             features: vm.groundsFilter
         });
 
-        this.groundsSource.loadSource = function (onSuccess) {
-
-            if (vm.dateCache != vm.arrivalDateString+vm.departureDateString+vm.gearType+vm.penType) {
-            var urlBase = vm.parkstayUrl+'/api/mooring_map_filter/?';
-            var params = {format: 'json'};
-            var isCustom = false;
-
-
-            if ((vm.arrivalData.date) && (vm.departureData.date)) {
-                isCustom = true;
-                var arrival = vm.arrivalDateString;
-                if (arrival) {
-                    params.arrival = arrival;
-                }
-                var departure = vm.departureDateString;
-                if (departure) {
-                    params.departure = vm.departureDateString;
-                }
-                params.num_adult = vm.numAdults;
-                params.num_concessions = vm.numConcessions;
-                params.num_children = vm.numChildren;
-                params.num_infant = vm.numInfants;
-                params.num_mooring = vm.numMooring;
-                params.gear_type = vm.gearType;
-                params.pen_type = vm.penType;
-                
-            }
-            $.ajax({
-                url: urlBase+$.param(params),
-                success: function (response, stat, xhr) {
-                    vm.groundsIds.clear();
-                    response.forEach(function(el) {
-                        vm.groundsIds.add(el.id);
-                    });
-                    vm.updateFilter();
-                    vm.dateCache = vm.arrivalDateString+vm.departureDateString+vm.gearType+vm.penType;
-                },
-                dataType: 'json'
-            });
-            }
-        };
+//        this.groundsSource.loadSource = function (onSuccess) {
+//
+//            if (vm.dateCache != vm.arrivalDateString+vm.departureDateString+vm.gearType+vm.penType) {
+//            var urlBase = vm.parkstayUrl+'/api/mooring_map_filter/?';
+//            var params = {format: 'json'};
+//            var isCustom = false;
+//
+//
+//            if ((vm.arrivalData.date) && (vm.departureData.date)) {
+//                isCustom = true;
+//                var arrival = vm.arrivalDateString;
+//                if (arrival) {
+//                    params.arrival = arrival;
+//                }
+//                var departure = vm.departureDateString;
+//                if (departure) {
+//                    params.departure = vm.departureDateString;
+//                }
+//                params.num_adult = vm.numAdults;
+//                params.num_concessions = vm.numConcessions;
+//                params.num_children = vm.numChildren;
+//                params.num_infant = vm.numInfants;
+//                params.num_mooring = vm.numMooring;
+//                params.gear_type = vm.gearType;
+//                params.pen_type = vm.penType;
+//                
+//            }
+//            $.ajax({
+//                url: urlBase+$.param(params),
+//                success: function (response, stat, xhr) {
+//                    vm.groundsIds.clear();
+//                    response.forEach(function(el) {
+//                        vm.groundsIds.add(el.id);
+//                    });
+//                    vm.updateFilter();
+//                    vm.dateCache = vm.arrivalDateString+vm.departureDateString+vm.gearType+vm.penType;
+//                },
+//                dataType: 'json'
+//            });
+//            }
+//        };
 
 //        this.grounds = new ol.layer.Vector({
 //            source: this.groundsSource,
@@ -2257,7 +2292,7 @@ export default {
                var features = vm.geojson.readFeatures(response);
                vm.groundsData.clear();
                vm.groundsData.extend(features);
-               vm.groundsSource.loadSource();
+               // vm.groundsSource.loadSource();
                vm.buildmarkers();
  
             }
@@ -2269,50 +2304,73 @@ export default {
         });
 
         this.groundsSource.loadSource = function (onSuccess) {
+            
             if (vm.dateCache != vm.arrivalDateString+vm.departureDateString+vm.gearType+vm.penType) {
+                    vm.mapLoading = true;
+                    vm.loadingID = vm.loadingID + 1;
                     vm.removePinAnchors();
                     vm.anchorPinLevelChange = true;
 
-            var urlBase = vm.parkstayUrl+'/api/mooring_map_filter/?';
-            var params = {format: 'json'};
-            var isCustom = false;
-            if ((vm.arrivalData.date) && (vm.departureData.date)) {
-                isCustom = true;
-                var arrival = vm.arrivalDateString;
-                if (arrival) {
-                    params.arrival = arrival;
-                }
-                var departure = vm.departureDateString;
-                if (departure) {
-                    params.departure = vm.departureDateString;
-                }
-                params.num_adult = vm.numAdults;
-                params.num_concessions = vm.numConcessions;
-                params.num_children = vm.numChildren;
-                params.num_infant = vm.numInfants;
-                params.num_mooring = vm.numMooring;
-                params.gear_type = vm.gearType;
-                params.pen_type = vm.penType;
-            }
-            $.ajax({
-                url: urlBase+$.param(params),
-                success: function (response, stat, xhr) {
-                    vm.groundsIds.clear();
-                    response.forEach(function(el) {
-                        vm.groundsIds.add(el.id);
+                    var urlBase = vm.parkstayUrl+'/api/mooring_map_filter/?';
+                    var params = {format: 'json'};
+                    var isCustom = false;
 
-                    vm.dateCache = vm.arrivalDateString+vm.departureDateString+vm.gearType+vm.penType;
-                    vm.markerAvail[el.id] = el.avail;
+                    if ((vm.arrivalData.date) && (vm.departureData.date)) {
+                        isCustom = true;
+                        var arrival = vm.arrivalDateString;
+                        if (arrival) {
+                            params.arrival = arrival;
+                        }
+                        var departure = vm.departureDateString;
+                        if (departure) {
+                            params.departure = vm.departureDateString;
+                        }
+                        params.num_adult = vm.numAdults;
+                        params.num_concessions = vm.numConcessions;
+                        params.num_children = vm.numChildren;
+                        params.num_infant = vm.numInfants;
+                        params.num_mooring = vm.numMooring;
+                        params.gear_type = vm.gearType;
+                        params.pen_type = vm.penType;
+                    }
+                    
+                    $.ajax({
+                        loadID: vm.loadingID,
+                        url: urlBase+$.param(params),
+                        success: function (response, stat, xhr) {
+                            vm.groundsIds.clear();
+                            response.forEach(function(el) {
+                               vm.groundsIds.add(el.id);
+
+                               vm.dateCache = vm.arrivalDateString+vm.departureDateString+vm.gearType+vm.penType;
+                               vm.markerAvail[el.id] = el.avail;
+                            });
+
+                            vm.updateFilter();
+                       //     vm.removePinAnchors();
+                       //     vm.anchorPinLevelChange = true;
+                            vm.buildmarkers();
+                            if (vm.loadingID == this.loadID) {
+                               vm.mapLoading = false;
+                            }
+
+                        },
+                        error: function(xhr, stat, err) {
+                            if (vm.loadingID == this.loadID) {
+	                            vm.mapLoading = false;
+                            }
+                            swal({
+                              title: 'Error',
+                              text: "There was and error loading map data please try again.",
+                              type: 'error',
+                              showCancelButton: false,
+                              confirmButtonText: 'Close',
+                              showLoaderOnConfirm: true,
+                              allowOutsideClick: false
+                            });
+			},
+                        dataType: 'json'
                     });
-
-                    vm.updateFilter();
-               //     vm.removePinAnchors();
-               //     vm.anchorPinLevelChange = true;
-                    vm.buildmarkers();
-
-                },
-                dataType: 'json'
-            });
           }
        };
        this.grounds = new ol.layer.Vector({
@@ -2452,11 +2510,13 @@ export default {
         });
 
         $('#dateArrival').change(function() {
-               vm.groundsSource.loadSource();
+               // vm.groundsSource.loadSource();
+               vm.reload();
         });
 
         $('#dateDeparture').change(function() {
-               vm.groundsSource.loadSource();
+                vm.reload();
+               // vm.groundsSource.loadSource();
         });
 
         $('#vesselSize').val('0');
@@ -2514,8 +2574,10 @@ export default {
 
                 $('#mapPopupName').html(properties.props.name);
                 $('#mapPopupInfo').attr('href', properties.props.info_url);
-
-                if (properties.props.mooring_type == 0) {
+                if (properties.props.mooring_type == 0 || properties.props.mooring_type == 1 || properties.props.mooring_type == 2) {
+                    console.log('MOOR');
+                    console.log(properties.props.mooring_type);
+                    $('#mapPopupMooringType').val(properties.props.mooring_physical_type);
                     if (properties.bookable == true) { 
                         $('#mapPopupBook').show();
                     } else {
@@ -2540,15 +2602,20 @@ export default {
                     var vessel_draft = $('#vesselDraft').val();
                     var vessel_rego = $('#vesselRego').val();
                     var vessel_beam = $('#vesselBeam').val();
+                    var vessel_weight = $('#vesselWeight').val();
 
-                    if (vessel_size > 0 && vessel_draft > 0 && vessel_beam > 0 &&vessel_rego.length > 1) {
+                    if (properties.props.mooring_physical_type == 0 && vessel_size > 0 && vessel_draft > 0 && vessel_weight > 0 &&vessel_rego.length > 1) {
                         var distance_radius = properties.props.park.distance_radius;
                         $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&distance_radius='+distance_radius+'&'+vm.bookingParam);
                         // $("#mapPopupBook").attr('target','_blank');
+
+                    } else if ((properties.props.mooring_physical_type == 1 || properties.props.mooring_physical_type == 2 ) && ( vessel_size > 0 && vessel_draft > 0 && vessel_beam > 0 && vessel_rego.length > 1)) { 
+			var distance_radius = properties.props.park.distance_radius;
+		        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&distance_radius='+distance_radius+'&'+vm.bookingParam);
                     } else {
-		                $("#mapPopupBook").attr('href','javascript:void(0);');
-                        $("#mapPopupBook").attr('target','');
-		            }
+	                      $("#mapPopupBook").attr('href','javascript:void(0);');
+                              $("#mapPopupBook").attr('target','');
+                   }
                 } else {
                     $("#max_stay_period").html(properties.props.max_advance_booking);
                     $("#vessel_size_popup").html(properties.props.vessel_size_limit);
@@ -2574,25 +2641,25 @@ export default {
                           resolution: resolution,
                           duration: 1000
                     }); 
-                    if (properties.props) { 
-                    if (properties.props.mooring_type == 0) {
-                        $('#mapPopupBook').show();
-                        $("#mapPopupImage").hide();
-                        var vessel_size = $('#vesselSize').val();
-                        var vessel_rego = $('#vesselRego').val();
-                        var vessel_draft = $('#vesselDraft').val();
-                        if (vessel_size > 0 && vessel_draft > 0 && vessel_rego.length > 1) { 
-                               var distance_radius = properties.props.park.distance_radius;
-                               $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&distance_radius='+distance_radius+'&'+vm.bookingParam);
-                        } else {
-				 $("#mapPopupBook").attr('href','javascript:void;');
-			}
-                    } else {
-                        $('#mapPopupBook').hide();
-                    }
-		    } else {
-			$('#mapPopupBook').hide();
-		    }
+                    //if (properties.props) { 
+                    //if (properties.props.mooring_type == 0) {
+                    //    $('#mapPopupBook').show();
+                    //    $("#mapPopupImage").hide();
+                    //    var vessel_size = $('#vesselSize').val();
+                    //    var vessel_rego = $('#vesselRego').val();
+                    //    var vessel_draft = $('#vesselDraft').val();
+                    //    if (vessel_size > 0 && vessel_draft > 0 && vessel_rego.length > 1) { 
+                    //           var distance_radius = properties.props.park.distance_radius;
+                    //           $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability2/?site_id='+properties.marker_id+'&distance_radius='+distance_radius+'&'+vm.bookingParam);
+                    //    } else {
+		    //    	 $("#mapPopupBook").attr('href','javascript:void;');
+		    //    }
+                    //} else {
+                    //    $('#mapPopupBook').hide();
+                    //}
+		    //} else {
+		    //    $('#mapPopupBook').hide();
+		    //}
 	        } 
 
           } else {

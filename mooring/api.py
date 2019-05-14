@@ -468,9 +468,11 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
             "avail": request.GET.get('gear_type', 'all'),
             "pen_type": request.GET.get('pen_type', 'all')
         }
-       
+ 
         serializer = MooringAreaMooringsiteFilterSerializer(data=data)
+
         serializer.is_valid(raise_exception=True)
+
         scrubbed = serializer.validated_data
         context = {}
         ground_ids = []
@@ -484,12 +486,13 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
             sites = Mooringsite.objects.filter(**context)
             #ground_ids = utils.get_open_marinas(sites, scrubbed['arrival'], scrubbed['departure'])
-  
+
             open_marinas = utils.get_open_marinas(sites, scrubbed['arrival'], scrubbed['departure'])
             for i in open_marinas:
                  ground_ids.append(i) 
 
-        else: # show all of the campgrounds with campsites
+        else:
+            # show all of the campgrounds with campsites
             ground_ids = set((x[0] for x in Mooringsite.objects.filter(**context).values_list('mooringarea')))
             # we need to be tricky here. for the default search (all, no timestamps),
             # we want to include all of the "campgrounds" that don't have any campsites in the model! (e.g. third party)
@@ -515,8 +518,9 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
             end_date = scrubbed['departure']
         else:
             end_date = today + timedelta(days=1)
-
+        
         temp_queryset = Mooringsite.objects.filter(id__in=ground_ids).order_by('name')
+
         queryset = []
         for q in temp_queryset:
             # Get the current stay history
@@ -525,6 +529,7 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
                             Q(range_start__lte=end_date,range_end__gte=end_date)|# filter end date is within period
                             Q(Q(range_start__gt=start_date,range_end__lt=end_date)&Q(range_end__gt=today)) #filter start date is before and end date after period
                             ,mooringarea=q.mooringarea)
+
 
             if stay_history:
                 max_days = min([x.max_days for x in stay_history])
@@ -569,7 +574,6 @@ class MooringAreaMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             query = queryset
                 
-
 #        serializer = self.get_serializer(queryset, many=True)
         return HttpResponse(json.dumps(query), content_type='application/json')
 #        return Response(serializer.data)
@@ -1723,7 +1727,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
          return distance
 
     def retrieve(self, request, pk=None, ratis_id=None, format=None, show_all=False):
-        """Fetch full campsite availability for a campground."""
+        """Fetch full mooring availability."""
+
         # convert GET parameters to objects
         ground = self.get_object()
         # check if the user has an ongoing booking
@@ -1765,7 +1770,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         vessel_beam = serializer.validated_data['vessel_beam']
         vessel_weight = serializer.validated_data['vessel_weight']
         vessel_rego = serializer.validated_data['vessel_rego']
-         #       distance_radius = serializer.validated_data['distance_radius']
+        # distance_radius = serializer.validated_data['distance_radius']
 
         if ongoing_booking:
             if not ongoing_booking.details:
@@ -1786,8 +1791,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         if ground.mooring_type != 0:
             return Response({'error': 'Mooring doesn\'t support online bookings'}, status=400)
 
-        if ground.vessel_size_limit < vessel_size:
-             return Response({'name':'   ', 'error': 'Vessel size is too large for mooring', 'error_type': 'vessel_error', 'vessel_size': ground.vessel_size_limit}, status=200 )
+        #if ground.vessel_size_limit < vessel_size:
+        #     return Response({'name':'   ', 'error': 'Vessel size is too large for mooring', 'error_type': 'vessel_error', 'vessel_size': ground.vessel_size_limit}, status=200 )
 
 
         #if not ground._is_open(start_date):
@@ -1814,7 +1819,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         #     context[gear_type] = True
 #        sites_qs = Mooringsite.objects.filter(mooringarea=ground).filter(**context)
 #        radius = int(distance_radius)
-        radius = int(100)
+
+        radius = int(1)
         if float(distance_radius) > 0:
             radius = float(distance_radius)
 #       sites_qs = Mooringsite.objects.all().filter(**context)
@@ -1822,7 +1828,19 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
   #      if request.session['ps_booking_old']:
 #            sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius))).filter(**context).exclude()
  #       else:
-        sites_qs = Mooringsite.objects.filter(mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius))).filter(**context)
+#        sites_qs = Mooringsite.objects.filter(mooringarea__vessel_size_limit__gte=vessel_size, 
+#                                              mooringarea__vessel_draft_limit__gte=vessel_draft,
+#                                              mooringarea__vessel_beam_limit__gte=vessel_beam,
+#                                              mooringarea__vessel_weight_limit__gte=vessel_weight,
+#                                              mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius)))
+#
+        sites_qs = Mooringsite.objects.filter(mooringarea__vessel_size_limit__gte=vessel_size,
+                                              mooringarea__vessel_draft_limit__gte=vessel_draft,
+                                              mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius)))
+
+        print ("SITE QS")
+        print sites_qs
+        #.filter(**context)
 
         # # If the pen type has been included in filtering and is not 'all' then loop through the sites selected.
         # if pen_type != 'all':
@@ -1846,11 +1864,15 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         }
 
   
+
         #for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items():
         # fetch availability map
+
         cb = get_current_booking(ongoing_booking)
         current_booking = cb['current_booking']
         total_price = cb['total_price']
+
+
 #        ms_booking = MooringsiteBooking.objects.filter(booking=ongoing_booking)
 #        current_booking = []
 #        total_price = Decimal('0.00')
@@ -1875,8 +1897,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                  if hashlib.md5(str(current_booking_obj)).hexdigest() == hashlib.md5(str(old_booking_obj)).hexdigest():
                        booking_changed = False
                       
-              
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date, ongoing_booking, request)
+
         # create our result object, which will be returned as JSON
         result = {
             'id': ground.id,
@@ -2083,8 +2105,34 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                     'vessel_weight_limit': k.mooringarea.vessel_weight_limit
                 }
 
-                result['sites'].append(site)
-                bookings_map[k.id] = site
+                showmooring = True
+                if vessel_size > 0: 
+                    if k.mooringarea.vessel_size_limit >= vessel_size:
+                          pass
+                    else:
+                       showmooring = False
+
+                if vessel_draft > 0:
+                    if k.mooringarea.vessel_draft_limit >= vessel_draft:
+                          pass
+                    else:
+                       showmooring = False
+
+                if vessel_beam > 0:
+                    if k.mooringarea.vessel_beam_limit >= vessel_beam:
+                          pass
+                    else:
+                       showmooring = False
+
+                if vessel_weight > 0:
+                    if k.mooringarea.vessel_weight_limit >= vessel_weight:
+                          pass
+                    else:
+                       showmooring = False
+
+                if showmooring == True:
+                   result['sites'].append(site)
+                   bookings_map[k.id] = site
 
                 if v[1].pk not in result['classes']:
                     result['classes'][v[1].pk] = v[1].name
