@@ -141,6 +141,7 @@ module.exports = {
             tileLayerSat: null,
             layers: [],
             popup: null,
+            opt_url : helpers.add_endpoint_json(api_endpoints.location, "optimised"),
         }
     },
     mounted(){
@@ -252,6 +253,8 @@ module.exports = {
             var markers = L.markerClusterGroup();
 
             console.log('addMarkers')
+            //opt_url = helpers.add_endpoint_json(api_endpoints.location, "optimised"); 
+            console.log(this.opt_url);
 
             $.ajax({
                 //url: '/api/call_email_location/',
@@ -282,7 +285,12 @@ module.exports = {
                                 /* dynamically construct content of the popup */
                                 myMarker.on('click', (ev)=>{
                                     let popup = ev.target.getPopup();
-                                    popup.setContent(self.construct_content(feature, coords));
+                                    //popup.setContent(self.construct_content(feature, coords));
+
+                                    self.$http.get('/api/call_email/' + feature.properties.call_email_id).then(response => {
+                                        let call_email = response.body;
+                                        popup.setContent(self.construct_content(call_email, coords));
+                                    });
                                 })
                             }
                         }
@@ -291,13 +299,14 @@ module.exports = {
                 }
             });
         },
-        construct_content: function (feature, coords){
+        construct_content: function (call_email, coords){
+            let feature = call_email.location
             let content = '<div class="popup-title popup-title-top">Coordinate</div>'
                         + '<div class="popup-coords">'
                         + 'Lat: ' + coords[1] + '<br />'
                         + 'Lng: ' + coords[0] 
                         + '</div>'
-            /*
+            
             if (feature.properties.street){
                 content += '<div class="popup-title">Address</div>'
                 + '<div class="popup-address">'
@@ -313,10 +322,9 @@ module.exports = {
                 + feature.properties.details
                 + '</div>'
             }
-            */
 
             content += '<div class="popup-link">'
-                + '<a src="">Link to call_email_id: ' + feature.properties.call_email_id + '</a>'
+                + '<a href="call_email/' + call_email.id + '">View callemail</a>'
                 + '</div>';
 
             return content;

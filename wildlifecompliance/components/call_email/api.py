@@ -285,6 +285,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     
     @detail_route(methods=['POST', ])
     def call_email_save(self, request, *args, **kwargs):
+        print("request.data")
+        print(request.data)
         instance = self.get_object()
         try:
             with transaction.atomic():

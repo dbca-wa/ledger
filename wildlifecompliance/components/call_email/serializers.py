@@ -87,7 +87,7 @@ class LocationSerializer(GeoFeatureModelSerializer):
             'country',
             'wkb_geometry',
             'details',
-            'call_email_id',
+            #'call_email_id',
         )
         
 

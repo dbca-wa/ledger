@@ -268,6 +268,8 @@ export const callemailStore = {
                     }
                 }
                 
+                console.log("payload");
+                console.log(payload);
                 const savedCallEmail = await Vue.http.post(fetchUrl, 
                     payload
                     )
