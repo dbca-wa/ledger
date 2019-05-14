@@ -44,11 +44,11 @@ def update_application_doc_filename(instance, filename):
 
 
 def update_pdf_licence_filename(instance, filename):
-    return 'applications/{}/wildlife_compliance_licence/{}'.format(instance.id, filename)
+    return 'wildlifecompliance/applications/{}/wildlife_compliance_licence/{}'.format(instance.id, filename)
 
 
 def update_assessment_inspection_report_filename(instance, filename):
-    return 'assessments/{}/inspection_report/{}'.format(instance.id, filename)
+    return 'wildlifecompliance/assessments/{}/inspection_report/{}'.format(instance.id, filename)
 
 
 def replace_special_chars(input_str, new_char='_'):
@@ -1268,6 +1268,7 @@ class Application(RevisionedMixin):
             try:
                 parent_licence = None
                 issued_activities = []
+                declined_activities = []
                 for item in request.data.get('activity'):
                     licence_activity_id = item['id']
                     selected_activity = self.activities.filter(
@@ -1332,6 +1333,7 @@ class Application(RevisionedMixin):
                         selected_activity.cc_email = item['cc_email']
                         selected_activity.reason = item['reason']
                         selected_activity.save()
+                        declined_activities.append(selected_activity)
                         # Log application action
                         self.log_user_action(
                             ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(
@@ -1349,8 +1351,6 @@ class Application(RevisionedMixin):
                             self.submitter.log_user_action(
                                 ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(
                                     item['name']), request)
-                        send_application_decline_notification(
-                            item['name'], self, request)
 
                 # If any activities were issued - re-generate PDF
                 if parent_licence is not None:
@@ -1361,6 +1361,9 @@ class Application(RevisionedMixin):
                         request=request,
                         licence=parent_licence
                     )
+                if declined_activities:
+                    send_application_decline_notification(
+                        declined_activities, self, request)
 
             except BaseException:
                 raise

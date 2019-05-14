@@ -89,29 +89,29 @@
                                     </div>
                                     <div v-if="!applicationIsDraft && canRequestAmendment" class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="amendmentRequest()">Request Amendment</button><br/>
+                                            <button class="btn btn-primary top-buffer-s col-xs-12" @click.prevent="amendmentRequest()">Request Amendment</button><br/>
                                         </div>
                                     </div>
                                     <div v-if="!applicationIsDraft" class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="togglesendtoAssessor()">Assessments &amp; Conditions</button><br/>
+                                            <button class="btn btn-primary top-buffer-s col-xs-12" @click.prevent="togglesendtoAssessor()">Assessments &amp; Conditions</button><br/>
                                         </div>
                                     </div>
                                     <div v-if="canOfficerReviewConditions" class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-warning top-buffer-s" @click.prevent="toggleOfficerConditions()">Review Conditions</button>
+                                            <button class="btn btn-warning top-buffer-s col-xs-12" @click.prevent="toggleOfficerConditions()">Review Conditions</button>
                                         </div>
                                     </div>
                                     <div v-if="canProposeIssueOrDecline" class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-danger top-buffer-s" @click.prevent="proposedDecline()">Propose Decline</button>
-                                            <button style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="proposedLicence()">Propose Issue</button>
+                                            <button class="btn btn-danger top-buffer-s col-xs-12" @click.prevent="proposedDecline()">Propose Decline</button>
+                                            <button class="btn btn-success top-buffer-s col-xs-12" @click.prevent="proposedLicence()">Propose Issue</button>
                                         </div>
                                     </div>
                                     <div v-if="canIssueDecline" class="row">
                                         <div class="col-sm-12">
-                                            <button v-if="!userIsAssignedOfficer" style="width:80%;" class="btn btn-success top-buffer-s" @click.prevent="toggleIssue()">Issue/Decline</button>
-                                            <button v-else disabled style="width:80%;" class="btn btn-success top-buffer-s">Issue/Decline</button>
+                                            <button v-if="!userIsAssignedOfficer" class="btn btn-success top-buffer-s col-xs-12" @click.prevent="toggleIssue()">Issue/Decline</button>
+                                            <button v-else disabled class="btn btn-success top-buffer-s col-xs-12">Issue/Decline</button>
                                         </div>
                                     </div>
                                 </template>
@@ -123,7 +123,7 @@
                                     </div>
                                     <div v-if="isSendingToAssessor || isOfficerConditions || isofficerfinalisation" class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary top-buffer-s" @click.prevent="toggleApplication({show: true})">Back to Application</button><br/>
+                                            <button class="btn btn-primary top-buffer-s col-xs-12" @click.prevent="toggleApplication({show: true})">Back to Application</button><br/>
                                         </div>
                                     </div>
                                 </template>
