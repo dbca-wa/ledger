@@ -24,7 +24,7 @@
             :help_text="help_text"
             :help_text_url="help_text_url"
             :isRemovable="true">
-                <renderer-block v-for="(subcomponent, index) in component.children"
+                <compliance-renderer-block v-for="(subcomponent, index) in component.children"
                     :component="subcomponent"
                     :instance="instance"
                     v-bind:key="`group_${index}`"
