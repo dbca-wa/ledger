@@ -141,7 +141,7 @@ module.exports = {
             tileLayerSat: null,
             layers: [],
             popup: null,
-            opt_url : helpers.add_endpoint_json(api_endpoints.location, "optimised"),
+            opt_url : helpers.add_endpoint_json(api_endpoints.call_email, "optimised"),
         }
     },
     mounted(){
@@ -252,8 +252,10 @@ module.exports = {
             let self = this;
             var markers = L.markerClusterGroup();
 
+            console.log(this.opt_url);
+
             $.ajax({
-                url: '/api/call_email/optimised/',
+                url: this.opt_url,
                 dataType: 'json',
                 success: function(data, status, xhr){
                     if (data && data.length > 0){
@@ -262,6 +264,7 @@ module.exports = {
                                 let call_email = data[i];
                                 let coords = call_email.location.geometry.coordinates;
 
+                                /* Select a marker file, according to the classification */
                                 let filename = 'marker-gray-locked.svg';
                                 if (call_email.classification){
                                     if (call_email.classification.id == 1){
@@ -304,31 +307,45 @@ module.exports = {
             });
         },
         construct_content: function (call_email, coords){
-            let feature = call_email.location
-            let content = '<div class="popup-title popup-title-top">Coordinate</div>'
+            let classification_str = '---';
+            if (call_email.classification){
+                classification_str = call_email.classification.name;
+            }
+
+            let report_type_str = '---';
+            if (call_email.report_type){
+                report_type_str = call_email.report_type.report_type;
+            }
+
+            let content = '<div class="popup-title popup-title-top">Classification</div>'
                         + '<div class="popup-coords">'
-                        + 'Lat: ' + coords[1] + '<br />'
-                        + 'Lng: ' + coords[0] 
+                        + classification_str
                         + '</div>'
+
+            content    += '<div class="popup-title">Report Type</div>'
+                        + '<div class="popup-address">'
+                        + report_type_str
+                        + '</div>'
+
             
-            if (feature.properties.street){
+            if (call_email.location.properties.street){
                 content += '<div class="popup-title">Address</div>'
                 + '<div class="popup-address">'
-                + feature.properties.street + '<br />'
-                + feature.properties.town_suburb + '<br />'
-                + feature.properties.state + '<br />'
-                + feature.properties.postcode
+                + call_email.location.properties.street + '<br />'
+                + call_email.location.properties.town_suburb + '<br />'
+                + call_email.location.properties.state + '<br />'
+                + call_email.location.properties.postcode
                 + '</div>'
 
             }else{
                 content += '<div class="popup-title">Details</div>'
                 + '<div class="popup-address">'
-                + feature.properties.details
+                + call_email.location.properties.details.substring(0, 10)
                 + '</div>'
             }
 
             content += '<div class="popup-link">'
-                + '<a href="call_email/' + call_email.id + '">View callemail</a>'
+                + '<a href="call_email/' + call_email.id + '">View</a>'
                 + '</div>';
 
             return content;
@@ -408,6 +425,8 @@ module.exports = {
     padding: 10px;
 }
 .popup-link {
+    text-align: center;
+    font-size: 1.2em;
     padding: 10px;
 }
 .leaflet-popup-content {
