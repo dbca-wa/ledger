@@ -2476,9 +2476,13 @@ class Referral(RevisionedMixin):
     def title(self):
         return self.proposal.title
 
+    # @property
+    # def applicant(self):
+    #     return self.proposal.applicant.name
+
     @property
     def applicant(self):
-        return self.proposal.applicant.name
+        return self.proposal.applicant
 
     @property
     def can_be_processed(self):

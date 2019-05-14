@@ -387,7 +387,7 @@ class DTProposalSerializer(BaseProposalSerializer):
 
 class ListProposalSerializer(BaseProposalSerializer):
     submitter = EmailUserSerializer()
-    applicant = serializers.CharField(source='applicant.organisation.name')
+    applicant = serializers.CharField(read_only=True)
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
@@ -543,6 +543,7 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'review_status',
                 #'hard_copy',
                 'applicant',
+                'org_applicant',
                 'proxy_applicant',
                 'submitter',
                 'assigned_officer',
@@ -630,7 +631,9 @@ class ProposalParkSerializer(BaseProposalSerializer):
 
 
 class InternalProposalSerializer(BaseProposalSerializer):
-    applicant = ApplicantSerializer()
+    #applicant = ApplicantSerializer()
+    applicant = serializers.CharField(read_only=True)
+    org_applicant = OrganisationSerializer()
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
@@ -672,6 +675,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'review_status',
                 #'hard_copy',
                 'applicant',
+                'org_applicant',
                 'proxy_applicant',
                 'submitter',
                 'assigned_officer',
