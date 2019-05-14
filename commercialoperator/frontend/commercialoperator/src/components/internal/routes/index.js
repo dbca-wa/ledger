@@ -55,6 +55,7 @@ export default
         {
             path: 'payment',
             component: PaymentDash,
+            //component: PaymentOrder,
         },
         {
             path: 'payment_order',

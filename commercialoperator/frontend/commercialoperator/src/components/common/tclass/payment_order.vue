@@ -37,6 +37,7 @@
 </template>
 
 <script>
+
 import TextArea from '@/components/forms/text-area.vue'
 import OrderTable from './order_table.vue'
 import Select from '@/components/forms/select.vue'
@@ -76,7 +77,7 @@ from '@/utils/hooks'
             return{
                 values: null,
                 //headers: '{"Species": "text", "Quantity": "number", "Date": "date", "Taken": "checkbox"}',
-                headers: '{"Park": "select", "Arrival": "date", "Adults": "number", "Children": "number", "Free of Charge":"number"}',
+                headers: '{"Park": "select", "Arrival": "date", "Adults": "number", "Children": "number", "Free of Charge":"number", "Cost":"total"}',
                 _options: "[{'label': 'Nungarin', 'value': 'Nungarin'}, {'label': 'Nungarin_2', 'value': 'Nungarin_2'}]",
                 _parks: [
                     {'label': 'Nungarin', 'value': 'Nungarin'},
@@ -96,7 +97,9 @@ from '@/utils/hooks'
                             expiry_date: String,
                         }
                     }
-                }
+                },
+                columns: ['a','b','c'],
+                rows: [['a','b','c']],
             }
         },
         computed: {
@@ -127,7 +130,8 @@ from '@/utils/hooks'
 
                 $(".editable-table tbody").find("tr:not(:first)").remove();
 
-                vm.$refs.order_table.table.tbody = [["","","","",""]];
+                //vm.$refs.order_table.table.tbody = [["","","","","", ""]];
+                vm.$refs.order_table.table.tbody = [vm.$refs.order_table.init_row];
                 $(".editable-table .selected-tag").text('')
                 $(".tbl_input").val('');
             },
@@ -185,7 +189,15 @@ from '@/utils/hooks'
                     //vm.parks = [];
                     vm.parks = [];
                     for (var i in vm.land_parks) {
-                        vm.parks.push({value:vm.land_parks[i].park.id, label:vm.land_parks[i].park.name});
+                        vm.parks.push({
+                            value:vm.land_parks[i].park.id,
+                            label:vm.land_parks[i].park.name,
+                            prices:{
+                                adult:vm.land_parks[i].park.adult,
+                                child:vm.land_parks[i].park.child,
+                                senior:vm.land_parks[i].park.senior
+                            }
+                        });
                     }
                     if (vm.parks.length==0) {
                         //document.getElementById("new_payment").reset();

@@ -119,21 +119,6 @@ class Activity(models.Model):
     def __str__(self):
         return self.name
 
-@python_2_unicode_compatible
-class ParkPrice(models.Model):
-    park = models.ForeignKey('Park', related_name='park_prices')
-    adult = models.DecimalField('Adult (price per adult)', max_digits=5, decimal_places=2, null=True, blank=True)
-    child = models.DecimalField('Child (price per child)', max_digits=5, decimal_places=2, null=True, blank=True)
-    senior = models.DecimalField('Senior (price per senior)', max_digits=5, decimal_places=2, null=True, blank=True)
-
-    class Meta:
-        ordering = ['park__name']
-        app_label = 'commercialoperator'
-        #unique_together = ('id', 'proposal',)
-
-    def __str__(self):
-        return self.park.name
-
 
 @python_2_unicode_compatible
 class Park(models.Model):
@@ -150,6 +135,9 @@ class Park(models.Model):
     allowed_activities = models.ManyToManyField(Activity, blank=True)
     allowed_access = models.ManyToManyField(AccessType, blank=True)
 
+    adult = models.DecimalField('Adult (price per adult)', max_digits=5, decimal_places=2, null=True, blank=True)
+    child = models.DecimalField('Child (price per child)', max_digits=5, decimal_places=2, null=True, blank=True)
+    senior = models.DecimalField('Senior (price per senior)', max_digits=5, decimal_places=2, null=True, blank=True)
     #proposal = models.ForeignKey(Proposal, related_name='parks')
 
 
@@ -426,8 +414,7 @@ reversion.register(ActivityType)
 reversion.register(ActivityCategory, follow=['activities'])
 #reversion.register(Activity, follow=['park_set', 'zone_set', 'trail_set', 'requireddocument_set'])
 reversion.register(Activity, follow=['park_set', 'zone_set', 'trail_set', 'requireddocument_set', 'proposalparkactivity_set','proposalparkzoneactivity_set', 'proposaltrailsectionactivity_set'])
-reversion.register(Park, follow=['zones', 'requireddocument_set', 'proposals', 'park_prices', 'park_entries'])
-reversion.register(ParkPrice)
+reversion.register(Park, follow=['zones', 'requireddocument_set', 'proposals', 'park_entries'])
 reversion.register(Zone, follow=['proposal_zones'])
 reversion.register(Trail, follow=['sections', 'proposals'])
 reversion.register(Section, follow=['proposal_trails'])

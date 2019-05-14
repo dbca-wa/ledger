@@ -16,23 +16,35 @@
                 </thead>
 
                 <tbody>
-                  <tr v-for="row in table.tbody">
+                  <!--<tr v-for="row in table.tbody">-->
+                  <tr v-for="(row, row_idx) in table.tbody">
                       <td v-if="col_types[index]=='select'" width="30%" v-for="(value, index) in row">
-                          <v-select class="tbl_input2" :options="options" v-model="row[index]"/>
+                          <!-- <v-select class="tbl_input2" :options="options" v-model="row[index]" @change="calcPrice(row[index], row, row_idx)"/> -->
+                          <v-select class="tbl_input2" :options="options" v-model="row[index]" @change="park_change(row[index], row, row_idx)" :title="'Adult Price: '+ row[index] +  ', Child Price: ' + row[index]"/>
                       </td>
                       <td v-if="col_types[index]=='date'" v-for="(value, index) in row">
-                          <input :readonly="readonly" id="id_arrival_date" class="tbl_input" :type="col_types[index]" :max="expiry_date" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="disabled"/>
+                          <input :readonly="readonly" id="id_arrival_date" class="tbl_input" :type="col_types[index]" :max="expiry_date" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="disabled" @change="calcPrice(row[index], row, row_idx)"/>
                       </td>
                       <td v-if="col_types[index]=='text' || col_types[index]=='number'" v-for="(value, index) in row">
-                          <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" value="0" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="disabled"/>
+                          <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" value="0" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="disabled" @change="calcPrice(row[index], row, row_idx)"/>
                       </td>
+                      <td v-if="col_types[index]=='total'" v-for="(value, index) in row">
+                          <!--${{ net_park_prices | price(row_idx) }}-->
+                          <div class="currencyinput"><input class="tbl_input" :type="col_types[index]" min="0" value="0" v-model="row[index]" disabled/> </div>
+                      </td>
+
+                      <!--
+                      <td>
+                          ${{ net_park_prices | price(row_idx) }}
+                      </td>
+                      -->
                       <td v-if="!readonly">
                           <a class="fa fa-trash-o" v-on:click="deleteRow(row)" title="Delete row" style="cursor: pointer; color:red;" :disabled="disabled"></a>
                       </td>
                   </tr>
 
                 </tbody>
-                      <span><button class="btn btn-primary" type="button" v-on:click="addRow()" :disabled="disabled">+</button>Add another park and/or date</span>
+                <span><button class="btn btn-primary" type="button" v-on:click="addRow()" :disabled="disabled">+</button>Add another park and/or date</span>
 
               </table>
 
@@ -72,41 +84,18 @@ export default {
         id: String,
         isRequired: String,
         comment_value: String,
-        assessor_readonly: Boolean,
         disabled: Boolean,
-        help_text: String,
-        help_text_assessor: String,
-        help_text_url: String,
-        help_text_assessor_url: String,
-        assessorMode:{
-            default:function(){
-                return false;
-            }
-        },
+        readonly:Boolean,
         value:{
             default:function () {
                 return null;
             }
         },
-        readonly:Boolean,
-
-        /*
-        tableJSON:{
+        init_row:{
             default:function () {
-                return '';
+                return [];
             }
         },
-
-        table:{
-            default:function () {
-                return {
-                    thead: [],
-                    tbody: [],
-                }
-            }
-        }
-        */
-
     },
 
     components: {
@@ -135,8 +124,10 @@ export default {
         ];
 
         // setup initial empty row for display
-        var init_row = [];
-        for(var i = 0, length = col_headers.length; i < length; i++) { init_row.push('')  }
+        //var init_row = [vm.rowIdx];
+        //vm.init_row = [];
+        for(var i = 0, length = col_headers.length; i < length; i++) { vm.init_row.push('')  }
+        //vm.rowIdx += 1;
 
         if (value == null) {
             vm.table = {
@@ -144,7 +135,7 @@ export default {
                     thead: col_headers,
                     tbody: [
                         //['No header specified']
-                        init_row
+                        vm.init_row
                     ]
             }
         } else {
@@ -154,12 +145,34 @@ export default {
             }
         }
 
-        if(vm.readonly) {
-            return { isClickable: "return false;" }
-        } else {
-            return { isClickable: "return true;" }
-        }
+        return { 
+            idx_park: 0,
+            idx_arrival_date: 1,
+            idx_adult: 2,
+            idx_child: 3,
+            idx_senior: 4,
+            idx_price: 5,
 
+            isClickable: "return true;" ,
+            selected_park:{
+                default:function () {
+                    return {
+                        value: String,
+                        label: String,
+                        prices: Object,
+                    }
+                }
+            },
+            net_park_prices:{
+                default:function () {
+                    return {
+                        value: Number,
+                        idx: Number,
+                    }
+                }
+            },
+
+        }
     },
     watch:{
         //table: function(){
@@ -167,6 +180,15 @@ export default {
         //}
     },
     beforeUpdate() {
+    },
+    filters: {
+        _price: function(row_idx){
+            let vm = this;
+            return row_idx ? vm.net_park_prices[row_idx]: '';
+        },
+        price: function(dict, key){
+            return dict[key];
+        }
     },
     methods: {
         updateTableJSON: function() {
@@ -181,12 +203,19 @@ export default {
 
           for(var i = 0, length = vm.table.thead.length; i < length; i++) {
             //newRow.push('R:' + (vm.table.tbody.length + 1) + ' V:' + (i + 1))
+
+//            if (i==0) {
+//                newRow.push(vm.rowIdx)
+//            } else {
+//                newRow.push('')
+//            }
             newRow.push('')
           }
 
           vm.table.tbody.push(newRow);
 
           vm.updateTableJSON();
+          vm.rowIdx += 1;
         },
         deleteRow: function(row) {
             let vm = this;
@@ -197,6 +226,33 @@ export default {
             })
             vm.updateTableJSON();
         },
+
+        adult_price: function(row) {
+            return row[this.idx_park] ? row[this.idx_park].prices.adult : '';
+        },
+        child_price: function(row) {
+            return row[this.idx_park] ? row[this.idx_park].prices.child : '';
+        },
+        calcPrice: function(selected_park, row, row_idx) {
+          let vm = this;
+          if (selected_park) {
+            console.log('*** ' + selected_park + ' row: ' + row);
+
+            var adult_price = isNaN(parseInt(row[vm.idx_adult])) ? 0.00 : parseInt(row[vm.idx_adult]) * vm.adult_price(row);
+            var child_price = isNaN(parseInt(row[vm.idx_child])) ? 0.00 : parseInt(row[vm.idx_child]) * vm.child_price(row);
+
+            vm.net_park_prices[row_idx] = (adult_price + child_price).toFixed(2);
+            vm.table.tbody[row_idx][vm.idx_price] = (adult_price + child_price).toFixed(2);
+            vm.updateTableJSON();
+          }
+        },
+        park_change: function(selected_park, row, row_idx) {
+            console.log('aaa ' + selected_park + ' row: ' + row);
+        },
+        park_selected: function(selected_park) {
+            return selected_park ? true : false;
+        },
+ 
     },
 
     computed:{
@@ -261,6 +317,21 @@ export default {
 
     input[id="header"] {
         outline-style: none;
+    }
+
+    div.currencyinput{
+    position:relative;
+    }
+
+    div.currencyinput input{
+    padding-left: 15px;
+    }
+
+    div.currencyinput:after{
+    position: absolute;
+        left: 6px;
+        top: 2px;
+        content: '$';
     }
 </style>
 

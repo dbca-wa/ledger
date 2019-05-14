@@ -19,7 +19,7 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, ParkPrice, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument#, RevisionedMixin
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument#, RevisionedMixin
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
@@ -322,7 +322,7 @@ class ParkEntry(models.Model):
     def price_net(self):
         return (self.price_adult + self.price_child + self.price_senior)
 
- 
+
 class Proposal(DirtyFieldsMixin, RevisionedMixin):
 #class Proposal(DirtyFieldsMixin, models.Model):
 
@@ -837,7 +837,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         try:
                             chk_instance=ProposalAssessmentAnswer.objects.get(question=chk, assessment=assessor_assessment)
                         except ProposalAssessmentAnswer.DoesNotExist:
-                            chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=assessor_assessment)  
+                            chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=assessor_assessment)
 
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
@@ -931,7 +931,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                 try:
                                     chk_instance=ProposalAssessmentAnswer.objects.get(question=chk, assessment=referral_assessment)
                                 except ProposalAssessmentAnswer.DoesNotExist:
-                                    chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=referral_assessment) 
+                                    chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=referral_assessment)
                     # Create a log entry for the proposal
                     #self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
                     self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}'.format(referral_group.name)),request)
@@ -1893,7 +1893,7 @@ class AmendmentReason(models.Model):
 
     def __str__(self):
         return self.reason
-                                                                      
+
 
 class AmendmentRequest(ProposalRequest):
     STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
@@ -2505,7 +2505,7 @@ class ProposalAssessment(RevisionedMixin):
     @property
     def checklist(self):
         return self.answers.all()
-    
+
 
 
 class ProposalAssessmentAnswer(RevisionedMixin):
@@ -2518,8 +2518,8 @@ class ProposalAssessmentAnswer(RevisionedMixin):
 
     class Meta:
         app_label = 'commercialoperator'
-    
-    
+
+
 
 
 class QAOfficerReferral(RevisionedMixin):
