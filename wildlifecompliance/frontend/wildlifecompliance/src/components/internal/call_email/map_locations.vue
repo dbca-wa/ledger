@@ -317,7 +317,8 @@ module.exports = {
                 report_type_str = call_email.report_type.report_type;
             }
 
-            let content = '<div class="popup-title popup-title-top">Classification</div>'
+            let content = '<div class="popup-title-main">' + call_email.number + '</div>';
+            content    += '<div class="popup-title">Classification</div>'
                         + '<div class="popup-coords">'
                         + classification_str
                         + '</div>'
@@ -345,7 +346,7 @@ module.exports = {
             }
 
             content += '<div class="popup-link">'
-                + '<a href="call_email/' + call_email.id + '">View</a>'
+                + '<a href="/internal/call_email/' + call_email.id + '">View</a>'
                 + '</div>';
 
             return content;
@@ -415,8 +416,11 @@ module.exports = {
     font-weight: bold;
     color: white;
 }
-.popup-title-top {
-    border-radius: 12px 12px 0 0;
+.popup-title-main {
+    color: gray;
+    font-size: 1.3em;
+    font-weight: bold;
+    padding: 5px 5px 5px 10px;
 }
 .popup-coords {
     padding: 10px;

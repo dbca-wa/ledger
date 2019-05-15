@@ -188,6 +188,7 @@ class CallEmailOptimisedSerializer(serializers.ModelSerializer):
             'id',
             'location',
             'classification',
+            'number',
             'report_type',
         )
         read_only_fields = ('id', )
