@@ -40,7 +40,7 @@
           <div class="col-md-8">  
             <div class="row">
 
-              <FormSection collapse="collapse in" label="Caller" Index="0">
+              <FormSection :formCollapse="false" label="Caller" Index="0">
                 
                 <div class="row"><div class="col-sm-8 form-group">
                   <label class="col-sm-12">Caller name</label>
@@ -68,13 +68,13 @@
                 </div></div>
               </FormSection>
 
-              <FormSection collapse="collapse in" label="Location" Index="1">
+              <FormSection :formCollapse="false" label="Location" Index="1">
                   <div v-if="call_email.location">
                     <MapLocation v-bind:key="call_email.location.id"/>
                   </div>
               </FormSection>
 
-              <FormSection collapse="collapse" label="Details" Index="2">
+              <FormSection :formCollapse="true" label="Details" Index="2">
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Use occurrence from/to</label>
@@ -136,7 +136,7 @@
                 </div>
               </FormSection>
 
-              <FormSection collapse="collapse" label="Outcome" Index="3">
+              <FormSection :formCollapse="true" label="Outcome" Index="3">
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Referrer</label>
                   <select class="form-control" v-model="call_email.referrer_id">
@@ -175,7 +175,7 @@
 </template>
 <script>
 import Vue from "vue";
-import FormSection from "@/components/compliance_forms/section.vue";
+import FormSection from "@/components/compliance_forms/section_toggle.vue";
 
 import CommsLogs from "@common-components/comms_logs.vue";
 import MapLocation from "./map_location.vue";
@@ -299,6 +299,15 @@ export default {
     this.loadReferrers();
     
   },
+  mounted: function() {
+        console.log(this);
+        $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
+            var chev = $( this ).children()[ 0 ];
+            window.setTimeout( function () {
+                $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
+            }, 100 );
+        });
+  }
 };
 </script>
 
