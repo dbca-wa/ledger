@@ -43,6 +43,13 @@
                       </td>
                   </tr>
 
+                  <tr>
+                      <td align="right" >
+                          <!-- <div class="currencyinput"> ${{ net_park_prices | total_price() }} </div> -->
+                          ${{ table.tbody | total_price(idx_price) }}
+                      </td>
+                  </tr>
+
                 </tbody>
                 <span><button class="btn btn-primary" type="button" v-on:click="addRow()" :disabled="disabled">+</button>Add another park and/or date</span>
 
@@ -124,10 +131,7 @@ export default {
         ];
 
         // setup initial empty row for display
-        //var init_row = [vm.rowIdx];
-        //vm.init_row = [];
         for(var i = 0, length = col_headers.length; i < length; i++) { vm.init_row.push('')  }
-        //vm.rowIdx += 1;
 
         if (value == null) {
             vm.table = {
@@ -171,13 +175,11 @@ export default {
                     }
                 }
             },
+            total_price: 0.0,
 
         }
     },
     watch:{
-        //table: function(){
-        //    vm.table.tobdy
-        //}
     },
     beforeUpdate() {
     },
@@ -188,7 +190,15 @@ export default {
         },
         price: function(dict, key){
             return dict[key];
-        }
+        },
+        total_price: function(data, idx_price) {
+            var total = 0.0;
+            for (var key in data) { 
+                //total += parseFloat(data[key][idx_price]) 
+                total += isNaN(parseFloat(data[key][idx_price])) ? 0.00 : parseFloat(data[key][idx_price]);
+            }
+            return total
+        },
     },
     methods: {
         updateTableJSON: function() {
@@ -202,20 +212,11 @@ export default {
           var newRow = [];
 
           for(var i = 0, length = vm.table.thead.length; i < length; i++) {
-            //newRow.push('R:' + (vm.table.tbody.length + 1) + ' V:' + (i + 1))
-
-//            if (i==0) {
-//                newRow.push(vm.rowIdx)
-//            } else {
-//                newRow.push('')
-//            }
             newRow.push('')
           }
-
           vm.table.tbody.push(newRow);
 
           vm.updateTableJSON();
-          vm.rowIdx += 1;
         },
         deleteRow: function(row) {
             let vm = this;
@@ -249,9 +250,9 @@ export default {
         park_change: function(selected_park, row, row_idx) {
             console.log('aaa ' + selected_park + ' row: ' + row);
         },
-        park_selected: function(selected_park) {
-            return selected_park ? true : false;
-        },
+//        park_selected: function(selected_park) {
+//            return selected_park ? true : false;
+//        },
  
     },
 

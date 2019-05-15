@@ -2509,7 +2509,7 @@ class ProposalAssessment(RevisionedMixin):
 
 
 class ProposalAssessmentAnswer(RevisionedMixin):
-    question=models.ForeignKey(ChecklistQuestion)
+    question=models.ForeignKey(ChecklistQuestion, related_name='answers')
     answer = models.NullBooleanField()
     assessment=models.ForeignKey(ProposalAssessment, related_name='answers', null=True, blank=True)
 
@@ -2941,10 +2941,10 @@ class HelpPage(models.Model):
 park = models.ForeignKey('Park', related_name='park_entries')
 
 import reversion
-reversion.register(Referral, follow=['referral_documents',])
+reversion.register(Referral, follow=['referral_documents', 'assessment'])
 reversion.register(ReferralDocument, follow=['referral_document'])
 
-reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_logs','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails', 'proposalonhold', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals', 'park_entries'])
+reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_logs','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails', 'proposalonhold', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals', 'park_entries', 'assessment'])
 reversion.register(ProposalDocument, follow=['onhold_documents'])
 reversion.register(OnHoldDocument)
 reversion.register(ProposalRequest)
@@ -2985,11 +2985,14 @@ reversion.register(ProposalDeclinedDetails)
 reversion.register(ProposalOnHold)
 reversion.register(ProposalStandardRequirement, follow=['proposalrequirement_set'])
 reversion.register(ProposalRequirement, follow=['compliance_requirement'])
-reversion.register(ReferralRecipientGroup, follow=['commercialoperator_referral_groups'])
+reversion.register(ReferralRecipientGroup, follow=['commercialoperator_referral_groups', 'referral_assessment'])
 reversion.register(QAOfficerGroup, follow=['qaofficer_groups'])
 reversion.register(QAOfficerReferral)
 reversion.register(QAOfficerDocument, follow=['qaofficer_referral_document'])
 reversion.register(ProposalAccreditation)
 reversion.register(HelpPage)
+reversion.register(ChecklistQuestion, follow=['answers'])
+reversion.register(ProposalAssessment, follow=['answers'])
+reversion.register(ProposalAssessmentAnswer)
 
 

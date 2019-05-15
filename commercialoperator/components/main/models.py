@@ -135,9 +135,9 @@ class Park(models.Model):
     allowed_activities = models.ManyToManyField(Activity, blank=True)
     allowed_access = models.ManyToManyField(AccessType, blank=True)
 
-    adult = models.DecimalField('Adult (price per adult)', max_digits=5, decimal_places=2, null=True, blank=True)
-    child = models.DecimalField('Child (price per child)', max_digits=5, decimal_places=2, null=True, blank=True)
-    senior = models.DecimalField('Senior (price per senior)', max_digits=5, decimal_places=2, null=True, blank=True)
+    adult = models.DecimalField('Adult (price per adult)', max_digits=5, decimal_places=2)
+    child = models.DecimalField('Child (price per child)', max_digits=5, decimal_places=2)
+    senior = models.DecimalField('Senior (price per senior)', max_digits=5, decimal_places=2)
     #proposal = models.ForeignKey(Proposal, related_name='parks')
 
 
@@ -409,7 +409,7 @@ import reversion
 reversion.register(Region, follow=['districts'])
 reversion.register(District, follow=['parks'])
 #reversion.register(AccessType)
-reversion.register(AccessType, follow=['proposalparkaccess_set', 'vehicles'])
+reversion.register(AccessType, follow=['park_set', 'proposalparkaccess_set', 'vehicles'])
 reversion.register(ActivityType)
 reversion.register(ActivityCategory, follow=['activities'])
 #reversion.register(Activity, follow=['park_set', 'zone_set', 'trail_set', 'requireddocument_set'])
