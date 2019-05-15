@@ -116,7 +116,7 @@ export default {
         addMarker(coord){
             let self = this;
 
-            let testIcon = L.icon({
+            let myIcon = L.icon({
                 iconUrl: require('../../../assets/marker-green-locked.svg'),
                 shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
                 shadowSize: [41, 41],
@@ -126,20 +126,11 @@ export default {
                 popupAnchor: [0, -20]
             });
 
-            let myIcon = L.icon({
-                iconUrl: require('../../../assets/marker-green-unlocked.svg'),
-                shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-                shadowSize: [41, 41],
-                shadowAnchor: [12, 41],
-                iconSize: [32, 32],
-                iconAnchor: [16, 32],
-                popupAnchor: [0, -20]
-            });
             self.feature_marker = L.marker({lon: coord[1], lat: coord[0]}, {icon: myIcon}).on('click', function(ev){
                 //ev.preventDefault();
                 self.feature_marker.setIcon(myIcon);
             });
-            self.feature_marker.bindTooltip("click to lock/unlock");
+            //self.feature_marker.bindTooltip("click to lock/unlock");
             self.feature_marker.addTo(self.map);
         },
         saveInstanceLocation: async function() {
@@ -310,9 +301,7 @@ export default {
         /* this function retrieve the coordinates from vuex and applys it to the marker */
         refreshMarkerLocation: function(){
             if (this.call_email.location.geometry) {
-                this.feature_marker.setLatLng({lat: this.call_latitude, 
-                lng: this.call_longitude
-                });
+                this.feature_marker.setLatLng({lat: this.call_latitude, lng: this.call_longitude });
                 this.reverseGeocoding(this.call_email.location.geometry);
             } 
         },
@@ -349,6 +338,9 @@ export default {
             let self = this;
             let latlng = this.map.mouseEventToLatLng(e.originalEvent);
             console.log(latlng);
+            if(!self.feature_marker){
+                self.addMarker([latlng.lat, latlng.lng]);
+            }
             
             /* User clicked on a map, not on any feature */
             this.relocateMarker(latlng);
