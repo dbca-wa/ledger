@@ -263,6 +263,9 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     returned_location = self.save_location(request)        
                     request_data.update({'location_id': returned_location.id})
 
+                request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
+                request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
+                
                 serializer = CreateCallEmailSerializer(data=request_data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
@@ -356,6 +359,9 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 
                 if request_data.get('renderer_data'):
                     self.form_data(request)
+
+            request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
+            request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
 
             serializer = SaveCallEmailSerializer(instance, data=request_data)
             serializer.is_valid(raise_exception=True)

@@ -5,6 +5,7 @@ import {
 }
 from '@/utils/hooks';
 import moment from 'moment';
+import localforage from "localforage";
 
 export const callemailStore = {
     namespaced: true,
@@ -38,10 +39,6 @@ export const callemailStore = {
     },
     getters: {
         call_email: state => state.call_email,
-        report_type(state) {
-            return state.call_email.report_type ? 
-                state.call_email.report_type.report_type : "";
-        },
         classification_types: state => state.classification_types,
         report_types: state => state.report_types,
         referrers: state => state.referrers,
@@ -65,7 +62,8 @@ export const callemailStore = {
             });
         },
         updateSchema(state, schema) {
-            state.call_email.schema = schema;
+            //state.call_email.schema = schema;
+            Vue.set(state.call_email, 'schema', schema);
         },        
         updateClassificationTypes(state, classification_entry) {
             if (classification_entry) {
@@ -86,6 +84,20 @@ export const callemailStore = {
                 state.report_types.push(report_type_entry);
             } else {
                 state.report_types = [];
+            }
+        },
+        updateClassification(state, classification) {
+            if (classification) {
+                Vue.set(state.call_email, 'classification', classification);
+            }
+        },
+        updateReportType(state, report_type) {
+            if (report_type) {
+                console.log("report_type");
+                console.log(report_type);
+                Vue.set(state.call_email, 'report_type', report_type);
+                console.log("state.call_email.report_type");
+                console.log(state.call_email.report_type);
             }
         },
         updateLocation(state, location) {
@@ -236,7 +248,7 @@ export const callemailStore = {
             try {
                 let payload = new Object();
                 payload.id = state.call_email.id;
-                payload.report_type_id = state.call_email.report_type_id;
+                payload.report_type_id = state.call_email.report_type.id;
 
                 const updatedCallEmail = await Vue.http.post(
                     helpers.add_endpoint_join(
@@ -246,6 +258,17 @@ export const callemailStore = {
                     );
 
                 await dispatch("setSchema", updatedCallEmail.body.schema);
+
+                localforage.setItem(
+                    state.call_email.report_type.id, updatedCallEmail.body.schema
+                    ).then(function () {
+                    //return localforage.getItem('key');
+                    console.log("key stored");
+                  }).then(function (value) {
+                    // we got our value
+                  }).catch(function (err) {
+                    // we got an error
+                  });
 
             } catch (err) {
                 console.error(err);
@@ -268,8 +291,8 @@ export const callemailStore = {
 
                 let payload = new Object();
                 Object.assign(payload, state.call_email);
-                delete payload.report_type;
-                delete payload.schema;
+                //delete payload.report_type;
+                //delete payload.schema;
                 //delete payload.location;
                 if (payload.occurrence_date_from) {
                     payload.occurrence_date_from = moment(payload.occurrence_date_from).format('YYYY-MM-DD');
@@ -406,6 +429,16 @@ export const callemailStore = {
             commit,
         }, call_email) {
             commit("updateCallEmail", call_email);
+        },
+        setReportType({
+            commit,
+        }, report_type) {
+            commit("updateReportType", report_type)
+        },
+        setClassification({
+            commit,
+        }, classification) {
+            commit("updateClassification", classification)
         },
     },
 };

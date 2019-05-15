@@ -112,7 +112,7 @@
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Classification</label>
-                  <select class="form-control" v-model="call_email.classification_id">
+                  <select class="form-control" v-model="classification_id">
                         <option v-for="option in classification_types" :value="option.id" v-bind:key="option.id">
                           {{ option.name }} 
                         </option>
@@ -121,8 +121,8 @@
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Report Type</label>
-                  <select @click.prevent="loadSchema" class="form-control" v-model="call_email.report_type_id">
-                          <option  v-for="option in report_types" :value="option.id" v-bind:key="option.id">
+                  <select @click.prevent="loadSchema" class="form-control" v-model="report_type_id">
+                          <option v-for="option in report_types" :value="option.id" v-bind:key="option.id">
                             {{ option.report_type }} 
                           </option>
                   </select>
@@ -224,8 +224,38 @@ export default {
     }),
     ...mapGetters({
       renderer_form_data: 'renderer_form_data',
+    }),
+    classification_id: {
+        get: function() {
+          return this.call_email.classification ? this.call_email.classification.id : "";
+        },
+        set: function(value) {
+          let classification = null;
+          this.classification_types.forEach(function(element) {
+            if (element.id === value) {
+              classification = element;
+            }
+          }); 
+          this.setClassification(classification);
+        }, 
     },
-    ),
+    report_type_id: {
+        get: function() {
+          return this.call_email.report_type ? this.call_email.report_type.id : "";
+        },
+        set: function(value) {
+          let report_type = null;
+          this.report_types.forEach(function(element) {
+            if (element.id === value) {
+              report_type = element;
+            }
+          }); 
+          this.setReportType(report_type);
+        }, 
+    },
+      // report_type_id(state) {
+      //   return state.call_email.report_type ? state.call_email.report_type.id : "";
+      // },
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
     },
@@ -260,6 +290,8 @@ export default {
       saveCallEmail: 'saveCallEmail',
       updateSchema: "updateSchema",
       loadReferrers: "loadReferrers",
+      setClassification: "setClassification",
+      setReportType: "setReportType",
     }),
     ...mapActions({
       saveFormData: "saveFormData",
