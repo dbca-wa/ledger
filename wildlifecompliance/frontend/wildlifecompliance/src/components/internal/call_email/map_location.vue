@@ -14,13 +14,13 @@
         <div id="lat" class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Latitude:</label>
             <div v-if="call_email.location">
-                <input class="form-control" v-model="call_email.location.geometry.coordinates[1]" readonly />
+                <input class="form-control" v-model="call_latitude" readonly />
             </div>
         </div></div>
         <div id="lon" class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Longitude:</label>
             <div v-if="call_email.location">
-                <input class="form-control" v-model="call_email.location.geometry.coordinates[0]" readonly />
+                <input class="form-control" v-model="call_longitude" readonly />
             </div>
         </div></div>
 
@@ -85,6 +85,8 @@ export default {
     computed: {
         ...mapGetters('callemailStore', {
             call_email: 'call_email',
+            call_latitude: 'call_latitude',
+            call_longitude: 'call_longitude',
         }),
     },
     mounted: function(){
@@ -95,8 +97,11 @@ export default {
             this.initMap();
             this.setBaseLayer('osm');
             this.initAwesomplete();
-            this.addMarker([0, 0]);
-            this.refreshMarkerLocation();
+            if (this.call_latitude){
+                this.addMarker([this.call_longitude, this.call_latitude]);
+                this.refreshMarkerLocation();
+            }        
+            this.showHideAddressDetailsFields(false, false);
             console.debug('End loading map');
         });
     },
@@ -104,8 +109,9 @@ export default {
         ...mapActions('callemailStore', {
             saveLocation: 'saveLocation',
             setLocationPoint: 'setLocationPoint',
-            setLocationProperties: 'setLocationProperties',
-            setLocationPropertiesEmpty: 'setLocationPropertiesEmpty',
+            setLocationAddress: 'setLocationAddress',
+            setLocationAddressEmpty: 'setLocationAddressEmpty',
+            setLocationDetailsFieldEmpty: 'setLocationDetailsFieldEmpty',
         }),
         addMarker(coord){
             let self = this;
@@ -156,6 +162,7 @@ export default {
                     if (data.features && data.features.length > 0){
                         for (var i = 0; i < data.features.length; i++){
                             if(data.features[i].place_type.includes('address')){
+                                console.log(data.features[i]);
                                 self.updateAddressFields(data.features[i]);
                                 address_found = true;
                             }
@@ -164,10 +171,11 @@ export default {
                     if(address_found){
                         console.log("address found");
                         self.showHideAddressDetailsFields(true, false);
+                        self.setLocationDetailsFieldEmpty()
                     } else {
                         console.log("address not found");
                         self.showHideAddressDetailsFields(false, true);
-                        self.setLocationPropertiesEmpty();
+                        self.setLocationAddressEmpty();
                     }
                 }
             });
@@ -230,9 +238,10 @@ export default {
                             /* Selection has address ==> Update address fields */
                             self.showHideAddressDetailsFields(true, false);
                             self.updateAddressFields(self.suggest_list[i].feature);
+                            self.setLocationDetailsFieldEmpty();
                         } else {
                             self.showHideAddressDetailsFields(false, true);
-                            self.setLocationPropertiesEmpty();
+                            self.setLocationAddressEmpty();
                         }
                     }
                 }
@@ -270,7 +279,7 @@ export default {
             /* country */
             properties_for_update.country = 'Australia';
             /* update Vuex */
-            this.setLocationProperties(properties_for_update);
+            this.setLocationAddress(properties_for_update);
         },
         setBaseLayer: function(selected_layer_name){
             if (selected_layer_name == 'sat') {
@@ -300,8 +309,10 @@ export default {
         },
         /* this function retrieve the coordinates from vuex and applys it to the marker */
         refreshMarkerLocation: function(){
-            if (this.call_email.location.geometry.coordinates.length > 0) {
-                this.feature_marker.setLatLng({lat: this.call_email.location.geometry.coordinates[1], lng: this.call_email.location.geometry.coordinates[0]});
+            if (this.call_email.location.geometry) {
+                this.feature_marker.setLatLng({lat: this.call_latitude, 
+                lng: this.call_longitude
+                });
                 this.reverseGeocoding(this.call_email.location.geometry);
             } 
         },
@@ -328,6 +339,7 @@ export default {
         },
         /* this function stores the coordinates into the vuex, then call refresh marker function */
         relocateMarker: function(latlng){ 
+            
             let lnglat = [latlng.lng, latlng.lat];
             this.setLocationPoint(lnglat);
             this.refreshMarkerLocation();
@@ -337,6 +349,7 @@ export default {
             let self = this;
             let latlng = this.map.mouseEventToLatLng(e.originalEvent);
             console.log(latlng);
+            
             /* User clicked on a map, not on any feature */
             this.relocateMarker(latlng);
         }

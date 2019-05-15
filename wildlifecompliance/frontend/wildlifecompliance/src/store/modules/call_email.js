@@ -15,6 +15,7 @@ export const callemailStore = {
                 id: null,
             },
             location: {
+                type: "Feature",
                 properties: {
                     town_suburb: null,
                     street: null,
@@ -24,7 +25,7 @@ export const callemailStore = {
                 },
                 geometry: {
                     "type": "Point",
-                    "coordinates": [null, null],
+                    "coordinates": [],
                 },
             },
             report_type: {
@@ -37,10 +38,25 @@ export const callemailStore = {
     },
     getters: {
         call_email: state => state.call_email,
-        report_type: state => state.call_email.report_type.report_type,
+        report_type(state) {
+            return state.call_email.report_type ? 
+                state.call_email.report_type.report_type : "";
+        },
         classification_types: state => state.classification_types,
         report_types: state => state.report_types,
         referrers: state => state.referrers,
+        call_latitude(state) {
+            if (state.call_email) {
+                return state.call_email.location.geometry ?
+                state.call_email.location.geometry.coordinates[1] : "";
+            } else { return ""; }
+        },
+        call_longitude(state) {
+            if (state.call_email) {
+                return state.call_email.location.geometry ?
+                state.call_email.location.geometry.coordinates[0] : "";
+            } else { return ""; }
+        }
     },
     mutations: {
         updateCallEmail(state, call_email) {
@@ -80,13 +96,12 @@ export const callemailStore = {
         updateLocationPoint(state, point) {
             console.log("point");
             console.log(point);
-            //
-            state.call_email.location.geometry.coordinates = point;
+                state.call_email.location.geometry.coordinates = point;
         },
-        updateLocationProperties(state, location_properties) {
+        updateLocationAddress(state, location_properties) {
             state.call_email.location.properties = location_properties;
         },
-        updateLocationPropertiesEmpty(state) {
+        updateLocationAddressEmpty(state) {
             state.call_email.location.properties = {
                 town_suburb: null,
                 street: null,
@@ -95,6 +110,9 @@ export const callemailStore = {
                 country: null,
             };
         },
+        updateLocationDetailsFieldEmpty(state) {
+            state.call_email.location.properties.details = "";
+        }
     },
     actions: {
         async loadCallEmail({
@@ -120,6 +138,7 @@ export const callemailStore = {
                     console.log("null location");
                     await dispatch("setLocation", 
                     {
+                        "type": "Feature",
                         properties: {
                             town_suburb: null,
                             street: null,
@@ -129,9 +148,10 @@ export const callemailStore = {
                         },
                         id: null,
                         geometry: {
-                            coordinates: [null, null],
                             "type": "Point",
+                            "coordinates": [],
                         },
+                        
                     }
                     );
                     console.log("empty location loaded");
@@ -259,7 +279,10 @@ export const callemailStore = {
                 } 
                 if (crud == 'duplicate') {
                     payload.id = null;
-
+                    payload.location_id = null;
+                    if (payload.location) {
+                        payload.location.id = null;
+                    }
                 }
 
                 if (state.call_email.schema) {
@@ -283,6 +306,7 @@ export const callemailStore = {
                     console.log("null location");
                     await dispatch("setLocation", 
                     {
+                        type: "Feature",
                         properties: {
                             town_suburb: null,
                             street: null,
@@ -292,8 +316,8 @@ export const callemailStore = {
                         },
                         id: null,
                         geometry: {
-                            coordinates: [null, null],
                             "type": "Point",
+                            "coordinates": [],
                         },
                     }
                     );
@@ -333,21 +357,24 @@ export const callemailStore = {
         setLocation({
             commit,
         }, location) {
-            console.log("setLocation");
             commit("updateLocation", location);
         },
-        setLocationProperties({
+        setLocationAddress({
             commit,
         }, location_properties) {
-            console.log("setLocationProperties");
-            commit("updateLocationProperties", location_properties);
+            commit("updateLocationAddress", location_properties);
         },
-        setLocationPropertiesEmpty({
+        setLocationAddressEmpty({
             commit,
         }) {
-            console.log("setLocationPropertiesEmpty");
-            commit("updateLocationPropertiesEmpty");
+            commit("updateLocationAddressEmpty");
         },
+        setLocationDetailsFieldEmpty({
+            commit,
+        }) {
+            commit("updateLocationDetailsFieldEmpty");
+        },
+        
         setLocationPoint({
             commit,
         }, point) {
