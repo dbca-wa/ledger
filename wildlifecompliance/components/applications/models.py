@@ -228,6 +228,7 @@ class Application(RevisionedMixin):
     APPLICATION_TYPE_RENEWAL = 'renew_activity'
     APPLICATION_TYPE_CHOICES = (
         (APPLICATION_TYPE_NEW_LICENCE, 'New'),
+        (APPLICATION_TYPE_ACTIVITY, 'New Activity'),
         (APPLICATION_TYPE_AMENDMENT, 'Amendment'),
         (APPLICATION_TYPE_RENEWAL, 'Renewal'),
     )
