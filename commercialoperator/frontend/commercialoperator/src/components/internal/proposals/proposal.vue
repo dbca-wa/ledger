@@ -15,7 +15,7 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <strong>Submitted by</strong><br/>
-                                {{ proposal.submitter }}
+                                {{ proposal.submitter.first_name }} {{ proposal.submitter.last_name }}
                             </div>
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Lodged on</strong><br/>
@@ -1124,7 +1124,7 @@ export default {
               next(vm => {
                 vm.proposal = res.body;
                 vm.original_proposal = helpers.copyObject(res.body);
-                vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 vm.proposal.selected_trails_activities=[];
                 vm.proposal.selected_parks_activities=[];
                 vm.proposal.marine_parks_activities=[];

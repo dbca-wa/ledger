@@ -36,6 +36,7 @@ from commercialoperator.components.organisations.models import (
                             )
 from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer, ParkSerializer, ActivitySerializer, AccessTypeSerializer, TrailSerializer
 from commercialoperator.components.organisations.serializers import OrganisationSerializer
+from commercialoperator.components.users.serializers import UserAddressSerializer, DocumentSerializer
 from rest_framework import serializers
 from django.db.models import Q
 from reversion.models import Version
@@ -58,6 +59,25 @@ class EmailUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailUser
         fields = ('id','email','first_name','last_name','title','organisation')
+
+class EmailUserAppViewSerializer(serializers.ModelSerializer):
+    residential_address = UserAddressSerializer()
+    identification = DocumentSerializer()
+
+    class Meta:
+        model = EmailUser
+        fields = ('id',
+                  'email',
+                  'first_name',
+                  'last_name',
+                  'dob',
+                  'title',
+                  'organisation',
+                  'residential_address',
+                  'identification',
+                  'email',
+                  'phone_number',
+                  'mobile_number',)
 
 class ProposalApplicantDetailsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -637,7 +657,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
     processing_status = serializers.SerializerMethodField(read_only=True)
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
-    submitter = serializers.CharField(source='submitter.get_full_name')
+    #submitter = serializers.CharField(source='submitter.get_full_name')
+    submitter = EmailUserAppViewSerializer()
     proposaldeclineddetails = ProposalDeclinedDetailsSerializer()
     #
     assessor_mode = serializers.SerializerMethodField()
@@ -678,6 +699,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'org_applicant',
                 'proxy_applicant',
                 'submitter',
+                'applicant_type',
                 'assigned_officer',
                 'assigned_approver',
                 'previous_application',
