@@ -61,6 +61,18 @@ class ReferrerSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'name', )
 
 
+class LocationSerializerMinimum(GeoFeatureModelSerializer):
+    class Meta:
+        model = Location
+        geo_field = 'wkb_geometry'
+
+        fields = (
+            'id',
+            'wkb_geometry',
+            'call_email_id',
+        )
+
+
 class LocationSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = Location
@@ -75,6 +87,7 @@ class LocationSerializer(GeoFeatureModelSerializer):
             'country',
             'wkb_geometry',
             'details',
+            #'call_email_id',
         )
         
 
@@ -162,6 +175,22 @@ class UpdateSchemaSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'id', 
             )
+
+
+class CallEmailOptimisedSerializer(serializers.ModelSerializer):
+    classification = ClassificationSerializer(read_only=True)
+    location = LocationSerializerMinimum()
+    report_type = ReportTypeSerializer(read_only=True)
+
+    class Meta:
+        model = CallEmail
+        fields = (
+            'id',
+            'location',
+            'classification',
+            'report_type',
+        )
+        read_only_fields = ('id', )
 
 
 class CallEmailSerializer(serializers.ModelSerializer):
