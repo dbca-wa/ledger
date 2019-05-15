@@ -5,6 +5,7 @@ import logging
 import re
 from decimal import Decimal
 from django.db import models, transaction
+from django.db.models import Q
 from django.db.models.signals import pre_delete
 from django.db.models.query import QuerySet
 from django.dispatch import receiver
@@ -222,8 +223,9 @@ class Application(RevisionedMixin):
     )
 
     APPLICATION_TYPE_NEW_LICENCE = 'new_licence'
-    APPLICATION_TYPE_AMENDMENT = 'amendment'
-    APPLICATION_TYPE_RENEWAL = 'renewal'
+    APPLICATION_TYPE_ACTIVITY = 'new_activity'
+    APPLICATION_TYPE_AMENDMENT = 'amend_activity'
+    APPLICATION_TYPE_RENEWAL = 'renew_activity'
     APPLICATION_TYPE_CHOICES = (
         (APPLICATION_TYPE_NEW_LICENCE, 'New'),
         (APPLICATION_TYPE_AMENDMENT, 'Amendment'),
@@ -371,8 +373,8 @@ class Application(RevisionedMixin):
     def processing_status(self):
         selected_activities = self.selected_activities.all()
         activity_statuses = [activity.processing_status for activity in selected_activities]
-        # not yet submitted
-        if activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT) == len(activity_statuses):
+        # not yet submitted or have some newly added activities that are in Draft state
+        if activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT) > 0:
             return self.PROCESSING_STATUS_DRAFT
         # application discarded
         elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED) == len(activity_statuses):
@@ -696,7 +698,6 @@ class Application(RevisionedMixin):
 
     def update_dynamic_attributes(self):
         """ Update application and activity attributes based on selected JSON schema options. """
-
         if self.processing_status != Application.PROCESSING_STATUS_DRAFT:
             return
 
@@ -735,6 +736,8 @@ class Application(RevisionedMixin):
                             q.save()
                 else:
                     for activity in self.licence_type_data['activity']:
+                        if activity["processing_status"]["id"] != ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT:
+                            continue
                         self.set_activity_processing_status(
                             activity["id"], ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER)
                         qs = DefaultCondition.objects.filter(
@@ -1051,14 +1054,10 @@ class Application(RevisionedMixin):
     def send_to_assessor(self, request):
         with transaction.atomic():
             try:
-                # activity=details.get('activity')
-                # print(activity)
                 Assessment.objects.update_or_create(
                     application=self,
                     officer=request.user,
                     reason=request.data.get('reason'),
-                    # cc_email=details.get('cc_email', None),  # TODO: fix undefined details (missing source)
-                    # activity=details.get('activity')  # TODO: fix undefined details (missing source)
                 )
 
                 # Log application action
@@ -1441,6 +1440,35 @@ class Application(RevisionedMixin):
             base_fees['licence'] += purpose.base_licence_fee
 
         return base_fees
+
+    @staticmethod
+    def is_type_amendment(application_type):
+        amendment_types = {
+            Application.APPLICATION_TYPE_NEW_LICENCE: False,
+            Application.APPLICATION_TYPE_ACTIVITY: True,
+            Application.APPLICATION_TYPE_AMENDMENT: True,
+            Application.APPLICATION_TYPE_RENEWAL: True,
+        }
+        try:
+            return amendment_types[application_type]
+        except KeyError:
+            return False
+
+    @staticmethod
+    def get_active_licence_application(request):
+        proxy_details = request.user.get_wildlifecompliance_proxy_details(request)
+        proxy_id = proxy_details.get('proxy_id')
+        organisation_id = proxy_details.get('organisation_id')
+        current_date = timezone.now().date()
+
+        return Application.objects.filter(
+            Q(org_applicant_id=organisation_id) if organisation_id
+            else Q(proxy_applicant=proxy_id) if proxy_id
+            else Q(submitter=request.user)
+        ).filter(
+            selected_activities__processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
+            selected_activities__expiry_date__gte=current_date,
+        ).first()
 
 
 class ApplicationInvoice(models.Model):

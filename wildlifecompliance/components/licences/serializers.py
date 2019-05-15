@@ -144,7 +144,9 @@ class ActivitySerializer(serializers.ModelSerializer):
         purposes = self.context.get('purpose_records')
         purpose_records = purposes if purposes else obj.purpose.all()
         serializer = PurposeSerializer(
-            purpose_records,
+            purpose_records.filter(
+                licence_activity_id=obj.id
+            ),
             many=True,
         )
         return serializer.data
