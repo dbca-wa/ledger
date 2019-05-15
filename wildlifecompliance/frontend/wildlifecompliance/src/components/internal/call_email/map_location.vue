@@ -76,7 +76,6 @@ export default {
             map: null,
             popup: null,
             element: null,
-            marker_locked: false,
             base_layer: 'osm',
             awe: null,
             suggest_list: [],
@@ -138,12 +137,7 @@ export default {
             });
             self.feature_marker = L.marker({lon: coord[1], lat: coord[0]}, {icon: myIcon}).on('click', function(ev){
                 //ev.preventDefault();
-                self.marker_locked = !self.marker_locked;
-                if (self.marker_locked){
-                    self.feature_marker.setIcon(testIcon);
-                }else{
-                    self.feature_marker.setIcon(myIcon);
-                }
+                self.feature_marker.setIcon(myIcon);
             });
             self.feature_marker.bindTooltip("click to lock/unlock");
             self.feature_marker.addTo(self.map);
@@ -238,9 +232,6 @@ export default {
                             animate: true,
                             duration: 1.5
                         });
-
-                        /* Do nothing if the marker is locked */
-                        //if(self.marker_locked){ return; }
 
                         self.relocateMarker(latlng);
                         if(self.suggest_list[i].feature.place_type.includes('address')){
@@ -360,14 +351,7 @@ export default {
             console.log(latlng);
             
             /* User clicked on a map, not on any feature */
-            if (!self.feature_marker) {
-                let latlngArray = [latlng.lat, latlng.lng];
-                self.addMarker(latlngArray);
-            } else { 
-                if(!this.marker_locked) {
-                    this.relocateMarker(latlng);
-                }
-            }
+            this.relocateMarker(latlng);
         }
     },
 }

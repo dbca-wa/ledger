@@ -59,21 +59,12 @@ from wildlifecompliance.components.call_email.serializers import (
     CreateCallEmailSerializer,
     UpdateSchemaSerializer,
     ReferrerSerializer,
-)
+    LocationSerializerMinimum, CallEmailOptimisedSerializer)
 from utils import SchemaParser
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
-class LocationViewSet(viewsets.ModelViewSet):
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
-
-    def get_queryset(self):
-        user = self.request.user
-        if is_internal(self.request):
-            return Location.objects.all()
-        return Location.objects.none()
 
 
 class CallEmailViewSet(viewsets.ModelViewSet):
@@ -85,6 +76,13 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return CallEmail.objects.all()
         return CallEmail.objects.none()
+
+    @list_route(methods=['GET', ])
+    def optimised(self, request, *args, **kwargs):
+        queryset = self.get_queryset().exclude(location__isnull=True)
+        serializer = CallEmailOptimisedSerializer(queryset, many=True)
+
+        return Response(serializer.data)
 
     @list_route(methods=['GET', ])
     def datatable_list(self, request, *args, **kwargs):
@@ -340,6 +338,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     def call_email_save(self, request, *args, **kwargs):
+        print("request.data")
+        print(request.data)
         instance = self.get_object()
         try:
             with transaction.atomic():
@@ -470,6 +470,13 @@ class LocationViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return Location.objects.all()
         return Location.objects.none()
+
+    @list_route(methods=['GET', ])
+    def optimised(self, request, *args, **kwargs):
+        queryset = self.get_queryset().exclude(call_location__isnull=True)
+        serializer = LocationSerializerMinimum(queryset, many=True)
+
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         try:
