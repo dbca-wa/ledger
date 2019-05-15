@@ -480,6 +480,16 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @list_route(methods=['GET', ])
+    def active_licence_application(self, request, *args, **kwargs):
+        active_application = Application.get_active_licence_application(request)
+        if not active_application:
+            return Response({'application': None})
+
+        serializer = ApplicationSerializer(
+            active_application, context={'request': request})
+        return Response({'application': serializer.data})
+
     @list_route(methods=['POST', ])
     def estimate_price(self, request, *args, **kwargs):
         purpose_ids = request.data.get('purpose_ids', [])
@@ -985,25 +995,55 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
+        from wildlifecompliance.components.licences.models import LicencePurpose
         try:
-            app_data = self.request.data
-            licence_category_data = app_data.get('licence_category_data')
-            org_applicant = request.data.get('org_applicant')
-            proxy_applicant = request.data.get('proxy_applicant')
+            org_applicant = request.data.get('organisation_id')
+            proxy_applicant = request.data.get('proxy_id')
             licence_purposes = request.data.get('licence_purposes')
+            application_type = request.data.get('application_type')
             data = {
                 'submitter': request.user.id,
-                'licence_type_data': licence_category_data,
                 'org_applicant': org_applicant,
                 'proxy_applicant': proxy_applicant,
                 'licence_purposes': licence_purposes,
             }
 
-            # Use serializer for external application creation - do not expose unneeded fields
-            serializer = CreateExternalApplicationSerializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            serializer.instance.update_dynamic_attributes()
+            with transaction.atomic():
+
+                # If this is an activity addition / amendment - find current licence application record.
+                if Application.is_type_amendment(application_type):
+                    active_application = Application.get_active_licence_application(request)
+                    if not active_application:
+                        raise Exception("Active licence not found!")
+
+                    if application_type == Application.APPLICATION_TYPE_ACTIVITY:
+                        for licence_purpose_id in licence_purposes:
+                            licence_purpose = LicencePurpose.objects.get(
+                                id=licence_purpose_id
+                            )
+                            selected_activity = active_application.get_selected_activity(
+                                licence_purpose.licence_activity_id
+                            )
+                            # Cannot add purposes to an existing activity as part of this action.
+                            if selected_activity.processing_status != ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT:
+                                raise Exception(
+                                    "Cannot add purposes to an existing activity, please request an amendment instead!"
+                                )
+                            active_application.licence_purposes.add(
+                                licence_purpose
+                            )
+                        active_application.customer_status = Application.CUSTOMER_STATUS_DRAFT
+                        active_application.update_dynamic_attributes()
+
+                    serializer = ApplicationSerializer(
+                        active_application, context={'request': request})
+                    return Response(serializer.data)
+
+                # Use serializer for external application creation - do not expose unneeded fields
+                serializer = CreateExternalApplicationSerializer(data=data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                serializer.instance.update_dynamic_attributes()
 
             return Response(serializer.data)
         except Exception as e:

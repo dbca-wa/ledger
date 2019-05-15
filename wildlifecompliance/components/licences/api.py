@@ -259,11 +259,36 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
     serializer_class = LicenceCategorySerializer
 
     def list(self, request, *args, **kwargs):
-        print(self.request)
-        print(self.request.GET)
-        print(self.request.GET.get('org_applicant', None))
+        from wildlifecompliance.components.licences.models import LicencePurpose
+
         queryset = self.get_queryset()
-        serializer = LicenceCategorySerializer(queryset, many=True, context={'request':request})
+        only_purpose_records = None
+        application_type = request.GET.get('application_type')
+
+        active_application = Application.get_active_licence_application(request)
+        if active_application:
+            if Application.is_type_amendment(application_type):
+                active_category = active_application.get_licence_category()
+                queryset = queryset.filter(id=active_category.id)
+                if application_type == Application.APPLICATION_TYPE_ACTIVITY:
+                    only_purpose_records = LicencePurpose.objects.exclude(
+                        licence_activity_id__in=active_application.activities.values_list('licence_activity_id', flat=True)
+                    )
+                elif application_type == Application.APPLICATION_TYPE_AMENDMENT:
+                    only_purpose_records = LicencePurpose.objects.filter(
+                        id__in=active_application.licence_purposes.values_list('id', flat=True)
+                    )
+            elif application_type == Application.APPLICATION_TYPE_NEW_LICENCE:
+                active_category = active_application.get_licence_category()
+                queryset = queryset.exclude(id=active_category.id)
+                only_purpose_records = LicencePurpose.objects.exclude(
+                    licence_category_id=active_category.id
+                )
+
+        serializer = LicenceCategorySerializer(queryset, many=True, context={
+            'request': request,
+            'purpose_records': only_purpose_records
+        })
         return Response(serializer.data)
 
     def get_serializer_context(self):
