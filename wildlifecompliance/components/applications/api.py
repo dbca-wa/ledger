@@ -482,7 +482,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['GET', ])
     def active_licence_application(self, request, *args, **kwargs):
-        active_application = Application.get_active_licence_application(request)
+        active_application = Application.get_active_licence_applications(request).first()
         if not active_application:
             return Response({'application': None})
 
@@ -1012,15 +1012,19 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
                 # If this is an activity addition / amendment - find current licence application record.
                 if Application.is_type_amendment(application_type):
-                    active_application = Application.get_active_licence_application(request)
+                    licence_purposes_queryset = LicencePurpose.objects.filter(
+                        id__in=licence_purposes
+                    )
+                    licence_category = licence_purposes_queryset.first().licence_category
+                    active_applications = Application.get_active_licence_applications(request)
+                    active_application = active_applications.filter(
+                        licence_purposes__licence_category_id=licence_category.id
+                    ).first()
                     if not active_application:
                         raise Exception("Active licence not found!")
 
                     if application_type == Application.APPLICATION_TYPE_ACTIVITY:
-                        for licence_purpose_id in licence_purposes:
-                            licence_purpose = LicencePurpose.objects.get(
-                                id=licence_purpose_id
-                            )
+                        for licence_purpose in licence_purposes_queryset:
                             selected_activity = active_application.get_selected_activity(
                                 licence_purpose.licence_activity_id
                             )
