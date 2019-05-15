@@ -302,7 +302,9 @@ export default {
         refreshMarkerLocation: function(){
             if (this.call_email.location.geometry) {
                 this.feature_marker.setLatLng({lat: this.call_latitude, lng: this.call_longitude });
-                this.reverseGeocoding(this.call_email.location.geometry);
+                if (this.call_email.location.geometry) {
+                    this.reverseGeocoding(this.call_email.location.geometry.coordinates);
+                }
             } 
         },
         initMap: function(){
