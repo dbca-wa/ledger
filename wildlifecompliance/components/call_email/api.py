@@ -254,11 +254,23 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
-                serializer = CreateCallEmailSerializer(data=request.data, partial=True)
+                request_data = request.data
+                # Create location then include in request to create new Call/Email
+                returned_location = None
+                if (
+                    request_data.get('location', {}).get('geometry', {}).get('coordinates') or
+                    request_data.get('location', {}).get('properties', {}).get('postcode', {}) or
+                    request_data.get('location', {}).get('properties', {}).get('details', {})
+                ):
+                    returned_location = self.save_location(request)        
+                    request_data.update({'location_id': returned_location.id})
+
+                serializer = CreateCallEmailSerializer(data=request_data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
                     new_instance = serializer.save()
-        
+                    returned_location = None
+
                     if request.data.get('renderer_data'):
                     # option required for duplicated Call/Emails
                         ComplianceFormDataRecord.process_form(
@@ -292,6 +304,40 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
     
+    def save_location(self, request, *args, **kwargs):
+        
+        location_request_data = request.data.get('location')
+        # if (
+        #         location_request_data.get('geometry', {}).get('coordinates', {})[0] or
+        #         location_request_data.get('properties', {}).get('postcode', {}) or
+        #         location_request_data.get('properties', {}).get('details', {})
+        #     ):
+        if location_request_data.get('id'):
+            print("exist location_request_data")
+            print(location_request_data)
+            
+            #location_instance = instance.location
+            location_instance = Location.objects.get(id=location_request_data.get('id'))
+            location_serializer = LocationSerializer(
+                instance=location_instance, 
+                data=location_request_data, 
+                partial=True
+                )
+            location_serializer.is_valid(raise_exception=True)
+            if location_serializer.is_valid():
+                location_serializer.save()
+        else:
+            print("new location_request_data")
+            print(location_request_data)
+            location_serializer = LocationSerializer(
+                data=location_request_data, 
+                partial=True
+                )
+            location_serializer.is_valid(raise_exception=True)
+            if location_serializer.is_valid():
+                location_instance = location_serializer.save()
+        return location_instance
+
     @detail_route(methods=['POST', ])
     def call_email_save(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -299,27 +345,17 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 request_data = request.data
 
-                location_request_data = request.data.get('location')
+                returned_location = None
                 if (
-                        location_request_data.get('geometry', {}).get('coordinates', {})[0] or
-                        location_request_data.get('properties', {}).get('postcode', {})
-                    ):
-                    if location_request_data.get('id'):
-                        location_instance = instance.location
-                        location_serializer = LocationSerializer(instance=location_instance, data=request.data, partial=True)
-                        location_serializer.is_valid(raise_exception=True)
-                        if location_serializer.is_valid():
-                            location_serializer.save()
-                    else:
-                        location_serializer = LocationSerializer(data=location_request_data, partial=True)
-                        location_serializer.is_valid(raise_exception=True)
-                        if location_serializer.is_valid():
-                            location_instance = location_serializer.save()
-                            # Required for Call/Email duplication
-                            request_data.update({'location_id': location_instance.id})
+                    request_data.get('location', {}).get('geometry', {}).get('coordinates') or
+                    request_data.get('location', {}).get('properties', {}).get('postcode', {}) or
+                    request_data.get('location', {}).get('properties', {}).get('details', {})
+                ):
+                    returned_location = self.save_location(request)
+                    request_data.update({'location_id': returned_location.id})
                 
                 if request_data.get('renderer_data'):
-                    form_data_response = self.form_data(request)
+                    self.form_data(request)
 
             serializer = SaveCallEmailSerializer(instance, data=request_data)
             serializer.is_valid(raise_exception=True)
@@ -330,7 +366,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     instance.number), request)
                 headers = self.get_success_headers(serializer.data)
                 returned_data = serializer.data
-                # Required for Call/Email duplication
+                # Ensure classification_id and report_type_id is returned for Vue template evaluation
                 returned_data.update({'classification_id': request_data.get('classification_id')})
                 returned_data.update({'report_type_id': request_data.get('report_type_id')})
                 return Response(
@@ -338,6 +374,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_201_CREATED,
                     headers=headers
                     )
+                
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
