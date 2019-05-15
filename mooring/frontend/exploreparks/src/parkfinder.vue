@@ -250,7 +250,7 @@
                     <div id="mapPopupContent">
                         <h4 style="margin: 0"><b id="mapPopupName"></b></h4>
                         <p><i id="mapPopupPrice"></i></p>
-                        <img class="thumbnail" id="mapPopupImage" />
+                        <img class="thumbnail" id="mapPopupImage" style='width: 230px; height: 230px;' />
                         <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
                         <p>Mooring Limits</p>
                         <div class="row">
@@ -285,8 +285,8 @@
                                 <span class="searchTitle">{{ f.name }}</span>
                             </div>
                             <div class="small-12 medium-12 large-12 columns" >
-                                <img v-if="f.images[0]" class="thumbnail" v-bind:src="f.images[0].image" />
-                                <img v-else class="thumbnail" src="/static/exploreparks/mooring_photo_scaled.png"/>
+                                <img v-if="f.images[0]" class="thumbnail" v-bind:src="f.images[0].image" style='width: 230px; height: 230px;' />
+                                <img v-else class="thumbnail" src="/static/exploreparks/mooring_photo_scaled.png" style='width: 230px; height: 230px;'/>
                             </div>
                             <div class="small-12 medium-9 large-9 columns">
                                 <div v-html="f.description"/>
@@ -1670,6 +1670,7 @@ export default {
             return vectorLayer;
         },
     buildMarkerNotBookable: function(lat,lon,props,name,marker_id) {
+                var vm = this; 
                 if (vm.pinsCache[marker_id+'-'+vm.markerAvail[marker_id]] == null) {
 		var iconFeature = new ol.Feature({
                   marker_group: 'mooring_marker',
