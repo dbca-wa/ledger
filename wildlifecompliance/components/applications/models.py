@@ -1455,7 +1455,7 @@ class Application(RevisionedMixin):
             return False
 
     @staticmethod
-    def get_active_licence_application(request):
+    def get_active_licence_applications(request):
         proxy_details = request.user.get_wildlifecompliance_proxy_details(request)
         proxy_id = proxy_details.get('proxy_id')
         organisation_id = proxy_details.get('organisation_id')
@@ -1468,7 +1468,7 @@ class Application(RevisionedMixin):
         ).filter(
             selected_activities__processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
             selected_activities__expiry_date__gte=current_date,
-        ).first()
+        ).distinct()
 
 
 class ApplicationInvoice(models.Model):
