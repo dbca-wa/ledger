@@ -124,14 +124,14 @@ from '@/utils/hooks'
         },
         methods:{
             resetTable: function(row) {
-                /* Romes the rows, keeos the first and clears the td contents */
+                /* Removes the rows, keeos the first and clears the td contents */
                 let vm = this;
                 //var nrows = $(".editable-table tbody tr").length;
-
-                $(".editable-table tbody").find("tr:not(:first)").remove();
+                $(".editable-table tbody").find("tr:not(:first):not(:last)").remove(); // last row contains total price cell
 
                 //vm.$refs.order_table.table.tbody = [["","","","","", ""]];
-                vm.$refs.order_table.table.tbody = [vm.$refs.order_table.init_row];
+                //vm.$refs.order_table.table.tbody = [vm.$refs.order_table.init_row];
+                vm.$refs.order_table.table.tbody = [vm.$refs.order_table.reset_row()];
                 $(".editable-table .selected-tag").text('')
                 $(".tbl_input").val('');
             },

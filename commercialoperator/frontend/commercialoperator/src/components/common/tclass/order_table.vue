@@ -19,14 +19,15 @@
                   <!--<tr v-for="row in table.tbody">-->
                   <tr v-for="(row, row_idx) in table.tbody">
                       <td v-if="col_types[index]=='select'" width="30%" v-for="(value, index) in row">
-                          <!-- <v-select class="tbl_input2" :options="options" v-model="row[index]" @change="calcPrice(row[index], row, row_idx)"/> -->
-                          <v-select class="tbl_input2" :options="options" v-model="row[index]" @change="park_change(row[index], row, row_idx)" :title="'Adult Price: '+ row[index] +  ', Child Price: ' + row[index]"/>
+                          <!-- <v-select class="tbl_input" :options="options" v-model="row[index]" @change="calcPrice(row[index], row, row_idx)"/> -->
+                          <v-select class="tbl_input" :options="options" v-model="row[index]" @change="park_change(row[index], row, row_idx)" :title="'Adult Price: '+ row[index] +  ', Child Price: ' + row[index]"i :disabled="disabled"/>
                       </td>
                       <td v-if="col_types[index]=='date'" v-for="(value, index) in row">
-                          <input :readonly="readonly" id="id_arrival_date" class="tbl_input" :type="col_types[index]" :max="expiry_date" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="disabled" @change="calcPrice(row[index], row, row_idx)"/>
+                          <!--<input id="id_arrival_date" class="tbl_input" :type="col_types[index]" :max="expiry_date" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[0]=='' || row[0]==null" @change="calcPrice(row[index], row, row_idx)"/>-->
+                          <input id="id_arrival_date" class="tbl_input" :type="col_types[index]" :max="expiry_date" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[0]=='' || row[0]==null" @change="date_change(row[index], row, row_idx)"/>
                       </td>
                       <td v-if="col_types[index]=='text' || col_types[index]=='number'" v-for="(value, index) in row">
-                          <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" value="0" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="disabled" @change="calcPrice(row[index], row, row_idx)"/>
+                          <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" value="0" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[1]==''" @change="calcPrice(row[index], row, row_idx)"/>
                       </td>
                       <td v-if="col_types[index]=='total'" v-for="(value, index) in row">
                           <!--${{ net_park_prices | price(row_idx) }}-->
@@ -44,9 +45,11 @@
                   </tr>
 
                   <tr>
-                      <td align="right" >
+                      <td colspan="5">
+                      </td>
+                      <td align="left" >
                           <!-- <div class="currencyinput"> ${{ net_park_prices | total_price() }} </div> -->
-                          ${{ table.tbody | total_price(idx_price) }}
+                          <div class="currencyinput">{{ table.tbody | total_price(idx_price) }}</div>
                       </td>
                   </tr>
 
@@ -98,11 +101,6 @@ export default {
                 return null;
             }
         },
-        init_row:{
-            default:function () {
-                return [];
-            }
-        },
     },
 
     components: {
@@ -121,7 +119,7 @@ export default {
         var value  =JSON.parse(vm.value);
 
         var headers = JSON.parse(vm.headers)
-        var col_headers = Object.keys(headers);
+        vm.col_headers = Object.keys(headers);
         vm.col_types = Object.values(headers);
 
         vm._options = [
@@ -131,12 +129,13 @@ export default {
         ];
 
         // setup initial empty row for display
-        for(var i = 0, length = col_headers.length; i < length; i++) { vm.init_row.push('')  }
+        vm.init_row = vm.reset_row();
+        //for(var i = 0, length = vm.col_headers.length; i < length; i++) { vm.init_row.push('')  }
 
         if (value == null) {
             vm.table = {
                     //thead: ['Heading 1'],
-                    thead: col_headers,
+                    thead: vm.col_headers,
                     tbody: [
                         //['No header specified']
                         vm.init_row
@@ -201,6 +200,17 @@ export default {
         },
     },
     methods: {
+        reset_row: function() {
+            var init_row = [];
+            for(var i = 0, length = this.col_headers.length; i < length; i++) { init_row.push('')  }
+            return init_row;
+        },
+        reset_row_part: function(row) {
+            // reset part of the row (from date onwards)
+            for(var i = 1, length = row.length; i < length; i++) { row[i]=''  }
+            return row;
+        },
+
         updateTableJSON: function() {
           let vm = this;
           vm.tableJSON = JSON.stringify(vm.table);
@@ -248,12 +258,21 @@ export default {
           }
         },
         park_change: function(selected_park, row, row_idx) {
-            console.log('aaa ' + selected_park + ' row: ' + row);
+          let vm = this;
+            if (selected_park==null) {
+                // reset the row
+                vm.table.tbody[row_idx] = vm.reset_row();
+            }
+            vm.updateTableJSON();
         },
-//        park_selected: function(selected_park) {
-//            return selected_park ? true : false;
-//        },
- 
+        date_change: function(selected_date, row, row_idx) {
+          let vm = this;
+            if (selected_date==null || selected_date=='') {
+                // reset part of the row (date onwards)
+                vm.table.tbody[row_idx] = vm.reset_row_part(row);
+            }
+            vm.updateTableJSON();
+        },
     },
 
     computed:{
@@ -321,11 +340,8 @@ export default {
     }
 
     div.currencyinput{
-    position:relative;
-    }
-
-    div.currencyinput input{
-    padding-left: 15px;
+        position:relative;
+        padding-left: 15px;
     }
 
     div.currencyinput:after{
