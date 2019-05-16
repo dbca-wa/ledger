@@ -255,6 +255,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 request_data = request.data
                 # Create location then include in request to create new Call/Email
                 returned_location = None
+                
                 if (
                     request_data.get('location', {}).get('geometry', {}).get('coordinates') or
                     request_data.get('location', {}).get('properties', {}).get('postcode', {}) or
@@ -272,7 +273,11 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
                     new_instance = serializer.save()
-                    returned_location = None
+                    new_returned = serializer.data
+                    # Ensure classification_id and report_type_id is returned for Vue template evaluation                
+                    new_returned.update({'classification_id': request_data.get('classification_id')})
+                    new_returned.update({'report_type_id': request_data.get('report_type_id')})
+                    new_returned.update({'referrer_id': request_data.get('referrer_id')})
 
                     if request.data.get('renderer_data'):
                     # option required for duplicated Call/Emails
@@ -283,21 +288,22 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                             action=ComplianceFormDataRecord.ACTION_TYPE_ASSIGN_VALUE
                         )
                         # Serializer returns CallEmail.data for HTTP response
-                        returned_data = CallEmailSerializer(instance=new_instance)
-                        headers = self.get_success_headers(returned_data)
-                        # Ensure classification_id and report_type_id is returned for Vue template evaluation
-                        returned_data.update({'classification_id': request_data.get('classification_id')})
-                        returned_data.update({'report_type_id': request_data.get('report_type_id')})
-                        returned_data.update({'referrer_id': request_data.get('referrer_id')})
+                        duplicate = CallEmailSerializer(instance=new_instance)
+                        headers = self.get_success_headers(duplicate.data)
+
+                        duplicate.data.update({'classification_id': request_data.get('classification_id')})
+                        duplicate.data.update({'report_type_id': request_data.get('report_type_id')})
+                        duplicate.data.update({'referrer_id': request_data.get('referrer_id')})
+                        
                         return Response(
-                            returned_data.data,
+                            duplicate.data,
                             status=status.HTTP_201_CREATED,
                             headers=headers
                             )
                     else:
                         headers = self.get_success_headers(serializer.data)
                         return Response(
-                            serializer.data,
+                            new_returned,
                             status=status.HTTP_201_CREATED,
                             headers=headers
                         )
