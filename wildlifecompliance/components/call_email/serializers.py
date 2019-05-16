@@ -306,5 +306,8 @@ class EmailUserSerializer(serializers.ModelSerializer):
             'email',
             'first_name',
             'last_name',
-            'title',
-            'organisation')
+            'phone_number',
+            'mobile_number',
+            'organisation',
+            'dob',
+        )

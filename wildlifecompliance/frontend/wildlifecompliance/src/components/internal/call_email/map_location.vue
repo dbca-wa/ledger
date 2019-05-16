@@ -208,7 +208,7 @@ export default {
             this.awe = new Awesomplete(element_search);
             $(element_search).on('keyup', function(ev){
                 var keyCode = ev.keyCode || ev.which;
-                if ((48 <= keyCode && keyCode <= 90)||(96 <= keyCode && keyCode <= 105)){
+                if ((48 <= keyCode && keyCode <= 90)||(96 <= keyCode && keyCode <= 105) || (keyCode == 8) || (keyCode == 46)){
                     self.search(ev.target.value);
                     return false;
                 }

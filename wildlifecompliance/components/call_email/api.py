@@ -507,4 +507,4 @@ class EmailUserViewSet(viewsets.ModelViewSet):
     queryset = EmailUser.objects.all()
     serializer_class = EmailUserSerializer
     filter_backends = (filters.SearchFilter,)
-    search_fields = ('first_name', 'last_name', 'email', 'phone_number', 'mobile_number', 'fax_number', 'organisation')
+    search_fields = ('first_name', 'last_name', 'email', 'phone_number', 'mobile_number', 'organisation')
