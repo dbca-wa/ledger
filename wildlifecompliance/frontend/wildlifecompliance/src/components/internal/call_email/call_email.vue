@@ -128,7 +128,7 @@
                   </select>
                 </div></div>
                 
-                <div v-for="(item, index) in call_email.schema">
+                <div v-for="(item, index) in current_schema">
                   <compliance-renderer-block
                     :component="item"
                     v-bind:key="`compliance_renderer_block_${index}`"
@@ -183,11 +183,17 @@ import { api_endpoints, helpers } from "@/utils/hooks";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import Datepicker from 'vuejs-datepicker';
+import localforage from "localforage";
+localforage.config({
+    name: 'CallEmail_ReportType_Schema'
+});
+
 
 export default {
   name: "ViewCallEmail",
   data: function() {
     return {
+      current_schema: null,
       sectionLabel: "Details",
       sectionIndex: 1,
       pBody: "pBody" + this._uid,
@@ -313,11 +319,56 @@ export default {
         await this.saveCallEmail({ route: true, crud: 'create'});
       }
     },
-    loadSchema: function() {
-      this.updateSchema();
-    },
     duplicate: async function() {
       await this.saveCallEmail({ route: false, crud: 'duplicate'});
+    },
+    loadSchema: async function() {
+            console.log("updateSchema");
+            try {
+                // check local cache to see if key exists
+
+                // fetch new schema from db
+                let payload = new Object();
+                payload.id = state.call_email.id;
+                payload.report_type_id = state.call_email.report_type.id;
+
+                const updatedCallEmail = await Vue.http.post(
+                    helpers.add_endpoint_join(
+                        api_endpoints.call_email, 
+                        state.call_email.id + "/update_schema/"),
+                    payload
+                    );
+
+                // // update Vuex - still required?
+                // await dispatch("setSchema", updatedCallEmail.body.schema);
+
+                // write new value to local cache
+                
+                const timeNow = Date.now()
+                //moment(payload.occurrence_date_from).format('YYYY-MM-DD');
+                const value_to_cache = [timeNow, updatedCallEmail.body.schema];
+                const report_type_id_str = state.call_email.report_type.id.toString()
+
+                localforage.setItem(
+                    report_type_id_str, value_to_cache
+                    )
+                    
+                    .then(function () {
+                    //return localforage.getItem('key');
+                    console.log("key stored");
+                  }).then(function (value) {
+                    // we got our value
+                  }).catch(function (err) {
+                    // we got an error
+                  });
+
+                // update current schema
+                current_schema = "";
+
+            } catch (err) {
+                console.error(err);
+            }
+
     },
   },
 

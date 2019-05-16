@@ -5,7 +5,6 @@ import {
 }
 from '@/utils/hooks';
 import moment from 'moment';
-import localforage from "localforage";
 
 export const callemailStore = {
     namespaced: true,
@@ -243,38 +242,6 @@ export const callemailStore = {
                 console.error(err);
             }
         },        
-        async updateSchema({dispatch, state}) {
-            console.log("updateSchema");
-            try {
-                let payload = new Object();
-                payload.id = state.call_email.id;
-                payload.report_type_id = state.call_email.report_type.id;
-
-                const updatedCallEmail = await Vue.http.post(
-                    helpers.add_endpoint_join(
-                        api_endpoints.call_email, 
-                        state.call_email.id + "/update_schema/"),
-                    payload
-                    );
-
-                await dispatch("setSchema", updatedCallEmail.body.schema);
-
-                localforage.setItem(
-                    state.call_email.report_type.id, updatedCallEmail.body.schema
-                    ).then(function () {
-                    //return localforage.getItem('key');
-                    console.log("key stored");
-                  }).then(function (value) {
-                    // we got our value
-                  }).catch(function (err) {
-                    // we got an error
-                  });
-
-            } catch (err) {
-                console.error(err);
-            }
-
-        },
         async saveCallEmail({ dispatch, state, rootGetters}, { route, crud }) {
             console.log("saveCallEmail");
             let callId = null;
