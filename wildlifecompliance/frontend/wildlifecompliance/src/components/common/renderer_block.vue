@@ -96,7 +96,7 @@
                     :name="component_name"
                     :instance="instance"
                     :data="json_data"
-                    :id="element_id(2)"
+                    :id="element_id(1)"
                     :readonly="is_readonly"/>
         </div>
 
