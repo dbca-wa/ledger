@@ -90,14 +90,14 @@
                 :conditions="component.conditions"
                 :isRequired="component.isRequired"
                 :help_text_url="help_text_url"/>
-                
-                <SelectConditions
-                    :conditions="component.conditions" 
+
+                <Conditions
+                    :conditions="component.conditions"
                     :name="component_name"
+                    :instance="instance"
                     :data="json_data"
-                    :id="element_id(1)"
-                    :readonly="is_readonly" 
-                    :isRequired="component.isRequired"/>
+                    :id="element_id(2)"
+                    :readonly="is_readonly"/>
         </div>
 
         <SelectBlock v-if="component.type === 'multi-select'"
@@ -266,7 +266,6 @@ import FormSection from '@/components/forms/section.vue'
 import Group from '@/components/forms/group.vue'
 import Radio from '@/components/forms/radio.vue'
 import Conditions from '@/components/forms/conditions.vue'
-import SelectConditions from '@/components/forms/select-conditions.vue'
 import Checkbox from '@/components/forms/checkbox.vue'
 import Declaration from '@/components/forms/declarations.vue'
 import File from '@/components/forms/file.vue'
@@ -290,7 +289,6 @@ const RendererBlock = {
       TextField,
       Group,
       SelectBlock,
-      SelectConditions,
       HelpText,
       HelpTextUrl,
       CommentBlock,
@@ -410,11 +408,20 @@ const RendererBlock = {
                     'visible': false
                 });
             }
-            e.target && this.toggleVisibleComponent({
-                'component_id': `cons_${e.target.name}_${e.target.value}`,
-                'visible': e.target.checked
-            });
             let value = e.value == null ? e.target.value : e.value;
+            if(e.target) {
+                this.toggleVisibleComponent({
+                    'component_id': `cons_${e.target.name}_${e.target.value}`,
+                    'visible': e.target.checked
+                });
+            }
+            else {
+                // Handle select drop-downs
+                this.toggleVisibleComponent({
+                    'component_id': `cons_${this.component_name}_${value}`,
+                    'visible': true
+                });
+            }
             // Hack for unchecked checkboxes
             if(value === 'on' && !e.target.checked) {
                 value = '';
