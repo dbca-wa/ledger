@@ -74,7 +74,7 @@
                   </div>
               </FormSection>
 
-              <FormSection :formCollapse="false" label="Details" Index="2">
+              <FormSection :formCollapse="true" label="Details" Index="2">
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Use occurrence from/to</label>
@@ -157,8 +157,14 @@
                   <textarea class="form-control" rows="5" v-model="call_email.advice_details"/>
                 </div></div>
               </FormSection>
+              
+              <div class="col-sm-12 form-group"><div class="row">
+              <h3></h3>
+              </div></div>
+            
             </div>          
           </div>
+
 
         <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                         <div class="navbar-inner">
@@ -171,7 +177,7 @@
                             </div>
                         </div>
         </div>          
-        <div class="row"/>
+        
     </div>
 </template>
 <script>
@@ -191,17 +197,6 @@ let CallEmail_ReportType_Schema = localforage.createInstance({
     name: "WildlifeCompliance",
     storeName: 'CallEmail_ReportType_Schema',
   });
-
-//import WildlifeComplianceCache from '../../../main.js'
-// const CallEmail_ReportType_Schema = WildlifeComplianceCache.config({
-//     name: 'WildlifeCompliance',
-//     storeName: 'CallEmail_ReportType_Schema'
-// });
-// WildlifeComplianceCache
-// CallEmail_ReportType_Schema = localforage.config({
-//     name: 'WildlifeCompliance',
-//     storeName: 'CallEmail_ReportType_Schema'
-// });
 
 export default {
   name: "ViewCallEmail",
@@ -228,7 +223,6 @@ export default {
       ),
     };
   },
-
   components: {
     CommsLogs,
     FormSection,
@@ -274,9 +268,6 @@ export default {
           await this.setReportType(report_type);
         }, 
     },
-      // report_type_id(state) {
-      //   return state.call_email.report_type ? state.call_email.report_type.id : "";
-      // },
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
     },
@@ -294,15 +285,12 @@ export default {
         return "Occurrence time";
       }
     },
-
   },
-  
   filters: {
     formatDate: function(data) {
       return data ? moment(data).format("DD/MM/YYYY HH:mm:ss") : "";
     }
   },
-
   methods: {
     ...mapActions('callemailStore', {
       loadCallEmail: "loadCallEmail",
@@ -341,7 +329,6 @@ export default {
             console.log("loadSchema");
             if (this.report_type_id || new_report_type_id) {
               try {
-                
                   let new_schema = [];
                   let retrieved_val = null;
                   let report_type_id_str = "";
@@ -350,7 +337,6 @@ export default {
                   } else {
                     report_type_id_str = this.report_type_id.toString();
                   }
-                  
                   // check local cache to see if key exists
                   try {
                     retrieved_val = await CallEmail_ReportType_Schema.getItem(
@@ -358,9 +344,6 @@ export default {
                   } catch(err) {
                     console.log(err);
                   }
-
-                  //moment(payload.occurrence_date_from).format('YYYY-MM-DD');
-                  //const timeDiff = Date.now() - retrieved_val[0]
                   
                   let timeDiff = 0;
                   if (retrieved_val) {
@@ -371,8 +354,8 @@ export default {
                     Object.assign(new_schema, retrieved_val[1]);
                   }
 
+                  // if no schema retrieved or expired cached value, fetch new schema from db
                   if (!(new_schema.length > 0) || timeDiff > 86400000) {
-                    // fetch new schema from db
                     let payload = new Object();
                     payload.id = this.call_email.id;
                     payload.report_type_id = report_type_id_str;
@@ -385,7 +368,6 @@ export default {
                         );
                     
                     const insertTimeNow = Date.now()
-
                     const value_to_cache = [insertTimeNow, updatedCallEmail.body.schema];
                     
                     try {
@@ -405,12 +387,10 @@ export default {
                     if (retrieved_val) {
                       Object.assign(this.current_schema, retrieved_val[1]);
                     }
-                      
                   } else {
                       console.log("cached keyvalue");  
                       Object.assign(this.current_schema, new_schema);
                   }
-
               } catch (err) {
                   console.error(err);
               }
@@ -418,21 +398,18 @@ export default {
     },
   },
 
-  created: function() {
-    
-    //CallEmail_ReportType_Schema.clear();
-    //localforage.clear();
+  created: async function() {
     
     if (this.$route.params.call_email_id) {
-      this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
+      await this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
     }
     // load current CallEmail renderer schema
-    this.loadSchema(this.call_email.report_type_id);
+    await this.loadSchema(this.call_email.report_type_id);
     
     // load drop-down select lists
-    this.loadClassification();
-    this.loadReportTypes();
-    this.loadReferrers();
+    await this.loadClassification();
+    await this.loadReportTypes();
+    await this.loadReferrers();
     
   },
   mounted: function() {

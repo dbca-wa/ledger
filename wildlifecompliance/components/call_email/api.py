@@ -250,8 +250,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     def create(self, request, *args, **kwargs):
-        print("create")
-        print(request.data)
         try:
             with transaction.atomic():
                 request_data = request.data
@@ -315,16 +313,10 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     def save_location(self, request, *args, **kwargs):
         
         location_request_data = request.data.get('location')
-        # if (
-        #         location_request_data.get('geometry', {}).get('coordinates', {})[0] or
-        #         location_request_data.get('properties', {}).get('postcode', {}) or
-        #         location_request_data.get('properties', {}).get('details', {})
-        #     ):
         if location_request_data.get('id'):
             print("exist location_request_data")
             print(location_request_data)
             
-            #location_instance = instance.location
             location_instance = Location.objects.get(id=location_request_data.get('id'))
             location_serializer = LocationSerializer(
                 instance=location_instance, 
@@ -348,8 +340,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     def call_email_save(self, request, *args, **kwargs):
-        print("call_email_save")
-        print(request.data)
         instance = self.get_object()
         try:
             with transaction.atomic():
@@ -399,7 +389,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-
     
     @detail_route(methods=['POST', ])
     def update_schema(self, request, *args, **kwargs):
