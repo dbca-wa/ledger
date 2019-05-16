@@ -8,8 +8,8 @@
                         <br/>
                         <table>
                             <tr>
-                                <td><strong>Application:</strong></td>
-                                <td><strong>{{application.id}}</strong></td>
+                                <td><strong>Application:&nbsp;</strong></td>
+                                <td><strong>{{application.lodgement_number}}</strong></td>
                             </tr>
                             <tr>
                                 <td><strong>Date:</strong></td>

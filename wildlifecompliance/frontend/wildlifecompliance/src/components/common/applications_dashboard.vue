@@ -104,15 +104,18 @@ export default {
         let internal_columns = [
             {
                 data: "lodgement_number",
+                width: "10%",
             },
             {
                 data: "category_name",
+                width: "10%",
                 className: "normal-white-space",
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "purpose_string",
+                width: "30%",
                 mRender:function (data,type,full) {
                     let output = data.replace(/(?:\r\n|\r|\n|,)/g, '<br>');
                     return output;
@@ -122,12 +125,14 @@ export default {
             },
             {
                 data: "application_type",
+                width: "10%",
                 mRender:function (data,type,full) {
                     return data.name;
-                }
+                },
             },
             {
                 data: "submitter",
+                visible: false,
                 className: "normal-white-space",
                 name: "submitter__first_name, submitter__last_name, submitter__email",
                 mRender:function (data,type,full) {
@@ -135,16 +140,18 @@ export default {
                         return `${data.first_name} ${data.last_name}`;
                     }
                     return ''
-                }
+                },
             },
             {
                 data: "applicant",
+                width: "10%",
                 className: "normal-white-space",
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "processing_status",
+                width: "10%",
                 className: "normal-white-space",
                 mRender:function(data,type,full){
                     return data.name;
@@ -154,11 +161,13 @@ export default {
             },
             {
                 data: "payment_status",
+                visible: false,
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "lodgement_date",
+                width: "10%",
                 mRender:function (data,type,full) {
                     return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                 },
@@ -166,16 +175,19 @@ export default {
             },
             {
                 data: "assigned_officer",
+                visible: false,
                 name: "assigned_officer__first_name, assigned_officer__last_name, assigned_officer__email"
             },
             {
                 // Actions
+                width: "10%",
                 mRender:function (data,type,full) {
                     let links = '';
                     if (!vm.is_external){
+                        const finalised = ['approved', 'declined'].includes(full.processing_status.id);
                         links += (full.can_be_processed && full.user_in_officers_and_assessors) ?
                             `<a href='/internal/application/${full.id}'>Process</a><br/>` :
-                            `<a href='/external/application/${full.id}'>View</a><br/>`;
+                            `<a href='/${finalised ? 'internal' : 'external'}/application/${full.id}'>View</a><br/>`;
                     }
                     if (vm.is_external){
                         if (full.can_current_user_edit) {
@@ -195,14 +207,17 @@ export default {
         let external_columns = [
             {
                 data: "lodgement_number",
+                width: "10%",
             },
             {
                 data: "category_name",
+                width: "10%",
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "purpose_string",
+                width: "30%",
                 mRender:function (data,type,full) {
                     let output = data.replace(/(?:\r\n|\r|\n|,)/g, '<br>');
                     return output;
@@ -212,12 +227,14 @@ export default {
             },
             {
                 data: "application_type",
+                width: "10%",
                 mRender:function (data,type,full) {
                     return data.name;
                 }
             },
             {
                 data: "submitter",
+                visible: false,
                 name: "submitter__first_name, submitter__last_name, submitter__email",
                 mRender:function (data,type,full) {
                     if (data) {
@@ -228,11 +245,13 @@ export default {
             },
             {
                 data: "applicant",
+                width: "10%",
                 orderable: false,
                 searchable: false // handled by filter_queryset override method - class ApplicationFilterBackend
             },
             {
                 data: "customer_status",
+                width: "10%",
                 mRender:function(data,type,full){
                     return data.name;
                 },
@@ -241,6 +260,7 @@ export default {
             },
             {
                 data: "lodgement_date",
+                width: "10%",
                 mRender:function (data,type,full) {
                     return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                 },
@@ -248,6 +268,7 @@ export default {
             },
             {
                 // Actions
+                width: "10%",
                 mRender:function (data,type,full) {
                     let links = '';
                     if (!vm.is_external){
@@ -306,7 +327,10 @@ export default {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
-                responsive: true,
+                rowCallback: function (row, data){
+                    $(row).addClass('appRecordRow');
+                },
+                responsive: false,
                 ajax: {
                     "url": vm.url,
                     "dataSrc": 'data',
@@ -368,26 +392,10 @@ export default {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
-                responsive: {
-                    details: {
-                        type: 'column',
-                        target: 'tr',
-                        renderer: function ( api, rowIdx, columns ) {
-                            var data = $.map( columns, function ( col, i ) {
-                                return col.hidden ?
-                                    '<tr data-dt-row="'+col.rowIndex+'" data-dt-column="'+col.columnIndex+'">'+
-                                        '<td><strong>'+col.title+':&nbsp;'+'</strong></td> '+
-                                        '<td>'+col.data+'</td>'+
-                                    '</tr>' :
-                                    '';
-                            } ).join('');
-
-                            return data ?
-                                $('<table/>').append( data ) :
-                                false;
-                        }
-                    }
+                rowCallback: function (row, data){
+                    $(row).addClass('appRecordRow');
                 },
+                responsive: false,
                 ajax: {
                     "url": vm.url,
                     "dataSrc": 'data',
@@ -553,6 +561,76 @@ export default {
                 e.preventDefault();
                 var id = $(this).attr('data-pay-application-fee');
                 vm.payApplicationFee(id);
+            });
+            // Child row listener
+            vm.visibleDatatable.vmDataTable.on('click', 'tr.appRecordRow', function(e) {
+                // If a link is clicked, ignore
+                if($(e.target).is('a')){
+                    return;
+                }
+                // Generate child row for application
+                var tr = $(this);
+                var row = vm.visibleDatatable.vmDataTable.row(tr);
+
+                if (row.child.isShown()) {
+                    // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('shown');
+                }
+                else {
+                    // Open this row (the format() function would return the data to be shown)
+                    var child_row = ''
+                    // Generate rows for each activity if internal
+                    if (!vm.is_external){
+                        var activity_rows = ''
+                        row.data()['activities'].forEach(function(activity) {
+                            activity_rows += `
+                                <tr>
+                                    <td>${activity['activity_name_str']}</td>
+                                    <td>${activity['activity_purpose_names'].
+                                        replace(/(?:\r\n|\r|\n|,)/g, '<br>')}</td>
+                                    <td>${activity['processing_status']['name']}</td>
+                                </tr>`;
+                        });
+                    }
+                    // Generate html for child row
+                    child_row += `
+                        <table class="table table-striped table-bordered child-row-table">
+                            <tr>
+                                <td class="width_20pc"><strong>Submitter:&nbsp;</strong></td>
+                                <td>${row.data()['submitter']['first_name']}
+                                    ${row.data()['submitter']['last_name']}</td>
+                            </tr>`;
+                    if (!vm.is_external){
+                        child_row += `
+                            <tr>
+                                <td><strong>Payment Status:&nbsp;</strong></td>
+                                <td>${row.data()['payment_status']}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Assigned Officer:&nbsp;</strong></td>
+                                <td>${row.data()['assigned_officer'] === null
+                                    ? '' : row.data()['assigned_officer']}</td>
+                            </tr>`;
+                    }
+                    child_row += `</table>`
+                    if (!vm.is_external){
+                        child_row += `
+                            <table class="table table-striped table-bordered child-row-table">
+                                <tr>
+                                    <th>Activity</th>
+                                    <th class="width_55pc">Purposes</th>
+                                    <th class="width_20pc">Status</th>
+                                </tr>
+                                ${activity_rows}
+                            </table>`;
+                    }
+                    // Show child row, dark-row className CSS applied from application.scss
+                    row.child(
+                        child_row
+                        , 'dark-row').show();
+                    tr.addClass('shown');
+                }
             });
             // Initialise select2 for submitter
             $(vm.$refs.submitter_select).select2({

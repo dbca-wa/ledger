@@ -23,12 +23,12 @@ export const returnsStore = {
                 Vue.http.get(url).then(res => {
                     var obj = res.body.table[0]['data'][0]
                     for(let form_data_record of Object.keys(obj)) {
-                       dispatch('setFormValue', {
-                         key: form_data_record,
-                         value: {"value" :  obj[form_data_record] }
-                       });
-                    dispatch('setReturns', res.body);
+                        dispatch('setFormValue', {
+                          key: form_data_record,
+                          value: {"value" :  obj[form_data_record] }
+                        });
                     }
+                    dispatch('setReturns', res.body);
                     resolve();
                 },
                 err => {

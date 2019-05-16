@@ -40,7 +40,8 @@
                         <div class="navbar-inner">
                             <div class="container">
                                 <p class="pull-right" style="margin-top:5px;">
-                                    <router-link class="btn btn-primary" :to="{name: 'external-applications-dash'}">Back to Dashboard</router-link>
+                                    <button v-if="isProcessing" disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Processing</button>
+                                    <router-link v-else class="btn btn-primary" :to="{name: 'external-applications-dash'}">Back to Dashboard</router-link>
                                 </p>
                             </div>
                         </div>
@@ -259,7 +260,6 @@ export default {
                       this.setApplication(res.body);
                       if (vm.requiresCheckout) {
                           vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,vm.application.id+'/application_fee_checkout/'), {}).then(res=>{
-                              this.isProcessing = false;
                               window.location.href = "/ledger/checkout/checkout/payment-details/";
                           },err=>{
                               swal(

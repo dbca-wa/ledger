@@ -1,9 +1,13 @@
 {%  extends 'wildlifecompliance/emails/base_email.html' %}
 
 {% block content %}
-    A Wildlife Licensing application activity has been declined, with below details.
+    One or more Wildlife Licensing application activities have been declined, with below details.
     <p><strong>Application: {{ application.id }}</strong></p>
-    <p><strong>Activity: {{ activity_name }}</strong></p>
+    <p><strong>Activities:
+        {% for activity in activities %}
+            <br>{{activity.licence_activity.name}}
+        {% endfor %}
+    </strong></p>
     <p><strong>Link: <a href="{{url}}">{{url}}</a></strong></p>
     <p>Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.</p>
 {% endblock %}

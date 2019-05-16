@@ -4,7 +4,41 @@ td {
     }
 }
 tr {
-    :not(.child) {
+    &:not(.child) {
         cursor: pointer;
     }
+
+    &.dark-row {
+        background-color: #eeeeee;
+    }
+}
+table {
+    &.child-row-table {
+        width: 90%;
+        float: right;
+    }
+}
+
+.width_55pc {
+    width: 55%;
+}
+
+.width_20pc {
+    width: 20%;
+}
+
+.assessment-button {
+    margin-top: 10px;
+    margin-left: 20px;
+}
+
+.assessment-action {
+    display: block;
+    padding: 0px;
+    margin: 0px;
+    cursor: pointer;
+}
+
+.conditions-table {
+    margin-top: 20px;
 }

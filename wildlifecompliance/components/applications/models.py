@@ -23,13 +23,13 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry, Us
 from wildlifecompliance.components.applications.email import (
     send_application_submitter_email_notification,
     send_application_submit_email_notification,
-    send_application_amendment_notification,
     send_assessment_email_notification,
     send_assessment_reminder_email,
     send_amendment_submit_email_notification,
     send_application_issue_notification,
     send_application_decline_notification,
-    send_id_update_request_notification
+    send_id_update_request_notification,
+    send_application_return_to_officer_conditions_notification,
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
@@ -44,11 +44,11 @@ def update_application_doc_filename(instance, filename):
 
 
 def update_pdf_licence_filename(instance, filename):
-    return 'applications/{}/wildlife_compliance_licence/{}'.format(instance.id, filename)
+    return 'wildlifecompliance/applications/{}/wildlife_compliance_licence/{}'.format(instance.id, filename)
 
 
 def update_assessment_inspection_report_filename(instance, filename):
-    return 'assessments/{}/inspection_report/{}'.format(instance.id, filename)
+    return 'wildlifecompliance/assessments/{}/inspection_report/{}'.format(instance.id, filename)
 
 
 def replace_special_chars(input_str, new_char='_'):
@@ -497,6 +497,8 @@ class Application(RevisionedMixin):
                     ApplicationSelectedActivity.PROCESSING_STATUS_CHOICES
                 )
             }
+            activity['start_date'] = selected_activity.start_date
+            activity['expiry_date'] = selected_activity.expiry_date
         return licence_data
 
     @property
@@ -598,18 +600,23 @@ class Application(RevisionedMixin):
         return ApplicationUserAction.log_action(self, action, request.user)
 
     def calculate_fees(self, data_source):
-        schema_fields = self.schema_fields
-        fees = Application.calculate_base_fees(
-            self.licence_purposes.values_list('id', flat=True)
-        )
+        return self.get_dynamic_schema_attributes(data_source)['fees']
 
-        def adjust_fee(fees, component, schema_name, adjusted_by_fields):
+    def get_dynamic_schema_attributes(self, data_source):
+        dynamic_attributes = {
+            'fees': Application.calculate_base_fees(
+                self.licence_purposes.values_list('id', flat=True)
+            ),
+            'activity_attributes': {},
+        }
+
+        def parse_modifiers(dynamic_attributes, component, schema_name, adjusted_by_fields, activity):
             def increase_fee(fees, field, amount):
                 fees[field] += amount
                 fees[field] = fees[field] if fees[field] >= 0 else 0
                 return True
 
-            modifier_keys = {
+            fee_modifier_keys = {
                 'IncreaseLicenceFee': 'licence',
                 'IncreaseApplicationFee': 'application',
             }
@@ -619,53 +626,93 @@ class Application(RevisionedMixin):
             except KeyError:
                 increase_count = adjusted_by_fields[schema_name] = 0
 
+            # Does this component / selected option enable the inspection requirement?
+            try:
+                # If at least one component has a positive value - require inspection for the entire activity.
+                if component['InspectionRequired']:
+                    dynamic_attributes['activity_attributes'][activity]['is_inspection_required'] = True
+            except KeyError:
+                pass
+
             if increase_limit_key in component:
                 max_increases = int(component[increase_limit_key])
                 if increase_count >= max_increases:
                     return
 
             adjustments_performed = sum(key in component and increase_fee(
-                fees, field, component[key]
-            ) for key, field in modifier_keys.items())
+                dynamic_attributes['fees'], field, component[key]
+            ) for key, field in fee_modifier_keys.items())
 
             if adjustments_performed:
                 adjusted_by_fields[schema_name] += 1
 
-        # Adjust fees based on selected options (radios and checkboxes)
-        adjusted_by_fields = {}
-        for form_data_record in data_source:
-            try:
-                # Retrieve dictionary of fields from a model instance
-                data_record = form_data_record.__dict__
-            except AttributeError:
-                # If a raw form data (POST) is supplied, form_data_record is a key
-                data_record = data_source[form_data_record]
+        for selected_activity in self.activities:
+            schema_fields = self.get_schema_fields_for_purposes(
+                selected_activity.purposes.values_list('id', flat=True)
+            )
+            dynamic_attributes['activity_attributes'][selected_activity] = {
+                'is_inspection_required': False
+            }
 
-            schema_name = data_record['schema_name']
-            schema_data = schema_fields[schema_name]
+            # Adjust fees based on selected options (radios and checkboxes)
+            adjusted_by_fields = {}
+            for form_data_record in data_source:
+                try:
+                    # Retrieve dictionary of fields from a model instance
+                    data_record = form_data_record.__dict__
+                except AttributeError:
+                    # If a raw form data (POST) is supplied, form_data_record is a key
+                    data_record = data_source[form_data_record]
 
-            if 'options' in schema_data:
-                for option in schema_data['options']:
-                    # Only consider fee modifications if the current option is selected
-                    if option['value'] != data_record['value']:
-                        continue
-                    adjust_fee(fees, option, schema_name, adjusted_by_fields)
+                schema_name = data_record['schema_name']
+                if schema_name not in schema_fields:
+                    continue
+                schema_data = schema_fields[schema_name]
 
-            # If this is a checkbox - skip unchecked ones
-            elif data_record['value'] == 'on':
-                adjust_fee(fees, schema_data, schema_name, adjusted_by_fields)
+                if 'options' in schema_data:
+                    for option in schema_data['options']:
+                        # Only consider fee modifications if the current option is selected
+                        if option['value'] != data_record['value']:
+                            continue
+                        parse_modifiers(
+                            dynamic_attributes=dynamic_attributes,
+                            component=option,
+                            schema_name=schema_name,
+                            adjusted_by_fields=adjusted_by_fields,
+                            activity=selected_activity
+                        )
 
-        return fees
+                # If this is a checkbox - skip unchecked ones
+                elif data_record['value'] == 'on':
+                    parse_modifiers(
+                        dynamic_attributes=dynamic_attributes,
+                        component=schema_data,
+                        schema_name=schema_name,
+                        adjusted_by_fields=adjusted_by_fields,
+                        activity=selected_activity
+                    )
 
-    def update_fees(self):
+        return dynamic_attributes
+
+    def update_dynamic_attributes(self):
+        """ Update application and activity attributes based on selected JSON schema options. """
+
         if self.processing_status != Application.PROCESSING_STATUS_DRAFT:
             return
 
-        fees = self.calculate_fees(self.data)
+        dynamic_attributes = self.get_dynamic_schema_attributes(self.data)
 
+        # Update application and licence fees
+        fees = dynamic_attributes['fees']
         self.application_fee = fees['application']
         self.licence_fee = fees['licence']
         self.save()
+
+        # Save any parsed per-activity modifiers
+        for selected_activity, field_data in dynamic_attributes['activity_attributes'].items():
+            for field, value in field_data.items():
+                setattr(selected_activity, field, value)
+                selected_activity.save()
 
     def submit(self, request, viewset):
         from wildlifecompliance.components.licences.models import LicenceActivity
@@ -870,58 +917,90 @@ class Application(RevisionedMixin):
             except BaseException:
                 raise
 
+    def return_to_officer_conditions(self, request, activity_id):
+        text = request.data.get('text', '')
+        if self.assigned_officer:
+            email_list = [self.assigned_officer.email]
+        else:
+            officer_groups = ActivityPermissionGroup.objects.filter(
+                permissions__codename='licensing_officer',
+                licence_activities__id=activity_id
+            )
+            group_users = EmailUser.objects.filter(
+                groups__id__in=officer_groups.values_list('id', flat=True)
+            ).distinct()
+            email_list = [user.email for user in group_users]
+
+        self.set_activity_processing_status(
+            activity_id,
+            ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_CONDITIONS
+        )
+        send_application_return_to_officer_conditions_notification(
+            email_list=email_list,
+            application=self,
+            text=text,
+            request=request
+        )
+
     def complete_assessment(self, request):
         with transaction.atomic():
             try:
-                # Get the assessor groups the current user is member of for the
-                # selected activity tab
-                qs = request.user.get_wildlifelicence_permission_group(
+                assessment_id = request.data.get('assessment_id')
+                activity_id = int(request.data.get('selected_assessment_tab', 0))
+
+                assessment = Assessment.objects.filter(
+                    id=assessment_id,
+                    licence_activity_id=activity_id,
+                    status=Assessment.STATUS_AWAITING_ASSESSMENT,
+                    application=self
+                ).first()
+
+                if not assessment:
+                    raise Exception("Assessment record ID %s (activity: %s) does not exist!" % (
+                        assessment_id, activity_id))
+
+                assessor_group = request.user.get_wildlifelicence_permission_group(
                     permission_codename='assessor',
-                    activity_id=request.data.get('selected_assessment_tab'),
-                    first=False
+                    activity_id=assessment.licence_activity_id,
+                    first=True
                 )
+                if not assessor_group:
+                    raise Exception("Missing assessor permissions for Activity ID: %s" % (
+                        assessment.licence_activity_id))
 
-                # For each assessor groups get the assessments of current
-                # application whose status is awaiting_assessment and mark it
-                # as complete
-                for q in qs:
-                    assessments = Assessment.objects.filter(
-                        licence_activity_id=request.data.get('selected_assessment_tab'),
-                        assessor_group=q,
-                        status=Assessment.STATUS_AWAITING_ASSESSMENT,
-                        application=self)
+                assessment.status = Assessment.STATUS_COMPLETED
+                assessment.actioned_by = request.user
+                assessment.save()
+                # Log application action
+                self.log_user_action(
+                    ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(assessor_group), request)
+                # Log entry for organisation
+                if self.org_applicant:
+                    self.org_applicant.log_user_action(
+                        ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(assessor_group), request)
+                elif self.proxy_applicant:
+                    self.proxy_applicant.log_user_action(
+                        ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(assessor_group), request)
+                else:
+                    self.submitter.log_user_action(
+                        ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(assessor_group), request)
 
-                    for q1 in assessments:
-                        q1.status = Assessment.STATUS_COMPLETED
-                        q1.save()
-                        # Log application action
-                        self.log_user_action(
-                            ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q), request)
-                        # Log entry for organisation
-                        if self.org_applicant:
-                            self.org_applicant.log_user_action(
-                                ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q), request)
-                        elif self.proxy_applicant:
-                            self.proxy_applicant.log_user_action(
-                                ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q), request)
-                        else:
-                            self.submitter.log_user_action(
-                                ApplicationUserAction.ACTION_ASSESSMENT_COMPLETE.format(q), request)
-                # check if this is the last assessment for current
-                # application, Change the processing status only if it is the
-                # last assessment
-                if not Assessment.objects.filter(
-                        application=self,
-                        licence_activity=request.data.get('selected_assessment_tab'),
-                        status=Assessment.STATUS_AWAITING_ASSESSMENT).exists():
-                    for activity in self.licence_type_data['activity']:
-                        if int(
-                                request.data.get('selected_assessment_tab')) == activity["id"]:
-                            self.set_activity_processing_status(
-                                activity["id"], ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_CONDITIONS)
-
+                self.check_assessment_complete(activity_id)
             except BaseException:
                 raise
+
+    def check_assessment_complete(self, activity_id):
+        # check if this is the last assessment for current
+        # application, Change the processing status only if it is the
+        # last assessment
+        if not Assessment.objects.filter(
+                application=self,
+                licence_activity=activity_id,
+                status=Assessment.STATUS_AWAITING_ASSESSMENT).exists():
+            for activity in self.licence_type_data['activity']:
+                if activity_id == activity["id"]:
+                    self.set_activity_processing_status(
+                        activity["id"], ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_CONDITIONS)
 
     def proposed_decline(self, request, details):
         with transaction.atomic():
@@ -1018,6 +1097,34 @@ class Application(RevisionedMixin):
 
     @property
     def schema_fields(self):
+        return self.get_schema_fields(self.schema)
+
+    @property
+    def schema(self):
+        return self.get_schema_for_purposes(
+            self.licence_purposes.values_list('id', flat=True)
+        )
+
+    @property
+    def data(self):
+        """ returns a queryset of form data records attached to application (shortcut to ApplicationFormDataRecord related_name). """
+        return self.form_data_records.all()
+
+    @property
+    def activities(self):
+        """ returns a queryset of activities attached to application (shortcut to ApplicationSelectedActivity related_name). """
+        return self.selected_activities.exclude(processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED)
+
+    def get_schema_fields_for_purposes(self, purpose_id_list):
+        return self.get_schema_fields(
+            self.get_schema_for_purposes(purpose_id_list)
+        )
+
+    def get_schema_for_purposes(self, purpose_id_list):
+        from wildlifecompliance.components.applications.utils import get_activity_schema
+        return get_activity_schema(purpose_id_list)
+
+    def get_schema_fields(self, schema_json):
         fields = {}
 
         def iterate_children(schema_group, fields, parent={}, parent_type='', condition={}):
@@ -1048,8 +1155,9 @@ class Application(RevisionedMixin):
                     if children_key in fields[name]:
                         del fields[name][children_key]
                         iterate_children(item[children_key], fields, fields[name], children_key, condition)
+                condition = {}
 
-        iterate_children(self.schema, fields)
+        iterate_children(schema_json, fields)
         return fields
 
     def get_visible_form_data_tree(self, form_data_records=None):
@@ -1073,6 +1181,8 @@ class Application(RevisionedMixin):
 
         for instance, schemas in data_tree.items():
             for schema_name, item in schemas.items():
+                if schema_name not in schema_fields:
+                    continue
                 schema_data = schema_fields[schema_name]
                 for condition_field, condition_value in schema_data['condition'].items():
                     if condition_field in schemas and schemas[condition_field] != condition_value:
@@ -1082,21 +1192,6 @@ class Application(RevisionedMixin):
                             continue
 
         return data_tree
-
-    @property
-    def schema(self):
-        from wildlifecompliance.components.applications.utils import get_activity_schema
-        return get_activity_schema(self.licence_purposes.values_list('id', flat=True))
-
-    @property
-    def data(self):
-        """ returns a queryset of form data records attached to application (shortcut to ApplicationFormDataRecord related_name). """
-        return self.form_data_records.all()
-
-    @property
-    def activities(self):
-        """ returns a queryset of activities attached to application (shortcut to ApplicationSelectedActivity related_name). """
-        return self.selected_activities.exclude(processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED)
 
     def get_licences_by_status(self, status):
         return self.licences.filter(current_application__selected_activities__activity_status=status).distinct()
@@ -1139,7 +1234,7 @@ class Application(RevisionedMixin):
                     licence_activity_id__in=activity_list
                 ).update(
                     officer=request.user,
-                    proposed_action=ApplicationSelectedActivity.PROPOSED_ACTION_DECLINE,
+                    proposed_action=ApplicationSelectedActivity.PROPOSED_ACTION_ISSUE,
                     processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION,
                     reason=details.get('reason'),
                     cc_email=details.get('cc_email', None),
@@ -1172,6 +1267,8 @@ class Application(RevisionedMixin):
         with transaction.atomic():
             try:
                 parent_licence = None
+                issued_activities = []
+                declined_activities = []
                 for item in request.data.get('activity'):
                     licence_activity_id = item['id']
                     selected_activity = self.activities.filter(
@@ -1198,18 +1295,18 @@ class Application(RevisionedMixin):
                                 licence_category=self.get_licence_category()
                             )
 
-                        start_date = item['start_date']
-                        expiry_date = item['end_date']
-
                         selected_activity.issue_date = timezone.now()
                         selected_activity.officer = request.user
                         selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
                         selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
-                        selected_activity.original_issue_date = start_date
-                        selected_activity.start_date = start_date
-                        selected_activity.expiry_date = expiry_date
+                        selected_activity.original_issue_date = item['start_date']
+                        selected_activity.start_date = item['start_date']
+                        selected_activity.expiry_date = item['end_date']
+                        selected_activity.cc_email = item['cc_email']
+                        selected_activity.reason = item['reason']
                         selected_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
                         selected_activity.save()
+                        issued_activities.append(selected_activity)
 
                         self.generate_returns(parent_licence, selected_activity, request)
                         # Log application action
@@ -1229,13 +1326,14 @@ class Application(RevisionedMixin):
                             self.submitter.log_user_action(
                                 ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
                                     item['name']), request)
-                        send_application_issue_notification(
-                            item['name'], item['end_date'], item['start_date'], self, request)
                     elif item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_DECLINED:
                         selected_activity.officer = request.user
                         selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED
                         selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
+                        selected_activity.cc_email = item['cc_email']
+                        selected_activity.reason = item['reason']
                         selected_activity.save()
+                        declined_activities.append(selected_activity)
                         # Log application action
                         self.log_user_action(
                             ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(
@@ -1253,12 +1351,19 @@ class Application(RevisionedMixin):
                             self.submitter.log_user_action(
                                 ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(
                                     item['name']), request)
-                        send_application_decline_notification(
-                            item['name'], self, request)
 
                 # If any activities were issued - re-generate PDF
                 if parent_licence is not None:
                     parent_licence.generate_doc()
+                    send_application_issue_notification(
+                        activities=issued_activities,
+                        application=self,
+                        request=request,
+                        licence=parent_licence
+                    )
+                if declined_activities:
+                    send_application_decline_notification(
+                        declined_activities, self, request)
 
             except BaseException:
                 raise
@@ -1455,9 +1560,6 @@ class AmendmentRequest(ApplicationRequest):
                 # Create a log entry for the application
                 self.application.log_user_action(
                     ApplicationUserAction.ACTION_ID_REQUEST_AMENDMENTS, request)
-                # send email
-                send_application_amendment_notification(
-                    self, self.application, request)
                 self.save()
             except BaseException:
                 raise
@@ -1482,13 +1584,14 @@ class Assessment(ApplicationRequest):
     date_last_reminded = models.DateField(null=True, blank=True)
     assessor_group = models.ForeignKey(
         ActivityPermissionGroup, null=False, default=1)
-    activity = JSONField(blank=True, null=True)
     licence_activity = models.ForeignKey(
         'wildlifecompliance.LicenceActivity', null=True)
-    comment = models.TextField(blank=True)
+    inspection_comment = models.TextField(blank=True)
+    final_comment = models.TextField(blank=True)
     purpose = models.TextField(blank=True)
     inspection_date = models.DateField(null=True, blank=True)
     inspection_report = models.FileField(upload_to=update_assessment_inspection_report_filename, blank=True, null=True)
+    actioned_by = models.ForeignKey(EmailUser, null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -1535,13 +1638,33 @@ class Assessment(ApplicationRequest):
         with transaction.atomic():
             try:
                 self.status = Assessment.STATUS_RECALLED
-                self.application.set_activity_processing_status(
-                    self.licence_activity_id, ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER)
+                self.actioned_by = request.user
                 self.save()
-                # Create a log entry for the application
-                self.application.log_user_action(
-                    ApplicationUserAction.ACTION_ASSESSMENT_RECALLED.format(
-                        self.assessor_group), request)
+
+                if not Assessment.objects.filter(
+                    application_id=self.application_id,
+                    licence_activity=self.licence_activity_id,
+                    status=Assessment.STATUS_AWAITING_ASSESSMENT
+                ).exists():
+                    # Create a log entry for the application
+                    self.application.log_user_action(
+                        ApplicationUserAction.ACTION_ASSESSMENT_RECALLED.format(
+                            self.assessor_group), request)
+
+                    last_complete_assessment = Assessment.objects.filter(
+                        application_id=self.application_id,
+                        licence_activity=self.licence_activity_id,
+                        status=Assessment.STATUS_COMPLETED,
+                        actioned_by__isnull=False
+                    ).order_by('-id').first()
+                    if last_complete_assessment:
+                        last_complete_assessment.application.check_assessment_complete(self.licence_activity_id)
+                    else:
+                        self.application.set_activity_processing_status(
+                            self.licence_activity_id,
+                            ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER
+                        )
+
             except BaseException:
                 raise
 
@@ -1558,6 +1681,17 @@ class Assessment(ApplicationRequest):
                         self.assessor_group), request)
             except BaseException:
                 raise
+
+    @property
+    def selected_activity(self):
+        return ApplicationSelectedActivity.objects.filter(
+            application_id=self.application_id,
+            licence_activity_id=self.licence_activity_id
+        ).first()
+
+    @property
+    def is_inspection_required(self):
+        return self.selected_activity.is_inspection_required
 
 
 class ApplicationSelectedActivity(models.Model):
@@ -1641,7 +1775,6 @@ class ApplicationSelectedActivity(models.Model):
     proposed_start_date = models.DateField(null=True, blank=True)
     proposed_end_date = models.DateField(null=True, blank=True)
     is_activity_renewable = models.BooleanField(default=False)
-    purpose = models.TextField(blank=True, null=True)
     additional_info = models.TextField(blank=True, null=True)
     conditions = models.TextField(blank=True, null=True)
     original_issue_date = models.DateTimeField(blank=True, null=True)
@@ -1649,11 +1782,20 @@ class ApplicationSelectedActivity(models.Model):
     start_date = models.DateField(blank=True, null=True)
     expiry_date = models.DateField(blank=True, null=True)
     renewal_sent = models.BooleanField(default=False)
+    is_inspection_required = models.BooleanField(default=False)
 
     @staticmethod
     def is_valid_status(status):
         return filter(lambda x: x[0] == status,
                       ApplicationSelectedActivity.PROCESSING_STATUS_CHOICES)
+
+    @property
+    def purposes(self):
+        from wildlifecompliance.components.licences.models import LicencePurpose
+        return LicencePurpose.objects.filter(
+            application__id=self.application_id,
+            licence_activity_id=self.licence_activity_id
+        )
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -1713,7 +1855,8 @@ class ApplicationFormDataRecord(models.Model):
         choices=COMPONENT_TYPE_CHOICES,
         default=COMPONENT_TYPE_TEXT)
     value = JSONField(blank=True, null=True)
-    comment = models.TextField(blank=True)
+    officer_comment = models.TextField(blank=True)
+    assessor_comment = models.TextField(blank=True)
     deficiency = models.TextField(blank=True)
 
     def __str__(self):
@@ -1729,11 +1872,13 @@ class ApplicationFormDataRecord(models.Model):
     @staticmethod
     def process_form(request, application, form_data, action=ACTION_TYPE_ASSIGN_VALUE):
         from wildlifecompliance.components.applications.utils import MissingFieldsException
-        can_edit_comments = request.user.has_perm(
+        can_edit_officer_comments = request.user.has_perm(
             'wildlifecompliance.licensing_officer'
-        ) or request.user.has_perm(
+        )
+        can_edit_assessor_comments = request.user.has_perm(
             'wildlifecompliance.assessor'
         )
+        can_edit_comments = can_edit_officer_comments or can_edit_assessor_comments
         can_edit_deficiencies = request.user.has_perm(
             'wildlifecompliance.licensing_officer'
         )
@@ -1753,7 +1898,8 @@ class ApplicationFormDataRecord(models.Model):
             instance_name = field_data.get('instance_name', '')
             component_type = field_data.get('component_type', '')
             value = field_data.get('value', '')
-            comment = field_data.get('comment_value', '')
+            officer_comment = field_data.get('officer_comment', '')
+            assessor_comment = field_data.get('assessor_comment', '')
             deficiency = field_data.get('deficiency_value', '')
 
             if ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR in field_name:
@@ -1789,14 +1935,16 @@ class ApplicationFormDataRecord(models.Model):
                     continue
                 form_data_record.value = value
             elif action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT:
-                if can_edit_comments:
-                    form_data_record.comment = comment
+                if can_edit_officer_comments:
+                    form_data_record.officer_comment = officer_comment
+                if can_edit_assessor_comments:
+                    form_data_record.assessor_comment = assessor_comment
                 if can_edit_deficiencies:
                     form_data_record.deficiency = deficiency
             form_data_record.save()
 
         if action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_VALUE:
-            application.update_fees()
+            application.update_dynamic_attributes()
             for existing_field in ApplicationFormDataRecord.objects.filter(application_id=application.id):
                 if existing_field.field_name not in form_data.keys():
                     existing_field.delete()

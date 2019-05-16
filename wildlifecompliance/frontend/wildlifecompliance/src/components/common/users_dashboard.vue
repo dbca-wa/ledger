@@ -101,11 +101,21 @@ export default {
                     }
                 },
                 columns: [
-                    {data: "title"},
-                    {data: "first_name"},
-                    {data: "last_name"},
+                    {
+                        data: "title",
+                        responsivePriority: 10,
+                    },
+                    {
+                        data: "first_name",
+                        responsivePriority: 20,
+                    },
+                    {
+                        data: "last_name",
+                        responsivePriority: 30,
+                    },
                     {
                         data: "dob",
+                        responsivePriority: 40,
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         },
@@ -124,6 +134,7 @@ export default {
                     {data: "character_comments"},
                     {
                         data:"id",
+                        responsivePriority: 50,
                         mRender:function(data, type, full){
                             let links = ''
                             links += "<a href='/internal/users/\__ID__\'> Edit</a><br/>";

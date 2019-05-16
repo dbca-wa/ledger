@@ -6,7 +6,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from ledger.payments.pdf import create_invoice_pdf_bytes
 from ledger.payments.models import Invoice
-
+from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.components.emails.emails import TemplateEmailBase
 
 logger = logging.getLogger(__name__)
@@ -78,6 +78,12 @@ class ApplicationIdUpdatedEmail(TemplateEmailBase):
     subject = 'A user has updated their identification'
     html_template = 'wildlifecompliance/emails/send_id_updated_notification.html'
     txt_template = 'wildlifecompliance/emails/send_id_updated_notification.txt'
+
+
+class ApplicationReturnedToOfficerEmail(TemplateEmailBase):
+    subject = 'A licensed activity has been returned to officer for review'
+    html_template = 'wildlifecompliance/emails/send_application_return_to_officer_conditions.html'
+    txt_template = 'wildlifecompliance/emails/send_application_return_to_officer_conditions.txt'
 
 
 def send_assessment_reminder_email(select_group, assessment, request=None):
@@ -213,10 +219,15 @@ def send_amendment_submit_email_notification(
     _log_application_email(msg, application, sender=sender)
 
 
-def send_application_amendment_notification(amendment, application, request):
+def send_application_amendment_notification(amendment_data, application, request):
+    from wildlifecompliance.components.applications.models import AmendmentRequest
+
     # An email to submitter notifying about amendment request for an application
     email = ApplicationAmendmentRequestNotificationEmail()
-    reason = amendment.get_reason_display()
+    reason = get_choice_value(
+        amendment_data['reason'],
+        AmendmentRequest.REASON_CHOICES
+    )
     url = request.build_absolute_uri(
         reverse(
             'external-application-detail',
@@ -225,7 +236,7 @@ def send_application_amendment_notification(amendment, application, request):
     context = {
         'application': application,
         'reason': reason,
-        'amendment_details': amendment.text,
+        'amendment_details': amendment_data['text'],
         'url': url
     }
 
@@ -235,11 +246,10 @@ def send_application_amendment_notification(amendment, application, request):
 
 
 def send_application_issue_notification(
-        activity_name,
-        expiry_date,
-        start_date,
+        activities,
         application,
-        request):
+        request,
+        licence):
     # An email to internal users notifying about an application activity being issued
     email = ApplicationIssueNotificationEmail()
 
@@ -248,22 +258,26 @@ def send_application_issue_notification(
             'external-application-detail',
             kwargs={
                 'application_pk': application.id}))
+
     context = {
         'application': application,
-        'activity_name': activity_name,
-        'expiry_date': expiry_date,
-        'start_date': start_date,
+        'activities': activities,
         'url': url
     }
 
-    msg = email.send(application.submitter.email, context=context)
+    msg = email.send(
+        application.submitter.email,
+        context=context, attachments=[
+            (licence.licence_document.name, licence.licence_document._file.read(), 'application/pdf')],
+        bcc=[activities[0].cc_email] if activities[0].cc_email else None
+    )
 
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, application, sender=sender)
 
 
 def send_application_decline_notification(
-        activity_name, application, request):
+        activities, application, request):
     # An email to submitter users notifying about an application activity being declined
     email = ApplicationDeclineNotificationEmail()
 
@@ -274,11 +288,15 @@ def send_application_decline_notification(
                 'application_pk': application.id}))
     context = {
         'application': application,
-        'activity_name': activity_name,
+        'activities': activities,
         'url': url
     }
 
-    msg = email.send(application.submitter.email, context=context)
+    msg = email.send(
+        application.submitter.email,
+        context=context,
+        bcc=[activities[0].cc_email] if activities[0].cc_email else None
+    )
 
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, application, sender=sender)
@@ -322,6 +340,26 @@ def send_id_updated_notification(user, applications, assigned_officers, request)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     for application in applications:
         _log_application_email(msg, application, sender=sender)
+
+
+def send_application_return_to_officer_conditions_notification(
+        email_list, application, text, request):
+    # An email to internal users notifying about an application returning to the officer - conditions stage
+    email = ApplicationReturnedToOfficerEmail()
+    url = request.build_absolute_uri(
+        reverse(
+            'internal-application-detail',
+            kwargs={
+                'application_pk': application.id}))
+
+    context = {
+        'application': application,
+        'text': text,
+        'url': url
+    }
+    msg = email.send(email_list, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_application_email(msg, application, sender=sender)
 
 
 def _log_application_email(email_message, application, sender=None):
