@@ -332,6 +332,7 @@ export default {
                   let new_schema = [];
                   let retrieved_val = null;
                   let report_type_id_str = "";
+                  const timeNow = Date.now();
 
                   if (new_report_type_id) {
                     report_type_id_str = new_report_type_id.toString();
@@ -345,18 +346,19 @@ export default {
                   } catch(err) {
                     console.log(err);
                   }
-                  
+
                   let timeDiff = 0;
+                  let expiryDiff = 300000; // 5 mins // 1 day 86400000;
                   if (retrieved_val) {
-                    const timeNow = Date.now();
                     timeDiff = timeNow - retrieved_val[0];
-                    console.log("timeDiff");
-                    console.log(timeDiff);
                     Object.assign(new_schema, retrieved_val[1]);
                   }
 
                   // if no schema retrieved or expired cached value, fetch new schema from db
-                  if (!(new_schema.length > 0) || timeDiff > 86400000) {
+                  if (!(new_schema.length > 0) || timeDiff > expiryDiff) {
+                    console.log("timeDiff");
+                    console.log(timeDiff);
+                    
                     let payload = new Object();
                     payload.id = this.call_email.id;
                     payload.report_type_id = report_type_id_str;
@@ -368,28 +370,20 @@ export default {
                         payload
                         );
                     
-                    const insertTimeNow = Date.now()
-                    const value_to_cache = [insertTimeNow, updatedCallEmail.body.schema];
-                    
+                    const value_to_cache = [timeNow, updatedCallEmail.body.schema];
                     try {
-                      await CallEmail_ReportType_Schema.setItem(
+                      retrieved_val = await CallEmail_ReportType_Schema.setItem(
                         report_type_id_str, 
                         value_to_cache)
-                      console.log("keyvalue stored");  
+                      console.log("keyvalue stored and returned");  
                     } catch(err) {
                       console.log(err);
-                    }
-                    try {
-                      retrieved_val = await CallEmail_ReportType_Schema.getItem(
-                        report_type_id_str)
-                    } catch(err) {
-                      console.error(err);
                     }
                     if (retrieved_val) {
                       Object.assign(this.current_schema, retrieved_val[1]);
                     }
                   } else {
-                      console.log("cached keyvalue");  
+                      console.log("cached keyvalue returned");  
                       Object.assign(this.current_schema, new_schema);
                   }
               } catch (err) {
