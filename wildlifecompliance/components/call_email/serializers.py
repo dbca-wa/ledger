@@ -2,6 +2,7 @@ import traceback
 
 from rest_framework_gis.serializers import GeoFeatureModelSerializer, GeometryField
 
+from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.call_email.models import (
     CallEmail,
     Classification,
@@ -295,3 +296,15 @@ class ComplianceLogEntrySerializer(CommunicationLogEntrySerializer):
 
     def get_documents(self, obj):
         return [[d.name, d._file.url] for d in obj.documents.all()]
+
+
+class EmailUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'email',
+            'first_name',
+            'last_name',
+            'title',
+            'organisation')

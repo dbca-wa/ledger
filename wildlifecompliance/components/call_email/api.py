@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from rest_framework import viewsets, serializers, status, generics, views
+from rest_framework import viewsets, serializers, status, generics, views, filters
 import rest_framework.exceptions as rest_exceptions
 from rest_framework.decorators import (
     detail_route,
@@ -59,7 +59,7 @@ from wildlifecompliance.components.call_email.serializers import (
     CreateCallEmailSerializer,
     UpdateSchemaSerializer,
     ReferrerSerializer,
-    LocationSerializerMinimum, CallEmailOptimisedSerializer)
+    LocationSerializerMinimum, CallEmailOptimisedSerializer, EmailUserSerializer)
 from utils import SchemaParser
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
@@ -501,3 +501,10 @@ class LocationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+class EmailUserViewSet(viewsets.ModelViewSet):
+    queryset = EmailUser.objects.all()
+    serializer_class = EmailUserSerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('first_name', 'last_name', 'email', 'phone_number', 'mobile_number', 'fax_number', 'organisation')
