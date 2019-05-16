@@ -182,7 +182,7 @@
 </template>
 <script>
 import Vue from "vue";
-import FormSection from "@/components/compliance_forms/section_toggle.vue";
+import FormSection from "@/components/forms/section_toggle.vue";
 
 import CommsLogs from "@common-components/comms_logs.vue";
 import MapLocation from "./map_location.vue";
@@ -332,6 +332,7 @@ export default {
                   let new_schema = [];
                   let retrieved_val = null;
                   let report_type_id_str = "";
+
                   if (new_report_type_id) {
                     report_type_id_str = new_report_type_id.toString();
                   } else {

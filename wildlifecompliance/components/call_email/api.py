@@ -288,6 +288,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                         # Ensure classification_id and report_type_id is returned for Vue template evaluation
                         returned_data.update({'classification_id': request_data.get('classification_id')})
                         returned_data.update({'report_type_id': request_data.get('report_type_id')})
+                        returned_data.update({'referrer_id': request_data.get('referrer_id')})
                         return Response(
                             returned_data.data,
                             status=status.HTTP_201_CREATED,
@@ -374,6 +375,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     # Ensure classification_id and report_type_id is returned for Vue template evaluation
                     returned_data.update({'classification_id': request_data.get('classification_id')})
                     returned_data.update({'report_type_id': request_data.get('report_type_id')})
+                    returned_data.update({'referrer_id': request_data.get('referrer_id')})
                     return Response(
                         returned_data,
                         status=status.HTTP_201_CREATED,
