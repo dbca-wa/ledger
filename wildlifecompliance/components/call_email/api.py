@@ -250,6 +250,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     def create(self, request, *args, **kwargs):
+        print("create")
+        print(request.data)
         try:
             with transaction.atomic():
                 request_data = request.data
@@ -283,6 +285,9 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                         # Serializer returns CallEmail.data for HTTP response
                         returned_data = CallEmailSerializer(instance=new_instance)
                         headers = self.get_success_headers(returned_data)
+                        # Ensure classification_id and report_type_id is returned for Vue template evaluation
+                        returned_data.update({'classification_id': request_data.get('classification_id')})
+                        returned_data.update({'report_type_id': request_data.get('report_type_id')})
                         return Response(
                             returned_data.data,
                             status=status.HTTP_201_CREATED,
@@ -341,7 +346,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     def call_email_save(self, request, *args, **kwargs):
-        print("request.data")
+        print("call_email_save")
         print(request.data)
         instance = self.get_object()
         try:
@@ -360,27 +365,27 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 if request_data.get('renderer_data'):
                     self.form_data(request)
 
-            request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
-            request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
+                request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
+                request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
 
-            serializer = SaveCallEmailSerializer(instance, data=request_data)
-            serializer.is_valid(raise_exception=True)
-            if serializer.is_valid():
-                serializer.save()
-                instance.log_user_action(
-                    ComplianceUserAction.ACTION_SAVE_CALL_EMAIL_.format(
-                    instance.number), request)
-                headers = self.get_success_headers(serializer.data)
-                returned_data = serializer.data
-                # Ensure classification_id and report_type_id is returned for Vue template evaluation
-                returned_data.update({'classification_id': request_data.get('classification_id')})
-                returned_data.update({'report_type_id': request_data.get('report_type_id')})
-                return Response(
-                    returned_data,
-                    status=status.HTTP_201_CREATED,
-                    headers=headers
-                    )
-                
+                serializer = SaveCallEmailSerializer(instance, data=request_data)
+                serializer.is_valid(raise_exception=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    instance.log_user_action(
+                        ComplianceUserAction.ACTION_SAVE_CALL_EMAIL_.format(
+                        instance.number), request)
+                    headers = self.get_success_headers(serializer.data)
+                    returned_data = serializer.data
+                    # Ensure classification_id and report_type_id is returned for Vue template evaluation
+                    returned_data.update({'classification_id': request_data.get('classification_id')})
+                    returned_data.update({'report_type_id': request_data.get('report_type_id')})
+                    return Response(
+                        returned_data,
+                        status=status.HTTP_201_CREATED,
+                        headers=headers
+                        )
+                    
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -394,28 +399,31 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     
     @detail_route(methods=['POST', ])
     def update_schema(self, request, *args, **kwargs):
+        print("request.data")
+        print(request.data)
         instance = self.get_object()
-        try:
-            serializer = UpdateSchemaSerializer(instance, data=request.data)
-            serializer.is_valid(raise_exception=True)
-            if serializer.is_valid():
-                serializer.save()
-                headers = self.get_success_headers(serializer.data)
-                returned_data = serializer.data
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_201_CREATED,
-                    headers=headers
-                    )
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+        if request.data.get('report_type_id'):
+            try:
+                serializer = UpdateSchemaSerializer(instance, data=request.data)
+                serializer.is_valid(raise_exception=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    headers = self.get_success_headers(serializer.data)
+                    returned_data = serializer.data
+                    return Response(
+                        serializer.data,
+                        status=status.HTTP_201_CREATED,
+                        headers=headers
+                        )
+            except serializers.ValidationError:
+                print(traceback.print_exc())
+                raise
+            except ValidationError as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(repr(e.error_dict))
+            except Exception as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e))
 
 
 class ClassificationViewSet(viewsets.ModelViewSet):

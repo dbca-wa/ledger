@@ -74,7 +74,7 @@
                   </div>
               </FormSection>
 
-              <FormSection :formCollapse="true" label="Details" Index="2">
+              <FormSection :formCollapse="false" label="Details" Index="2">
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Use occurrence from/to</label>
@@ -121,7 +121,7 @@
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Report Type</label>
-                  <select @click.prevent="loadSchema" class="form-control" v-model="report_type_id">
+                  <select class="form-control" v-model="report_type_id">
                           <option v-for="option in report_types" :value="option.id" v-bind:key="option.id">
                             {{ option.report_type }} 
                           </option>
@@ -131,7 +131,7 @@
                 <div v-for="(item, index) in current_schema">
                   <compliance-renderer-block
                     :component="item"
-                    v-bind:key="`compliance_renderer_block_${index}`"
+                    v-bind:key="`compliance_renderer_block_${report_type_id}`"
                     />
                 </div>
               </FormSection>
@@ -147,10 +147,10 @@
                 </div></div>
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Advice given</label>
-                    <label class="col-sm-1">Yes</label>
                     <input class="col-sm-1" type="radio" v-model="call_email.advice_given" v-bind:value="true">
-                    <label class="col-sm-1">No</label>
+                    <label class="col-sm-1">Yes</label>
                     <input class="col-sm-1" type="radio" v-model="call_email.advice_given" v-bind:value="false">
+                    <label class="col-sm-1">No</label>
                 </div></div>
                 <div v-if="call_email.advice_given" class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Advice details</label>
@@ -171,6 +171,7 @@
                             </div>
                         </div>
         </div>          
+        <div class="row"/>
     </div>
 </template>
 <script>
@@ -183,17 +184,30 @@ import { api_endpoints, helpers } from "@/utils/hooks";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import Datepicker from 'vuejs-datepicker';
+import moment from 'moment';
 import localforage from "localforage";
-localforage.config({
-    name: 'CallEmail_ReportType_Schema'
-});
 
+let CallEmail_ReportType_Schema = localforage.createInstance({
+    name: "WildlifeCompliance",
+    storeName: 'CallEmail_ReportType_Schema',
+  });
+
+//import WildlifeComplianceCache from '../../../main.js'
+// const CallEmail_ReportType_Schema = WildlifeComplianceCache.config({
+//     name: 'WildlifeCompliance',
+//     storeName: 'CallEmail_ReportType_Schema'
+// });
+// WildlifeComplianceCache
+// CallEmail_ReportType_Schema = localforage.config({
+//     name: 'WildlifeCompliance',
+//     storeName: 'CallEmail_ReportType_Schema'
+// });
 
 export default {
   name: "ViewCallEmail",
   data: function() {
     return {
-      current_schema: null,
+      current_schema: [],
       sectionLabel: "Details",
       sectionIndex: 1,
       pBody: "pBody" + this._uid,
@@ -249,14 +263,15 @@ export default {
         get: function() {
           return this.call_email.report_type ? this.call_email.report_type.id : "";
         },
-        set: function(value) {
+        set: async function(value) {
           let report_type = null;
           this.report_types.forEach(function(element) {
             if (element.id === value) {
               report_type = element;
             }
           }); 
-          this.setReportType(report_type);
+          await this.loadSchema(value);
+          await this.setReportType(report_type);
         }, 
     },
       // report_type_id(state) {
@@ -322,61 +337,99 @@ export default {
     duplicate: async function() {
       await this.saveCallEmail({ route: false, crud: 'duplicate'});
     },
-    loadSchema: async function() {
-            console.log("updateSchema");
-            try {
-                // check local cache to see if key exists
-
-                // fetch new schema from db
-                let payload = new Object();
-                payload.id = state.call_email.id;
-                payload.report_type_id = state.call_email.report_type.id;
-
-                const updatedCallEmail = await Vue.http.post(
-                    helpers.add_endpoint_join(
-                        api_endpoints.call_email, 
-                        state.call_email.id + "/update_schema/"),
-                    payload
-                    );
-
-                // // update Vuex - still required?
-                // await dispatch("setSchema", updatedCallEmail.body.schema);
-
-                // write new value to local cache
+    loadSchema: async function(new_report_type_id) {
+            console.log("loadSchema");
+            if (this.report_type_id || new_report_type_id) {
+              try {
                 
-                const timeNow = Date.now()
-                //moment(payload.occurrence_date_from).format('YYYY-MM-DD');
-                const value_to_cache = [timeNow, updatedCallEmail.body.schema];
-                const report_type_id_str = state.call_email.report_type.id.toString()
+                  let new_schema = [];
+                  let retrieved_val = null;
+                  let report_type_id_str = "";
+                  if (new_report_type_id) {
+                    report_type_id_str = new_report_type_id.toString();
+                  } else {
+                    report_type_id_str = this.report_type_id.toString();
+                  }
+                  
+                  // check local cache to see if key exists
+                  try {
+                    retrieved_val = await CallEmail_ReportType_Schema.getItem(
+                      report_type_id_str)
+                  } catch(err) {
+                    console.log(err);
+                  }
 
-                localforage.setItem(
-                    report_type_id_str, value_to_cache
-                    )
+                  //moment(payload.occurrence_date_from).format('YYYY-MM-DD');
+                  //const timeDiff = Date.now() - retrieved_val[0]
+                  
+                  let timeDiff = 0;
+                  if (retrieved_val) {
+                    const timeNow = Date.now();
+                    timeDiff = timeNow - retrieved_val[0];
+                    console.log("timeDiff");
+                    console.log(timeDiff);
+                    Object.assign(new_schema, retrieved_val[1]);
+                  }
+
+                  if (!(new_schema.length > 0) || timeDiff > 86400000) {
+                    // fetch new schema from db
+                    let payload = new Object();
+                    payload.id = this.call_email.id;
+                    payload.report_type_id = report_type_id_str;
+
+                    const updatedCallEmail = await Vue.http.post(
+                        helpers.add_endpoint_join(
+                            api_endpoints.call_email, 
+                            this.call_email.id + "/update_schema/"),
+                        payload
+                        );
                     
-                    .then(function () {
-                    //return localforage.getItem('key');
-                    console.log("key stored");
-                  }).then(function (value) {
-                    // we got our value
-                  }).catch(function (err) {
-                    // we got an error
-                  });
+                    const insertTimeNow = Date.now()
 
-                // update current schema
-                current_schema = "";
+                    const value_to_cache = [insertTimeNow, updatedCallEmail.body.schema];
+                    
+                    try {
+                      await CallEmail_ReportType_Schema.setItem(
+                        report_type_id_str, 
+                        value_to_cache)
+                      console.log("keyvalue stored");  
+                    } catch(err) {
+                      console.log(err);
+                    }
+                    try {
+                      retrieved_val = await CallEmail_ReportType_Schema.getItem(
+                        report_type_id_str)
+                    } catch(err) {
+                      console.error(err);
+                    }
+                    if (retrieved_val) {
+                      Object.assign(this.current_schema, retrieved_val[1]);
+                    }
+                      
+                  } else {
+                      console.log("cached keyvalue");  
+                      Object.assign(this.current_schema, new_schema);
+                  }
 
-            } catch (err) {
-                console.error(err);
+              } catch (err) {
+                  console.error(err);
+              }
             }
-
     },
   },
 
   created: function() {
     
+    //CallEmail_ReportType_Schema.clear();
+    //localforage.clear();
+    
     if (this.$route.params.call_email_id) {
       this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
     }
+    // load current CallEmail renderer schema
+    this.loadSchema(this.call_email.report_type_id);
+    
+    // load drop-down select lists
     this.loadClassification();
     this.loadReportTypes();
     this.loadReferrers();
