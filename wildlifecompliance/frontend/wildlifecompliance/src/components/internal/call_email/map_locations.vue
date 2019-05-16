@@ -1,5 +1,32 @@
 <template lang="html">
     <div class="">
+        <div id="map-filter">
+            <div>
+                <label class="">Call/Email Status</label>
+                <select>
+                    <option>Under Construction</option>
+                </select>
+            </div>
+            <div>
+                <label class="">Call/Email Classification</label>
+                <select>
+                    <option>Under Construction</option>
+                </select>
+            </div>
+            <div>
+                <label class="">Lodged From</label>
+                <select>
+                    <option>Under Construction</option>
+                </select>
+            </div>
+            <div>
+                <label class="">Lodged To</label>
+                <select>
+                    <option>Under Construction</option>
+                </select>
+            </div>
+        </div>
+
         <div id="map-wrapper">
             <div id="search-box">
                 <input id="search-input" />
@@ -438,5 +465,9 @@ module.exports = {
 }
 .leaflet-popup-content-wrapper {
     padding: 0px !important;
+}
+#map-filter{
+    display: flex;
+    justify-content: space-between;
 }
 </style>
