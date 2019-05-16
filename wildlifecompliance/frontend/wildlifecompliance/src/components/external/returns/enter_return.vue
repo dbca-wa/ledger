@@ -38,25 +38,25 @@
                         <input type="radio" name="SpreadsheetNo" value="no" v-model='spreadsheetReturn'>
                         <label style="width:10%;" for="SpreadsheetNo">No</label>
                       </div>
-                      <div v-if="nilReturn === 'no' && spreadsheetReturn != null" class="row">
+                      <div v-if="nilReturn === 'no' && spreadsheetReturn === 'yes'" class="row">
                         <label style="width:70%;" class="col-sm-4">Do you want to add to existing data or replace existing data?</label>
-                        <input type="radio" name="ReplaceYes" value="replace" v-model='returns.replace'>
+                        <input type="radio" name="ReplaceYes" value="yes" v-model='replaceReturn'>
                         <label style="width:10%;" for="ReplaceYes">Replace</label>
-                        <input type="radio" name="ReplaceNo" value="add" v-model='returns.replace'>
+                        <input type="radio" name="ReplaceNo" value="no" v-model='replaceReturn'>
                         <label style="width:10%;" for="ReplaceNo">Add to</label>
-                      </div>
-                      <div class="row"></div>
-                      <div v-if="nilReturn === 'no' && spreadsheetReturn === 'no'" class="row">
-                          <renderer-block v-for="(data, key) in returns.table"
-                              :component="data"
-                              v-bind:key="returns-grid-data"
-                          />
                       </div>
                       <div v-if="nilReturn === 'no' && spreadsheetReturn === 'yes'" class="row">
                         <span class="btn btn-primary btn-file pull-left">Upload File
                           <input type="file" ref="spreadsheet" @change="uploadFile()"/>
                         </span>
                         <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
+                      </div>
+                      <div class="row"></div>
+                      <div v-if="nilReturn === 'no'" class="row">
+                          <renderer-block v-for="(data, key) in returns.table"
+                              :component="data"
+                              v-bind:key="returns-grid-data"
+                          />
                       </div>
                       <div class="margin-left-20"></div>
                       <!-- End of Spreadsheet Return -->
@@ -109,6 +109,7 @@ export default {
         returnBtn: 'Submit',
         nilReturn: 'yes',
         spreadsheetReturn: 'no',
+        replaceReturn: 'no',
     }
   },
   components:{
@@ -140,39 +141,30 @@ export default {
       this.form=document.forms.enter_return
       let data = new FormData(this.form);
       if (this.spreadsheetReturn === 'no') {
-          this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/save'),data,{
+        this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/save'),data,{
       		  emulateJSON:true,
-	        }).then((response)=>{
-		        swal( 'Sent',
-		              'successful returns',
-		              'success'
-		        );
-	        },(error)=>{
-		        swal( 'error',
-		              'Enter data in correct format',
-		              'error'
-          	);
-	        });
+        }).then((response)=>{
+                swal('Saved', 'Return details have been updated', 'success');
+
+        },exception=>{
+		            swal('Error Saving Data', exception.body.error, 'error');
+        });
       }
       if (this.spreadsheetReturn === 'yes') {
         data.append('spreadsheet', this.spreadsheet)
         this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/upload_details'),data,{
                     emulateJSON:true,
-        }).then((res)=>{
-                swal(
-                  'Saved',
-                  'Return details have been updated',
-                 'success'
-                )
-        },err=>{
-                console.log(err)
+        }).then((response)=>{
+                swal('Saved', 'Return details have been updated', 'success');
+
+        },exception=>{
+		            swal('Error Saving Upload', exception.body.error, 'error');
         });
       }
     },
     uploadFile: function(e) {
-      let vm = this;
       let _file = null;
-      var input = $(vm.$refs.spreadsheet)[0];
+      var input = $(this.$refs.spreadsheet)[0];
       if (input.files && input.files[0]) {
         var reader = new FileReader();
         reader.readAsDataURL(input.files[0]);
@@ -181,24 +173,44 @@ export default {
         };
         _file = input.files[0];
       }
-      vm.spreadsheet = _file;
+      this.spreadsheet = _file;
+      this.validate_upload()
+    },
+    validate_upload(e) {
+      let _data = new FormData(this.form);
+      _data.append('spreadsheet', this.spreadsheet)
+      this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/upload_details'),_data,{
+                    emulateJSON:true,
+        }).then((response)=>{
+            if (this.replaceReturn === 'no') {
+              let idx1 = this.returns.table[0]['data'].length
+              for (let idx2=0; idx2 < response.body[0]['data'].length; idx2++) {
+                this.returns.table[0]['data'][idx1++] = response.body[0]['data'][idx2]
+              }
+            }
+            if (this.replaceReturn === 'yes') {
+              this.returns.table[0]['data'] = response.body[0]['data']
+              this.replaceReturn = 'no'
+            }
+            this.nilReturn = 'no'
+            this.spreadsheetReturn = 'no'
+        },exception=>{
+		        swal('Error Uploading', exception.body.error, 'error');
+        });
     },
     submit: function(e) {
-      let vm = this;
-      vm.form=document.forms.enter_return
-      let data = new FormData(vm.form);
+      this.form=document.forms.enter_return
+      let _data = new FormData(this.form);
+      this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/update_details'),_data,{
+          emulateJSON:true,
+        }).then((response)=>{
 
-      vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/update_details'),data,{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        swal(
-                             'Sent',
-                             'successful returns',
-                             'success'
-                        );
-                    },(error)=>{
-                        console.log(error);
-                    });
+            swal('Saved', 'Return details have been updated', 'success');
+
+        },exception=>{
+		        swal('Error Saving Upload', exception.body.error, 'error');
+
+        });
     },
     
   },
@@ -212,6 +224,7 @@ export default {
           if (vm.returns.table[0]) {
             vm.nilReturn = 'no'
             vm.spreadsheetReturn = 'no'
+            vm.replaceReturn = 'no'
           }
        });
      });
