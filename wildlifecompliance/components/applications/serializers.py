@@ -31,6 +31,9 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     start_date = serializers.SerializerMethodField(read_only=True)
     expiry_date = serializers.SerializerMethodField(read_only=True)
     approve_options = serializers.SerializerMethodField(read_only=True)
+    purposes = serializers.SerializerMethodField(read_only=True)
+    activity_purpose_names = serializers.SerializerMethodField(read_only=True)
+    processing_status = CustomChoiceField(read_only=True)
 
     class Meta:
         model = ApplicationSelectedActivity
@@ -50,6 +53,13 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
 
     def get_approve_options(self, obj):
         return [{'label': 'Approved', 'value': 'approved'}, {'label': 'Declined', 'value': 'declined'}]
+
+    def get_purposes(self, obj):
+        from wildlifecompliance.components.licences.serializers import PurposeSerializer
+        return PurposeSerializer(obj.purposes, many=True).data
+
+    def get_activity_purpose_names(self, obj):
+        return ','.join([p.short_name for p in obj.purposes])
 
 
 class EmailUserSerializer(serializers.ModelSerializer):
@@ -116,9 +126,11 @@ class AssessmentSerializer(serializers.ModelSerializer):
             'date_last_reminded',
             'status',
             'licence_activity',
-            'comment',
+            'inspection_comment',
+            'final_comment',
             'inspection_date',
-            'inspection_report'
+            'inspection_report',
+            'is_inspection_required',
         )
 
 
@@ -128,9 +140,12 @@ class SimpleSaveAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assessment
         fields = (
-            'comment',
+            'inspection_comment',
+            'final_comment',
             'inspection_date',
-            'inspection_report')
+            'inspection_report',
+            'is_inspection_required',
+            )
 
 
 class SaveAssessmentSerializer(serializers.ModelSerializer):
@@ -182,7 +197,8 @@ class ApplicationFormDataRecordSerializer(serializers.ModelSerializer):
             'schema_name',
             'component_type',
             'instance_name',
-            'comment',
+            'officer_comment',
+            'assessor_comment',
             'deficiency',
             'value',
         )
@@ -191,13 +207,16 @@ class ApplicationFormDataRecordSerializer(serializers.ModelSerializer):
             'schema_name',
             'component_type',
             'instance_name',
-            'comment',
+            'officer_comment',
+            'assessor_comment',
             'deficiency',
             'value',
         )
 
 
 class BaseApplicationSerializer(serializers.ModelSerializer):
+    org_applicant = OrganisationSerializer()
+    proxy_applicant = EmailUserAppViewSerializer()
     readonly = serializers.SerializerMethodField(read_only=True)
     licence_type_short_name = serializers.ReadOnlyField()
     documents_url = serializers.SerializerMethodField()
@@ -378,7 +397,8 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
             'assigned_officer',
             'can_be_processed',
             'user_in_officers_and_assessors',
-            'application_type'
+            'application_type',
+            'activities'
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render

@@ -3,7 +3,7 @@
         <div class="col-md-12">
             <div class="form-group">
                 <div class="row">
-                  <label :id="id" class="col-md-3" for="label" >{{isDeficiency ? 'Deficiency' : 'Comments'}}</label>
+                  <label :id="id" class="col-md-3" for="label" >{{labelText}}</label>
                   <div class="col-md-9">
                       <textarea
                         :readonly="readonly"
@@ -20,6 +20,12 @@
 </template>
 
 <script>
+import {
+    COMMENT_TYPE_OFFICER,
+    COMMENT_TYPE_ASSESSOR,
+    COMMENT_TYPE_DEFICIENCY,
+} from '@/store/constants';
+
 export default {
     props: {
         "name": {
@@ -43,22 +49,50 @@ export default {
             type: Boolean,
             default: false
         },
-        "isDeficiency": {
-            type: Boolean,
-            default: false
+        "commentType": {
+            type: String,
+            default: COMMENT_TYPE_OFFICER,
         }
     },
     computed: {
+        labelText: function() {
+            switch(this.commentType) {
+                case COMMENT_TYPE_OFFICER:
+                    return 'Officer Comments';
+                break;
+                case COMMENT_TYPE_ASSESSOR:
+                    return 'Assessor Comments';
+                break;
+                case COMMENT_TYPE_DEFICIENCY:
+                    return 'Deficiency';
+                break;
+            }
+        },
         value: {
             get: function() {
-                return this.isDeficiency ? this.field_data.deficiency_value : this.field_data.comment_value;
+                switch(this.commentType) {
+                    case COMMENT_TYPE_OFFICER:
+                        return this.field_data.officer_comment;
+                    break;
+                    case COMMENT_TYPE_ASSESSOR:
+                        return this.field_data.assessor_comment;
+                    break;
+                    case COMMENT_TYPE_DEFICIENCY:
+                        return this.field_data.deficiency_value;
+                    break;
+                }
             },
             set: function(value) {
-                if(this.isDeficiency) {
-                    this.field_data.deficiency_value = value;
-                }
-                else {
-                    this.field_data.comment_value = value;
+                switch(this.commentType) {
+                    case COMMENT_TYPE_OFFICER:
+                        this.field_data.officer_comment = value;
+                    break;
+                    case COMMENT_TYPE_ASSESSOR:
+                        this.field_data.assessor_comment = value;
+                    break;
+                    case COMMENT_TYPE_DEFICIENCY:
+                        this.field_data.deficiency_value = value;
+                    break;
                 }
             }
         }

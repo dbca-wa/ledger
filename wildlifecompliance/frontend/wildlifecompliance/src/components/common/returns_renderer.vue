@@ -1,7 +1,7 @@
 <template lang="html">
     <div>
         <div class="col-md-3">
-            <h3>Return: {{ returns.id }}</h3>
+            <h3>Return: {{ returns.lodgement_number }}</h3>
         </div>
         <div :class="`${form_width ? form_width : 'col-md-9'}`" id="returns-tabs">
             <div >
@@ -60,7 +60,6 @@ export default {
     },
   },
   mounted: function() {
-
   },
 }
 </script>

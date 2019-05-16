@@ -32,11 +32,12 @@ export const rendererStore = {
         },
         isActivityVisible: (state, getters, rootState, rootGetters) => (
             activity_id, hide_decisions, hide_processing_statuses, for_user_role) => {
-            return rootGetters.isApplicationActivityVisible(activity_id,
-                hide_decisions,
-                hide_processing_statuses,
-                for_user_role
-            );
+            return rootGetters.isApplicationActivityVisible({
+                activity_id: activity_id,
+                exclude_statuses: hide_decisions,
+                exclude_processing_statuses: hide_processing_statuses,
+                for_user_role: for_user_role
+            });
         },
         unfinishedActivities: (state, getters, rootState, rootGetters) => {
             return getters.visibleActivities(

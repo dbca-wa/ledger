@@ -73,7 +73,7 @@ export default {
                     {
                         mRender:function (data,type,full) {
                             let links = '';
-                            links +=  `<a href='/external/organisations/manage/${full.id}'>View</a><br/>`;
+                            links +=  `<a href='/internal/organisations/${full.id}'>View</a><br/>`;
                             return links;
                         },
                         orderable: false,
