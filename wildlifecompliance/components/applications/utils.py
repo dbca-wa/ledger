@@ -3,7 +3,7 @@ from datetime import datetime
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from preserialize.serialize import serialize
-from ledger.accounts.models import EmailUser, Document
+from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.applications.models import ApplicationDocument
 from wildlifecompliance.components.applications.serializers import SaveApplicationSerializer
 import json

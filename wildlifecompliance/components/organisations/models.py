@@ -8,7 +8,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
 from ledger.accounts.models import Organisation as ledger_organisation
-from ledger.accounts.models import EmailUser, Document, RevisionedMixin
+from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.main.models import UserAction, CommunicationsLogEntry
 from wildlifecompliance.components.organisations.utils import random_generator, get_officer_email_list
 from wildlifecompliance.components.organisations.emails import (

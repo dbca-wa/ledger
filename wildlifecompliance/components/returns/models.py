@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 from django.db import models, transaction
+from django.db.models.signals import post_save
 from django.contrib.postgres.fields.jsonb import JSONField
+from django.dispatch import receiver
 from django.utils import timezone
 from django.core.exceptions import FieldError
 from ledger.accounts.models import EmailUser, RevisionedMixin
@@ -9,6 +11,8 @@ from wildlifecompliance.components.applications.models import ApplicationConditi
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction
 from wildlifecompliance.components.returns.email import send_external_submit_email_notification, \
                                                         send_return_accept_email_notification
+
+import json, ast
 
 
 def template_directory_path(instance, filename):
@@ -323,6 +327,20 @@ class Return(models.Model):
         return self.lodgement_number
 
 
+class ReturnListener(object):
+    """
+    Listener object signalling additional processing outside Return model.
+    """
+    @staticmethod
+    @receiver(post_save, sender=Return)
+    def post_create(sender, instance, created, **kwargs):
+        if not created:
+            return
+        if instance.has_sheet:
+            # create default species data for Return running sheets.
+            instance.sheet.set_licence_species
+
+
 class ReturnData(object):
     """
     Informational data of requirements supporting licence condition.
@@ -634,8 +652,6 @@ class ReturnSheet(object):
         for _species in ReturnTable.objects.filter(ret=a_return):
             self._species_list.append(_species.name)
             self._species = _species.name
-        # build list of Species available on Licence.
-        self._licence_species_list = []
 
     def _get_table_rows(self, _data):
         """
@@ -669,7 +685,7 @@ class ReturnSheet(object):
             # filter empty rows.
             is_empty = True
             for value in row_data.values():
-                if len(value[row_num].strip()) > 0:
+                if value and len(value.strip()) > 0:
                     is_empty = False
                     break
             if not is_empty:
@@ -721,14 +737,6 @@ class ReturnSheet(object):
         return self._species_list
 
     @property
-    def licence_species_list(self):
-        """
-        List of Species applicable for Running Sheet Return Licence.
-        :return: List of Species.
-        """
-        return self._licence_species_list
-
-    @property
     def activity_list(self):
         """
         List of stock movement activities applicable for Running Sheet.
@@ -760,15 +768,15 @@ class ReturnSheet(object):
 
         return self._table
 
-    def set_activity(self, _species_id, _data):
+    def set_activity(self, _species, _data):
         """
         Sets Running Sheet Activity for the movement of Species stock.
-        :param _species_id:
+        :param _species:
         :param _data:
         :return:
         """
-        self._create_return_data(self._return, _species_id, _data)
-        self.set_species(_species_id)
+        self._create_return_data(self._return, _species, _data)
+        self.set_species(_species)
 
     def set_activity_from_previous(self):
         """
@@ -792,6 +800,18 @@ class ReturnSheet(object):
                     self._table = self._NO_ACTIVITY
                 self._create_return_data(self._return, _species_id, _table)
             '''
+
+    @staticmethod
+    def set_licence_species(self):
+        """
+        Sets the species from the licence for the current Running Sheet.
+        :return:
+        """
+        _data = []
+        # TODO: create default entries for each species on the licence.
+        # for _species in self._return.licence:
+        #    self.set_activity(_species, _data)
+        pass
 
     def set_species(self, _species):
         """
@@ -839,12 +859,13 @@ class ReturnSheet(object):
         :param request:
         :return:
         """
-        try:
-            species = request.data.get('species_id').encode('utf-8')
-            data = eval(request.data.get('species_data').encode('utf-8'))
-            self.set_activity(species, data)
-        except AttributeError:
-            pass
+        for species in self.species_list:
+            try:
+                _data = request.data.get(species).encode('utf-8')
+                _data = tuple(ast.literal_eval(_data))
+                self.set_activity(species, _data)
+            except AttributeError:
+                continue
 
     def __str__(self):
         return self._return.lodgement_number

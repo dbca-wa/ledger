@@ -46,11 +46,11 @@ def update_application_doc_filename(instance, filename):
 
 
 def update_pdf_licence_filename(instance, filename):
-    return 'applications/{}/wildlife_compliance_licence/{}'.format(instance.id, filename)
+    return 'wildlifecompliance/applications/{}/wildlife_compliance_licence/{}'.format(instance.id, filename)
 
 
 def update_assessment_inspection_report_filename(instance, filename):
-    return 'assessments/{}/inspection_report/{}'.format(instance.id, filename)
+    return 'wildlifecompliance/assessments/{}/inspection_report/{}'.format(instance.id, filename)
 
 
 def replace_special_chars(input_str, new_char='_'):
