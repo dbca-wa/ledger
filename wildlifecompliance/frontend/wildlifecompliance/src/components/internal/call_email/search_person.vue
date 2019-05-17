@@ -35,35 +35,16 @@ export default {
         search: function(searchTerm){
             var self = this;
 
-            console.log('=====');
-            console.log('search by: ' + searchTerm);
-
             self.suggest_list.length = 0;
             self.$http.get('/api/search_user/?search=' + searchTerm).then(response => {
-                console.log('number: ' + response.body.results.length);
                 if (response.body && response.body.results) {
                     let persons = response.body.results;
                     let limit = Math.min(self.max_items, persons.length);
                     for (var i = 0; i < limit; i++){
-                        let f_name = persons[i].first_name?persons[i].first_name:'';
-                        let l_name = persons[i].last_name?persons[i].last_name:'';
-
-                        let full_name = [f_name, l_name].filter(Boolean).join(' ');
-                        let email = persons[i].email?'e:' + persons[i].email:'';
-                        let p_number = persons[i].phone_number?'p:' + persons[i].phone_number:'';
-                        let m_number = persons[i].mobile_number?'m:' + persons[i].mobile_number:'';
-                        let dob = persons[i].dob?'DOB:' + persons[i].dob:'';
-                        let myLabel = [full_name, email, p_number, m_number, dob].filter(Boolean).join(', ');
-                        console.log('Add: ' + myLabel);
-                        self.suggest_list.push({
-                            label: myLabel,   // Displayed in the list below the search box
-                            value: [full_name, dob].filter(Boolean).join(', '), // Inserted into the search box once selected
-                        });
+                        self.suggest_list.push(persons[i])
                     }
                 }
                 self.awe.list = self.suggest_list;
-                console.log('list');
-                console.log(self.awe.list);
                 self.awe.evaluate();
             });
         },
@@ -74,6 +55,24 @@ export default {
             self.awe = new Awesomplete(element_search, { 
                 maxItems: self.max_items, 
                 sort: false, 
+                filter: ()=>{ return true; }, // Display all the items in the list without filtering.
+                data: function(item, input){
+                    let f_name = item.first_name?item.first_name:'';
+                    let l_name = item.last_name?item.last_name:'';
+
+                    let full_name = [f_name, l_name].filter(Boolean).join(' ');
+                    let email = item.email?'E:' + item.email:'';
+                    let p_number = item.phone_number?'P:' + item.phone_number:'';
+                    let m_number = item.mobile_number?'M:' + item.mobile_number:'';
+                    let dob = item.dob?'DOB:' + item.dob:'DOB: ---';
+                    let myLabel = [full_name, email, p_number, m_number, dob].filter(Boolean).join(', ');
+
+                    return { 
+                        label: myLabel,   // Displayed in the list below the search box
+                        value: [full_name, dob].filter(Boolean).join(', '), // Inserted into the search box once selected
+                        id: item.id
+                    };
+                }
             });
             $(element_search).on('keyup', function(ev){
                 var keyCode = ev.keyCode || ev.which;
@@ -84,13 +83,24 @@ export default {
             }).on('awesomplete-selectcomplete', function(ev){
                 ev.preventDefault();
                 ev.stopPropagation();
+                // console.log(ev);
                 /* User selected one of the search results */
-                for (var i=0; i<self.suggest_list.length; i++){
-                    if (self.suggest_list[i].value == ev.target.value){
+                // for (var i=0; i<self.suggest_list.length; i++){
+                //     if (self.suggest_list[i].value == ev.target.value){
 
-                    }
-                }
+                //     }
+                // }
                 return false;
+            }).on('awesomplete-select', function(ev){
+                /* Retrieve element id of the selected item from the list
+                 * By parsing it, we can get the order-number of the item in the list
+                 */
+                let elem_id = ev.originalEvent.origin.id;
+                let reg = /^.+(\d+)$/gi;
+                let result = reg.exec(elem_id)
+                let idx = result[1];
+                console.log('Selected person obj: ');
+                console.log(self.suggest_list[idx]);
             });
         },
 
