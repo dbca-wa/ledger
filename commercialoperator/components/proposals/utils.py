@@ -745,6 +745,7 @@ def save_assessor_data(instance,request,viewset):
             sc=json.loads(schema)
             #select_parks_activities=sc['selected_parks_activities']
             #select_trails_activities=sc['selected_trails_activities']
+            #import ipdb; ipdb.set_trace()
             select_parks_activities=json.loads(request.data.get('selected_parks_activities'))
             select_trails_activities=json.loads(request.data.get('selected_trails_activities'))
             marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
