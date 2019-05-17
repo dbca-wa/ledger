@@ -1,7 +1,7 @@
 <template lang="html">
     <div v-if="isApplicationLoaded" class="container" id="internalApplication">
             <div class="row">
-        <h3>Application: {{ application.lodgement_number }}</h3>
+        <h3>{{ headerLabel }}: {{ application.lodgement_number }}</h3>
         <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
             <div class="row">
@@ -756,6 +756,16 @@ export default {
         form_data_comments_url: function() {
             return (this.application) ? `/api/application/${this.application.id}/officer_comments.json` : '';
         },
+        headerLabel: function() {
+            switch(this.application.application_type.id) {
+                case 'amend_activity':
+                    return 'Application - Activity Amendment';
+                break;
+                default:
+                    return 'Application'
+                break;
+            }
+        }
     },
     methods: {
         ...mapActions({
