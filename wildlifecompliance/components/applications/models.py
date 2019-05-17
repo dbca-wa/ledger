@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import datetime
+from itertools import chain
 import logging
 import re
 from decimal import Decimal
@@ -374,8 +375,8 @@ class Application(RevisionedMixin):
     def processing_status(self):
         selected_activities = self.selected_activities.all()
         activity_statuses = [activity.processing_status for activity in selected_activities]
-        # not yet submitted or have some newly added activities that are in Draft state
-        if activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT) > 0:
+        # not yet submitted
+        if activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT) == len(activity_statuses):
             return self.PROCESSING_STATUS_DRAFT
         # application discarded
         elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED) == len(activity_statuses):
@@ -1115,6 +1116,12 @@ class Application(RevisionedMixin):
         """ returns a queryset of activities attached to application (shortcut to ApplicationSelectedActivity related_name). """
         return self.selected_activities.exclude(processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED)
 
+    def get_activity_chain(self, activity_status):
+        activity_chain = self.selected_activities.filter(activity_status=activity_status)
+        return activity_chain | self.previous_application.get_activity_chain(
+            activity_status
+        ) if self.previous_application else activity_chain
+
     def get_schema_fields_for_purposes(self, purpose_id_list):
         return self.get_schema_fields(
             self.get_schema_for_purposes(purpose_id_list)
@@ -1262,11 +1269,29 @@ class Application(RevisionedMixin):
             except BaseException:
                 raise
 
+    def get_parent_licence(self):
+        from wildlifecompliance.components.licences.models import WildlifeLicence
+        try:
+            parent_licence = WildlifeLicence.objects.get(
+                Q(licence_category=self.get_licence_category()),
+                Q(application__org_applicant_id=self.org_applicant_id) if self.org_applicant_id
+                else (
+                    Q(application__submitter=self.proxy_applicant_id) | Q(application__proxy_applicant=self.proxy_applicant_id)
+                ) if self.proxy_applicant_id
+                else Q(application__submitter=self.submitter)
+            )
+        except WildlifeLicence.DoesNotExist:
+            parent_licence = WildlifeLicence.objects.create(
+                current_application=self,
+                licence_category=self.get_licence_category()
+            )
+        return parent_licence
+
     def final_decision(self, request):
         from wildlifecompliance.components.licences.models import WildlifeLicence
         with transaction.atomic():
             try:
-                parent_licence = None
+                parent_licence = self.get_parent_licence()
                 issued_activities = []
                 declined_activities = []
                 for item in request.data.get('activity'):
@@ -1283,18 +1308,6 @@ class Application(RevisionedMixin):
                             selected_activity.licence_activity.name, selected_activity.processing_status))
 
                     if item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_ISSUED:
-                        try:
-                            # check if parent licence is available
-                            parent_licence = WildlifeLicence.objects.get(
-                                current_application=self)
-                        except WildlifeLicence.DoesNotExist:
-                            # if parent licence is not available create one
-                            # before proceeding
-                            parent_licence = WildlifeLicence.objects.create(
-                                current_application=self,
-                                licence_category=self.get_licence_category()
-                            )
-
                         selected_activity.issue_date = timezone.now()
                         selected_activity.officer = request.user
                         selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
@@ -1352,8 +1365,9 @@ class Application(RevisionedMixin):
                                 ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(
                                     item['name']), request)
 
-                # If any activities were issued - re-generate PDF
-                if parent_licence is not None:
+                if issued_activities:
+                    # Re-generate PDF document using all finalised activities
+                    parent_licence.current_application = self
                     parent_licence.generate_doc()
                     send_application_issue_notification(
                         activities=issued_activities,
@@ -1361,6 +1375,7 @@ class Application(RevisionedMixin):
                         request=request,
                         licence=parent_licence
                     )
+
                 if declined_activities:
                     send_application_decline_notification(
                         declined_activities, self, request)
@@ -1443,33 +1458,25 @@ class Application(RevisionedMixin):
         return base_fees
 
     @staticmethod
-    def is_type_amendment(application_type):
-        amendment_types = {
-            Application.APPLICATION_TYPE_NEW_LICENCE: False,
-            Application.APPLICATION_TYPE_ACTIVITY: True,
-            Application.APPLICATION_TYPE_AMENDMENT: True,
-            Application.APPLICATION_TYPE_RENEWAL: True,
-        }
-        try:
-            return amendment_types[application_type]
-        except KeyError:
-            return False
+    def get_active_licence_applications(request):
+        current_date = timezone.now().date()
+
+        return Application.get_request_user_applications(request).filter(
+            selected_activities__processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
+            selected_activities__expiry_date__gte=current_date,
+        ).distinct()
 
     @staticmethod
-    def get_active_licence_applications(request):
+    def get_request_user_applications(request):
         proxy_details = request.user.get_wildlifecompliance_proxy_details(request)
         proxy_id = proxy_details.get('proxy_id')
         organisation_id = proxy_details.get('organisation_id')
-        current_date = timezone.now().date()
 
         return Application.objects.filter(
             Q(org_applicant_id=organisation_id) if organisation_id
             else Q(proxy_applicant=proxy_id) if proxy_id
             else Q(submitter=request.user)
-        ).filter(
-            selected_activities__processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
-            selected_activities__expiry_date__gte=current_date,
-        ).distinct()
+        )
 
 
 class ApplicationInvoice(models.Model):
@@ -1824,6 +1831,12 @@ class ApplicationSelectedActivity(models.Model):
         return LicencePurpose.objects.filter(
             application__id=self.application_id,
             licence_activity_id=self.licence_activity_id
+        )
+
+    def __str__(self):
+        return "Application {id} Selected Activity: {activity_id}".format(
+            id=self.application_id,
+            activity_id=self.licence_activity_id
         )
 
     class Meta:

@@ -1006,47 +1006,27 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 'org_applicant': org_applicant,
                 'proxy_applicant': proxy_applicant,
                 'licence_purposes': licence_purposes,
+                'application_type': application_type,
             }
 
             with transaction.atomic():
-
-                # If this is an activity addition / amendment - find current licence application record.
-                if Application.is_type_amendment(application_type):
-                    licence_purposes_queryset = LicencePurpose.objects.filter(
-                        id__in=licence_purposes
-                    )
-                    licence_category = licence_purposes_queryset.first().licence_category
-                    active_applications = Application.get_active_licence_applications(request)
-                    active_application = active_applications.filter(
-                        licence_purposes__licence_category_id=licence_category.id
-                    ).first()
-                    if not active_application:
-                        raise Exception("Active licence not found!")
-
-                    if application_type == Application.APPLICATION_TYPE_ACTIVITY:
-                        for licence_purpose in licence_purposes_queryset:
-                            selected_activity = active_application.get_selected_activity(
-                                licence_purpose.licence_activity_id
-                            )
-                            # Cannot add purposes to an existing activity as part of this action.
-                            if selected_activity.processing_status != ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT:
-                                raise Exception(
-                                    "Cannot add purposes to an existing activity, please request an amendment instead!"
-                                )
-                            active_application.licence_purposes.add(
-                                licence_purpose
-                            )
-                        active_application.customer_status = Application.CUSTOMER_STATUS_DRAFT
-                        active_application.update_dynamic_attributes()
-
-                    serializer = ApplicationSerializer(
-                        active_application, context={'request': request})
-                    return Response(serializer.data)
-
                 # Use serializer for external application creation - do not expose unneeded fields
                 serializer = CreateExternalApplicationSerializer(data=data)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
+
+                licence_purposes_queryset = LicencePurpose.objects.filter(
+                    id__in=licence_purposes
+                )
+                licence_category = licence_purposes_queryset.first().licence_category
+                active_applications = Application.get_active_licence_applications(request)
+                active_application = active_applications.filter(
+                    licence_purposes__licence_category_id=licence_category.id
+                ).order_by('-id').first()
+                if active_application:
+                    serializer.instance.previous_application_id = active_application.id
+                    serializer.instance.save()
+
                 serializer.instance.update_dynamic_attributes()
 
             return Response(serializer.data)

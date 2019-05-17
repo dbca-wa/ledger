@@ -270,44 +270,37 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
 
         active_applications = Application.get_active_licence_applications(request)
         if active_applications.count():
+            # Including inactive licences
+            all_applications = Application.get_request_user_applications(request).distinct()
             active_category_ids = active_applications.values_list(
                 'selected_activities__licence_activity__licence_category_id',
                 flat=True
             )
-            if Application.is_type_amendment(application_type):
-                all_activity_ids = active_applications.first().activities.values_list(
-                    'licence_activity_id',
-                    flat=True
+            active_purpose_ids = all_applications.values_list(
+                'licence_purposes__id',
+                flat=True
+            ).exclude(
+                selected_activities__processing_status__in=[
+                    ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
+                    ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED,
+                ]
+            )
+
+            if application_type in [
+                Application.APPLICATION_TYPE_ACTIVITY,
+                Application.APPLICATION_TYPE_NEW_LICENCE,
+            ]:
+                only_purpose_records = LicencePurpose.objects.exclude(
+                    id__in=active_purpose_ids
                 )
-                amendable_activity_ids = active_applications.first().selected_activities.values_list(
-                    'licence_activity_id',
-                    flat=True
-                ).filter(
-                    processing_status__in=[
-                        ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
-                        ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
-                        ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED,
-                    ]
-                )
+            elif application_type == Application.APPLICATION_TYPE_AMENDMENT:
                 amendable_purpose_ids = active_applications.values_list(
                     'licence_purposes__id',
                     flat=True
                 )
-
                 queryset = queryset.filter(id__in=active_category_ids)
-                if application_type == Application.APPLICATION_TYPE_ACTIVITY:
-                    only_purpose_records = LicencePurpose.objects.exclude(
-                        licence_activity_id__in=all_activity_ids
-                    )
-                elif application_type == Application.APPLICATION_TYPE_AMENDMENT:
-                    only_purpose_records = LicencePurpose.objects.filter(
-                        id__in=amendable_purpose_ids,
-                        licence_activity_id__in=amendable_activity_ids,
-                    )
-            elif application_type == Application.APPLICATION_TYPE_NEW_LICENCE:
-                queryset = queryset.exclude(id__in=active_category_ids)
-                only_purpose_records = LicencePurpose.objects.exclude(
-                    licence_category_id=active_category_ids
+                only_purpose_records = LicencePurpose.objects.filter(
+                    id__in=amendable_purpose_ids,
                 )
 
         serializer = LicenceCategorySerializer(queryset, many=True, context={

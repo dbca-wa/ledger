@@ -180,11 +180,9 @@ class WildlifeLicence(models.Model):
             self.save()
 
     def get_activities_by_status(self, status):
-        from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
-        return ApplicationSelectedActivity.objects.filter(
-            application_id=self.current_application_id,
-            activity_status=status
-        )
+        return self.current_application.get_activity_chain(status).order_by(
+            'licence_activity_id', '-issue_date'
+        ).distinct('licence_activity_id')
 
     @property
     def current_activities(self):

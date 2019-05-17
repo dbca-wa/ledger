@@ -485,6 +485,7 @@ class CreateExternalApplicationSerializer(serializers.ModelSerializer):
             'proxy_applicant',
             'submitter',
             'licence_purposes',
+            'application_type',
         )
 
 
