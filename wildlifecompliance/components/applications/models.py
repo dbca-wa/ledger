@@ -1120,7 +1120,7 @@ class Application(RevisionedMixin):
         activity_chain = self.selected_activities.filter(**activity_filters)
         return activity_chain | self.previous_application.get_activity_chain(
             **activity_filters
-        ) if self.previous_application else activity_chain
+        ) if self.previous_application and self.previous_application != self else activity_chain
 
     def get_latest_current_activity(self, activity_id):
         return self.get_activity_chain(

@@ -31,7 +31,7 @@ class WildlifeLicenceSerializer(serializers.ModelSerializer):
         )
 
     def get_last_issue_date(self, obj):
-        return obj.current_activities.order_by('-issue_date').first().issue_date
+        return obj.current_activities.first().issue_date
 
 
 class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
@@ -55,7 +55,7 @@ class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
         datatables_always_serialize = fields
 
     def get_last_issue_date(self, obj):
-        return obj.current_activities.order_by('-issue_date').first().issue_date
+        return obj.current_activities.first().issue_date
 
 
 class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
@@ -79,7 +79,7 @@ class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
         datatables_always_serialize = fields
 
     def get_last_issue_date(self, obj):
-        return obj.current_activities.order_by('-issue_date').first().issue_date
+        return obj.current_activities.first().issue_date
 
 
 class DefaultPurposeSerializer(serializers.ModelSerializer):
