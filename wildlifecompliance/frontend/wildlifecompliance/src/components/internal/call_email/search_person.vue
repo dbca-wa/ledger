@@ -36,6 +36,61 @@
                                         </div>
                                         <div class="form-group">
                                         <div class="col-sm-12">
+                                                <button v-if="!updatingPersonal" class="pull-right btn btn-primary" @click.prevent="updatePersonal()">Update</button>
+                                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                                        </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                <h3 class="panel-title">Address Details
+                                    <a class="panelClicker" :href="'#'+adBody" data-toggle="collapse" expanded="false"  data-parent="#userInfo" :aria-controls="adBody">
+                                        <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                    </a>
+                                </h3>
+                                </div>
+                                <div v-if="loading.length == 0" class="panel-body collapse in" :id="adBody">
+                                    <form class="form-horizontal" action="index.html" method="post">
+                                        <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Street</label>
+                                        <div class="col-sm-6">
+                                            <input type="text" class="form-control" name="street" placeholder="" v-model="user.residential_address.line1">
+                                        </div>
+                                        </div>
+                                        <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
+                                        <div class="col-sm-6">
+                                            <input type="text" class="form-control" name="surburb" placeholder="" v-model="user.residential_address.locality">
+                                        </div>
+                                        </div>
+                                        <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">State</label>
+                                        <div class="col-sm-2">
+                                            <input type="text" class="form-control" name="country" placeholder="" v-model="user.residential_address.state">
+                                        </div>
+                                        <label for="" class="col-sm-2 control-label">Postcode</label>
+                                        <div class="col-sm-2">
+                                            <input type="text" class="form-control" name="postcode" placeholder="" v-model="user.residential_address.postcode">
+                                        </div>
+                                        </div>
+                                        <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label" >Country</label>
+                                        <div class="col-sm-4">
+                                            <select class="form-control" name="country" v-model="user.residential_address.country">
+                                                <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
+                                            </select>
+                                        </div>
+                                        </div>
+                                        <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <button v-if="!updatingAddress" class="pull-right btn btn-primary" @click.prevent="updateAddress()">Update</button>
+                                            <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
                                         </div>
                                         </div>
                                     </form>
@@ -75,6 +130,10 @@ export default {
                 residential_address: {},
                 wildlifecompliance_organisations: []
             },
+            loading: [],
+            countries: [],
+            updatingAddress: false,
+            updatingPersonal: false,
         }
     },
     computed: {
