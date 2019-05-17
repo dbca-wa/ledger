@@ -132,7 +132,7 @@ export default {
             'licenceActivities',
         ]),
         canEditLicenceDates: function() {
-            return this.application_type && this.application_type.id !== 'amend_activity';
+            return this.application.application_type && this.application.application_type.id !== 'amend_activity';
         },
         showError: function() {
             var vm = this;

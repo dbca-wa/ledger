@@ -18,7 +18,6 @@ def update_licence_doc_filename(instance, filename):
 
 
 class LicenceDocument(Document):
-    licence = models.ForeignKey('WildlifeLicence', related_name='documents')
     _file = models.FileField(upload_to=update_licence_doc_filename)
 
     class Meta:

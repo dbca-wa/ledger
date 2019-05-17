@@ -17,6 +17,7 @@ class WildlifeLicenceSerializer(serializers.ModelSerializer):
         source='licence_document._file.url')
     current_application = BaseApplicationSerializer(read_only=True)
     last_issue_date = serializers.SerializerMethodField(read_only=True)
+    licence_number = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = WildlifeLicence
@@ -32,6 +33,9 @@ class WildlifeLicenceSerializer(serializers.ModelSerializer):
 
     def get_last_issue_date(self, obj):
         return obj.current_activities.first().issue_date
+
+    def get_licence_number(self, obj):
+        return obj.reference
 
 
 class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):

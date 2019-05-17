@@ -250,7 +250,6 @@ class Application(RevisionedMixin):
         choices=CUSTOMER_STATUS_CHOICES,
         default=CUSTOMER_STATUS_DRAFT)
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
-    lodgement_sequence = models.IntegerField(blank=True, default=0)
     lodgement_date = models.DateTimeField(blank=True, null=True)
     org_applicant = models.ForeignKey(
         Organisation,
@@ -296,7 +295,6 @@ class Application(RevisionedMixin):
         'wildlifecompliance.WildlifeLicence',
         null=True,
         blank=True)
-    pdf_licence = models.FileField(upload_to=update_pdf_licence_filename, blank=True, null=True)
     previous_application = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
     application_fee = models.DecimalField(
@@ -318,10 +316,6 @@ class Application(RevisionedMixin):
             new_lodgement_id = 'A{0:06d}'.format(self.pk)
             self.lodgement_number = new_lodgement_id
             self.save()
-
-    @property
-    def reference(self):
-        return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
 
     @property
     def applicant(self):
@@ -1299,26 +1293,23 @@ class Application(RevisionedMixin):
     def get_parent_licence(self):
         from wildlifecompliance.components.licences.models import WildlifeLicence
         try:
-            parent_licence = WildlifeLicence.objects.get(
+            return WildlifeLicence.objects.get(
                 Q(licence_category=self.get_licence_category()),
-                Q(application__org_applicant_id=self.org_applicant_id) if self.org_applicant_id
-                else (
-                    Q(application__submitter=self.proxy_applicant_id) | Q(application__proxy_applicant=self.proxy_applicant_id)
-                ) if self.proxy_applicant_id
-                else Q(application__submitter=self.submitter)
-            )
+                Q(current_application__org_applicant_id=self.org_applicant_id) if self.org_applicant_id else (
+                    Q(current_application__submitter_id=self.proxy_applicant_id
+                      ) | Q(current_application__proxy_applicant_id=self.proxy_applicant_id)
+                ) if self.proxy_applicant_id else Q(current_application__submitter_id=self.submitter_id)
+            ), False
         except WildlifeLicence.DoesNotExist:
-            parent_licence = WildlifeLicence.objects.create(
+            return WildlifeLicence.objects.create(
                 current_application=self,
                 licence_category=self.get_licence_category()
-            )
-        return parent_licence
+            ), True
 
     def final_decision(self, request):
-        from wildlifecompliance.components.licences.models import WildlifeLicence
         with transaction.atomic():
             try:
-                parent_licence = self.get_parent_licence()
+                parent_licence, created = self.get_parent_licence()
                 issued_activities = []
                 declined_activities = []
                 for item in request.data.get('activity'):
@@ -1409,6 +1400,8 @@ class Application(RevisionedMixin):
                 if issued_activities:
                     # Re-generate PDF document using all finalised activities
                     parent_licence.current_application = self
+                    if not created:
+                        parent_licence.licence_sequence += 1
                     parent_licence.generate_doc()
                     send_application_issue_notification(
                         activities=issued_activities,
@@ -1566,7 +1559,7 @@ class ApplicationLogEntry(CommunicationsLogEntry):
     def save(self, **kwargs):
         # save the application reference if the reference not provided
         if not self.reference:
-            self.reference = self.application.reference
+            self.reference = self.application.lodgement_number
         super(ApplicationLogEntry, self).save(**kwargs)
 
 
