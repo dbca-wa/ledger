@@ -1516,7 +1516,9 @@ class Application(RevisionedMixin):
 
         return Application.objects.filter(
             Q(org_applicant_id=organisation_id) if organisation_id
-            else Q(proxy_applicant=proxy_id) if proxy_id
+            else (
+                Q(submitter=proxy_id) | Q(proxy_applicant=proxy_id)
+            ) if proxy_id
             else Q(submitter=request.user)
         )
 
