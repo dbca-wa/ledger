@@ -1,6 +1,51 @@
 <template lang="html">
     <div>
-        Search Person <input id="search-person" />
+        Search Person <input id="search-person" /><button>Create New Person</button>
+        <div class="col-md-9">
+            <div class="tab-content">
+                <div :id="dTab" class="tab-pane fade in active">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                <h3 class="panel-title">Personal Details
+                                    <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
+                                        <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                    </a>
+                                </h3>
+                                </div>
+                                <div class="panel-body collapse in" :id="pdBody">
+                                    <form class="form-horizontal" name="personal_form" method="post">
+                                        <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Given Name(s)</label>
+                                        <div class="col-sm-6">
+                                            <input type="text" class="form-control" name="first_name" placeholder="" v-model="user.first_name">
+                                        </div>
+                                        </div>
+                                        <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Last Name</label>
+                                        <div class="col-sm-6">
+                                            <input type="text" class="form-control" name="last_name" placeholder="" v-model="user.last_name">
+                                        </div>
+                                        </div>
+                                        <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label" >Date of Birth</label>
+                                        <div class="col-sm-6">
+                                            <input type="date" class="form-control" name="dob" placeholder="" v-model="user.dob">
+                                        </div>
+                                        </div>
+                                        <div class="form-group">
+                                        <div class="col-sm-12">
+                                        </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> 
+            </div>
+        </div>
     </div>
 </template>
         
@@ -19,6 +64,17 @@ export default {
         return {
             awe: null,
             suggest_list: [],
+            adBody: 'adBody'+vm._uid,
+            pdBody: 'pdBody'+vm._uid,
+            cdBody: 'cdBody'+vm._uid,
+            odBody: 'odBody'+vm._uid,
+            idBody: 'idBody'+vm._uid,
+            dTab: 'dTab'+vm._uid,
+            oTab: 'oTab'+vm._uid,
+            user: {
+                residential_address: {},
+                wildlifecompliance_organisations: []
+            },
         }
     },
     computed: {
@@ -83,13 +139,6 @@ export default {
             }).on('awesomplete-selectcomplete', function(ev){
                 ev.preventDefault();
                 ev.stopPropagation();
-                // console.log(ev);
-                /* User selected one of the search results */
-                // for (var i=0; i<self.suggest_list.length; i++){
-                //     if (self.suggest_list[i].value == ev.target.value){
-
-                //     }
-                // }
                 return false;
             }).on('awesomplete-select', function(ev){
                 /* Retrieve element id of the selected item from the list
