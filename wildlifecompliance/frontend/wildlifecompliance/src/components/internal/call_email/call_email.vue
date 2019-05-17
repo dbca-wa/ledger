@@ -109,10 +109,10 @@
                       </div>
                   </div>
                 </div></div>
-
+  
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Classification</label>
-                  <select class="form-control" v-model="classification_id">
+                  <select class="form-control" v-model="call_email.classification_id">
                         <option v-for="option in classification_types" :value="option.id" v-bind:key="option.id">
                           {{ option.name }} 
                         </option>
@@ -202,6 +202,18 @@ export default {
   name: "ViewCallEmail",
   data: function() {
     return {
+      classification_types: [
+        {
+          id: "", 
+          name: "",
+        },
+      ],
+      referrers: [
+        {
+          id: "", 
+          name: "",
+        },
+      ],
       current_schema: [],
       sectionLabel: "Details",
       sectionIndex: 1,
@@ -232,27 +244,28 @@ export default {
   computed: {
     ...mapGetters('callemailStore', {
       call_email: "call_email",
-      classification_types: "classification_types",
+      //classification_types: "classification_types",
       report_types: "report_types",
-      referrers: "referrers",
+      //referrers: "referrers",
     }),
     ...mapGetters({
       renderer_form_data: 'renderer_form_data',
     }),
-    classification_id: {
-        get: function() {
-          return this.call_email.classification ? this.call_email.classification.id : "";
-        },
-        set: function(value) {
-          let classification = null;
-          this.classification_types.forEach(function(element) {
-            if (element.id === value) {
-              classification = element;
-            }
-          }); 
-          this.setClassification(classification);
-        }, 
-    },
+    
+    // classification_id: {
+    //     get: function() {
+    //       return this.call_email.classification ? this.call_email.classification.id : "";
+    //     },
+    //     set: function(value) {
+    //       let classification = null;
+    //       this.classification_types.forEach(function(element) {
+    //         if (element.id === value) {
+    //           classification = element;
+    //         }
+    //       }); 
+    //       this.setClassification(classification);
+    //     }, 
+    // },
     report_type_id: {
         get: function() {
           return this.call_email.report_type ? this.call_email.report_type.id : "";
@@ -294,7 +307,7 @@ export default {
   methods: {
     ...mapActions('callemailStore', {
       loadCallEmail: "loadCallEmail",
-      loadClassification: "loadClassification",
+      //loadClassification: "loadClassification",
       loadReportTypes: "loadReportTypes",
       saveCallEmail: 'saveCallEmail',
       updateSchema: "updateSchema",
@@ -325,87 +338,114 @@ export default {
     duplicate: async function() {
       await this.saveCallEmail({ route: false, crud: 'duplicate'});
     },
+    loadClassification: async function() {
+        console.log("loadClassification");
+        try {
+            const returnedClassification = await Vue.http.get(
+                api_endpoints.classification 
+                );
+            //Object.assign(this.classification_types, returnedClassification.body.results);
+            this.classification_types.push(...returnedClassification.body.results);
+
+        } catch (err) {
+                console.error(err);
+        }
+    },
+    loadReferrers: async function() {
+        console.log("loadReferrers");
+        try {
+            const returnedReferrers = await Vue.http.get(
+                api_endpoints.referrers
+                );
+
+            this.referrers.push(...returnedReferrers.body.results);
+        } catch (err) {
+                console.error(err);
+        }
+    },
     loadSchema: async function(new_report_type_id) {
-            console.log("loadSchema");
-            if (this.report_type_id || new_report_type_id) {
-              try {
-                  let new_schema = [];
-                  let retrieved_val = null;
-                  let report_type_id_str = "";
-                  const timeNow = Date.now();
+        console.log("loadSchema");
+        if (this.report_type_id || new_report_type_id) {
+          try {
+              let new_schema = [];
+              let retrieved_val = null;
+              let report_type_id_str = "";
+              const timeNow = Date.now();
 
-                  if (new_report_type_id) {
-                    report_type_id_str = new_report_type_id.toString();
-                  } else {
-                    report_type_id_str = this.report_type_id.toString();
-                  }
-                  // check local cache to see if key exists
-                  try {
-                    retrieved_val = await CallEmail_ReportType_Schema.getItem(
-                      report_type_id_str)
-                  } catch(err) {
-                    console.log(err);
-                  }
-
-                  let timeDiff = 0;
-                  let expiryDiff = 300000; // 5 mins // 1 day 86400000;
-                  if (retrieved_val) {
-                    timeDiff = timeNow - retrieved_val[0];
-                    Object.assign(new_schema, retrieved_val[1]);
-                  }
-
-                  // if no schema retrieved or expired cached value, fetch new schema from db
-                  if (!(new_schema.length > 0) || timeDiff > expiryDiff) {
-                    console.log("timeDiff");
-                    console.log(timeDiff);
-                    
-                    let payload = new Object();
-                    payload.id = this.call_email.id;
-                    payload.report_type_id = report_type_id_str;
-
-                    const updatedCallEmail = await Vue.http.post(
-                        helpers.add_endpoint_join(
-                            api_endpoints.call_email, 
-                            this.call_email.id + "/update_schema/"),
-                        payload
-                        );
-                    
-                    const value_to_cache = [timeNow, updatedCallEmail.body.schema];
-                    try {
-                      retrieved_val = await CallEmail_ReportType_Schema.setItem(
-                        report_type_id_str, 
-                        value_to_cache)
-                      console.log("keyvalue stored and returned");  
-                    } catch(err) {
-                      console.log(err);
-                    }
-                    if (retrieved_val) {
-                      Object.assign(this.current_schema, retrieved_val[1]);
-                    }
-                  } else {
-                      console.log("cached keyvalue returned");  
-                      Object.assign(this.current_schema, new_schema);
-                  }
-              } catch (err) {
-                  console.error(err);
+              if (new_report_type_id) {
+                report_type_id_str = new_report_type_id.toString();
+              } else {
+                report_type_id_str = this.report_type_id.toString();
               }
-            }
+              // check local cache to see if key exists
+              try {
+                retrieved_val = await CallEmail_ReportType_Schema.getItem(
+                  report_type_id_str)
+              } catch(err) {
+                console.log(err);
+              }
+
+              let timeDiff = 0;
+              let expiryDiff = 300000; // 5 mins // 1 day 86400000;
+              if (retrieved_val) {
+                timeDiff = timeNow - retrieved_val[0];
+                Object.assign(new_schema, retrieved_val[1]);
+              }
+
+              // if no schema retrieved or expired cached value, fetch new schema from db
+              if (!(new_schema.length > 0) || timeDiff > expiryDiff) {
+                console.log("timeDiff");
+                console.log(timeDiff);
+                
+                let payload = new Object();
+                payload.id = this.call_email.id;
+                payload.report_type_id = report_type_id_str;
+
+                const updatedCallEmail = await Vue.http.post(
+                    helpers.add_endpoint_join(
+                        api_endpoints.call_email, 
+                        this.call_email.id + "/update_schema/"),
+                    payload
+                    );
+                
+                const value_to_cache = [timeNow, updatedCallEmail.body.schema];
+                try {
+                  retrieved_val = await CallEmail_ReportType_Schema.setItem(
+                    report_type_id_str, 
+                    value_to_cache)
+                  console.log("keyvalue stored and returned");  
+                } catch(err) {
+                  console.log(err);
+                }
+                if (retrieved_val) {
+                  Object.assign(this.current_schema, retrieved_val[1]);
+                }
+              } else {
+                  console.log("cached keyvalue returned");  
+                  Object.assign(this.current_schema, new_schema);
+              }
+          } catch (err) {
+              console.error(err);
+          }
+        }
     },
   },
-
+  
+  // beforeRouteEnter (to, from, next) {
+  //   this.loadCallEmail({ call_email_id: to.$route.params.call_email_id });
+  // },
+  
   created: async function() {
     
     if (this.$route.params.call_email_id) {
-      await this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
+      this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
     }
     // load current CallEmail renderer schema
-    await this.loadSchema(this.call_email.report_type_id);
-    
+    this.loadSchema(this.call_email.report_type_id);
     // load drop-down select lists
-    await this.loadClassification();
-    await this.loadReportTypes();
-    await this.loadReferrers();
-    
+    this.loadClassification();
+    this.loadReportTypes();
+    this.loadReferrers();
   },
   mounted: function() {
         console.log(this);
@@ -415,6 +455,7 @@ export default {
                 $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
             }, 100 );
         });
+
   }
 };
 </script>

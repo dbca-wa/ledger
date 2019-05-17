@@ -185,43 +185,44 @@ export const callemailStore = {
                 console.error(err);
             }
         },
-        async loadClassification({
-            dispatch,
-        }) {
-            console.log("loadClassification");
-            try {
-            const returnedClassification = await Vue.http.get(
-                api_endpoints.classification 
-                );
-            // Clear existing classification entries
-            await dispatch("setClassificationEntry", null);
+        // async loadClassification({
+        //     dispatch,
+        // }) {
+        //     console.log("loadClassification");
+        //     try {
+        //     const returnedClassification = await Vue.http.get(
+        //         api_endpoints.classification 
+        //         );
+        //     // Clear existing classification entries
+        //     await dispatch("setClassificationEntry", null);
 
-            for (let classification_entry of returnedClassification.body.results) {
-                dispatch("setClassificationEntry", classification_entry);
-            }
-            } catch (err) {
-                console.error(err);
-            }
-        },
-        async loadReferrers({
-            dispatch,
-        }) {
-            console.log("loadReferrers");
-            try {
-            const returnedReferrers = await Vue.http.get(
-                api_endpoints.referrers
-                );
-            // Clear existing classification entries
-            await dispatch("setReferrerEntry", null);
+        //     for (let classification_entry of returnedClassification.body.results) {
+        //         dispatch("setClassificationEntry", classification_entry);
+        //     }
+        //     } catch (err) {
+        //         console.error(err);
+        //     }
+        // },
+        // async loadReferrers({
+        //     dispatch,
+        // }) {
+        //     console.log("loadReferrers");
+        //     try {
+        //     const returnedReferrers = await Vue.http.get(
+        //         api_endpoints.referrers
+        //         );
+        //     // Clear existing classification entries
+        //     await dispatch("setReferrerEntry", null);
 
-            for (let referrer_entry of returnedReferrers.body.results) {
-                dispatch("setReferrerEntry", referrer_entry);
-            }
-            } catch (err) {
-                console.error(err);
-            }
-        },
+        //     for (let referrer_entry of returnedReferrers.body.results) {
+        //         dispatch("setReferrerEntry", referrer_entry);
+        //     }
+        //     } catch (err) {
+        //         console.error(err);
+        //     }
+        // },
         async loadReportTypes({
+            state,
             dispatch,
         }) {
             console.log("loadReportTypes");
@@ -236,7 +237,21 @@ export const callemailStore = {
             await dispatch("setReportTypeEntry", null);
             
             for (let report_type_entry of returnedReportTypes.body) {
-                dispatch("setReportTypeEntry", report_type_entry);
+                await dispatch("setReportTypeEntry", report_type_entry);
+            }
+            // insert current CallEmail report type if not in report_types
+            let reportTypeMatches = 0;
+            if (state.call_email.report_type) {
+                state.report_types.findIndex((report_type) => {
+                    if (report_type.id === state.call_email.report_type.id) {
+                        reportTypeMatches += 1;
+                    }
+                });
+            console.log("reportTypeMatches");
+            console.log(reportTypeMatches);
+            if (!(reportTypeMatches > 0)) {
+                await dispatch("setReportTypeEntry", state.call_email.report_type);
+                }
             }
             } catch (err) {
                 console.error(err);
