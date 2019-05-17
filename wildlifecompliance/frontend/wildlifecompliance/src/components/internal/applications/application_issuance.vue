@@ -36,13 +36,13 @@
                                                         <input type="checkbox" class="confirmation-checkbox" v-model="getActivity(item.id).confirmed">
                                                     </div>
                                                 </div>
-                                                <div class="row" v-if="finalStatus(item.id) === 'issued'">
+                                                <div class="row" v-if="finalStatus(item.id) === 'issued' && canEditLicenceDates">
                                                     <div class="col-sm-3">
                                                         <label class="control-label pull-left">Proposed Start Date</label>
                                                     </div>
                                                     <div class="col-sm-9">
                                                         <div class="input-group date" ref="start_date" style="width: 70%;" :data-init="false" :data-activity="item.id">
-                                                            <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY" v-model="getActivity(item.id).start_date">
+                                                            <input type="text" class="form-control" name="start_date" placeholder="DD/MM/YYYY">
                                                             <span class="input-group-addon">
                                                                 <span class="glyphicon glyphicon-calendar"></span>
                                                             </span>
@@ -50,7 +50,7 @@
                                                     </div>
 
                                                 </div>
-                                                <div class="row" v-if="finalStatus(item.id) === 'issued'">
+                                                <div class="row" v-if="finalStatus(item.id) === 'issued' && canEditLicenceDates">
                                                     <div class="col-sm-3">
                                                         <label class="control-label pull-left">Proposed Expiry Date</label>
                                                     </div>
@@ -276,6 +276,9 @@ export default {
             ).length;
             return missingConfirmations === 0;
         },
+        canEditLicenceDates: function() {
+            return this.application.application_type && this.application.application_type.id !== 'amend_activity';
+        },
     },
     methods:{
         ...mapActions([
@@ -295,6 +298,16 @@ export default {
                 );
             }
             let licence = JSON.parse(JSON.stringify(vm.licence));
+            licence.activity = this.licence.activity.map(activity => {
+                const date_formats = ["DD/MM/YYYY", "YYYY-MM-DD"];
+                return {
+                    ...activity,
+                    start_date: activity.start_date ?
+                        moment(activity.start_date, date_formats).format('YYYY-MM-DD') : null,
+                    end_date: activity.end_date ?
+                        moment(activity.end_date, date_formats).format('YYYY-MM-DD') : null,
+                }
+            });
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/final_decision'),JSON.stringify(licence),{
                         emulateJSON:true,
                     }).then((response)=>{
@@ -411,7 +424,7 @@ export default {
                 $(end_date).datetimepicker(this.datepickerOptions);
                 $(end_date).data('DateTimePicker').date(proposedEndDate);
                 $(end_date).off('dp.change').on('dp.change', (e) => {
-                    const selected_end_date = $(end_date).data('DateTimePicker').date().format('YYYY-MM-DD');
+                    const selected_end_date = $(end_date).data('DateTimePicker').date().format('DD/MM/YYYY');
                     if (selected_end_date && selected_end_date != activity.end_date) {
                         activity.end_date = selected_end_date;
                     }
@@ -420,7 +433,7 @@ export default {
                 $(start_date).datetimepicker(this.datepickerOptions);
                 $(start_date).data('DateTimePicker').date(proposedStartDate);
                 $(start_date).off('dp.change').on('dp.change', (e) => {
-                    const selected_start_date = $(start_date).data('DateTimePicker').date().format('YYYY-MM-DD');
+                    const selected_start_date = $(start_date).data('DateTimePicker').date().format('DD/MM/YYYY');
                     if (selected_start_date && selected_start_date != activity.start_date) {
                         activity.start_date = selected_start_date;
                     }

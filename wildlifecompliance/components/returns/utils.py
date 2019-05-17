@@ -1,7 +1,7 @@
+from datetime import datetime
 from wildlifecompliance.components.returns.models import Return, ReturnTable, ReturnRow
 from wildlifecompliance.components.returns.utils_schema import Schema
 from wildlifecompliance.utils import excel
-import ast
 
 
 # def _is_post_data_valid(ret, tables_info, post_data):
@@ -100,6 +100,8 @@ class SpreadSheet(object):
         if self.filename.name == 'regulation15.xlsx':
             return Regulation15Sheet(self.ret, self.filename)
 
+        return self
+
     def get_table_rows(self):
         """
         Gets the row of data.
@@ -114,7 +116,10 @@ class SpreadSheet(object):
         for row_num in range(num_rows):
             row_data = {}
             for key, value in table_data.by_columns():
-                row_data[key] = value[row_num] if value[row_num] is not None else ''
+                if type(value[row_num]) is datetime:
+                    row_data[key.lower()] = value[row_num].strftime("%d/%m/%Y")
+                    continue
+                row_data[key.lower()] = value[row_num] if value[row_num] is not None else ''
             self.rows_list.append(row_data)
 
         return self.rows_list
@@ -165,7 +170,7 @@ class Regulation15Sheet(SpreadSheet):
         for row in table_rows:
             self.errors.append(self.schema.get_error_fields(row))
 
-        return self.errors.__len__() == 0
+        return self.errors[1].__len__() == 0
 
     def create_return_data(self):
         """

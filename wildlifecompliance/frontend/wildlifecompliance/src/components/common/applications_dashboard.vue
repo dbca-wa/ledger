@@ -30,7 +30,7 @@
                             </div>
                         </div>
                         <div v-if="is_external" class="col-md-3">
-                            <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_application' }">New Application</router-link>
+                            <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_application_organisation' }">New Application</router-link>
                         </div>
                     </div>
                     <div class="row">
@@ -184,9 +184,10 @@ export default {
                 mRender:function (data,type,full) {
                     let links = '';
                     if (!vm.is_external){
+                        const finalised = ['approved', 'declined'].includes(full.processing_status.id);
                         links += (full.can_be_processed && full.user_in_officers_and_assessors) ?
                             `<a href='/internal/application/${full.id}'>Process</a><br/>` :
-                            `<a href='/external/application/${full.id}'>View</a><br/>`;
+                            `<a href='/${finalised ? 'internal' : 'external'}/application/${full.id}'>View</a><br/>`;
                     }
                     if (vm.is_external){
                         if (full.can_current_user_edit) {

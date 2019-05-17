@@ -126,9 +126,11 @@ class AssessmentSerializer(serializers.ModelSerializer):
             'date_last_reminded',
             'status',
             'licence_activity',
-            'comment',
+            'inspection_comment',
+            'final_comment',
             'inspection_date',
-            'inspection_report'
+            'inspection_report',
+            'is_inspection_required',
         )
 
 
@@ -138,9 +140,12 @@ class SimpleSaveAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assessment
         fields = (
-            'comment',
+            'inspection_comment',
+            'final_comment',
             'inspection_date',
-            'inspection_report')
+            'inspection_report',
+            'is_inspection_required',
+            )
 
 
 class SaveAssessmentSerializer(serializers.ModelSerializer):
@@ -192,7 +197,8 @@ class ApplicationFormDataRecordSerializer(serializers.ModelSerializer):
             'schema_name',
             'component_type',
             'instance_name',
-            'comment',
+            'officer_comment',
+            'assessor_comment',
             'deficiency',
             'value',
         )
@@ -201,7 +207,8 @@ class ApplicationFormDataRecordSerializer(serializers.ModelSerializer):
             'schema_name',
             'component_type',
             'instance_name',
-            'comment',
+            'officer_comment',
+            'assessor_comment',
             'deficiency',
             'value',
         )
@@ -275,7 +282,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'payment_status',
             'assigned_officer',
             'can_be_processed',
-            'pdf_licence',
             'activities',
             'processed',
             'application_type'
@@ -478,6 +484,7 @@ class CreateExternalApplicationSerializer(serializers.ModelSerializer):
             'proxy_applicant',
             'submitter',
             'licence_purposes',
+            'application_type',
         )
 
 
@@ -511,7 +518,6 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
             'licence_type_data',
             'licence_type_name',
             'licence_category',
-            'pdf_licence',
             'application_fee',
             'licence_fee',
             'assigned_officer',
@@ -560,6 +566,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'id',
             'data',
             'schema',
+            'application_type',
             'customer_status',
             'processing_status',
             'review_status',
@@ -587,7 +594,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'assigned_officer',
             'can_be_processed',
             'licence_category',
-            'pdf_licence',
             'activities',
             'processed',
             'licence_officers',
@@ -730,8 +736,8 @@ class ApplicationProposedIssueSerializer(serializers.ModelSerializer):
 
 
 class ProposedLicenceSerializer(serializers.Serializer):
-    expiry_date = serializers.DateField(input_formats=['%d/%m/%Y'])
-    start_date = serializers.DateField(input_formats=['%d/%m/%Y'])
+    expiry_date = serializers.DateField(input_formats=['%d/%m/%Y'], required=False, allow_null=True)
+    start_date = serializers.DateField(input_formats=['%d/%m/%Y'], required=False, allow_null=True)
     reason = serializers.CharField()
     cc_email = serializers.CharField(required=False, allow_null=True)
     activity = serializers.ListField(child=serializers.IntegerField())
