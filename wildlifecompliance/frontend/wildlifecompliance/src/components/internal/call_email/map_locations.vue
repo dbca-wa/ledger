@@ -162,11 +162,17 @@ L.Icon.Default.mergeOptions({
 
 module.exports = {
     data: function(){
+        let vm = this;
+
+        vm.layers = [
+            {name:'public:dbca_legislated_lands_and_waters', label: 'Lands and Waters (Legislated)'},
+            {name:'public:dpaw_lands_and_waters', label: 'Lands and Waters'},
+        ];
+
         return {
             map: null,
-            tileLayer: null,
-            tileLayerSat: null,
-            layers: [],
+            tileLayer: null, // Base layer (Open street map)
+            tileLayerSat: null, // Base layer (satelllite)
             popup: null,
             opt_url : helpers.add_endpoint_json(api_endpoints.call_email, "optimised"),
         }
@@ -274,6 +280,25 @@ module.exports = {
             this.popup = L.popup();
             this.map.on('click', this.onClick);
             this.setBaseLayer('osm');
+            this.addOtherLayers();
+        },
+        addOtherLayers(){
+            var overlayMaps = {};
+
+            for (var i = 0; i < this.layers.length; i++){
+                let l = L.tileLayer.wmts(
+                    'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
+                    {
+                        layer: this.layers[i].name,
+                        tilematrixSet: 'mercator',
+                        format: 'image/png',
+                    }
+                );
+                overlayMaps[this.layers[i].label] = l;
+                l.addTo(this.map);
+            }
+
+            L.control.layers(null, overlayMaps, {position: 'topleft'}).addTo(this.map);
         },
         addMarkers(){
             let self = this;
