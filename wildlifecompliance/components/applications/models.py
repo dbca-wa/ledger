@@ -318,10 +318,6 @@ class Application(RevisionedMixin):
             self.save()
 
     @property
-    def reference(self):
-        return '{}'.format(self.lodgement_number)
-
-    @property
     def applicant(self):
         if self.org_applicant:
             return self.org_applicant.organisation.name
@@ -1563,7 +1559,7 @@ class ApplicationLogEntry(CommunicationsLogEntry):
     def save(self, **kwargs):
         # save the application reference if the reference not provided
         if not self.reference:
-            self.reference = self.application.reference
+            self.reference = self.application.lodgement_number
         super(ApplicationLogEntry, self).save(**kwargs)
 
 
