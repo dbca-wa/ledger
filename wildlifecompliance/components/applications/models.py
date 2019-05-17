@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 import datetime
-from itertools import chain
 import logging
 import six
 import re
