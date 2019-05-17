@@ -227,7 +227,7 @@
             :readonly="is_readonly"
             :help_text="help_text"
             :docsUrl="documents_url"
-            :application_id="application_id"
+            :call_email_id="call_email.id"
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
@@ -269,7 +269,7 @@ import Conditions from '@/components/forms/conditions.vue'
 import SelectConditions from '@/components/forms/select-conditions.vue'
 import Checkbox from '@/components/forms/checkbox.vue'
 import Declaration from '@/components/forms/declarations.vue'
-import File from '@/components/forms/file.vue'
+import File from '@/components/forms/call_email_file.vue'
 import SelectBlock from '@/components/forms/select.vue'
 import DateField from '@/components/forms/date-field.vue'
 import TextField from '@/components/forms/text.vue'
@@ -280,7 +280,7 @@ import HelpText from '@/components/forms/help_text.vue'
 import HelpTextUrl from '@/components/forms/help_text_url.vue'
 import CommentBlock from '@/components/forms/comment_block.vue';
 import TableBlock from '@/components/forms/table.vue'
-import ExpanderTable from '@/components/forms/expander_table.vue'
+import ExpanderTable from '@/components/forms/compliance_expander_table.vue'
 import GridBlock from '@/components/forms/grid.vue'
 
 const ComplianceRendererBlock = {
