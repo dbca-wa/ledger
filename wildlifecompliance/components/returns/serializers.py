@@ -108,7 +108,7 @@ class ReturnActionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ReturnCommsSerializer(serializers.ModelSerializer):
+class ReturnLogEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = ReturnLogEntry
         fields = '__all__'
