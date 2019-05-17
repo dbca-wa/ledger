@@ -120,13 +120,11 @@ export const callemailStore = {
             state.call_email.location.properties = location_properties;
         },
         updateLocationAddressEmpty(state) {
-            state.call_email.location.properties = {
-                town_suburb: null,
-                street: null,
-                state: null,
-                postcode: null,
-                country: null,
-            };
+            state.call_email.location.properties.town_suburb = "";
+            state.call_email.location.properties.street = "";
+            state.call_email.location.properties.state = "";
+            state.call_email.location.properties.postcode = "";
+            state.call_email.location.properties.country = "";
         },
         updateLocationDetailsFieldEmpty(state) {
             state.call_email.location.properties.details = "";
