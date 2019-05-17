@@ -22,6 +22,7 @@ export const callemailStore = {
                     state: 'WA',
                     postcode: null,
                     country: 'Australia',
+                    details: ''
                 },
                 geometry: {
                     "type": "Point",
@@ -42,17 +43,23 @@ export const callemailStore = {
         report_types: state => state.report_types,
         referrers: state => state.referrers,
         call_latitude(state) {
-            if (state.call_email) {
-                return state.call_email.location.geometry ?
-                state.call_email.location.geometry.coordinates[1] : "";
-            } else { return ""; }
+            if (state.call_email.location) {
+                if (state.call_email.location.geometry) {
+                    if (state.call_email.location.geometry.coordinates.length > 0) {
+                        return state.call_email.location.geometry.coordinates[1];
+                    } else {return "";}
+                } else {return "";}
+            } else {return "";}
         },
         call_longitude(state) {
-            if (state.call_email) {
-                return state.call_email.location.geometry ?
-                state.call_email.location.geometry.coordinates[0] : "";
-            } else { return ""; }
-        }
+            if (state.call_email.location) {
+                if (state.call_email.location.geometry) {
+                    if (state.call_email.location.geometry.coordinates.length > 0) {
+                        return state.call_email.location.geometry.coordinates[0];
+                    } else {return "";}
+                } else {return "";}
+            } else {return "";}
+        },
     },
     mutations: {
         updateCallEmail(state, call_email) {

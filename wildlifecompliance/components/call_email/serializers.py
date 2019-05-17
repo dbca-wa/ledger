@@ -199,8 +199,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
     lodgement_date = serializers.CharField(
         source='lodged_on')
     report_type = ReportTypeSerializer(read_only=True)
-    location = LocationSerializer()
-    referrer = ReferrerSerializer()
+    location = LocationSerializer(read_only=True)
+    referrer = ReferrerSerializer(read_only=True)
     data = ComplianceFormDataRecordSerializer(many=True)
 
     class Meta:

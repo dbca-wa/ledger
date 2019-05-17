@@ -257,12 +257,18 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 returned_location = None
                 
                 if (
-                    request_data.get('location', {}).get('geometry', {}).get('coordinates') or
+                    request_data.get('location', {}).get('geometry', {}).get('coordinates', {}) or
                     request_data.get('location', {}).get('properties', {}).get('postcode', {}) or
                     request_data.get('location', {}).get('properties', {}).get('details', {})
                 ):
-                    returned_location = self.save_location(request)        
-                    request_data.update({'location_id': returned_location.id})
+                    returned_location = self.save_location(request)
+                    if returned_location:
+                        request_data.update({'location_id': returned_location.get('id')})
+                
+                print("returned_location")
+                print(returned_location)
+                print("request_data")
+                print(request_data)
 
                 if request_data.get('classification'):
                     request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
@@ -278,6 +284,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     new_returned.update({'classification_id': request_data.get('classification_id')})
                     new_returned.update({'report_type_id': request_data.get('report_type_id')})
                     new_returned.update({'referrer_id': request_data.get('referrer_id')})
+                    if request_data.get('location'):
+                        new_returned.update({'location_id': request_data.get('location').get('id')})
 
                     if request.data.get('renderer_data'):
                     # option required for duplicated Call/Emails
@@ -294,6 +302,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                         duplicate.data.update({'classification_id': request_data.get('classification_id')})
                         duplicate.data.update({'report_type_id': request_data.get('report_type_id')})
                         duplicate.data.update({'referrer_id': request_data.get('referrer_id')})
+                        if request_data.get('location'):
+                            duplicate.data.update({'location_id': request_data.get('location').get('id')})
                         
                         return Response(
                             duplicate.data,
@@ -343,7 +353,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             location_serializer.is_valid(raise_exception=True)
             if location_serializer.is_valid():
                 location_instance = location_serializer.save()
-        return location_instance
+        return location_serializer.data
 
     @detail_route(methods=['POST', ])
     def call_email_save(self, request, *args, **kwargs):
@@ -352,15 +362,20 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 request_data = request.data
 
-                returned_location = None
                 if (
-                    request_data.get('location', {}).get('geometry', {}).get('coordinates') or
+                    request_data.get('location', {}).get('geometry', {}).get('coordinates', {}) or
                     request_data.get('location', {}).get('properties', {}).get('postcode', {}) or
                     request_data.get('location', {}).get('properties', {}).get('details', {})
                 ):
                     returned_location = self.save_location(request)
-                    request_data.update({'location_id': returned_location.id})
+                    if returned_location:
+                        request_data.update({'location_id': returned_location.get('id')})
                 
+                print("returned_location")
+                print(returned_location)
+                print("request_data")
+                print(request_data)
+
                 if request_data.get('renderer_data'):
                     self.form_data(request)
 
