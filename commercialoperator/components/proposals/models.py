@@ -581,6 +581,15 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         else:
             return self.APPLICANT_TYPE_SUBMITTER
 
+    @property
+    def applicant_field(self):
+        if self.org_applicant:
+            return 'org_applicant'
+        elif self.proxy_applicant:
+            return 'proxy_applicant'
+        else:
+            return 'submitter'
+
     def qa_officers(self, name=None):
         if not name:
             return QAOfficerGroup.objects.get(default=True).members.all().values_list('email', flat=True)
@@ -866,7 +875,9 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                 # Create a log entry for the organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                #self.applicant.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                applicant_field=getattr(self, self.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
 
                 #import ipdb; ipdb.set_trace()
                 ret1 = send_submit_email_notification(request, self)

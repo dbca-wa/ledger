@@ -331,6 +331,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'processing_status',
                 'review_status',
                 #'hard_copy',
+                'applicant_type',
                 'applicant',
                 'org_applicant',
                 'proxy_applicant',
@@ -524,6 +525,7 @@ class ProposalSerializer(BaseProposalSerializer):
     application_type = serializers.CharField(source='application_type.name', read_only=True)
     region = serializers.CharField(source='region.name', read_only=True)
     district = serializers.CharField(source='district.name', read_only=True)
+
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
 
     def get_readonly(self,obj):
@@ -562,6 +564,7 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'processing_status',
                 'review_status',
                 #'hard_copy',
+                'applicant_type',
                 'applicant',
                 'org_applicant',
                 'proxy_applicant',

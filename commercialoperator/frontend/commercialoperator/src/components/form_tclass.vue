@@ -65,7 +65,7 @@
                   <div v-if="is_external">
                     <Profile :isApplication="true" v-if="applicantType == 'SUB'"></Profile>
               
-                    <Organisation :org_id="proposal.applicant" :isApplication="true" v-if="applicantType == 'ORG'"></Organisation> 
+                    <Organisation :org_id="proposal.org_applicant" :isApplication="true" v-if="applicantType == 'ORG'"></Organisation> 
                   </div>
                   <div v-else>
                     <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant>
