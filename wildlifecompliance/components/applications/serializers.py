@@ -282,7 +282,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'payment_status',
             'assigned_officer',
             'can_be_processed',
-            'pdf_licence',
             'activities',
             'processed',
             'application_type'
@@ -519,7 +518,6 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
             'licence_type_data',
             'licence_type_name',
             'licence_category',
-            'pdf_licence',
             'application_fee',
             'licence_fee',
             'assigned_officer',
@@ -596,7 +594,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'assigned_officer',
             'can_be_processed',
             'licence_category',
-            'pdf_licence',
             'activities',
             'processed',
             'licence_officers',

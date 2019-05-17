@@ -296,7 +296,6 @@ class Application(RevisionedMixin):
         'wildlifecompliance.WildlifeLicence',
         null=True,
         blank=True)
-    pdf_licence = models.FileField(upload_to=update_pdf_licence_filename, blank=True, null=True)
     previous_application = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
     application_fee = models.DecimalField(
