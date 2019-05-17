@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import datetime
 from itertools import chain
 import logging
+import six
 import re
 from decimal import Decimal
 from django.db import models, transaction
@@ -1116,11 +1117,19 @@ class Application(RevisionedMixin):
         """ returns a queryset of activities attached to application (shortcut to ApplicationSelectedActivity related_name). """
         return self.selected_activities.exclude(processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED)
 
-    def get_activity_chain(self, activity_status):
-        activity_chain = self.selected_activities.filter(activity_status=activity_status)
+    def get_activity_chain(self, **activity_filters):
+        activity_chain = self.selected_activities.filter(**activity_filters)
         return activity_chain | self.previous_application.get_activity_chain(
-            activity_status
+            **activity_filters
         ) if self.previous_application else activity_chain
+
+    def get_latest_current_activity(self, activity_id):
+        return self.get_activity_chain(
+            licence_activity_id=activity_id,
+            activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+        ).order_by(
+            '-issue_date'
+        ).first()
 
     def get_schema_fields_for_purposes(self, purpose_id_list):
         return self.get_schema_fields(
@@ -1224,7 +1233,7 @@ class Application(RevisionedMixin):
     def proposed_licence(self, request, details):
         with transaction.atomic():
             try:
-                activity_list = details.get('activity')
+                activity_list = details.get('activity', [])
                 incorrect_statuses = ApplicationSelectedActivity.objects.filter(
                     application_id=self.id,
                     licence_activity_id__in=activity_list
@@ -1236,18 +1245,37 @@ class Application(RevisionedMixin):
                     raise ValidationError(
                         'You cannot propose for licence if it is not with officer for conditions')
 
-                ApplicationSelectedActivity.objects.filter(
-                    application_id=self.id,
-                    licence_activity_id__in=activity_list
-                ).update(
-                    officer=request.user,
-                    proposed_action=ApplicationSelectedActivity.PROPOSED_ACTION_ISSUE,
-                    processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION,
-                    reason=details.get('reason'),
-                    cc_email=details.get('cc_email', None),
-                    proposed_start_date=details.get('start_date', None),
-                    proposed_end_date=details.get('expiry_date', None),
-                )
+                if self.application_type == Application.APPLICATION_TYPE_AMENDMENT:
+                    # Pre-populate proposed issue dates with dates from the currently active licence.
+                    for activity_id in activity_list:
+                        latest_activity = self.get_latest_current_activity(activity_id)
+                        if not latest_activity:
+                            raise Exception("Active licence not found for activity ID: %s" % activity_id)
+
+                        activity = self.activities.get(
+                            licence_activity_id=activity_id
+                        )
+                        activity.officer = request.user
+                        activity.proposed_action = ApplicationSelectedActivity.PROPOSED_ACTION_ISSUE
+                        activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION
+                        activity.reason = details.get('reason')
+                        activity.cc_email = details.get('cc_email', None)
+                        activity.proposed_start_date = latest_activity.start_date
+                        activity.proposed_end_date = latest_activity.expiry_date
+                        activity.save()
+                else:
+                    ApplicationSelectedActivity.objects.filter(
+                        application_id=self.id,
+                        licence_activity_id__in=activity_list
+                    ).update(
+                        officer=request.user,
+                        proposed_action=ApplicationSelectedActivity.PROPOSED_ACTION_ISSUE,
+                        processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION,
+                        reason=details.get('reason'),
+                        cc_email=details.get('cc_email', None),
+                        proposed_start_date=details.get('start_date', None),
+                        proposed_end_date=details.get('expiry_date', None),
+                    )
 
                 # Log application action
                 self.log_user_action(
@@ -1308,13 +1336,27 @@ class Application(RevisionedMixin):
                             selected_activity.licence_activity.name, selected_activity.processing_status))
 
                     if item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_ISSUED:
+
+                        original_issue_date = start_date = item.get('start_date')
+                        expiry_date = item.get('end_date')
+
+                        if self.application_type == Application.APPLICATION_TYPE_AMENDMENT:
+                            latest_activity = self.get_latest_current_activity(licence_activity_id)
+                            if not latest_activity:
+                                raise Exception("Active licence not found for activity ID: %s" % licence_activity_id)
+
+                            # Populate start and expiry dates from the latest issued activity record
+                            original_issue_date = latest_activity.original_issue_date
+                            start_date = latest_activity.start_date
+                            expiry_date = latest_activity.expiry_date
+
                         selected_activity.issue_date = timezone.now()
                         selected_activity.officer = request.user
                         selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
                         selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
-                        selected_activity.original_issue_date = item['start_date']
-                        selected_activity.start_date = item['start_date']
-                        selected_activity.expiry_date = item['end_date']
+                        selected_activity.original_issue_date = original_issue_date
+                        selected_activity.start_date = start_date
+                        selected_activity.expiry_date = expiry_date
                         selected_activity.cc_email = item['cc_email']
                         selected_activity.reason = item['reason']
                         selected_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
@@ -1387,7 +1429,8 @@ class Application(RevisionedMixin):
         from wildlifecompliance.components.returns.models import Return
         licence_expiry = selected_activity.expiry_date
         licence_expiry = datetime.datetime.strptime(
-            licence_expiry, "%Y-%m-%d").date()
+            licence_expiry, "%Y-%m-%d"
+        ).date() if isinstance(licence_expiry, six.string_types) else licence_expiry
         today = timezone.now().date()
         timedelta = datetime.timedelta
         for condition in self.conditions.all():

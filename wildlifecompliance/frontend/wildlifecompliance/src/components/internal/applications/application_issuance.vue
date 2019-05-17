@@ -36,7 +36,7 @@
                                                         <input type="checkbox" class="confirmation-checkbox" v-model="getActivity(item.id).confirmed">
                                                     </div>
                                                 </div>
-                                                <div class="row" v-if="finalStatus(item.id) === 'issued'">
+                                                <div class="row" v-if="finalStatus(item.id) === 'issued' && canEditLicenceDates">
                                                     <div class="col-sm-3">
                                                         <label class="control-label pull-left">Proposed Start Date</label>
                                                     </div>
@@ -50,7 +50,7 @@
                                                     </div>
 
                                                 </div>
-                                                <div class="row" v-if="finalStatus(item.id) === 'issued'">
+                                                <div class="row" v-if="finalStatus(item.id) === 'issued' && canEditLicenceDates">
                                                     <div class="col-sm-3">
                                                         <label class="control-label pull-left">Proposed Expiry Date</label>
                                                     </div>
@@ -275,6 +275,9 @@ export default {
                 activity => !activity.confirmed
             ).length;
             return missingConfirmations === 0;
+        },
+        canEditLicenceDates: function() {
+            return this.application_type && this.application_type.id !== 'amend_activity';
         },
     },
     methods:{

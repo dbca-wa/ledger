@@ -180,7 +180,7 @@ class WildlifeLicence(models.Model):
             self.save()
 
     def get_activities_by_status(self, status):
-        return self.current_application.get_activity_chain(status).order_by(
+        return self.current_application.get_activity_chain(activity_status=status).order_by(
             'licence_activity_id', '-issue_date'
         ).distinct('licence_activity_id')
 
