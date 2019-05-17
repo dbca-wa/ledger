@@ -375,8 +375,8 @@ class Application(RevisionedMixin):
     def processing_status(self):
         selected_activities = self.selected_activities.all()
         activity_statuses = [activity.processing_status for activity in selected_activities]
-        # not yet submitted
-        if activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT) == len(activity_statuses):
+        # not yet submitted or have some newly added activities that are in Draft state
+        if activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT) > 0:
             return self.PROCESSING_STATUS_DRAFT
         # application discarded
         elif activity_statuses.count(ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED) == len(activity_statuses):
