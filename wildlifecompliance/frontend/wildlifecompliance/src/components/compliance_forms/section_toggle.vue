@@ -1,13 +1,13 @@
 <template lang="html">
     <div class="panel panel-default" >
       <div class="panel-heading">
-        <h3 class="panel-title">{{label}}
+        <h3 class="panel-title">{{label}} 
             <a :href="'#'+section_id" class="panelClicker" data-toggle="collapse" expanded="true" :aria-controls="section_id">
-                <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                <span :class="panel_chevron_class"></span>
             </a>
         </h3>
       </div>
-      <div class="panel-body collapse in" :id="section_id">
+      <div :class="panel_collapse_class" :id="section_id">
           <slot></slot>
       </div>
     </div>
@@ -16,17 +16,28 @@
 <script>
 export default {
     name:"FormSection",
-    props:["label","Index"],
+    props:["label", "Index", "formCollapse"],
     data:function () {
         return {
             title:"Section title",
-            eventInitialised: false
+            eventInitialised: false,
+            panel_chevron_class: null,
         }
     },
     computed:{
-        section_id:function () {
+        section_id: function () {
             return "section_"+this.Index
-        }
+        },
+        panel_collapse_class: function() {
+            if (this.formCollapse) {
+                this.panel_chevron_class = "glyphicon glyphicon-chevron-up pull-right ";
+                return "panel-body collapse";
+            } else {
+                this.panel_chevron_class = "glyphicon glyphicon-chevron-down pull-right ";
+                return "panel-body collapse in";
+            }
+        },
+
     },
     updated:function () {
         let vm = this;
@@ -41,7 +52,7 @@ export default {
                 this.eventInitialised = true;
             }
         });
-    }
+    },
 }
 </script>
 
