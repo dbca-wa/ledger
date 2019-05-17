@@ -1009,7 +1009,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 'application_type': application_type,
             }
 
+            if not licence_purposes:
+                raise serializers.ValidationError(
+                    'Please select at least one purpose for editing!')
+
             with transaction.atomic():
+
                 # Use serializer for external application creation - do not expose unneeded fields
                 serializer = CreateExternalApplicationSerializer(data=data)
                 serializer.is_valid(raise_exception=True)
@@ -1019,10 +1024,26 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                     id__in=licence_purposes
                 )
                 licence_category = licence_purposes_queryset.first().licence_category
+                licence_activities = licence_purposes_queryset.values_list('licence_activity_id', flat=True).distinct()
                 active_applications = Application.get_active_licence_applications(request)
                 active_application = active_applications.filter(
                     licence_purposes__licence_category_id=licence_category.id
                 ).order_by('-id').first()
+
+                if application_type == Application.APPLICATION_TYPE_AMENDMENT:
+                    if not active_application:
+                        raise serializers.ValidationError(
+                            'Cannot create amendment application: active licence not found!')
+
+                    # Re-load purposes from the last active application to prevent front-end tampering.
+                    # Do not allow amending an incomplete subset.
+                    licence_purposes = active_applications.filter(
+                        licence_purposes__licence_activity_id__in=licence_activities
+                    ).values_list(
+                        'licence_purposes__id',
+                        flat=True
+                    )
+
                 if active_application:
                     serializer.instance.previous_application_id = active_application.id
                     serializer.instance.save()

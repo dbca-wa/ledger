@@ -16,10 +16,13 @@
                           
                             <div class="col-sm-12">
                                 <div class="row">
-                                    <label class="col-sm-4">Select the class of licence you wish to apply for:</label>
+                                    <label class="col-sm-4">
+                                        {{isAmendment ?
+                                        `Select the licence activity you wish to amend` :
+                                        `Select the class of licence you wish to apply for`}}:
+                                    </label>
                                 </div>
 
-                                
                                 <div class="margin-left-20">
                                 <div v-for="(category,index) in visibleLicenceCategories" class="radio">
                                     <div class ="row">
@@ -38,7 +41,14 @@
                                                             <div v-for="(purpose,index2) in type.purpose" class="checkbox purpose-clear-left">
 
                                                                 <div class ="col-sm-12">
-                                                                    <input type="checkbox" :value="purpose.id" :id="purpose.id" v-model="type.purpose[index2].selected" @change="handlePurposeCheckboxChange(index,$event)">{{purpose.name}}<span> ({{purpose.base_application_fee}} + {{purpose.base_licence_fee}})</span>
+                                                                    <input type="checkbox"
+                                                                        :disabled="isAmendment"
+                                                                        :value="purpose.id"
+                                                                        :id="purpose.id"
+                                                                        v-model="type.purpose[index2].selected"
+                                                                        @change="handlePurposeCheckboxChange(index,$event)">
+                                                                            {{purpose.name}}
+                                                                            <span> ({{purpose.base_application_fee}} + {{purpose.base_licence_fee}})</span>
                                                                 </div>
 
                                                             </div>
@@ -130,6 +140,9 @@ export default {
         visibleLicenceCategories: function() {
             return this.licence_categories;
         },
+        isAmendment: function() {
+            return this.licence_select && this.licence_select === 'amend_activity'
+        }
   },
   methods: {
     submit: function() {
@@ -173,8 +186,8 @@ export default {
         var input = $(vm.$refs.selected_activity_type)[0];
         if(vm.licence_categories[index].activity[index1].selected){
             for(var activity_index=0, len2=vm.licence_categories[index].activity[index1].purpose.length; activity_index<len2; activity_index++){
-                         vm.licence_categories[index].activity[index1].purpose[activity_index].selected= false;
-                            }
+                vm.licence_categories[index].activity[index1].purpose[activity_index].selected = this.isAmendment;
+            }
         }
     },
     handlePurposeCheckboxChange:function(index, event){

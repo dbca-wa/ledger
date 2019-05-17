@@ -1026,7 +1026,7 @@ class Application(RevisionedMixin):
                     application_id=self.id,
                     licence_activity_id__in=activity_list
                 ).update(
-                    officer=request.user,
+                    updated_by=request.user,
                     proposed_action=ApplicationSelectedActivity.PROPOSED_ACTION_DECLINE,
                     processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION,
                     reason=details.get('reason'),
@@ -1254,7 +1254,7 @@ class Application(RevisionedMixin):
                         activity = self.activities.get(
                             licence_activity_id=activity_id
                         )
-                        activity.officer = request.user
+                        activity.updated_by = request.user
                         activity.proposed_action = ApplicationSelectedActivity.PROPOSED_ACTION_ISSUE
                         activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION
                         activity.reason = details.get('reason')
@@ -1267,7 +1267,7 @@ class Application(RevisionedMixin):
                         application_id=self.id,
                         licence_activity_id__in=activity_list
                     ).update(
-                        officer=request.user,
+                        updated_by=request.user,
                         proposed_action=ApplicationSelectedActivity.PROPOSED_ACTION_ISSUE,
                         processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION,
                         reason=details.get('reason'),
@@ -1350,7 +1350,7 @@ class Application(RevisionedMixin):
                             expiry_date = latest_activity.expiry_date
 
                         selected_activity.issue_date = timezone.now()
-                        selected_activity.officer = request.user
+                        selected_activity.updated_by = request.user
                         selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
                         selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
                         selected_activity.original_issue_date = original_issue_date
@@ -1381,7 +1381,7 @@ class Application(RevisionedMixin):
                                 ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
                                     item['name']), request)
                     elif item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_DECLINED:
-                        selected_activity.officer = request.user
+                        selected_activity.updated_by = request.user
                         selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED
                         selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
                         selected_activity.cc_email = item['cc_email']
@@ -1846,7 +1846,7 @@ class ApplicationSelectedActivity(models.Model):
         choices=ACTIVITY_STATUS_CHOICES,
         default=ACTIVITY_STATUS_DEFAULT)
     application = models.ForeignKey(Application, related_name='selected_activities')
-    officer = models.ForeignKey(EmailUser, null=True)
+    updated_by = models.ForeignKey(EmailUser, null=True)
     reason = models.TextField(blank=True)
     cc_email = models.TextField(null=True)
     activity = JSONField(blank=True, null=True)
