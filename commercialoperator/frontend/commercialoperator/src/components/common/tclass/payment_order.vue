@@ -3,15 +3,28 @@
         <p> In payment_order </p>
         <v-select  :options="licences" @change="proposal_parks()" v-model="selected_licence" />
         <OrderTable ref="order_table" :expiry_date="selected_licence.expiry_date" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="Payment Form" id="id_payment" />
+
+		<form method="post" name="new_payment" @submit.prevent="validate()" novalidate>
+			<input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
+            <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
+        </form> 
+
         <!--
+        <form :action="/payment/49" method="post" name="new_payment" enctype="multipart/form-data">
+            <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
+        </form> 
+
+		<form method="post" name="new_payment2" @submit.prevent="validate()" novalidate>
+			<button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
+			<button v-if="total >= 0" :disabled="!toc" type="submit" class="btn btn-primary btn-lg">Proceed to payment</button>
+        </form> 
+
         <form :action="payment_form_url" method="post" name="new_payment" enctype="multipart/form-data">
             <div>
-        -->
-                <!--
+
+
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="new_payment_id" :value="1" />
-                -->
-        <!--
                 <div class="row" style="margin-bottom: 50px">
                   <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5;">
                     <div class="navbar-inner">
@@ -103,6 +116,13 @@ from '@/utils/hooks'
             }
         },
         computed: {
+            payment_url: function(){
+                return `/api/payment/${to.params.proposal_id}.json`;
+            },
+			csrf_token: function() {
+                return helpers.getCookie('csrftoken')
+            },
+
             _headers: function() {
                 return '{\"Species\": \"text\", \"Quantity\": \"number\", \"Date\": \"date\", \"Taken\": \"checkbox\"}';
                 //return {"Species": "text", "Quantity": "number", "Date": "date", "Taken": "checkbox"};
@@ -152,19 +172,54 @@ from '@/utils/hooks'
                 //vm.$refs.payment_calc.land_parks = vm.proposal.land_parks;
                 vm.$refs.payment_calc.isModalOpen = true;
             },
-            save: function(e) {
+            payment: function() {
                 let vm = this;
+                var proposal_id = vm.selected_licence.value;
+
                 let formData = new FormData(vm.form);
-                //formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
-                vm.$http.post(vm.payment_form_url,formData).then(res=>{
+                formData.append('tbody', JSON.stringify(vm.$refs.order_table.table.tbody))
+                //vm.$http.post(vm.payment_form_url,formData).then(res=>{
+                //vm.$http.post(`/api/payment/${vm.selected_licence.value}/park_payment/`, JSON.stringify(formData),{
+                //vm.$http.post(`/api/payment/${proposal_id}/park_payment/`, formData,{
+                vm.$http.post(`/payment/${proposal_id}/`, formData,{
+                    emulateJSON:true
+                }).then((res) => {
+                //vm.$http.post(`/api/payment/${vm.selected_licence.value}/park_payment/`,formData).then(res=>{
                     swal(
-                        'Saved',
-                        'Your proposal has been saved',
+                        'Payment',
+                        'Your payment has been completed',
                         'success'
                     )
                 },err=>{
                 });
             },
+            validate: function (e) {
+                var isValid = true;
+                var form = document.forms.new_payment;
+//                var fields = $(form).find(':input');
+//                $('.tooltip-err').tooltip("destroy");
+//                $.each(fields, function(i, field) {
+//                    $(field).removeClass('tooltip-err');
+//                    $(field).closest('.form-group').removeClass('has-error');
+//                    if ($(field).attr('required') == 'required' || $(field).attr('required') == 'true') {
+//                        var inputStr = $(field).val();
+//                        if (inputStr == "" || inputStr == null) {
+//                             var errMsg = $(field).attr('data-error-msg') ? $(field).attr('data-error-msg') : "Field is required";
+//                             $(field).closest('.form-group').addClass('has-error');
+//                               $(field).focus();
+//                               $(field).select();
+//                               $(field).addClass('tooltip-err');
+//                               $(field).tooltip()
+//                                   .attr("data-original-title", errMsg)
+//                             isValid = false;
+//                         }
+//                    }
+//                });
+                if (isValid) {
+                    form.submit();
+                }
+            },
+
             get_user_approvals: function(e) {
                 let vm = this;
                 //let formData = new FormData(vm.form);

@@ -598,12 +598,14 @@ class ProposalParkSerializer(BaseProposalSerializer):
     submitter = serializers.CharField(source='submitter.get_full_name')
     application_type = serializers.CharField(source='application_type.name', read_only=True)
     licence_number = serializers.SerializerMethodField(read_only=True)
+    licence_number_id = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Proposal
         fields = (
                 'id',
                 'licence_number',
+                'licence_number_id',
                 'application_type',
                 'approval_level',
                 'title',
@@ -624,6 +626,9 @@ class ProposalParkSerializer(BaseProposalSerializer):
 
     def get_licence_number(self,obj):
         return obj.approval.lodgement_number
+
+    def get_licence_number_id(self,obj):
+        return obj.approval.id
 
 
 class InternalProposalSerializer(BaseProposalSerializer):

@@ -6,6 +6,7 @@ from commercialoperator import views
 from commercialoperator.admin import commercialoperator_admin_site
 from commercialoperator.components.proposals import views as proposal_views
 from commercialoperator.components.organisations import views as organisation_views
+from commercialoperator import views as main_views
 
 from commercialoperator.components.users import api as users_api
 from commercialoperator.components.organisations import api as org_api
@@ -51,6 +52,7 @@ router.register(r'land_activities', main_api.LandActivitiesViewSet)
 router.register(r'marine_activities', main_api.MarineActivitiesViewSet)
 router.register(r'required_documents', main_api.RequiredDocumentViewSet)
 router.register(r'questions', main_api.QuestionViewSet)
+router.register(r'payment', main_api.PaymentViewSet)
 
 api_patterns = [
     url(r'^api/profile$', users_api.GetProfile.as_view(), name='get-profile'),
@@ -89,6 +91,7 @@ urlpatterns = [
     #url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),
     #following url is used to include url path when sending Proposal amendment request to user.
     url(r'^proposal/$', proposal_views.ProposalView.as_view(), name='proposal'),
+    url(r'^payment/(?P<proposal_pk>\d+)/$', main_views.MakePaymentView.as_view(), name='make_payment'),
 
     #following url is defined so that to include url path when sending Proposal amendment request to user.
     url(r'^external/proposal/(?P<proposal_pk>\d+)/$', views.ExternalProposalView.as_view(), name='external-proposal-detail'),
