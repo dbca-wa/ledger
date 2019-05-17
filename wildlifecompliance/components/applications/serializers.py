@@ -282,7 +282,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'payment_status',
             'assigned_officer',
             'can_be_processed',
-            'pdf_licence',
             'activities',
             'processed',
             'application_type'
@@ -485,6 +484,7 @@ class CreateExternalApplicationSerializer(serializers.ModelSerializer):
             'proxy_applicant',
             'submitter',
             'licence_purposes',
+            'application_type',
         )
 
 
@@ -518,7 +518,6 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
             'licence_type_data',
             'licence_type_name',
             'licence_category',
-            'pdf_licence',
             'application_fee',
             'licence_fee',
             'assigned_officer',
@@ -567,6 +566,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'id',
             'data',
             'schema',
+            'application_type',
             'customer_status',
             'processing_status',
             'review_status',
@@ -594,7 +594,6 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'assigned_officer',
             'can_be_processed',
             'licence_category',
-            'pdf_licence',
             'activities',
             'processed',
             'licence_officers',
@@ -737,8 +736,8 @@ class ApplicationProposedIssueSerializer(serializers.ModelSerializer):
 
 
 class ProposedLicenceSerializer(serializers.Serializer):
-    expiry_date = serializers.DateField(input_formats=['%d/%m/%Y'])
-    start_date = serializers.DateField(input_formats=['%d/%m/%Y'])
+    expiry_date = serializers.DateField(input_formats=['%d/%m/%Y'], required=False, allow_null=True)
+    start_date = serializers.DateField(input_formats=['%d/%m/%Y'], required=False, allow_null=True)
     reason = serializers.CharField()
     cc_email = serializers.CharField(required=False, allow_null=True)
     activity = serializers.ListField(child=serializers.IntegerField())

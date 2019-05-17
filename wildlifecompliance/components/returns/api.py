@@ -87,12 +87,16 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
     def upload_details(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            if request.method == 'POST':
-                spreadsheet = SpreadSheet(
-                    instance, request.FILES['spreadsheet']).factory()
-                if not spreadsheet.is_valid():
-                    return Response(
+            if not instance.has_data:
+                return Response(
+                        {'error': 'Upload not applicable for Return Type.'}, status=status.HTTP_406_NOT_FOUND)
+            spreadsheet = SpreadSheet(instance, request.FILES['spreadsheet']).factory()
+            if not spreadsheet.is_valid():
+                return Response(
                         {'error': 'Enter data in correct format.'}, status=status.HTTP_404_NOT_FOUND)
+            table = instance.data.build_table(spreadsheet.rows_list)
+
+            return Response(table)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
