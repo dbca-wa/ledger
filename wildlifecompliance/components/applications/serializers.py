@@ -485,6 +485,7 @@ class CreateExternalApplicationSerializer(serializers.ModelSerializer):
             'proxy_applicant',
             'submitter',
             'licence_purposes',
+            'application_type',
         )
 
 
@@ -567,6 +568,7 @@ class InternalApplicationSerializer(BaseApplicationSerializer):
             'id',
             'data',
             'schema',
+            'application_type',
             'customer_status',
             'processing_status',
             'review_status',
@@ -737,8 +739,8 @@ class ApplicationProposedIssueSerializer(serializers.ModelSerializer):
 
 
 class ProposedLicenceSerializer(serializers.Serializer):
-    expiry_date = serializers.DateField(input_formats=['%d/%m/%Y'])
-    start_date = serializers.DateField(input_formats=['%d/%m/%Y'])
+    expiry_date = serializers.DateField(input_formats=['%d/%m/%Y'], required=False, allow_null=True)
+    start_date = serializers.DateField(input_formats=['%d/%m/%Y'], required=False, allow_null=True)
     reason = serializers.CharField()
     cc_email = serializers.CharField(required=False, allow_null=True)
     activity = serializers.ListField(child=serializers.IntegerField())
