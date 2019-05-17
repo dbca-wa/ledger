@@ -516,7 +516,7 @@ def create_licence_doc(licence, application):
 
     _create_licence(licence_buffer, licence, application)
     filename = 'licence-{}.pdf'.format(licence.id)
-    document = LicenceDocument.objects.create(licence=licence, name=filename)
+    document = LicenceDocument.objects.create(name=filename)
     document._file.save(filename, File(licence_buffer), save=True)
 
     licence_buffer.close()
