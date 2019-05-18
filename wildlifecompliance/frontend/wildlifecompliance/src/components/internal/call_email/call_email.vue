@@ -112,7 +112,7 @@
   
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Classification</label>
-                  <select class="form-control" v-model="call_email.classification_id">
+                  <select @change.prevent="getClassification" class="form-control" v-model="call_email.classification">
                         <option v-for="option in classification_types" :value="option.id" v-bind:key="option.id">
                           {{ option.name }} 
                         </option>
@@ -186,7 +186,7 @@ import FormSection from "@/components/forms/section_toggle.vue";
 
 import CommsLogs from "@common-components/comms_logs.vue";
 import MapLocation from "./map_location.vue";
-import { api_endpoints, helpers } from "@/utils/hooks";
+import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import Datepicker from 'vuejs-datepicker';
@@ -338,18 +338,32 @@ export default {
     duplicate: async function() {
       await this.saveCallEmail({ route: false, crud: 'duplicate'});
     },
-    loadClassification: async function() {
-        console.log("loadClassification");
-        try {
-            const returnedClassification = await Vue.http.get(
-                api_endpoints.classification 
-                );
-            //Object.assign(this.classification_types, returnedClassification.body.results);
-            this.classification_types.push(...returnedClassification.body.results);
+    // loadClassification: async function() {
+    //     console.log("loadClassification");
+    //     try {
+    //       //helpers.getOrSetCache('CallEmail_Classification', key, url)
 
-        } catch (err) {
-                console.error(err);
-        }
+
+    //         // const returnedClassification = await Vue.http.get(
+    //         //     api_endpoints.classification 
+    //         //     );
+    //         // //Object.assign(this.classification_types, returnedClassification.body.results);
+    //         // this.classification_types.push(...returnedClassification.body.results);
+
+    //     } catch (err) {
+    //             console.error(err);
+    //     }
+    // },
+    getClassification: function() {
+      let key = "";
+      let url = api_endpoints.classification;
+      if (this.call_email.classification) {
+        let key = this.call_email.classification.id;
+        
+      return cache_helper.getOrSetCache('CallEmail_ClassificationTypes', key, url);
+      } else {
+        cache_helper.getOrSetCache('CallEmail_ClassificationTypes', key, url);
+      }
     },
     loadReferrers: async function() {
         console.log("loadReferrers");
@@ -377,7 +391,7 @@ export default {
               } else {
                 report_type_id_str = this.report_type_id.toString();
               }
-              // check local cache to see if key exists
+              // check store cache to see if key exists
               try {
                 retrieved_val = await CallEmail_ReportType_Schema.getItem(
                   report_type_id_str)
@@ -443,7 +457,7 @@ export default {
     // load current CallEmail renderer schema
     this.loadSchema(this.call_email.report_type_id);
     // load drop-down select lists
-    this.loadClassification();
+    //this.loadClassification();
     this.loadReportTypes();
     this.loadReferrers();
   },

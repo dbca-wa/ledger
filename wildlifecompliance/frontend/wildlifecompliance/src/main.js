@@ -6,6 +6,7 @@ import App from './App';
 import router from './router';
 import bs from 'bootstrap';
 import helpers from '@/utils/helpers';
+import cache_helper from  '@/utils/cache_helper';
 import hooks from './packages';
 import api_endpoints from './api';
 import store from './store';
