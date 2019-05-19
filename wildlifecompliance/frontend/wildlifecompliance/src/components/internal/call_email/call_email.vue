@@ -112,7 +112,7 @@
   
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Classification</label>
-                  <select @change.prevent="getClassification" class="form-control" v-model="call_email.classification">
+                  <select class="form-control" v-model="call_email.classification_id">
                         <option v-for="option in classification_types" :value="option.id" v-bind:key="option.id">
                           {{ option.name }} 
                         </option>
@@ -202,12 +202,12 @@ export default {
   name: "ViewCallEmail",
   data: function() {
     return {
-      classification_types: [
-        {
-          id: "", 
-          name: "",
-        },
-      ],
+      classification_types: [],
+      //   {
+      //     id: "", 
+      //     name: "",
+      //   },
+      // ],
       referrers: [
         {
           id: "", 
@@ -354,17 +354,25 @@ export default {
     //             console.error(err);
     //     }
     // },
-    getClassification: function() {
-      let key = "";
-      let url = api_endpoints.classification;
-      if (this.call_email.classification) {
-        let key = this.call_email.classification.id;
-        
-      return cache_helper.getOrSetCache('CallEmail_ClassificationTypes', key, url);
-      } else {
-        cache_helper.getOrSetCache('CallEmail_ClassificationTypes', key, url);
-      }
-    },
+    // getClassification: async function() {
+    //   let key = "";
+    //   let url = api_endpoints.classification;
+    //   if (this.call_email.classification) {
+    //     let key = this.call_email.classification.id;
+    //   }
+    //   let val_to_assign = await cache_helper.getOrSetCache('CallEmail_ClassificationTypes', key, url);
+    //   Object.assign(
+    //     this.classification_types, 
+    //     val_to_assign
+    //     );  
+    //   console.log("this.classification_types");
+    //   console.log(this.classification_types);
+      
+    //   //this.classification_types = cache_helper.getOrSetCache('CallEmail_ClassificationTypes', key, url);
+    //   // } else {
+    //   //   cache_helper.getOrSetCache('CallEmail_ClassificationTypes', key, url);
+    //   // }
+    // },
     loadReferrers: async function() {
         console.log("loadReferrers");
         try {
@@ -458,8 +466,17 @@ export default {
     this.loadSchema(this.call_email.report_type_id);
     // load drop-down select lists
     //this.loadClassification();
+    
     this.loadReportTypes();
     this.loadReferrers();
+    let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', api_endpoints.classification);
+    Object.assign(this.classification_types, returned_classification_types);
+    // insert blank entry to enable user to clear selection
+    this.classification_types.splice(0, 0, 
+      {
+        id: "", 
+        name: "",
+      });
   },
   mounted: function() {
         console.log(this);

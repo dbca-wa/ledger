@@ -270,8 +270,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 print("request_data")
                 print(request_data)
 
-                if request_data.get('classification'):
-                    request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
+                # if request_data.get('classification'):
+                #     request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
                 if request_data.get('report_type'):
                     request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
                 
@@ -281,7 +281,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     new_instance = serializer.save()
                     new_returned = serializer.data
                     # Ensure classification_id and report_type_id is returned for Vue template evaluation                
-                    new_returned.update({'classification_id': request_data.get('classification_id')})
+                    # new_returned.update({'classification_id': request_data.get('classification_id')})
                     new_returned.update({'report_type_id': request_data.get('report_type_id')})
                     new_returned.update({'referrer_id': request_data.get('referrer_id')})
                     if request_data.get('location'):
@@ -299,7 +299,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                         duplicate = CallEmailSerializer(instance=new_instance)
                         headers = self.get_success_headers(duplicate.data)
 
-                        duplicate.data.update({'classification_id': request_data.get('classification_id')})
+                        # duplicate.data.update({'classification_id': request_data.get('classification_id')})
                         duplicate.data.update({'report_type_id': request_data.get('report_type_id')})
                         duplicate.data.update({'referrer_id': request_data.get('referrer_id')})
                         if request_data.get('location'):
@@ -379,8 +379,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 if request_data.get('renderer_data'):
                     self.form_data(request)
 
-                if request_data.get('classification'):
-                    request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
+                # if request_data.get('classification'):
+                #     request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
                 if request_data.get('report_type'):
                     request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
 
