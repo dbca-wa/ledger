@@ -460,15 +460,15 @@ export default {
   created: async function() {
     
     if (this.$route.params.call_email_id) {
-      this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
+      await this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
     }
     // load current CallEmail renderer schema
-    this.loadSchema(this.call_email.report_type_id);
+    await this.loadSchema(this.call_email.report_type_id);
     // load drop-down select lists
     //this.loadClassification();
     
-    this.loadReportTypes();
-    this.loadReferrers();
+    await this.loadReportTypes();
+    await this.loadReferrers();
     let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', api_endpoints.classification);
     Object.assign(this.classification_types, returned_classification_types);
     // insert blank entry to enable user to clear selection
