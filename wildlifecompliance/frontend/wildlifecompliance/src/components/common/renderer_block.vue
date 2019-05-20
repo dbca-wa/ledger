@@ -90,14 +90,14 @@
                 :conditions="component.conditions"
                 :isRequired="component.isRequired"
                 :help_text_url="help_text_url"/>
-                
-                <SelectConditions
-                    :conditions="component.conditions" 
+
+                <Conditions
+                    :conditions="component.conditions"
                     :name="component_name"
+                    :instance="instance"
                     :data="json_data"
                     :id="element_id(1)"
-                    :readonly="is_readonly" 
-                    :isRequired="component.isRequired"/>
+                    :readonly="is_readonly"/>
         </div>
 
         <SelectBlock v-if="component.type === 'multi-select'"
@@ -153,10 +153,11 @@
             <label :id="element_id()" class="inline">{{component.label}}</label>
                 <HelpText :help_text="help_text"/>
                 <HelpTextUrl :help_text_url="help_text_url"/>
-                <CommentRadioCheckBox
+                <CommentBlock 
+                    :label="component.label"
                     :name="component_name"
                     :field_data="value"
-                    :label="component.label"/>
+                    />
 
                 <Radio v-for="(option, index) in component.options"
                     :name="component_name"
@@ -240,6 +241,17 @@
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
+        <GridBlock v-if="component.type === 'grid'"
+            :name="component.name"
+            :headers="component.headers"
+            :field_data="component.data"
+            :id="element_id()"
+            :label="component.label"
+            :help_text="help_text"
+            :readonly="is_readonly"
+            :isRequired="component.isRequired"
+            :help_text_url="help_text_url"/>
+
     </span>
 </template>
 
@@ -254,7 +266,6 @@ import FormSection from '@/components/forms/section.vue'
 import Group from '@/components/forms/group.vue'
 import Radio from '@/components/forms/radio.vue'
 import Conditions from '@/components/forms/conditions.vue'
-import SelectConditions from '@/components/forms/select-conditions.vue'
 import Checkbox from '@/components/forms/checkbox.vue'
 import Declaration from '@/components/forms/declarations.vue'
 import File from '@/components/forms/file.vue'
@@ -266,9 +277,10 @@ import LabelBlock from '@/components/forms/label.vue'
 import AssessorText from '@/components/forms/readonly_text.vue'
 import HelpText from '@/components/forms/help_text.vue'
 import HelpTextUrl from '@/components/forms/help_text_url.vue'
-import CommentRadioCheckBox from '@/components/forms/comment_icon_checkbox_radio.vue'
+import CommentBlock from '@/components/forms/comment_block.vue';
 import TableBlock from '@/components/forms/table.vue'
 import ExpanderTable from '@/components/forms/expander_table.vue'
+import GridBlock from '@/components/forms/grid.vue'
 
 const RendererBlock = {
   name: 'renderer-block',
@@ -277,10 +289,9 @@ const RendererBlock = {
       TextField,
       Group,
       SelectBlock,
-      SelectConditions,
       HelpText,
       HelpTextUrl,
-      CommentRadioCheckBox,
+      CommentBlock,
       Radio,
       Conditions,
       Checkbox,
@@ -290,6 +301,7 @@ const RendererBlock = {
       LabelBlock,
       TableBlock,
       ExpanderTable,
+      GridBlock,
   },
   data: function() {
     return {
@@ -339,7 +351,8 @@ const RendererBlock = {
                 key: this.component_name,
                 value: {
                     "value": '',
-                    "comment_value": '',
+                    "officer_comment": '',
+                    "assessor_comment": '',
                     "deficiency_value": '',
                     "schema_name": this.component.name,
                     "component_type": this.component.type,
@@ -395,11 +408,20 @@ const RendererBlock = {
                     'visible': false
                 });
             }
-            e.target && this.toggleVisibleComponent({
-                'component_id': `cons_${e.target.name}_${e.target.value}`,
-                'visible': e.target.checked
-            });
             let value = e.value == null ? e.target.value : e.value;
+            if(e.target) {
+                this.toggleVisibleComponent({
+                    'component_id': `cons_${e.target.name}_${e.target.value}`,
+                    'visible': e.target.checked
+                });
+            }
+            else {
+                // Handle select drop-downs
+                this.toggleVisibleComponent({
+                    'component_id': `cons_${this.component_name}_${value}`,
+                    'visible': true
+                });
+            }
             // Hack for unchecked checkboxes
             if(value === 'on' && !e.target.checked) {
                 value = '';

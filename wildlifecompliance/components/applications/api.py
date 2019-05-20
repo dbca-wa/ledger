@@ -20,6 +20,9 @@ from wildlifecompliance.components.applications.utils import (
 )
 from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 from wildlifecompliance.helpers import is_customer, is_internal
+from wildlifecompliance.components.applications.email import (
+    send_application_amendment_notification,
+)
 from wildlifecompliance.components.applications.models import (
     Application,
     ApplicationSelectedActivity,
@@ -477,6 +480,16 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @list_route(methods=['GET', ])
+    def active_licence_application(self, request, *args, **kwargs):
+        active_application = Application.get_active_licence_applications(request).first()
+        if not active_application:
+            return Response({'application': None})
+
+        serializer = ApplicationSerializer(
+            active_application, context={'request': request})
+        return Response({'application': serializer.data})
+
     @list_route(methods=['POST', ])
     def estimate_price(self, request, *args, **kwargs):
         purpose_ids = request.data.get('purpose_ids', [])
@@ -726,7 +739,34 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST', ])
+    def return_to_officer(self, request, *args, **kwargs):
+
+        try:
+            instance = self.get_object()
+            activity_id = request.data.get('activity_id')
+            if not activity_id:
+                raise serializers.ValidationError(
+                    'Activity ID is required!')
+
+            instance.return_to_officer_conditions(request, activity_id)
+            serializer = InternalApplicationSerializer(
+                instance, context={'request': request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
     def update_activity_status(self, request, *args, **kwargs):
+
         try:
             instance = self.get_object()
             activity_id = request.data.get('activity_id')
@@ -955,25 +995,60 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
+        from wildlifecompliance.components.licences.models import LicencePurpose
         try:
-            app_data = self.request.data
-            licence_category_data = app_data.get('licence_category_data')
-            org_applicant = request.data.get('org_applicant')
-            proxy_applicant = request.data.get('proxy_applicant')
+            org_applicant = request.data.get('organisation_id')
+            proxy_applicant = request.data.get('proxy_id')
             licence_purposes = request.data.get('licence_purposes')
+            application_type = request.data.get('application_type')
             data = {
                 'submitter': request.user.id,
-                'licence_type_data': licence_category_data,
                 'org_applicant': org_applicant,
                 'proxy_applicant': proxy_applicant,
                 'licence_purposes': licence_purposes,
+                'application_type': application_type,
             }
 
-            # Use serializer for external application creation - do not expose unneeded fields
-            serializer = CreateExternalApplicationSerializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            serializer.instance.update_fees()
+            if not licence_purposes:
+                raise serializers.ValidationError(
+                    'Please select at least one purpose for editing!')
+
+            with transaction.atomic():
+
+                # Use serializer for external application creation - do not expose unneeded fields
+                serializer = CreateExternalApplicationSerializer(data=data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+
+                licence_purposes_queryset = LicencePurpose.objects.filter(
+                    id__in=licence_purposes
+                )
+                licence_category = licence_purposes_queryset.first().licence_category
+                licence_activities = licence_purposes_queryset.values_list('licence_activity_id', flat=True).distinct()
+                active_applications = Application.get_active_licence_applications(request)
+                active_application = active_applications.filter(
+                    licence_purposes__licence_category_id=licence_category.id
+                ).order_by('-id').first()
+
+                if application_type == Application.APPLICATION_TYPE_AMENDMENT:
+                    if not active_application:
+                        raise serializers.ValidationError(
+                            'Cannot create amendment application: active licence not found!')
+
+                    # Re-load purposes from the last active application to prevent front-end tampering.
+                    # Do not allow amending an incomplete subset.
+                    licence_purposes = active_applications.filter(
+                        licence_purposes__licence_activity_id__in=licence_activities
+                    ).values_list(
+                        'licence_purposes__id',
+                        flat=True
+                    )
+
+                if active_application:
+                    serializer.instance.previous_application_id = active_application.id
+                    serializer.instance.save()
+
+                serializer.instance.update_dynamic_attributes()
 
             return Response(serializer.data)
         except Exception as e:
@@ -1378,17 +1453,21 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             reason = amend_data.pop('reason')
             application_id = amend_data.pop('application')
             text = amend_data.pop('text')
-            activity_id = amend_data.pop('activity_id')
-            for item in activity_id:
+            activity_list = amend_data.pop('activity_list')
+            if not activity_list:
+                raise serializers.ValidationError('Please select at least one activity to amend!')
+
+            data = {}
+            application = Application.objects.get(id=application_id)
+            for activity_id in activity_list:
                 data = {
                     'application': application_id,
                     'reason': reason,
                     'text': text,
-                    'licence_activity': item
+                    'licence_activity': activity_id
                 }
 
-                application = Application.objects.get(id=application_id)
-                selected_activity = application.get_selected_activity(item)
+                selected_activity = application.get_selected_activity(activity_id)
                 if selected_activity.processing_status == ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED:
                     raise serializers.ValidationError('Selected activity has been discarded by the customer!')
 
@@ -1397,6 +1476,10 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
                 instance = serializer.save()
                 instance.reason = reason
                 instance.generate_amendment(request)
+
+            # send email
+            send_application_amendment_notification(
+                data, application, request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:

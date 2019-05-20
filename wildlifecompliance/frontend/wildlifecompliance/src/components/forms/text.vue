@@ -10,27 +10,12 @@
                 <HelpTextUrl :help_text_url="help_text_url" />
             </template>
 
-            <template v-if="canViewComments">
-                <template v-if="!showingComment">
-                    <a v-if="field_data.comment_value" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
-                    <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
-                </template>
-                <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
-            </template>
-            <div v-if="canViewDeficiencies">
-                <div v-if="canEditDeficiencies">
-                    <div v-if="!showingDeficiencies">
-                        <a v-if="field_data.deficiency_value" href=""  @click.prevent="toggleDeficiencies"><i style="color:red" class="fa fa-exclamation-triangle">&nbsp;</i></a>
-                        <a v-else href="" @click.prevent="toggleDeficiencies"><i class="fa fa-exclamation-triangle">&nbsp;</i></a>
-                    </div>
-                    <a href="" v-else  @click.prevent="toggleDeficiencies"><i class="fa fa-ban">&nbsp;</i></a>
-                    <Comment :question="label" :name="name+'-deficiency-field'" v-show="showingDeficiencies" :field_data="field_data" :isDeficiency="true"/>
-                </div>
-                <div v-else-if="field_data.deficiency_value" style="color:red">
-                    <i class="fa fa-exclamation-triangle">&nbsp;</i>
-                    <span>{{field_data.deficiency_value}}</span>
-                </div>
-            </div>
+            <CommentBlock 
+                :label="label"
+                :name="name"
+                :field_data="field_data"
+                />
+
             <span v-if="min!='' || max!=''">
                 <input :readonly="readonly" :type="type" :min="min" :max="max" class="form-control" :name="name" v-model="field_data.value" :required="isRequired" />
             </span>
@@ -38,45 +23,28 @@
                 <input :readonly="readonly" :type="type" class="form-control" :name="name" v-model="value" :required="isRequired" />
             </span>
         </div>
-        <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :field_data="field_data"/>
     </div>
 </template>
 
 <script>
-import Comment from './comment.vue';
+import CommentBlock from './comment_block.vue';
 import HelpText from './help_text.vue';
 import HelpTextUrl from './help_text_url.vue';
-import { mapGetters, mapActions } from 'vuex';
+import { mapActions } from 'vuex';
 export default {
     props:["type","name","id", "field_data","isRequired","help_text","label","readonly", "help_text_url", "min", "max"],
-    components: {Comment, HelpText, HelpTextUrl},
+    components: {CommentBlock, HelpText, HelpTextUrl},
     data(){
         let vm = this;
         return {
-            showingComment: false,
-            showingDeficiencies: false,
         }
     },
     methods: {
         ...mapActions([
             'setFormValue',
         ]),
-        toggleComment(){
-            this.showingComment = ! this.showingComment;
-        },
-        toggleDeficiencies: function() {
-            if(this.showingDeficiencies) {
-                this.field_data.deficiency_value = '';
-            }
-            this.showingDeficiencies = !this.showingDeficiencies;
-        },
     },
     computed: {
-        ...mapGetters([
-            'canViewComments',
-            'canViewDeficiencies',
-            'canEditDeficiencies',
-        ]),
     }
 }
 </script>

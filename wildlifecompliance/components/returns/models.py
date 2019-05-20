@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 from django.db import models, transaction
+from django.db.models.signals import post_save
 from django.contrib.postgres.fields.jsonb import JSONField
+from django.dispatch import receiver
 from django.utils import timezone
 from django.core.exceptions import FieldError
 from ledger.accounts.models import EmailUser, RevisionedMixin
@@ -9,6 +11,8 @@ from wildlifecompliance.components.applications.models import ApplicationConditi
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction
 from wildlifecompliance.components.returns.email import send_external_submit_email_notification, \
                                                         send_return_accept_email_notification
+
+import json, ast
 
 
 def template_directory_path(instance, filename):
@@ -240,7 +244,7 @@ class Return(models.Model):
         :return: External Status.
         """
         workflow_mapper = {
-            self.RETURN_PROCESSING_STATUS_DUE : self.RETURN_CUSTOMER_STATUS_DUE,
+            self.RETURN_PROCESSING_STATUS_DUE: self.RETURN_CUSTOMER_STATUS_DUE,
             self.RETURN_PROCESSING_STATUS_OVERDUE: self.RETURN_CUSTOMER_STATUS_OVERDUE,
             self.RETURN_PROCESSING_STATUS_DRAFT: self.RETURN_CUSTOMER_STATUS_DRAFT,
             self.RETURN_PROCESSING_STATUS_FUTURE: self.RETURN_CUSTOMER_STATUS_FUTURE,
@@ -316,11 +320,37 @@ class Return(models.Model):
         """
         pass
 
+    def create_return_data(self, table_name, table_rows):
+        if table_rows:
+            return_table = ReturnTable.objects.get_or_create(
+                name=table_name, ret=self._return)[0]
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in table_rows]
+            ReturnRow.objects.bulk_create(return_rows)
+
     def log_user_action(self, action, request):
         return ReturnUserAction.log_action(self, action, request.user)
 
     def __str__(self):
         return self.lodgement_number
+
+
+class ReturnListener(object):
+    """
+    Listener object signalling additional processing outside Return model.
+    """
+    @staticmethod
+    @receiver(post_save, sender=Return)
+    def post_create(sender, instance, created, **kwargs):
+        if not created:
+            return
+        if instance.has_sheet:
+            # create default species data for Return running sheets.
+            instance.sheet.set_licence_species
 
 
 class ReturnData(object):
@@ -333,30 +363,9 @@ class ReturnData(object):
     @property
     def table(self):
         """
-        Data Table of record information for Species.
-        :return: formatted data.
+        Table of return information presented in Grid format.
+        :return: Grid formatted data.
         """
-        return self._get_raw_table()
-
-    def store(self, request):
-        """
-        Save the current state of this Return Data.
-        :param request:
-        :return:
-        """
-        for key in request.POST.keys():
-            if key == "nilYes":
-                self._return.nil_return = True
-                self._return.comments = request.data.get('nilReason')
-                self._return.save()
-            if key == "nilNo":
-                returns_tables = request.data.get('table_name')
-                if self._is_post_data_valid(returns_tables.encode('utf-8'), request.POST):
-                    self._create_return_data_from_post_data(returns_tables.encode('utf-8'), request.POST)
-                else:
-                    raise FieldError('Enter data in correct format.')
-
-    def _get_raw_table(self):
         tables = []
         for resource in self._return.return_type.resources:
             resource_name = resource.get('name')
@@ -364,7 +373,8 @@ class ReturnData(object):
             headers = []
             for f in schema.fields:
                 header = {
-                    "label": f.name,
+                    "label": f.data['label'],
+                    "name": f.data['name'],
                     "required": f.required,
                     "type": f.type.name
                 }
@@ -389,7 +399,7 @@ class ReturnData(object):
                 results = []
                 for field_name in schema.fields:
                     result[field_name.name] = {
-                        'value': None
+                            'value': None
                     }
                 results.append(result)
                 table['data'] = results
@@ -397,23 +407,23 @@ class ReturnData(object):
 
         return tables
 
-    def _get_formatted_table(self):
-        headers = {}
-        tables = {}
-        #tables = {
-        #    "type": "table",
-        #    "headers": "{\"Species\": \"text\", \"Quantity\": \"number\", \"Date\": \"date\", \"Taken\": \"checkbox\"}",
-        #    "name": "Section2-0",
-        #    "label": "The first table in section 2"
-        #}
-
-        tables['headers'] = 'Quantity'
-        tables['type'] = 'table'
-        tables['label'] = 'first table'
-        tables['name'] = 'table-example'
-        tables['data'] = '100'
-
-        return tables
+    def store(self, request):
+        """
+        Save the current state of this Return Data.
+        :param request:
+        :return:
+        """
+        for key in request.data.keys():
+            if key == "nilYes":
+                self._return.nil_return = True
+                self._return.comments = request.data.get('nilReason')
+                self._return.save()
+            if key == "nilNo":
+                returns_tables = request.data.get('table_name')
+                if self._is_post_data_valid(returns_tables.encode('utf-8'), request.data):
+                    self._create_return_data_from_post_data(returns_tables.encode('utf-8'), request.data)
+                else:
+                    raise FieldError('Enter data in correct format.')
 
     def _is_post_data_valid(self, tables_info, post_data):
         """
@@ -438,8 +448,10 @@ class ReturnData(object):
         :return:
         """
         table_namespace = table_name + '::'
+        # exclude fields defaulted from renderer. ie comment-field, deficiency-field (Application specific)
+        excluded_field = ('-field')
         by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(
-            key)) for key in post_data.keys() if key.startswith(table_namespace)])
+            key)) for key in post_data.keys() if key.startswith(table_namespace) and not key.endswith(excluded_field)])
         # by_column is of format {'col_header':[row1_val, row2_val,...],...}
         num_rows = len(
             list(
@@ -459,6 +471,48 @@ class ReturnData(object):
             if not is_empty:
                 rows.append(row_data)
         return rows
+
+    def build_table(self, rows):
+        """
+        Method to create and validate rows of data to the table schema without persisting.
+        :param rows: data to be formatted.
+        :return: Array of tables.
+        """
+        tables = []
+        for resource in self._return.return_type.resources:
+            resource_name = resource.get('name')
+            schema = Schema(resource.get('schema'))
+            table = {
+                'name': resource_name,
+                'label': resource.get('title', resource.get('name')),
+                'type': None,
+                'headers': None,
+                'data': None
+            }
+            try:
+                validated_rows = schema.rows_validator(rows)
+                table['data'] = validated_rows
+            except AttributeError:
+                result = {}
+                results = []
+                for field_name in schema.fields:
+                    result[field_name.name] = {
+                            'value': None
+                    }
+                results.append(result)
+                table['data'] = results
+        tables.append(table)
+
+        return tables
+
+    def _create_return_data(self, table_name, table_rows):
+        """
+        Method to persist Return record.
+        :return:
+        """
+        self._return.create_return_data(table_name, table_rows)
+
+        return True
 
     def _create_return_data_from_post_data(self, tables_info, post_data):
         """
@@ -493,7 +547,7 @@ class ReturnQuestion(object):
     @property
     def table(self):
         """
-        Table of questions for Species. Defaults to a Species on the Return if exists.
+        Table of return questions.
         :return: formatted data.
         """
         tables = []
@@ -614,8 +668,6 @@ class ReturnSheet(object):
         for _species in ReturnTable.objects.filter(ret=a_return):
             self._species_list.append(_species.name)
             self._species = _species.name
-        # build list of Species available on Licence.
-        self._licence_species_list = []
 
     def _get_table_rows(self, _data):
         """
@@ -649,7 +701,7 @@ class ReturnSheet(object):
             # filter empty rows.
             is_empty = True
             for value in row_data.values():
-                if len(value[row_num].strip()) > 0:
+                if value and len(value.strip()) > 0:
                     is_empty = False
                     break
             if not is_empty:
@@ -701,14 +753,6 @@ class ReturnSheet(object):
         return self._species_list
 
     @property
-    def licence_species_list(self):
-        """
-        List of Species applicable for Running Sheet Return Licence.
-        :return: List of Species.
-        """
-        return self._licence_species_list
-
-    @property
     def activity_list(self):
         """
         List of stock movement activities applicable for Running Sheet.
@@ -740,15 +784,15 @@ class ReturnSheet(object):
 
         return self._table
 
-    def set_activity(self, _species_id, _data):
+    def set_activity(self, _species, _data):
         """
         Sets Running Sheet Activity for the movement of Species stock.
-        :param _species_id:
+        :param _species:
         :param _data:
         :return:
         """
-        self._create_return_data(self._return, _species_id, _data)
-        self.set_species(_species_id)
+        self._create_return_data(self._return, _species, _data)
+        self.set_species(_species)
 
     def set_activity_from_previous(self):
         """
@@ -772,6 +816,18 @@ class ReturnSheet(object):
                     self._table = self._NO_ACTIVITY
                 self._create_return_data(self._return, _species_id, _table)
             '''
+
+    @staticmethod
+    def set_licence_species(self):
+        """
+        Sets the species from the licence for the current Running Sheet.
+        :return:
+        """
+        _data = []
+        # TODO: create default entries for each species on the licence.
+        # for _species in self._return.licence:
+        #    self.set_activity(_species, _data)
+        pass
 
     def set_species(self, _species):
         """
@@ -819,12 +875,13 @@ class ReturnSheet(object):
         :param request:
         :return:
         """
-        try:
-            species = request.data.get('species_id').encode('utf-8')
-            data = eval(request.data.get('species_data').encode('utf-8'))
-            self.set_activity(species, data)
-        except AttributeError:
-            pass
+        for species in self.species_list:
+            try:
+                _data = request.data.get(species).encode('utf-8')
+                _data = tuple(ast.literal_eval(_data))
+                self.set_activity(species, _data)
+            except AttributeError:
+                continue
 
     def __str__(self):
         return self._return.lodgement_number
