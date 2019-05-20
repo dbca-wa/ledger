@@ -564,6 +564,15 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 self.submitter.addresses.all().first())
 
     @property
+    def applicant_address(self):
+        if self.org_applicant:
+            return self.org_applicant.address
+        elif self.proxy_applicant:
+            return self.proxy_applicant.addresses.all().first()
+        else:
+            return self.submitter.addresses.all().first()
+
+    @property
     def applicant_id(self):
         if self.org_applicant:
             return self.org_applicant.id
@@ -1385,7 +1394,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                     raise exceptions.ProposalNotAuthorized()
                 if self.processing_status != 'with_approver':
                     raise ValidationError('You cannot issue the approval if it is not with an approver')
-                if not self.applicant.organisation.postal_address:
+                #if not self.applicant.organisation.postal_address:
+                if not self.applicant_address:
                     raise ValidationError('The applicant needs to have set their postal address before approving this proposal.')
 
                 self.proposed_issuance_approval = {
@@ -1420,7 +1430,10 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                     'issue_date' : timezone.now(),
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
-                                    'applicant' : self.applicant,
+                                    #'applicant' : self.applicant,
+                                    'submitter': self.submitter,
+                                    'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                    'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,                                
                                     'lodgement_number': previous_approval.lodgement_number
                                     #'extracted_fields' = JSONField(blank=True, null=True)
                                 }
@@ -1442,7 +1455,10 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                     'issue_date' : timezone.now(),
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
-                                    'applicant' : self.applicant,
+                                    #'applicant' : self.applicant,
+                                    'submitter': self.submitter,
+                                    'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                    'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,                                
                                     'lodgement_number': previous_approval.lodgement_number
                                     #'extracted_fields' = JSONField(blank=True, null=True)
                                 }
@@ -1462,6 +1478,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                 'issue_date' : timezone.now(),
                                 'expiry_date' : details.get('expiry_date'),
                                 'start_date' : details.get('start_date'),
+                                'submitter': self.submitter,
                                 'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
                                 'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
                                 #'extracted_fields' = JSONField(blank=True, null=True)
@@ -3037,10 +3054,10 @@ class HelpPage(models.Model):
 park = models.ForeignKey('Park', related_name='park_entries')
 
 import reversion
-reversion.register(Referral, follow=['referral_documents',])
-reversion.register(ReferralDocument, follow=['referral_document'])
+reversion.register(Referral, follow=['referral_documents','assessment'])
+reversion.register(ReferralDocument, follow=['referral_document', ])
 
-reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_logs','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails', 'proposalonhold', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals', 'park_entries'])
+reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_logs','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails', 'proposalonhold', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals', 'park_entries', 'assessment'])
 reversion.register(ProposalDocument, follow=['onhold_documents'])
 reversion.register(OnHoldDocument)
 reversion.register(ProposalRequest)
@@ -3081,11 +3098,15 @@ reversion.register(ProposalDeclinedDetails)
 reversion.register(ProposalOnHold)
 reversion.register(ProposalStandardRequirement, follow=['proposalrequirement_set'])
 reversion.register(ProposalRequirement, follow=['compliance_requirement'])
-reversion.register(ReferralRecipientGroup, follow=['commercialoperator_referral_groups'])
+reversion.register(ReferralRecipientGroup, follow=['commercialoperator_referral_groups', 'referral_assessment'])
 reversion.register(QAOfficerGroup, follow=['qaofficer_groups'])
 reversion.register(QAOfficerReferral)
 reversion.register(QAOfficerDocument, follow=['qaofficer_referral_document'])
 reversion.register(ProposalAccreditation)
 reversion.register(HelpPage)
+reversion.register(ChecklistQuestion, follow=['answers'])
+reversion.register(ProposalAssessment, follow=['answers'])
+reversion.register(ProposalAssessmentAnswer)
+
 
 
