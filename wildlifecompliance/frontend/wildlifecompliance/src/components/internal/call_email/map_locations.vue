@@ -5,7 +5,7 @@
                 <label class="">Call/Email Status</label>
                 <select class="form-control" v-model="filterStatus">
                     <option value="All">All</option>
-                    <option v-for="c in statusChoices" :value="c">{{ c }}</option>
+                    <option v-for="c in status_choices" :value="c.id">{{ c.display }}</option>
                 </select>
             </div>
             <div>
@@ -188,10 +188,12 @@ module.exports = {
             opt_url : helpers.add_endpoint_json(api_endpoints.call_email, "optimised"),
             filterStatus: 'All',
             filterClassification: 'All',
-            statusChoices: [],
             filterLodgedFrom: '',
             filterLodgedTo: '',
         }
+    },
+    created(){
+        this.loadStatusChoices();
     },
     mounted(){
         let vm = this;
@@ -205,10 +207,13 @@ module.exports = {
     computed: {
         ...mapGetters('callemailStore', {
             classification_types: "classification_types",
-            report_types: "report_types",
+            status_choices: "status_choices",
         }),
     },
     methods: {
+        ...mapActions('callemailStore', {
+            loadStatusChoices: "loadStatusChoices",
+        }),
         addEventListeners: function () {
             let vm = this;
             // Initialise Application Date Filters

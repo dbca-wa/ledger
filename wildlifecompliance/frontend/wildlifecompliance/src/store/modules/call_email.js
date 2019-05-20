@@ -35,6 +35,7 @@ export const callemailStore = {
         classification_types: [],
         report_types: [],
         referrers: [],
+        status_choices: [],
     },
     getters: {
         call_email: state => state.call_email,
@@ -44,6 +45,7 @@ export const callemailStore = {
         },
         classification_types: state => state.classification_types,
         report_types: state => state.report_types,
+        status_choices: state => state.status_choices,
         referrers: state => state.referrers,
         call_latitude(state) {
             if (state.call_email) {
@@ -59,6 +61,11 @@ export const callemailStore = {
         }
     },
     mutations: {
+        updateStatusChoices(state, choices){
+            for (var i = 0; i < choices.length; i++){
+                state.status_choices.push(choices[i]);
+            }
+        },
         updateCallEmail(state, call_email) {
             Vue.set(state, 'call_email', {
                 ...call_email
@@ -407,5 +414,12 @@ export const callemailStore = {
         }, call_email) {
             commit("updateCallEmail", call_email);
         },
+        loadStatusChoices({ commit }){
+            let pro = Vue.http.get("/call_email/call_email_types");
+            pro.then(res => {
+                console.log(res.body);
+                commit("updateStatusChoices", res.body);
+            })
+        }
     },
 };
