@@ -114,5 +114,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GIT_COMMIT_DATE = os.popen('cd '+BASE_DIR+' ; git log -1 --format=%cd').read()
 GIT_COMMIT_HASH = os.popen('cd  '+BASE_DIR+' ; git log -1 --format=%H').read()
 VERSION_NO = '2.02'
-os.environ['UPDATE_PAYMENT_ALLOCATION'] = 'True' 
+os.environ['UPDATE_PAYMENT_ALLOCATION'] = 'True'
+UNALLOCATED_ORACLE_CODE = 'UN2019 GST' 
+
+ 
 #os.environ.setdefault("UPDATE_PAYMENT_ALLOCATION", True)

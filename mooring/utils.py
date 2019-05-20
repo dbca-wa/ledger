@@ -21,6 +21,7 @@ from ledger.checkout.utils import create_basket_session, create_checkout_session
 from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod, GlobalSettings, MooringAreaGroup, AdmissionsLocation, ChangeGroup, CancelGroup, BookingPeriod, BookingPeriodOption)
 from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer, AdmissionsRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
+from oscar.apps.order.models import Order
 
 
 def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, num_mooring=0, vessel_size=0):
@@ -1709,6 +1710,47 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
             secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
         )
     return response
+
+
+def allocate_failedrefund_to_unallocated(request, booking, lines, invoice_text=None, internal=False):
+        print ('ALLOCATED')
+#        lines = []
+#        for cf in booking_cancellation_fees:
+#                lines.append({'ledger_description':cf['description'],"quantity":1,"price_incl_tax":cf['amount'],"oracle_code":cf['oracle_code'], 'line_status': 3})
+
+        basket_params = {
+            'products': lines,
+            'vouchers': [],
+            'system': settings.PS_PAYMENT_SYSTEM_ID,
+            'custom_basket': True,
+        }
+        basket, basket_hash = create_basket_session(request, basket_params)
+
+        print (basket)
+        print (basket_hash)
+        checkout_params = {
+            'system': settings.PS_PAYMENT_SYSTEM_ID,
+            'fallback_url': request.build_absolute_uri('/'),
+            'return_url': request.build_absolute_uri(reverse('public_admissions_success')),
+            'return_preload_url': request.build_absolute_uri(reverse('public_admissions_success')),
+            'force_redirect': True,
+            'proxy': False,
+            'invoice_text': "Refund Failed Unallocated Pool",
+            'basket_owner': booking.customer.id
+        }
+        create_checkout_session(request, checkout_params)
+        # END PLACE IN UTILS
+        #print ('between')
+        #order_response = place_order_submission(request)
+        #print (order_response)
+        new_order = Order.objects.get(basket=basket)
+        print (new_order)
+        new_invoice = Invoice.objects.get(order_number=new_order.number)
+        print (new_invoice)
+        book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference)
+        print (book_inv)
+        return book_inv
+
 
 def iiicheckout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):
     JSON_REQUEST_HEADER_PARAMS = {
