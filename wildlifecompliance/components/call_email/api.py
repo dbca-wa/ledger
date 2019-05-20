@@ -81,8 +81,26 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET', ])
     def optimised(self, request, *args, **kwargs):
         queryset = self.get_queryset().exclude(location__isnull=True)
-        serializer = CallEmailOptimisedSerializer(queryset, many=True)
 
+        filter_status = request.query_params.get('status', '')
+        filter_status = '' if filter_status.lower() == 'all' else filter_status
+        filter_classification = request.query_params.get('classification', '')
+        filter_classification = '' if filter_classification.lower() == 'all' else filter_classification
+        filter_lodged_from = request.query_params.get('lodged_from', '')
+        filter_lodged_to = request.query_params.get('lodged_to', '')
+
+        if filter_status:
+            queryset = queryset.filter(status__exact=filter_status)
+        if filter_classification:
+            queryset = queryset.filter(classification__name__exact=filter_classification)
+        if filter_lodged_from:
+            date_from = datetime.strptime(filter_lodged_from, '%d/%m/%Y')
+            queryset = queryset.filter(lodged_on__gte=date_from)
+        if filter_lodged_to:
+            date_to = datetime.strptime(filter_lodged_to, '%d/%m/%Y')
+            queryset = queryset.filter(lodged_on__lte=date_to)
+
+        serializer = CallEmailOptimisedSerializer(queryset, many=True)
         return Response(serializer.data)
 
     @list_route(methods=['GET', ])

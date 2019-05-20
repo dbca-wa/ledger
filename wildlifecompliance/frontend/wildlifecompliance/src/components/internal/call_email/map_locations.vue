@@ -179,6 +179,8 @@ module.exports = {
             {name:'public:dbca_legislated_lands_and_waters', label: 'Lands and Waters (Legislated)'},
             {name:'public:dpaw_lands_and_waters', label: 'Lands and Waters'},
         ];
+        vm.mcg = L.markerClusterGroup();
+        vm.datetime_pattern = /^\d{2}\/\d{2}\/\d{4}$/gi;
 
         return {
             map: null,
@@ -198,11 +200,43 @@ module.exports = {
     mounted(){
         let vm = this;
         vm.initMap();
-        vm.addMarkers();
+        vm.loadLocations();
         vm.initAwesomplete();
         vm.$nextTick(() => {
             vm.addEventListeners();
         });
+    },
+    watch: {
+        filterStatus: function () {
+            this.loadLocations();
+        },
+        filterClassification: function() {
+            this.loadLocations();
+        },
+        filterLodgedFrom: function(){
+            if (!this.filterLodgedFrom){
+                /* When empty string */
+                this.loadLocations();
+            } else {
+                let result = this.datetime_pattern.exec(this.filterLodgedFrom);
+                if (result){
+                    /* When date is set */
+                    this.loadLocations();
+                }
+            }
+        },
+        filterLodgedTo: function(){
+            if (!this.filterLodgedTo){
+                /* When empty string */
+                this.loadLocations();
+            } else {
+                let result = this.datetime_pattern.exec(this.filterLodgedTo);
+                if (result){
+                    /* When date is set */
+                    this.loadLocations();
+                }
+            }
+        }
     },
     computed: {
         ...mapGetters('callemailStore', {
@@ -217,7 +251,7 @@ module.exports = {
         addEventListeners: function () {
             let vm = this;
             // Initialise Application Date Filters
-            $(vm.$refs.lodgementDateToPicker).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.lodgementDateToPicker).datetimepicker({ format: 'DD/MM/YYYY' });
             $(vm.$refs.lodgementDateToPicker).on('dp.change', function (e) {
                 if ($(vm.$refs.lodgementDateToPicker).data('DateTimePicker').date()) {
                     vm.filterLodgedTo = e.date.format('DD/MM/YYYY');
@@ -225,7 +259,7 @@ module.exports = {
                     vm.filterLodgedTo = "";
                 }
             });
-            $(vm.$refs.lodgementDateFromPicker).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.lodgementDateFromPicker).datetimepicker({ format: 'DD/MM/YYYY' });
             $(vm.$refs.lodgementDateFromPicker).on('dp.change', function (e) {
                 if ($(vm.$refs.lodgementDateFromPicker).data('DateTimePicker').date()) {
                     vm.filterLodgedFrom = e.date.format('DD/MM/YYYY');
@@ -332,6 +366,7 @@ module.exports = {
             this.map.on('click', this.onClick);
             this.setBaseLayer('osm');
             this.addOtherLayers();
+            this.map.addLayer(this.mcg);
         },
         addOtherLayers(){
             var overlayMaps = {};
@@ -351,63 +386,64 @@ module.exports = {
 
             L.control.layers(null, overlayMaps, {position: 'topleft'}).addTo(this.map);
         },
-        addMarkers(){
+        loadLocations(){
+            this.$http.get(this.opt_url, {params: {
+              "status": this.filterStatus,
+              "classification": this.filterClassification,
+              "lodged_from" : this.filterLodgedFrom,
+              "lodged_to" : this.filterLodgedTo,
+            }}).then(response => {
+                this.addMarkers(response.body);
+            });
+        },
+        addMarkers(call_emails){
             let self = this;
-            var markers = L.markerClusterGroup();
+            self.mcg.clearLayers();
 
-            console.log(this.opt_url);
+            if (call_emails && call_emails.length > 0){
+                for (var i = 0; i < call_emails.length; i++){
+                    if(call_emails[i].location){
+                        let call_email = call_emails[i];
+                        let coords = call_email.location.geometry.coordinates;
 
-            $.ajax({
-                url: this.opt_url,
-                dataType: 'json',
-                success: function(data, status, xhr){
-                    if (data && data.length > 0){
-                        for (var i = 0; i < data.length; i++){
-                            if(data[i].location){
-                                let call_email = data[i];
-                                let coords = call_email.location.geometry.coordinates;
-
-                                /* Select a marker file, according to the classification */
-                                let filename = 'marker-gray-locked.svg';
-                                if (call_email.classification){
-                                    if (call_email.classification.id == 1){
-                                        filename = 'marker-yellow-locked.svg';
-                                    } else if (call_email.classification.id == 2){
-                                        filename = 'marker-green-locked.svg';
-                                    } else if (call_email.classification.id == 3){
-                                        filename = 'marker-red-locked.svg';
-                                    }
-                                }
-
-                                /* create marker */
-                                let myIcon = L.icon({
-                                    iconUrl: require('../../../assets/' + filename),
-                                    shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-                                    shadowSize: [41, 41],
-                                    shadowAnchor: [12, 41],
-                                    iconSize: [32, 32],
-                                    iconAnchor: [16, 32],
-                                    popupAnchor: [0, -20]
-                                });
-                                let myMarker = L.marker([coords[1], coords[0]], {icon: myIcon});
-                                let myPopup = L.popup();
-                                myMarker.bindPopup(myPopup);
-                                markers.addLayer(myMarker);
-
-                                /* dynamically construct content of the popup */
-                                myMarker.on('click', (ev)=>{
-                                    let popup = ev.target.getPopup();
-                                    self.$http.get('/api/call_email/' + call_email.id).then(response => {
-                                        let call_email = response.body;
-                                        popup.setContent(self.construct_content(call_email, coords));
-                                    });
-                                })
+                        /* Select a marker file, according to the classification */
+                        let filename = 'marker-gray-locked.svg';
+                        if (call_email.classification){
+                            if (call_email.classification.id == 1){
+                                filename = 'marker-yellow-locked.svg';
+                            } else if (call_email.classification.id == 2){
+                                filename = 'marker-green-locked.svg';
+                            } else if (call_email.classification.id == 3){
+                                filename = 'marker-red-locked.svg';
                             }
                         }
-                        self.map.addLayer(markers);
+
+                        /* create marker */
+                        let myIcon = L.icon({
+                            iconUrl: require('../../../assets/' + filename),
+                            shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+                            shadowSize: [41, 41],
+                            shadowAnchor: [12, 41],
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 32],
+                            popupAnchor: [0, -20]
+                        });
+                        let myMarker = L.marker([coords[1], coords[0]], {icon: myIcon});
+                        let myPopup = L.popup();
+                        myMarker.bindPopup(myPopup);
+                        self.mcg.addLayer(myMarker);
+
+                        /* dynamically construct content of the popup */
+                        myMarker.on('click', (ev)=>{
+                            let popup = ev.target.getPopup();
+                            self.$http.get('/api/call_email/' + call_email.id).then(response => {
+                                let call_email = response.body;
+                                popup.setContent(self.construct_content(call_email, coords));
+                            });
+                        })
                     }
                 }
-            });
+            }
         },
         construct_content: function (call_email, coords){
             let classification_str = '---';
