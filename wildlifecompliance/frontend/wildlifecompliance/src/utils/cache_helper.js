@@ -15,8 +15,8 @@ let dbName = 'WildlifeCompliance';
 const timeNow = Date.now();
 let expiryDiff = 300000;  // 1 day = 86400000 milliseconds;
 
-module.exports = {
-    getSetCache: async function(store_name, key, url, expiry) {
+//module.exports = {
+    export async function getSetCache(store_name, key, url, expiry) {
         
         let storeInstance = localforage.createInstance({
             name: dbName,
@@ -58,8 +58,8 @@ module.exports = {
         } catch(err) {
             console.error(err);
         }
-    },
-    getSetCacheList: async function(store_name, url, expiry) {
+    }
+    export async function getSetCacheList(store_name, url, expiry) {
         
         try {
             let returned_list = [];
@@ -116,9 +116,10 @@ module.exports = {
                 if (returnedFromUrl.body.results) {
                 returnedFromUrl.body.results
                 .forEach(async (record) => {
+                    let valToStore = [timeNow, record];
                     let new_val = await storeInstance.setItem(
                         record.id.toString(), 
-                        [timeNow, record]
+                        valToStore
                         );
                     returned_list.push(new_val[1]);
                 });
@@ -126,9 +127,10 @@ module.exports = {
                 } else {
                     returnedFromUrl.body
                     .forEach(async (record) => {
-                    let new_val = await storeInstance.setItem(
+                        let valToStore = [timeNow, record];
+                        let new_val = await storeInstance.setItem(
                         record.id.toString(), 
-                        [timeNow, record]
+                        valToStore
                         );
                     returned_list.push(new_val[1]);
                 });
@@ -152,7 +154,6 @@ module.exports = {
         } catch(err) {
             console.log(err);
         }
-        
-                 
-    }
-};
+}
+
+//export { getSetCache, getSetCacheList };
