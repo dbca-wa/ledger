@@ -3,27 +3,37 @@
         <div id="map-filter">
             <div>
                 <label class="">Call/Email Status</label>
-                <select>
-                    <option>Under Construction</option>
+                <select class="form-control" v-model="filterStatus">
+                    <option value="All">All</option>
+                    <option v-for="c in statusChoices" :value="c">{{ c }}</option>
                 </select>
             </div>
             <div>
                 <label class="">Call/Email Classification</label>
-                <select>
-                    <option>Under Construction</option>
+                <select class="form-control" v-model="filterClassification">
+                    <option value="All">All</option>
+                    <option v-for="option in classification_types" :value="option.name" v-bind:key="option.name">
+                        {{ option.name }} 
+                    </option>
                 </select>
             </div>
             <div>
                 <label class="">Lodged From</label>
-                <select>
-                    <option>Under Construction</option>
-                </select>
+                <div class="input-group date" ref="lodgementDateFromPicker">
+                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedFrom">
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
             </div>
             <div>
                 <label class="">Lodged To</label>
-                <select>
-                    <option>Under Construction</option>
-                </select>
+                <div class="input-group date" ref="lodgementDateToPicker">
+                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedTo">
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -45,6 +55,7 @@ import L from 'leaflet';
 import { api_endpoints, helpers } from '@/utils/hooks'
 import 'leaflet.markercluster';  /* This should be imported after leaflet */
 import Awesomplete from 'awesomplete';
+import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
@@ -175,14 +186,49 @@ module.exports = {
             tileLayerSat: null, // Base layer (satelllite)
             popup: null,
             opt_url : helpers.add_endpoint_json(api_endpoints.call_email, "optimised"),
+            filterStatus: 'All',
+            filterClassification: 'All',
+            statusChoices: [],
+            filterLodgedFrom: '',
+            filterLodgedTo: '',
         }
     },
     mounted(){
-        this.initMap();
-        this.addMarkers();
-        this.initAwesomplete();
+        let vm = this;
+        vm.initMap();
+        vm.addMarkers();
+        vm.initAwesomplete();
+        vm.$nextTick(() => {
+            vm.addEventListeners();
+        });
+    },
+    computed: {
+        ...mapGetters('callemailStore', {
+            classification_types: "classification_types",
+            report_types: "report_types",
+        }),
     },
     methods: {
+        addEventListeners: function () {
+            let vm = this;
+            // Initialise Application Date Filters
+            $(vm.$refs.lodgementDateToPicker).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.lodgementDateToPicker).on('dp.change', function (e) {
+                if ($(vm.$refs.lodgementDateToPicker).data('DateTimePicker').date()) {
+                    vm.filterLodgedTo = e.date.format('DD/MM/YYYY');
+                } else if ($(vm.$refs.lodgementDateToPicker).data('date') === "") {
+                    vm.filterLodgedTo = "";
+                }
+            });
+            $(vm.$refs.lodgementDateFromPicker).datetimepicker(vm.datepickerOptions);
+            $(vm.$refs.lodgementDateFromPicker).on('dp.change', function (e) {
+                if ($(vm.$refs.lodgementDateFromPicker).data('DateTimePicker').date()) {
+                    vm.filterLodgedFrom = e.date.format('DD/MM/YYYY');
+                } else if ($(vm.$refs.lodgementDateFromPicker).data('date') === "") {
+                    vm.filterLodgedFrom = "";
+                }
+            });
+        },
         initAwesomplete: function(){
             var self = this;
             var element_search = document.getElementById('search-input');
@@ -434,7 +480,7 @@ module.exports = {
     position: absolute;
     top: 10px;
     right: 10px;
-    z-index: 1000;
+    z-index: 400;
     -moz-box-shadow: 5px 5px 5px #555;
     -webkit-box-shadow: 5px 5px 5px #555;
     box-shadow: 5px 5px 5px #555;
@@ -475,7 +521,7 @@ module.exports = {
     padding: 5px 5px 5px 10px;
 }
 .popup-coords {
-    padding: 10px;
+    padding: 0 0 10px 0;
 }
 .popup-address {
     padding: 10px;
@@ -493,6 +539,7 @@ module.exports = {
 }
 #map-filter{
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
+    padding: 10px;
 }
 </style>

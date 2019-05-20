@@ -1,3 +1,4 @@
+import json
 import traceback
 import os
 import base64
@@ -508,3 +509,11 @@ class EmailUserViewSet(viewsets.ModelViewSet):
     serializer_class = EmailUserSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('first_name', 'last_name', 'email', 'phone_number', 'mobile_number', 'organisation')
+
+
+def type_choices_list(request):
+    res_obj = {}
+    for choice in CallEmail.STATUS_CHOICES:
+        res_obj[choice[0]] = choice[1]
+    res_json = json.dumps(res_obj)
+    return HttpResponse(res_json, content_type='application/json')

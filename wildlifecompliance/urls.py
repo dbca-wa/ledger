@@ -140,6 +140,7 @@ urlpatterns = [
     url(r'^mgt-commands/$',
         views.ManagementCommandsView.as_view(),
         name='mgt-commands'),
+    url(r'^call_email/call_email_types/$', call_email_api.type_choices_list, name='call_email_types'),
 
 ] + ledger_patterns
 
