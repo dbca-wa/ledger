@@ -203,17 +203,8 @@ export default {
   data: function() {
     return {
       classification_types: [],
-      //   {
-      //     id: "", 
-      //     name: "",
-      //   },
-      // ],
-      referrers: [
-        {
-          id: "", 
-          name: "",
-        },
-      ],
+      report_types: [],
+      referrers: [],
       current_schema: [],
       sectionLabel: "Details",
       sectionIndex: 1,
@@ -245,7 +236,7 @@ export default {
     ...mapGetters('callemailStore', {
       call_email: "call_email",
       //classification_types: "classification_types",
-      report_types: "report_types",
+      //report_types: "report_types",
       //referrers: "referrers",
     }),
     ...mapGetters({
@@ -308,11 +299,11 @@ export default {
     ...mapActions('callemailStore', {
       loadCallEmail: "loadCallEmail",
       //loadClassification: "loadClassification",
-      loadReportTypes: "loadReportTypes",
+      //loadReportTypes: "loadReportTypes",
       saveCallEmail: 'saveCallEmail',
       updateSchema: "updateSchema",
-      loadReferrers: "loadReferrers",
-      setClassification: "setClassification",
+      //loadReferrers: "loadReferrers",
+      //setClassification: "setClassification",
       setReportType: "setReportType",
     }),
     ...mapActions({
@@ -373,18 +364,18 @@ export default {
     //   //   cache_helper.getOrSetCache('CallEmail_ClassificationTypes', key, url);
     //   // }
     // },
-    loadReferrers: async function() {
-        console.log("loadReferrers");
-        try {
-            const returnedReferrers = await Vue.http.get(
-                api_endpoints.referrers
-                );
+    // loadReferrers: async function() {
+    //     console.log("loadReferrers");
+    //     try {
+    //         const returnedReferrers = await Vue.http.get(
+    //             api_endpoints.referrers
+    //             );
 
-            this.referrers.push(...returnedReferrers.body.results);
-        } catch (err) {
-                console.error(err);
-        }
-    },
+    //         this.referrers.push(...returnedReferrers.body.results);
+    //     } catch (err) {
+    //             console.error(err);
+    //     }
+    // },
     loadSchema: async function(new_report_type_id) {
         console.log("loadSchema");
         if (this.report_type_id || new_report_type_id) {
@@ -467,12 +458,33 @@ export default {
     // load drop-down select lists
     //this.loadClassification();
     
-    await this.loadReportTypes();
-    await this.loadReferrers();
-    let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', api_endpoints.classification);
+    //await this.loadReportTypes();
+    //await this.loadReferrers();
+    // classification_types
+    let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', helpers.add_endpoint_json(api_endpoints.classification));
     Object.assign(this.classification_types, returned_classification_types);
-    // insert blank entry to enable user to clear selection
+    // blank entry allows user to clear selection
     this.classification_types.splice(0, 0, 
+      {
+        id: "", 
+        name: "",
+      });
+    //report_types
+    let returned_report_types = await cache_helper.getSetCacheList('CallEmail_ReportTypes', helpers.add_endpoint_json(
+                    api_endpoints.report_types,
+                    'get_distinct_queryset'));
+    Object.assign(this.report_types, returned_report_types);
+    // blank entry allows user to clear selection
+    this.report_types.splice(0, 0, 
+      {
+        id: "", 
+        name: "",
+      });
+    // referrers
+    let returned_referrers = await cache_helper.getSetCacheList('CallEmail_Referrers', helpers.add_endpoint_json(api_endpoints.referrers));
+    Object.assign(this.referrers, returned_referrers);
+    // blank entry allows user to clear selection
+    this.referrers.splice(0, 0, 
       {
         id: "", 
         name: "",

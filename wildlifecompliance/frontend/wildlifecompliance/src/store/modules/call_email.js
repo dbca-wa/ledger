@@ -226,42 +226,42 @@ export const callemailStore = {
         //         console.error(err);
         //     }
         // },
-        async loadReportTypes({
-            state,
-            dispatch,
-        }) {
-            console.log("loadReportTypes");
-            try {
-            const returnedReportTypes = await Vue.http.get(
-                helpers.add_endpoint_json(
-                    api_endpoints.report_types,
-                    'get_distinct_queryset')
-                //api_endpoints.report_types
-                );
-            // Clear existing report_type entries
-            await dispatch("setReportTypeEntry", null);
+        // async loadReportTypes({
+        //     state,
+        //     dispatch,
+        // }) {
+        //     console.log("loadReportTypes");
+        //     try {
+        //     const returnedReportTypes = await Vue.http.get(
+        //         helpers.add_endpoint_json(
+        //             api_endpoints.report_types,
+        //             'get_distinct_queryset')
+        //         //api_endpoints.report_types
+        //         );
+        //     // Clear existing report_type entries
+        //     await dispatch("setReportTypeEntry", null);
             
-            for (let report_type_entry of returnedReportTypes.body) {
-                await dispatch("setReportTypeEntry", report_type_entry);
-            }
-            // insert current CallEmail report type if not in report_types
-            let reportTypeMatches = 0;
-            if (state.call_email.report_type) {
-                state.report_types.findIndex((report_type) => {
-                    if (report_type.id === state.call_email.report_type.id) {
-                        reportTypeMatches += 1;
-                    }
-                });
-            console.log("reportTypeMatches");
-            console.log(reportTypeMatches);
-            if (!(reportTypeMatches > 0)) {
-                await dispatch("setReportTypeEntry", state.call_email.report_type);
-                }
-            }
-            } catch (err) {
-                console.error(err);
-            }
-        },        
+        //     for (let report_type_entry of returnedReportTypes.body) {
+        //         await dispatch("setReportTypeEntry", report_type_entry);
+        //     }
+        //     // insert current CallEmail report type if not in report_types
+        //     let reportTypeMatches = 0;
+        //     if (state.call_email.report_type) {
+        //         state.report_types.findIndex((report_type) => {
+        //             if (report_type.id === state.call_email.report_type.id) {
+        //                 reportTypeMatches += 1;
+        //             }
+        //         });
+        //     console.log("reportTypeMatches");
+        //     console.log(reportTypeMatches);
+        //     if (!(reportTypeMatches > 0)) {
+        //         await dispatch("setReportTypeEntry", state.call_email.report_type);
+        //         }
+        //     }
+        //     } catch (err) {
+        //         console.error(err);
+        //     }
+        // },        
         async saveCallEmail({ dispatch, state, rootGetters}, { route, crud }) {
             console.log("saveCallEmail");
             let callId = null;

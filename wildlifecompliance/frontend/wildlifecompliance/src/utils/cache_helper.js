@@ -84,13 +84,15 @@ module.exports = {
                 // ensure store is empty
                 await storeInstance.clear();
                 // populate store
-                returnedFromUrl.body.results
+                if (returnedFromUrl) {
+                returnedFromUrl.body
                 .forEach(async (record) => {
                     await storeInstance.setItem(
                         record.id.toString(), 
                         [timeNow, record]
                         );
                 });
+                }
             }
             // Now populate the returned list from cache
             await storeInstance.iterate((value, key, iterationNumber) => {
