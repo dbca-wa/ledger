@@ -7,7 +7,9 @@ from wildlifecompliance.components.licences.models import (
 from wildlifecompliance.components.applications.serializers import (
     BaseApplicationSerializer,
     DTInternalApplicationSerializer,
-    DTExternalApplicationSerializer
+    DTExternalApplicationSerializer,
+    ApplicationSelectedActivitySerializer,
+    ExternalApplicationSelectedActivitySerializer
 )
 from rest_framework import serializers
 
@@ -43,6 +45,7 @@ class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
         source='licence_document._file.url')
     current_application = DTInternalApplicationSerializer(read_only=True)
     last_issue_date = serializers.SerializerMethodField(read_only=True)
+    current_activities = ApplicationSelectedActivitySerializer(many=True, read_only=True)
 
     class Meta:
         model = WildlifeLicence
@@ -52,6 +55,7 @@ class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
             'licence_document',
             'current_application',
             'last_issue_date',
+            'current_activities'
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render
@@ -67,6 +71,7 @@ class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
         source='licence_document._file.url')
     current_application = DTExternalApplicationSerializer(read_only=True)
     last_issue_date = serializers.SerializerMethodField(read_only=True)
+    current_activities = ExternalApplicationSelectedActivitySerializer(many=True, read_only=True)
 
     class Meta:
         model = WildlifeLicence
@@ -76,6 +81,7 @@ class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
             'licence_document',
             'current_application',
             'last_issue_date',
+            'current_activities'
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render

@@ -62,6 +62,45 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
         return ','.join([p.short_name for p in obj.purposes])
 
 
+class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer):
+    activity_name_str = serializers.SerializerMethodField(read_only=True)
+    issue_date = serializers.SerializerMethodField(read_only=True)
+    start_date = serializers.SerializerMethodField(read_only=True)
+    expiry_date = serializers.SerializerMethodField(read_only=True)
+    activity_purpose_names = serializers.SerializerMethodField(read_only=True)
+    processing_status = CustomChoiceField(read_only=True)
+
+    class Meta:
+        model = ApplicationSelectedActivity
+        fields = (
+            'activity_name_str',
+            'issue_date',
+            'start_date',
+            'expiry_date',
+            'activity_purpose_names',
+            'processing_status'
+        )
+        # the serverSide functionality of datatables is such that only columns that have field 'data'
+        # defined are requested from the serializer. Use datatables_always_serialize to force render
+        # of fields that are not listed as 'data' in the datatable columns
+        datatables_always_serialize = fields
+
+    def get_activity_name_str(self, obj):
+        return obj.licence_activity.name if obj.licence_activity else ''
+
+    def get_issue_date(self, obj):
+        return obj.issue_date.strftime('%Y/%m/%d %H:%M') if obj.issue_date else ''
+
+    def get_start_date(self, obj):
+        return obj.start_date.strftime('%Y/%m/%d') if obj.start_date else ''
+
+    def get_expiry_date(self, obj):
+        return obj.expiry_date.strftime('%Y/%m/%d') if obj.expiry_date else ''
+
+    def get_activity_purpose_names(self, obj):
+        return ','.join([p.short_name for p in obj.purposes])
+
+
 class EmailUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailUser
@@ -364,6 +403,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 class DTInternalApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(read_only=True)
+    org_applicant = OrganisationSerializer()
     proxy_applicant = EmailUserSerializer()
     processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
     customer_status = CustomChoiceField(read_only=True)
@@ -383,6 +423,7 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
             'processing_status',
             'applicant',
             'proxy_applicant',
+            'org_applicant',
             'submitter',
             'lodgement_number',
             'lodgement_date',

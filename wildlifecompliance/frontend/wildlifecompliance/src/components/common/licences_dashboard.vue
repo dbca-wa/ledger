@@ -124,6 +124,9 @@ export default {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
+                rowCallback: function (row, data){
+                    $(row).addClass('licRecordRow');
+                },
                 responsive: true,
                 ajax: {
                     "url": vm.url,
@@ -173,6 +176,12 @@ export default {
                     {
                         mRender:function (data,type,full) {
                             let links = '';
+                            let org_id = full.current_application.org_applicant ? full.current_application.org_applicant.id : ''
+                            let proxy_id = full.current_application.proxy_applicant ? full.current_application.proxy_applicant.id : ''
+                            console.log(full);
+                            console.log(full.current_application.org_applicant);
+                            console.log(org_id);
+                            links +=  `<a href='#${full.id}' add-activity-purpose='${full.id}' org_id='${org_id}' proxy_id='${proxy_id}'>Add Activity/Purpose</a><br/>`;
                             return links;
                         },
                         orderable: false,
@@ -280,6 +289,64 @@ export default {
                 var selected = $(e.currentTarget);
                 vm.filterLicenceHolder = selected.val();
             });
+            // Add Activity/Purpose listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[add-activity-purpose]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('add-activity-purpose');
+                var org_id = $(this).attr('org_id');
+                var proxy_id = $(this).attr('proxy_id');
+                vm.addActivityPurpose(id, org_id, proxy_id);
+            });
+            // Child row listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'tr.licRecordRow', function(e) {
+                // If a link is clicked, ignore
+                if($(e.target).is('a')){
+                    return;
+                }
+                // Generate child row for application
+                var tr = $(this);
+                var row = vm.$refs.licence_datatable.vmDataTable.row(tr);
+
+                if (row.child.isShown()) {
+                    // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('shown');
+                }
+                else {
+                    // Open this row (the format() function would return the data to be shown)
+                    var child_row = ''
+                    // Generate rows for each activity if internal
+                    var activity_rows = ''
+                    row.data()['current_activities'].forEach(function(activity) {
+                        activity_rows += `
+                            <tr>
+                                <td>${activity['activity_name_str']}</td>
+                                <td>${activity['activity_purpose_names'].
+                                    replace(/(?:\r\n|\r|\n|,)/g, '<br>')}</td>
+                                <td>${activity['processing_status']['name']}</td>
+                                <td>${activity['expiry_date']}</td>
+                                <td></td>
+                            </tr>`;
+                    });
+                    // Generate html for child row
+                    child_row += `
+                        <table class="table table-striped table-bordered child-row-table">
+                            <tr>
+                                <th>Activity</th>
+                                <th class="width_55pc">Purposes</th>
+                                <th class="width_20pc">Status</th>
+                                <th class="width_20pc">Expiry Date</th>
+                                <th class="width_20pc">Action</th>
+                            </tr>
+                            ${activity_rows}
+                        </table>`;
+                    // Show child row, dark-row className CSS applied from application.scss
+                    row.child(
+                        child_row
+                        , 'dark-row').show();
+                    tr.addClass('shown');
+                }
+            });
 
         },
         initialiseSearch:function(){
@@ -334,6 +401,16 @@ export default {
         },
         getColumnIndex: function(column_name) {
             return this.licence_headers.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
+        },
+        addActivityPurpose:function (licence_id, org_id, proxy_id) {
+            return this.$router.push({
+                name: "apply_application_licence",
+                params: {
+                    licence_select: 'new_activity',
+                    org_select: org_id,
+                    proxy_select: proxy_id
+                }
+            });
         },
 //        filterByColumn: function(column, filterAttribute) {
 //            const column_idx = this.getColumnIndex(column);
