@@ -349,13 +349,10 @@ def generate_mooring_rate(mooringsites_qs,start_date, end_date, duration):
          date_rotate_forward = start_date+timedelta(days=i)
          mooring_rate[date_rotate_forward] = {}
          for mrr in mr_resp:
-            print ("DATE CHECKS")
-            print (mrr.date_start)
             # this is to account for None end dates..
             if mrr.date_end is None:
                 mrr.date_end = datetime.today().date()+timedelta(days=90)
                 #+timedelta(days=90)
-            print (mrr.date_end)
             if mrr.date_start <= date_rotate_forward and mrr.date_end >= date_rotate_forward:
                 #print (str(mrr.id)+' '+str(mrr.date_start)+' '+str(mrr.date_end)+' '+str(mrr.campsite.id) )
             #mooring_rate[date_rotate_forward] = {}
