@@ -66,11 +66,7 @@
     import datatable from '@vue-utils/datatable.vue'
     import MapLocations from "./map_locations.vue";
     import Vue from 'vue'
-    import {
-        api_endpoints,
-        helpers
-    }
-    from '@/utils/hooks'
+    import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
     import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
     import FormSection from "@/components/compliance_forms/section.vue";
     export default {
@@ -78,6 +74,8 @@
         data() {
             let vm = this;
             return {
+                classification_types: [],
+                report_types: [],
                 // Filters
                 filterStatus: 'All',
                 filterClassification: 'All',
@@ -205,9 +203,22 @@
             },
         },
 
-        created: function() {
-            this.loadClassification();
-            this.loadReportTypes();
+        created: async function() {
+
+                // // load drop-down select lists
+                // // classification_types
+                // let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
+                // if (returned_classification_types.length > 0) {
+                //     returned_classification_types.forEach((value) => {
+                //         this.classification_types.push(value);
+                //     });
+                //     // Object.assign(this.classification_types, returned_classification_types);
+
+                //     // console.log("returned_classification_types");
+                //     // console.log(returned_classification_types);
+                // }
+                // console.log("this.classification_types");
+                // console.log(this.classification_types);
         },
         components: {
             datatable,
@@ -216,14 +227,14 @@
         },
         computed: {
             ...mapGetters('callemailStore', {
-                classification_types: "classification_types",
-                report_types: "report_types",
+                //classification_types: "classification_types",
+                //report_types: "report_types",
             }),
         },
         methods: {
             ...mapActions('callemailStore', {
-                loadClassification: "loadClassification",
-                loadReportTypes: "loadReportTypes",
+                //loadClassification: "loadClassification",
+                //loadReportTypes: "loadReportTypes",
                 saveCallEmail: "saveCallEmail",
             }),
             
@@ -300,10 +311,40 @@
                     $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
                 }, 100);
             });
-            this.$nextTick(() => {
-                vm.initialiseSearch();
-                vm.addEventListeners();
+            this.$nextTick(async () => {
+                // load drop-down select lists
+                // classification_types
+                let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
+                console.log("returned_classification_types");
+                console.log(returned_classification_types);
+                console.log(typeof(returned_classification_types));
+                console.log(returned_classification_types.length);
+
+
+                if (returned_classification_types) {
+                    returned_classification_types.forEach((value) => {
+                        console.log("returned_classification_types - inside loop");
+                        console.log(returned_classification_types);
+                        console.log("value");
+                        console.log(value);
+                        this.classification_types.push(value);
+                    });
+                }
+                //Object.assign(this.classification_types, returned_classification_types);
+
+                    // console.log("returned_classification_types");
+                    // console.log(returned_classification_types);
+                //}
+                console.log("this.classification_types");
+                console.log(this.classification_types);
+
+                await vm.initialiseSearch();
+                await vm.addEventListeners();
+
+                
             });
+            
+
         }
     }
 </script>

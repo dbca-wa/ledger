@@ -25,7 +25,8 @@ module.exports = {
         if (expiry) {
             expiryDiff = expiry;
         }
-        
+        await storeInstance.ready();
+
         try {
             let retrieved_val = await storeInstance.getItem(
               key);
@@ -39,6 +40,8 @@ module.exports = {
             }
             else {
                 let returnedFromUrl = await Vue.http.get(url);
+                console.log("returnedFromUrl");
+                console.log(returnedFromUrl);
                 // url returns individual record (eg. @detail_route)
                 if (returnedFromUrl.body.id) {
                     // assumes that every record has an id element
@@ -57,6 +60,7 @@ module.exports = {
         }
     },
     getSetCacheList: async function(store_name, url, expiry) {
+        
         try {
             let returned_list = [];
             if (expiry) {
@@ -66,41 +70,89 @@ module.exports = {
                 name: dbName,
                 storeName: store_name,
             });
-            
-            let keys = await storeInstance.keys();
+            await storeInstance.ready();
+
+            let store_keys = await storeInstance.keys();
             // existing store
-            if (keys.length > 0) {
+            if (store_keys.length > 0) {
                 // Clear store if stale
                 // We only need to check the first entry, since all store values are written at the same time
-                let firstEntry = await storeInstance.getItem(keys[0]);
+                let firstEntry = await storeInstance.getItem(store_keys[0]);
+                console.log("firstEntry");
+                console.log(firstEntry);
                 let timeDiff = timeNow - firstEntry[0];
-                        // ensure cached value is not stale
-                        if (timeDiff > expiryDiff) {
-                            await storeInstance.clear();
+                // ensure cached value is not stale
+                if (timeDiff > expiryDiff) {
+                    store_keys.forEach(async (store_key) => {
+                        await storeInstance.removeItem(store_key);
+                    });
+                    //await storeInstance.ready();
+                } else {
+                    store_keys.forEach(async (store_key) => {
+                        let this_val = await storeInstance.getItem(store_key);
+                        if (this_val) {
+                            returned_list.push(this_val[1]);
                         }
-            } else {
+                    });
+                }
+                // await storeInstance.iterate((value, key, iterationNumber) => {
+                //     returned_list.push(value[1]);
+                // });
+            
+            } 
+            await storeInstance.ready();
+            store_keys = await storeInstance.keys();
+            console.log("store_keys");
+            console.log(store_keys);
+            if ((store_keys.length == 0)) {
                 // empty store - get data from url
                 let returnedFromUrl = await Vue.http.get(url);
+                console.log("returnedFromUrl");
+                console.log(returnedFromUrl);
                 // ensure store is empty
-                await storeInstance.clear();
-                // populate store
-                if (returnedFromUrl) {
-                returnedFromUrl.body
+                //await storeInstance.clear();
+                //await storeInstance.ready();
+                // populate store - switch accounts for DRF method using @renderer_classes((JSONRenderer,))
+                if (returnedFromUrl.body.results) {
+                returnedFromUrl.body.results
                 .forEach(async (record) => {
-                    await storeInstance.setItem(
+                    let new_val = await storeInstance.setItem(
                         record.id.toString(), 
                         [timeNow, record]
                         );
+                    returned_list.push(new_val[1]);
+                });
+                
+                } else {
+                    returnedFromUrl.body
+                    .forEach(async (record) => {
+                    let new_val = await storeInstance.setItem(
+                        record.id.toString(), 
+                        [timeNow, record]
+                        );
+                    returned_list.push(new_val[1]);
                 });
                 }
+                
             }
+            // Ensure cached records are available to read
+            //await storeInstance.ready();
             // Now populate the returned list from cache
-            await storeInstance.iterate((value, key, iterationNumber) => {
-                returned_list.push(value[1]);
-            });
+            // await storeInstance.iterate((value, key, iterationNumber) => {
+            //     returned_list.push(value[1]);
+            // });
+            // console.log(returned_list);        
+            // return returned_list;   
+                
+            await storeInstance.ready();
+            console.log("returned_list");
+            console.log(returned_list);
             return returned_list;
+
         } catch(err) {
             console.log(err);
         }
+        
+                 
     }
 };

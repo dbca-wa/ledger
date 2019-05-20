@@ -57,7 +57,7 @@ from wildlifecompliance.components.call_email.serializers import (
     ReportTypeSerializer,
     SaveCallEmailSerializer,
     CreateCallEmailSerializer,
-    UpdateSchemaSerializer,
+    ReportTypeSchemaSerializer,
     ReferrerSerializer,
     LocationSerializerMinimum, CallEmailOptimisedSerializer)
 from utils import SchemaParser
@@ -413,33 +413,33 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
     
-    @detail_route(methods=['POST', ])
-    def update_schema(self, request, *args, **kwargs):
-        print("request.data")
-        print(request.data)
-        instance = self.get_object()
-        if request.data.get('report_type_id'):
-            try:
-                serializer = UpdateSchemaSerializer(instance, data=request.data)
-                serializer.is_valid(raise_exception=True)
-                if serializer.is_valid():
-                    serializer.save()
-                    headers = self.get_success_headers(serializer.data)
-                    returned_data = serializer.data
-                    return Response(
-                        serializer.data,
-                        status=status.HTTP_201_CREATED,
-                        headers=headers
-                        )
-            except serializers.ValidationError:
-                print(traceback.print_exc())
-                raise
-            except ValidationError as e:
-                print(traceback.print_exc())
-                raise serializers.ValidationError(repr(e.error_dict))
-            except Exception as e:
-                print(traceback.print_exc())
-                raise serializers.ValidationError(str(e))
+    # @detail_route(methods=['POST', ])
+    # def update_schema(self, request, *args, **kwargs):
+    #     print("request.data")
+    #     print(request.data)
+    #     instance = self.get_object()
+    #     if request.data.get('report_type_id'):
+    #         try:
+    #             serializer = UpdateSchemaSerializer(instance, data=request.data)
+    #             serializer.is_valid(raise_exception=True)
+    #             if serializer.is_valid():
+    #                 serializer.save()
+    #                 headers = self.get_success_headers(serializer.data)
+    #                 returned_data = serializer.data
+    #                 return Response(
+    #                     serializer.data,
+    #                     status=status.HTTP_201_CREATED,
+    #                     headers=headers
+    #                     )
+    #         except serializers.ValidationError:
+    #             print(traceback.print_exc())
+    #             raise
+    #         except ValidationError as e:
+    #             print(traceback.print_exc())
+    #             raise serializers.ValidationError(repr(e.error_dict))
+    #         except Exception as e:
+    #             print(traceback.print_exc())
+    #             raise serializers.ValidationError(str(e))
 
 
 class ClassificationViewSet(viewsets.ModelViewSet):
@@ -489,6 +489,28 @@ class ReportTypeViewSet(viewsets.ModelViewSet):
 
                 return_list.append(qs_record)
         return Response(return_list)
+
+    @detail_route(methods=['GET',])
+    @renderer_classes((JSONRenderer,))
+    def get_schema(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            serializer = ReportTypeSchemaSerializer(instance)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                )
+                
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+   
 
 
 class LocationViewSet(viewsets.ModelViewSet):

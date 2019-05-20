@@ -161,7 +161,7 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             )
 
 
-class UpdateSchemaSerializer(serializers.ModelSerializer):
+class ReportTypeSchemaSerializer(serializers.ModelSerializer):
     report_type_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)        
 
