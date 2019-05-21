@@ -1510,10 +1510,14 @@ class Application(RevisionedMixin):
     @staticmethod
     def get_activity_date_filter(for_application_type, prefix=''):
         current_date = timezone.now().date()
-        date_filter = {'{}expiry_date__gte'.format(prefix): current_date}
+        date_filter = {
+            '{}expiry_date__isnull'.format(prefix): False,
+            '{}expiry_date__gte'.format(prefix): current_date
+        }
         if for_application_type == Application.APPLICATION_TYPE_RENEWAL:
             expires_at = current_date + datetime.timedelta(days=settings.RENEWAL_PERIOD_DAYS)
             date_filter = {
+                '{}expiry_date__isnull'.format(prefix): False,
                 '{}expiry_date__gte'.format(prefix): current_date,
                 '{}expiry_date__lte'.format(prefix): expires_at,
             }
@@ -1527,6 +1531,12 @@ class Application(RevisionedMixin):
         return ApplicationSelectedActivity.objects.filter(
             application_id__in=applications.values_list('id', flat=True),
             **date_filter
+        ).exclude(
+            activity_status__in=[
+                ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
+            ]
         ).distinct()
 
     @staticmethod
