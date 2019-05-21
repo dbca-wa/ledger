@@ -71,7 +71,7 @@
     //      const getSetCacheList = await import('../../../utils/cache_helper.js'); 
     // }
     // const getSetCacheList = main();
-    import { getSetCache, getSetCacheList } from '../../../utils/cache_helper.js'
+    //import { getSetCache, getSetCacheList } from '../../../utils/cache_helper.js'
     //import getSetCache from './../../../utils/getSetCache';
     //import getSetCacheList from './../../../utils/getSetCacheList';
     import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
@@ -210,9 +210,31 @@
             },
         },
 
-        created: function() {
+        created: async function() {
+                const { getSetCache, getSetCacheList } = await import('../../../utils/cache_helper.js');
+                let returned_classification_types = await getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
 
-                
+                console.log("returned_classification_types");
+                console.log(returned_classification_types);
+                console.log(typeof(returned_classification_types));
+                console.log(returned_classification_types.length);
+
+                if (returned_classification_types) {
+                    returned_classification_types.forEach((value) => {
+                        console.log("returned_classification_types - inside loop");
+                        console.log(returned_classification_types);
+                        console.log("value");
+                        console.log(value);
+                        this.classification_types.push(value);
+                    });
+                }
+                //Object.assign(this.classification_types, returned_classification_types);
+
+                    // console.log("returned_classification_types");
+                    // console.log(returned_classification_types);
+                //}
+                console.log("this.classification_types");
+                console.log(this.classification_types);
                 
                 // // load drop-down select lists
                 // // classification_types
@@ -321,41 +343,41 @@
                 }, 100);
             });
             this.$nextTick(async () => {
-                // load drop-down select lists
-                // classification_types
-                // console.log(cache_helper.filename);  
-                // console.log(cache_helper.id);  
-                // console.log(cache_helper.exports);  
-                let returned_classification_types_promise = new Promise((resolve, reject) => { 
-                    resolve(getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json'));
-                    //resolve();
-                }).then((returned_classification_types) => {
-                    //let returned_classification_types = getSetCacheList;
-                    console.log("returned_classification_types");
-                    console.log(returned_classification_types);
-                    console.log(typeof(returned_classification_types));
-                    console.log(returned_classification_types.length);
+                // // load drop-down select lists
+                // // classification_types
+                // // console.log(cache_helper.filename);  
+                // // console.log(cache_helper.id);  
+                // // console.log(cache_helper.exports);  
+                // let returned_classification_types_promise = new Promise((resolve, reject) => { 
+                //     resolve(getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json'));
+                //     //resolve();
+                // }).then((returned_classification_types) => {
+                //     //let returned_classification_types = getSetCacheList;
+                //     console.log("returned_classification_types");
+                //     console.log(returned_classification_types);
+                //     console.log(typeof(returned_classification_types));
+                //     console.log(returned_classification_types.length);
 
 
-                    if (returned_classification_types) {
-                        returned_classification_types.forEach((value) => {
-                            console.log("returned_classification_types - inside loop");
-                            console.log(returned_classification_types);
-                            console.log("value");
-                            console.log(value);
-                            this.classification_types.push(value);
-                        });
-                    }
-                    //Object.assign(this.classification_types, returned_classification_types);
+                //     if (returned_classification_types) {
+                //         returned_classification_types.forEach((value) => {
+                //             console.log("returned_classification_types - inside loop");
+                //             console.log(returned_classification_types);
+                //             console.log("value");
+                //             console.log(value);
+                //             this.classification_types.push(value);
+                //         });
+                //     }
+                //     //Object.assign(this.classification_types, returned_classification_types);
 
-                        // console.log("returned_classification_types");
-                        // console.log(returned_classification_types);
-                    //}
-                    console.log("this.classification_types");
-                    console.log(this.classification_types);
-                });
-                console.log("returned_classification_types_promise");
-                console.log(returned_classification_types_promise);
+                //         // console.log("returned_classification_types");
+                //         // console.log(returned_classification_types);
+                //     //}
+                //     console.log("this.classification_types");
+                //     console.log(this.classification_types);
+                // });
+                // console.log("returned_classification_types_promise");
+                // console.log(returned_classification_types_promise);
                 await vm.initialiseSearch();
                 await vm.addEventListeners();
             });
