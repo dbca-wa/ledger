@@ -20,7 +20,9 @@ export const userStore = {
                 return false;
             }
             return rootGetters.application.user_roles.find(
-                role_record => role_record.role == role && (!activity_id || activity_id == role_record.activity_id)
+                role_record =>
+                (role.constructor === Array ? role : [role]
+                    ).includes(role_record.role) && (!activity_id || activity_id == role_record.activity_id)
             );
         },
         visibleConditionsFor: (state, getters, rootState, rootGetters) => (for_role, processing_status, tab_id) => {
