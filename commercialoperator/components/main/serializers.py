@@ -50,7 +50,7 @@ class ParkSerializer(serializers.ModelSerializer):
     zones=ZoneSerializer(many=True)
     class Meta:
         model = Park
-        fields=('id', 'zones', 'name', 'code', 'park_type', 'allowed_activities', 'zone_ids', 'adult', 'child', 'senior')
+        fields=('id', 'zones', 'name', 'code', 'park_type', 'allowed_activities', 'zone_ids', 'adult_price', 'child_price', 'oracle_code')
 
 class DistrictSerializer(serializers.ModelSerializer):
     land_parks = ParkSerializer(many=True)

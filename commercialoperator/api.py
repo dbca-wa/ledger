@@ -8,160 +8,83 @@ from django.http import HttpResponseRedirect, HttpResponse
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser,update_payments
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
+from django.views.decorators.http import require_http_methods
+from commercialoperator.context_processors import commercialoperator_url, template_context
+from commercialoperator.components.proposals.models import Booking, ParkBooking
+from commercialoperator.helpers import is_internal
+from commercialoperator import pdf
 
 
-class PaymentViewSet(viewsets.ModelViewSet):
-    #import ipdb; ipdb.set_trace()
-    #queryset = Proposal.objects.all()
-    queryset = Proposal.objects.none()
-    serializer_class = ProposalSerializer
-    lookup_field = 'id'
+@require_http_methods(['GET'])
+def get_confirmation(request, *args, **kwargs):
 
-    @detail_route(methods=['POST',])
-    @renderer_classes((JSONRenderer,))
-    def add_comms_log(self, request, *args, **kwargs):
-        try:
-            with transaction.atomic():
-                instance = self.get_object()
-                request.data['proposal'] = u'{}'.format(instance.id)
-                request.data['staff'] = u'{}'.format(request.user.id)
-                serializer = ProposalLogEntrySerializer(data=request.data)
-                serializer.is_valid(raise_exception=True)
-                comms = serializer.save()
-                # Save the files
-                for f in request.FILES:
-                    document = comms.documents.create()
-                    document.name = str(request.FILES[f])
-                    document._file = request.FILES[f]
-                    document.save()
-                # End Save Documents
+    # Get branding configuration
+    context_processor = template_context(request)
+    # fetch booking for ID
+    booking_id = kwargs.get('booking_id', None)
+    if (booking_id is None):
+        return HttpResponse('Booking ID not specified', status=400)
 
-                return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+    try:
+        booking = Booking.objects.get(id=booking_id)
+    except Booking.DoesNotExist:
+        return HttpResponse('Booking unavailable', status=403)
 
+    try:
+        park_bookings = ParkBooking.objects.filter(booking=booking).order_by('arrival')
+    except ParkBooking.DoesNotExist:
+        return HttpResponse('Park Booking unavailable', status=403)
 
-    @detail_route(methods=['POST',])
-    @renderer_classes((JSONRenderer,))
-    def post(self, request, *args, **kwargs):
+    # check permissions
+    #if not ((request.user == booking.proposal.submitter) or is_officer(request.user) or (booking.id == request.session.get('ps_last_booking', None))):
+    if not ((request.user == booking.proposal.submitter) or is_internal(request) or (booking.id == request.session.get('cols_booking', None))):
+        return HttpResponse('Booking unavailable', status=403)
 
-        try:
-            with transaction.atomic():
-                instance = self.get_object()
-                self.create_lines(request):
-                self.checkout(request, booking, lines):
+    # check payment status
+    #if (not is_officer(request.user)) and (not booking.paid):
+    if (not is_internal(request)) and (not booking.paid):
+        return HttpResponse('Booking unavailable', status=403)
 
-                data = [dict(key='My Response')]
-                return Response(data)
-                #return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'filename="confirmation-PS{}.pdf"'.format(booking_id)
 
+    response.write(pdf.create_confirmation(response, booking, park_bookings, context_processor))
+    return response
 
-    def create_lines(self, request, invoice_text=None, vouchers=[], internal=False):
-        """ Create the ledger lines - line items for invoice sent to payment system """
+@require_http_methods(['GET'])
+def _get_confirmation(request, *args, **kwargs):
 
-        lines = []
-        for row in request.data.get('tbody'):
-            park_id = row[0]['value']
-            arrival = row[1]
-            no_adults = int(row[2])
-            no_children = int(row[3])
-            park= Park.objects.get(id=park_id)
-            ledger_description = row[1] + '. ' + park.name + ' (' + row[2] + ' Adults' + ')'
-            oracle_code = 'ABC123 GST'
-            price_incl_tax = str(park.adult * int(no_adults))
-            quantity = 1
+    # Get branding configuration
+    context_processor = template_context(request)
+    # fetch booking for ID
+    booking_id = kwargs.get('booking_id', None)
+    if (booking_id is None):
+        return HttpResponse('Booking ID not specified', status=400)
 
-            if row[1]:
-                llines.append(dict(
-                    ledger_description = arrival + '. ' + park.name + ' (' + str(no_adults) + ' Adults' + ')',
-                    oracle_code = 'ABC123 GST',
-                    price_incl_tax = Decimal(park.adult * int(no_adults)),
-                    quantity = 1
-                ))
-                print arrival + '. ' + park.name + '. Adults: ' + str(no_adults) + ', Price: ' + str(park.adult * int(no_adults))
+    try:
+        booking = Booking.objects.get(id=booking_id)
+    except Booking.DoesNotExist:
+        return HttpResponse('Booking unavailable', status=403)
 
-            if row[2]:
+    try:
+        park_bookings = ParkBooking.objects.filter(booking=booking).order_by('arrival')
+    except ParkBooking.DoesNotExist:
+        return HttpResponse('Park Booking unavailable', status=403)
 
-                lines.append(dict(
-                    ledger_description = arrival + '. ' + park.name + ' (' + str(no_children) + ' Children' + ')',
-                    oracle_code = 'ABC123 GST',
-                    price_incl_tax = Decimal(park.child * int(no_children)),
-                    quantity = 1
-                ))
-                print arrival + '. ' + park.name + '. Children: ' + str(no_children) + ', Price: ' + str(park.child * int(no_children))
+    # check permissions
+    #if not ((request.user == booking.proposal.submitter) or is_officer(request.user) or (booking.id == request.session.get('ps_last_booking', None))):
+    if not ((request.user == booking.proposal.submitter) or is_internal(request) or (booking.id == request.session.get('cols_booking', None))):
+        return HttpResponse('Booking unavailable', status=403)
 
+    # check payment status
+    #if (not is_officer(request.user)) and (not booking.paid):
+    if (not is_internal(request)) and (not booking.paid):
+        return HttpResponse('Booking unavailable', status=403)
 
-    def checkout(self, request, booking, lines, invoice_text=None, vouchers=[], internal=False):
-        import ipdb; ipdb.set_trace()
-        basket_params = {
-            'products': lines,
-            'vouchers': vouchers,
-            'system': settings.PS_PAYMENT_SYSTEM_ID,
-            'custom_basket': True,
-        }
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'filename="confirmation-PS{}.pdf"'.format(booking_id)
 
-        basket, basket_hash = create_basket_session(request, basket_params)
-        checkout_params = {
-            'system': settings.PS_PAYMENT_SYSTEM_ID,
-            'fallback_url': request.build_absolute_uri('/'),                                      # 'http://mooring-ria-jm.dbca.wa.gov.au/'
-            'return_url': request.build_absolute_uri(reverse('public_booking_success')),          # 'http://mooring-ria-jm.dbca.wa.gov.au/success/'
-            'return_preload_url': request.build_absolute_uri(reverse('public_booking_success')),  # 'http://mooring-ria-jm.dbca.wa.gov.au/success/'
-            'force_redirect': True,
-            'proxy': True if internal else False,
-            'invoice_text': invoice_text,                                                         # 'Reservation for Jawaid Mushtaq from 2019-05-17 to 2019-05-19 at RIA 005'
-        }
-#    if not internal:
-#        checkout_params['check_url'] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
-        if internal or request.user.is_anonymous():
-            checkout_params['basket_owner'] = booking.customer.id
+    response.write(pdf.create_confirmation(response, booking, park_bookings, context_processor))
+    return response
 
-
-        create_checkout_session(request, checkout_params)
-
-#    if internal:
-#        response = place_order_submission(request)
-#    else:
-        response = HttpResponseRedirect(reverse('checkout:index'))
-        # inject the current basket into the redirect response cookies
-        # or else, anonymous users will be directionless
-        response.set_cookie(
-                settings.OSCAR_BASKET_COOKIE_OPEN, basket_hash,
-                max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
-                secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
-        )
-
-#    if booking.cost_total < 0:
-#        response = HttpResponseRedirect('/refund-payment')
-#        response.set_cookie(
-#            settings.OSCAR_BASKET_COOKIE_OPEN, basket_hash,
-#            max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
-#            secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
-#        )
-#
-#    # Zero booking costs
-#    if booking.cost_total < 1 and booking.cost_total > -1:
-#        response = HttpResponseRedirect('/no-payment')
-#        response.set_cookie(
-#            settings.OSCAR_BASKET_COOKIE_OPEN, basket_hash,
-#            max_age=settings.OSCAR_BASKET_COOKIE_LIFETIME,
-#            secure=settings.OSCAR_BASKET_COOKIE_SECURE, httponly=True
-#        )
-
-        return response
 

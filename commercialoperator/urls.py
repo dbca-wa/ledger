@@ -14,6 +14,7 @@ from commercialoperator.components.proposals import api as proposal_api
 from commercialoperator.components.approvals import api as approval_api
 from commercialoperator.components.compliances import api as compliances_api
 from commercialoperator.components.main import api as main_api
+from commercialoperator import api as api
 
 from ledger.urls import urlpatterns as ledger_patterns
 
@@ -70,6 +71,7 @@ api_patterns = [
     url(r'^api/search_reference',proposal_api.SearchReferenceView.as_view(),name='search_reference'),
     url(r'^api/accreditation_choices',proposal_api.AccreditationTypeView.as_view(),name='accreditation_choices'),
     url(r'^api/licence_period_choices',proposal_api.LicencePeriodChoicesView.as_view(),name='licence_period_choices'),
+    #url(r'^api/get_confirmation/(?P<booking_id>[0-9]+)/$', api.get_confirmation, name='get_confirmation'),
 
 ]
 
@@ -92,6 +94,9 @@ urlpatterns = [
     #following url is used to include url path when sending Proposal amendment request to user.
     url(r'^proposal/$', proposal_views.ProposalView.as_view(), name='proposal'),
     url(r'^payment/(?P<proposal_pk>\d+)/$', main_views.MakePaymentView.as_view(), name='make_payment'),
+    url(r'^success/$', main_views.BookingSuccessView.as_view(), name='public_booking_success'),
+    url(r'cols/payments/invoice-pdf/(?P<reference>\d+)',main_views.InvoicePDFView.as_view(), name='cols-invoice-pdf'),
+    url(r'cols/payments/confirmation-pdf/(?P<reference>\d+)',main_views.ConfirmationPDFView.as_view(), name='cols-confirmation-pdf'),
 
     #following url is defined so that to include url path when sending Proposal amendment request to user.
     url(r'^external/proposal/(?P<proposal_pk>\d+)/$', views.ExternalProposalView.as_view(), name='external-proposal-detail'),

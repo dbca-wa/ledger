@@ -1,15 +1,16 @@
 <template lang="html">
     <div>
         <p> In payment_order </p>
-        <v-select  :options="licences" @change="proposal_parks()" v-model="selected_licence" />
-        <OrderTable ref="order_table" :expiry_date="selected_licence.expiry_date" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="Payment Form" id="id_payment" />
-
-		<form method="post" name="new_payment" @submit.prevent="validate()" novalidate>
+		<form action="/payment/46/" method="post" name="new_payment" @submit.prevent="validate()" novalidate>
 			<input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
+            <v-select  :options="licences" @change="proposal_parks()" v-model="selected_licence" />
+            <OrderTable ref="order_table" :expiry_date="selected_licence.expiry_date" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="Payment Form" id="id_payment" />
+
             <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
         </form> 
 
         <!--
+			<input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
         <form :action="/payment/49" method="post" name="new_payment" enctype="multipart/form-data">
             <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
         </form> 
@@ -248,9 +249,9 @@ from '@/utils/hooks'
                             value:vm.land_parks[i].park.id,
                             label:vm.land_parks[i].park.name,
                             prices:{
-                                adult:vm.land_parks[i].park.adult,
-                                child:vm.land_parks[i].park.child,
-                                senior:vm.land_parks[i].park.senior
+                                adult:vm.land_parks[i].park.adult_price,
+                                child:vm.land_parks[i].park.child_price,
+                                //senior:vm.land_parks[i].park.senior
                             }
                         });
                     }

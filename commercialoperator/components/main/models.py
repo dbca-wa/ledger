@@ -135,10 +135,10 @@ class Park(models.Model):
     allowed_activities = models.ManyToManyField(Activity, blank=True)
     allowed_access = models.ManyToManyField(AccessType, blank=True)
 
-    adult = models.DecimalField('Adult (price per adult)', max_digits=5, decimal_places=2)
-    child = models.DecimalField('Child (price per child)', max_digits=5, decimal_places=2)
-    senior = models.DecimalField('Senior (price per senior)', max_digits=5, decimal_places=2)
-    #proposal = models.ForeignKey(Proposal, related_name='parks')
+    adult_price = models.DecimalField('Adult (price per adult)', max_digits=5, decimal_places=2)
+    child_price = models.DecimalField('Child (price per child)', max_digits=5, decimal_places=2)
+    #senior = models.DecimalField('Senior (price per senior)', max_digits=5, decimal_places=2)
+    oracle_code = models.CharField(max_length=50,null=True,blank=True)
 
 
     class Meta:
@@ -241,7 +241,7 @@ class ApplicationType(models.Model):
 
     max_renewals = models.PositiveSmallIntegerField('Maximum number of times an Approval can be renewed', null=True, blank=True)
     max_renewal_period = models.PositiveSmallIntegerField('Maximum period of each Approval renewal (Years)', null=True, blank=True)
-    application_fee = models.DecimalField(max_digits=5, decimal_places=2)
+    application_fee = models.DecimalField(max_digits=6, decimal_places=2)
 
     class Meta:
         ordering = ['order', 'name']
@@ -414,7 +414,7 @@ reversion.register(ActivityType)
 reversion.register(ActivityCategory, follow=['activities'])
 #reversion.register(Activity, follow=['park_set', 'zone_set', 'trail_set', 'requireddocument_set'])
 reversion.register(Activity, follow=['park_set', 'zone_set', 'trail_set', 'requireddocument_set', 'proposalparkactivity_set','proposalparkzoneactivity_set', 'proposaltrailsectionactivity_set'])
-reversion.register(Park, follow=['zones', 'requireddocument_set', 'proposals', 'park_entries'])
+reversion.register(Park, follow=['zones', 'requireddocument_set', 'proposals', 'park_entries', 'bookings'])
 reversion.register(Zone, follow=['proposal_zones'])
 reversion.register(Trail, follow=['sections', 'proposals'])
 reversion.register(Section, follow=['proposal_trails'])
