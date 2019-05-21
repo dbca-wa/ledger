@@ -52,14 +52,16 @@
 
 <script>
 import L from 'leaflet';
-import { api_endpoints, helpers } from '@/utils/hooks'
 import 'leaflet.markercluster';  /* This should be imported after leaflet */
+import 'leaflet.locatecontrol';
 import Awesomplete from 'awesomplete';
+import { api_endpoints, helpers } from '@/utils/hooks'
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import 'leaflet.locatecontrol/dist/L.Control.Locate.min.css'
 import 'bootstrap/dist/css/bootstrap.css';
 import 'awesomplete/awesomplete.css';
 
@@ -364,6 +366,7 @@ module.exports = {
             this.setBaseLayer('osm');
             this.addOtherLayers();
             this.map.addLayer(this.mcg);
+            L.control.locate().addTo(this.map);
         },
         addOtherLayers(){
             var overlayMaps = {};
