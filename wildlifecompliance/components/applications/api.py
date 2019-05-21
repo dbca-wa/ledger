@@ -1024,13 +1024,17 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                     id__in=licence_purposes
                 )
                 licence_category = licence_purposes_queryset.first().licence_category
-                licence_activities = licence_purposes_queryset.values_list('licence_activity_id', flat=True).distinct()
-                active_applications = Application.get_active_licence_applications(request)
+                licence_activities = Application.get_active_licence_activities(
+                    request, application_type).values_list('licence_activity_id', flat=True)
+                active_applications = Application.get_active_licence_applications(request, application_type)
                 active_application = active_applications.filter(
                     licence_purposes__licence_category_id=licence_category.id
                 ).order_by('-id').first()
 
-                if application_type == Application.APPLICATION_TYPE_AMENDMENT:
+                if application_type in [
+                    Application.APPLICATION_TYPE_AMENDMENT,
+                    Application.APPLICATION_TYPE_RENEWAL,
+                ]:
                     if not active_application:
                         raise serializers.ValidationError(
                             'Cannot create amendment application: active licence not found!')

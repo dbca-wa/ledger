@@ -12,14 +12,12 @@
                     </div>
 
                     <div class="panel-body collapse in" :id="pBody">
-                        <form class="form-horizontal" name="personal_form" method="post">
+                        <form v-if="categoryCount" class="form-horizontal" name="personal_form" method="post">
                           
                             <div class="col-sm-12">
                                 <div class="row">
                                     <label class="col-sm-4">
-                                        {{isAmendment ?
-                                        `Select the licence activity you wish to amend` :
-                                        `Select the class of licence you wish to apply for`}}:
+                                        {{ selectionLabel }}:
                                     </label>
                                 </div>
 
@@ -42,7 +40,7 @@
 
                                                                 <div class ="col-sm-12">
                                                                     <input type="checkbox"
-                                                                        :disabled="isAmendment"
+                                                                        :disabled="isAmendment || isRenewal"
                                                                         :value="purpose.id"
                                                                         :id="purpose.id"
                                                                         v-model="type.purpose[index2].selected"
@@ -72,6 +70,15 @@
                                 </div>
                             </div>
                         </form>
+                        <div v-else>
+                            <div class="col-sm-12">
+                                <div class="row">
+                                    <label>
+                                        No matching licensed activities found.
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -132,16 +139,32 @@ export default {
                 case 'amend_activity':
                     return 'Amend one or more licensed activities';
                 break;
+                case 'renew_activity':
+                    return 'Renew one or more licensed activities';
+                break;
                 default:
                     return 'Apply for a new licence';
                 break;
             }
+        },
+        selectionLabel: function() {
+            return this.isAmendment ?
+            `Select the licence activity you wish to amend` :
+            this.isRenewal ?
+            `Select one or more activities you wish to renew` :
+            `Select the class of licence you wish to apply for`;
+        },
+        categoryCount: function() {
+            return this.visibleLicenceCategories.length;
         },
         visibleLicenceCategories: function() {
             return this.licence_categories;
         },
         isAmendment: function() {
             return this.licence_select && this.licence_select === 'amend_activity'
+        },
+        isRenewal: function() {
+            return this.licence_select && this.licence_select === 'renew_activity'
         }
   },
   methods: {
@@ -186,7 +209,7 @@ export default {
         var input = $(vm.$refs.selected_activity_type)[0];
         if(vm.licence_categories[index].activity[index1].selected){
             for(var activity_index=0, len2=vm.licence_categories[index].activity[index1].purpose.length; activity_index<len2; activity_index++){
-                vm.licence_categories[index].activity[index1].purpose[activity_index].selected = this.isAmendment;
+                vm.licence_categories[index].activity[index1].purpose[activity_index].selected = this.isAmendment || this.isRenewal;
             }
         }
     },
