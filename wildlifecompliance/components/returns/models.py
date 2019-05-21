@@ -255,6 +255,32 @@ class Return(models.Model):
 
         return workflow_mapper.get(self.processing_status, self.RETURN_CUSTOMER_STATUS_FUTURE)
 
+    @property
+    def payment_status(self):
+        """
+        Property defining fee status for this Return.
+        :return:
+        """
+        # TODO: provide status for the Return payment fee.
+        # if self.return_fee == 0:
+        #   return 'payment_not_required'
+        # else:
+        #    if self.invoices.count() == 0:
+        #    return 'unpaid'
+
+        return 'payment_not_required'
+
+    @property
+    def has_payment(self):
+        """
+        Property defining if payment is required for this Return.
+        :return:
+        """
+        if self.payment_status == 'payment_not_required':
+            return False
+
+        return True
+
     @transaction.atomic
     def set_submitted(self, request):
         try:

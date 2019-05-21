@@ -3,15 +3,15 @@
         <div class="col-md-3">
             <h3>Return: {{ returns.lodgement_number }}</h3>
         </div>
-        <div :class="`${form_width ? form_width : 'col-md-9'}`" id="returns-tabs">
-            <div >
-              <ul class="nav nav-tabs">
-                <li ><a data-toggle="tab_1">Return</a></li>
-              </ul>
+        <div class="col-md-1">&nbsp;</div>
+        <div :class="`${form_width ? form_width : 'col-md-9'}`">
+            <div id="tabs">
+                <ul class="nav nav-tabs" id="tabs-section" data-tabs="tabs" >
+                    <li class="active"><a id="tab_1">1. Return</a></li>
+                    <li v-if="returns.has_payment" ><a id="tab_2">2. Confirmation</a></li>
+                </ul>
             </div>
-            <div class="tab-content">
-              {{ this.$slots.default }}
-            </div>
+            {{ this.$slots.default }}
         </div>
     </div>
 </template>
@@ -54,12 +54,24 @@ export default {
     ...mapActions([
       'setReturnsTab',
     ]),
-    selectTab: function(component) {
+    selectReturnsTab: function(component) {
         this.returns_tab_id = component.id;
         this.setReturnsTab({id: component.id, name: component.label});
     },
+    initReturnsTab: function() {
+        let tabs_list = [];
+        tabs_list.push({name: 'component.name', label: 'component.label', id: 'component.id'});
+        this.setReturnsTab(tabs_list);
+    },
+    initFirstTab: function(){
+        const tab = $('#tabs-section li:first-child a')[0];
+        if(tab) {
+            tab.click();
+        }
+    },
   },
   mounted: function() {
+
   },
 }
 </script>

@@ -2,7 +2,7 @@
   <form method="POST" name="enter_return_sheet" enctype="multipart/form-data">
   <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
   <div class="container" id="externalReturnRunningSheet">
-
+    <!-- Returns v-if="isReturnsLoaded" -->
     <div class="row">
       <div class="col-md-3">
         <h3>Return: {{ returns.id }}</h3>
@@ -69,14 +69,14 @@
           <div class="navbar-inner">
             <div class="container">
               <p class="pull-right" style="margin-top:5px;">
-                <button class="btn btn-primary" name="save_sheet" @click.prevent="save()">Save</button>
+                <button style="width:150px;" class="btn btn-primary btn-md" name="save_sheet" @click.prevent="save()">Save</button>
                </p>
             </div>
           </div>
         </div>
       </div>
     </div>
-
+    <!-- /Returns -->
   </div>
   <SheetEntry ref="sheet_entry"></SheetEntry>
   </form>

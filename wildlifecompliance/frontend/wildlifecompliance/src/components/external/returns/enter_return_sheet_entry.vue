@@ -56,9 +56,9 @@
                 </div>
             </div>
             <div slot="footer">
-                <button v-show="isPayable" style="width: 15%;" class="btn btn-primary" @click.prevent="close()">Pay</button>
-                <button v-show="isSubmitable" style="width: 15%;" class="btn btn-primary" @click.prevent="update()">Submit</button>
-                <button style="width: 15%;" class="btn btn-primary" @click.prevent="close()">Cancel</button>
+                <button v-show="isPayable" style="width:150px;" class="btn btn-primary" @click.prevent="close()">Pay</button>
+                <button v-show="isSubmitable" style="width:150px;" class="btn btn-primary" @click.prevent="update()">Update</button>
+                <button style="width:150px;" class="btn btn-primary" @click.prevent="close()">Cancel</button>
             </div>
         </modal>
     </div>
@@ -107,9 +107,9 @@ export default {
             isPayable: false,
             isSubmitable: false,
             activityList: {'null': {'label': null}},
-            fullSpeciesList: {'':''}
-        //    fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
-        //                      'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
+            fullSpeciesList: {'':''},
+            //fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
+            //                  'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
         }
     },
     computed: {
@@ -130,7 +130,10 @@ export default {
             if (vm.isAddEntry) {
               let _currentDateTime = new Date()
               vm.entryDateTime = Date.parse(new Date())
-              let newRowId = (vm.row_of_data.data().count()-1) + ''
+              let newRowId = (vm.row_of_data.data().count()) + ''
+              console.log('Created New RowId')
+              console.log(vm.row_of_data.data().count())
+              console.log(newRowId)
               let _data = { rowId: newRowId,
                             date: vm.entryDateTime,
                             activity: vm.entryActivity,

@@ -50,6 +50,7 @@ class ReturnSerializer(serializers.ModelSerializer):
             'text',
             'format',
             'template',
+            'has_payment',
             'sheet_activity_list',
             'sheet_species_list',
             'sheet_species'
