@@ -174,11 +174,7 @@ L.Icon.Default.mergeOptions({
 module.exports = {
     data: function(){
         let vm = this;
-
-        vm.layers = [
-            {name:'public:dbca_legislated_lands_and_waters', label: 'Lands and Waters (Legislated)'},
-            {name:'public:dpaw_lands_and_waters', label: 'Lands and Waters'},
-        ];
+        vm.layers = [];
         vm.mcg = L.markerClusterGroup();
         vm.datetime_pattern = /^\d{2}\/\d{2}\/\d{4}$/gi;
         vm.ajax_for_location = null;
@@ -372,20 +368,21 @@ module.exports = {
         addOtherLayers(){
             var overlayMaps = {};
 
-            for (var i = 0; i < this.layers.length; i++){
-                let l = L.tileLayer.wmts(
-                    'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
-                    {
-                        layer: this.layers[i].name,
-                        tilematrixSet: 'mercator',
-                        format: 'image/png',
-                    }
-                );
-                overlayMaps[this.layers[i].label] = l;
-                l.addTo(this.map);
-            }
-
-            L.control.layers(null, overlayMaps, {position: 'topleft'}).addTo(this.map);
+            this.$http.get('/api/map_layers/').then(response => {
+                let layers = response.body.results;
+                for (var i = 0; i < layers.length; i++){
+                    let l = L.tileLayer.wmts(
+                        'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
+                        {
+                            layer: layers[i].layer_name,
+                            tilematrixSet: 'mercator',
+                            format: 'image/png',
+                        }
+                    );
+                    overlayMaps[layers[i].display_name] = l;
+                }
+                L.control.layers(null, overlayMaps, {position: 'topleft'}).addTo(this.map);
+            });
         },
         loadLocations(){
             let vm = this;

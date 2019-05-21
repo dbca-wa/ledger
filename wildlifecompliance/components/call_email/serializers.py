@@ -11,7 +11,7 @@ from wildlifecompliance.components.call_email.models import (
     ComplianceLogEntry,
     Location,
     ComplianceUserAction,
-)
+    MapLayer)
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
@@ -310,4 +310,12 @@ class EmailUserSerializer(serializers.ModelSerializer):
             'mobile_number',
             'organisation',
             'dob',
+        )
+
+class MapLayerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MapLayer
+        fields = (
+            'display_name',
+            'layer_name',
         )

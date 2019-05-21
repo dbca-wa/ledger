@@ -46,7 +46,7 @@ from wildlifecompliance.components.call_email.models import (
     ReportType,
     Referrer,
     ComplianceUserAction,
-)
+    MapLayer)
 from wildlifecompliance.components.call_email.serializers import (
     CallEmailSerializer,
     ClassificationSerializer,
@@ -60,7 +60,7 @@ from wildlifecompliance.components.call_email.serializers import (
     CreateCallEmailSerializer,
     UpdateSchemaSerializer,
     ReferrerSerializer,
-    LocationSerializerMinimum, CallEmailOptimisedSerializer, EmailUserSerializer)
+    LocationSerializerMinimum, CallEmailOptimisedSerializer, EmailUserSerializer, MapLayerSerializer)
 from utils import SchemaParser
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
@@ -527,6 +527,17 @@ class EmailUserViewSet(viewsets.ModelViewSet):
     serializer_class = EmailUserSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('first_name', 'last_name', 'email', 'phone_number', 'mobile_number', 'organisation')
+
+
+class MapLayerViewSet(viewsets.ModelViewSet):
+    queryset = MapLayer.objects.filter(availability__exact=True)
+    serializer_class =  MapLayerSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return MapLayer.objects.filter(availability__exact=True)
+        return MapLayer.objects.none()
 
 
 def call_email_status_choices(request):

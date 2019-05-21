@@ -9,6 +9,11 @@ class LocationAdmin(admin.ModelAdmin):
     pass
 
 
+@admin.register(models.MapLayer)
+class MaplayerAdmin(admin.ModelAdmin):
+    list_display = ['display_name', 'layer_name', 'availability']
+
+
 @admin.register(models.ReportType)
 class ReportTypeAdmin(admin.ModelAdmin):
     list_display = ['report_type', 'version', 'date_created']
