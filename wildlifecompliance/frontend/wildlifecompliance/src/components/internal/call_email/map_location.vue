@@ -98,7 +98,8 @@ export default {
             this.setBaseLayer('osm');
             this.initAwesomplete();
             if (this.call_latitude){
-                this.addMarker([this.call_longitude, this.call_latitude]);
+                /* If there is a location loaded, add a marker to the map */
+                this.addMarker([this.call_latitude, this.call_longitude]);
                 this.refreshMarkerLocation();
             }        
             this.showHideAddressDetailsFields(false, false);
@@ -113,7 +114,7 @@ export default {
             setLocationAddressEmpty: 'setLocationAddressEmpty',
             setLocationDetailsFieldEmpty: 'setLocationDetailsFieldEmpty',
         }),
-        addMarker(coord){
+        addMarker(latLngArr){
             let self = this;
 
             let myIcon = L.icon({
@@ -126,7 +127,7 @@ export default {
                 popupAnchor: [0, -20]
             });
 
-            self.feature_marker = L.marker({lon: coord[1], lat: coord[0]}, {icon: myIcon}).on('click', function(ev){
+            self.feature_marker = L.marker({lon: latLngArr[1], lat: latLngArr[0]}, {icon: myIcon}).on('click', function(ev){
                 //ev.preventDefault();
                 self.feature_marker.setIcon(myIcon);
             });
@@ -207,7 +208,7 @@ export default {
             this.awe = new Awesomplete(element_search);
             $(element_search).on('keyup', function(ev){
                 var keyCode = ev.keyCode || ev.which;
-                if ((48 <= keyCode && keyCode <= 90)||(96 <= keyCode && keyCode <= 105)){
+                if ((48 <= keyCode && keyCode <= 90)||(96 <= keyCode && keyCode <= 105) || (keyCode == 8) || (keyCode == 46)){
                     self.search(ev.target.value);
                     return false;
                 }
@@ -223,6 +224,10 @@ export default {
                             animate: true,
                             duration: 1.5
                         });
+
+                        if (!self.feature_marker){
+                            self.addMarker([latlng.lat, latlng.lng]);
+                        }
 
                         self.relocateMarker(latlng);
                         if(self.suggest_list[i].feature.place_type.includes('address')){
@@ -330,7 +335,6 @@ export default {
         },
         /* this function stores the coordinates into the vuex, then call refresh marker function */
         relocateMarker: function(latlng){ 
-            
             let lnglat = [latlng.lng, latlng.lat];
             this.setLocationPoint(lnglat);
             this.refreshMarkerLocation();

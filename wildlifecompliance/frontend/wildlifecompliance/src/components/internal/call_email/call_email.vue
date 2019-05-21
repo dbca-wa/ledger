@@ -66,6 +66,10 @@
                     <input class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
                     <label class="col-sm-1">No</label>
                 </div></div>
+
+                <div class="col-sm-12 form-group"><div class="row">
+                  <SearchPerson />
+                </div></div>
               </FormSection>
 
               <FormSection :formCollapse="false" label="Location" Index="1">
@@ -187,6 +191,7 @@ import FormSection from "@/components/forms/section_toggle.vue";
 import CommsLogs from "@common-components/comms_logs.vue";
 import MapLocation from "./map_location.vue";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
+import SearchPerson from "./search_person.vue";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import Datepicker from 'vuejs-datepicker';
@@ -230,6 +235,7 @@ export default {
     CommsLogs,
     FormSection,
     MapLocation,
+    SearchPerson,
     Datepicker,
   },
   computed: {
@@ -347,6 +353,7 @@ export default {
     if (this.call_email.report_type_id) {
       await this.loadSchema();
     }
+
   },
   mounted: async function() {
         console.log(this);
