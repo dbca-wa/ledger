@@ -9,16 +9,18 @@
                         <label for="">Call/Email Status</label>
                         <select class="form-control" v-model="filterStatus">
                             <option value="All">All</option>
-                            <option v-for="c in status_choices" :value="c.display">{{ c.display }}</option>
+                            <option v-for="c in status_choices" :value="c.display" v-bind:key="c.id">
+                                {{ c.display }}
+                            </option>
                         </select>
                 </div>
                 <div class="col-md-3">
                         <label for="">Call/Email Classification</label>
                         <select class="form-control" v-model="filterClassification">
-                        <option value="All">All</option>
-                        <option v-for="option in classification_types" :value="option.display" v-bind:key="option.display">
-                          {{ option.display }} 
-                        </option>
+                            <option value="All">All</option>
+                            <option v-for="option in classification_types" :value="option.display" v-bind:key="option.id">
+                                {{ option.display }} 
+                            </option>
                     </select>
                 </div>
             </div>
@@ -179,7 +181,7 @@
         },
 
         watch: {
-            filterCall: function () {
+            filterStatus: function () {
                 let vm = this;
                 let regexSearch = helpers.datatableExactStringMatch(vm.filterStatus);
                 if (vm.filterStatus != 'All') {
