@@ -22,6 +22,7 @@ export const callemailStore = {
                     state: 'WA',
                     postcode: null,
                     country: 'Australia',
+                    details: ''
                 },
                 geometry: {
                     "type": "Point",
@@ -44,17 +45,23 @@ export const callemailStore = {
         status_choices: state => state.status_choices,
         referrers: state => state.referrers,
         call_latitude(state) {
-            if (state.call_email) {
-                return state.call_email.location.geometry ?
-                state.call_email.location.geometry.coordinates[1] : "";
-            } else { return ""; }
+            if (state.call_email.location) {
+                if (state.call_email.location.geometry) {
+                    if (state.call_email.location.geometry.coordinates.length > 0) {
+                        return state.call_email.location.geometry.coordinates[1];
+                    } else {return "";}
+                } else {return "";}
+            } else {return "";}
         },
         call_longitude(state) {
-            if (state.call_email) {
-                return state.call_email.location.geometry ?
-                state.call_email.location.geometry.coordinates[0] : "";
-            } else { return ""; }
-        }
+            if (state.call_email.location) {
+                if (state.call_email.location.geometry) {
+                    if (state.call_email.location.geometry.coordinates.length > 0) {
+                        return state.call_email.location.geometry.coordinates[0];
+                    } else {return "";}
+                } else {return "";}
+            } else {return "";}
+        },
     },
     mutations: {
         updateStatusChoices(state, choices) {
@@ -125,13 +132,11 @@ export const callemailStore = {
             state.call_email.location.properties = location_properties;
         },
         updateLocationAddressEmpty(state) {
-            state.call_email.location.properties = {
-                town_suburb: null,
-                street: null,
-                state: null,
-                postcode: null,
-                country: null,
-            };
+            state.call_email.location.properties.town_suburb = "";
+            state.call_email.location.properties.street = "";
+            state.call_email.location.properties.state = "";
+            state.call_email.location.properties.postcode = "";
+            state.call_email.location.properties.country = "";
         },
         updateLocationDetailsFieldEmpty(state) {
             state.call_email.location.properties.details = "";
@@ -197,74 +202,6 @@ export const callemailStore = {
                 console.error(err);
             }
         },
-        loadStatusChoices({ commit }){
-            let pro = Vue.http.get("/call_email/call_email_status_choices");
-            pro.then(res => {
-                commit("updateStatusChoices", res.body);
-            })
-        },
-        loadClassificationChoices({ commit }){
-            let pro = Vue.http.get("/call_email/call_email_classification_choices");
-            pro.then(res => {
-                commit("updateClassificationChoices", res.body);
-            })
-        },
-        async loadClassification({
-            dispatch,
-        }) {
-            console.log("loadClassification");
-            try {
-            const returnedClassification = await Vue.http.get(
-                api_endpoints.classification 
-                );
-            // Clear existing classification entries
-            await dispatch("setClassificationEntry", null);
-            for (let classification_entry of returnedClassification.body.results) {
-                dispatch("setClassificationEntry", classification_entry);
-            }
-            } catch (err) {
-                console.error(err);
-            }
-        },
-        async loadReferrers({
-            dispatch,
-        }) {
-            console.log("loadReferrers");
-            try {
-            const returnedReferrers = await Vue.http.get(
-                api_endpoints.referrers
-                );
-            // Clear existing classification entries
-            await dispatch("setReferrerEntry", null);
-
-            for (let referrer_entry of returnedReferrers.body.results) {
-                dispatch("setReferrerEntry", referrer_entry);
-            }
-            } catch (err) {
-                console.error(err);
-            }
-        },
-        async loadReportTypes({
-            dispatch,
-        }) {
-            console.log("loadReportTypes");
-            try {
-            const returnedReportTypes = await Vue.http.get(
-                helpers.add_endpoint_json(
-                    api_endpoints.report_types,
-                    'get_distinct_queryset')
-                //api_endpoints.report_types
-                );
-            // Clear existing report_type entries
-            await dispatch("setReportTypeEntry", null);
-            
-            for (let report_type_entry of returnedReportTypes.body) {
-                dispatch("setReportTypeEntry", report_type_entry);
-            }
-            } catch (err) {
-                console.error(err);
-            }
-        },        
         async saveCallEmail({ dispatch, state, rootGetters}, { route, crud }) {
             console.log("saveCallEmail");
             let callId = null;
