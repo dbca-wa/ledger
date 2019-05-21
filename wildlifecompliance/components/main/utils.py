@@ -15,8 +15,9 @@ def get_department_user(email):
     try:
         res = requests.get(
             '{}/api/users?email={}'.format(
-                settings.EXT_USER_API_ROOT_URL, email), auth=(
-                settings.LEDGER_USER, settings.LEDGER_PASS))
+                settings.EXT_USER_API_ROOT_URL, email),
+            auth=(settings.LEDGER_USER, settings.LEDGER_PASS),
+            verify=False)
         res.raise_for_status()
         data = json.loads(res.content).get('objects')
         if len(data) > 0:

@@ -5,6 +5,7 @@ import logging
 import six
 import re
 from decimal import Decimal
+from django.conf import settings
 from django.db import models, transaction
 from django.db.models import Q
 from django.db.models.signals import pre_delete
@@ -701,8 +702,16 @@ class Application(RevisionedMixin):
 
         # Update application and licence fees
         fees = dynamic_attributes['fees']
-        self.application_fee = fees['application']
-        self.licence_fee = fees['licence']
+
+        # Amendments are always free.
+        if self.application_type in [
+            Application.APPLICATION_TYPE_AMENDMENT,
+        ]:
+            self.application_fee = Decimal(0)
+            self.licence_fee = Decimal(0)
+        else:
+            self.application_fee = fees['application']
+            self.licence_fee = fees['licence']
         self.save()
 
         # Save any parsed per-activity modifiers
@@ -1292,13 +1301,19 @@ class Application(RevisionedMixin):
 
     def get_parent_licence(self):
         from wildlifecompliance.components.licences.models import WildlifeLicence
+        current_date = timezone.now().date()
         try:
             return WildlifeLicence.objects.get(
                 Q(licence_category=self.get_licence_category()),
                 Q(current_application__org_applicant_id=self.org_applicant_id) if self.org_applicant_id else (
                     Q(current_application__submitter_id=self.proxy_applicant_id
                       ) | Q(current_application__proxy_applicant_id=self.proxy_applicant_id)
-                ) if self.proxy_applicant_id else Q(current_application__submitter_id=self.submitter_id)
+                ) if self.proxy_applicant_id else Q(current_application__submitter_id=self.submitter_id),
+                # Only load licence if any associated activities are still current.
+                Q(
+                    current_application__selected_activities__expiry_date__gte=current_date,
+                    current_application__selected_activities__activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT,
+                )
             ), False
         except WildlifeLicence.DoesNotExist:
             return WildlifeLicence.objects.create(
@@ -1493,12 +1508,44 @@ class Application(RevisionedMixin):
         return base_fees
 
     @staticmethod
-    def get_active_licence_applications(request):
+    def get_activity_date_filter(for_application_type, prefix=''):
         current_date = timezone.now().date()
+        date_filter = {
+            '{}expiry_date__isnull'.format(prefix): False,
+            '{}expiry_date__gte'.format(prefix): current_date
+        }
+        if for_application_type == Application.APPLICATION_TYPE_RENEWAL:
+            expires_at = current_date + datetime.timedelta(days=settings.RENEWAL_PERIOD_DAYS)
+            date_filter = {
+                '{}expiry_date__isnull'.format(prefix): False,
+                '{}expiry_date__gte'.format(prefix): current_date,
+                '{}expiry_date__lte'.format(prefix): expires_at,
+            }
+        return date_filter
 
+    @staticmethod
+    def get_active_licence_activities(request, for_application_type=APPLICATION_TYPE_NEW_LICENCE):
+        applications = Application.get_active_licence_applications(request, for_application_type)
+        date_filter = Application.get_activity_date_filter(
+            for_application_type)
+        return ApplicationSelectedActivity.objects.filter(
+            application_id__in=applications.values_list('id', flat=True),
+            **date_filter
+        ).exclude(
+            activity_status__in=[
+                ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
+            ]
+        ).distinct()
+
+    @staticmethod
+    def get_active_licence_applications(request, for_application_type=APPLICATION_TYPE_NEW_LICENCE):
+        date_filter = Application.get_activity_date_filter(
+            for_application_type, 'selected_activities__')
         return Application.get_request_user_applications(request).filter(
             selected_activities__processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
-            selected_activities__expiry_date__gte=current_date,
+            **date_filter
         ).distinct()
 
     @staticmethod
