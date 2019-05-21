@@ -76,13 +76,13 @@ export const callemailStore = {
             //state.call_email.schema = schema;
             Vue.set(state.call_email, 'schema', schema);
         },        
-        // updateClassificationTypes(state, classification_entry) {
-        //     if (classification_entry) {
-        //         state.classification_types.push(classification_entry);
-        //     } else {
-        //         state.classification_types = [];
-        //     }
-        // },
+        updateClassificationTypes(state, classification_entry) {
+            if (classification_entry) {
+                state.classification_types.push(classification_entry);
+            } else {
+                state.classification_types = [];
+            }
+        },
         updateReferrers(state, referrer_entry) {
             if (referrer_entry) {
                 state.referrers.push(referrer_entry);
@@ -208,6 +208,23 @@ export const callemailStore = {
             pro.then(res => {
                 commit("updateClassificationChoices", res.body);
             })
+        },
+        async loadClassification({
+            dispatch,
+        }) {
+            console.log("loadClassification");
+            try {
+            const returnedClassification = await Vue.http.get(
+                api_endpoints.classification 
+                );
+            // Clear existing classification entries
+            await dispatch("setClassificationEntry", null);
+            for (let classification_entry of returnedClassification.body.results) {
+                dispatch("setClassificationEntry", classification_entry);
+            }
+            } catch (err) {
+                console.error(err);
+            }
         },
         async loadReferrers({
             dispatch,
@@ -376,6 +393,13 @@ export const callemailStore = {
         }, point) {
             console.log("setLocationPoint");
             commit("updateLocationPoint", point);
+        },
+        setClassificationEntry({
+            commit,
+        },
+        classification_entry
+        ) {
+            commit("updateClassificationTypes", classification_entry);
         },
         setReferrerEntry({
             commit,
