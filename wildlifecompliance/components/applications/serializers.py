@@ -17,7 +17,10 @@ from wildlifecompliance.components.organisations.models import (
 )
 from wildlifecompliance.components.licences.models import LicenceActivity
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
-from wildlifecompliance.components.organisations.serializers import OrganisationSerializer
+from wildlifecompliance.components.organisations.serializers import (
+    OrganisationSerializer,
+    ExternalOrganisationSerializer
+)
 from wildlifecompliance.components.users.serializers import UserAddressSerializer, DocumentSerializer
 from wildlifecompliance.components.main.fields import CustomChoiceField
 from wildlifecompliance import helpers
@@ -460,6 +463,7 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
 class DTExternalApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(read_only=True)
+    org_applicant = ExternalOrganisationSerializer()
     proxy_applicant = EmailUserSerializer()
     processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
     customer_status = CustomChoiceField(read_only=True)
@@ -474,6 +478,7 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
             'customer_status',
             'processing_status',
             'applicant',
+            'org_applicant',
             'proxy_applicant',
             'submitter',
             'lodgement_number',

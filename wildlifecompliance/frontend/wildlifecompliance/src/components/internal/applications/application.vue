@@ -97,11 +97,6 @@
                                             <button class="btn btn-primary top-buffer-s col-xs-12" @click.prevent="togglesendtoAssessor()">Assessments &amp; Conditions</button><br/>
                                         </div>
                                     </div>
-                                    <div v-if="canOfficerReviewConditions" class="row">
-                                        <div class="col-sm-12">
-                                            <button class="btn btn-warning top-buffer-s col-xs-12" @click.prevent="toggleOfficerConditions()">Review Conditions</button>
-                                        </div>
-                                    </div>
                                     <div v-if="canProposeIssueOrDecline" class="row">
                                         <div class="col-sm-12">
                                             <button class="btn btn-danger top-buffer-s col-xs-12" @click.prevent="proposedDecline()">Propose Decline</button>
@@ -707,9 +702,6 @@ export default {
                 return false;
             }
             return this.selected_activity_tab_id && this.selectedActivity.processing_status.id == 'with_officer_finalisation' ? true : false;
-        },
-        canOfficerReviewConditions: function(){
-            return this.hasActivityStatus('with_officer_conditions', 1, 'licensing_officer');
         },
         canProposeIssueOrDecline: function(){
             return this.hasActivityStatus('with_officer_conditions', 1, 'licensing_officer');
