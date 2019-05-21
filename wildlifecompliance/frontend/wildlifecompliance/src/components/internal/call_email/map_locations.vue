@@ -249,21 +249,30 @@ module.exports = {
         }),
         addEventListeners: function () {
             let vm = this;
-            // Initialise Application Date Filters
-            $(vm.$refs.lodgementDateToPicker).datetimepicker({ format: 'DD/MM/YYYY' });
-            $(vm.$refs.lodgementDateToPicker).on('dp.change', function (e) {
-                if ($(vm.$refs.lodgementDateToPicker).data('DateTimePicker').date()) {
-                    vm.filterLodgedTo = e.date.format('DD/MM/YYYY');
-                } else if ($(vm.$refs.lodgementDateToPicker).data('date') === "") {
-                    vm.filterLodgedTo = "";
+            let el_fr = $(vm.$refs.lodgementDateFromPicker);
+            let el_to = $(vm.$refs.lodgementDateToPicker);
+
+            /* Date from */
+            el_fr.datetimepicker({ format: 'DD/MM/YYYY', maxDate: 'now'});
+            el_fr.on('dp.change', function (e) {
+                if (el_fr.data('DateTimePicker').date()) {
+                    vm.filterLodgedFrom = e.date.format('DD/MM/YYYY');
+                    el_to.data('DateTimePicker').minDate(e.date); /* link to "to" date selector */
+                } else if (el_fr.data('date') === "") {
+                    vm.filterLodgedFrom = "";
+                    el_to.data('DateTimePicker').minDate(false);  /* link to "to" date selector */
                 }
             });
-            $(vm.$refs.lodgementDateFromPicker).datetimepicker({ format: 'DD/MM/YYYY' });
-            $(vm.$refs.lodgementDateFromPicker).on('dp.change', function (e) {
-                if ($(vm.$refs.lodgementDateFromPicker).data('DateTimePicker').date()) {
-                    vm.filterLodgedFrom = e.date.format('DD/MM/YYYY');
-                } else if ($(vm.$refs.lodgementDateFromPicker).data('date') === "") {
-                    vm.filterLodgedFrom = "";
+
+            /* Date to */
+            el_to.datetimepicker({ format: 'DD/MM/YYYY', maxDate: 'now'});
+            el_to.on('dp.change', function (e) {
+                if (el_to.data('DateTimePicker').date()) {
+                    vm.filterLodgedTo = e.date.format('DD/MM/YYYY');
+                    el_fr.data('DateTimePicker').maxDate(e.date);  /* link to "from" date selector */
+                } else if (el_to.data('date') === "") {
+                    vm.filterLodgedTo = "";
+                    el_fr.data('DateTimePicker').maxDate(false);  /* link to "from" date selector */
                 }
             });
         },
