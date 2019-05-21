@@ -16,7 +16,7 @@ def in_dbca_domain(user):
 
 def get_department_user_minimal(email):
     try:
-        res = requests.get('{}/api/users/?minimal&email={}'.format(settings.CMS_URL,email), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
+        res = requests.get('{}/api/users/?minimal&email={}'.format(settings.CMS_URL,email), auth=(settings.LEDGER_USER,settings.LEDGER_PASS), verify=False)
         res.raise_for_status()
         data = json.loads(res.content).get('objects')
         if len(data) > 0:
@@ -29,7 +29,8 @@ def get_department_user_minimal(email):
 
 def get_department_user_compact(email):
     try:
-        res = requests.get('{}/api/users/fast/?compact&email={}'.format(settings.CMS_URL,email), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
+        res = 
+        ('{}/api/users/fast/?compact&email={}'.format(settings.CMS_URL,email), auth=(settings.LEDGER_USER,settings.LEDGER_PASS))
         res.raise_for_status()
         data = json.loads(res.content).get('objects')
         if len(data) > 0:
