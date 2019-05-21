@@ -35,11 +35,13 @@ export const callemailStore = {
         classification_types: [],
         report_types: [],
         referrers: [],
+        status_choices: [],
     },
     getters: {
         call_email: state => state.call_email,
         classification_types: state => state.classification_types,
         report_types: state => state.report_types,
+        status_choices: state => state.status_choices,
         referrers: state => state.referrers,
         call_latitude(state) {
             if (state.call_email) {
@@ -55,6 +57,16 @@ export const callemailStore = {
         }
     },
     mutations: {
+        updateStatusChoices(state, choices) {
+            for (var i = 0; i < choices.length; i++) {
+                state.status_choices.push(choices[i]);
+            }
+        },
+        updateClassificationChoices(state, choices) {
+            for (var i = 0; i < choices.length; i++) {
+                state.classification_types.push(choices[i]);
+            }
+        },
         updateCallEmail(state, call_email) {
             Vue.set(state, 'call_email', {
                 ...call_email
@@ -64,13 +76,13 @@ export const callemailStore = {
             //state.call_email.schema = schema;
             Vue.set(state.call_email, 'schema', schema);
         },        
-        updateClassificationTypes(state, classification_entry) {
-            if (classification_entry) {
-                state.classification_types.push(classification_entry);
-            } else {
-                state.classification_types = [];
-            }
-        },
+        // updateClassificationTypes(state, classification_entry) {
+        //     if (classification_entry) {
+        //         state.classification_types.push(classification_entry);
+        //     } else {
+        //         state.classification_types = [];
+        //     }
+        // },
         updateReferrers(state, referrer_entry) {
             if (referrer_entry) {
                 state.referrers.push(referrer_entry);
@@ -185,23 +197,17 @@ export const callemailStore = {
                 console.error(err);
             }
         },
-        async loadClassification({
-            dispatch,
-        }) {
-            console.log("loadClassification");
-            try {
-            const returnedClassification = await Vue.http.get(
-                api_endpoints.classification 
-                );
-            // Clear existing classification entries
-            await dispatch("setClassificationEntry", null);
-
-            for (let classification_entry of returnedClassification.body.results) {
-                dispatch("setClassificationEntry", classification_entry);
-            }
-            } catch (err) {
-                console.error(err);
-            }
+        loadStatusChoices({ commit }){
+            let pro = Vue.http.get("/call_email/call_email_status_choices");
+            pro.then(res => {
+                commit("updateStatusChoices", res.body);
+            })
+        },
+        loadClassificationChoices({ commit }){
+            let pro = Vue.http.get("/call_email/call_email_classification_choices");
+            pro.then(res => {
+                commit("updateClassificationChoices", res.body);
+            })
         },
         async loadReferrers({
             dispatch,
@@ -370,13 +376,6 @@ export const callemailStore = {
         }, point) {
             console.log("setLocationPoint");
             commit("updateLocationPoint", point);
-        },
-        setClassificationEntry({
-            commit,
-        },
-        classification_entry
-        ) {
-            commit("updateClassificationTypes", classification_entry);
         },
         setReferrerEntry({
             commit,

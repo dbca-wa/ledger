@@ -65,6 +65,8 @@ router.register(r'classification', call_email_api.ClassificationViewSet)
 router.register(r'report_types', call_email_api.ReportTypeViewSet)
 router.register(r'location', call_email_api.LocationViewSet)
 router.register(r'referrers', call_email_api.ReferrerViewSet)
+router.register(r'search_user', call_email_api.EmailUserViewSet)
+router.register(r'map_layers', call_email_api.MapLayerViewSet)
 
 api_patterns = [url(r'^api/my_user_details/$',
                     users_api.GetMyUserDetails.as_view(),
@@ -139,6 +141,8 @@ urlpatterns = [
     url(r'^mgt-commands/$',
         views.ManagementCommandsView.as_view(),
         name='mgt-commands'),
+    url(r'^call_email/call_email_status_choices/$', call_email_api.call_email_status_choices, name='call_email_status_choices'),
+    url(r'^call_email/call_email_classification_choices/$', call_email_api.call_email_classification_choices, name='call_email_classification_choices'),
 
 ] + ledger_patterns
 

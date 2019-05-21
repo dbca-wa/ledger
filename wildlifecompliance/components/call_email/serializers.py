@@ -2,6 +2,7 @@ import traceback
 
 from rest_framework_gis.serializers import GeoFeatureModelSerializer, GeometryField
 
+from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.call_email.models import (
     CallEmail,
     Classification,
@@ -10,7 +11,7 @@ from wildlifecompliance.components.call_email.models import (
     ComplianceLogEntry,
     Location,
     ComplianceUserAction,
-)
+    MapLayer)
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
@@ -188,6 +189,7 @@ class CallEmailOptimisedSerializer(serializers.ModelSerializer):
             'id',
             'location',
             'classification',
+            'number',
             'report_type',
         )
         read_only_fields = ('id', )
@@ -294,3 +296,26 @@ class ComplianceLogEntrySerializer(CommunicationLogEntrySerializer):
 
     def get_documents(self, obj):
         return [[d.name, d._file.url] for d in obj.documents.all()]
+
+
+class EmailUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'email',
+            'first_name',
+            'last_name',
+            'phone_number',
+            'mobile_number',
+            'organisation',
+            'dob',
+        )
+
+class MapLayerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MapLayer
+        fields = (
+            'display_name',
+            'layer_name',
+        )

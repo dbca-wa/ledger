@@ -66,6 +66,10 @@
                     <input class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
                     <label class="col-sm-1">No</label>
                 </div></div>
+
+                <div class="col-sm-12 form-group"><div class="row">
+                  <SearchPerson />
+                </div></div>
               </FormSection>
 
               <FormSection :formCollapse="false" label="Location" Index="1">
@@ -186,6 +190,7 @@ import FormSection from "@/components/forms/section_toggle.vue";
 
 import CommsLogs from "@common-components/comms_logs.vue";
 import MapLocation from "./map_location.vue";
+import SearchPerson from "./search_person.vue";
 import { api_endpoints, helpers } from "@/utils/hooks";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
@@ -227,6 +232,7 @@ export default {
     CommsLogs,
     FormSection,
     MapLocation,
+    SearchPerson,
     Datepicker,
   },
   computed: {
@@ -294,7 +300,8 @@ export default {
   methods: {
     ...mapActions('callemailStore', {
       loadCallEmail: "loadCallEmail",
-      loadClassification: "loadClassification",
+      // loadClassification: "loadClassification",
+      loadClassificationChoices: "loadClassificationChoices",
       loadReportTypes: "loadReportTypes",
       saveCallEmail: 'saveCallEmail',
       updateSchema: "updateSchema",
@@ -402,7 +409,7 @@ export default {
     await this.loadSchema(this.call_email.report_type_id);
     
     // load drop-down select lists
-    await this.loadClassification();
+    await this.loadClassificationChoices();
     await this.loadReportTypes();
     await this.loadReferrers();
     
