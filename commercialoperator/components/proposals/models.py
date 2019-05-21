@@ -568,9 +568,11 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         if self.org_applicant:
             return self.org_applicant.address
         elif self.proxy_applicant:
-            return self.proxy_applicant.addresses.all().first()
+            #return self.proxy_applicant.addresses.all().first()
+            return self.proxy_applicant.residential_address
         else:
-            return self.submitter.addresses.all().first()
+            #return self.submitter.addresses.all().first()
+            return self.submitter.residential_address
 
     @property
     def applicant_id(self):

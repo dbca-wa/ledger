@@ -290,7 +290,8 @@ export default {
         let vm=this;
         if (applicant_type == 'org_applicant') {
            vm.fetchOrgApplicant(applicant_id);
-        } else {
+        } 
+        else {
            vm.fetchProxyApplicant(applicant_id);
         }
     },
