@@ -22,7 +22,7 @@ class LicenceType(RevisionedMixin, ActiveMixin):
     replaced_by = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
     is_renewable = models.BooleanField(default=True)
-    keywords = ArrayField(models.CharField(max_length=50), blank=True, default=[])
+    keywords = ArrayField(models.CharField(max_length=50), blank=True, default=list)
 
     def __str__(self):
         return self.display_name

@@ -1616,9 +1616,9 @@ class BookingViewSet(viewsets.ModelViewSet):
             sql += ';'
 
             cursor = connection.cursor()
-            cursor.execute("Select count(*) from parkstay_booking ");
+            cursor.execute("Select count(*) from parkstay_booking ")
             recordsTotal = cursor.fetchone()[0]
-            cursor.execute(sqlCount, sqlParams);
+            cursor.execute(sqlCount, sqlParams)
             recordsFiltered = cursor.fetchone()[0]
 
             cursor.execute(sql, sqlParams)
@@ -1660,7 +1660,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                     bk['override_reason_info'] = booking.override_reason_info
                 if booking.send_invoice:
                     bk['send_invoice'] = booking.send_invoice
-                if booking.override_price >= 0:
+                if booking.override_price:
                     bk['discount'] = booking.discount
                 if not booking.paid:
                     bk['payment_callback_url'] = '/api/booking/{}/payment_callback.json'.format(booking.id)

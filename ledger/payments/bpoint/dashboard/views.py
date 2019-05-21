@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from django.views import generic
 from django.contrib import messages
-from django.core.urlresolvers import reverse, reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.conf import settings
 from django import http
 from django.utils.translation import ugettext as _

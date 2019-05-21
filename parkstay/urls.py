@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.conf.urls import url, include
+from django.urls import path, re_path, include
 from django.conf.urls.static import static
 from rest_framework import routers
 from parkstay import views, api
@@ -40,42 +40,41 @@ router.register(r'countries', api.CountryViewSet)
 router.register(r'discountReasons',api.DiscountReasonViewset)
 
 api_patterns = [
-    url(r'^api/profile$',api.GetProfile.as_view(), name='get-profile'),
-    url(r'^api/profile/update_personal$',api.UpdateProfilePersonal.as_view(), name='update-profile-personal'),
-    url(r'^api/profile/update_contact$',api.UpdateProfileContact.as_view(), name='update-profile-contact'),
-    url(r'^api/profile/update_address$',api.UpdateProfileAddress.as_view(), name='update-profile-address'),
-    url(r'^api/oracle_job$',api.OracleJob.as_view(), name='get-oracle'),
-    url(r'^api/bulkPricing', api.BulkPricingView.as_view(),name='bulkpricing-api'),
-    url(r'^api/search_suggest', api.search_suggest, name='search_suggest'),
-    url(r'^api/create_booking', api.create_booking, name='create_booking'),
-    url(r'api/get_confirmation/(?P<booking_id>[0-9]+)/$', api.get_confirmation, name='get_confirmation'),
-    url(r'^api/reports/booking_refunds$', api.BookingRefundsReportView.as_view(),name='booking-refunds-report'),
-    url(r'^api/reports/bookings$', api.BookingReportView.as_view(),name='bookings-report'),
-    url(r'^api/reports/booking_settlements$', api.BookingSettlementReportView.as_view(),name='booking-settlements-report'),
-    url(r'^api/',include(router.urls))
+    path('api/profile',api.GetProfile.as_view(), name='get-profile'),
+    path('api/profile/update_personal',api.UpdateProfilePersonal.as_view(), name='update-profile-personal'),
+    path('api/profile/update_contact',api.UpdateProfileContact.as_view(), name='update-profile-contact'),
+    path('api/profile/update_address',api.UpdateProfileAddress.as_view(), name='update-profile-address'),
+    path('api/oracle_job',api.OracleJob.as_view(), name='get-oracle'),
+    path('api/bulkPricing', api.BulkPricingView.as_view(),name='bulkpricing-api'),
+    path('api/search_suggest', api.search_suggest, name='search_suggest'),
+    path('api/create_booking', api.create_booking, name='create_booking'),
+    re_path(r'api/get_confirmation/(?P<booking_id>[0-9]+)/$', api.get_confirmation, name='get_confirmation'),
+    path('api/reports/booking_refunds', api.BookingRefundsReportView.as_view(),name='booking-refunds-report'),
+    path('api/reports/bookings', api.BookingReportView.as_view(),name='bookings-report'),
+    path('api/reports/booking_settlements', api.BookingSettlementReportView.as_view(),name='booking-settlements-report'),
+    path('api/',include(router.urls))
 ]
 
 # URL Patterns
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'', include(api_patterns)),
-    url(r'^account/', views.ProfileView.as_view(), name='account'),
-    url(r'^$', views.ParkstayRoutingView.as_view(), name='ps_home'),
-    url(r'^campsites/(?P<ground_id>[0-9]+)/$', views.CampsiteBookingSelector.as_view(), name='campsite_booking_selector'),
-    url(r'^availability/$', views.CampsiteAvailabilitySelector.as_view(), name='campsite_availaiblity_selector'),
-    url(r'^availability_admin/$', views.AvailabilityAdmin.as_view(), name='availability_admin'),
-    #url(r'^ical/campground/(?P<ground_id>[0-9]+)/$', views.CampgroundFeed(), name='campground_calendar'),
-    url(r'^dashboard/campgrounds$', views.DashboardView.as_view(), name='dash-campgrounds'),
-    url(r'^dashboard/campsite-types$', views.DashboardView.as_view(), name='dash-campsite-types'),
-    url(r'^dashboard/bookings/edit/', views.DashboardView.as_view(), name='dash-bookings'),
-    url(r'^dashboard/bookings$', views.DashboardView.as_view(), name='dash-bookings'),
-    url(r'^dashboard/bulkpricing$', views.DashboardView.as_view(), name='dash-bulkpricing'),
-    url(r'^dashboard/', views.DashboardView.as_view(), name='dash'),
-    url(r'^booking/abort$', views.abort_booking_view, name='public_abort_booking'),
-    url(r'^booking/', views.MakeBookingsView.as_view(), name='public_make_booking'),
-    url(r'^mybookings/', views.MyBookingsView.as_view(), name='public_my_bookings'),
-    url(r'^success/', views.BookingSuccessView.as_view(), name='public_booking_success'),
-    url(r'^map/', views.MapView.as_view(), name='map'),
+    path('admin/', admin.site.urls),
+    path('', include(api_patterns)),
+    path('account/', views.ProfileView.as_view(), name='account'),
+    path('', views.ParkstayRoutingView.as_view(), name='ps_home'),
+    re_path(r'^campsites/(?P<ground_id>[0-9]+)/$', views.CampsiteBookingSelector.as_view(), name='campsite_booking_selector'),
+    path('availability/', views.CampsiteAvailabilitySelector.as_view(), name='campsite_availaiblity_selector'),
+    path('availability_admin/', views.AvailabilityAdmin.as_view(), name='availability_admin'),
+    path('dashboard/campgrounds', views.DashboardView.as_view(), name='dash-campgrounds'),
+    path('dashboard/campsite-types', views.DashboardView.as_view(), name='dash-campsite-types'),
+    path('dashboard/bookings/edit/', views.DashboardView.as_view(), name='dash-bookings'),
+    path('dashboard/bookings', views.DashboardView.as_view(), name='dash-bookings'),
+    path('dashboard/bulkpricing', views.DashboardView.as_view(), name='dash-bulkpricing'),
+    path('dashboard/', views.DashboardView.as_view(), name='dash'),
+    path('booking/abort', views.abort_booking_view, name='public_abort_booking'),
+    path('booking/', views.MakeBookingsView.as_view(), name='public_make_booking'),
+    path('mybookings/', views.MyBookingsView.as_view(), name='public_my_bookings'),
+    path('success/', views.BookingSuccessView.as_view(), name='public_booking_success'),
+    path('map/', views.MapView.as_view(), name='map'),
 ] + ledger_patterns
 
 if settings.DEBUG:  # Serve media locally in development.

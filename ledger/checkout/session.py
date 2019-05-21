@@ -1,5 +1,5 @@
 from oscar.apps.checkout import exceptions
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib import messages
 from oscar.core.loading import get_class
 from decimal import Decimal as D
@@ -172,7 +172,7 @@ class CheckoutSessionMixin(CoreCheckoutSessionMixin):
 
         # Set guest email after overrides as we need to update the order_kwargs
         # entry.
-        if (not submission['user'].is_authenticated() and
+        if (not submission['user'].is_authenticated and
                 'guest_email' not in submission['order_kwargs']):
             email = self.checkout_session.get_guest_email()
             submission['order_kwargs']['guest_email'] = email

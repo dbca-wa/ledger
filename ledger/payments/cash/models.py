@@ -78,7 +78,7 @@ class Region(models.Model):
 
 class District(models.Model):
     name = models.CharField(choices=DISTRICT_CHOICES,max_length=3,unique=True)
-    region = models.ForeignKey(Region,related_name='districts')
+    region = models.ForeignKey(Region,related_name='districts', on_delete=models.PROTECT)
 
     class Meta:
         db_table = 'payments_district'
@@ -97,10 +97,10 @@ class CashTransaction(models.Model):
         ('eftpos','eftpos'),
         ('money_order','money_order')
     )
-    invoice = models.ForeignKey(Invoice, related_name='cash_transactions', to_field='reference')
+    invoice = models.ForeignKey(Invoice, related_name='cash_transactions', to_field='reference', on_delete=models.PROTECT)
     amount = models.DecimalField(decimal_places=2,max_digits=12)
     created = models.DateTimeField(auto_now_add=True)
-    original_txn = models.ForeignKey('self', null=True, blank=True)
+    original_txn = models.ForeignKey('self', null=True, blank=True, on_delete=models.PROTECT)
     type = models.CharField(choices=TRANSACTION_TYPES, max_length=8)
     source = models.CharField(choices=SOURCE_TYPES, max_length=11)
     region = models.CharField(choices=REGION_CHOICES, max_length=50, blank=True,null=True)

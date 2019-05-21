@@ -1,4 +1,4 @@
-from django.conf.urls import url, include
+from django.urls import path, re_path, include
 from rest_framework import routers
 from ledger.payments.api import (
                 BpayTransactionViewSet,
@@ -28,20 +28,19 @@ router.register(r'^cash', CashViewSet)
 router.register(r'^regions', RegionViewSet)
 
 api_patterns = [
-    url(r'api/bpoint/payment$', BpointPaymentCreateView.as_view(), name='bpoint-payment'),
-    url(r'api/report$', ReportCreateView.as_view(),name='ledger-report'),
-    url(r'api/', include(router.urls)),
+    path('api/bpoint/payment', BpointPaymentCreateView.as_view(), name='bpoint-payment'),
+    path('api/report', ReportCreateView.as_view(),name='ledger-report'),
+    path('api/', include(router.urls)),
 ]
 
 urlpatterns = [
-    url(r'checkout/dashboard/payments/bpay/', include(bpay.urls)),
-    url(r'checkout/dashboard/payments/invoices/', include(invoice_dash.urls)),
-    url(r'checkout/dashboard/payments/', include(bpoint_dash.urls)),
-    url(r'payments/', include(api_patterns)),
-    url(r'payments/invoice/(?P<reference>\d+)',views.InvoiceDetailView.as_view(), name='invoice-detail'),
-    url(r'payments/invoice-pdf/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='invoice-pdf'),
-    #url(r'payments/invoice/payment/(?P<reference>\d+)',views.InvoicePaymentView.as_view(), name='invoice-payment'),
-    url(r'payments/invoice/payment$',views.InvoicePaymentView.as_view(), name='invoice-payment'),
-    url(r'payments/invoice/search$',views.InvoiceSearchView.as_view(), name='invoice-search'),
-    url(r'payments/error$',views.PaymentErrorView.as_view(), name='payments-error'),
+    path('checkout/dashboard/payments/bpay/', bpay.urls),
+    path('checkout/dashboard/payments/invoices/', invoice_dash.urls),
+    path('checkout/dashboard/payments/', bpoint_dash.urls),
+    path('payments/', include(api_patterns)),
+    re_path(r'payments/invoice/(?P<reference>\d+)',views.InvoiceDetailView.as_view(), name='invoice-detail'),
+    re_path(r'payments/invoice-pdf/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='invoice-pdf'),
+    path('payments/invoice/payment',views.InvoicePaymentView.as_view(), name='invoice-payment'),
+    path('payments/invoice/search',views.InvoiceSearchView.as_view(), name='invoice-search'),
+    path('payments/error',views.PaymentErrorView.as_view(), name='payments-error'),
 ]
