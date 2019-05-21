@@ -268,12 +268,20 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
         only_purpose_records = None
         application_type = request.GET.get('application_type')
 
-        active_applications = Application.get_active_licence_applications(request)
-        if active_applications.count():
+        active_applications = Application.get_active_licence_applications(request, application_type)
+        if not active_applications.count() and application_type == Application.APPLICATION_TYPE_RENEWAL:
+            # Do not present with renewal options if no activities are within the renewal period
+            queryset = LicenceCategory.objects.none()
+            only_purpose_records = LicencePurpose.objects.none()
+
+        elif active_applications.count():
             # Including inactive licences
             all_applications = Application.get_request_user_applications(request).distinct()
-            active_category_ids = active_applications.values_list(
-                'selected_activities__licence_activity__licence_category_id',
+            # Activities relevant to the current application type
+            current_activities = Application.get_active_licence_activities(request, application_type)
+
+            active_category_ids = current_activities.values_list(
+                'licence_activity__licence_category_id',
                 flat=True
             )
             active_purpose_ids = all_applications.values_list(
@@ -293,14 +301,20 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
                 only_purpose_records = LicencePurpose.objects.exclude(
                     id__in=active_purpose_ids
                 )
-            elif application_type == Application.APPLICATION_TYPE_AMENDMENT:
+            elif application_type in [
+                Application.APPLICATION_TYPE_AMENDMENT,
+                Application.APPLICATION_TYPE_RENEWAL,
+            ]:
                 amendable_purpose_ids = active_applications.values_list(
                     'licence_purposes__id',
                     flat=True
                 )
+
                 queryset = queryset.filter(id__in=active_category_ids)
                 only_purpose_records = LicencePurpose.objects.filter(
                     id__in=amendable_purpose_ids,
+                    licence_activity_id__in=current_activities.values_list(
+                        'licence_activity_id', flat=True)
                 )
 
         serializer = LicenceCategorySerializer(queryset, many=True, context={
