@@ -83,7 +83,7 @@ def create_checkout_session(request, parameters):
     session_data.owned_by(serializer.validated_data['basket_owner'])
     # FIXME: replace internal user ID with email address once lookup/alias issues sorted
     email = None
-    if serializer.validated_data['basket_owner'] and request.user.is_anonymous():
+    if serializer.validated_data['basket_owner'] and request.user.is_anonymous:
         email = EmailUser.objects.get(id=serializer.validated_data['basket_owner']).email
     session_data.set_guest_email(email)
 

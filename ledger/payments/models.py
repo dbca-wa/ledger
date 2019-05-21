@@ -20,7 +20,7 @@ class OracleParser(models.Model):
         return str(self.date_parsed)
 
 class OracleParserInvoice(models.Model):
-    parser = models.ForeignKey(OracleParser,related_name='invoices')
+    parser = models.ForeignKey(OracleParser,related_name='invoices', on_delete=models.PROTECT)
     reference = models.CharField(max_length=50)
     details = JSONField() 
 
@@ -58,7 +58,7 @@ class OracleInterfaceSystem(models.Model):
         return '{} - {}'.format(self.system_name, self.system_id)
 
 class OracleInterfaceDeduction(models.Model):
-    oisystem = models.ForeignKey(OracleInterfaceSystem, related_name='deductions')
+    oisystem = models.ForeignKey(OracleInterfaceSystem, related_name='deductions', on_delete=models.PROTECT)
     percentage = models.PositiveIntegerField(validators=[MaxValueValidator(99), MinValueValidator(0)],null=True,blank=True)
     percentage_account_code = models.CharField(max_length=50,null=True,blank=True)
     destination_account_code = models.CharField(max_length=50,null=True,blank=True)
@@ -70,7 +70,7 @@ class OracleInterfaceDeduction(models.Model):
         return '{} - {}'.format(self.oisystem, self.destination_account_code)
 
 class OracleInterfaceRecipient(models.Model):
-    system = models.ForeignKey(OracleInterfaceSystem,related_name='recipients')
+    system = models.ForeignKey(OracleInterfaceSystem,related_name='recipients', on_delete=models.PROTECT)
     email = models.EmailField()
 
     def __str__(self):
@@ -100,7 +100,7 @@ class TrackRefund(models.Model):
         (2,'Bpoint'),
         (3,'Bpay')
     )
-    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     type = models.SmallIntegerField(choices=REFUND_TYPES)
     refund_id = models.PositiveIntegerField()
     details = models.TextField()

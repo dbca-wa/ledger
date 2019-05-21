@@ -12,6 +12,10 @@ Basket = get_model('basket', 'basket')
 from oscar.apps.basket.middleware import BasketMiddleware as CoreBasketMiddleware
 
 class BasketMiddleware(CoreBasketMiddleware):
+    
+    def __init__(self, get_response=None):
+        self.get_response = get_response
+
     def get_cookie_basket(self, cookie_key, request, manager):
         """
         Looks for a basket which is referenced by a cookie.
@@ -23,7 +27,7 @@ class BasketMiddleware(CoreBasketMiddleware):
         if cookie_key in request.COOKIES:
             basket_hash = request.COOKIES[cookie_key]
             try:
-                basket_id = Signer(sep='|').unsign(basket_hash)
+                basket_id = Signer().unsign(basket_hash)
                 basket = Basket.objects.get(pk=basket_id, owner=None,
                                             status=Basket.OPEN)
             except (BadSignature, Basket.DoesNotExist):
@@ -31,4 +35,4 @@ class BasketMiddleware(CoreBasketMiddleware):
         return basket
 
     def get_basket_hash(self, basket_id):
-        return Signer(sep='|').sign(basket_id)
+        return Signer().sign(basket_id)

@@ -307,7 +307,7 @@ class CampgroundGroup(models.Model):
 
 class CampgroundImage(models.Model):
     image = models.ImageField(max_length=255, upload_to=campground_image_path)
-    campground = models.ForeignKey(Campground, related_name='images')
+    campground = models.ForeignKey(Campground, related_name='images', on_delete=models.CASCADE)
     checksum = models.CharField(blank=True, max_length=255, editable=False)
 
     class Meta:
@@ -376,7 +376,7 @@ class BookingRange(models.Model):
     updated_on = models.DateTimeField(auto_now_add=True,help_text='Used to check if the start and end dated were changed')
 
     status = models.SmallIntegerField(choices=BOOKING_RANGE_CHOICES, default=0)
-    closure_reason = models.ForeignKey('ClosureReason',null=True,blank=True)
+    closure_reason = models.ForeignKey('ClosureReason',null=True,blank=True, on_delete=models.CASCADE)
     details = models.TextField(blank=True,null=True)
     range_start = models.DateField(blank=True, null=True)
     range_end = models.DateField(blank=True, null=True)
@@ -434,7 +434,7 @@ class StayHistory(models.Model):
     min_dba = models.SmallIntegerField(default=0)
     max_dba = models.SmallIntegerField(default=180)
 
-    reason = models.ForeignKey('MaximumStayReason')
+    reason = models.ForeignKey('MaximumStayReason', on_delete=models.CASCADE)
     details = models.TextField(blank=True,null=True)
     range_start = models.DateField(blank=True, null=True)
     range_end = models.DateField(blank=True, null=True)
@@ -828,7 +828,7 @@ class CampsiteRate(models.Model):
     date_end = models.DateField(null=True, blank=True)
     rate_type = models.SmallIntegerField(choices=RATE_TYPE_CHOICES, default=0)
     price_model = models.SmallIntegerField(choices=PRICE_MODEL_CHOICES, default=0)
-    reason = models.ForeignKey('PriceReason')
+    reason = models.ForeignKey('PriceReason', on_delete=models.CASCADE)
     details = models.TextField(null=True,blank=True)
     update_level = models.SmallIntegerField(choices=UPDATE_LEVEL_CHOICES, default=0)
 
@@ -884,10 +884,10 @@ class Booking(models.Model):
     expiry_time = models.DateTimeField(blank=True, null=True)
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     override_price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
-    override_reason = models.ForeignKey('DiscountReason', null=True, blank=True)
+    override_reason = models.ForeignKey('DiscountReason', null=True, blank=True, on_delete=models.CASCADE)
     override_reason_info = models.TextField(blank=True, null=True)
     overridden_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True, related_name='overridden_bookings')
-    campground = models.ForeignKey('Campground', null=True)
+    campground = models.ForeignKey('Campground', null=True, on_delete=models.PROTECT)
     is_canceled = models.BooleanField(default=False)
     send_invoice = models.BooleanField(default=False)
     cancellation_reason = models.TextField(null=True,blank=True)
@@ -1259,7 +1259,7 @@ class Booking(models.Model):
         return payment_dict
 
 class BookingHistory(models.Model):
-    booking = models.ForeignKey(Booking,related_name='history')
+    booking = models.ForeignKey(Booking,related_name='history', on_delete=models.PROTECT)
     created = models.DateTimeField(auto_now_add=True)
     arrival = models.DateField()
     departure = models.DateField()
@@ -1270,7 +1270,7 @@ class BookingHistory(models.Model):
     campsites = JSONField()
     vehicles = JSONField()
     updated_by = models.ForeignKey(EmailUser,on_delete=models.PROTECT, blank=True, null=True)
-    invoice=models.ForeignKey(Invoice,null=True,blank=True)
+    invoice=models.ForeignKey(Invoice,null=True,blank=True, on_delete=models.PROTECT)
 
 class OutstandingBookingRecipient(models.Model):
     email = models.EmailField()
@@ -1279,7 +1279,7 @@ class OutstandingBookingRecipient(models.Model):
         return self.email
 
 class BookingInvoice(models.Model):
-    booking = models.ForeignKey(Booking, related_name='invoices')
+    booking = models.ForeignKey(Booking, related_name='invoices', on_delete=models.PROTECT)
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
 
     def __str__(self):
@@ -1303,7 +1303,7 @@ class BookingVehicleRego(models.Model):
         ('motorbike','Motorcycle'),
         ('concession','Vehicle (concession)')
     )
-    booking = models.ForeignKey(Booking, related_name = "regos")
+    booking = models.ForeignKey(Booking, related_name = "regos", on_delete=models.CASCADE)
     rego = models.CharField(max_length=50)
     type = models.CharField(max_length=10,choices=VEHICLE_CHOICES)
     entry_fee = models.BooleanField(default=False)

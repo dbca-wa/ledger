@@ -5,7 +5,7 @@ from decimal import *
 import json
 import requests
 from django.conf import settings
-from django.core.urlresolvers import reverse, reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
@@ -919,7 +919,7 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
     }
     if not internal:
         checkout_params['check_url'] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
-    if internal or request.user.is_anonymous():
+    if internal or request.user.is_anonymous:
         checkout_params['basket_owner'] = booking.customer.id
     create_checkout_session(request, checkout_params)
 

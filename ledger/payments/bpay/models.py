@@ -39,7 +39,7 @@ class BpayFileTrailer(models.Model):
     total = models.DecimalField(default=0,decimal_places=2,max_digits=12)
     groups = models.IntegerField(default=0)
     records = models.IntegerField(default=0)
-    file = models.OneToOneField(BpayFile, related_name='trailer')
+    file = models.OneToOneField(BpayFile, related_name='trailer', on_delete=models.PROTECT)
 
     class Meta:
         db_table = 'payments_bpayfiletrailer'
@@ -120,7 +120,7 @@ class BpayTransaction(models.Model):
     discount_ref = models.CharField(max_length=20, null=True, blank=True, help_text='Discount Reference Code.')
     discount_method = models.CharField(max_length=3, null=True, blank=True, help_text='Discount Method Code.')
     biller_code = models.CharField(max_length=10)
-    file = models.ForeignKey(BpayFile, related_name='transactions')
+    file = models.ForeignKey(BpayFile, related_name='transactions', on_delete=models.PROTECT)
 
     class Meta:
         unique_together = ('crn', 'txn_ref', 'p_date')
@@ -228,7 +228,7 @@ class BpayGroupRecord(models.Model):
     )
     settled = models.DateTimeField(help_text='File Settlement Date Time')
     modifier = models.IntegerField(choices=DATE_MODIFIERS, help_text='As of Date modifier')
-    file = models.ForeignKey(BpayFile, related_name='group_records')
+    file = models.ForeignKey(BpayFile, related_name='group_records', on_delete=models.PROTECT)
 
     class Meta:
         db_table = 'payments_bpaygrouprecord'
@@ -237,7 +237,7 @@ class BpayGroupTrailer(models.Model):
     total = models.DecimalField(default=0,decimal_places=2,max_digits=12)
     accounts = models.IntegerField(default=0)
     records = models.IntegerField(default=0)
-    file = models.ForeignKey(BpayFile, related_name='group_trailerrecords')
+    file = models.ForeignKey(BpayFile, related_name='group_trailerrecords', on_delete=models.PROTECT)
 
     class Meta:
         db_table = 'payments_bpaygrouptrailer'
@@ -249,7 +249,7 @@ class BpayAccountRecord(models.Model):
     cheque_amount = models.DecimalField(default=0,decimal_places=2,max_digits=12)
     debit_amount =models.DecimalField(default=0,decimal_places=2,max_digits=12)
     debit_items = models.IntegerField(default=0)
-    file = models.ForeignKey(BpayFile, related_name='account_records')
+    file = models.ForeignKey(BpayFile, related_name='account_records', on_delete=models.PROTECT)
 
     class Meta:
         db_table = 'payments_bpayaccountrecord'
@@ -257,7 +257,7 @@ class BpayAccountRecord(models.Model):
 class BpayAccountTrailer(models.Model):
     total = models.DecimalField(default=0,decimal_places=2,max_digits=12)
     records = models.IntegerField(default=0)
-    file = models.ForeignKey(BpayFile, related_name='account_trailerrecords')
+    file = models.ForeignKey(BpayFile, related_name='account_trailerrecords', on_delete=models.PROTECT)
 
     class Meta:
         db_table = 'payments_bpayaccounttrailer'
@@ -296,7 +296,7 @@ class BillerCodeSystem(models.Model):
         return '{} - Biller Code: {}'.format(self.system,self.biller_code)
     
 class BillerCodeRecipient(models.Model):
-    app = models.ForeignKey(BillerCodeSystem, related_name='recipients')
+    app = models.ForeignKey(BillerCodeSystem, related_name='recipients', on_delete=models.PROTECT)
     email = models.EmailField()
     
     class Meta:

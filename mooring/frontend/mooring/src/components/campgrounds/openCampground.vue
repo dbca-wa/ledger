@@ -1,5 +1,5 @@
 <template id="pkCgOpen">
-<bootstrapModal title="Open campground" :large=true @ok="addOpen()">
+<bootstrapModal title="Open mooring" :large=true @ok="addOpen()">
 
     <div class="modal-body">
         <form id="openCGForm" class="form-horizontal">
