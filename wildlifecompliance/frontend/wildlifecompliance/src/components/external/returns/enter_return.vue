@@ -32,7 +32,7 @@
                         <input type="textarea" name="nilReason" v-model="returns.nilReason">
                       </div>
                       <div v-if="nilReturn === 'no'" class="row">
-                        <label style="width:70%;" class="col-sm-4">Do you want to upload spreadsheet with Return data?<br>(Download <a v-bind:href="url">spreadsheet template</a>)</label>
+                        <label style="width:70%;" class="col-sm-4">Do you want to upload spreadsheet with Return data?<br>(Download <a v-bind:href="returns.template">spreadsheet template</a>)</label>
                         <input type="radio" name="SpreadsheetYes" value="yes" v-model='spreadsheetReturn'>
                         <label style="width:10%;" for="SpreadsheetYes">Yes</label>
                         <input type="radio" name="SpreadsheetNo" value="no" v-model='spreadsheetReturn'>
@@ -47,27 +47,10 @@
                       </div>
                       <div class="row"></div>
                       <div v-if="nilReturn === 'no' && spreadsheetReturn === 'no'" class="row">
-                        <table class="return-table table table-striped table-bordered dataTable" style="width:100%">
-                        <thead>
-                        <tr>
-                          <div v-for="(item,index) in returns.table">
-                            <th v-if="item.headers" v-for="header in item.headers">{{header.label}}</th>
-                          </div>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                          <div v-for="(item,index) in returns.table">
-                            <td v-if="item.headers" v-for="header in item.headers">
-                              <div v-for ="item1 in item.data">
-                                <input v-for="(title,key) in item1" v-if="key == header.label" class="form-control returns" :name="`${item.name}::${header.label}`" :data-species="`${header.species}`" v-model="title.value">
-                              </div>
-                            </td>
-                          </div>
-                        </tr>
-                        </tbody>
-                        </table>
-                        <input type="button" class="btn btn-primary" @click.prevent="addRow()" >Add Row</button>
+                          <renderer-block v-for="(data, key) in returns.table"
+                              :component="data"
+                              v-bind:key="returns-grid-data"
+                          />
                       </div>
                       <div v-if="nilReturn === 'no' && spreadsheetReturn === 'yes'" class="row">
                         <span class="btn btn-primary btn-file pull-left">Upload File
@@ -107,7 +90,6 @@
 <script>
 import Returns from '../../returns_form.vue'
 import { mapActions, mapGetters } from 'vuex'
-import $ from 'jquery'
 import Vue from 'vue'
 import CommsLogs from '@common-components/comms_logs.vue'
 import {
@@ -117,12 +99,7 @@ import {
 from '@/utils/hooks'
 export default {
   name: 'externalReturn',
-  props: {
-     url:{
-        type: String,
-        required: false
-     }
-  },
+  props:["table", "data", "grid"],
   data() {
     let vm = this;
     return {
@@ -155,18 +132,15 @@ export default {
         'setReturnsTab',
     ]),
     eventListeners: function(){
-      console.log('eventListener')
-      console.log(this)
       $("[data-target!=''][data-target]").off("click").on("click", function (e) {
         this.setReturnsTab(0, 'Return')
       });
     },
     save: function(e) {
-      let vm = this;
-      vm.form=document.forms.enter_return
-      let data = new FormData(vm.form);
-      if (vm.returns.spreadsheet == 'no') {
-          vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/update_details'),data,{
+      this.form=document.forms.enter_return
+      let data = new FormData(this.form);
+      if (this.spreadsheetReturn === 'no') {
+          this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/save'),data,{
       		  emulateJSON:true,
 	        }).then((response)=>{
 		        swal( 'Sent',
@@ -180,9 +154,9 @@ export default {
           	);
 	        });
       }
-      if (vm.returns.spreadsheet == 'yes') {
-        data.append('spreadsheet', vm.spreadsheet)
-        vm.$http.post(helpers.add_endpoint_json(api_endpoints.returns,vm.returns.id+'/upload_details'),data,{
+      if (this.spreadsheetReturn === 'yes') {
+        data.append('spreadsheet', this.spreadsheet)
+        this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/upload_details'),data,{
                     emulateJSON:true,
         }).then((res)=>{
                 swal(
@@ -208,26 +182,6 @@ export default {
         _file = input.files[0];
       }
       vm.spreadsheet = _file;
-    },
-    addRow: function(e) {
-      let vm = this;
-      let dataObj = Object.assign({}, vm.returns.table[0].data[0]);
-      for(let key in dataObj) { dataObj[key] = '' };
-      vm.returns.table[0].data.push(dataObj);
-    },
-    buildRow: function(e) {
-      let vm = this;
-      let dataObj = vm.returns.table[0].data[0];
-      let dataHdr = vm.returns.table[0].headers[0];
-      for(let key in dataObj) { delete dataObj[key] };
-      for(let key in dataHdr) { delete dataHdr[key] };
-      let data = {
-        LOCATION: '',
-        SITE: '',
-        DATUM: '',
-        LATITUDE: ''
-      };
-      Object.assign(vm.returns.table[0].data[0], data);
     },
     submit: function(e) {
       let vm = this;
@@ -263,8 +217,7 @@ export default {
      });
   },
   mounted: function(){
-    let vm = this;
-    vm.form = document.forms.enter_return;
+    this.form = document.forms.enter_return;
   },
 }
 </script>

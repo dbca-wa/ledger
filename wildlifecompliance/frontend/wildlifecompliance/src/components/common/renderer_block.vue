@@ -153,10 +153,11 @@
             <label :id="element_id()" class="inline">{{component.label}}</label>
                 <HelpText :help_text="help_text"/>
                 <HelpTextUrl :help_text_url="help_text_url"/>
-                <CommentRadioCheckBox
+                <CommentBlock 
+                    :label="component.label"
                     :name="component_name"
                     :field_data="value"
-                    :label="component.label"/>
+                    />
 
                 <Radio v-for="(option, index) in component.options"
                     :name="component_name"
@@ -240,6 +241,17 @@
             :isRequired="component.isRequired"
             :help_text_url="help_text_url"/>
 
+        <GridBlock v-if="component.type === 'grid'"
+            :name="component.name"
+            :headers="component.headers"
+            :field_data="component.data"
+            :id="element_id()"
+            :label="component.label"
+            :help_text="help_text"
+            :readonly="is_readonly"
+            :isRequired="component.isRequired"
+            :help_text_url="help_text_url"/>
+
     </span>
 </template>
 
@@ -266,9 +278,10 @@ import LabelBlock from '@/components/forms/label.vue'
 import AssessorText from '@/components/forms/readonly_text.vue'
 import HelpText from '@/components/forms/help_text.vue'
 import HelpTextUrl from '@/components/forms/help_text_url.vue'
-import CommentRadioCheckBox from '@/components/forms/comment_icon_checkbox_radio.vue'
+import CommentBlock from '@/components/forms/comment_block.vue';
 import TableBlock from '@/components/forms/table.vue'
 import ExpanderTable from '@/components/forms/expander_table.vue'
+import GridBlock from '@/components/forms/grid.vue'
 
 const RendererBlock = {
   name: 'renderer-block',
@@ -280,7 +293,7 @@ const RendererBlock = {
       SelectConditions,
       HelpText,
       HelpTextUrl,
-      CommentRadioCheckBox,
+      CommentBlock,
       Radio,
       Conditions,
       Checkbox,
@@ -290,6 +303,7 @@ const RendererBlock = {
       LabelBlock,
       TableBlock,
       ExpanderTable,
+      GridBlock,
   },
   data: function() {
     return {
@@ -339,7 +353,8 @@ const RendererBlock = {
                 key: this.component_name,
                 value: {
                     "value": '',
-                    "comment_value": '',
+                    "officer_comment": '',
+                    "assessor_comment": '',
                     "deficiency_value": '',
                     "schema_name": this.component.name,
                     "component_type": this.component.type,

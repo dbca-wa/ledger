@@ -40,7 +40,7 @@
           <div class="col-md-8">  
             <div class="row">
 
-              <FormSection collapse="collapse in" label="Caller" Index="0">
+              <FormSection :formCollapse="false" label="Caller" Index="0">
                 
                 <div class="row"><div class="col-sm-8 form-group">
                   <label class="col-sm-12">Caller name</label>
@@ -72,13 +72,13 @@
                 </div></div>
               </FormSection>
 
-              <FormSection collapse="collapse in" label="Location" Index="1">
+              <FormSection :formCollapse="false" label="Location" Index="1">
                   <div v-if="call_email.location">
                     <MapLocation v-bind:key="call_email.location.id"/>
                   </div>
               </FormSection>
 
-              <FormSection collapse="collapse" label="Details" Index="2">
+              <FormSection :formCollapse="true" label="Details" Index="2">
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Use occurrence from/to</label>
@@ -116,7 +116,7 @@
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Classification</label>
-                  <select class="form-control" v-model="call_email.classification_id">
+                  <select class="form-control" v-model="classification_id">
                         <option v-for="option in classification_types" :value="option.id" v-bind:key="option.id">
                           {{ option.name }} 
                         </option>
@@ -125,22 +125,22 @@
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Report Type</label>
-                  <select @click.prevent="loadSchema" class="form-control" v-model="call_email.report_type_id">
-                          <option  v-for="option in report_types" :value="option.id" v-bind:key="option.id">
+                  <select class="form-control" v-model="report_type_id">
+                          <option v-for="option in report_types" :value="option.id" v-bind:key="option.id">
                             {{ option.report_type }} 
                           </option>
                   </select>
                 </div></div>
                 
-                <div v-for="(item, index) in call_email.schema">
+                <div v-for="(item, index) in current_schema">
                   <compliance-renderer-block
                     :component="item"
-                    v-bind:key="`compliance_renderer_block_${index}`"
+                    v-bind:key="`compliance_renderer_block_${report_type_id}`"
                     />
                 </div>
               </FormSection>
 
-              <FormSection collapse="collapse" label="Outcome" Index="3">
+              <FormSection :formCollapse="true" label="Outcome" Index="3">
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Referrer</label>
                   <select class="form-control" v-model="call_email.referrer_id">
@@ -151,18 +151,24 @@
                 </div></div>
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Advice given</label>
-                    <label class="col-sm-1">Yes</label>
                     <input class="col-sm-1" type="radio" v-model="call_email.advice_given" v-bind:value="true">
-                    <label class="col-sm-1">No</label>
+                    <label class="col-sm-1">Yes</label>
                     <input class="col-sm-1" type="radio" v-model="call_email.advice_given" v-bind:value="false">
+                    <label class="col-sm-1">No</label>
                 </div></div>
                 <div v-if="call_email.advice_given" class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Advice details</label>
                   <textarea class="form-control" rows="5" v-model="call_email.advice_details"/>
                 </div></div>
               </FormSection>
+              
+              <div class="col-sm-12 form-group"><div class="row">
+              <h3></h3>
+              </div></div>
+            
             </div>          
           </div>
+
 
         <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                         <div class="navbar-inner">
@@ -175,11 +181,12 @@
                             </div>
                         </div>
         </div>          
+        
     </div>
 </template>
 <script>
 import Vue from "vue";
-import FormSection from "@/components/compliance_forms/section.vue";
+import FormSection from "@/components/forms/section_toggle.vue";
 
 import CommsLogs from "@common-components/comms_logs.vue";
 import MapLocation from "./map_location.vue";
@@ -188,11 +195,19 @@ import { api_endpoints, helpers } from "@/utils/hooks";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import Datepicker from 'vuejs-datepicker';
+import moment from 'moment';
+import localforage from "localforage";
+
+let CallEmail_ReportType_Schema = localforage.createInstance({
+    name: "WildlifeCompliance",
+    storeName: 'CallEmail_ReportType_Schema',
+  });
 
 export default {
   name: "ViewCallEmail",
   data: function() {
     return {
+      current_schema: [],
       sectionLabel: "Details",
       sectionIndex: 1,
       pBody: "pBody" + this._uid,
@@ -213,7 +228,6 @@ export default {
       ),
     };
   },
-
   components: {
     CommsLogs,
     FormSection,
@@ -230,8 +244,36 @@ export default {
     }),
     ...mapGetters({
       renderer_form_data: 'renderer_form_data',
+    }),
+    classification_id: {
+        get: function() {
+          return this.call_email.classification ? this.call_email.classification.id : "";
+        },
+        set: function(value) {
+          let classification = null;
+          this.classification_types.forEach(function(element) {
+            if (element.id === value) {
+              classification = element;
+            }
+          }); 
+          this.setClassification(classification);
+        }, 
     },
-    ),
+    report_type_id: {
+        get: function() {
+          return this.call_email.report_type ? this.call_email.report_type.id : "";
+        },
+        set: async function(value) {
+          let report_type = null;
+          this.report_types.forEach(function(element) {
+            if (element.id === value) {
+              report_type = element;
+            }
+          }); 
+          await this.loadSchema(value);
+          await this.setReportType(report_type);
+        }, 
+    },
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
     },
@@ -249,15 +291,12 @@ export default {
         return "Occurrence time";
       }
     },
-
   },
-  
   filters: {
     formatDate: function(data) {
       return data ? moment(data).format("DD/MM/YYYY HH:mm:ss") : "";
     }
   },
-
   methods: {
     ...mapActions('callemailStore', {
       loadCallEmail: "loadCallEmail",
@@ -267,6 +306,8 @@ export default {
       saveCallEmail: 'saveCallEmail',
       updateSchema: "updateSchema",
       loadReferrers: "loadReferrers",
+      setClassification: "setClassification",
+      setReportType: "setReportType",
     }),
     ...mapActions({
       saveFormData: "saveFormData",
@@ -288,25 +329,100 @@ export default {
         await this.saveCallEmail({ route: true, crud: 'create'});
       }
     },
-    loadSchema: function() {
-      this.updateSchema();
-    },
     duplicate: async function() {
       await this.saveCallEmail({ route: false, crud: 'duplicate'});
     },
+    loadSchema: async function(new_report_type_id) {
+            console.log("loadSchema");
+            if (this.report_type_id || new_report_type_id) {
+              try {
+                  let new_schema = [];
+                  let retrieved_val = null;
+                  let report_type_id_str = "";
+                  const timeNow = Date.now();
+
+                  if (new_report_type_id) {
+                    report_type_id_str = new_report_type_id.toString();
+                  } else {
+                    report_type_id_str = this.report_type_id.toString();
+                  }
+                  // check local cache to see if key exists
+                  try {
+                    retrieved_val = await CallEmail_ReportType_Schema.getItem(
+                      report_type_id_str)
+                  } catch(err) {
+                    console.log(err);
+                  }
+
+                  let timeDiff = 0;
+                  let expiryDiff = 300000; // 5 mins // 1 day 86400000;
+                  if (retrieved_val) {
+                    timeDiff = timeNow - retrieved_val[0];
+                    Object.assign(new_schema, retrieved_val[1]);
+                  }
+
+                  // if no schema retrieved or expired cached value, fetch new schema from db
+                  if (!(new_schema.length > 0) || timeDiff > expiryDiff) {
+                    console.log("timeDiff");
+                    console.log(timeDiff);
+                    
+                    let payload = new Object();
+                    payload.id = this.call_email.id;
+                    payload.report_type_id = report_type_id_str;
+
+                    const updatedCallEmail = await Vue.http.post(
+                        helpers.add_endpoint_join(
+                            api_endpoints.call_email, 
+                            this.call_email.id + "/update_schema/"),
+                        payload
+                        );
+                    
+                    const value_to_cache = [timeNow, updatedCallEmail.body.schema];
+                    try {
+                      retrieved_val = await CallEmail_ReportType_Schema.setItem(
+                        report_type_id_str, 
+                        value_to_cache)
+                      console.log("keyvalue stored and returned");  
+                    } catch(err) {
+                      console.log(err);
+                    }
+                    if (retrieved_val) {
+                      Object.assign(this.current_schema, retrieved_val[1]);
+                    }
+                  } else {
+                      console.log("cached keyvalue returned");  
+                      Object.assign(this.current_schema, new_schema);
+                  }
+              } catch (err) {
+                  console.error(err);
+              }
+            }
+    },
   },
 
-  created: function() {
+  created: async function() {
     
     if (this.$route.params.call_email_id) {
-      this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
+      await this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
     }
-    //this.loadClassification();
-    this.loadClassificationChoices();
-    this.loadReportTypes();
-    this.loadReferrers();
+    // load current CallEmail renderer schema
+    await this.loadSchema(this.call_email.report_type_id);
+    
+    // load drop-down select lists
+    await this.loadClassificationChoices();
+    await this.loadReportTypes();
+    await this.loadReferrers();
     
   },
+  mounted: function() {
+        console.log(this);
+        $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
+            var chev = $( this ).children()[ 0 ];
+            window.setTimeout( function () {
+                $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
+            }, 100 );
+        });
+  }
 };
 </script>
 

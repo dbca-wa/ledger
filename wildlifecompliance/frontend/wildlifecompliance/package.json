@@ -29,6 +29,7 @@
     "leaflet": "^1.4.0",
     "leaflet.locatecontrol": "^0.67.0",
     "leaflet.markercluster": "^1.4.1",
+    "localforage": "^1.7.3",
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
     "moment-range": "^3.0.3",

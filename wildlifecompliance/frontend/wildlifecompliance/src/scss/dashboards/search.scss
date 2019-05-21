@@ -1,5 +1,8 @@
 td {
-   &.capitalise, [data-dt-column="8"] .dtr-data {
-       text-transform: capitalize;
-   }
+    &.capitalise, [data-dt-column="8"] .dtr-data {
+        text-transform: capitalize;
+    }
+    &.normal-white-space {
+        white-space: normal !important;
+    }
 }

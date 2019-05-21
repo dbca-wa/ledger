@@ -132,6 +132,10 @@ export default {
                 type:Number,
                 required: true
             },
+            condition: {
+                type: Object,
+                required: true
+            },
             conditions: {
                 type: Array,
                 required: true
@@ -146,14 +150,6 @@ export default {
         return {
             isModalOpen:false,
             form:null,
-            condition: {
-                due_date: '',
-                standard: true,
-                recurrence: false,
-                recurrence_pattern: 'weekly',
-                application: vm.application_id,
-                licence_activity:null
-            },
             return_types: [],
             addingCondition: false,
             updatingCondition: false,
@@ -181,7 +177,7 @@ export default {
         due_date: {
             cache: false,
             get(){
-                if (this.condition.due_date == undefined  || this.condition.due_date == '' || this.condition.due_date ==  null){
+                if (this.condition.due_date == null){
                     return '';
                 }
                 else{
@@ -196,15 +192,6 @@ export default {
         },
     },
     methods:{
-        initialiseCondition: function(){
-            this.condition = {
-                due_date: '',
-                standard: true,
-                recurrence: false,
-                recurrence_pattern: 'weekly',
-                application: vm.application_id
-            }
-        },
         ok:function () {
             let vm =this;
             if($(vm.form).valid()){
@@ -217,17 +204,12 @@ export default {
         close:function () {
             this.isModalOpen = false;
             $(this.$refs.standard_req).val(null).trigger('change');
-            this.condition = {
-                standard: true,
-                recurrence: false,
-                due_date: '',
-                recurrence_pattern: 'weekly',
-                application: this.application_id
-            };
             this.errors = false;
             $('.has-error').removeClass('has-error');
-            $(this.$refs.due_date).data('DateTimePicker').clear();
-            //$(this.$refs.due_date).clear();
+            const datePicker = $(this.$refs.due_date).data('DateTimePicker');
+            if(datePicker) {
+                datePicker.clear();
+            }
             this.validation_form.resetForm();
         },
         fetchContact: function(id){
@@ -265,9 +247,6 @@ export default {
             }
             if (vm.condition.id){
                 vm.updatingCondition = true;
-                
-                console.log('adding condition')
-                console.log(JSON.stringify(condition))
                 vm.$http.put(helpers.add_endpoint_json(api_endpoints.application_conditions,condition.id),JSON.stringify(condition),{
                         emulateJSON:true,
                     }).then((response)=>{
@@ -281,8 +260,6 @@ export default {
                     });
             } else {
                 vm.addingCondition = true;
-                console.log('adding condition')
-                console.log(JSON.stringify(condition))
                 vm.$http.post(api_endpoints.application_conditions,JSON.stringify(condition),{
                         emulateJSON:true,
                     }).then((response)=>{

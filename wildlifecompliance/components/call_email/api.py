@@ -274,6 +274,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 request_data = request.data
                 # Create location then include in request to create new Call/Email
                 returned_location = None
+                
                 if (
                     request_data.get('location', {}).get('geometry', {}).get('coordinates') or
                     request_data.get('location', {}).get('properties', {}).get('postcode', {}) or
@@ -282,11 +283,20 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     returned_location = self.save_location(request)        
                     request_data.update({'location_id': returned_location.id})
 
+                if request_data.get('classification'):
+                    request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
+                if request_data.get('report_type'):
+                    request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
+                
                 serializer = CreateCallEmailSerializer(data=request_data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
                     new_instance = serializer.save()
-                    returned_location = None
+                    new_returned = serializer.data
+                    # Ensure classification_id and report_type_id is returned for Vue template evaluation                
+                    new_returned.update({'classification_id': request_data.get('classification_id')})
+                    new_returned.update({'report_type_id': request_data.get('report_type_id')})
+                    new_returned.update({'referrer_id': request_data.get('referrer_id')})
 
                     if request.data.get('renderer_data'):
                     # option required for duplicated Call/Emails
@@ -297,17 +307,22 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                             action=ComplianceFormDataRecord.ACTION_TYPE_ASSIGN_VALUE
                         )
                         # Serializer returns CallEmail.data for HTTP response
-                        returned_data = CallEmailSerializer(instance=new_instance)
-                        headers = self.get_success_headers(returned_data)
+                        duplicate = CallEmailSerializer(instance=new_instance)
+                        headers = self.get_success_headers(duplicate.data)
+
+                        duplicate.data.update({'classification_id': request_data.get('classification_id')})
+                        duplicate.data.update({'report_type_id': request_data.get('report_type_id')})
+                        duplicate.data.update({'referrer_id': request_data.get('referrer_id')})
+                        
                         return Response(
-                            returned_data.data,
+                            duplicate.data,
                             status=status.HTTP_201_CREATED,
                             headers=headers
                             )
                     else:
                         headers = self.get_success_headers(serializer.data)
                         return Response(
-                            serializer.data,
+                            new_returned,
                             status=status.HTTP_201_CREATED,
                             headers=headers
                         )
@@ -324,16 +339,10 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     def save_location(self, request, *args, **kwargs):
         
         location_request_data = request.data.get('location')
-        # if (
-        #         location_request_data.get('geometry', {}).get('coordinates', {})[0] or
-        #         location_request_data.get('properties', {}).get('postcode', {}) or
-        #         location_request_data.get('properties', {}).get('details', {})
-        #     ):
         if location_request_data.get('id'):
             print("exist location_request_data")
             print(location_request_data)
             
-            #location_instance = instance.location
             location_instance = Location.objects.get(id=location_request_data.get('id'))
             location_serializer = LocationSerializer(
                 instance=location_instance, 
@@ -357,8 +366,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     def call_email_save(self, request, *args, **kwargs):
-        print("request.data")
-        print(request.data)
         instance = self.get_object()
         try:
             with transaction.atomic():
@@ -376,24 +383,30 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 if request_data.get('renderer_data'):
                     self.form_data(request)
 
-            serializer = SaveCallEmailSerializer(instance, data=request_data)
-            serializer.is_valid(raise_exception=True)
-            if serializer.is_valid():
-                serializer.save()
-                instance.log_user_action(
-                    ComplianceUserAction.ACTION_SAVE_CALL_EMAIL_.format(
-                    instance.number), request)
-                headers = self.get_success_headers(serializer.data)
-                returned_data = serializer.data
-                # Ensure classification_id and report_type_id is returned for Vue template evaluation
-                returned_data.update({'classification_id': request_data.get('classification_id')})
-                returned_data.update({'report_type_id': request_data.get('report_type_id')})
-                return Response(
-                    returned_data,
-                    status=status.HTTP_201_CREATED,
-                    headers=headers
-                    )
-                
+                if request_data.get('classification'):
+                    request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
+                if request_data.get('report_type'):
+                    request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
+
+                serializer = SaveCallEmailSerializer(instance, data=request_data)
+                serializer.is_valid(raise_exception=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    instance.log_user_action(
+                        ComplianceUserAction.ACTION_SAVE_CALL_EMAIL_.format(
+                        instance.number), request)
+                    headers = self.get_success_headers(serializer.data)
+                    returned_data = serializer.data
+                    # Ensure classification_id and report_type_id is returned for Vue template evaluation
+                    returned_data.update({'classification_id': request_data.get('classification_id')})
+                    returned_data.update({'report_type_id': request_data.get('report_type_id')})
+                    returned_data.update({'referrer_id': request_data.get('referrer_id')})
+                    return Response(
+                        returned_data,
+                        status=status.HTTP_201_CREATED,
+                        headers=headers
+                        )
+                    
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -403,32 +416,34 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-
     
     @detail_route(methods=['POST', ])
     def update_schema(self, request, *args, **kwargs):
+        print("request.data")
+        print(request.data)
         instance = self.get_object()
-        try:
-            serializer = UpdateSchemaSerializer(instance, data=request.data)
-            serializer.is_valid(raise_exception=True)
-            if serializer.is_valid():
-                serializer.save()
-                headers = self.get_success_headers(serializer.data)
-                returned_data = serializer.data
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_201_CREATED,
-                    headers=headers
-                    )
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
+        if request.data.get('report_type_id'):
+            try:
+                serializer = UpdateSchemaSerializer(instance, data=request.data)
+                serializer.is_valid(raise_exception=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    headers = self.get_success_headers(serializer.data)
+                    returned_data = serializer.data
+                    return Response(
+                        serializer.data,
+                        status=status.HTTP_201_CREATED,
+                        headers=headers
+                        )
+            except serializers.ValidationError:
+                print(traceback.print_exc())
+                raise
+            except ValidationError as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(repr(e.error_dict))
+            except Exception as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e))
 
 
 class ClassificationViewSet(viewsets.ModelViewSet):
