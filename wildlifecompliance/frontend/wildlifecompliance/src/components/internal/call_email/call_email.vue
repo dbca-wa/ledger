@@ -300,8 +300,8 @@ export default {
   methods: {
     ...mapActions('callemailStore', {
       loadCallEmail: "loadCallEmail",
-      // loadClassification: "loadClassification",
-      loadClassificationChoices: "loadClassificationChoices",
+      loadClassification: "loadClassification",
+      //loadClassificationChoices: "loadClassificationChoices",
       loadReportTypes: "loadReportTypes",
       saveCallEmail: 'saveCallEmail',
       updateSchema: "updateSchema",
@@ -409,7 +409,8 @@ export default {
     await this.loadSchema(this.call_email.report_type_id);
     
     // load drop-down select lists
-    await this.loadClassificationChoices();
+    //await this.loadClassificationChoices();
+    await this.loadClassification();
     await this.loadReportTypes();
     await this.loadReferrers();
     
