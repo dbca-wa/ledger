@@ -55,7 +55,7 @@ class ExplorerView(APIUserRequiredMixin, View):
                 resource_obj = OrderedDict()
                 resource_obj['name'] = resource.get('name', '')
                 resource_obj['data'] = url
-                resource_obj['python'] = "requests.get('{0}', cookies={{'sessionid':'{1}'}}).content".format(
+                resource_obj['python'] = "requests.get('{0}', cookies={{'sessionid':'{1}'}}, verify=False).content".format(
                     url,
                     sessionid
                 )
