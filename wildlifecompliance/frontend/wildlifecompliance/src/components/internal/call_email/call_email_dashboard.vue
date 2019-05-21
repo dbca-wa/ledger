@@ -66,11 +66,7 @@
     import datatable from '@vue-utils/datatable.vue'
     import MapLocations from "./map_locations.vue";
     import Vue from 'vue'
-    import {
-        api_endpoints,
-        helpers
-    }
-    from '@/utils/hooks'
+    import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
     import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
     import FormSection from "@/components/compliance_forms/section.vue";
     export default {
@@ -78,6 +74,8 @@
         data() {
             let vm = this;
             return {
+                classification_types: [],
+                report_types: [],
                 // Filters
                 filterStatus: 'All',
                 filterClassification: 'All',
@@ -205,9 +203,9 @@
             },
         },
 
-        created: function() {
-            this.loadClassification();
-            this.loadReportTypes();
+        created: async function() {
+            let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
+            Object.assign(this.classification_types, returned_classification_types);
         },
         components: {
             datatable,
@@ -216,14 +214,10 @@
         },
         computed: {
             ...mapGetters('callemailStore', {
-                classification_types: "classification_types",
-                report_types: "report_types",
             }),
         },
         methods: {
             ...mapActions('callemailStore', {
-                loadClassification: "loadClassification",
-                loadReportTypes: "loadReportTypes",
                 saveCallEmail: "saveCallEmail",
             }),
             
@@ -290,9 +284,9 @@
                         }
                     }
                 );
-            }
+            },
         },
-        mounted: function () {
+        mounted: async function () {
             let vm = this;
             $('a[data-toggle="collapse"]').on('click', function () {
                 var chev = $(this).children()[0];
@@ -300,9 +294,9 @@
                     $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
                 }, 100);
             });
-            this.$nextTick(() => {
-                vm.initialiseSearch();
-                vm.addEventListeners();
+            this.$nextTick(async () => {
+                await vm.initialiseSearch();
+                await vm.addEventListeners();
             });
         }
     }

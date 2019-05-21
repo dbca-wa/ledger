@@ -57,7 +57,7 @@ from wildlifecompliance.components.call_email.serializers import (
     ReportTypeSerializer,
     SaveCallEmailSerializer,
     CreateCallEmailSerializer,
-    UpdateSchemaSerializer,
+    ReportTypeSchemaSerializer,
     ReferrerSerializer,
     LocationSerializerMinimum, CallEmailOptimisedSerializer)
 from utils import SchemaParser
@@ -257,15 +257,21 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 returned_location = None
                 
                 if (
-                    request_data.get('location', {}).get('geometry', {}).get('coordinates') or
+                    request_data.get('location', {}).get('geometry', {}).get('coordinates', {}) or
                     request_data.get('location', {}).get('properties', {}).get('postcode', {}) or
                     request_data.get('location', {}).get('properties', {}).get('details', {})
                 ):
-                    returned_location = self.save_location(request)        
-                    request_data.update({'location_id': returned_location.id})
+                    returned_location = self.save_location(request)
+                    if returned_location:
+                        request_data.update({'location_id': returned_location.get('id')})
+                
+                print("returned_location")
+                print(returned_location)
+                print("request_data")
+                print(request_data)
 
-                if request_data.get('classification'):
-                    request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
+                # if request_data.get('classification'):
+                #     request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
                 if request_data.get('report_type'):
                     request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
                 
@@ -275,9 +281,11 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     new_instance = serializer.save()
                     new_returned = serializer.data
                     # Ensure classification_id and report_type_id is returned for Vue template evaluation                
-                    new_returned.update({'classification_id': request_data.get('classification_id')})
+                    # new_returned.update({'classification_id': request_data.get('classification_id')})
                     new_returned.update({'report_type_id': request_data.get('report_type_id')})
                     new_returned.update({'referrer_id': request_data.get('referrer_id')})
+                    if request_data.get('location'):
+                        new_returned.update({'location_id': request_data.get('location').get('id')})
 
                     if request.data.get('renderer_data'):
                     # option required for duplicated Call/Emails
@@ -291,9 +299,11 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                         duplicate = CallEmailSerializer(instance=new_instance)
                         headers = self.get_success_headers(duplicate.data)
 
-                        duplicate.data.update({'classification_id': request_data.get('classification_id')})
+                        # duplicate.data.update({'classification_id': request_data.get('classification_id')})
                         duplicate.data.update({'report_type_id': request_data.get('report_type_id')})
                         duplicate.data.update({'referrer_id': request_data.get('referrer_id')})
+                        if request_data.get('location'):
+                            duplicate.data.update({'location_id': request_data.get('location').get('id')})
                         
                         return Response(
                             duplicate.data,
@@ -343,7 +353,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             location_serializer.is_valid(raise_exception=True)
             if location_serializer.is_valid():
                 location_instance = location_serializer.save()
-        return location_instance
+        return location_serializer.data
 
     @detail_route(methods=['POST', ])
     def call_email_save(self, request, *args, **kwargs):
@@ -352,20 +362,25 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 request_data = request.data
 
-                returned_location = None
                 if (
-                    request_data.get('location', {}).get('geometry', {}).get('coordinates') or
+                    request_data.get('location', {}).get('geometry', {}).get('coordinates', {}) or
                     request_data.get('location', {}).get('properties', {}).get('postcode', {}) or
                     request_data.get('location', {}).get('properties', {}).get('details', {})
                 ):
                     returned_location = self.save_location(request)
-                    request_data.update({'location_id': returned_location.id})
+                    if returned_location:
+                        request_data.update({'location_id': returned_location.get('id')})
                 
+                print("returned_location")
+                print(returned_location)
+                print("request_data")
+                print(request_data)
+
                 if request_data.get('renderer_data'):
                     self.form_data(request)
 
-                if request_data.get('classification'):
-                    request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
+                # if request_data.get('classification'):
+                #     request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
                 if request_data.get('report_type'):
                     request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
 
@@ -398,33 +413,33 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
     
-    @detail_route(methods=['POST', ])
-    def update_schema(self, request, *args, **kwargs):
-        print("request.data")
-        print(request.data)
-        instance = self.get_object()
-        if request.data.get('report_type_id'):
-            try:
-                serializer = UpdateSchemaSerializer(instance, data=request.data)
-                serializer.is_valid(raise_exception=True)
-                if serializer.is_valid():
-                    serializer.save()
-                    headers = self.get_success_headers(serializer.data)
-                    returned_data = serializer.data
-                    return Response(
-                        serializer.data,
-                        status=status.HTTP_201_CREATED,
-                        headers=headers
-                        )
-            except serializers.ValidationError:
-                print(traceback.print_exc())
-                raise
-            except ValidationError as e:
-                print(traceback.print_exc())
-                raise serializers.ValidationError(repr(e.error_dict))
-            except Exception as e:
-                print(traceback.print_exc())
-                raise serializers.ValidationError(str(e))
+    # @detail_route(methods=['POST', ])
+    # def update_schema(self, request, *args, **kwargs):
+    #     print("request.data")
+    #     print(request.data)
+    #     instance = self.get_object()
+    #     if request.data.get('report_type_id'):
+    #         try:
+    #             serializer = UpdateSchemaSerializer(instance, data=request.data)
+    #             serializer.is_valid(raise_exception=True)
+    #             if serializer.is_valid():
+    #                 serializer.save()
+    #                 headers = self.get_success_headers(serializer.data)
+    #                 returned_data = serializer.data
+    #                 return Response(
+    #                     serializer.data,
+    #                     status=status.HTTP_201_CREATED,
+    #                     headers=headers
+    #                     )
+    #         except serializers.ValidationError:
+    #             print(traceback.print_exc())
+    #             raise
+    #         except ValidationError as e:
+    #             print(traceback.print_exc())
+    #             raise serializers.ValidationError(repr(e.error_dict))
+    #         except Exception as e:
+    #             print(traceback.print_exc())
+    #             raise serializers.ValidationError(str(e))
 
 
 class ClassificationViewSet(viewsets.ModelViewSet):
@@ -474,6 +489,28 @@ class ReportTypeViewSet(viewsets.ModelViewSet):
 
                 return_list.append(qs_record)
         return Response(return_list)
+
+    @detail_route(methods=['GET',])
+    @renderer_classes((JSONRenderer,))
+    def get_schema(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            serializer = ReportTypeSchemaSerializer(instance)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                )
+                
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+   
 
 
 class LocationViewSet(viewsets.ModelViewSet):
