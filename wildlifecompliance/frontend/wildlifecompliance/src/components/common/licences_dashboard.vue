@@ -178,10 +178,8 @@ export default {
                             let links = '';
                             let org_id = full.current_application.org_applicant ? full.current_application.org_applicant.id : ''
                             let proxy_id = full.current_application.proxy_applicant ? full.current_application.proxy_applicant.id : ''
-                            console.log(full);
-                            console.log(full.current_application.org_applicant);
-                            console.log(org_id);
-                            links +=  `<a href='#${full.id}' add-activity-purpose='${full.id}' org_id='${org_id}' proxy_id='${proxy_id}'>Add Activity/Purpose</a><br/>`;
+                            let licence_category_id = full.current_application.category_id ? full.current_application.category_id : ''
+                            links +=  `<a href='#${full.id}' add-activity-purpose='${full.id}' org_id='${org_id}' proxy_id='${proxy_id}' licence_category_id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
                             return links;
                         },
                         orderable: false,
@@ -295,7 +293,8 @@ export default {
                 var id = $(this).attr('add-activity-purpose');
                 var org_id = $(this).attr('org_id');
                 var proxy_id = $(this).attr('proxy_id');
-                vm.addActivityPurpose(id, org_id, proxy_id);
+                var licence_category_id = $(this).attr('licence_category_id');
+                vm.addActivityPurpose(id, org_id, proxy_id, licence_category_id);
             });
             // Child row listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'tr.licRecordRow', function(e) {
@@ -402,11 +401,12 @@ export default {
         getColumnIndex: function(column_name) {
             return this.licence_headers.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
         },
-        addActivityPurpose:function (licence_id, org_id, proxy_id) {
+        addActivityPurpose:function (licence_id, org_id, proxy_id, licence_category_id) {
             return this.$router.push({
                 name: "apply_application_licence",
                 params: {
                     licence_select: 'new_activity',
+                    licence_category: licence_category_id,
                     org_select: org_id,
                     proxy_select: proxy_id
                 }
