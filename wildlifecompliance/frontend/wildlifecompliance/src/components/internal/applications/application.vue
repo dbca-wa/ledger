@@ -761,6 +761,9 @@ export default {
                 case 'amend_activity':
                     return 'Application - Activity Amendment';
                 break;
+                case 'renew_activity':
+                    return 'Application - Activity Renewal';
+                break;
                 default:
                     return 'Application'
                 break;
