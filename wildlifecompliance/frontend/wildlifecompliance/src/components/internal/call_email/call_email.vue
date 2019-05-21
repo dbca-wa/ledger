@@ -31,7 +31,9 @@
                                 </div>
                             </div>
                         </div>
-                             
+                        <div class="col-sm-5">
+                              <a ref="addWorkflowBtn" @click="addWorkflow()" class="actionBtn pull-right">Forward</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -177,7 +179,7 @@
                             </div>
                         </div>
         </div>          
-        
+        <CallWorkflow ref="add_workflow"/>
     </div>
 </template>
 <script>
@@ -191,12 +193,7 @@ import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import Datepicker from 'vuejs-datepicker';
 import moment from 'moment';
-import localforage from "localforage";
-
-let CallEmail_ReportType_Schema = localforage.createInstance({
-    name: "WildlifeCompliance",
-    storeName: 'CallEmail_ReportType_Schema',
-  });
+import CallWorkflow from './call_email_workflow';
 
 export default {
   name: "ViewCallEmail",
@@ -231,6 +228,7 @@ export default {
     FormSection,
     MapLocation,
     Datepicker,
+    CallWorkflow,
   },
   computed: {
     ...mapGetters('callemailStore', {
@@ -270,6 +268,9 @@ export default {
     ...mapActions({
       saveFormData: "saveFormData",
     }),
+    addWorkflow() {
+    this.$refs.add_workflow.isModalOpen = true;
+    },
     save: async function() {
       if (this.call_email.id) {
         await this.saveCallEmail({ route: false, crud: 'save' });
@@ -348,7 +349,7 @@ export default {
       await this.loadSchema();
     }
   },
-  mounted: async function() {
+  mounted: function() {
         console.log(this);
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];
