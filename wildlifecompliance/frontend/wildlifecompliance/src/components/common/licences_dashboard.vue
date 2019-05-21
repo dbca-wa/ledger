@@ -180,6 +180,8 @@ export default {
                             let proxy_id = full.current_application.proxy_applicant ? full.current_application.proxy_applicant.id : ''
                             let licence_category_id = full.current_application.category_id ? full.current_application.category_id : ''
                             links +=  `<a href='#${full.id}' add-activity-purpose='${full.id}' org_id='${org_id}' proxy_id='${proxy_id}' licence_category_id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
+                            links +=  `<a>Renew</a><br/>`
+                            links +=  `<a>Surrender</a><br/>`
                             return links;
                         },
                         orderable: false,
@@ -324,7 +326,11 @@ export default {
                                     replace(/(?:\r\n|\r|\n|,)/g, '<br>')}</td>
                                 <td>${activity['processing_status']['name']}</td>
                                 <td>${activity['expiry_date']}</td>
-                                <td></td>
+                                <td>
+                                    <a>Amend</a></br>
+                                    <a>Renew</a></br>
+                                    <a>Surrender</a></br>
+                                </td>
                             </tr>`;
                     });
                     // Generate html for child row
