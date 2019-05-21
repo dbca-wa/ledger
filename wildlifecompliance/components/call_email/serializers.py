@@ -162,7 +162,7 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             )
 
 
-class UpdateSchemaSerializer(serializers.ModelSerializer):
+class ReportTypeSchemaSerializer(serializers.ModelSerializer):
     report_type_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)        
 
@@ -201,8 +201,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
     lodgement_date = serializers.CharField(
         source='lodged_on')
     report_type = ReportTypeSerializer(read_only=True)
-    location = LocationSerializer()
-    referrer = ReferrerSerializer()
+    location = LocationSerializer(read_only=True)
+    referrer = ReferrerSerializer(read_only=True)
     data = ComplianceFormDataRecordSerializer(many=True)
 
     class Meta:
