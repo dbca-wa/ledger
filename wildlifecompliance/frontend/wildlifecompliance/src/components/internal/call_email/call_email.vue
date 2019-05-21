@@ -261,7 +261,8 @@ export default {
   methods: {
     ...mapActions('callemailStore', {
       loadCallEmail: "loadCallEmail",
-      loadClassification: "loadClassification",
+      // loadClassification: "loadClassification",
+      loadClassificationChoices: "loadClassificationChoices",
       loadReportTypes: "loadReportTypes",
       saveCallEmail: 'saveCallEmail',
       updateSchema: "updateSchema",
@@ -300,7 +301,8 @@ export default {
     if (this.$route.params.call_email_id) {
       this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
     }
-    this.loadClassification();
+    //this.loadClassification();
+    this.loadClassificationChoices();
     this.loadReportTypes();
     this.loadReferrers();
     

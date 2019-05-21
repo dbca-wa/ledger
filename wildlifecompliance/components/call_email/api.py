@@ -529,9 +529,17 @@ class EmailUserViewSet(viewsets.ModelViewSet):
     search_fields = ('first_name', 'last_name', 'email', 'phone_number', 'mobile_number', 'organisation')
 
 
-def type_choices_list(request):
+def call_email_status_choices(request):
     res_obj = [] 
     for choice in CallEmail.STATUS_CHOICES:
+        res_obj.append({'id': choice[0], 'display': choice[1]});
+    res_json = json.dumps(res_obj)
+    return HttpResponse(res_json, content_type='application/json')
+
+
+def call_email_classification_choices(request):
+    res_obj = []
+    for choice in Classification.NAME_CHOICES:
         res_obj.append({'id': choice[0], 'display': choice[1]});
     res_json = json.dumps(res_obj)
     return HttpResponse(res_json, content_type='application/json')

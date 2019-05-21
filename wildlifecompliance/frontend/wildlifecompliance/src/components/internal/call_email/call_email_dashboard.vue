@@ -9,15 +9,15 @@
                         <label for="">Call/Email Status</label>
                         <select class="form-control" v-model="filterStatus">
                             <option value="All">All</option>
-                            <option v-for="c in statusChoices" :value="c">{{ c }}</option>
+                            <option v-for="c in status_choices" :value="c.display">{{ c.display }}</option>
                         </select>
                 </div>
                 <div class="col-md-3">
                         <label for="">Call/Email Classification</label>
                         <select class="form-control" v-model="filterClassification">
                         <option value="All">All</option>
-                        <option v-for="option in classification_types" :value="option.name" v-bind:key="option.name">
-                          {{ option.name }} 
+                        <option v-for="option in classification_types" :value="option.display" v-bind:key="option.display">
+                          {{ option.display }} 
                         </option>
                     </select>
                 </div>
@@ -206,7 +206,8 @@
         },
 
         created: function() {
-            this.loadClassification();
+            this.loadStatusChoices();
+            this.loadClassificationChoices();
             this.loadReportTypes();
         },
         components: {
@@ -216,13 +217,15 @@
         },
         computed: {
             ...mapGetters('callemailStore', {
+                status_choices: "status_choices",
                 classification_types: "classification_types",
                 report_types: "report_types",
             }),
         },
         methods: {
             ...mapActions('callemailStore', {
-                loadClassification: "loadClassification",
+                loadStatusChoices: "loadStatusChoices",
+                loadClassificationChoices: "loadClassificationChoices",
                 loadReportTypes: "loadReportTypes",
                 saveCallEmail: "saveCallEmail",
             }),

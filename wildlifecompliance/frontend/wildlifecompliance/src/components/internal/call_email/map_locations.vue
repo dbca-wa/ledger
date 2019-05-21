@@ -12,15 +12,15 @@
                 <label class="">Call/Email Classification</label>
                 <select class="form-control" v-model="filterClassification">
                     <option value="All">All</option>
-                    <option v-for="option in classification_types" :value="option.name" v-bind:key="option.name">
-                        {{ option.name }} 
+                    <option v-for="option in classification_types" :value="option.display" v-bind:key="option.display">
+                        {{ option.display }} 
                     </option>
                 </select>
             </div>
             <div>
                 <label class="">Lodged From</label>
                 <div class="input-group date" ref="lodgementDateFromPicker">
-                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedFrom">
+                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedFrom" />
                     <span class="input-group-addon">
                         <span class="glyphicon glyphicon-calendar"></span>
                     </span>
@@ -29,7 +29,7 @@
             <div>
                 <label class="">Lodged To</label>
                 <div class="input-group date" ref="lodgementDateToPicker">
-                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedTo">
+                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedTo" />
                     <span class="input-group-addon">
                         <span class="glyphicon glyphicon-calendar"></span>
                     </span>
@@ -181,6 +181,7 @@ module.exports = {
         ];
         vm.mcg = L.markerClusterGroup();
         vm.datetime_pattern = /^\d{2}\/\d{2}\/\d{4}$/gi;
+        vm.ajax_for_location = null;
 
         return {
             map: null,
@@ -195,7 +196,7 @@ module.exports = {
         }
     },
     created(){
-        this.loadStatusChoices();
+        //this.loadStatusChoices();
     },
     mounted(){
         let vm = this;
@@ -387,13 +388,29 @@ module.exports = {
             L.control.layers(null, overlayMaps, {position: 'topleft'}).addTo(this.map);
         },
         loadLocations(){
-            this.$http.get(this.opt_url, {params: {
-              "status": this.filterStatus,
-              "classification": this.filterClassification,
-              "lodged_from" : this.filterLodgedFrom,
-              "lodged_to" : this.filterLodgedTo,
-            }}).then(response => {
-                this.addMarkers(response.body);
+            let vm = this;
+
+            /* Cancel all the previous requests */
+            if (vm.ajax_for_location != null){
+                vm.ajax_for_location.abort();
+                vm.ajax_for_location = null;
+            }
+
+            vm.ajax_for_location = $.ajax({
+                type: 'GET',
+                data: {
+                    "status": vm.filterStatus,
+                    "classification": vm.filterClassification,
+                    "lodged_from" : vm.filterLodgedFrom,
+                    "lodged_to" : vm.filterLodgedTo,
+                    },
+                url: vm.opt_url,
+                success: function(data){
+                    vm.addMarkers(data);
+                },
+                error: function (e){
+                    console.log(e);
+                }
             });
         },
         addMarkers(call_emails){
