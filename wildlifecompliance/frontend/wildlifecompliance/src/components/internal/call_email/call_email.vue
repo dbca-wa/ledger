@@ -266,8 +266,6 @@ export default {
     ...mapActions('callemailStore', {
       loadCallEmail: "loadCallEmail",
       saveCallEmail: 'saveCallEmail',
-      //updateSchema: "updateSchema",
-      //setReportType: "setReportType",
     }),
     ...mapActions({
       saveFormData: "saveFormData",
@@ -309,7 +307,6 @@ export default {
       });
     },
   },
-
   created: async function() {
     
     if (this.$route.params.call_email_id) {
@@ -318,11 +315,7 @@ export default {
     // load drop-down select lists
     // classification_types
     let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
-    if (returned_classification_types.length > 0) {
-                returned_classification_types.forEach((value) => {
-                    this.classification_types.push(value);
-                });
-    }
+    Object.assign(this.classification_types, returned_classification_types);
     // blank entry allows user to clear selection
     this.classification_types.splice(0, 0, 
       {
@@ -333,11 +326,7 @@ export default {
     let returned_report_types = await cache_helper.getSetCacheList('CallEmail_ReportTypes', helpers.add_endpoint_json(
                     api_endpoints.report_types,
                     'get_distinct_queryset'));
-    if (returned_report_types.length > 0) {
-                returned_report_types.forEach((value) => {
-                    this.report_types.push(value);
-                });
-    }
+    Object.assign(this.report_types, returned_report_types);
     // blank entry allows user to clear selection
     this.report_types.splice(0, 0, 
       {
@@ -346,11 +335,7 @@ export default {
       });
     // referrers
     let returned_referrers = await cache_helper.getSetCacheList('CallEmail_Referrers', '/api/referrers.json');
-    if (returned_referrers.length > 0) {
-                returned_referrers.forEach((value) => {
-                    this.referrers.push(value);
-                });
-    }
+    Object.assign(this.referrers, returned_referrers);
     // blank entry allows user to clear selection
     this.referrers.splice(0, 0, 
       {
@@ -362,43 +347,6 @@ export default {
     if (this.call_email.report_type_id) {
       await this.loadSchema();
     }
-    
-
-    // // load drop-down select lists
-    // // classification_types
-    // let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
-    // Object.assign(this.classification_types, returned_classification_types);
-    // // blank entry allows user to clear selection
-    // this.classification_types.splice(0, 0, 
-    //   {
-    //     id: "", 
-    //     name: "",
-    //   });
-    // //report_types
-    // let returned_report_types = await cache_helper.getSetCacheList('CallEmail_ReportTypes', helpers.add_endpoint_json(
-    //                 api_endpoints.report_types,
-    //                 'get_distinct_queryset'));
-    // Object.assign(this.report_types, returned_report_types);
-    // // blank entry allows user to clear selection
-    // this.report_types.splice(0, 0, 
-    //   {
-    //     id: "", 
-    //     name: "",
-    //   });
-    // // referrers
-    // let returned_referrers = await cache_helper.getSetCacheList('CallEmail_Referrers', '/api/referrers.json');
-    // Object.assign(this.referrers, returned_referrers);
-    // // blank entry allows user to clear selection
-    // this.referrers.splice(0, 0, 
-    //   {
-    //     id: "", 
-    //     name: "",
-    //   });
-
-    // // load current CallEmail renderer schema
-    // if (this.call_email.report_type_id) {
-    //   await this.loadSchema();
-    // }
   },
   mounted: async function() {
         console.log(this);
@@ -408,8 +356,6 @@ export default {
                 $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
             }, 100 );
         });
-
-        
   }
 };
 </script>
