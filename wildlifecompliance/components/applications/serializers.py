@@ -265,6 +265,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         max_digits=8, decimal_places=2, coerce_to_string=False, read_only=True)
     licence_fee = serializers.DecimalField(
         max_digits=8, decimal_places=2, coerce_to_string=False, read_only=True)
+    category_id = serializers.SerializerMethodField(read_only=True)
     category_name = serializers.SerializerMethodField(read_only=True)
     activity_names = serializers.SerializerMethodField(read_only=True)
     activity_purpose_string = serializers.SerializerMethodField(read_only=True)
@@ -313,6 +314,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'return_check_status',
             'application_fee',
             'licence_fee',
+            'category_id',
             'category_name',
             'activity_names',
             'activity_purpose_string',
@@ -335,6 +337,9 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 
     def get_payment_status(self, obj):
         return obj.payment_status
+
+    def get_category_id(self, obj):
+        return obj.licence_category_id
 
     def get_category_name(self, obj):
         return obj.licence_category_name
@@ -427,6 +432,7 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
             'submitter',
             'lodgement_number',
             'lodgement_date',
+            'category_id',
             'category_name',
             'activity_names',
             'activity_purpose_string',
@@ -472,6 +478,7 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
             'submitter',
             'lodgement_number',
             'lodgement_date',
+            'category_id',
             'category_name',
             'activity_names',
             'activity_purpose_string',

@@ -302,12 +302,6 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
                 only_purpose_records = LicencePurpose.objects.exclude(
                     id__in=active_purpose_ids
                 )
-                if licence_category:
-                    only_purpose_records = only_purpose_records.filter(
-                        licence_category_id=licence_category
-                    )
-                if licence_category:
-                    queryset = queryset.filter(id=licence_category)
 
             elif application_type in [
                 Application.APPLICATION_TYPE_AMENDMENT,
@@ -324,6 +318,15 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
                     licence_activity_id__in=current_activities.values_list(
                         'licence_activity_id', flat=True)
                 )
+
+        if licence_category:
+            only_purpose_records = only_purpose_records.filter(
+                licence_category_id=licence_category
+            )
+            if not only_purpose_records:
+                queryset = LicenceCategory.objects.none()
+            else:
+                queryset = queryset.filter(id=licence_category)
 
         serializer = LicenceCategorySerializer(queryset, many=True, context={
             'request': request,

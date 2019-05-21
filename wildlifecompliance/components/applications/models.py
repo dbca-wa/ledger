@@ -540,6 +540,13 @@ class Application(RevisionedMixin):
         )
 
     @property
+    def licence_category_id(self):
+        try:
+            return self.licence_purposes.first().licence_category.id
+        except AttributeError:
+            return ''
+
+    @property
     def licence_category(self):
         try:
             return self.licence_purposes.first().licence_category.display_name
