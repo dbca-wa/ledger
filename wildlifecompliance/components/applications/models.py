@@ -1526,18 +1526,10 @@ class Application(RevisionedMixin):
     @staticmethod
     def get_active_licence_activities(request, for_application_type=APPLICATION_TYPE_NEW_LICENCE):
         applications = Application.get_active_licence_applications(request, for_application_type)
-        date_filter = Application.get_activity_date_filter(
-            for_application_type)
-        return ApplicationSelectedActivity.objects.filter(
-            application_id__in=applications.values_list('id', flat=True),
-            **date_filter
-        ).exclude(
-            activity_status__in=[
-                ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
-                ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED,
-                ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
-            ]
-        ).distinct()
+        return ApplicationSelectedActivity.get_activities_for_application_type(
+            for_application_type,
+            applications=applications
+        )
 
     @staticmethod
     def get_active_licence_applications(request, for_application_type=APPLICATION_TYPE_NEW_LICENCE):
@@ -1916,6 +1908,76 @@ class ApplicationSelectedActivity(models.Model):
             application__id=self.application_id,
             licence_activity_id=self.licence_activity_id
         )
+
+    @property
+    def can_renew(self):
+        return ApplicationSelectedActivity.get_activities_for_application_type(
+            Application.APPLICATION_TYPE_RENEWAL,
+            activity_ids=[self.id]
+        ).count() > 0
+
+    @property
+    def can_amend(self):
+        return ApplicationSelectedActivity.get_activities_for_application_type(
+            Application.APPLICATION_TYPE_AMENDMENT,
+            activity_ids=[self.id]
+        ).count() > 0
+
+    @property
+    def can_surrender(self):
+        # TODO: clarify business logic for when an activity is allowed to be surrendered.
+        return ApplicationSelectedActivity.get_activities_for_application_type(
+            Application.APPLICATION_TYPE_NEW_LICENCE,
+            activity_ids=[self.id]
+        ).count() > 0
+
+    @property
+    def can_cancel(self):
+        # TODO: clarify business logic for when an activity is allowed to be cancelled.
+        return ApplicationSelectedActivity.get_activities_for_application_type(
+            Application.APPLICATION_TYPE_NEW_LICENCE,
+            activity_ids=[self.id]
+        ).count() > 0
+
+    @property
+    def can_reissue(self):
+        current_date = timezone.now().date()
+        return ApplicationSelectedActivity.objects.filter(
+            Q(id=self.id, expiry_date__isnull=False),
+            Q(expiry_date__lt=current_date) |
+            Q(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED)
+        ).exclude(
+            activity_status__in=[
+                ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
+            ]
+        ).count() > 0
+
+    @property
+    def can_reinstate(self):
+        current_date = timezone.now().date()
+        return self.expiry_date and\
+            self.expiry_date >= current_date and\
+            self.activity_status == ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
+
+    @staticmethod
+    def get_activities_for_application_type(application_type, **kwargs):
+        applications = kwargs.get('applications', Application.objects.none())
+        activity_ids = kwargs.get('activity_ids', [])
+
+        date_filter = Application.get_activity_date_filter(
+            application_type)
+        return ApplicationSelectedActivity.objects.filter(
+            Q(id__in=activity_ids) if activity_ids else
+            Q(application_id__in=applications.values_list('id', flat=True)),
+            **date_filter
+        ).exclude(
+            activity_status__in=[
+                ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
+            ]
+        ).distinct()
 
     def __str__(self):
         return "Application {id} Selected Activity: {activity_id}".format(
