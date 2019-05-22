@@ -179,9 +179,20 @@ export default {
                             let org_id = full.current_application.org_applicant ? full.current_application.org_applicant.id : ''
                             let proxy_id = full.current_application.proxy_applicant ? full.current_application.proxy_applicant.id : ''
                             let licence_category_id = full.current_application.category_id ? full.current_application.category_id : ''
-                            links +=  `<a add-activity-purpose='${full.id}' org_id='${org_id}' proxy_id='${proxy_id}' licence_category_id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
-                            links +=  `<a>Renew</a><br/>`
-                            links +=  `<a>Surrender</a><br/>`
+                            links += `<a add-activity-purpose='${full.id}' org_id='${org_id}' proxy_id='${proxy_id}' licence_category_id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
+                            links += `<a>Renew</a><br/>`
+                            if (vm.is_external) {
+                                links += `<a>Surrender</a><br/>`
+                            }
+                            if (!vm.is_external) {
+                                links += `<a>Cancel</a><br/>`
+                            }
+                            if (!vm.is_external) {
+                                links += `<a>Suspend</a><br/>`
+                            }
+                            if (!vm.is_external) {
+                                links += `<a>Reinstate</a><br/>`
+                            }
                             return links;
                         },
                         orderable: false,
@@ -322,6 +333,12 @@ export default {
                 var id = $(this).attr('cancel-activity');
                 console.log('cancel-activity: ' + id);
             });
+            // Suspend activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[suspend-activity]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('suspend-activity');
+                console.log('suspend-activity: ' + id);
+            });
             // Reissue activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reissue-activity]', function(e) {
                 e.preventDefault();
@@ -378,6 +395,10 @@ export default {
                                     if (!vm.is_external && activity['can_cancel']) {
                                         activity_rows +=
                                             `<a cancel-activity=` + activity['id'] + `>Cancel</a></br>`;
+                                    }
+                                    if (!vm.is_external && activity['can_suspend']) {
+                                        activity_rows +=
+                                            `<a suspend-activity=` + activity['id'] + `>Suspend</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reissue']) {
                                         activity_rows +=
