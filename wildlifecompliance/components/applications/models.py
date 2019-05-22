@@ -1899,7 +1899,6 @@ class ApplicationSelectedActivity(models.Model):
     issue_date = models.DateTimeField(blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     expiry_date = models.DateField(blank=True, null=True)
-    renewal_sent = models.BooleanField(default=False)
     is_inspection_required = models.BooleanField(default=False)
 
     @staticmethod
