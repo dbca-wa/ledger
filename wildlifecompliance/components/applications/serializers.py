@@ -37,6 +37,12 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     purposes = serializers.SerializerMethodField(read_only=True)
     activity_purpose_names = serializers.SerializerMethodField(read_only=True)
     processing_status = CustomChoiceField(read_only=True)
+    can_renew = serializers.BooleanField(read_only=True)
+    can_amend = serializers.BooleanField(read_only=True)
+    can_surrender = serializers.BooleanField(read_only=True)
+    can_cancel = serializers.BooleanField(read_only=True)
+    can_reissue = serializers.SerializerMethodField(read_only=True)
+    can_reinstate = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = ApplicationSelectedActivity
@@ -63,6 +69,19 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
 
     def get_activity_purpose_names(self, obj):
         return ','.join([p.short_name for p in obj.purposes])
+
+    def get_can_reissue(self, obj):
+        try:
+            user = self.context['request'].user
+        except (KeyError, AttributeError):
+            return False
+        if user is None:
+            return False
+        return user.has_perm('wildlifecompliance.system_administrator') or (
+            user.has_wildlifelicenceactivity_perm([
+                'issuing_officer',
+            ], obj.licence_activity_id) and obj.can_reissue
+        )
 
 
 class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer):
