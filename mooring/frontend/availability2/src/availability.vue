@@ -70,12 +70,22 @@
                         </div>
                 </div>
                 <div class="columns small-4 medium-3 large-2">
-                        <div v-if="vesselRego.length < 1 || vesselRego == ' ' || vesselSize < 1 || vesselBeam < 1 || vesselDraft < 1 || vesselWeight < 1">
+                        <div v-if="vesselRego.length < 1 || vesselRego == ' ' || vesselSize < 1 || vesselDraft < 1 ">
+                            
                             <button title="Please enter vessel details" style="border-radius: 4px; border: 1px solid #2e6da4" class="button small-12 medium-12 large-12" @click="validateVessel()">Proceed to Check Out</button>
                         </div>
                         <div v-else>
+                           <div v-if="vesselWeight == 0 && vesselBeam == 0 ">
+
+                            <button title="Please enter vessel details" style="border-radius: 4px; border: 1px solid #2e6da4" class="button small-12 medium-12 large-12" @click="validateVessel()">Proceed to Check Out</button>
+                           </div>
+                           <div v-else>
                             <a  v-show="current_booking.length > 0 && booking_changed == true" class="button small-12 medium-12 large-12" :href="parkstayUrl+'/booking'" style="border-radius: 4px; border: 1px solid #2e6da4">Proceed to Check Out</a>
-                            <button  title="Please add items into your trolley." v-show="current_booking.length == 0 || booking_changed == false" style="color: #000000; background-color: rgb(224, 217, 217); border: 1px solid #000; border-radius: 4px;" class="button small-12 medium-12 large-12" disabled >Add items to Proceed to Check Out</button>                </div>
+                            <button  title="Please add items into your trolley." v-show="current_booking.length == 0 || booking_changed == false" style="color: #000000; background-color: rgb(224, 217, 217); border: 1px solid #000; border-radius: 4px;" class="button small-12 medium-12 large-12" disabled >Add items to Proceed to Check Out</button>                
+                            </div>
+
+
+                            </div>
                         </div>
         </div>
         </div>
@@ -247,75 +257,90 @@
                 </label>
             </div>           
         </div>
-        <div class="row" v-show="status == 'online'"><div class="columns table-scroll">
-             <div oldvif="mooring_vessel_size > vesselSize" class="small-12 medium-12 large-12">
-            <table class="hover">
-                <thead>
-                    <tr>
-                        <th class="site">Mooring &nbsp;<a class="float-right" target="_blank" :href="map" v-if="map" style='display: none;'>View Map</a></th>
-                        <th class="book">Book</th>
-                        <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i-1) }}</th>
-                    </tr>
-                </thead>
-                <tbody><template v-for="(site, index) in sites" >
-                    <tr v-show="mooring_book_row_display[index] == 'show'" >
-                        <td class="site">{{ site.name }} - <i>{{ site.mooring_park }}</i><br>
-				<i v-if="site.distance_from_selection > 1" >Distance: {{ site.distance_from_selection }}km</i>
-				<i v-else >Distance: {{ site.distance_from_selection_meters }}m</i>
-                        </td>
-                        <td class="book">
-                            <template v-if="site.price">
-                                <button v-if="mooring_book_row[index] == true" :disabled="mooring_book_row_disabled[index] == true" @click="addBookingRow(index)" class="button"><small>Book now</small><br/> ${{ mooring_book_row_price[index] }}</button>
-                                <button style='display:none' v-else disabled class="button has-tip" data-tooltip aria-haspopup="true" title="Please complete your current ongoing booking using the button at the top of the page."><small>Book now</small><br/>{{ site.price }}</button>
-                            </template>
-                            <template v-else>
-                                <button v-if="site.breakdown" class="button warning" @click="toggleBreakdown(site)"><small>Show availability</small></button>
-                                <button v-else class="button secondary disabled" disabled><small>Change dates</small></button>
-                            </template>
-                        </td>
-                        <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" align='center'>
-                                     <div v-for="bp in day[1].booking_period" style='width:160px; '>
+        <div class="row" v-show="status == 'online'">
+            <div class="columns table-scroll">
+                 <div v-if="vesselSize > 0 && vesselDraft > 0" class="small-12 medium-12 large-12">
+                      <div v-if="vesselDraft != 0 && vesselWeight != 0" class="small-12 medium-12 large-12">
+                           <table class="hover">
+                               <thead>
+                                   <tr>
+                                       <th class="site">Mooring &nbsp;<a class="float-right" target="_blank" :href="map" v-if="map" style='display: none;'>View Map</a></th>
+                                       <th class="book">Book</th>
+                                       <th class="date" v-for="i in days">{{ getDateString(arrivalDate, i-1) }}</th>
+                                   </tr>
+                               </thead>
+                               <tbody><template v-for="(site, index) in sites" >
+                                   <tr v-show="mooring_book_row_display[index] == 'show'" >
+                                       <td class="site">{{ site.name }} - <i>{{ site.mooring_park }}</i><br>
+	                       		<i v-if="site.distance_from_selection > 1" >Distance: {{ site.distance_from_selection }}km</i>
+	                       		<i v-else >Distance: {{ site.distance_from_selection_meters }}m</i>
+                                       </td>
+                                       <td class="book">
+                                           <template v-if="site.price">
+                                               <button v-if="mooring_book_row[index] == true" :disabled="mooring_book_row_disabled[index] == true" @click="addBookingRow(index)" class="button"><small>Book now</small><br/> ${{ mooring_book_row_price[index] }}</button>
+                                               <button style='display:none' v-else disabled class="button has-tip" data-tooltip aria-haspopup="true" title="Please complete your current ongoing booking using the button at the top of the page."><small>Book now</small><br/>{{ site.price }}</button>
+                                           </template>
+                                           <template v-else>
+                                               <button v-if="site.breakdown" class="button warning" @click="toggleBreakdown(site)"><small>Show availability</small></button>
+                                               <button v-else class="button secondary disabled" disabled><small>Change dates</small></button>
+                                           </template>
+                                       </td>
+                                       <td class="date" v-for="day in site.availability" v-bind:class="{available: day[0]}" align='center'>
+                                                    <div v-for="bp in day[1].booking_period" style='width:160px; '>
 
-                                        <div v-if="bp.status == 'open'" class='tooltip2'  align='left'>
-                                        <button class="button" style='width: 160px; margin-bottom: 2px;'  @click="addBooking(site.id,site.mooring_id,bp.id,bp.date)" >
-                                            <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 'small'">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 'medium'">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 'large'">${{ bp.large_price }}</span></small>
-                                        </button><br>
-                                           
-                                           <span v-show="bp.caption.length > 1" class="tooltiptext">{{ bp.caption }}</span>
-                                        </div>
-					<div v-else-if="bp.status == 'selected'" >
-                                             <div style="position: relative; text-align: right; margin-right: 25px;"><a v-show="bp.past_booking == false" type="button" class="close" style="color: red; opacity: 1; position: absolute; padding-left: 5px;" @click="deleteBooking(bp.booking_row_id, bp.past_booking)" >x</a></div>
-                                        <button class="button" style='width: 160px; margin-bottom: 2px; background-color: #8bc8f1;' @click="deleteBooking(bp.booking_row_id, bp.past_booking)" > 
-                                            <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 'small'">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 'medium'">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 'large'">${{ bp.large_price }} </span></small>
-                                        </button>
-					</div>
-                                        <div v-else-if="bp.status == 'perday'" >
-                                        <button class="button"  style='width: 160px; margin-bottom: 2px; background-color: rgb(255, 253, 199); color: #000;' >
-                                             <small>One Mooring Limit</small>
-                                        </button>
-                                        </div>
+                                                       <div v-if="bp.status == 'open'" class='tooltip2'  align='left'>
+                                                       <button class="button" style='width: 160px; margin-bottom: 2px;'  @click="addBooking(site.id,site.mooring_id,bp.id,bp.date)" >
+                                                           <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 'small'">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 'medium'">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 'large'">${{ bp.large_price }}</span></small>
+                                                       </button><br>
+                                                          
+                                                          <span v-show="bp.caption.length > 1" class="tooltiptext">{{ bp.caption }}</span>
+                                                       </div>
+	                       			<div v-else-if="bp.status == 'selected'" >
+                                                            <div style="position: relative; text-align: right; margin-right: 25px;"><a v-show="bp.past_booking == false" type="button" class="close" style="color: red; opacity: 1; position: absolute; padding-left: 5px;" @click="deleteBooking(bp.booking_row_id, bp.past_booking)" >x</a></div>
+                                                       <button class="button" style='width: 160px; margin-bottom: 2px; background-color: #8bc8f1;' @click="deleteBooking(bp.booking_row_id, bp.past_booking)" > 
+                                                           <small>Book {{ bp.period_name }} <span v-if="site.mooring_class == 'small'">${{ bp.small_price }}</span> <span v-if="site.mooring_class == 'medium'">${{ bp.medium_price }}</span> <span v-if="site.mooring_class == 'large'">${{ bp.large_price }} </span></small>
+                                                       </button>
+	                       			</div>
+                                                       <div v-else-if="bp.status == 'perday'" >
+                                                       <button class="button"  style='width: 160px; margin-bottom: 2px; background-color: rgb(255, 253, 199); color: #000;' >
+                                                            <small>One Mooring Limit</small>
+                                                       </button>
+                                                       </div>
 
-                                        <div v-else-if="bp.status == 'maxstay'" >
-                                        <button class="button"  style='width: 160px; margin-bottom: 2px; background-color: rgb(255, 253, 199); color: #000;' >
-                                             <small>Max Stay Limit Reached</small>
-                                        </button>
-                                        </div>
+                                                       <div v-else-if="bp.status == 'maxstay'" >
+                                                       <button class="button"  style='width: 160px; margin-bottom: 2px; background-color: rgb(255, 253, 199); color: #000;' >
+                                                            <small>Max Stay Limit Reached</small>
+                                                       </button>
+                                                       </div>
 
-					<div v-else >
-                                        <button class="button"  style='width: 160px; margin-bottom: 2px; background-color: rgb(255, 236, 236); text-decoration: line-through;color: #000;' >
-                                             <small>{{ bp.period_name }}</small>
-                                        </button>
-					</div>
-                                     </div>
-                        </td>
-                    </tr>
-                    <template v-if="site.showBreakdown"><tr v-for="line in site.breakdown" class="breakdown">
-                        <td class="site">Site: {{ line.name }}</td>
-                        <td></td>
-                        <td class="date" v-for="day in line.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
-                    </tr></template>
-                </template></tbody>
-            </table>
+	                       			<div v-else >
+                                                       <button class="button"  style='width: 160px; margin-bottom: 2px; background-color: rgb(255, 236, 236); text-decoration: line-through;color: #000;' >
+                                                            <small>{{ bp.period_name }}</small>
+                                                       </button>
+	                       			</div>
+                                                    </div>
+                                       </td>
+                                   </tr>
+                                   <template v-if="site.showBreakdown"><tr v-for="line in site.breakdown" class="breakdown">
+                                       <td class="site">Site: {{ line.name }}</td>
+                                       <td></td>
+                                       <td class="date" v-for="day in line.availability" v-bind:class="{available: day[0]}" >{{ day[1] }}</td>
+                                   </tr></template>
+                               </template></tbody>
+                           </table>
+                       </div>
+                 </div>
+	    </div>
+            <div class="small-12 medium-12 large-12">
+            <div v-if="vesselSize > 0 && vesselDraft > 0 && vesselWeight == 0 && vesselBeam == 0" class="small-12 medium-12 large-12">
+                <div class="columns small-12 medium-12 large-12" >
+                    <div class="callout alert">
+                      Please enter a beam length or weight depending on your mooring type.   
+                    </div>
+                </div>
+	    </div>
+
+
             <div class="row" v-if="sites.length == 0 && isLoading == false">
                 <div class="columns small-12 medium-12 large-12">
                     <div class="callout alert">
