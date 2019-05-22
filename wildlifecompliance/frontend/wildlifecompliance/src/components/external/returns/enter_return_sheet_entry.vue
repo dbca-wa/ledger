@@ -114,8 +114,7 @@ export default {
     },
     computed: {
         showError: function() {
-            var vm = this;
-            return vm.errors;
+            return this.errors;
         },
         title: function(){
             this.currentStock = +this.entryTotal;
@@ -125,54 +124,42 @@ export default {
     },
     methods:{
         update:function () {
-            var vm = this;
-
-            if (vm.isAddEntry) {
+            if (this.isAddEntry) {
               let _currentDateTime = new Date()
-              vm.entryDateTime = Date.parse(new Date())
-              let newRowId = (vm.row_of_data.data().count()) + ''
-              console.log('Created New RowId')
-              console.log(vm.row_of_data.data().count())
-              console.log(newRowId)
+              this.entryDateTime = Date.parse(new Date())
+              let newRowId = (this.row_of_data.data().count()) + ''
               let _data = { rowId: newRowId,
-                            date: vm.entryDateTime,
-                            activity: vm.entryActivity,
-                            qty: vm.entryQty,
-                            total: vm.entryTotal,
-                            comment: vm.entryComment,
-                            licence: vm.entryLicence
+                            date: this.entryDateTime,
+                            activity: this.entryActivity,
+                            qty: this.entryQty,
+                            total: this.entryTotal,
+                            comment: this.entryComment,
+                            licence: this.entryLicence
                           };
-              vm.row_of_data.row.add(_data).node().id = newRowId
-              vm.row_of_data.draw()
+              this.row_of_data.row.add(_data).node().id = newRowId
+              this.row_of_data.draw()
             }
 
-            if (vm.isChangeEntry) {
-              vm.row_of_data.data().activity = vm.entryActivity;
-              vm.row_of_data.data().qty = vm.entryQty;
-              vm.row_of_data.data().total = vm.entryTotal;
-              vm.row_of_data.data().licence = vm.entryLicence;
-              vm.row_of_data.data().comment = vm.entryComment;
-              vm.row_of_data.invalidate().draw()
+            if (this.isChangeEntry) {
+              this.row_of_data.data().activity = this.entryActivity;
+              this.row_of_data.data().qty = this.entryQty;
+              this.row_of_data.data().total = this.entryTotal;
+              this.row_of_data.data().licence = this.entryLicence;
+              this.row_of_data.data().comment = this.entryComment;
+              this.row_of_data.invalidate().draw()
             }
 
-            vm.close();
+            this.close();
         },
         cancel:function () {
             this.close()
         },
         close:function () {
-            var vm = this;
-            vm.isChangeEntry = false;
-            vm.isAddEntry = false;
+            this.isChangeEntry = false;
+            this.isAddEntry = false;
             this.isModalOpen = false;
         },
-        eventListeners:function () {
-            let vm = this;
-        }
     },
-    mounted:function () {
-        let vm = this;
-    }
 }
 </script>
 
