@@ -179,7 +179,7 @@ export default {
                             let org_id = full.current_application.org_applicant ? full.current_application.org_applicant.id : ''
                             let proxy_id = full.current_application.proxy_applicant ? full.current_application.proxy_applicant.id : ''
                             let licence_category_id = full.current_application.category_id ? full.current_application.category_id : ''
-                            links +=  `<a href='#${full.id}' add-activity-purpose='${full.id}' org_id='${org_id}' proxy_id='${proxy_id}' licence_category_id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
+                            links +=  `<a add-activity-purpose='${full.id}' org_id='${org_id}' proxy_id='${proxy_id}' licence_category_id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
                             links +=  `<a>Renew</a><br/>`
                             links +=  `<a>Surrender</a><br/>`
                             return links;
@@ -298,6 +298,42 @@ export default {
                 var licence_category_id = $(this).attr('licence_category_id');
                 vm.addActivityPurpose(id, org_id, proxy_id, licence_category_id);
             });
+            // Amend activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[amend-activity]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('amend-activity');
+                console.log('amend-activity: ' + id);
+            });
+            // Renew activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[renew-activity]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('renew-activity');
+                console.log('renew-activity: ' + id);
+            });
+            // Surrender activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[surrender-activity]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('surrender-activity');
+                console.log('surrender-activity: ' + id);
+            });
+            // Cancel activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[cancel-activity]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('cancel-activity');
+                console.log('cancel-activity: ' + id);
+            });
+            // Reissue activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reissue-activity]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('reissue-activity');
+                console.log('reissue-activity: ' + id);
+            });
+            // Reinstate activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reinstate-activity]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('reinstate-activity');
+                console.log('reinstate-activity: ' + id);
+            });
             // Child row listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'tr.licRecordRow', function(e) {
                 // If a link is clicked, ignore
@@ -326,11 +362,32 @@ export default {
                                     replace(/(?:\r\n|\r|\n|,)/g, '<br>')}</td>
                                 <td>${activity['processing_status']['name']}</td>
                                 <td>${activity['expiry_date']}</td>
-                                <td>
-                                    <a>Amend</a></br>
-                                    <a>Renew</a></br>
-                                    <a>Surrender</a></br>
-                                </td>
+                                <td>`;
+                                    if (activity['can_amend']) {
+                                        activity_rows +=
+                                            `<a amend-activity=` + activity['id'] + `>Amend</a></br>`;
+                                    }
+                                    if (activity['can_renew']) {
+                                        activity_rows +=
+                                            `<a renew-activity=` + activity['id'] + `>Renew</a></br>`;
+                                    }
+                                    if (vm.is_external && ['can_surrender']) {
+                                        activity_rows +=
+                                            `<a surrender-activity=` + activity['id'] + `>Surrender</a></br>`;
+                                    }
+                                    if (!vm.is_external && activity['can_cancel']) {
+                                        activity_rows +=
+                                            `<a cancel-activity=` + activity['id'] + `>Cancel</a></br>`;
+                                    }
+                                    if (!vm.is_external && activity['can_reissue']) {
+                                        activity_rows +=
+                                            `<a reissue-activity=` + activity['id'] + `>Reissue</a></br>`;
+                                    }
+                                    if (!vm.is_external && activity['can_reinstate']) {
+                                        activity_rows +=
+                                            `<a reinstate-activity=` + activity['id'] + `>Reinstate</a></br>`;
+                                    }
+                        activity_rows += `</td>
                             </tr>`;
                     });
                     // Generate html for child row
