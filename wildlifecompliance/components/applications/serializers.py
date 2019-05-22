@@ -34,10 +34,10 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     purposes = serializers.SerializerMethodField(read_only=True)
     activity_purpose_names = serializers.SerializerMethodField(read_only=True)
     processing_status = CustomChoiceField(read_only=True)
-    can_renew = serializers.BooleanField()
-    can_amend = serializers.BooleanField()
-    can_surrender = serializers.BooleanField()
-    can_cancel = serializers.BooleanField()
+    can_renew = serializers.BooleanField(read_only=True)
+    can_amend = serializers.BooleanField(read_only=True)
+    can_surrender = serializers.BooleanField(read_only=True)
+    can_cancel = serializers.BooleanField(read_only=True)
     can_reissue = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
