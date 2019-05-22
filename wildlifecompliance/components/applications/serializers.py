@@ -39,6 +39,7 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     can_surrender = serializers.BooleanField(read_only=True)
     can_cancel = serializers.BooleanField(read_only=True)
     can_reissue = serializers.SerializerMethodField(read_only=True)
+    can_reinstate = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = ApplicationSelectedActivity

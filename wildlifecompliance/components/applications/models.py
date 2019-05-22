@@ -1953,6 +1953,16 @@ class ApplicationSelectedActivity(models.Model):
             ]
         ).count() > 0
 
+    @property
+    def can_reinstate(self):
+        current_date = timezone.now().date()
+        return ApplicationSelectedActivity.objects.filter(
+            id=self.id,
+            expiry_date__isnull=False,
+            expiry_date__gte=current_date,
+            activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED,
+        ).count() > 0
+
     @staticmethod
     def get_activities_for_application_type(application_type, **kwargs):
         applications = kwargs.get('applications', Application.objects.none())
