@@ -109,6 +109,7 @@ import Awesomplete from 'awesomplete';
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import 'bootstrap/dist/css/bootstrap.css';
 import 'awesomplete/awesomplete.css';
+import utils from '../utils'
 
 export default {
     name: "search-person",
@@ -136,17 +137,36 @@ export default {
             updatingPersonal: false,
         }
     },
+    beforeRouteEnter: function(to, from, next){
+        console.log('beforeRouteEnter');
+        console.log(to);
+        console.log(from);
+        console.log(next);
+    },
     computed: {
-        //...mapGetters('callemailStore', {
-            //call_email: 'call_email',
-        //}),
+        ...mapGetters('callemailStore', {
+            call_email: "call_email",
+        }),
     },
     mounted: function(){
         this.$nextTick(function() {
             this.initAwesomplete();
-        })
+        });
+        // TODO: user should be loaded if call_email has.
+        // this.loadEmailUser(emailUser_id);
     },
     methods: {
+        loadEmailUser: function(id){
+            let initialisers = [
+                utils.fetchCountries(),
+                utils.fetchUser(id),
+            ]
+            Promise.all(initialisers).then(data => {
+                this.countries = data[0];
+                this.user = data[1];
+                this.user.residential_address = this.user.residential_address != null ? this.user.residential_address : {};
+            });
+        },
         search: function(searchTerm){
             var self = this;
 
@@ -207,11 +227,11 @@ export default {
                 let reg = /^.+(\d+)$/gi;
                 let result = reg.exec(elem_id)
                 let idx = result[1];
-                console.log('Selected person obj: ');
-                console.log(self.suggest_list[idx]);
+                console.log('Selected person id: ');
+                console.log(self.suggest_list[idx].id);
+                self.loadEmailUser(self.suggest_list[idx].id);
             });
         },
-
     }
 }
 </script>        
