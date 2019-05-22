@@ -22,6 +22,7 @@ INSTALLED_APPS += [
     'commercialoperator.components.proposals',
     'commercialoperator.components.approvals',
     'commercialoperator.components.compliances',
+    'commercialoperator.components.bookings',
     'taggit',
     'rest_framework',
     'rest_framework_datatables',

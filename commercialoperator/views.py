@@ -21,6 +21,7 @@ from commercialoperator.components.proposals.mixins import ReferralOwnerMixin
 from commercialoperator.components.main.models import Park
 from commercialoperator.context_processors import commercialoperator_url, template_context
 from commercialoperator.invoice_pdf import create_invoice_pdf_bytes, create_confirmation_pdf_bytes
+from commercialoperator.components.bookings.email import send_invoice_email_notification
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
 from django.core.management import call_command
 import json
@@ -399,6 +400,11 @@ class BookingSuccessView(TemplateView):
 #            return redirect('home')
 
         import ipdb; ipdb.set_trace()
+        try:
+            recipient = booking.proposal.applicant.email
+        except:
+            recipient = booking.proposal.submitter.email
+        send_invoice_email_notification(request, booking, recipients=[recipient])
         context = {
             'booking': booking,
             'book_inv': [book_inv]
