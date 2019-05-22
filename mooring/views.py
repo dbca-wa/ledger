@@ -75,6 +75,8 @@ from mooring import utils
 from ledger.payments.mixins import InvoiceOwnerMixin
 from mooring.invoice_pdf import create_invoice_pdf_bytes
 from mooring.context_processors import mooring_url, template_context
+from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
+from ledger.payments.invoice import utils as utils_ledger_payment_invoice
 
 logger = logging.getLogger('booking_checkout')
 
@@ -238,7 +240,7 @@ class CancelBookingView(TemplateView):
         return render(request, self.template_name, {'booking': booking,'basket': basket, 'booking_fees': booking_cancellation_fees, 'booking_total': booking_total, 'booking_total_positive': booking_total - booking_total - booking_total })
 
     def post(self, request, *args, **kwargs):
-
+        failed_refund = False
         if request.session:
            if 'ps_booking' in request.session:
                booking_session = utils.get_session_booking(request.session)
@@ -270,8 +272,6 @@ class CancelBookingView(TemplateView):
 #        booking_total =  Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total)))
 
         ## PLACE IN UTILS
-        from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
-
         lines = []
         for cf in booking_cancellation_fees:
                 lines.append({'ledger_description':cf['description'],"quantity":1,"price_incl_tax":cf['amount'],"oracle_code":cf['oracle_code'], 'line_status': 3})
@@ -282,30 +282,47 @@ class CancelBookingView(TemplateView):
             'system': settings.PS_PAYMENT_SYSTEM_ID,
             'custom_basket': True,
         }
+
         basket, basket_hash = create_basket_session(request, basket_params)
+        ci = utils_ledger_payment_invoice.CreateInvoiceBasket()
+        order_ci  = ci.create_invoice_and_order(basket, total=None, shipping_method='No shipping required',shipping_charge=False, status='Submitted', invoice_text='Refund Allocation Pool', user=booking.customer)
+        #basket.status = 'Submitted'
+        #basket.save() 
+#        print (basket)
+#        print (basket_hash)
+#
+#        checkout_params = {
+#            'system': settings.PS_PAYMENT_SYSTEM_ID,
+#            'fallback_url': request.build_absolute_uri('/'),
+#            'return_url': request.build_absolute_uri(reverse('public_admissions_success')),
+#            'return_preload_url': request.build_absolute_uri(reverse('public_admissions_success')),
+#            'force_redirect': True,
+#            'proxy': False,
+#            'invoice_text': "Cancellation of Booking",
+#            'basket_owner': booking.customer.id
+#        }
+#        create_checkout_session(request, checkout_params)
+#        # END PLACE IN UTILS
+#        print ('BASKET')
+#        print (basket)
+#        print basket.status
+#        order_response = place_order_submission(request)
 
-        checkout_params = {
-            'system': settings.PS_PAYMENT_SYSTEM_ID,
-            'fallback_url': request.build_absolute_uri('/'),
-            'return_url': request.build_absolute_uri(reverse('public_admissions_success')),
-            'return_preload_url': request.build_absolute_uri(reverse('public_admissions_success')),
-            'force_redirect': True,
-            'proxy': False,
-            'invoice_text': "Cancellation of Booking",
-            'basket_owner': booking.customer.id
-        }
-        create_checkout_session(request, checkout_params)
-        # END PLACE IN UTILS
-
-        order_response = place_order_submission(request)
         new_order = Order.objects.get(basket=basket)
         new_invoice = Invoice.objects.get(order_number=new_order.number)
+        update_payments(new_invoice.reference)
         book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference)
 
+        #basket.status = 'Submitted'
+        #basket.save()
+
+        #print new_order.basket
+        #print basket.status
         b_total = Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total)))
         info = {'amount': Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total))), 'details' : 'Refund via system'}
 #         info = {'amount': float('10.00'), 'details' : 'Refund via system'}
         refund = None
+
         try: 
             bpoint = BpointTransaction.objects.get(id=bpoint_id)
             refund = bpoint.refund(info,request.user)
@@ -313,7 +330,13 @@ class CancelBookingView(TemplateView):
             update_payments(invoice.reference)
             emails.send_refund_completed_email_customer(booking, context_processor)
  
-        except: 
+        except:
+            failed_refund = True
+#            # Refund Failed Assign Refund amount to allocation pool.
+#            lines = [{'ledger_description':'Refund assigned to unallocated pool',"quantity":1,"price_incl_tax":info['amount'],"oracle_code":settings.UNALLOCATED_ORACLE_CODE, 'line_status': 1}]
+#            utils.allocate_failedrefund_to_unallocated(request, booking, lines, invoice_text=None, internal=False)
+#            #######################################################
+ 
             emails.send_refund_failure_email(booking, context_processor)
             emails.send_refund_failure_email_customer(booking, context_processor)
          
@@ -342,7 +365,12 @@ class CancelBookingView(TemplateView):
             booking_admission.cancelation_time = datetime.now()
             booking_admission.canceled_by = request.user
             booking_admission.save()
-        
+
+        if failed_refund is True:
+            # Refund Failed Assign Refund amount to allocation pool.
+            lines = [{'ledger_description':'Refund assigned to unallocated pool',"quantity":1,"price_incl_tax":abs(info['amount']),"oracle_code":settings.UNALLOCATED_ORACLE_CODE, 'line_status': 1}]
+            utils.allocate_failedrefund_to_unallocated(request, booking, lines, invoice_text=None, internal=False,order_total=abs(info['amount']),user=booking.customer)
+
         return HttpResponseRedirect(reverse('public_booking_cancelled', args=(booking.id,)))
 
 
@@ -510,6 +538,7 @@ class RefundPaymentView(TemplateView):
              bpoint = None
              invoice = None
              refund  = None
+             failed_refund = False
              basket = utils.get_basket(request)
              booking,bpoint_id = self.get_booking_info(request, *args, **kwargs)
              basket_total = Decimal('0.00')
@@ -526,6 +555,7 @@ class RefundPaymentView(TemplateView):
                 update_payments(invoice.reference)
                 emails.send_refund_completed_email_customer(booking, context_processor)
              except:
+                failed_refund = True
                 emails.send_refund_failure_email(booking, context_processor)
                 emails.send_refund_failure_email_customer(booking, context_processor)
                 booking_invoice = BookingInvoice.objects.filter(booking=booking.old_booking).order_by('id')
@@ -547,6 +577,12 @@ class RefundPaymentView(TemplateView):
                  bpoint_refund.save()
                  update_payments(invoice.reference)
                  update_payments(new_invoice.reference)
+
+
+             if failed_refund is True:
+                 # Refund Failed Assign Refund amount to allocation pool.
+                 lines = [{'ledger_description':'Refund assigned to unallocated pool',"quantity":1,"price_incl_tax":abs(info['amount']),"oracle_code":settings.UNALLOCATED_ORACLE_CODE, 'line_status': 1}]
+                 utils.allocate_failedrefund_to_unallocated(request, booking, lines, invoice_text=None, internal=False,order_total=abs(info['amount']),user=booking.customer)
 
              return HttpResponseRedirect('/success/')
          else:

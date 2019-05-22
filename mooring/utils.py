@@ -1709,93 +1709,29 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
     return response
 
 
-def allocate_failedrefund_to_unallocated(request, booking, lines, invoice_text=None, internal=False):
-        print ('ALLOCATED')
-#        lines = []
-#        for cf in booking_cancellation_fees:
-#                lines.append({'ledger_description':cf['description'],"quantity":1,"price_incl_tax":cf['amount'],"oracle_code":cf['oracle_code'], 'line_status': 3})
-
+def allocate_failedrefund_to_unallocated(request, booking, lines, invoice_text=None, internal=False, order_total='0.00',user=None):
         basket_params = {
             'products': lines,
             'vouchers': [],
             'system': settings.PS_PAYMENT_SYSTEM_ID,
             'custom_basket': True,
         }
-        basket, basket_hash = create_basket_session(request, basket_params)
 
+        basket, basket_hash = create_basket_session(request, basket_params)
         print (basket)
         print (basket_hash)
-        checkout_params = {
-            'system': settings.PS_PAYMENT_SYSTEM_ID,
-            'fallback_url': request.build_absolute_uri('/'),
-            'return_url': request.build_absolute_uri(reverse('public_admissions_success')),
-            'return_preload_url': request.build_absolute_uri(reverse('public_admissions_success')),
-            'force_redirect': True,
-            'proxy': False,
-            'invoice_text': "Refund Failed Unallocated Pool",
-            'basket_owner': booking.customer.id
-        }
-        create_checkout_session(request, checkout_params)
-        # END PLACE IN UTILS
-        #print ('between')
-        #order_response = place_order_submission(request)
-        #print (order_response)
+        from ledger.payments.invoice import utils
+        ci = utils.CreateInvoiceBasket()
+        order  = ci.create_invoice_and_order(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=user, status='Submitted', invoice_text='Refund Allocation Pool', )
+        #basket.status = 'Submitted'
+        #basket.save()
         new_order = Order.objects.get(basket=basket)
-        print (new_order)
         new_invoice = Invoice.objects.get(order_number=new_order.number)
-        print (new_invoice)
+        update_payments(new_invoice.reference)
         book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference)
-        print (book_inv)
-        return book_inv
 
+        return order
 
-def iiicheckout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):
-    JSON_REQUEST_HEADER_PARAMS = {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Referer": request.META.get('HTTP_REFERER'),
-        "X-CSRFToken": request.COOKIES.get('csrftoken')
-    }
-    try:
-        parameters = {
-            'system': 'S019',
-            'fallback_url': request.build_absolute_uri('/'),
-            'return_url': request.build_absolute_uri(reverse('public_booking_success')),
-            'forceRedirect': True,
-            'proxy': True if internal else False,
-            "products": lines,
-            "custom_basket": True,
-            "invoice_text": invoice_text,
-            "vouchers": vouchers,
-        }
-
-        if not internal:
-            parameters["check_url"] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
-        if internal or request.user.is_anonymous():
-            parameters['basket_owner'] = booking.customer.id
-
-        url = request.build_absolute_uri(
-            reverse('payments:ledger-initial-checkout')
-        )
-        COOKIES = request.COOKIES
-        if 'ps_booking' in request.session:
-            COOKIES['ps_booking_internal'] = str(request.session['ps_booking'])
-        response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=COOKIES,
-                                 data=json.dumps(parameters))
-        response.raise_for_status()
-        return response
-
-
-    except requests.exceptions.HTTPError as e:
-        if 400 <= e.response.status_code < 500:
-            http_error_msg = '{} Client Error: {} for url: {} > {}'.format(e.response.status_code, e.response.reason, e.response.url,e.response._content)
-
-        elif 500 <= e.response.status_code < 600:
-            http_error_msg = '{} Server Error: {} for url: {}'.format(e.response.status_code, e.response.reason, e.response.url)
-        e.message = http_error_msg
-
-        e.args = (http_error_msg,)
-        raise
 
 def old_internal_create_booking_invoice(booking, checkout_response):
     if not checkout_response.history:
