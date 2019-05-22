@@ -714,7 +714,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'trails',
                 'training_completed',
                 'can_edit_activities',
-                'reversion_ids'
+                'reversion_ids',
                 'assessor_assessment',
                 'referral_assessments'
                 )

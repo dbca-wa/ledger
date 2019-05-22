@@ -16,10 +16,10 @@ def commercialoperator_url(request):
          is_customer = helpers.is_customer(request)
 
     return {
-        'EXPLORE_PARKS_SEARCH': '/map',
+        'EXPLORE_PARKS_SEARCH': '/external/payment',
         'EXPLORE_PARKS_CONTACT': '/contact-us',
-        'EXPLORE_PARKS_CONSERVE': '/know/conserving-our-moorings',
-        'EXPLORE_PARKS_PEAK_PERIODS': '/know/when-visit',
+        #'EXPLORE_PARKS_CONSERVE': '/know/conserving-our-moorings',
+        #'EXPLORE_PARKS_PEAK_PERIODS': '/know/when-visit',
         'EXPLORE_PARKS_ENTRY_FEES': '/know/entry-fees',
         'EXPLORE_PARKS_TERMS': TERMS,
         'DEV_STATIC': settings.DEV_STATIC,

@@ -8,29 +8,27 @@
                 <p>A confirmation email has been sent to {{ booking.proposal.submitter.email }}. </p>
                 <p>{% if booking.cost_total < 0 %}{% if refund_failed|length > 0 %}Sorry your refund failed to automatically refund and require a manually refund to be completed.  Please allow upto 28 days for this to be completed.  Your reference is {{ refund_failed.0.refund_amount }} {% else %}A refund has automatically been refunded to you,  please allow 1-3 business days for the money to be credit to your account.{%endif %}{%endif %}</p>
                 <p>&nbsp;</p>
-		<p>Please click <a href="{{EXPLORE_PARKS_SEARCH}}">here</a> if you want to make another booking.</p>
-
+                <p>Please click <a href="{{EXPLORE_PARKS_SEARCH}}">here</a> if you want to make another booking.</p>
             </div></div>
         </div>
         <div class="row"><div class="col-sm-12" style="margin-top: 1em">
-                    {% if request.user == booking.proposal.submitter or request.user.is_staff or request.session.ps_last_booking == booking.id %}
-                        {% for bi in book_inv %}
-                            <a href="{% url 'cols-confirmation-pdf' bi.invoice_reference %}" class="btn btn-info btn-lg" target="_blank">Confirmation</a>
-                        {% endfor %}
+            {% if request.user == booking.proposal.submitter or request.user.is_staff or request.session.ps_last_booking == booking.id %}
+                {% for bi in book_inv %}
+                    <a href="{% url 'cols-confirmation-pdf' bi.invoice_reference %}" class="btn btn-info btn-lg" target="_blank">Confirmation</a>
+                {% endfor %}
 
-                        {% if request.user.is_authenticated %}
-                            {% for bi in book_inv %}
-                                <a href="{% url 'cols-invoice-pdf' bi.invoice_reference %}" class="btn btn-info btn-lg"  target="_blank">Invoice</a>
-                            {% endfor %}
-                        {% else %}
-                            <a href="{% url 'home' %}" class="btn btn-info btn-lg">Log in</a><p>You must be logged in to see your invoice online.</p>
-                        {% endif %}
+                {% if request.user.is_authenticated %}
+                    {% for bi in book_inv %}
+                        <a href="{% url 'cols-invoice-pdf' bi.invoice_reference %}" class="btn btn-info btn-lg"  target="_blank">Invoice</a>
+                    {% endfor %}
+                {% else %}
+                    <a href="{% url 'home' %}" class="btn btn-info btn-lg">Log in</a><p>You must be logged in to see your invoice online.</p>
+                {% endif %}
 
-                        <p style="font-size: 1.5rem; font-weight: bold;">You must bring your confirmation with you to the park</p>
-                    {% else %}
-                        <p style="font-size: 1.5rem; font-weight: bold;">You do not have permission to access the confirmation or invoice for this booking.<br>Please check your email or contact COLS directly.</p>
-                    {% endif %}
+                <p style="font-size: 1.5rem; font-weight: bold;">You must bring your confirmation with you to the park</p>
+            {% else %}
+                <p style="font-size: 1.5rem; font-weight: bold;">You do not have permission to access the confirmation or invoice for this booking.<br>Please check your email or contact COLS directly.</p>
+            {% endif %}
         </div>
-        {% include "commercialoperator/booking/booking_view.html" %}
     </div>
 {% endblock %}

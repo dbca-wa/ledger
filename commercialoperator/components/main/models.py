@@ -138,8 +138,7 @@ class Park(models.Model):
     adult_price = models.DecimalField('Adult (price per adult)', max_digits=5, decimal_places=2)
     child_price = models.DecimalField('Child (price per child)', max_digits=5, decimal_places=2)
     #senior = models.DecimalField('Senior (price per senior)', max_digits=5, decimal_places=2)
-    oracle_code = models.CharField(max_length=50,null=True,blank=True)
-
+    oracle_code = models.CharField(max_length=50)
 
     class Meta:
         ordering = ['name']
@@ -242,6 +241,7 @@ class ApplicationType(models.Model):
     max_renewals = models.PositiveSmallIntegerField('Maximum number of times an Approval can be renewed', null=True, blank=True)
     max_renewal_period = models.PositiveSmallIntegerField('Maximum period of each Approval renewal (Years)', null=True, blank=True)
     application_fee = models.DecimalField(max_digits=6, decimal_places=2)
+    oracle_code = models.CharField(max_length=50)
 
     class Meta:
         ordering = ['order', 'name']
