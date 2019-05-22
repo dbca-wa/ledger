@@ -1893,7 +1893,6 @@ class ApplicationSelectedActivity(models.Model):
         'wildlifecompliance.LicenceActivity', null=True)
     proposed_start_date = models.DateField(null=True, blank=True)
     proposed_end_date = models.DateField(null=True, blank=True)
-    is_activity_renewable = models.BooleanField(default=False)
     additional_info = models.TextField(blank=True, null=True)
     conditions = models.TextField(blank=True, null=True)
     original_issue_date = models.DateTimeField(blank=True, null=True)
