@@ -21,7 +21,8 @@ from commercialoperator.components.proposals.mixins import ReferralOwnerMixin
 from commercialoperator.components.main.models import Park
 from commercialoperator.context_processors import commercialoperator_url, template_context
 from commercialoperator.invoice_pdf import create_invoice_pdf_bytes, create_confirmation_pdf_bytes
-from commercialoperator.components.bookings.email import send_invoice_email_notification
+from commercialoperator.components.bookings.email import send_invoice_tclass_email_notification, send_confirmation_tclass_email_notification
+
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
 from django.core.management import call_command
 import json
@@ -362,19 +363,7 @@ class BookingSuccessView(TemplateView):
     def get(self, request, *args, **kwargs):
         print (" BOOKING SUCCESS ")
 
-#            context_processor = template_context(self.request)
-#            basket = None
-#            booking = utils.get_session_booking(request.session)
-#            if self.request.user.is_authenticated():
-#                basket = Basket.objects.filter(status='Submitted', owner=request.user).order_by('-id')[:1]
-#            else:
-#                basket = Basket.objects.filter(status='Submitted', owner=booking.proposal.submitter).order_by('-id')[:1]
-#
-#            order = Order.objects.get(basket=basket[0])
-#            invoice = Invoice.objects.get(order_number=order.number)
-#            invoice_ref = invoice.reference
-#            book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
-
+        import ipdb; ipdb.set_trace()
         context_processor = template_context(self.request)
         basket = None
         booking = self.get_session_booking(request.session)
@@ -389,22 +378,15 @@ class BookingSuccessView(TemplateView):
         invoice_ref = invoice.reference
         book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
 
-
         print ("BOOKING")
-#        invoice_ref = request.GET.get('invoice')
-#        self.internal_create_booking_invoice(booking, invoice_ref)
-#        if ('cols_booking' in request.session) and Booking.objects.filter(id=request.session['cols_booking']).exists():
-#            booking = Booking.objects.get(id=request.session['cols_booking'])
-#            book_inv = BookingInvoice.objects.get(booking=booking).invoice_reference
-#        else:
-#            return redirect('home')
 
-        import ipdb; ipdb.set_trace()
         try:
             recipient = booking.proposal.applicant.email
         except:
             recipient = booking.proposal.submitter.email
-        send_invoice_email_notification(request, booking, recipients=[recipient])
+        send_invoice_tclass_email_notification(request, booking, invoice, recipients=[recipient])
+        send_confirmation_tclass_email_notification(request, booking, invoice, recipients=[recipient])
+
         context = {
             'booking': booking,
             'book_inv': [book_inv]
@@ -428,9 +410,7 @@ class InvoicePDFView(InvoiceOwnerMixin,View):
     def get(self, request, *args, **kwargs):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         response = HttpResponse(content_type='application/pdf')
-        #mooring_var = mooring_url(request)
-        cols_var = commercialoperator_url(request)
-        response.write(create_invoice_pdf_bytes('invoice.pdf',invoice, request, cols_var))
+        response.write(create_invoice_pdf_bytes('invoice.pdf',invoice))
         return response
 
     def get_object(self):
@@ -443,9 +423,7 @@ class ConfirmationPDFView(InvoiceOwnerMixin,View):
         bi=BookingInvoice.objects.get(invoice_reference=invoice.reference)
 
         response = HttpResponse(content_type='application/pdf')
-        #mooring_var = mooring_url(request)
-        cols_var = commercialoperator_url(request)
-        response.write(create_confirmation_pdf_bytes('confirmation.pdf',invoice, bi.booking, request, cols_var))
+        response.write(create_confirmation_pdf_bytes('confirmation.pdf',invoice, bi.booking))
         return response
 
     def get_object(self):

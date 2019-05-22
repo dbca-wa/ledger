@@ -1,0 +1,7 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+        Please find attached the confirmation for your booking, {{ booking_number }}.
+        
+        Print or save the attached confirmation for presentation on arrival and at any time during your visit.
+{%  endblock %}

@@ -6,18 +6,43 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 
 from commercialoperator.components.emails.emails import TemplateEmailBase
+from commercialoperator.invoice_pdf import create_invoice_pdf_bytes, create_confirmation_pdf_bytes
 
 logger = logging.getLogger(__name__)
 
 SYSTEM_NAME = settings.SYSTEM_NAME_SHORT + ' Automated Message'
 
-class InvoiceSendNotificationEmail(TemplateEmailBase):
+class InvoiceTClassSendNotificationEmail(TemplateEmailBase):
     subject = 'Your booking invoice.'
-    html_template = 'commercialoperator/emails/bookings/send_invoice_notification.html'
-    txt_template = 'commercialoperator/emails/bookings/send_invoice_notification.txt'
+    html_template = 'commercialoperator/emails/bookings/tclass/send_invoice_notification.html'
+    txt_template = 'commercialoperator/emails/bookings/tclass/send_invoice_notification.txt'
 
-def send_invoice_email_notification(request, booking, recipients):
-    email = InvoiceSendNotificationEmail()
+class ConfirmationTClassSendNotificationEmail(TemplateEmailBase):
+    subject = 'Your booking confirmation.'
+    html_template = 'commercialoperator/emails/bookings/tclass/send_confirmation_notification.html'
+    txt_template = 'commercialoperator/emails/bookings/tclass/send_confirmation_notification.txt'
+
+def send_invoice_tclass_email_notification(request, booking, invoice, recipients):
+    email = InvoiceTClassSendNotificationEmail()
+    #url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+
+    context = {
+        'booking_number': booking.booking_number,
+        #'url': url,
+    }
+
+    filename = 'invoice.pdf'
+    doc = create_invoice_pdf_bytes(filename, invoice)
+    attachment = (filename, doc, 'application/pdf')
+
+    msg = email.send(recipients, attachments=[attachment], context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, booking.proposal, sender=sender)
+    _log_org_email(msg, booking.proposal.applicant, booking.proposal.submitter, sender=sender)
+
+
+def send_confirmation_tclass_email_notification(request, booking, invoice, recipients):
+    email = ConfirmationTClassSendNotificationEmail()
     #url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
 
     import ipdb; ipdb.set_trace()
@@ -26,7 +51,11 @@ def send_invoice_email_notification(request, booking, recipients):
         #'url': url,
     }
 
-    msg = email.send(recipients, context=context)
+    filename = 'confirmation.pdf'
+    doc = create_confirmation_pdf_bytes(filename, invoice, booking)
+    attachment = (filename, doc, 'application/pdf')
+
+    msg = email.send(recipients, attachments=[attachment], context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, booking.proposal, sender=sender)
     _log_org_email(msg, booking.proposal.applicant, booking.proposal.submitter, sender=sender)
