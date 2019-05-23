@@ -10,7 +10,7 @@
           </h3>
         </div>
         <div class="panel-body collapse in" :id="pBody">
-          <div class="borderDecoration">
+          <div class="borderDecoration col-sm-12">
           <form class="form-horizontal col-sm-12" name="personal_form" method="post">
             <label class="control-label"> Select the required access and activities</label>
           </form>
@@ -796,7 +796,11 @@ export default {
     },
 
         mounted: function() {
+
             let vm = this;
+            vm.proposal.selected_trails_activities=[];
+            vm.proposal.selected_parks_activities=[];
+            //vm.proposal.marine_parks_activities=[];
             vm.fetchRequiredDocumentList();
             Vue.http.get('/api/access_types.json').then((res) => {
                       vm.accessTypes=res.body;                 

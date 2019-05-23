@@ -16,10 +16,18 @@
 
                             <div class="col-sm-12">
                                 <div class="form-group" v-if="!isLoading">
+                                    <div class="radio">
+                                        <label>
+                                            <input type="radio"  name="behalf_of_org" v-model="yourself" value="yourself"> On behalf of yourself
+                                        </label>
+                                    </div>
                                     <div v-if="profile.commercialoperator_organisations.length > 0">
                                         <div v-for="org in profile.commercialoperator_organisations" class="radio">
-                                            <label>
-                                              <input type="radio" name="behalf_of_org" v-model="behalf_of"  :value="org.id"> On behalf of {{org.name}}
+                                            <label v-if ="!org.is_consultant">
+                                              <input type="radio" name="behalf_of_org" v-model="org_applicant"  :value="org.id"> On behalf of {{org.name}}
+                                            </label>
+                                            <label v-if ="org.is_consultant">
+                                              <input type="radio" name="behalf_of_org" v-model="org_applicant"  :value="org.id"> On behalf of {{org.name}} (as a Consultant)
                                             </label>
                                         </div>
                                         <!--
@@ -30,9 +38,9 @@
                                         </div>
                                         -->
                                     </div>
-                                    <div v-else>
+                                    <!-- <div v-else>
                                         <p style="color:red"> You cannot add a New Commercial Operator because you do not have an associated Organisation. First add an Organisation. </p>
-                                    </div>
+                                    </div> -->
                                 </div>
                             </div>
                             <!--
@@ -70,7 +78,7 @@
                         </div>
                     </div>
 
-                    <div v-if="behalf_of != ''" class="panel panel-default">
+                    <div v-if="org_applicant != ''||yourself!=''" class="panel panel-default">
                         <div class="panel-heading">
                             <h3 class="panel-title">Apply for
                                 <a :href="'#'+pBody2" data-toggle="collapse"  data-parent="#userInfo2" expanded="true" :aria-controls="pBody2">
@@ -213,6 +221,8 @@ export default {
         "proposal": null,
         agent: {},
         behalf_of: '',
+        org_applicant: '',
+        yourself: '',
         profile: {
             commercialoperator_organisations: []
         },
@@ -252,8 +262,11 @@ export default {
     },
     org: function() {
         let vm = this;
-        if (vm.behalf_of != '' || vm.behalf_of != 'other'){
-            return vm.profile.commercialoperator_organisations.find(org => parseInt(org.id) === parseInt(vm.behalf_of)).name;
+        // if (vm.org_applicant != '' || vm.org_applicant != 'submitter'){
+        //     return vm.profile.commercialoperator_organisations.find(org => parseInt(org.id) === parseInt(vm.org_applicant)).name;
+        // }
+        if (vm.org_applicant != ''){
+            return vm.profile.commercialoperator_organisations.find(org => parseInt(org.id) === parseInt(vm.org_applicant)).name;
         }
         return '';
     },
@@ -286,7 +299,7 @@ export default {
   methods: {
     submit: function() {
         let vm = this;
-			
+		console.log(vm.org_applicant)
         swal({
             title: "Create " + vm.selected_application_name,
             text: "Are you sure you want to create " + this.alertText() + " application on behalf of "+vm.org+" ?",
@@ -312,7 +325,8 @@ export default {
         let vm = this;
         vm.creatingProposal = true;
 		vm.$http.post('/api/proposal.json',{
-			behalf_of: vm.behalf_of,
+			//behalf_of: vm.behalf_of,
+            org_applicant:vm.org_applicant,
 			application: vm.selected_application_id,
 			region: vm.selected_region,
 			district: vm.selected_district,
@@ -336,15 +350,18 @@ export default {
     },
     isDisabled: function() {
         let vm = this;
-        if (vm.selected_application_name == 'Western Power Maintenance') {
-            if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.approval_level == ''){
+        // if (vm.selected_application_name == 'Western Power Maintenance') {
+        //     if (vm.behalf_of == '' || vm.selected_application_id == '' || vm.selected_region == '' || vm.approval_level == ''){
+        //         return true;
+        //     }
+        // } else {
+        //     if (vm.behalf_of == '' || vm.selected_application_id == ''){
+        //         return true;
+        //     }
+        // }
+        if ((vm.org_applicant == '' && vm.yourself=='') ||( vm.selected_application_id == '')){
                 return true;
             }
-        } else {
-            if (vm.behalf_of == '' || vm.selected_application_id == ''){
-                return true;
-            }
-        }
         return false;
     },
 	fetchRegions: function(){

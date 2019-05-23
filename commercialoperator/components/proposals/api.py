@@ -246,7 +246,7 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
             return Proposal.objects.all().exclude(application_type=self.excluded_type)
         elif is_customer(self.request):
             user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
-            return  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) ).exclude(application_type=excluded_type)
+            return  Proposal.objects.filter( Q(org_applicant_id__in = user_orgs) | Q(submitter = user) ).exclude(application_type=self.excluded_type)
         return Proposal.objects.none()
 
 #    def filter_queryset(self, request, queryset, view):
@@ -275,7 +275,10 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation
         applicant_id = request.GET.get('org_id')
         if applicant_id:
-            qs = qs.filter(applicant_id=applicant_id)
+            qs = qs.filter(org_applicant_id=applicant_id)
+        submitter_id = request.GET.get('submitter_id', None)
+        if submitter_id:
+            qs = qs.filter(submitter_id=submitter_id)
 
         self.paginator.page_size = qs.count()
         result_page = self.paginator.paginate_queryset(qs, request)
@@ -336,7 +339,10 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation
         applicant_id = request.GET.get('org_id')
         if applicant_id:
-            qs = qs.filter(applicant_id=applicant_id)
+            qs = qs.filter(org_applicant_id=applicant_id)
+        submitter_id = request.GET.get('submitter_id', None)
+        if submitter_id:
+            qs = qs.filter(submitter_id=submitter_id)
 
         self.paginator.page_size = qs.count()
         result_page = self.paginator.paginate_queryset(qs, request)
@@ -358,7 +364,10 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation
         applicant_id = request.GET.get('org_id')
         if applicant_id:
-            qs = qs.filter(applicant_id=applicant_id)
+            qs = qs.filter(org_applicant_id=applicant_id)
+        submitter_id = request.GET.get('submitter_id', None)
+        if submitter_id:
+            qs = qs.filter(submitter_id=submitter_id)
 
         #import ipdb; ipdb.set_trace()
         self.paginator.page_size = qs.count()
@@ -426,7 +435,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             #return Proposal.objects.filter(region__isnull=False)
         elif is_customer(self.request):
             user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
-            queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
+            queryset =  Proposal.objects.filter( Q(org_applicant_id__in = user_orgs) | Q(submitter = user) )
             #queryset =  Proposal.objects.filter(region__isnull=False).filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
             return queryset.exclude(application_type=self.excluded_type)
         logger.warn("User is neither customer nor internal user: {} <{}>".format(user.get_full_name(), user.email))
@@ -1459,7 +1468,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 #'schema': qs_proposal_type.order_by('-version').first().schema,
                 'schema': proposal_type.schema,
                 'submitter': request.user.id,
-                'applicant': request.data.get('behalf_of'),
+                'org_applicant': request.data.get('org_applicant'),
                 'application_type': application_type,
                 'region': region,
                 'district': district,

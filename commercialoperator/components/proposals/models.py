@@ -15,11 +15,12 @@ from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin
+from ledger.payments.models import Invoice
 #from ledger.accounts.models import EmailUser
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, ParkPrice, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument#, RevisionedMixin
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument#, RevisionedMixin
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
@@ -29,6 +30,7 @@ import subprocess
 from django.db.models import Q
 from reversion.models import Version
 from dirtyfields import DirtyFieldsMixin
+from decimal import Decimal as D
 
 import logging
 logger = logging.getLogger(__name__)
@@ -322,9 +324,12 @@ class ParkEntry(models.Model):
     def price_net(self):
         return (self.price_adult + self.price_child + self.price_senior)
 
- 
+
 class Proposal(DirtyFieldsMixin, RevisionedMixin):
 #class Proposal(DirtyFieldsMixin, models.Model):
+    APPLICANT_TYPE_ORGANISATION = 'ORG'
+    APPLICANT_TYPE_PROXY = 'PRX'
+    APPLICANT_TYPE_SUBMITTER = 'SUB'
 
     CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'),
                                ('with_assessor', 'Under Review'),
@@ -424,8 +429,12 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
     customer_status = models.CharField('Customer Status', max_length=40, choices=CUSTOMER_STATUS_CHOICES,
                                        default=CUSTOMER_STATUS_CHOICES[1][0])
-    applicant = models.ForeignKey(Organisation, blank=True, null=True, related_name='proposals')
-
+    #applicant = models.ForeignKey(Organisation, blank=True, null=True, related_name='proposals')
+    org_applicant = models.ForeignKey(
+        Organisation,
+        blank=True,
+        null=True,
+        related_name='org_applications')
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_sequence = models.IntegerField(blank=True, default=0)
     #lodgement_date = models.DateField(blank=True, null=True)
@@ -470,7 +479,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     approval_comment = models.TextField(blank=True)
 
     # common
-    applicant_details = models.OneToOneField(ProposalApplicantDetails, blank=True, null=True) #, related_name='applicant_details')
+    #applicant_details = models.OneToOneField(ProposalApplicantDetails, blank=True, null=True) #, related_name='applicant_details')
     training_completed = models.BooleanField(default=False)
     #payment = models.OneToOneField(ProposalPayment, blank=True, null=True)
     #confirmation = models.OneToOneField(ProposalConfirmation, blank=True, null=True)
@@ -495,6 +504,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     #other_details = models.OneToOneField(ProposalOtherDetails, blank=True, null=True)
     #online_training = models.OneToOneField(ProposalOnlineTraining, blank=True, null=True)
 
+    fee_invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
 
     class Meta:
         app_label = 'commercialoperator'
@@ -516,6 +526,10 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             self.save(version_comment='processing_status: {}'.format(self.processing_status))
 
     @property
+    def fee_paid(self):
+        return True if self.fee_invoice_reference else False
+
+    @property
     def reference(self):
         return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
 
@@ -525,6 +539,74 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         versions = Version.objects.get_for_object(self).select_related("revision__user").filter(Q(revision__comment__icontains='status') | Q(revision_id=current_revision_id))
         version_ids = [[i.id,i.revision.date_created] for i in versions]
         return [dict(cur_version_id=version_ids[0][0], prev_version_id=version_ids[i+1][0], created=version_ids[i][1]) for i in range(len(version_ids)-1)]
+
+    @property
+    def applicant(self):
+        if self.org_applicant:
+            return self.org_applicant.organisation.name
+        elif self.proxy_applicant:
+            return "{} {}".format(
+                self.proxy_applicant.first_name,
+                self.proxy_applicant.last_name)
+        else:
+            return "{} {}".format(
+                self.submitter.first_name,
+                self.submitter.last_name)
+
+    @property
+    def applicant_details(self):
+        if self.org_applicant:
+            return '{} \n{}'.format(
+                self.org_applicant.organisation.name,
+                self.org_applicant.address)
+        elif self.proxy_applicant:
+            return "{} {}\n{}".format(
+                self.proxy_applicant.first_name,
+                self.proxy_applicant.last_name,
+                self.proxy_applicant.addresses.all().first())
+        else:
+            return "{} {}\n{}".format(
+                self.submitter.first_name,
+                self.submitter.last_name,
+                self.submitter.addresses.all().first())
+
+    @property
+    def applicant_address(self):
+        if self.org_applicant:
+            return self.org_applicant.address
+        elif self.proxy_applicant:
+            #return self.proxy_applicant.addresses.all().first()
+            return self.proxy_applicant.residential_address
+        else:
+            #return self.submitter.addresses.all().first()
+            return self.submitter.residential_address
+
+    @property
+    def applicant_id(self):
+        if self.org_applicant:
+            return self.org_applicant.id
+        elif self.proxy_applicant:
+            return self.proxy_applicant.id
+        else:
+            return self.submitter.id
+
+    @property
+    def applicant_type(self):
+        if self.org_applicant:
+            return self.APPLICANT_TYPE_ORGANISATION
+        elif self.proxy_applicant:
+            return self.APPLICANT_TYPE_PROXY
+        else:
+            return self.APPLICANT_TYPE_SUBMITTER
+
+    @property
+    def applicant_field(self):
+        if self.org_applicant:
+            return 'org_applicant'
+        elif self.proxy_applicant:
+            return 'proxy_applicant'
+        else:
+            return 'submitter'
 
     def qa_officers(self, name=None):
         if not name:
@@ -811,7 +893,9 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
                 # Create a log entry for the organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                #self.applicant.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
+                applicant_field=getattr(self, self.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
 
                 #import ipdb; ipdb.set_trace()
                 ret1 = send_submit_email_notification(request, self)
@@ -837,13 +921,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         try:
                             chk_instance=ProposalAssessmentAnswer.objects.get(question=chk, assessment=assessor_assessment)
                         except ProposalAssessmentAnswer.DoesNotExist:
-                            chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=assessor_assessment)  
+                            chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=assessor_assessment)
 
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
+    #TODO: remove this function as it is not used anywhere.
     def save_form_tabs(self,request):
-        self.applicant_details = ProposalApplicantDetails.objects.create(first_name=request.data['first_name'])
+        #self.applicant_details = ProposalApplicantDetails.objects.create(first_name=request.data['first_name'])
         self.activities_land = ProposalActivitiesLand.objects.create(activities_land=request.data['activities_land'])
         self.activities_marine = ProposalActivitiesMarine.objects.create(activities_marine=request.data['activities_marine'])
         #self.save()
@@ -931,13 +1016,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                 try:
                                     chk_instance=ProposalAssessmentAnswer.objects.get(question=chk, assessment=referral_assessment)
                                 except ProposalAssessmentAnswer.DoesNotExist:
-                                    chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=referral_assessment) 
+                                    chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=referral_assessment)
                     # Create a log entry for the proposal
                     #self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
                     self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}'.format(referral_group.name)),request)
                     # Create a log entry for the organisation
                     #self.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
-                    self.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}'.format(referral_group.name)),request)
+                    applicant_field=getattr(self, self.applicant_field)
+                    applicant_field.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}'.format(referral_group.name)),request)
                     # send email
                     recipients = referral_group.members_list
                     send_referral_email_notification(referral,recipients,request)
@@ -960,7 +1046,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         # Create a log entry for the proposal
                         self.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_APPROVER.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
                         # Create a log entry for the organisation
-                        self.applicant.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_APPROVER.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
+                        applicant_field=getattr(self, self.applicant_field)
+                        applicant_field.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_APPROVER.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
                 else:
                     if officer != self.assigned_officer:
                         self.assigned_officer = officer
@@ -968,7 +1055,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         # Create a log entry for the proposal
                         self.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_ASSESSOR.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
                         # Create a log entry for the organisation
-                        self.applicant.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_ASSESSOR.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
+                        applicant_field=getattr(self, self.applicant_field)
+                        applicant_field.log_user_action(ProposalUserAction.ACTION_ASSIGN_TO_ASSESSOR.format(self.id,'{}({})'.format(officer.get_full_name(),officer.email)),request)
             except:
                 raise
 
@@ -997,7 +1085,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 self.save(version_comment=comment) # to allow revision to be added to reversion history
                 self.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)
                 # Create a log entry for the organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)
+                applicant_field=getattr(self, self.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_DOCUMENT.format(self.id),request)
                 return self
             except:
                 raise
@@ -1014,7 +1103,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         # Create a log entry for the proposal
                         self.log_user_action(ProposalUserAction.ACTION_UNASSIGN_APPROVER.format(self.id),request)
                         # Create a log entry for the organisation
-                        self.applicant.log_user_action(ProposalUserAction.ACTION_UNASSIGN_APPROVER.format(self.id),request)
+                        applicant_field=getattr(self, self.applicant_field)
+                        applicant_field.log_user_action(ProposalUserAction.ACTION_UNASSIGN_APPROVER.format(self.id),request)
                 else:
                     if self.assigned_officer:
                         self.assigned_officer = None
@@ -1022,7 +1112,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         # Create a log entry for the proposal
                         self.log_user_action(ProposalUserAction.ACTION_UNASSIGN_ASSESSOR.format(self.id),request)
                         # Create a log entry for the organisation
-                        self.applicant.log_user_action(ProposalUserAction.ACTION_UNASSIGN_ASSESSOR.format(self.id),request)
+                        applicant_field=getattr(self, self.applicant_field)
+                        applicant_field.log_user_action(ProposalUserAction.ACTION_UNASSIGN_ASSESSOR.format(self.id),request)
             except:
                 raise
 
@@ -1084,7 +1175,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
                 # Log entry for organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
+                applicant_field=getattr(self, self.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_PROPOSED_DECLINE.format(self.id),request)
 
                 send_approver_decline_email_notification(reason, request, self)
             except:
@@ -1109,7 +1201,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_DECLINE.format(self.id),request)
                 # Log entry for organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_DECLINE.format(self.id),request)
+                applicant_field=getattr(self, self.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_DECLINE.format(self.id),request)
                 send_proposal_decline_email_notification(self,request, proposal_decline)
             except:
                 raise
@@ -1128,7 +1221,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_PUT_ONHOLD.format(self.id),request)
                 # Log entry for organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_PUT_ONHOLD.format(self.id),request)
+                applicant_field=getattr(self, self.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_PUT_ONHOLD.format(self.id),request)
 
                 #send_approver_decline_email_notification(reason, request, self)
             except:
@@ -1148,7 +1242,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_REMOVE_ONHOLD.format(self.id),request)
                 # Log entry for organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_REMOVE_ONHOLD.format(self.id),request)
+                applicant_field=getattr(self, self.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_REMOVE_ONHOLD.format(self.id),request)
 
                 #send_approver_decline_email_notification(reason, request, self)
             except:
@@ -1178,7 +1273,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_WITH_QA_OFFICER.format(self.id),request)
                 # Log entry for organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_WITH_QA_OFFICER.format(self.id),request)
+                applicant_field=getattr(self, self.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_WITH_QA_OFFICER.format(self.id),request)
 
                 #send_approver_decline_email_notification(reason, request, self)
                 recipients = self.qa_officers()
@@ -1210,7 +1306,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_QA_OFFICER_COMPLETED.format(self.id),request)
                 # Log entry for organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_QA_OFFICER_COMPLETED.format(self.id),request)
+                applicant_field=getattr(self, self.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_QA_OFFICER_COMPLETED.format(self.id),request)
 
                 #send_approver_decline_email_notification(reason, request, self)
                 recipients = self.qa_officers()
@@ -1240,7 +1337,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_PROPOSED_APPROVAL.format(self.id),request)
                 # Log entry for organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_PROPOSED_APPROVAL.format(self.id),request)
+                applicant_field=getattr(self, self.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_PROPOSED_APPROVAL.format(self.id),request)
 
                 send_approver_approve_email_notification(request, self)
             except:
@@ -1269,7 +1367,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_ISSUE_APPROVAL_.format(self.id),request)
                 # Log entry for organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_ISSUE_APPROVAL_.format(self.id),request)
+                applicant_field=getattr(self, self.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_ISSUE_APPROVAL_.format(self.id),request)
 
                 if self.proposal_type == 'renewal':
                     pass
@@ -1304,7 +1403,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                     raise exceptions.ProposalNotAuthorized()
                 if self.processing_status != 'with_approver':
                     raise ValidationError('You cannot issue the approval if it is not with an approver')
-                if not self.applicant.organisation.postal_address:
+                #if not self.applicant.organisation.postal_address:
+                if not self.applicant_address:
                     raise ValidationError('The applicant needs to have set their postal address before approving this proposal.')
 
                 self.proposed_issuance_approval = {
@@ -1319,7 +1419,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 # Log proposal action
                 self.log_user_action(ProposalUserAction.ACTION_ISSUE_APPROVAL_.format(self.id),request)
                 # Log entry for organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_ISSUE_APPROVAL_.format(self.id),request)
+                applicant_field=getattr(self, self.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_ISSUE_APPROVAL_.format(self.id),request)
 
                 if self.processing_status == 'approved':
                     # TODO if it is an ammendment proposal then check appropriately
@@ -1338,7 +1439,10 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                     'issue_date' : timezone.now(),
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
-                                    'applicant' : self.applicant,
+                                    #'applicant' : self.applicant,
+                                    'submitter': self.submitter,
+                                    'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                    'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
                                     'lodgement_number': previous_approval.lodgement_number
                                     #'extracted_fields' = JSONField(blank=True, null=True)
                                 }
@@ -1360,7 +1464,10 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                     'issue_date' : timezone.now(),
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
-                                    'applicant' : self.applicant,
+                                    #'applicant' : self.applicant,
+                                    'submitter': self.submitter,
+                                    'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                    'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
                                     'lodgement_number': previous_approval.lodgement_number
                                     #'extracted_fields' = JSONField(blank=True, null=True)
                                 }
@@ -1380,6 +1487,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                 'issue_date' : timezone.now(),
                                 'expiry_date' : details.get('expiry_date'),
                                 'start_date' : details.get('start_date'),
+                                'submitter': self.submitter,
                                 'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
                                 'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
                                 #'extracted_fields' = JSONField(blank=True, null=True)
@@ -1413,7 +1521,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         # Log proposal action
                         self.log_user_action(ProposalUserAction.ACTION_UPDATE_APPROVAL_.format(self.id),request)
                         # Log entry for organisation
-                        self.applicant.log_user_action(ProposalUserAction.ACTION_UPDATE_APPROVAL_.format(self.id),request)
+                        applicant_field=getattr(self, self.applicant_field)
+                        applicant_field.log_user_action(ProposalUserAction.ACTION_UPDATE_APPROVAL_.format(self.id),request)
                     self.approval = approval
                 #send Proposal approval email with attachment
                 send_proposal_approval_email_notification(self,request)
@@ -1553,7 +1662,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_RENEW_PROPOSAL.format(self.id),request)
                 # Create a log entry for the organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_RENEW_PROPOSAL.format(self.id),request)
+                applicant_field=getattr(self, self.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_RENEW_PROPOSAL.format(self.id),request)
                 #Log entry for approval
                 from commercialoperator.components.approvals.models import ApprovalUserAction
                 self.approval.log_user_action(ApprovalUserAction.ACTION_RENEW_APPROVAL.format(self.approval.id),request)
@@ -1596,7 +1706,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_AMEND_PROPOSAL.format(self.id),request)
                 # Create a log entry for the organisation
-                self.applicant.log_user_action(ProposalUserAction.ACTION_AMEND_PROPOSAL.format(self.id),request)
+                applicant_field=getattr(self, self.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_AMEND_PROPOSAL.format(self.id),request)
                 #Log entry for approval
                 from commercialoperator.components.approvals.models import ApprovalUserAction
                 self.approval.log_user_action(ApprovalUserAction.ACTION_AMEND_APPROVAL.format(self.approval.id),request)
@@ -1893,7 +2004,7 @@ class AmendmentReason(models.Model):
 
     def __str__(self):
         return self.reason
-                                                                      
+
 
 class AmendmentRequest(ProposalRequest):
     STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
@@ -1936,7 +2047,8 @@ class AmendmentRequest(ProposalRequest):
                     # Create a log entry for the proposal
                     proposal.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
                     # Create a log entry for the organisation
-                    proposal.applicant.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+                    applicant_field=getattr(proposal, proposal.applicant_field)
+                    applicant_field.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
 
                     # send email
 
@@ -2261,7 +2373,8 @@ class Referral(RevisionedMixin):
             # TODO Log proposal action
             self.proposal.log_user_action(ProposalUserAction.RECALL_REFERRAL.format(self.id,self.proposal.id),request)
             # TODO log organisation action
-            self.proposal.applicant.log_user_action(ProposalUserAction.RECALL_REFERRAL.format(self.id,self.proposal.id),request)
+            applicant_field=getattr(self.proposal, self.proposal.applicant_field)
+            applicant_field.log_user_action(ProposalUserAction.RECALL_REFERRAL.format(self.id,self.proposal.id),request)
 
     def remind(self,request):
         with transaction.atomic():
@@ -2271,7 +2384,8 @@ class Referral(RevisionedMixin):
             #self.proposal.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
             self.proposal.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
             # Create a log entry for the organisation
-            self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
+            applicant_field=getattr(self.proposal, self.proposal.applicant_field)
+            applicant_field.log_user_action(ProposalUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
             # send email
             recipients = self.referral_group.members_list
             send_referral_email_notification(self,recipients,request,reminder=True)
@@ -2290,7 +2404,8 @@ class Referral(RevisionedMixin):
             self.proposal.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
             # Create a log entry for the organisation
             #self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
-            self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
+            applicant_field=getattr(self.proposal, self.proposal.applicant_field)
+            applicant_field.log_user_action(ProposalUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
             # send email
             recipients = self.referral_group.members_list
             send_referral_email_notification(self,recipients,request)
@@ -2315,7 +2430,8 @@ class Referral(RevisionedMixin):
                 self.proposal.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(request.user.get_full_name(), self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
                 # TODO log organisation action
                 #self.proposal.applicant.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(self.id,self.proposal.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
-                self.proposal.applicant.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(request.user.get_full_name(), self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
+                applicant_field=getattr(self.proposal, self.proposal.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.CONCLUDE_REFERRAL.format(request.user.get_full_name(), self.id,self.proposal.id,'{}'.format(self.referral_group.name)),request)
                 send_referral_complete_email_notification(self,request)
             except:
                 raise
@@ -2346,7 +2462,8 @@ class Referral(RevisionedMixin):
                 self.save(version_comment=comment) # to allow revision to be added to reversion history
                 self.proposal.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
                 # Create a log entry for the organisation
-                self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
+                applicant_field=getattr(self.proposal, self.proposal.applicant_field)
+                applicant_field.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
                 return self
             except:
                 raise
@@ -2397,7 +2514,8 @@ class Referral(RevisionedMixin):
                     # Create a log entry for the proposal
                     self.proposal.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.proposal.id,'{}({})'.format(user.get_full_name(),user.email)),request)
                     # Create a log entry for the organisation
-                    self.proposal.applicant.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.proposal.id,'{}({})'.format(user.get_full_name(),user.email)),request)
+                    applicant_field=getattr(self.proposal, self.proposal.applicant_field)
+                    applicant_field.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.proposal.id,'{}({})'.format(user.get_full_name(),user.email)),request)
                     # send email
                     recipients = self.email_group.members_list
                     send_referral_email_notification(referral,recipients,request)
@@ -2420,9 +2538,13 @@ class Referral(RevisionedMixin):
     def title(self):
         return self.proposal.title
 
+    # @property
+    # def applicant(self):
+    #     return self.proposal.applicant.name
+
     @property
     def applicant(self):
-        return self.proposal.applicant.name
+        return self.proposal.applicant
 
     @property
     def can_be_processed(self):
@@ -2505,11 +2627,11 @@ class ProposalAssessment(RevisionedMixin):
     @property
     def checklist(self):
         return self.answers.all()
-    
+
 
 
 class ProposalAssessmentAnswer(RevisionedMixin):
-    question=models.ForeignKey(ChecklistQuestion)
+    question=models.ForeignKey(ChecklistQuestion, related_name='answers')
     answer = models.NullBooleanField()
     assessment=models.ForeignKey(ProposalAssessment, related_name='answers', null=True, blank=True)
 
@@ -2518,8 +2640,8 @@ class ProposalAssessmentAnswer(RevisionedMixin):
 
     class Meta:
         app_label = 'commercialoperator'
-    
-    
+
+
 
 
 class QAOfficerReferral(RevisionedMixin):
@@ -2870,13 +2992,6 @@ def search_reference(reference_number):
     else:
         raise ValidationError('Record with provided reference number does not exist')
 
-
-
-
-
-
-
-
 from ckeditor.fields import RichTextField
 class HelpPage(models.Model):
     HELP_TEXT_EXTERNAL = 1
@@ -2897,54 +3012,12 @@ class HelpPage(models.Model):
         unique_together = ('application_type', 'help_type', 'version')
 
 
-#class Author(models.Model):
-#    name = models.CharField(max_length=256)
-#
-#    def __str__(self):
-#        return self.name
-#
-#    class Meta:
-#        app_label = 'commercialoperator'
-#
-#class Publisher(models.Model):
-#    name = models.CharField(max_length=256)
-#    author = models.ForeignKey(Author, related_name='publishers')
-#
-#    def __str__(self):
-#        return self.name
-#
-#    class Meta:
-#        app_label = 'commercialoperator'
-
-#import reversion
-#reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals', 'approvals','parks',])
-#reversion.register(ProposalType)
-#reversion.register(ProposalRequirement)            # related_name=requirements
-#reversion.register(ProposalStandardRequirement)    # related_name=proposal_requirements
-#reversion.register(ProposalDocument)               # related_name=documents
-#reversion.register(ProposalLogEntry)
-#reversion.register(ProposalUserAction)
-#reversion.register(ComplianceRequest)
-#reversion.register(AmendmentRequest)
-#reversion.register(Assessment)
-#reversion.register(Referral)
-#reversion.register(HelpPage)
-#reversion.register(ApplicationType)
-#reversion.register(ReferralRecipientGroup)
-#reversion.register(QAOfficerGroup)
-#reversion.register(ProposalPark, follow=['activities',])
-#reversion.register(ProposalParkActivity)
-
-#reversion.register(Author, follow=['publishers',])
-#reversion.register(Publisher)
-
-park = models.ForeignKey('Park', related_name='park_entries')
 
 import reversion
-reversion.register(Referral, follow=['referral_documents',])
+reversion.register(Referral, follow=['referral_documents', 'assessment'])
 reversion.register(ReferralDocument, follow=['referral_document'])
 
-reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_logs','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails', 'proposalonhold', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals', 'park_entries'])
+reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_logs','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails', 'proposalonhold', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals', 'park_entries', 'assessment', 'bookings'])
 reversion.register(ProposalDocument, follow=['onhold_documents'])
 reversion.register(OnHoldDocument)
 reversion.register(ProposalRequest)
@@ -2985,11 +3058,14 @@ reversion.register(ProposalDeclinedDetails)
 reversion.register(ProposalOnHold)
 reversion.register(ProposalStandardRequirement, follow=['proposalrequirement_set'])
 reversion.register(ProposalRequirement, follow=['compliance_requirement'])
-reversion.register(ReferralRecipientGroup, follow=['commercialoperator_referral_groups'])
+reversion.register(ReferralRecipientGroup, follow=['commercialoperator_referral_groups', 'referral_assessment'])
 reversion.register(QAOfficerGroup, follow=['qaofficer_groups'])
 reversion.register(QAOfficerReferral)
 reversion.register(QAOfficerDocument, follow=['qaofficer_referral_document'])
 reversion.register(ProposalAccreditation)
 reversion.register(HelpPage)
+reversion.register(ChecklistQuestion, follow=['answers'])
+reversion.register(ProposalAssessment, follow=['answers'])
+reversion.register(ProposalAssessmentAnswer)
 
 

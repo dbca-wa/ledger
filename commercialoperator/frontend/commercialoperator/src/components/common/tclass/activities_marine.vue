@@ -439,6 +439,7 @@ from '@/utils/hooks'
         },
         mounted: function(){
             let vm = this;
+            vm.proposal.marine_parks_activities=[];
             Vue.http.get('/api/marine_activities.json').then((res) => {
                       vm.marine_activities=res.body;                 
             },
