@@ -1,5 +1,42 @@
 <template lang="html">
     <div class="">
+        <div id="map-filter">
+            <div>
+                <label class="">Call/Email Status</label>
+                <select class="form-control" v-model="filterStatus">
+                    <option v-for="option in status_choices" :value="option.id" v-bind:key="option.id">
+                        {{ option.display }}
+                    </option>
+                </select>
+            </div>
+            <div>
+                <label class="">Call/Email Classification</label>
+                <select class="form-control" v-model="filterClassification">
+                    <option v-for="option in classification_types" :value="option.id" v-bind:key="option.id">
+                        {{ option.name }} 
+                    </option>
+                </select>
+            </div>
+            <div>
+                <label class="">Lodged From</label>
+                <div class="input-group date" ref="lodgementDateFromPicker">
+                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedFrom" />
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
+            </div>
+            <div>
+                <label class="">Lodged To</label>
+                <div class="input-group date" ref="lodgementDateToPicker">
+                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedTo" />
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
         <div id="map-wrapper">
             <div id="search-box">
                 <input id="search-input" />
@@ -15,13 +52,16 @@
 
 <script>
 import L from 'leaflet';
-import { api_endpoints, helpers } from '@/utils/hooks'
 import 'leaflet.markercluster';  /* This should be imported after leaflet */
+import 'leaflet.locatecontrol';
 import Awesomplete from 'awesomplete';
+import { api_endpoints, helpers, cache_helper } from '@/utils/hooks'
+import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import 'leaflet.locatecontrol/dist/L.Control.Locate.min.css'
 import 'bootstrap/dist/css/bootstrap.css';
 import 'awesomplete/awesomplete.css';
 
@@ -135,21 +175,117 @@ L.Icon.Default.mergeOptions({
 
 module.exports = {
     data: function(){
+        let vm = this;
+        vm.layers = [];
+        vm.mcg = L.markerClusterGroup();
+        vm.datetime_pattern = /^\d{2}\/\d{2}\/\d{4}$/gi;
+        vm.ajax_for_location = null;
+
         return {
             map: null,
-            tileLayer: null,
-            tileLayerSat: null,
-            layers: [],
+            tileLayer: null, // Base layer (Open street map)
+            tileLayerSat: null, // Base layer (satelllite)
             popup: null,
             opt_url : helpers.add_endpoint_json(api_endpoints.call_email, "optimised"),
+
+            /*
+             * Filers:
+             * value of the "value" attribute of the option is stored. 
+             * The value of this is used queryset.filter() in the backend.
+             */
+            filterStatus: 'all',
+            filterClassification: 'all',
+            filterLodgedFrom: '',
+            filterLodgedTo: '',
+
+            classification_types: [],
+            status_choices: [],
         }
     },
+    created: async function() {
+        let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
+        Object.assign(this.classification_types, returned_classification_types);
+        this.classification_types.splice(0, 0, {id: 'all', name: 'All'});
+
+        let returned_status_choices = await cache_helper.getSetCacheList('CallEmail_StatusChoices', '/api/call_email/status_choices');
+        Object.assign(this.status_choices, returned_status_choices);
+        this.status_choices.splice(0, 0, {id: 'all', display: 'All'});
+    },
     mounted(){
-        this.initMap();
-        this.addMarkers();
-        this.initAwesomplete();
+        let vm = this;
+        vm.initMap();
+        vm.loadLocations();
+        vm.initAwesomplete();
+        vm.$nextTick(() => {
+            vm.addEventListeners();
+        });
+    },
+    watch: {
+        filterStatus: function () {
+            this.loadLocations();
+        },
+        filterClassification: function() {
+            this.loadLocations();
+        },
+        filterLodgedFrom: function(){
+            if (!this.filterLodgedFrom){
+                /* When empty string */
+                this.loadLocations();
+            } else {
+                let result = this.datetime_pattern.exec(this.filterLodgedFrom);
+                if (result){
+                    /* When date is set */
+                    this.loadLocations();
+                }
+            }
+        },
+        filterLodgedTo: function(){
+            if (!this.filterLodgedTo){
+                /* When empty string */
+                this.loadLocations();
+            } else {
+                let result = this.datetime_pattern.exec(this.filterLodgedTo);
+                if (result){
+                    /* When date is set */
+                    this.loadLocations();
+                }
+            }
+        }
+    },
+    computed: {
+        ...mapGetters('callemailStore', {
+        }),
     },
     methods: {
+        ...mapActions('callemailStore', {
+        }),
+        addEventListeners: function () {
+            let vm = this;
+            let el_fr = $(vm.$refs.lodgementDateFromPicker);
+            let el_to = $(vm.$refs.lodgementDateToPicker);
+
+            // Date "From" field
+            el_fr.datetimepicker({ format: 'DD/MM/YYYY', maxDate: 'now', showClear: true });
+            el_fr.on('dp.change', function (e) {
+                if (el_fr.data('DateTimePicker').date()) {
+                    vm.filterLodgedFrom = e.date.format('DD/MM/YYYY');
+                    el_to.data('DateTimePicker').minDate(e.date);
+                } else if (el_fr.data('date') === "") {
+                    vm.filterLodgedFrom = "";
+                }
+            });
+
+            // Date "To" field
+            el_to.datetimepicker({ format: 'DD/MM/YYYY', maxDate: 'now', showClear: true });
+            el_to.on('dp.change', function (e) {
+                if (el_to.data('DateTimePicker').date()) {
+                    vm.filterLodgedTo = e.date.format('DD/MM/YYYY');
+                    el_fr.data('DateTimePicker').maxDate(e.date);
+                } else if (el_to.data('date') === "") {
+                    vm.filterLodgedTo = "";
+                }
+            });
+        },
         initAwesomplete: function(){
             var self = this;
             var element_search = document.getElementById('search-input');
@@ -247,64 +383,104 @@ module.exports = {
             this.popup = L.popup();
             this.map.on('click', this.onClick);
             this.setBaseLayer('osm');
+            this.addOtherLayers();
+            this.map.addLayer(this.mcg);
+            L.control.locate().addTo(this.map);
         },
-        addMarkers(){
-            let self = this;
-            var markers = L.markerClusterGroup();
+        addOtherLayers(){
+            var overlayMaps = {};
 
-            console.log(this.opt_url);
-
-            $.ajax({
-                url: this.opt_url,
-                dataType: 'json',
-                success: function(data, status, xhr){
-                    if (data && data.length > 0){
-                        for (var i = 0; i < data.length; i++){
-                            if(data[i].location){
-                                let call_email = data[i];
-                                let coords = call_email.location.geometry.coordinates;
-
-                                /* Select a marker file, according to the classification */
-                                let filename = 'marker-gray-locked.svg';
-                                if (call_email.classification){
-                                    if (call_email.classification.id == 1){
-                                        filename = 'marker-yellow-locked.svg';
-                                    } else if (call_email.classification.id == 2){
-                                        filename = 'marker-green-locked.svg';
-                                    } else if (call_email.classification.id == 3){
-                                        filename = 'marker-red-locked.svg';
-                                    }
-                                }
-
-                                /* create marker */
-                                let myIcon = L.icon({
-                                    iconUrl: require('../../../assets/' + filename),
-                                    shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-                                    shadowSize: [41, 41],
-                                    shadowAnchor: [12, 41],
-                                    iconSize: [32, 32],
-                                    iconAnchor: [16, 32],
-                                    popupAnchor: [0, -20]
-                                });
-                                let myMarker = L.marker([coords[1], coords[0]], {icon: myIcon});
-                                let myPopup = L.popup();
-                                myMarker.bindPopup(myPopup);
-                                markers.addLayer(myMarker);
-
-                                /* dynamically construct content of the popup */
-                                myMarker.on('click', (ev)=>{
-                                    let popup = ev.target.getPopup();
-                                    self.$http.get('/api/call_email/' + call_email.id).then(response => {
-                                        let call_email = response.body;
-                                        popup.setContent(self.construct_content(call_email, coords));
-                                    });
-                                })
-                            }
+            this.$http.get('/api/map_layers/').then(response => {
+                let layers = response.body.results;
+                for (var i = 0; i < layers.length; i++){
+                    let l = L.tileLayer.wmts(
+                        'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
+                        {
+                            layer: layers[i].layer_name,
+                            tilematrixSet: 'mercator',
+                            format: 'image/png',
                         }
-                        self.map.addLayer(markers);
-                    }
+                    );
+                    overlayMaps[layers[i].display_name] = l;
+                }
+                L.control.layers(null, overlayMaps, {position: 'topleft'}).addTo(this.map);
+            });
+        },
+        loadLocations(){
+            let vm = this;
+
+            /* Cancel all the previous requests */
+            if (vm.ajax_for_location != null){
+                vm.ajax_for_location.abort();
+                vm.ajax_for_location = null;
+            }
+            let myData = {
+                "status": vm.filterStatus,
+                "classification": vm.filterClassification,
+                "lodged_from" : vm.filterLodgedFrom,
+                "lodged_to" : vm.filterLodgedTo,
+            };
+
+            vm.ajax_for_location = $.ajax({
+                type: 'GET',
+                data: myData,
+                url: vm.opt_url,
+                success: function(data){
+                    vm.addMarkers(data);
+                },
+                error: function (e){
+                    console.log(e);
                 }
             });
+        },
+        addMarkers(call_emails){
+            let self = this;
+            self.mcg.clearLayers();
+
+            if (call_emails && call_emails.length > 0){
+                for (var i = 0; i < call_emails.length; i++){
+                    if(call_emails[i].location){
+                        let call_email = call_emails[i];
+                        let coords = call_email.location.geometry.coordinates;
+
+                        /* Select a marker file, according to the classification */
+                        let filename = 'marker-gray-locked.svg';
+                        if (call_email.classification){
+                            if (call_email.classification.id == 1){
+                                filename = 'marker-yellow-locked.svg';
+                            } else if (call_email.classification.id == 2){
+                                filename = 'marker-green-locked.svg';
+                            } else if (call_email.classification.id == 3){
+                                filename = 'marker-red-locked.svg';
+                            }
+                        }
+
+                        /* create marker */
+                        let myIcon = L.icon({
+                            iconUrl: require('../../../assets/' + filename),
+                            shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+                            shadowSize: [41, 41],
+                            shadowAnchor: [12, 41],
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 32],
+                            popupAnchor: [0, -20]
+                        });
+                        let myMarker = L.marker([coords[1], coords[0]], {icon: myIcon});
+                        let myPopup = L.popup();
+                        myMarker.bindPopup(myPopup);
+                        self.mcg.addLayer(myMarker);
+
+                        /* dynamically construct content of the popup */
+                        myMarker.on('click', (ev)=>{
+                            let popup = ev.target.getPopup();
+                            self.$http.get('/api/call_email/' + call_email.id).then(response => {
+                                let call_email = response.body;
+                                popup.setContent(self.construct_content(call_email, coords));
+                            });
+                        })
+                    }
+                }
+            }
         },
         construct_content: function (call_email, coords){
             let classification_str = '---';
@@ -317,7 +493,8 @@ module.exports = {
                 report_type_str = call_email.report_type.report_type;
             }
 
-            let content = '<div class="popup-title popup-title-top">Classification</div>'
+            let content = '<div class="popup-title-main">' + call_email.number + '</div>';
+            content    += '<div class="popup-title">Classification</div>'
                         + '<div class="popup-coords">'
                         + classification_str
                         + '</div>'
@@ -345,7 +522,7 @@ module.exports = {
             }
 
             content += '<div class="popup-link">'
-                + '<a href="call_email/' + call_email.id + '">View</a>'
+                + '<a href="/internal/call_email/' + call_email.id + '">View</a>'
                 + '</div>';
 
             return content;
@@ -381,7 +558,7 @@ module.exports = {
     position: absolute;
     top: 10px;
     right: 10px;
-    z-index: 1000;
+    z-index: 400;
     -moz-box-shadow: 5px 5px 5px #555;
     -webkit-box-shadow: 5px 5px 5px #555;
     box-shadow: 5px 5px 5px #555;
@@ -415,11 +592,14 @@ module.exports = {
     font-weight: bold;
     color: white;
 }
-.popup-title-top {
-    border-radius: 12px 12px 0 0;
+.popup-title-main {
+    color: gray;
+    font-size: 1.3em;
+    font-weight: bold;
+    padding: 5px 5px 5px 10px;
 }
 .popup-coords {
-    padding: 10px;
+    padding: 0 0 10px 0;
 }
 .popup-address {
     padding: 10px;
@@ -434,5 +614,10 @@ module.exports = {
 }
 .leaflet-popup-content-wrapper {
     padding: 0px !important;
+}
+#map-filter{
+    display: flex;
+    justify-content: space-evenly;
+    padding: 10px;
 }
 </style>
