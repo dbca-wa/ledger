@@ -84,7 +84,7 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
         )
 
 
-class ExternalDTApplicationSelectedActivitySerializer(serializers.ModelSerializer):
+class DTExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     activity_name_str = serializers.SerializerMethodField(read_only=True)
     issue_date = serializers.SerializerMethodField(read_only=True)
     start_date = serializers.SerializerMethodField(read_only=True)
