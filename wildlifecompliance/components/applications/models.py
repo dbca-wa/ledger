@@ -540,6 +540,13 @@ class Application(RevisionedMixin):
         )
 
     @property
+    def licence_category_id(self):
+        try:
+            return self.licence_purposes.first().licence_category.id
+        except AttributeError:
+            return ''
+
+    @property
     def licence_category(self):
         try:
             return self.licence_purposes.first().licence_category.display_name
@@ -1886,14 +1893,12 @@ class ApplicationSelectedActivity(models.Model):
         'wildlifecompliance.LicenceActivity', null=True)
     proposed_start_date = models.DateField(null=True, blank=True)
     proposed_end_date = models.DateField(null=True, blank=True)
-    is_activity_renewable = models.BooleanField(default=False)
     additional_info = models.TextField(blank=True, null=True)
     conditions = models.TextField(blank=True, null=True)
     original_issue_date = models.DateTimeField(blank=True, null=True)
     issue_date = models.DateTimeField(blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     expiry_date = models.DateField(blank=True, null=True)
-    renewal_sent = models.BooleanField(default=False)
     is_inspection_required = models.BooleanField(default=False)
 
     @staticmethod

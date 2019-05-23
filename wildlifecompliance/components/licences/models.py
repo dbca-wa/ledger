@@ -251,7 +251,7 @@ class LicenceUserAction(UserAction):
     licence = models.ForeignKey(WildlifeLicence, related_name='action_logs')
 
 
-@receiver(pre_delete, sender=WildlifeLicence)
-def delete_documents(sender, instance, *args, **kwargs):
-    for document in instance.documents.all():
-        document.delete()
+# @receiver(pre_delete, sender=WildlifeLicence)
+# def delete_documents(sender, instance, *args, **kwargs):
+#     for document in instance.documents.all():
+#         document.delete()
