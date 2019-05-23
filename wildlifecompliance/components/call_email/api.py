@@ -255,7 +255,13 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 request_data = request.data
                 # Create location then include in request to create new Call/Email
                 returned_location = None
-                
+                if not request.user.has_perm('wildlifecompliance.licensing_officer'):
+                    raise serializers.ValidationError(
+                    'You are not authorised to assign officers to applications')
+                else:
+                    print(request.user.has_perm('wildlifecompliance.licensing_officer'))
+                    print('You are authorised to assign officers to applications')
+
                 if (
                     request_data.get('location', {}).get('geometry', {}).get('coordinates', {}) or
                     request_data.get('location', {}).get('properties', {}).get('postcode', {}) or

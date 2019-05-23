@@ -34,6 +34,15 @@ PERMISSION_GROUPS = [
         'per_activity': False,
         'permissions': ['payment_officer']
     },
+    
+]
+
+COMPLIANCE_PERMISSION_GROUPS = [
+    {
+        'name': 'Triage Officers',
+        # 'per_activity': False,
+        'permissions': ['triage_officer']
+    },
 ]
 
 CUSTOM_GROUP_PERMISSIONS = {
@@ -71,5 +80,14 @@ CUSTOM_GROUP_PERMISSIONS = {
         'name': 'Payment Officer',
         'app_label': 'wildlifecompliance',
         'model': 'activitypermissiongroup',
+    },
+    
+}
+
+COMPLIANCE_GROUP_PERMISSIONS = {
+    'triage_officer': {
+        'name': 'Triage Officer',
+        'app_label': 'wildlifecompliance',
+        'model': 'compliancepermissiongroup',
     },
 }
