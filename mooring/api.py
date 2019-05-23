@@ -2275,7 +2275,13 @@ def create_admissions_booking(request, *args, **kwargs):
     # if request.user.is_staff:
     #     result = utils.admissionsCheckout(request, admissionsBooking, lines, invoice_text=invoice, internal=True)
     # else:
-    result = utils.admissionsCheckout(request, admissionsBooking, lines, invoice_text=invoice)
+    try:
+        result = utils.admissionsCheckout(request, admissionsBooking, lines, invoice_text=invoice)
+    except Exception as e:
+        return HttpResponse(geojson.dumps({
+           'status': 'failure',
+           'error':  ['',str(e)]
+        }), content_type='application/json')
     if(result):
         return result
     else:
