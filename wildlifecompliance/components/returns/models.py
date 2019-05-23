@@ -320,6 +320,18 @@ class Return(models.Model):
         """
         pass
 
+    def create_return_data(self, table_name, table_rows):
+        if table_rows:
+            return_table = ReturnTable.objects.get_or_create(
+                name=table_name, ret=self._return)[0]
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in table_rows]
+            ReturnRow.objects.bulk_create(return_rows)
+
     def log_user_action(self, action, request):
         return ReturnUserAction.log_action(self, action, request.user)
 
@@ -361,7 +373,8 @@ class ReturnData(object):
             headers = []
             for f in schema.fields:
                 header = {
-                    "label": f.name,
+                    "label": f.data['label'],
+                    "name": f.data['name'],
                     "required": f.required,
                     "type": f.type.name
                 }
@@ -412,47 +425,6 @@ class ReturnData(object):
                 else:
                     raise FieldError('Enter data in correct format.')
 
-    def _get_formatted_table(self):
-        tables = []
-        for resource in self._return.return_type.resources:
-            resource_name = resource.get('name')
-            schema = Schema(resource.get('schema'))
-            headers = []
-            for f in schema.fields:
-                header = {
-                    "label": f.name,
-                    "required": f.required,
-                    "type": f.type.name
-                }
-                if f.is_species:
-                    header["species"] = f.species_type
-                headers.append(header)
-            table = {
-                'name': resource_name,
-                'label': resource.get('title', resource.get('name')),
-                'type': 'grid',
-                'headers': headers,
-                'data': None
-            }
-            try:
-                return_table = self._return.returntable_set.get(name=resource_name)
-                rows = [
-                    return_row.data for return_row in return_table.returnrow_set.all()]
-                validated_rows = schema.rows_validator(rows)
-                table['data'] = validated_rows
-            except ReturnTable.DoesNotExist:
-                result = {}
-                results = []
-                for field_name in schema.fields:
-                    result[field_name.name] = {
-                        'value': None
-                    }
-                results.append(result)
-                table['data'] = results
-        tables.append(table)
-
-        return tables
-
     def _is_post_data_valid(self, tables_info, post_data):
         """
         Validates table data against the schema,
@@ -476,8 +448,10 @@ class ReturnData(object):
         :return:
         """
         table_namespace = table_name + '::'
+        # exclude fields defaulted from renderer. ie comment-field, deficiency-field (Application specific)
+        excluded_field = ('-field')
         by_column = dict([(key.replace(table_namespace, ''), post_data.getlist(
-            key)) for key in post_data.keys() if key.startswith(table_namespace)])
+            key)) for key in post_data.keys() if key.startswith(table_namespace) and not key.endswith(excluded_field)])
         # by_column is of format {'col_header':[row1_val, row2_val,...],...}
         num_rows = len(
             list(
@@ -497,6 +471,48 @@ class ReturnData(object):
             if not is_empty:
                 rows.append(row_data)
         return rows
+
+    def build_table(self, rows):
+        """
+        Method to create and validate rows of data to the table schema without persisting.
+        :param rows: data to be formatted.
+        :return: Array of tables.
+        """
+        tables = []
+        for resource in self._return.return_type.resources:
+            resource_name = resource.get('name')
+            schema = Schema(resource.get('schema'))
+            table = {
+                'name': resource_name,
+                'label': resource.get('title', resource.get('name')),
+                'type': None,
+                'headers': None,
+                'data': None
+            }
+            try:
+                validated_rows = schema.rows_validator(rows)
+                table['data'] = validated_rows
+            except AttributeError:
+                result = {}
+                results = []
+                for field_name in schema.fields:
+                    result[field_name.name] = {
+                            'value': None
+                    }
+                results.append(result)
+                table['data'] = results
+        tables.append(table)
+
+        return tables
+
+    def _create_return_data(self, table_name, table_rows):
+        """
+        Method to persist Return record.
+        :return:
+        """
+        self._return.create_return_data(table_name, table_rows)
+
+        return True
 
     def _create_return_data_from_post_data(self, tables_info, post_data):
         """

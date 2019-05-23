@@ -325,7 +325,7 @@ class Schema:
     def field_names(self):
         return [f.name for f in self.fields]
 
-    def get_field_by_mame(self, name, icase=False):
+    def get_field_by_mame(self, name, icase=True):
         if icase and name:
             name = name.lower()
         for f in self.fields:
@@ -453,8 +453,8 @@ class Schema:
 
     def is_all_valid(self, rows):
         for row in rows:
-            print("======Printing from is_all_valid====")
-            print(row)
+            #print("======Printing from is_all_valid====")
+            #print(row)
             if not self.is_row_valid(row):
                 return False
         return True
