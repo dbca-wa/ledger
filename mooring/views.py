@@ -413,6 +413,9 @@ class CancelAdmissionsBookingView(TemplateView):
         basket_total = Decimal('0.00')
         booking = None
         invoice = None
+        refund = None
+        failed_refund = False
+ 
         if request.user.is_staff or request.user.is_superuser or AdmissionsBooking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
              booking = AdmissionsBooking.objects.get(pk=booking_id)
              if booking.booking_type == 4:
@@ -427,7 +430,6 @@ class CancelAdmissionsBookingView(TemplateView):
 
 
         # START PLACE IN UTILS
-        from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
 
         lines = []
         for cf in booking_cancellation_fees:
@@ -459,16 +461,17 @@ class CancelAdmissionsBookingView(TemplateView):
         book_inv, created = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=booking, invoice_reference=new_invoice.reference)
 
 
-         
+        b_total = Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total))) 
         info = {'amount': Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total))), 'details' : 'Refund via system'}
 #         info = {'amount': float('10.00'), 'details' : 'Refund via system'}
-        try: 
+        try:
             bpoint = BpointTransaction.objects.get(id=bpoint_id)
             refund = bpoint.refund(info,request.user)
             invoice = Invoice.objects.get(reference=bpoint.crn1)
             update_payments(invoice.reference)
             emails.send_refund_completed_email_customer_admissions(booking, context_processor)
         except: 
+            failed_refund = True
             emails.send_refund_failure_email_admissions(booking, context_processor)
             emails.send_refund_failure_email_customer_admissions(booking, context_processor)
             booking_invoice = AdmissionsBookingInvoice.objects.filter(admissions_booking=booking).order_by('id')
@@ -482,7 +485,12 @@ class CancelAdmissionsBookingView(TemplateView):
             bpoint_refund.save()
             update_payments(invoice.reference)
             update_payments(new_invoice.reference)
-   
+  
+        if failed_refund is True:
+            # Refund Failed Assign Refund amount to allocation pool.
+            lines = [{'ledger_description':'Refund assigned to unallocated pool',"quantity":1,"price_incl_tax":abs(info['amount']),"oracle_code":settings.UNALLOCATED_ORACLE_CODE, 'line_status': 1}]
+            utils.allocate_failedrefund_to_unallocated(request, booking, lines, invoice_text=None, internal=False,order_total=abs(info['amount']),user=booking.customer)
+ 
  
         invoice.voided = True
         invoice.save()

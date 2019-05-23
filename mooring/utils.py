@@ -18,11 +18,11 @@ from pytz import timezone as pytimezone
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 from ledger.payments.utils import oracle_parser_on_invoice,update_payments
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
-from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod, GlobalSettings, MooringAreaGroup, AdmissionsLocation, ChangeGroup, CancelGroup, BookingPeriod, BookingPeriodOption)
+from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod, GlobalSettings, MooringAreaGroup, AdmissionsLocation, ChangeGroup, CancelGroup, BookingPeriod, BookingPeriodOption, AdmissionsBookingInvoice)
 from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer, AdmissionsRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
 from oscar.apps.order.models import Order
-
+from ledger.payments.invoice import utils
 
 def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, num_mooring=0, vessel_size=0):
     """Create a new temporary booking in the system."""
@@ -1236,7 +1236,7 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
                     oracle_codes = AdmissionsOracleCode.objects.filter(mooring_group=adLine.location.mooring_group)
                     if oracle_codes.count() > 0:
                         oracle_code = oracle_codes[0].oracle_code
-                    invoice_lines.append({'ledger_description':'Admission fee on {} ({}) {}'.format(adLine.arrivalDate, group, overnightStay),"quantity":amount,"price_incl_tax":price, "oracle_code":oracle_code})
+                    invoice_lines.append({'ledger_description':'Admission fee on {} ({}) {}'.format(adLine.arrivalDate, group, overnightStay),"quantity":amount,"price_incl_tax":price, "oracle_code":oracle_code, 'line_status': 1})
                 
             else:
                 daily_rate = daily_rates[adLine.arrivalDate.strftime('%d/%m/%Y')]
@@ -1718,9 +1718,6 @@ def allocate_failedrefund_to_unallocated(request, booking, lines, invoice_text=N
         }
 
         basket, basket_hash = create_basket_session(request, basket_params)
-        print (basket)
-        print (basket_hash)
-        from ledger.payments.invoice import utils
         ci = utils.CreateInvoiceBasket()
         order  = ci.create_invoice_and_order(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=user, status='Submitted', invoice_text='Refund Allocation Pool', )
         #basket.status = 'Submitted'
@@ -1728,7 +1725,11 @@ def allocate_failedrefund_to_unallocated(request, booking, lines, invoice_text=N
         new_order = Order.objects.get(basket=basket)
         new_invoice = Invoice.objects.get(order_number=new_order.number)
         update_payments(new_invoice.reference)
-        book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference)
+        if booking.__class__.__name__ == 'AdmissionsBooking':
+            print ("AdmissionsBooking")
+            book_inv, created = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=booking, invoice_reference=new_invoice.reference)
+        else:
+            book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference)
 
         return order
 
