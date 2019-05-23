@@ -7,6 +7,10 @@ DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
 SUPERVISOR_STOP_CMD = env('SUPERVISOR_STOP_CMD')
 SYSTEM_MAINTENANCE_WARNING = env('SYSTEM_MAINTENANCE_WARNING', 24) # hours
 DISABLE_EMAIL = env('DISABLE_EMAIL', False)
+PS_PAYMENT_SYSTEM_ID = env('PS_PAYMENT_SYSTEM_ID', 'S557')
+
+if not VALID_SYSTEMS:
+    VALID_SYSTEMS = [PS_PAYMENT_SYSTEM_ID]
 
 INSTALLED_APPS += [
     'reversion_compare',
@@ -18,6 +22,7 @@ INSTALLED_APPS += [
     'commercialoperator.components.proposals',
     'commercialoperator.components.approvals',
     'commercialoperator.components.compliances',
+    'commercialoperator.components.bookings',
     'taggit',
     'rest_framework',
     'rest_framework_datatables',
@@ -119,4 +124,17 @@ CKEDITOR_CONFIGS = {
         'toolbar': 'Basic',
     },
 }
+
+# Additional logging for commercialoperator
+LOGGING['handlers']['payment_checkout'] = {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'cols_payment_checkout.log'),
+            'formatter': 'verbose',
+            'maxBytes': 5242880
+        }
+LOGGING['loggers']['payment_checkout'] = {
+            'handlers': ['payment_checkout'],
+            'level': 'INFO'
+        }
 

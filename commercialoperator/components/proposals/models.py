@@ -15,11 +15,12 @@ from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin
+from ledger.payments.models import Invoice
 #from ledger.accounts.models import EmailUser
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
 from commercialoperator.components.organisations.models import Organisation
-from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, ParkPrice, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument#, RevisionedMixin
+from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument#, RevisionedMixin
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from commercialoperator.ordered_model import OrderedModel
@@ -29,6 +30,7 @@ import subprocess
 from django.db.models import Q
 from reversion.models import Version
 from dirtyfields import DirtyFieldsMixin
+from decimal import Decimal as D
 
 import logging
 logger = logging.getLogger(__name__)
@@ -322,7 +324,7 @@ class ParkEntry(models.Model):
     def price_net(self):
         return (self.price_adult + self.price_child + self.price_senior)
 
- 
+
 class Proposal(DirtyFieldsMixin, RevisionedMixin):
 #class Proposal(DirtyFieldsMixin, models.Model):
     APPLICANT_TYPE_ORGANISATION = 'ORG'
@@ -502,6 +504,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     #other_details = models.OneToOneField(ProposalOtherDetails, blank=True, null=True)
     #online_training = models.OneToOneField(ProposalOnlineTraining, blank=True, null=True)
 
+    fee_invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
 
     class Meta:
         app_label = 'commercialoperator'
@@ -521,6 +524,10 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             new_lodgment_id = 'P{0:06d}'.format(self.pk)
             self.lodgement_number = new_lodgment_id
             self.save(version_comment='processing_status: {}'.format(self.processing_status))
+
+    @property
+    def fee_paid(self):
+        return True if self.fee_invoice_reference else False
 
     @property
     def reference(self):
@@ -914,7 +921,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         try:
                             chk_instance=ProposalAssessmentAnswer.objects.get(question=chk, assessment=assessor_assessment)
                         except ProposalAssessmentAnswer.DoesNotExist:
-                            chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=assessor_assessment)  
+                            chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=assessor_assessment)
 
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')
@@ -1009,7 +1016,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                 try:
                                     chk_instance=ProposalAssessmentAnswer.objects.get(question=chk, assessment=referral_assessment)
                                 except ProposalAssessmentAnswer.DoesNotExist:
-                                    chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=referral_assessment) 
+                                    chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=referral_assessment)
                     # Create a log entry for the proposal
                     #self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
                     self.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}'.format(referral_group.name)),request)
@@ -1435,7 +1442,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                     #'applicant' : self.applicant,
                                     'submitter': self.submitter,
                                     'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
-                                    'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,                                
+                                    'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
                                     'lodgement_number': previous_approval.lodgement_number
                                     #'extracted_fields' = JSONField(blank=True, null=True)
                                 }
@@ -1460,7 +1467,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                     #'applicant' : self.applicant,
                                     'submitter': self.submitter,
                                     'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
-                                    'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,                                
+                                    'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
                                     'lodgement_number': previous_approval.lodgement_number
                                     #'extracted_fields' = JSONField(blank=True, null=True)
                                 }
@@ -1997,7 +2004,7 @@ class AmendmentReason(models.Model):
 
     def __str__(self):
         return self.reason
-                                                                      
+
 
 class AmendmentRequest(ProposalRequest):
     STATUS_CHOICES = (('requested', 'Requested'), ('amended', 'Amended'))
@@ -2630,11 +2637,11 @@ class ProposalAssessment(RevisionedMixin):
     @property
     def checklist(self):
         return self.answers.all()
-    
+
 
 
 class ProposalAssessmentAnswer(RevisionedMixin):
-    question=models.ForeignKey(ChecklistQuestion)
+    question=models.ForeignKey(ChecklistQuestion, related_name='answers')
     answer = models.NullBooleanField()
     assessment=models.ForeignKey(ProposalAssessment, related_name='answers', null=True, blank=True)
 
@@ -2643,8 +2650,8 @@ class ProposalAssessmentAnswer(RevisionedMixin):
 
     class Meta:
         app_label = 'commercialoperator'
-    
-    
+
+
 
 
 class QAOfficerReferral(RevisionedMixin):
@@ -2995,13 +3002,6 @@ def search_reference(reference_number):
     else:
         raise ValidationError('Record with provided reference number does not exist')
 
-
-
-
-
-
-
-
 from ckeditor.fields import RichTextField
 class HelpPage(models.Model):
     HELP_TEXT_EXTERNAL = 1
@@ -3022,54 +3022,12 @@ class HelpPage(models.Model):
         unique_together = ('application_type', 'help_type', 'version')
 
 
-#class Author(models.Model):
-#    name = models.CharField(max_length=256)
-#
-#    def __str__(self):
-#        return self.name
-#
-#    class Meta:
-#        app_label = 'commercialoperator'
-#
-#class Publisher(models.Model):
-#    name = models.CharField(max_length=256)
-#    author = models.ForeignKey(Author, related_name='publishers')
-#
-#    def __str__(self):
-#        return self.name
-#
-#    class Meta:
-#        app_label = 'commercialoperator'
-
-#import reversion
-#reversion.register(Proposal, follow=['requirements', 'documents', 'compliances', 'referrals', 'approvals','parks',])
-#reversion.register(ProposalType)
-#reversion.register(ProposalRequirement)            # related_name=requirements
-#reversion.register(ProposalStandardRequirement)    # related_name=proposal_requirements
-#reversion.register(ProposalDocument)               # related_name=documents
-#reversion.register(ProposalLogEntry)
-#reversion.register(ProposalUserAction)
-#reversion.register(ComplianceRequest)
-#reversion.register(AmendmentRequest)
-#reversion.register(Assessment)
-#reversion.register(Referral)
-#reversion.register(HelpPage)
-#reversion.register(ApplicationType)
-#reversion.register(ReferralRecipientGroup)
-#reversion.register(QAOfficerGroup)
-#reversion.register(ProposalPark, follow=['activities',])
-#reversion.register(ProposalParkActivity)
-
-#reversion.register(Author, follow=['publishers',])
-#reversion.register(Publisher)
-
-park = models.ForeignKey('Park', related_name='park_entries')
 
 import reversion
-reversion.register(Referral, follow=['referral_documents','assessment'])
-reversion.register(ReferralDocument, follow=['referral_document', ])
+reversion.register(Referral, follow=['referral_documents', 'assessment'])
+reversion.register(ReferralDocument, follow=['referral_document'])
 
-reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_logs','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails', 'proposalonhold', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals', 'park_entries', 'assessment'])
+reversion.register(Proposal, follow=['documents', 'onhold_documents','required_documents','qaofficer_documents','comms_logs','other_details', 'parks', 'trails', 'vehicles', 'vessels', 'proposalrequest_set','proposaldeclineddetails', 'proposalonhold', 'requirements', 'referrals', 'qaofficer_referrals', 'compliances', 'referrals', 'approvals', 'park_entries', 'assessment', 'bookings'])
 reversion.register(ProposalDocument, follow=['onhold_documents'])
 reversion.register(OnHoldDocument)
 reversion.register(ProposalRequest)
@@ -3119,6 +3077,5 @@ reversion.register(HelpPage)
 reversion.register(ChecklistQuestion, follow=['answers'])
 reversion.register(ProposalAssessment, follow=['answers'])
 reversion.register(ProposalAssessmentAnswer)
-
 
 

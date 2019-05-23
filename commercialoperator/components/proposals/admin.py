@@ -7,7 +7,7 @@ from commercialoperator.components.main.models import (
     SystemMaintenance,
     ApplicationType,
     Park,
-    ParkPrice,
+    #ParkPrice,
     Trail,
     ActivityType,
     ActivityCategory,
@@ -106,12 +106,6 @@ class ChecklistQuestionAdmin(admin.ModelAdmin):
     list_display = ['text', 'correct_answer', 'list_type', 'obsolete',]
     ordering = ('list_type',)
 
-# @admin.register(ActivityMatrix)
-# class ActivityMatrixAdmin(admin.ModelAdmin):
-#     list_display = ['name', 'description', 'version']
-#     ordering = ('name', '-version')
-
-
 @admin.register(SystemMaintenance)
 class SystemMaintenanceAdmin(admin.ModelAdmin):
     list_display = ['name', 'description', 'start_date', 'end_date', 'duration']
@@ -123,28 +117,6 @@ class SystemMaintenanceAdmin(admin.ModelAdmin):
 class ApplicationTypeAdmin(admin.ModelAdmin):
     list_display = ['name', 'order', 'visible', 'max_renewals', 'max_renewal_period', 'application_fee']
     ordering = ('order',)
-
-@admin.register(ParkPrice)
-class ParkPriceAdmin(admin.ModelAdmin):
-    list_display = ['park', 'adult', 'child', 'senior']
-    #filter_horizontal = ('name',)
-    ordering = ('park__name',)
-
-    def get_park(self, obj):
-        return obj.park.name
-    get_park.short_description = 'Park'
-    get_park.admin_order_field = 'park__name'
-
-#@admin.register(ParkEntry)
-#class ParkEntryAdmin(admin.ModelAdmin):
-#    list_display = ['park', 'number_adults', 'number_children', 'number_seniors']
-#    #filter_horizontal = ('name',)
-#    ordering = ('park__name',)
-#
-#    def get_park(self, obj):
-#        return obj.park.name
-#    get_park.short_description = 'Park'
-#    get_park.admin_order_field = 'park__name'
 
 @admin.register(Park)
 class ParkAdmin(admin.ModelAdmin):
@@ -186,11 +158,6 @@ class RequiredDocumentAdmin(admin.ModelAdmin):
     #filter_horizontal = ('allowed_activities',)
     #ordering = ('name',)
 
-# @admin.register(ActivityType)
-# class ActivityTypeAdmin(admin.ModelAdmin):
-#     list_display = ['name', 'visible']
-#     ordering = ('name',)
-
 @admin.register(ActivityCategory)
 class ActivityCategory(admin.ModelAdmin):
     list_display = ['name', 'visible', 'activity_type']
@@ -215,15 +182,8 @@ class ReferralRecipientGroupAdmin(admin.ModelAdmin):
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "members":
-            #kwargs["queryset"] = EmailUser.objects.filter(email__icontains='@dbca.wa.gov.au')
             kwargs["queryset"] = EmailUser.objects.filter(is_staff=True)
         return super(ReferralRecipientGroupAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
-
-    #def has_add_permission(self, request):
-    #    return True if models.ReferralRecipientGroup.objects.count() == 0 else False
-
-    #def has_delete_permission(self, request, obj=None):
-    #    return False
 
 @admin.register(models.QAOfficerGroup)
 class QAOfficerGroupAdmin(admin.ModelAdmin):
@@ -242,10 +202,6 @@ class QAOfficerGroupAdmin(admin.ModelAdmin):
     list_display = ['id','name']
     ordering = ('id',)
 
-# @admin.register(ParkActivity)
-# class ParkActivity(admin.ModelAdmin):
-#     list_display = ['park', 'activity']
-#     #ordering = ('name',)
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
