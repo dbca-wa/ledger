@@ -16,6 +16,8 @@ from wildlifecompliance.components.main.serializers import CommunicationLogEntry
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 
+from wildlifecompliance.components.users.serializers import UserAddressSerializer
+
 
 class ComplianceFormDataRecordSerializer(serializers.ModelSerializer):
     class Meta:
@@ -195,6 +197,24 @@ class CallEmailOptimisedSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', )
 
 
+class EmailUserSerializer(serializers.ModelSerializer):
+    residential_address = UserAddressSerializer()
+
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'email',
+            'first_name',
+            'last_name',
+            'residential_address',
+            'phone_number',
+            'mobile_number',
+            'organisation',
+            'dob',
+        )
+
+
 class CallEmailSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source='get_status_display')
     classification = ClassificationSerializer(read_only=True)
@@ -204,6 +224,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
     location = LocationSerializer(read_only=True)
     referrer = ReferrerSerializer(read_only=True)
     data = ComplianceFormDataRecordSerializer(many=True)
+    email_user = EmailUserSerializer()
 
     class Meta:
         model = CallEmail
@@ -234,6 +255,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'referrer_id',
             'advice_given',
             'advice_details',
+            'email_user',
         )
         read_only_fields = ('id', )
 
@@ -297,20 +319,6 @@ class ComplianceLogEntrySerializer(CommunicationLogEntrySerializer):
     def get_documents(self, obj):
         return [[d.name, d._file.url] for d in obj.documents.all()]
 
-
-class EmailUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EmailUser
-        fields = (
-            'id',
-            'email',
-            'first_name',
-            'last_name',
-            'phone_number',
-            'mobile_number',
-            'organisation',
-            'dob',
-        )
 
 class MapLayerSerializer(serializers.ModelSerializer):
     class Meta:

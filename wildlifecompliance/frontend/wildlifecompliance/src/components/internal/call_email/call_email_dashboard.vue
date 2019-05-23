@@ -8,18 +8,16 @@
                 <div class="col-md-3">
                         <label for="">Call/Email Status</label>
                         <select class="form-control" v-model="filterStatus">
-                            <option value="All">All</option>
-                            <option v-for="c in status_choices" :value="c.display" v-bind:key="c.id">
-                                {{ c.display }}
+                            <option v-for="option in status_choices" :value="option.display" v-bind:key="option.id">
+                                {{ option.display }}
                             </option>
                         </select>
                 </div>
                 <div class="col-md-3">
                         <label for="">Call/Email Classification</label>
                         <select class="form-control" v-model="filterClassification">
-                            <option value="All">All</option>
-                            <option v-for="option in classification_types" :value="option.display" v-bind:key="option.id">
-                                {{ option.display }} 
+                            <option v-for="option in classification_types" :value="option.name" v-bind:key="option.id">
+                                {{ option.name }} 
                             </option>
                     </select>
                 </div>
@@ -77,12 +75,13 @@
             let vm = this;
             return {
                 classification_types: [],
+                // classificationChoices: [],
                 report_types: [],
                 // Filters
                 filterStatus: 'All',
                 filterClassification: 'All',
-                statusChoices: [],
-                classificationChoices: [],
+                // statusChoices: [],
+                status_choices: [],
                 filterLodgedFrom: '',
                 filterLodgedTo: '',
                 dateFormat: 'DD/MM/YYYY',
@@ -142,28 +141,28 @@
                         }
                     ],
 
-                    initComplete: function () {
-                        var callColumn = vm.$refs.call_email_table.vmDataTable.columns(1);
-                        callColumn.data().unique().sort().each(function (d, j) {
-                            let status_choices = [];
-                            $.each(d, (index, a) => {
-                                a != null && status_choices.indexOf(a) < 0 ? status_choices.push(a) :
-                                '';
-                            })
-                            vm.statusChoices = status_choices;
-                        });
-                        var classificationColumn = vm.$refs.call_email_table.vmDataTable.columns(2);
-                        classificationColumn.data().unique().sort().each(function (d, j) {
-                            let classification_choices = [];
-                            $.each(d, (index, a) => {
-                                if (a) {
-                                    a['name'] != null && classification_choices.indexOf(a['name']) < 0 ?
-                                        classification_choices.push(a['name']) : '';
-                                }
-                            })
-                            vm.classificationChoices = classification_choices;
-                        });
-                    }
+                    // initComplete: function () {
+                    //     var callColumn = vm.$refs.call_email_table.vmDataTable.columns(1);
+                    //     callColumn.data().unique().sort().each(function (d, j) {
+                    //         let status_choices = [];
+                    //         $.each(d, (index, a) => {
+                    //             a != null && status_choices.indexOf(a) < 0 ? status_choices.push(a) :
+                    //             '';
+                    //         })
+                    //         vm.statusChoices = status_choices;
+                    //     });
+                    //     var classificationColumn = vm.$refs.call_email_table.vmDataTable.columns(2);
+                    //     classificationColumn.data().unique().sort().each(function (d, j) {
+                    //         let classification_choices = [];
+                    //         $.each(d, (index, a) => {
+                    //             if (a) {
+                    //                 a['name'] != null && classification_choices.indexOf(a['name']) < 0 ?
+                    //                     classification_choices.push(a['name']) : '';
+                    //             }
+                    //         })
+                    //         vm.classificationChoices = classification_choices;
+                    //     });
+                    // }
 
                 },
                 dtHeaders: [
@@ -178,6 +177,21 @@
             }
         },
 
+        created: async function() {
+            let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
+            console.log('classification types');
+            console.log(returned_classification_types);
+            Object.assign(this.classification_types, returned_classification_types);
+            console.log(this.classification_types);
+            this.classification_types.splice(0, 0, {id: 'all', name: 'All'});
+
+            let returned_status_choices = await cache_helper.getSetCacheList('CallEmail_StatusChoices', '/api/call_email/status_choices');
+            console.log('returned_status_choices');
+            console.log(returned_status_choices);
+            Object.assign(this.status_choices, returned_status_choices);
+            console.log(this.status_choices);
+            this.status_choices.splice(0, 0, {id: 'all', display: 'All'});
+        },
         watch: {
             filterStatus: function () {
                 let vm = this;
@@ -204,12 +218,6 @@
                 this.$refs.call_email_table.vmDataTable.draw();
             },
         },
-
-        created: async function() {
-            let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
-            Object.assign(this.classification_types, returned_classification_types);
-
-        },
         components: {
             datatable,
             FormSection,
@@ -223,7 +231,6 @@
             ...mapActions('callemailStore', {
                 saveCallEmail: "saveCallEmail",
             }),
-            
             createCallEmailUrl: async function () {
                 const newCallId = await this.saveCallEmail({ route: false, crud: 'create'});
                 console.log("newCallId");
