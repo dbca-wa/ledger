@@ -40,21 +40,25 @@
                   5. Online Training
                 </a>
               </li>
-              <li class="nav-item">
-                <! --<a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="#pills-payment" role="tab" aria-controls="pills-payment" aria-selected="false">
+              <li v-if="!proposal.fee_paid" class="nav-item">
+                <!--
+                <a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="#pills-payment" role="tab" aria-controls="pills-payment" aria-selected="false">
                   6. Payment
-                </a> -->
+                </a>
+                -->
 
                 <a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="#" role="tab" aria-controls="pills-payment" aria-selected="false">
                   6. Payment
                 </a>
               </li>
               <li class="nav-item">
-                <!-- <a class="nav-link disabled" id="pills-confirm-tab" data-toggle="pill" href="#pills-confirm" role="tab" aria-controls="pills-confirm" aria-selected="false">
-                  7. Confirmation
-                </a> -->
-                <a class="nav-link disabled" id="pills-confirm-tab" data-toggle="pill" href="#" role="tab" aria-controls="pills-confirm" aria-selected="false">
-                  7. Confirmation
+                <a class="nav-link disabled" id="pills-confirm-tab" data-toggle="pill" href="#pills-confirm" role="tab" aria-controls="pills-confirm" aria-selected="false">
+                  <div v-if="proposal.fee_paid">
+                    6. Confirmation
+                  </div>
+                  <div v-else>
+                    7. Confirmation
+                  </div>
                 </a>
               </li>
 
@@ -95,7 +99,7 @@
                 <OnlineTraining :proposal="proposal" id="proposalStartOnlineTraining"></OnlineTraining>
               </div>
               <div class="tab-pane fade" id="pills-payment" role="tabpanel" aria-labelledby="pills-payment-tab">
-                <Payment :proposal="proposal" id="proposalStartPayment"></Payment>
+                <!-- This is a Dummy Tab -->
               </div>
               <div class="tab-pane fade" id="pills-confirm" role="tabpanel" aria-labelledby="pills-confirm-tab">
                 <Confirmation :proposal="proposal" id="proposalStartConfirmation"></Confirmation>
@@ -114,7 +118,8 @@
     import ActivitiesMarine from '@/components/common/tclass/activities_marine.vue'
     import OtherDetails from '@/components/common/tclass/other_details.vue'
     import OnlineTraining from '@/components/common/tclass/online_training.vue'
-    import Payment from '@/components/common/tclass/payment.vue'
+    //import ApplicationFee from '@/components/common/tclass/application_fee.vue'
+    //import Confirmation from '@/components/common/tclass/confirmation.vue'
     import Confirmation from '@/components/common/tclass/confirmation.vue'
     export default {
         props:{
@@ -162,7 +167,7 @@
             ActivitiesMarine,
             OtherDetails,
             OnlineTraining,
-            Payment,
+            //ApplicationFee,
             Confirmation,
             Profile,
             Organisation,

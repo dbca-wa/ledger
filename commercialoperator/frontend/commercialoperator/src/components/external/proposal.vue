@@ -32,8 +32,8 @@
                 </ul>
             </div>
 
-			<div v-if="proposal" id="scrollspy-heading" class="col-lg-12" >
-               	<h4>Commercial Operator - {{proposal.application_type}} application: {{proposal.lodgement_number}}</h4>
+            <div v-if="proposal" id="scrollspy-heading" class="col-lg-12" >
+                <h4>Commercial Operator - {{proposal.application_type}} application: {{proposal.lodgement_number}}</h4>
             </div>
 
             <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart"  :canEditActivities="canEditActivities" :is_external="true"></ProposalTClass>
@@ -46,24 +46,31 @@
                 <input type='hidden' name="proposal_id" :value="1" />
 
                 <div class="row" style="margin-bottom: 50px">
-						<div v-if="proposal && !proposal.readonly" class="container">
-						  <p class="pull-right" style="margin-top:5px;">
-							<input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
-							<input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-							<input type="button" @click.prevent="submit" class="btn btn-primary" value="Pay and Submit" :disabled="!proposal.training_completed"/>
+                        <div v-if="proposal && !proposal.readonly && !proposal.fee_paid" class="container">
+                          <p class="pull-right" style="margin-top:5px;">
+                            <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
+                            <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
+                           <input type="button" @click.prevent="submit" class="btn btn-primary" value="Pay and Submit" :disabled="!proposal.training_completed"/>
 
-							<input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
-						  </p>
-						</div>
-						<div v-else class="container">
-						  <p class="pull-right" style="margin-top:5px;">
-							<router-link class="btn btn-primary" :to="{name: 'external-proposals-dash'}">Back to Dashboard</router-link>
-						  </p>
-						</div>
+                            <!--<form :action="application_fee_url" method="post" name="fee_payment" @submit.prevent="fee_payment()" novalidate>-->
+                            <!--
+                            <form :action="application_fee_url" method="post" name="fee_payment" novalidate>
+                                <input type="button" @click.prevent="submit" class="btn btn-primary" value="Pay and Submit"/>
+                            </form>
+                            -->
+
+                            <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
+                          </p>
+                        </div>
+                        <div v-else class="container">
+                          <p class="pull-right" style="margin-top:5px;">
+                            <router-link class="btn btn-primary" :to="{name: 'external-proposals-dash'}">Back to Dashboard</router-link>
+                          </p>
+                        </div>
                 </div>
             </div>
 
-		</form>
+        </form>
     </div>
 </template>
 <script>
@@ -109,6 +116,9 @@ export default {
     },
     proposal_form_url: function() {
       return (this.proposal) ? `/api/proposal/${this.proposal.id}/draft.json` : '';
+    },
+    application_fee_url: function() {
+      return (this.proposal) ? `/application_fee/${this.proposal.id}/` : '';
     },
     proposal_submit_url: function() {
       return (this.proposal) ? `/api/proposal/${this.proposal.id}/submit.json` : '';
@@ -336,9 +346,20 @@ export default {
                     'error'
                 )
             });
+        //}).then(() => {
+        //    this.fee_payment();
         },(error) => {
         });
     },
+
+    fee_payment: function () {
+        var isValid = true;
+        var form = document.forms.fee_payment;
+        if (isValid) {
+            form.submit();
+        }
+    },
+
 
   },
 
