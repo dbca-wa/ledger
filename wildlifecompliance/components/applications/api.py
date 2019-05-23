@@ -55,6 +55,7 @@ from wildlifecompliance.components.applications.serializers import (
     AmendmentRequestSerializer,
     ApplicationProposedIssueSerializer,
     DTAssessmentSerializer,
+    ApplicationSelectedActivitySerializer,
 )
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
@@ -664,6 +665,30 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET', ])
+    def last_current_activity(self, request, *args, **kwargs):
+        instance = self.get_object()
+        user = request.user
+        if user not in instance.licence_officers:
+            raise serializers.ValidationError(
+                'You are not in any relevant licence officer groups for this application.')
+
+        if not instance:
+            return Response({'activity': None})
+
+        last_activity = instance.get_activity_chain(
+            activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+        ).order_by(
+            '-issue_date'
+        ).first()
+
+        if not last_activity:
+            return Response({'activity': None})
+
+        serializer = ApplicationSelectedActivitySerializer(
+            last_activity, context={'request': request})
+        return Response({'activity': serializer.data})
 
     @detail_route(methods=['GET', ])
     def assign_to_me(self, request, *args, **kwargs):

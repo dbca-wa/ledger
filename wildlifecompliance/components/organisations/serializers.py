@@ -99,6 +99,7 @@ class DTOrganisationSerializer(serializers.ModelSerializer):
     def get_address_string(self, obj):
         return obj.address_string
 
+
 class OrganisationSerializer(serializers.ModelSerializer):
     address = OrganisationAddressSerializer(read_only=True)
     pins = serializers.SerializerMethodField(read_only=True)
@@ -133,6 +134,24 @@ class OrganisationSerializer(serializers.ModelSerializer):
                 return None
         except KeyError:
             return None
+
+
+class ExternalOrganisationSerializer(serializers.ModelSerializer):
+    address = OrganisationAddressSerializer(read_only=True)
+    delegates = DelegateSerializer(many=True, read_only=True)
+    organisation = LedgerOrganisationSerializer()
+
+    class Meta:
+        model = Organisation
+        fields = (
+            'id',
+            'name',
+            'abn',
+            'address',
+            'email',
+            'organisation',
+            'delegates'
+        )
 
 
 class OrganisationCheckExistSerializer(serializers.Serializer):

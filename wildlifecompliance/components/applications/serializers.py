@@ -17,7 +17,10 @@ from wildlifecompliance.components.organisations.models import (
 )
 from wildlifecompliance.components.licences.models import LicenceActivity
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
-from wildlifecompliance.components.organisations.serializers import OrganisationSerializer
+from wildlifecompliance.components.organisations.serializers import (
+    OrganisationSerializer,
+    ExternalOrganisationSerializer
+)
 from wildlifecompliance.components.users.serializers import UserAddressSerializer, DocumentSerializer
 from wildlifecompliance.components.main.fields import CustomChoiceField
 from wildlifecompliance import helpers
@@ -49,13 +52,13 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
         return obj.licence_activity.name if obj.licence_activity else ''
 
     def get_issue_date(self, obj):
-        return obj.issue_date.strftime('%Y/%m/%d %H:%M') if obj.issue_date else ''
+        return obj.issue_date.strftime('%d/%m/%Y %H:%M') if obj.issue_date else ''
 
     def get_start_date(self, obj):
-        return obj.start_date.strftime('%Y/%m/%d') if obj.start_date else ''
+        return obj.start_date.strftime('%Y-%m-%d') if obj.start_date else ''
 
     def get_expiry_date(self, obj):
-        return obj.expiry_date.strftime('%Y/%m/%d') if obj.expiry_date else ''
+        return obj.expiry_date.strftime('%Y-%m-%d') if obj.expiry_date else ''
 
     def get_approve_options(self, obj):
         return [{'label': 'Approved', 'value': 'approved'}, {'label': 'Declined', 'value': 'declined'}]
@@ -63,6 +66,71 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     def get_purposes(self, obj):
         from wildlifecompliance.components.licences.serializers import PurposeSerializer
         return PurposeSerializer(obj.purposes, many=True).data
+
+    def get_activity_purpose_names(self, obj):
+        return ','.join([p.short_name for p in obj.purposes])
+
+    def get_can_reissue(self, obj):
+        try:
+            user = self.context['request'].user
+        except (KeyError, AttributeError):
+            return False
+        if user is None:
+            return False
+        return user.has_perm('wildlifecompliance.system_administrator') or (
+            user.has_wildlifelicenceactivity_perm([
+                'issuing_officer',
+            ], obj.licence_activity_id) and obj.can_reissue
+        )
+
+
+class DTExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer):
+    activity_name_str = serializers.SerializerMethodField(read_only=True)
+    issue_date = serializers.SerializerMethodField(read_only=True)
+    start_date = serializers.SerializerMethodField(read_only=True)
+    expiry_date = serializers.SerializerMethodField(read_only=True)
+    activity_purpose_names = serializers.SerializerMethodField(read_only=True)
+    processing_status = CustomChoiceField(read_only=True)
+    can_renew = serializers.BooleanField(read_only=True)
+    can_amend = serializers.BooleanField(read_only=True)
+    can_surrender = serializers.BooleanField(read_only=True)
+    can_cancel = serializers.BooleanField(read_only=True)
+    can_reissue = serializers.SerializerMethodField(read_only=True)
+    can_reinstate = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = ApplicationSelectedActivity
+        fields = (
+            'id',
+            'activity_name_str',
+            'issue_date',
+            'start_date',
+            'expiry_date',
+            'activity_purpose_names',
+            'processing_status',
+            'can_renew',
+            'can_amend',
+            'can_surrender',
+            'can_cancel',
+            'can_reissue',
+            'can_reinstate'
+        )
+        # the serverSide functionality of datatables is such that only columns that have field 'data'
+        # defined are requested from the serializer. Use datatables_always_serialize to force render
+        # of fields that are not listed as 'data' in the datatable columns
+        datatables_always_serialize = fields
+
+    def get_activity_name_str(self, obj):
+        return obj.licence_activity.name if obj.licence_activity else ''
+
+    def get_issue_date(self, obj):
+        return obj.issue_date.strftime('%d/%m/%Y') if obj.issue_date else ''
+
+    def get_start_date(self, obj):
+        return obj.start_date.strftime('%d/%m/%Y') if obj.start_date else ''
+
+    def get_expiry_date(self, obj):
+        return obj.expiry_date.strftime('%d/%m/%Y') if obj.expiry_date else ''
 
     def get_activity_purpose_names(self, obj):
         return ','.join([p.short_name for p in obj.purposes])
@@ -245,6 +313,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
         max_digits=8, decimal_places=2, coerce_to_string=False, read_only=True)
     licence_fee = serializers.DecimalField(
         max_digits=8, decimal_places=2, coerce_to_string=False, read_only=True)
+    category_id = serializers.SerializerMethodField(read_only=True)
     category_name = serializers.SerializerMethodField(read_only=True)
     activity_names = serializers.SerializerMethodField(read_only=True)
     activity_purpose_string = serializers.SerializerMethodField(read_only=True)
@@ -293,6 +362,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'return_check_status',
             'application_fee',
             'licence_fee',
+            'category_id',
             'category_name',
             'activity_names',
             'activity_purpose_string',
@@ -315,6 +385,9 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 
     def get_payment_status(self, obj):
         return obj.payment_status
+
+    def get_category_id(self, obj):
+        return obj.licence_category_id
 
     def get_category_name(self, obj):
         return obj.licence_category_name
@@ -383,6 +456,7 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
 class DTInternalApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(read_only=True)
+    org_applicant = OrganisationSerializer()
     proxy_applicant = EmailUserSerializer()
     processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
     customer_status = CustomChoiceField(read_only=True)
@@ -402,9 +476,11 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
             'processing_status',
             'applicant',
             'proxy_applicant',
+            'org_applicant',
             'submitter',
             'lodgement_number',
             'lodgement_date',
+            'category_id',
             'category_name',
             'activity_names',
             'activity_purpose_string',
@@ -432,6 +508,7 @@ class DTInternalApplicationSerializer(BaseApplicationSerializer):
 class DTExternalApplicationSerializer(BaseApplicationSerializer):
     submitter = EmailUserSerializer()
     applicant = serializers.CharField(read_only=True)
+    org_applicant = ExternalOrganisationSerializer()
     proxy_applicant = EmailUserSerializer()
     processing_status = CustomChoiceField(read_only=True, choices=Application.PROCESSING_STATUS_CHOICES)
     customer_status = CustomChoiceField(read_only=True)
@@ -446,10 +523,12 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
             'customer_status',
             'processing_status',
             'applicant',
+            'org_applicant',
             'proxy_applicant',
             'submitter',
             'lodgement_number',
             'lodgement_date',
+            'category_id',
             'category_name',
             'activity_names',
             'activity_purpose_string',
