@@ -499,7 +499,7 @@ class PromoArea(admin.GeoModelAdmin):
 
 @admin.register(models.RegisteredVessels)
 class RegisteredVessels(admin.ModelAdmin):
-    list_display = ('rego_no', 'sticker_l', 'sticker_au', 'sticker_an')
+    list_display = ('rego_no', 'sticker_l', 'sticker_au', 'sticker_an','vessel_size','vessel_draft','vessel_beam','vessel_weight')
     ordering = ('rego_no',)
     search_fields = ('rego_no',)
 

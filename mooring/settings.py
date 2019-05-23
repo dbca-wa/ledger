@@ -1,9 +1,11 @@
 from ledger.settings_base import *
 from decimal import Decimal
+import os
 
 ROOT_URLCONF = 'mooring.urls'
 SITE_ID = 1
-
+print ("BASE DIR")
+print (os.path.join(BASE_DIR, 'staticfiles_mo'))
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_mo')
 
 # number of seconds before expiring a temporary booking
@@ -69,9 +71,7 @@ STATICFILES_DIRS.append(os.path.join(os.path.join(BASE_DIR, 'mooring', 'static')
 
 
 BPAY_ALLOWED = env('BPAY_ALLOWED',False)
-
 OSCAR_BASKET_COOKIE_OPEN = 'mooring_basket'
-
 
 CRON_CLASSES = [
     #'mooring.cron.SendBookingsConfirmationCronJob',
@@ -93,6 +93,7 @@ LOGGING['loggers']['booking_checkout'] = {
             'handlers': ['booking_checkout'],
             'level': 'INFO'
         }
+
 #PS_PAYMENT_SYSTEM_ID = env('PS_PAYMENT_SYSTEM_ID', 'S019')
 PS_PAYMENT_SYSTEM_ID = env('PS_PAYMENT_SYSTEM_ID', 'S516')
 if not VALID_SYSTEMS:
@@ -110,6 +111,20 @@ DEV_STATIC_URL = env('DEV_STATIC_URL')
 ROTTNEST_ISLAND_URL = env('ROTTNEST_URL', [])
 DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GIT_COMMIT_DATE = os.popen('cd '+BASE_DIR+' ; git log -1 --format=%cd').read()
-GIT_COMMIT_HASH = os.popen('cd  '+BASE_DIR+' ; git log -1 --format=%H').read()
+
+# Use git commit hash for purging cache in browser for deployment changes
+GIT_COMMIT_HASH = ''
+GIT_COMMIT_DATE = ''
+if  os.path.isdir('.git') is True:
+    GIT_COMMIT_DATE = os.popen('cd '+BASE_DIR+' ; git log -1 --format=%cd').read()
+    GIT_COMMIT_HASH = os.popen('cd  '+BASE_DIR+' ; git log -1 --format=%H').read()
+if len(GIT_COMMIT_HASH) == 0: 
+    GIT_COMMIT_HASH = os.popen('cat /app/git_hash').read()
+    if len(GIT_COMMIT_HASH) == 0:
+       print ("ERROR: No git hash provided")
 VERSION_NO = '2.02'
+os.environ['UPDATE_PAYMENT_ALLOCATION'] = 'True'
+UNALLOCATED_ORACLE_CODE = 'UN2019 GST' 
+
+ 
+#os.environ.setdefault("UPDATE_PAYMENT_ALLOCATION", True)
