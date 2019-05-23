@@ -232,6 +232,12 @@ class LicenceViewSet(viewsets.ModelViewSet):
         if submitter_id:
             queryset = queryset.filter(current_application__submitter_id=submitter_id)
         serializer = self.get_serializer(queryset, many=True)
+        # Display only the relevant Activity if activity_id param set
+        licence_id = request.GET.get('id', None)
+        activity_id = request.GET.get('activity_id', None)
+        if activity_id and licence_id:
+            queryset = queryset.get(id=licence_id).current_activities.filter(id=activity_id)
+            serializer = ExternalApplicationSelectedActivitySerializer(queryset, many=True)
         return Response(serializer.data)
 
     @list_route(methods=['GET', ])
@@ -251,23 +257,6 @@ class LicenceViewSet(viewsets.ModelViewSet):
         queryset = list(set(qs))
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-
-    @detail_route(methods=['GET', ])
-    def activities(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            qs = instance.current_activities
-            serializer = ExternalApplicationSelectedActivitySerializer(qs, many=True)
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
 
 
 class LicenceCategoryViewSet(viewsets.ModelViewSet):
