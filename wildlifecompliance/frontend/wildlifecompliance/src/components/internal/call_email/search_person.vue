@@ -25,27 +25,33 @@
                                         <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Given Name(s)</label>
                                         <div class="col-sm-6">
-                                            <input type="text" class="form-control" name="first_name" placeholder="" v-model="user.first_name">
+                                            <div v-if="call_email.email_user">
+                                                <input type="text" class="form-control" name="first_name" placeholder="" v-model="call_email.email_user.first_name" v-bind:key="call_email.email_user.id">
+                                            </div>
                                         </div>
                                         </div>
                                         <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Last Name</label>
                                         <div class="col-sm-6">
-                                            <input type="text" class="form-control" name="last_name" placeholder="" v-model="user.last_name">
+                                            <div v-if="call_email.email_user">
+                                                <input type="text" class="form-control" name="last_name" placeholder="" v-model="call_email.email_user.last_name" v-bind:key="call_email.email_user.id">
+                                            </div>
                                         </div>
                                         </div>
                                         <div class="form-group">
                                         <label for="" class="col-sm-3 control-label" >Date of Birth</label>
                                         <div class="col-sm-6">
-                                            <input type="date" class="form-control" name="dob" placeholder="" v-model="user.dob">
+                                            <div v-if="call_email.email_user">
+                                                <input type="date" class="form-control" name="dob" placeholder="" v-model="call_email.email_user.dob" v-bind:key="call_email.email_user.id">
+                                            </div>
                                         </div>
                                         </div>
-                                        <div class="form-group">
+                                        <!-- <div class="form-group">
                                         <div class="col-sm-12">
                                                 <button v-if="!updatingPersonal" class="pull-right btn btn-primary" @click.prevent="updatePersonal()">Update</button>
                                                 <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
                                         </div>
-                                        </div>
+                                        </div> -->
                                     </form>
                                 </div>
                             </div>
@@ -66,39 +72,49 @@
                                         <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Street</label>
                                         <div class="col-sm-6">
-                                            <input type="text" class="form-control" name="street" placeholder="" v-model="user.residential_address.line1">
+                                            <div v-if="call_email.email_user"><div v-if="call_email.email_user.residential_address">
+                                                <input type="text" class="form-control" name="street" placeholder="" v-model="call_email.email_user.residential_address.line1" v-bind:key="call_email.email_user.residential_address.id">
+                                            </div></div>
                                         </div>
                                         </div>
                                         <div class="form-group">
                                         <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
                                         <div class="col-sm-6">
-                                            <input type="text" class="form-control" name="surburb" placeholder="" v-model="user.residential_address.locality">
+                                            <div v-if="call_email.email_user"><div v-if="call_email.email_user.residential_address">
+                                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="call_email.email_user.residential_address.locality" v-bind:key="call_email.email_user.residential_address.id">
+                                            </div></div>
                                         </div>
                                         </div>
                                         <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">State</label>
                                         <div class="col-sm-2">
-                                            <input type="text" class="form-control" name="country" placeholder="" v-model="user.residential_address.state">
+                                            <div v-if="call_email.email_user"><div v-if="call_email.email_user.residential_address">
+                                                <input type="text" class="form-control" name="country" placeholder="" v-model="call_email.email_user.residential_address.state" v-bind:key="call_email.email_user.residential_address.id">
+                                            </div></div>
                                         </div>
                                         <label for="" class="col-sm-2 control-label">Postcode</label>
                                         <div class="col-sm-2">
-                                            <input type="text" class="form-control" name="postcode" placeholder="" v-model="user.residential_address.postcode">
+                                            <div v-if="call_email.email_user"><div v-if="call_email.email_user.residential_address">
+                                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="call_email.email_user.residential_address.postcode" v-bind:key="call_email.email_user.residential_address.id">
+                                            </div></div>
                                         </div>
                                         </div>
                                         <div class="form-group">
                                         <label for="" class="col-sm-3 control-label" >Country</label>
                                         <div class="col-sm-4">
-                                            <select class="form-control" name="country" v-model="user.residential_address.country">
-                                                <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
-                                            </select>
+                                            <div v-if="call_email.email_user"><div v-if="call_email.email_user.residential_address">
+                                                <select class="form-control" name="country" v-model="call_email.email_user.residential_address.country" v-bind:key="call_email.email_user.residential_address.id">
+                                                    <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
+                                                </select>
+                                            </div></div>
                                         </div>
                                         </div>
-                                        <div class="form-group">
+                                        <!-- <div class="form-group">
                                         <div class="col-sm-12">
                                             <button v-if="!updatingAddress" class="pull-right btn btn-primary" @click.prevent="updateAddress()">Update</button>
                                             <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
                                         </div>
-                                        </div>
+                                        </div> -->
                                     </form>
                                 </div>
                             </div>
@@ -161,12 +177,12 @@ export default {
         updateAddress: function() {
             let vm = this;
             vm.updatingAddress = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.user.id+'/update_address')),JSON.stringify(vm.user.residential_address),{
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.call_email.email_user.id+'/update_address')),JSON.stringify(vm.call_email.email_user.residential_address),{
                 emulateJSON:true
             }).then((response) => {
                 vm.updatingAddress = false;
-                vm.user = response.body;
-                if (vm.user.residential_address == null){ vm.user.residential_address = {}; }
+                vm.call_email.email_user = response.body;
+                if (vm.call_email.email_user.residential_address == null){ vm.call_email.email_user.residential_address = {}; }
                 swal({
                     title: 'Update Address Details',
                     html: 'User address details has been successfully updated.',
@@ -186,14 +202,15 @@ export default {
             });
         },
         updatePersonal: function() {
+            console.log('updatePersonal');
             let vm = this;
             vm.updatingPersonal = true;
-            if (vm.user.residential_address == null){ vm.user.residential_address = {}; }
+            if (vm.call_email.email_user.residential_address == null){ vm.call_email.email_user.residential_address = {}; }
             let params = '?';
-            params += '&first_name=' + vm.user.first_name;
-            params += '&last_name=' + vm.user.last_name;
-            params += '&dob=' + vm.user.dob;
-            if (vm.user.first_name == '' || vm.user.last_name == '' || (vm.user.dob == null || vm.user.dob == '')){
+            params += '&first_name=' + vm.call_email.email_user.first_name;
+            params += '&last_name=' + vm.call_email.email_user.last_name;
+            params += '&dob=' + vm.call_email.email_user.dob;
+            if (vm.call_email.email_user.first_name == '' || vm.call_email.email_user.last_name == '' || (vm.call_email.email_user.dob == null || vm.call_email.email_user.dob == '')){
                 let error_msg = 'Please ensure all fields are filled in.';
                 swal({
                     title: 'Update Personal Details',
@@ -204,7 +221,7 @@ export default {
                 });
                 return;
             }
-			vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.user.id+'/update_personal')),JSON.stringify(vm.user),{
+			vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.call_email.email_user.id+'/update_personal')),JSON.stringify(vm.call_email.email_user),{
 				emulateJSON:true
 			}).then((response) => {
 				swal({
@@ -232,14 +249,15 @@ export default {
 			});
         },
         loadEmailUser: function(id){
+            let vm = this;
             let initialisers = [
                 utils.fetchCountries(),
                 utils.fetchUser(id),
             ]
             Promise.all(initialisers).then(data => {
-                this.countries = data[0];
-                this.user = data[1];
-                this.user.residential_address = this.user.residential_address != null ? this.user.residential_address : {};
+                vm.countries = data[0];
+                vm.call_email.email_user = data[1];
+                vm.call_email.email_user.residential_address = vm.call_email.email_user.residential_address != null ? vm.call_email.email_user.residential_address : {};
             });
         },
         search: function(searchTerm){

@@ -159,10 +159,9 @@ export const callemailStore = {
                         );
                         
                 await dispatch("setCallEmail", returnedCallEmail.body);
+
                 // Set empty (not null) location to force map display
-                
                 if (!returnedCallEmail.body.location) {
-                    
                     console.log("null location");
                     await dispatch("setLocation", 
                     {
@@ -179,12 +178,14 @@ export const callemailStore = {
                             "type": "Point",
                             "coordinates": [],
                         },
-                        
-                    }
-                    );
+                    });
                     console.log("empty location loaded");
                 }
-                
+
+                if(!returnedCallEmail.body.email_user.residential_address){
+                    returnedCallEmail.body.email_user.residential_address = {};
+                }
+
                 for (let form_data_record of returnedCallEmail.body.data) {
                     dispatch("setFormValue", {
                         key: form_data_record.field_name,
