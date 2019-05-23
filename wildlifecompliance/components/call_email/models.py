@@ -122,6 +122,20 @@ class Location(models.Model):
             .format(self.street, self.town_suburb, self.state)
 
 
+class MapLayer(models.Model):
+    display_name = models.CharField(max_length=100, blank=True, null=True)
+    layer_name = models.CharField(max_length=200, blank=True, null=True)  # layer name defined in geoserver (kmi.dpaw.wa.gov.au)
+    availability = models.BooleanField(default=True)  # False to hide from the frontend options
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_MapLayer'
+        verbose_name_plural = 'CM_MapLayers'
+
+    def __str__(self):
+        return '{0}, {1}'.format(self.display_name, self.layer_name)
+
+
 class CallEmail(RevisionedMixin):
     STATUS_CHOICES = (
         ('draft', 'Draft'),
@@ -168,6 +182,10 @@ class CallEmail(RevisionedMixin):
         Referrer,
         null=True,
         related_name="report_referrer"
+    )
+    email_user = models.ForeignKey(
+        EmailUser,
+        null=True,
     )
     advice_given = models.BooleanField(default=False)
     advice_details = models.TextField(blank=True, null=True)

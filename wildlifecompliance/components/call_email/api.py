@@ -1,3 +1,5 @@
+import json
+import operator
 import traceback
 import os
 import base64
@@ -14,7 +16,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from rest_framework import viewsets, serializers, status, generics, views
+from rest_framework import viewsets, serializers, status, generics, views, filters
 import rest_framework.exceptions as rest_exceptions
 from rest_framework.decorators import (
     detail_route,
@@ -45,7 +47,7 @@ from wildlifecompliance.components.call_email.models import (
     ReportType,
     Referrer,
     ComplianceUserAction,
-)
+    MapLayer)
 from wildlifecompliance.components.call_email.serializers import (
     CallEmailSerializer,
     ClassificationSerializer,
@@ -59,7 +61,7 @@ from wildlifecompliance.components.call_email.serializers import (
     CreateCallEmailSerializer,
     ReportTypeSchemaSerializer,
     ReferrerSerializer,
-    LocationSerializerMinimum, CallEmailOptimisedSerializer)
+    LocationSerializerMinimum, CallEmailOptimisedSerializer, EmailUserSerializer, MapLayerSerializer)
 from utils import SchemaParser
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
@@ -80,8 +82,29 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET', ])
     def optimised(self, request, *args, **kwargs):
         queryset = self.get_queryset().exclude(location__isnull=True)
-        serializer = CallEmailOptimisedSerializer(queryset, many=True)
 
+        filter_status = request.query_params.get('status', '')
+        filter_status = '' if filter_status.lower() == 'all' else filter_status
+        filter_classification = request.query_params.get('classification', '')
+        filter_classification = '' if filter_classification.lower() == 'all' else filter_classification
+        filter_lodged_from = request.query_params.get('lodged_from', '')
+        filter_lodged_to = request.query_params.get('lodged_to', '')
+
+        q_list = []
+        if filter_status:
+            q_list.append(Q(status__exact=filter_status))
+        if filter_classification:
+            q_list.append(Q(classification__exact=filter_classification))
+        if filter_lodged_from:
+            date_from = datetime.strptime(filter_lodged_from, '%d/%m/%Y')
+            q_list.append(Q(lodged_on__gte=date_from))
+        if filter_lodged_to:
+            date_to = datetime.strptime(filter_lodged_to, '%d/%m/%Y')
+            q_list.append(Q(lodged_on__lte=date_to))
+
+        queryset = queryset.filter(reduce(operator.and_, q_list)) if len(q_list) else queryset
+
+        serializer = CallEmailOptimisedSerializer(queryset, many=True)
         return Response(serializer.data)
 
     @list_route(methods=['GET', ])
@@ -100,6 +123,14 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @list_route(methods=['GET', ])    
+    def status_choices(self, request, *args, **kwargs):
+        res_obj = [] 
+        for choice in CallEmail.STATUS_CHOICES:
+            res_obj.append({'id': choice[0], 'display': choice[1]});
+        res_json = json.dumps(res_obj)
+        return HttpResponse(res_json, content_type='application/json')
 
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
@@ -559,3 +590,22 @@ class LocationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+class EmailUserViewSet(viewsets.ModelViewSet):
+    queryset = EmailUser.objects.all()
+    serializer_class = EmailUserSerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('first_name', 'last_name', 'email', 'phone_number', 'mobile_number', 'organisation')
+
+
+class MapLayerViewSet(viewsets.ModelViewSet):
+    queryset = MapLayer.objects.filter(availability__exact=True)
+    serializer_class =  MapLayerSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return MapLayer.objects.filter(availability__exact=True)
+        return MapLayer.objects.none()
+

@@ -58,12 +58,15 @@
 </template>
 
 <script>
+import L from 'leaflet';
+import 'leaflet-measure';  /* This should be imported after leaflet */
 import Awesomplete from 'awesomplete';
+import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
+
 import 'bootstrap/dist/css/bootstrap.css';
 import 'awesomplete/awesomplete.css';
-import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-measure/dist/leaflet-measure.css';
 
 export default {
     name: "map-leaflet",
@@ -90,15 +93,14 @@ export default {
         }),
     },
     mounted: function(){
-        console.log("this.call_email.location");
-        console.log(this.call_email.location);
         this.$nextTick(function() {
             console.debug('Start loading map');
             this.initMap();
             this.setBaseLayer('osm');
             this.initAwesomplete();
             if (this.call_latitude){
-                this.addMarker([this.call_longitude, this.call_latitude]);
+                /* If there is a location loaded, add a marker to the map */
+                this.addMarker([this.call_latitude, this.call_longitude]);
                 this.refreshMarkerLocation();
             }        
             this.showHideAddressDetailsFields(false, false);
@@ -113,7 +115,7 @@ export default {
             setLocationAddressEmpty: 'setLocationAddressEmpty',
             setLocationDetailsFieldEmpty: 'setLocationDetailsFieldEmpty',
         }),
-        addMarker(coord){
+        addMarker(latLngArr){
             let self = this;
 
             let myIcon = L.icon({
@@ -126,7 +128,7 @@ export default {
                 popupAnchor: [0, -20]
             });
 
-            self.feature_marker = L.marker({lon: coord[1], lat: coord[0]}, {icon: myIcon}).on('click', function(ev){
+            self.feature_marker = L.marker({lon: latLngArr[1], lat: latLngArr[0]}, {icon: myIcon}).on('click', function(ev){
                 //ev.preventDefault();
                 self.feature_marker.setIcon(myIcon);
             });
@@ -207,7 +209,7 @@ export default {
             this.awe = new Awesomplete(element_search);
             $(element_search).on('keyup', function(ev){
                 var keyCode = ev.keyCode || ev.which;
-                if ((48 <= keyCode && keyCode <= 90)||(96 <= keyCode && keyCode <= 105)){
+                if ((48 <= keyCode && keyCode <= 90)||(96 <= keyCode && keyCode <= 105) || (keyCode == 8) || (keyCode == 46)){
                     self.search(ev.target.value);
                     return false;
                 }
@@ -223,6 +225,10 @@ export default {
                             animate: true,
                             duration: 1.5
                         });
+
+                        if (!self.feature_marker){
+                            self.addMarker([latlng.lat, latlng.lng]);
+                        }
 
                         self.relocateMarker(latlng);
                         if(self.suggest_list[i].feature.place_type.includes('address')){
@@ -327,10 +333,16 @@ export default {
 
             this.map.on('click', this.onClick);
             this.setBaseLayer('osm');
+            let measureControl = new L.Control.Measure({ 
+                position: 'topleft',
+                primaryLengthUnit: 'meters',
+                activeColor: '#ff7f50',
+                completedColor: '#228b22'
+            });
+            measureControl.addTo(this.map);
         },
         /* this function stores the coordinates into the vuex, then call refresh marker function */
         relocateMarker: function(latlng){ 
-            
             let lnglat = [latlng.lng, latlng.lat];
             this.setLocationPoint(lnglat);
             this.refreshMarkerLocation();
