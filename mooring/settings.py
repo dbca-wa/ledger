@@ -122,7 +122,7 @@ if len(GIT_COMMIT_HASH) == 0:
     GIT_COMMIT_HASH = os.popen('cat /app/git_hash').read()
     if len(GIT_COMMIT_HASH) == 0:
        print ("ERROR: No git hash provided")
-VERSION_NO = '2.02'
+VERSION_NO = '2.03'
 os.environ['UPDATE_PAYMENT_ALLOCATION'] = 'True'
 UNALLOCATED_ORACLE_CODE = 'UN2019 GST' 
 
