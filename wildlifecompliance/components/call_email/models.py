@@ -183,6 +183,10 @@ class CallEmail(RevisionedMixin):
         null=True,
         related_name="report_referrer"
     )
+    email_user = models.ForeignKey(
+        EmailUser,
+        null=True,
+    )
     advice_given = models.BooleanField(default=False)
     advice_details = models.TextField(blank=True, null=True)
 

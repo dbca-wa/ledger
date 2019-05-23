@@ -1,7 +1,13 @@
 <template lang="html">
-    <div>
-        Search Person <input id="search-person" /><button>Create New Person</button>
-        <div class="col-md-9">
+    <div class="col-sm-12 form-group">
+        <div class="row">
+            <label class="col-sm-3 control-label">Search Person</label>
+            <div class="col-sm-9">
+                <input class="col-sm-5 form-control" id="search-person" />
+                <input type="button" class="pull-right btn btn-primary" value="Create New Person" />
+            </div>
+        </div>
+        <div class="col-md-12">
             <div class="tab-content">
                 <div :id="dTab" class="tab-pane fade in active">
                     <div class="row">
@@ -106,15 +112,18 @@
         
 <script>
 import Awesomplete from 'awesomplete';
+import { api_endpoints, helpers } from '@/utils/hooks'
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import 'bootstrap/dist/css/bootstrap.css';
 import 'awesomplete/awesomplete.css';
+import utils from '../utils'
 
 export default {
     name: "search-person",
     data: function(){
         let vm = this;
-        vm.max_items = 15;
+        vm.max_items = 10;
+        vm.ajax_for_person_search = null;
 
         return {
             awe: null,
@@ -137,30 +146,131 @@ export default {
         }
     },
     computed: {
-        //...mapGetters('callemailStore', {
-            //call_email: 'call_email',
-        //}),
+        ...mapGetters('callemailStore', {
+            call_email: "call_email",
+        }),
     },
     mounted: function(){
         this.$nextTick(function() {
             this.initAwesomplete();
-        })
+        });
+        // TODO: user should be loaded if call_email has.
+        // this.loadEmailUser(emailUser_id);
     },
     methods: {
-        search: function(searchTerm){
-            var self = this;
-
-            self.suggest_list.length = 0;
-            self.$http.get('/api/search_user/?search=' + searchTerm).then(response => {
-                if (response.body && response.body.results) {
-                    let persons = response.body.results;
-                    let limit = Math.min(self.max_items, persons.length);
-                    for (var i = 0; i < limit; i++){
-                        self.suggest_list.push(persons[i])
-                    }
+        updateAddress: function() {
+            let vm = this;
+            vm.updatingAddress = true;
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.user.id+'/update_address')),JSON.stringify(vm.user.residential_address),{
+                emulateJSON:true
+            }).then((response) => {
+                vm.updatingAddress = false;
+                vm.user = response.body;
+                if (vm.user.residential_address == null){ vm.user.residential_address = {}; }
+                swal({
+                    title: 'Update Address Details',
+                    html: 'User address details has been successfully updated.',
+                    type: 'success',
+                })
+            }, (error) => {
+                vm.updatingAddress = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    error_msg += key + ': ' + error.body[key] + '<br/>';
                 }
-                self.awe.list = self.suggest_list;
-                self.awe.evaluate();
+                swal({
+                    title: 'Update Address Details',
+                    html: 'There was an error updating the user address details.<br/>' + error_msg,
+                    type: 'error'
+                })
+            });
+        },
+        updatePersonal: function() {
+            let vm = this;
+            vm.updatingPersonal = true;
+            if (vm.user.residential_address == null){ vm.user.residential_address = {}; }
+            let params = '?';
+            params += '&first_name=' + vm.user.first_name;
+            params += '&last_name=' + vm.user.last_name;
+            params += '&dob=' + vm.user.dob;
+            if (vm.user.first_name == '' || vm.user.last_name == '' || (vm.user.dob == null || vm.user.dob == '')){
+                let error_msg = 'Please ensure all fields are filled in.';
+                swal({
+                    title: 'Update Personal Details',
+                    html: 'There was an error updating the user personal details.<br/>' + error_msg,
+                    type: 'error'
+                }).then(() => {
+                    vm.updatingPersonal = false;
+                });
+                return;
+            }
+			vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.user.id+'/update_personal')),JSON.stringify(vm.user),{
+				emulateJSON:true
+			}).then((response) => {
+				swal({
+					title: 'Update Personal Details',
+					html: 'User personal details has been successfully updated.',
+					type: 'success',
+				}).then(() => {
+					vm.updatingPersonal = false;
+				});
+			}, (error) => {
+				vm.updatingPersonal = false;
+				let error_msg = '<br/>';
+				for (var key in error.body) {
+					if (key === 'dob') {
+						error_msg += 'dob: Please enter a valid date.<br/>';
+					} else {
+						error_msg += key + ': ' + error.body[key] + '<br/>';
+					}
+				}
+				swal({
+					title: 'Update Personal Details',
+					html: 'There was an error updating the user personal details.<br/>' + error_msg,
+					type: 'error'
+				})
+			});
+        },
+        loadEmailUser: function(id){
+            let initialisers = [
+                utils.fetchCountries(),
+                utils.fetchUser(id),
+            ]
+            Promise.all(initialisers).then(data => {
+                this.countries = data[0];
+                this.user = data[1];
+                this.user.residential_address = this.user.residential_address != null ? this.user.residential_address : {};
+            });
+        },
+        search: function(searchTerm){
+            var vm = this;
+            vm.suggest_list = [];
+            vm.suggest_list.length = 0;
+
+            /* Cancel all the previous requests */
+            if (vm.ajax_for_person_search != null){
+                vm.ajax_for_person_search.abort();
+                vm.ajax_for_person_search = null;
+            }
+
+            vm.ajax_for_person_search = $.ajax({
+                type: 'GET',
+                url: '/api/search_user/?search=' + searchTerm,
+                success: function(data){
+                    if (data && data.results) {
+                        let persons = data.results;
+                        let limit = Math.min(vm.max_items, persons.length);
+                        for (var i = 0; i < limit; i++){
+                            vm.suggest_list.push(persons[i])
+                        }
+                    }
+                    vm.awe.list = vm.suggest_list;
+                    vm.awe.evaluate();
+                    console.log(vm.suggest_list);
+                },
+                error: function (e){
+                    console.log(e);
+                }
             });
         },
         initAwesomplete: function(){
@@ -180,7 +290,7 @@ export default {
                     let p_number = item.phone_number?'P:' + item.phone_number:'';
                     let m_number = item.mobile_number?'M:' + item.mobile_number:'';
                     let dob = item.dob?'DOB:' + item.dob:'DOB: ---';
-                    let myLabel = [full_name, email, p_number, m_number, dob].filter(Boolean).join(', ');
+                    let myLabel = ['<span class="full_name">' + full_name + '</span>', email, p_number, m_number, dob].filter(Boolean).join('<br />');
 
                     return { 
                         label: myLabel,   // Displayed in the list below the search box
@@ -207,11 +317,9 @@ export default {
                 let reg = /^.+(\d+)$/gi;
                 let result = reg.exec(elem_id)
                 let idx = result[1];
-                console.log('Selected person obj: ');
-                console.log(self.suggest_list[idx]);
+                self.loadEmailUser(self.suggest_list[idx].id);
             });
         },
-
     }
 }
 </script>        
@@ -220,8 +328,19 @@ export default {
 .awesomplete {
     z-index: 2000 !important;
 }
+.awesomplete > ul {
+    z-index: 2001;
+    top: 30px;
+}
+.awesomplete > ul > li {
+    border-bottom: 1px solid lightgray;
+    margin: 5px 10px 5px 10px;
+}
+.full_name {
+    color: green;
+}
 #search-person {
-    z-index: 9999;
-    width: 400px;
+    z-index: 1000;
+    /* width: 400px; */
 }
 </style>

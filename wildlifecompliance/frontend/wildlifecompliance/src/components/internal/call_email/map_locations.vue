@@ -4,16 +4,16 @@
             <div>
                 <label class="">Call/Email Status</label>
                 <select class="form-control" v-model="filterStatus">
-                    <option value="All">All</option>
-                    <option v-for="c in status_choices" :value="c.id">{{ c.display }}</option>
+                    <option v-for="option in status_choices" :value="option.id" v-bind:key="option.id">
+                        {{ option.display }}
+                    </option>
                 </select>
             </div>
             <div>
                 <label class="">Call/Email Classification</label>
                 <select class="form-control" v-model="filterClassification">
-                    <option value="All">All</option>
-                    <option v-for="option in classification_types" :value="option.display" v-bind:key="option.display">
-                        {{ option.display }} 
+                    <option v-for="option in classification_types" :value="option.id" v-bind:key="option.id">
+                        {{ option.name }} 
                     </option>
                 </select>
             </div>
@@ -55,7 +55,7 @@ import L from 'leaflet';
 import 'leaflet.markercluster';  /* This should be imported after leaflet */
 import 'leaflet.locatecontrol';
 import Awesomplete from 'awesomplete';
-import { api_endpoints, helpers } from '@/utils/hooks'
+import { api_endpoints, helpers, cache_helper } from '@/utils/hooks'
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 
 import 'leaflet/dist/leaflet.css';
@@ -187,14 +187,29 @@ module.exports = {
             tileLayerSat: null, // Base layer (satelllite)
             popup: null,
             opt_url : helpers.add_endpoint_json(api_endpoints.call_email, "optimised"),
-            filterStatus: 'All',
-            filterClassification: 'All',
+
+            /*
+             * Filers:
+             * value of the "value" attribute of the option is stored. 
+             * The value of this is used queryset.filter() in the backend.
+             */
+            filterStatus: 'all',
+            filterClassification: 'all',
             filterLodgedFrom: '',
             filterLodgedTo: '',
+
+            classification_types: [],
+            status_choices: [],
         }
     },
-    created(){
-        //this.loadStatusChoices();
+    created: async function() {
+        let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
+        Object.assign(this.classification_types, returned_classification_types);
+        this.classification_types.splice(0, 0, {id: 'all', name: 'All'});
+
+        let returned_status_choices = await cache_helper.getSetCacheList('CallEmail_StatusChoices', '/api/call_email/status_choices');
+        Object.assign(this.status_choices, returned_status_choices);
+        this.status_choices.splice(0, 0, {id: 'all', display: 'All'});
     },
     mounted(){
         let vm = this;
@@ -239,31 +254,35 @@ module.exports = {
     },
     computed: {
         ...mapGetters('callemailStore', {
-            classification_types: "classification_types",
-            status_choices: "status_choices",
         }),
     },
     methods: {
         ...mapActions('callemailStore', {
-            loadStatusChoices: "loadStatusChoices",
         }),
         addEventListeners: function () {
             let vm = this;
-            // Initialise Application Date Filters
-            $(vm.$refs.lodgementDateToPicker).datetimepicker({ format: 'DD/MM/YYYY' });
-            $(vm.$refs.lodgementDateToPicker).on('dp.change', function (e) {
-                if ($(vm.$refs.lodgementDateToPicker).data('DateTimePicker').date()) {
-                    vm.filterLodgedTo = e.date.format('DD/MM/YYYY');
-                } else if ($(vm.$refs.lodgementDateToPicker).data('date') === "") {
-                    vm.filterLodgedTo = "";
+            let el_fr = $(vm.$refs.lodgementDateFromPicker);
+            let el_to = $(vm.$refs.lodgementDateToPicker);
+
+            // Date "From" field
+            el_fr.datetimepicker({ format: 'DD/MM/YYYY', maxDate: 'now', showClear: true });
+            el_fr.on('dp.change', function (e) {
+                if (el_fr.data('DateTimePicker').date()) {
+                    vm.filterLodgedFrom = e.date.format('DD/MM/YYYY');
+                    el_to.data('DateTimePicker').minDate(e.date);
+                } else if (el_fr.data('date') === "") {
+                    vm.filterLodgedFrom = "";
                 }
             });
-            $(vm.$refs.lodgementDateFromPicker).datetimepicker({ format: 'DD/MM/YYYY' });
-            $(vm.$refs.lodgementDateFromPicker).on('dp.change', function (e) {
-                if ($(vm.$refs.lodgementDateFromPicker).data('DateTimePicker').date()) {
-                    vm.filterLodgedFrom = e.date.format('DD/MM/YYYY');
-                } else if ($(vm.$refs.lodgementDateFromPicker).data('date') === "") {
-                    vm.filterLodgedFrom = "";
+
+            // Date "To" field
+            el_to.datetimepicker({ format: 'DD/MM/YYYY', maxDate: 'now', showClear: true });
+            el_to.on('dp.change', function (e) {
+                if (el_to.data('DateTimePicker').date()) {
+                    vm.filterLodgedTo = e.date.format('DD/MM/YYYY');
+                    el_fr.data('DateTimePicker').maxDate(e.date);
+                } else if (el_to.data('date') === "") {
+                    vm.filterLodgedTo = "";
                 }
             });
         },
@@ -395,15 +414,16 @@ module.exports = {
                 vm.ajax_for_location.abort();
                 vm.ajax_for_location = null;
             }
+            let myData = {
+                "status": vm.filterStatus,
+                "classification": vm.filterClassification,
+                "lodged_from" : vm.filterLodgedFrom,
+                "lodged_to" : vm.filterLodgedTo,
+            };
 
             vm.ajax_for_location = $.ajax({
                 type: 'GET',
-                data: {
-                    "status": vm.filterStatus,
-                    "classification": vm.filterClassification,
-                    "lodged_from" : vm.filterLodgedFrom,
-                    "lodged_to" : vm.filterLodgedTo,
-                    },
+                data: myData,
                 url: vm.opt_url,
                 success: function(data){
                     vm.addMarkers(data);

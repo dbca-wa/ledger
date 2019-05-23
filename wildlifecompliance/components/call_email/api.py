@@ -1,4 +1,5 @@
 import json
+import operator
 import traceback
 import os
 import base64
@@ -89,16 +90,19 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         filter_lodged_from = request.query_params.get('lodged_from', '')
         filter_lodged_to = request.query_params.get('lodged_to', '')
 
+        q_list = []
         if filter_status:
-            queryset = queryset.filter(status__exact=filter_status)
+            q_list.append(Q(status__exact=filter_status))
         if filter_classification:
-            queryset = queryset.filter(classification__name__exact=filter_classification)
+            q_list.append(Q(classification__exact=filter_classification))
         if filter_lodged_from:
             date_from = datetime.strptime(filter_lodged_from, '%d/%m/%Y')
-            queryset = queryset.filter(lodged_on__gte=date_from)
+            q_list.append(Q(lodged_on__gte=date_from))
         if filter_lodged_to:
             date_to = datetime.strptime(filter_lodged_to, '%d/%m/%Y')
-            queryset = queryset.filter(lodged_on__lte=date_to)
+            q_list.append(Q(lodged_on__lte=date_to))
+
+        queryset = queryset.filter(reduce(operator.and_, q_list)) if len(q_list) else queryset
 
         serializer = CallEmailOptimisedSerializer(queryset, many=True)
         return Response(serializer.data)
@@ -119,6 +123,14 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @list_route(methods=['GET', ])    
+    def status_choices(self, request, *args, **kwargs):
+        res_obj = [] 
+        for choice in CallEmail.STATUS_CHOICES:
+            res_obj.append({'id': choice[0], 'display': choice[1]});
+        res_json = json.dumps(res_obj)
+        return HttpResponse(res_json, content_type='application/json')
 
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
@@ -591,18 +603,3 @@ class MapLayerViewSet(viewsets.ModelViewSet):
             return MapLayer.objects.filter(availability__exact=True)
         return MapLayer.objects.none()
 
-
-def call_email_status_choices(request):
-    res_obj = [] 
-    for choice in CallEmail.STATUS_CHOICES:
-        res_obj.append({'id': choice[0], 'display': choice[1]});
-    res_json = json.dumps(res_obj)
-    return HttpResponse(res_json, content_type='application/json')
-
-
-def call_email_classification_choices(request):
-    res_obj = []
-    for choice in Classification.NAME_CHOICES:
-        res_obj.append({'id': choice[0], 'display': choice[1]});
-    res_json = json.dumps(res_obj)
-    return HttpResponse(res_json, content_type='application/json')
