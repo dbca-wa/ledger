@@ -84,7 +84,7 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
         )
 
 
-class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer):
+class ExternalDTApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     activity_name_str = serializers.SerializerMethodField(read_only=True)
     issue_date = serializers.SerializerMethodField(read_only=True)
     start_date = serializers.SerializerMethodField(read_only=True)
@@ -124,13 +124,13 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
         return obj.licence_activity.name if obj.licence_activity else ''
 
     def get_issue_date(self, obj):
-        return obj.issue_date.strftime('%Y/%m/%d %H:%M') if obj.issue_date else ''
+        return obj.issue_date.strftime('%d/%m/%Y') if obj.issue_date else ''
 
     def get_start_date(self, obj):
-        return obj.start_date.strftime('%Y/%m/%d') if obj.start_date else ''
+        return obj.start_date.strftime('%d/%m/%Y') if obj.start_date else ''
 
     def get_expiry_date(self, obj):
-        return obj.expiry_date.strftime('%Y/%m/%d') if obj.expiry_date else ''
+        return obj.expiry_date.strftime('%d/%m/%Y') if obj.expiry_date else ''
 
     def get_activity_purpose_names(self, obj):
         return ','.join([p.short_name for p in obj.purposes])

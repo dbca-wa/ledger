@@ -181,9 +181,8 @@ export default {
                             let licence_category_id = full.current_application.category_id ? full.current_application.category_id : ''
                             links += `<a add-activity-purpose='${full.id}' org_id='${org_id}' proxy_id='${proxy_id}' licence_category_id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
                             links += `<a>Renew</a><br/>`
-                            if (vm.is_external) {
-                                links += `<a>Surrender</a><br/>`
-                            }
+                            links += `<a>Reactivate Renew</a><br/>`
+                            links += `<a>Surrender</a><br/>`
                             if (!vm.is_external) {
                                 links += `<a>Cancel</a><br/>`
                             }
@@ -321,6 +320,12 @@ export default {
                 var id = $(this).attr('renew-activity');
                 console.log('renew-activity: ' + id);
             });
+            // Reactivate Renew activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reactivate-renew-activity]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('reactivate-renew-activity');
+                console.log('reactivate-renew-activity: ' + id);
+            });
             // Surrender activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[surrender-activity]', function(e) {
                 e.preventDefault();
@@ -369,7 +374,7 @@ export default {
                 else {
                     // Open this row (the format() function would return the data to be shown)
                     var child_row = ''
-                    // Generate rows for each activity if internal
+                    // Generate rows for each activity
                     var activity_rows = ''
                     row.data()['current_activities'].forEach(function(activity) {
                         activity_rows += `
@@ -388,7 +393,11 @@ export default {
                                         activity_rows +=
                                             `<a renew-activity=` + activity['id'] + `>Renew</a></br>`;
                                     }
-                                    if (vm.is_external && ['can_surrender']) {
+                                    if (!vm.is_external && activity['can_reactivate_renew']) {
+                                        activity_rows +=
+                                            `<a reactivate-renew-activity=` + activity['id'] + `>Reactivate Renew</a></br>`;
+                                    }
+                                    if (activity['can_surrender']) {
                                         activity_rows +=
                                             `<a surrender-activity=` + activity['id'] + `>Surrender</a></br>`;
                                     }

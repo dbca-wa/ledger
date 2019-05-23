@@ -9,7 +9,7 @@ from wildlifecompliance.components.applications.serializers import (
     DTInternalApplicationSerializer,
     DTExternalApplicationSerializer,
     ApplicationSelectedActivitySerializer,
-    ExternalApplicationSelectedActivitySerializer
+    ExternalDTApplicationSelectedActivitySerializer
 )
 from rest_framework import serializers
 
@@ -71,7 +71,7 @@ class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
         source='licence_document._file.url')
     current_application = DTExternalApplicationSerializer(read_only=True)
     last_issue_date = serializers.SerializerMethodField(read_only=True)
-    current_activities = ExternalApplicationSelectedActivitySerializer(many=True, read_only=True)
+    current_activities = ExternalDTApplicationSelectedActivitySerializer(many=True, read_only=True)
 
     class Meta:
         model = WildlifeLicence
