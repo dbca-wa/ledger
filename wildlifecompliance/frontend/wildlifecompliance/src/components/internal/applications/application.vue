@@ -836,6 +836,7 @@ export default {
             this.$refs.proposed_licence.propose_issue.licence_activity_id=this.selected_activity_tab_id;
             this.$refs.proposed_licence.propose_issue.licence_activity_name=selectedTabTitle.text();
             this.$refs.proposed_licence.isModalOpen = true;
+            this.$refs.proposed_licence.preloadLastActivity();
         },
         toggleIssue:function(){
             this.save_wo();
