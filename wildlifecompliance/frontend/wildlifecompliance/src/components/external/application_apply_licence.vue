@@ -4,7 +4,7 @@
             <div class="col-sm-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Apply for a new licence
+                        <h3 class="panel-title">{{applicationTitle}}
                             <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                             </a>
@@ -16,12 +16,15 @@
                           
                             <div class="col-sm-12">
                                 <div class="row">
-                                    <label class="col-sm-4">Select the class of licence you wish to apply for:</label>
+                                    <label class="col-sm-4">
+                                        {{isAmendment ?
+                                        `Select the licence activity you wish to amend` :
+                                        `Select the class of licence you wish to apply for`}}:
+                                    </label>
                                 </div>
 
-                                
                                 <div class="margin-left-20">
-                                <div v-for="(category,index) in licence_categories" class="radio">
+                                <div v-for="(category,index) in visibleLicenceCategories" class="radio">
                                     <div class ="row">
                                         <div class="col-sm-9" >  
                                             <input type="radio"  :id="category.id" name="licence_category" v-model="licence_categories.id"  :value="category.id" @change="handleRadioChange($event,index)"> {{category.short_name}}
@@ -38,7 +41,14 @@
                                                             <div v-for="(purpose,index2) in type.purpose" class="checkbox purpose-clear-left">
 
                                                                 <div class ="col-sm-12">
-                                                                    <input type="checkbox" :value="purpose.id" :id="purpose.id" v-model="type.purpose[index2].selected" @change="handlePurposeCheckboxChange(index,$event)">{{purpose.name}}<span> ({{purpose.base_application_fee}} + {{purpose.base_licence_fee}})</span>
+                                                                    <input type="checkbox"
+                                                                        :disabled="isAmendment"
+                                                                        :value="purpose.id"
+                                                                        :id="purpose.id"
+                                                                        v-model="type.purpose[index2].selected"
+                                                                        @change="handlePurposeCheckboxChange(index,$event)">
+                                                                            {{purpose.name}}
+                                                                            <span> ({{purpose.base_application_fee}} + {{purpose.base_licence_fee}})</span>
                                                                 </div>
 
                                                             </div>
@@ -55,7 +65,7 @@
                                 </div>
                             </div>
                             <div class="col-sm-12">
-                                <button :disabled="behalf_of == '' && yourself == ''" @click.prevent="submit()" class="btn btn-primary pull-right" style="margin-left: 10px;">Continue</button>
+                                <button @click.prevent="submit()" class="btn btn-primary pull-right" style="margin-left: 10px;">Continue</button>
                                 <div class="pull-right" style="font-size: 18px;">
                                     <strong>Estimated application fee: {{application_fee | toCurrency}}</strong><br>
                                     <strong>Estimated licence fee: {{licence_fee | toCurrency}}</strong><br>
@@ -83,9 +93,7 @@ export default {
         licence_select : this.$route.params.licence_select,
         behalf_of_org : this.$route.params.org_select,
         behalf_of_proxy : this.$route.params.proxy_select,
-        behalf_of: '',
-        yourself : this.$route.params.yourself,
-        "application": null,
+        application: null,
         agent: {},
         activity :{
             id:null,
@@ -106,10 +114,6 @@ export default {
              }
             ]
         },
-        licence_category:{
-            id:null,
-            activity:[]
-        },
         "loading": [],
         form: null,
         pBody: 'pBody' + vm._uid,
@@ -120,13 +124,32 @@ export default {
   components: {
   },
   computed: {
+        applicationTitle: function() {
+            switch(this.licence_select) {
+                case 'new_activity':
+                    return 'Apply for a new activity';
+                break;
+                case 'amend_activity':
+                    return 'Amend one or more licensed activities';
+                break;
+                default:
+                    return 'Apply for a new licence';
+                break;
+            }
+        },
+        visibleLicenceCategories: function() {
+            return this.licence_categories;
+        },
+        isAmendment: function() {
+            return this.licence_select && this.licence_select === 'amend_activity'
+        }
   },
   methods: {
     submit: function() {
         let vm = this;
         swal({
             title: "Create Application",
-            text: "Are you sure you want to create a application ",
+            text: "Are you sure you want to create an application?",
             type: "question",
             showCancelButton: true,
             confirmButtonText: 'Accept'
@@ -163,8 +186,8 @@ export default {
         var input = $(vm.$refs.selected_activity_type)[0];
         if(vm.licence_categories[index].activity[index1].selected){
             for(var activity_index=0, len2=vm.licence_categories[index].activity[index1].purpose.length; activity_index<len2; activity_index++){
-                         vm.licence_categories[index].activity[index1].purpose[activity_index].selected= false;
-                            }
+                vm.licence_categories[index].activity[index1].purpose[activity_index].selected = this.isAmendment;
+            }
         }
     },
     handlePurposeCheckboxChange:function(index, event){
@@ -183,12 +206,7 @@ export default {
     },
     createApplication:function () {
         let vm = this;
-        // clear out licence class
-        vm.licence_category = {
-            id: null,
-            name: null,
-            activity: []
-        }
+
         let licence_purposes = [];
         let count_total_licence_categories = 0
         let count_total_activities = 0
@@ -201,11 +219,6 @@ export default {
 
             // if licence class selected
             if(vm.licence_categories[i].checked){
-
-                // set licence class information
-                vm.licence_category.id         = vm.licence_categories[i].id
-                vm.licence_category.name       = vm.licence_categories[i].name
-                vm.licence_category.short_name = vm.licence_categories[i].short_name
 
                 // loop through level 2 and find selected activity (checkboxes, one or more)
                 for(var j=0,_len2=vm.licence_categories[i].activity.length;j<_len2;j++){
@@ -221,30 +234,6 @@ export default {
 
                             // if activity selected
                             if(vm.licence_categories[i].activity[j].purpose[k].selected){
-
-                                // if this is the first level 3 item
-                                // start of list for the selected activity
-                                if(count_selected_purposes_this_loop == 0){
-
-                                    // add activity to the licence_category.activity list
-                                    // only do if at least one activity is selected (hence why it is in this loop)
-                                    vm.licence_category.activity.push({
-                                        id:         vm.licence_categories[i].activity[j].id,
-                                        name:       vm.licence_categories[i].activity[j].name,
-                                        short_name: vm.licence_categories[i].activity[j].short_name
-                                    })
-
-                                    // initialise activity list for selected activity
-                                    vm.licence_category.activity[count_total_activities].purpose = []
-                                }
-
-                                // add activity to the licence_category.activity.activity list
-                                vm.licence_category.activity[count_total_activities].purpose.push({
-                                    id:     vm.licence_categories[i].activity[j].purpose[k].id,
-                                    name:   vm.licence_categories[i].activity[j].purpose[k].name,
-                                    short_name:   vm.licence_categories[i].activity[j].purpose[k].short_name
-                                });
-
                                 count_selected_purposes_this_loop++;
                                 count_total_purposes++;
 
@@ -277,12 +266,12 @@ export default {
                 type: "error",
             })
         } else {
-            data.org_applicant=vm.behalf_of_org;
-            data.proxy_applicant=vm.behalf_of_proxy;
-            data.licence_category_data=vm.licence_category;
+            data.organisation_id=vm.behalf_of_org;
+            data.proxy_id=vm.behalf_of_proxy;
             data.application_fee=vm.application_fee;
             data.licence_fee=vm.licence_fee;
             data.licence_purposes=licence_purposes;
+            data.application_type = vm.licence_select;
             vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
                 vm.application = res.body;
                 vm.$router.push({
@@ -291,21 +280,36 @@ export default {
                 });
             }, err => {
                 console.log(err);
+                swal(
+                    'Application Error',
+                    helpers.apiVueResourceError(err),
+                    'error'
+                )
             });
         }
     },
     
   },
-  beforeRouteEnter:function(to,from,next){
-    let data = new FormData()
-    data.org_applicant = window.v_org_applicant;
+  mounted: function() {
     let initialisers = [
-        utils.fetchLicenceAvailablePurposes(data)
-    ]
+        utils.fetchLicenceAvailablePurposes({
+            "application_type": this.licence_select,
+            "proxy_id": this.behalf_of_proxy,
+            "organisation_id": this.behalf_of_org,
+        }),
+    ];
+
     Promise.all(initialisers).then(data => {
-        next(vm => {
-            vm.licence_categories = data[0]
-        });
+        this.licence_categories = data[0];
+    });
+  },
+  beforeRouteEnter:function(to,from,next){
+    next(vm => {
+        if(vm.licence_select == null) {
+            return vm.$router.push({
+                name: "apply_application",
+            });
+        }
     });
   },
 }

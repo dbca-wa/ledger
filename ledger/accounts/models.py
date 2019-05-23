@@ -364,6 +364,39 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             qs = qs.filter(permissions__content_type__app_label=app_label)
         return qs.first() if first else qs
 
+    def get_wildlifecompliance_proxy_details(self, request):
+        proxy_id = request.data.get(
+            "proxy_id",
+            request.GET.get("proxy_id")
+        )
+        organisation_id = request.data.get(
+            "organisation_id",
+            request.GET.get("organisation_id")
+        )
+        return self.validate_wildlifecompliance_proxy_details(proxy_id, organisation_id)
+
+    def validate_wildlifecompliance_proxy_details(self, proxy_id, organisation_id):
+        proxy_details = {
+            'proxy_id': proxy_id,
+            'organisation_id': organisation_id,
+        }
+
+        if not proxy_id and not organisation_id:
+            return proxy_details
+
+        # Only licensing officers can apply as a proxy
+        if not self.get_wildlifelicence_permission_group(
+            permission_codename='licensing_officer',
+            first=True
+        ):
+            proxy_details['proxy_id'] = None
+
+        user = EmailUser.objects.get(pk=proxy_id) if proxy_details['proxy_id'] else self
+        if organisation_id and not user.wildlifecompliance_organisations.filter(pk=organisation_id):
+            proxy_details['organisation_id'] = None
+
+        return proxy_details
+
     @property
     def is_dummy_user(self):
         return not self.email or self.email[-1 * self.dummy_email_suffix_len:] == self.dummy_email_suffix
