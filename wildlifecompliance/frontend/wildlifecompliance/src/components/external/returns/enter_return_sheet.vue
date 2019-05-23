@@ -5,49 +5,44 @@
     <Returns v-if="isReturnsLoaded">
     <div class="col-md-1" />
     <div class="col-md-8">
-          <template>
-            <!--div  class="tab-content" -->
-              <!--div :id="returnTab" class="tab-pane fade active in" -->
-                <div class="panel panel-default">
-                  <div class="panel-heading">
-                     <h3 class="panel-title">{{ sheetTitle }}
-                      <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
-                         <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                      </a>
-                    </h3>
-                  </div>
-                  <div class="panel-body panel-collapse in" :id="pdBody">
-                    <div class="col-sm-12">
-                        <div class="row">
-                          <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="">Activity Type:</label>
-                                <select class="form-control">
-                                    <option v-for="sa in sheet_activity_type" :value="sa">{{sa['label']}}</option>
-                                </select>
-                            </div>
-                          </div>
-                          <div class="col-md-6">
-                            <div class="form-group">
-                                <button class="btn btn-primary pull-right" @click.prevent="addSheetRow()" name="sheet_entry">New Entry</button>
-                            </div>
-                          </div>
-                        </div>
-                        <div class = "row">
-                          <div class="col-lg-12">
-                            <datatable ref="return_datatable" :id="datatable_id" :dtOptions="sheet_options" :dtHeaders="sheet_headers"/>
-                          </div>
-                        </div>
-                    <!-- End of Sheet Return -->
-                    </div>
+
+      <template>
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">{{ sheetTitle }}
+              <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
+                <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+              </a>
+            </h3>
+          </div>
+          <div class="panel-body panel-collapse in" :id="pdBody">
+            <div class="col-sm-12">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="">Activity Type:</label>
+                    <select class="form-control">
+                      <option v-for="sa in sheet_activity_type" :value="sa">{{sa['label']}}</option>
+                    </select>
                   </div>
                 </div>
-
-              <!--div-->
-            <!--div-->
-          </template>
-          <!-- End template for Return Tab -->
-
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <button class="btn btn-primary pull-right" @click.prevent="addSheetRow()" name="sheet_entry">New Entry</button>
+                  </div>
+                </div>
+              </div>
+              <div class = "row">
+                <div class="col-lg-12">
+                  <datatable ref="return_datatable" :id="datatable_id" :dtOptions="sheet_options" :dtHeaders="sheet_headers"/>
+                </div>
+              </div>
+              <!-- End of Sheet Return -->
+            </div>
+          </div>
+        </div>
+      </template>
+      <!-- End template for Return Tab -->
 
       <div class="row" style="margin-bottom:50px;">
         <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
@@ -60,6 +55,8 @@
           </div>
         </div>
       </div>
+      <!-- End of Footer -->
+
     </div>
     </Returns>
   </div>
@@ -93,16 +90,10 @@ export default {
     return {
         pdBody: 'pdBody' + vm._uid,
         datatable_id: 'return-datatable',
-        sel_spec: [],
-        fullSpeciesList: {'': ''},
-        //fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
-        //                  'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
-        returnTab: 'returnTab'+vm._uid,
         form: null,
+        species_cache: {},
         selectedSpecies: 'selectedSpecies',
         isModalOpen: false,
-        returnBtn: 'Submit',
-        newSpecies: null,
         sheetTitle: null,
         sheet_activity_type: [],
         sheet_headers:["Date","Activity","Qty","Total","Comments","Action"],
@@ -149,7 +140,7 @@ export default {
               }
             ],
             drawCallback: function() {
-              vm.sheetTitle = vm.fullSpeciesList[vm.returns.sheet_species]
+              vm.sheetTitle = vm.species_list[vm.returns.sheet_species]
             },
             processing: true,
             ordering: false,
@@ -179,7 +170,7 @@ export default {
      ...mapGetters([
         'isReturnsLoaded',
         'returns',
-        'species',
+        'species_list',
     ]),
     sheetURL: function(){
       return helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
@@ -199,10 +190,10 @@ export default {
     save: function(e) {
       this.form=document.forms.enter_return_sheet;
       var data = new FormData(this.form);
-      for (const speciesID in this.species) {
+      for (const speciesID in this.species_cache) {
         let speciesJSON = []
-        for (let i=0;i<this.species[speciesID].length;i++){
-          speciesJSON[i] = JSON.stringify(this.species[speciesID][i])
+        for (let i=0;i<this.species_cache[speciesID].length;i++){
+          speciesJSON[i] = JSON.stringify(this.species_cache[speciesID][i])
         }
         data.append(speciesID, speciesJSON)
       };
@@ -247,6 +238,7 @@ export default {
             vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
             vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
             vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
+            vm.$refs.sheet_entry.entrySpecies = vm.sheetTitle    ;
             vm.$refs.sheet_entry.entryActivity = vm.$refs.sheet_entry.row_of_data.data().activity;
             vm.$refs.sheet_entry.entryQty = vm.$refs.sheet_entry.row_of_data.data().qty;
             vm.$refs.sheet_entry.entryTotal = vm.$refs.sheet_entry.row_of_data.data().total;
@@ -269,15 +261,15 @@ export default {
           $('form').on('click', '.change-species', function(e) {
             e.preventDefault();
             let selected_id = $(this).attr('species_id');
-            if (vm.species[vm.returns.sheet_species] == null) {
-              // save currently displayed species json
-              vm.species[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.ajax.json()
+            if (vm.species_cache[vm.returns.sheet_species] == null) {
+              // cache currently displayed species json
+              vm.species_cache[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.ajax.json()
             }
             vm.returns.sheet_species = selected_id;
-            if (vm.species[selected_id] != null) {
+            if (vm.species_cache[selected_id] != null) {
               // species json previously loaded from ajax
               vm.$refs.return_datatable.vmDataTable.clear().draw()
-              vm.$refs.return_datatable.vmDataTable.rows.add(vm.species[selected_id])
+              vm.$refs.return_datatable.vmDataTable.rows.add(vm.species_cache[selected_id])
               vm.$refs.return_datatable.vmDataTable.draw()
             } else {
               // load species json from ajax

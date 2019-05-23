@@ -65,7 +65,6 @@
 </template>
 
 <script>
-//import $ from 'jquery'
 import modal from '@vue-utils/bootstrap-modal.vue'
 import alert from '@vue-utils/alert.vue'
 import {
@@ -92,6 +91,7 @@ export default {
             errorString: '',
             successString: '',
             success:false,
+            entrySpecies: '',
             entryDateTime: '',
             entryActivity: 'null',
             entryQty: 0,
@@ -107,9 +107,6 @@ export default {
             isPayable: false,
             isSubmitable: false,
             activityList: {'null': {'label': null}},
-            fullSpeciesList: {'':''},
-            //fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
-            //                  'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
         }
     },
     computed: {
@@ -118,7 +115,7 @@ export default {
         },
         title: function(){
             this.currentStock = +this.entryTotal;
-            return this.fullSpeciesList[this.speciesType] + '   Current stock: ' + this.currentStock;
+            return this.entrySpecies + '   Current stock: ' + this.currentStock;
         }
 
     },

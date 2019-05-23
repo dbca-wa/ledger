@@ -4,8 +4,8 @@
             <h3>Return: {{ returns.lodgement_number }}</h3>
             <div v-if="returns.format === 'sheet'">
                 <label>Species on Return:</label>
-                <div v-for="species in returns.sheet_species_list">
-                    <a class="change-species" :species_id="species" :href="'/external/return/sheet/'+returns.id+'/'+species"><h5>{{fullSpeciesList[species]}}</h5></a>
+                <div v-for="specie in returns.sheet_species_list">
+                    <a class="change-species" :species_id="specie" :href="'/external/return/sheet/'+returns.id+'/'+specie"><h5>{{species_list[specie]}}</h5></a>
                 </div>
             </div>
         </div>
@@ -34,10 +34,7 @@ export default {
   },
   data: function() {
     return {
-        fullSpeciesList: {'': ''},
-        //fullSpeciesList: {'S000001': 'Western Grey Kangaroo', 'S000002': 'Western Red Kangaroo',
-        //                  'S000003': 'Blue Banded Bee', 'S000004': 'Orange-Browed Resin Bee'},
-        returns_tab_id: 0,
+       returns_tab_id: 0,
     }
   },
   props:{
@@ -51,6 +48,7 @@ export default {
       'returns',
       'returns_tabs',
       'selected_returns_tab_id',
+      'species_list',
     ]),
     returnsData: function() {
         return this.returns;
