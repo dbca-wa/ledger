@@ -1,4 +1,5 @@
 import json
+import operator
 import traceback
 import os
 import base64
@@ -89,16 +90,19 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         filter_lodged_from = request.query_params.get('lodged_from', '')
         filter_lodged_to = request.query_params.get('lodged_to', '')
 
+        q_list = []
         if filter_status:
-            queryset = queryset.filter(status__exact=filter_status)
+            q_list.append(Q(status__exact=filter_status))
         if filter_classification:
-            queryset = queryset.filter(classification__exact=filter_classification)
+            q_list.append(Q(classification__exact=filter_classification))
         if filter_lodged_from:
             date_from = datetime.strptime(filter_lodged_from, '%d/%m/%Y')
-            queryset = queryset.filter(lodged_on__gte=date_from)
+            q_list.append(Q(lodged_on__gte=date_from))
         if filter_lodged_to:
             date_to = datetime.strptime(filter_lodged_to, '%d/%m/%Y')
-            queryset = queryset.filter(lodged_on__lte=date_to)
+            q_list.append(Q(lodged_on__lte=date_to))
+
+        queryset = queryset.filter(reduce(operator.and_, q_list)) if len(q_list) else queryset
 
         serializer = CallEmailOptimisedSerializer(queryset, many=True)
         return Response(serializer.data)
