@@ -18,8 +18,25 @@ from commercialoperator.components.main.models import Park
 from commercialoperator.components.bookings.context_processors import commercialoperator_url, template_context
 from commercialoperator.components.bookings.invoice_pdf import create_invoice_pdf_bytes
 from commercialoperator.components.bookings.confirmation_pdf import create_confirmation_pdf_bytes
-from commercialoperator.components.bookings.email import send_invoice_tclass_email_notification, send_confirmation_tclass_email_notification
-from commercialoperator.components.bookings.utils import create_booking, get_session_booking, set_session_booking, delete_session_booking, create_lines, checkout
+from commercialoperator.components.bookings.email import (
+    send_invoice_tclass_email_notification,
+    send_confirmation_tclass_email_notification,
+    send_application_fee_tclass_email_notification
+)
+from commercialoperator.components.bookings.utils import (
+    create_booking,
+    get_session_booking,
+    set_session_booking,
+    delete_session_booking,
+    create_lines,
+    checkout,
+    create_fee_lines,
+    get_session_application_invoice,
+    set_session_application_invoice,
+    delete_session_application_invoice
+)
+
+from commercialoperator.components.proposals.serializers import ProposalSerializer
 
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
 import json
@@ -37,18 +54,28 @@ logger = logging.getLogger('payment_checkout')
 class ApplicationFeeView(TemplateView):
     template_name = 'commercialoperator/booking/success.html'
 
-    def post(self, request, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
+    def get_object(self):
+        return get_object_or_404(Proposal, id=self.kwargs['proposal_pk'])
 
-        proposal_id = int(kwargs['proposal_pk'])
-        proposal = Proposal.objects.get(id=proposal_id)
+    def post(self, request, *args, **kwargs):
+
+        #proposal_id = int(kwargs['proposal_pk'])
+        #proposal = Proposal.objects.get(id=proposal_id)
+
+        proposal = self.get_object()
 
         try:
-            #booking = create_booking(request, proposal_id)
             with transaction.atomic():
-                set_session_booking(request.session,booking)
+                set_session_application_invoice(request.session, proposal)
                 lines = create_fee_lines(proposal)
-                checkout_response = checkout(request, proposal, lines, invoice_text='Application Fee')
+                checkout_response = checkout(
+                    request,
+                    proposal,
+                    lines,
+                    return_url_ns='fee_success',
+                    return_preload_url_ns='fee_success',
+                    invoice_text='Application Fee'
+                )
 
                 logger.info('{} built payment line item {} for Application Fee and handing over to payment gateway'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
                 return checkout_response
@@ -76,7 +103,14 @@ class MakePaymentView(TemplateView):
             with transaction.atomic():
                 set_session_booking(request.session,booking)
                 lines = create_lines(request)
-                checkout_response = checkout(request, proposal, lines, invoice_text='Payment Invoice')
+                checkout_response = checkout(
+                    request,
+                    proposal,
+                    lines,
+                    return_url_ns='public_booking_success',
+                    return_preload_url_ns='public_booking_success',
+                    invoice_text='Payment Invoice'
+                )
 
                 logger.info('{} built payment line items {} for Park Bookings and handing over to payment gateway'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
                 #import ipdb; ipdb.set_trace()
@@ -104,6 +138,55 @@ class MakePaymentView(TemplateView):
             raise
 
 
+class ApplicationFeeSuccessView(TemplateView):
+    template_name = 'commercialoperator/booking/success_fee.html'
+
+    def get(self, request, *args, **kwargs):
+        print (" APPLICATION FEE SUCCESS ")
+
+        context = template_context(self.request)
+        basket = None
+        proposal = get_session_application_invoice(request.session)
+
+        if self.request.user.is_authenticated():
+            basket = Basket.objects.filter(status='Submitted', owner=request.user).order_by('-id')[:1]
+        else:
+            basket = Basket.objects.filter(status='Submitted', owner=booking.proposal.submitter).order_by('-id')[:1]
+
+        order = Order.objects.get(basket=basket[0])
+        invoice = Invoice.objects.get(order_number=order.number)
+        invoice_ref = invoice.reference
+        #book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
+#        if invoice.payment_status != 'paid' and invoice.payment_status != 'over_paid':
+#            proposal.fee_invoice_reference = invoice_ref
+#            proposal.processing_status = Proposal.PROCESSING_STATUS_WITH_ASSESSOR
+#            proposal.customer_status = Proposal.CUSTOMER_STATUS_WITH_ASSESSOR
+#            proposal.save()
+#        else:
+#            logger.error('Invoice payment status is {}'.format(invoice.payment_status))
+#            raise
+
+        print ("APPLICATION FEE")
+        try:
+            recipient = proposal.applicant.email
+            submitter = proposal.applicant
+        except:
+            recipient = proposal.submitter.email
+            submitter = proposal.submitter
+        #import ipdb; ipdb.set_trace()
+        send_application_fee_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+
+        #delete_session_booking(request.session)
+
+        context.update({
+            'lodgement_number': proposal.lodgement_number,
+            'proposal_id': proposal.id,
+            'submitter': submitter,
+            'fee_invoice': invoice
+        })
+        return render(request, self.template_name, context)
+
+
 class BookingSuccessView(TemplateView):
     template_name = 'commercialoperator/booking/success.html'
 
@@ -127,9 +210,12 @@ class BookingSuccessView(TemplateView):
         print ("BOOKING")
 
         try:
-            recipient = booking.proposal.applicant.email
+            recipient = proposal.applicant.email
+            submitter = proposal.applicant
         except:
-            recipient = booking.proposal.submitter.email
+            recipient = proposal.submitter.email
+            submitter = proposal.submitter
+
         #import ipdb; ipdb.set_trace()
         send_invoice_tclass_email_notification(request, booking, invoice, recipients=[recipient])
         send_confirmation_tclass_email_notification(request, booking, invoice, recipients=[recipient])
@@ -137,7 +223,8 @@ class BookingSuccessView(TemplateView):
         #delete_session_booking(request.session)
 
         context.update({
-            'booking': booking,
+            'booking_id': booking.id,
+            'submitter': submitter,
             'book_inv': [book_inv]
         })
         return render(request, self.template_name, context)

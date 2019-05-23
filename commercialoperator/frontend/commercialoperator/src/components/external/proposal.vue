@@ -46,18 +46,12 @@
                 <input type='hidden' name="proposal_id" :value="1" />
 
                 <div class="row" style="margin-bottom: 50px">
-                        <div v-if="proposal && !proposal.readonly && !proposal.fee_paid" class="container">
+                        <div v-if="proposal && !proposal.readonly" class="container">
                           <p class="pull-right" style="margin-top:5px;">
                             <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                             <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                           <input type="button" @click.prevent="submit" class="btn btn-primary" value="Pay and Submit" :disabled="!proposal.training_completed"/>
-
-                            <!--<form :action="application_fee_url" method="post" name="fee_payment" @submit.prevent="fee_payment()" novalidate>-->
-                            <!--
-                            <form :action="application_fee_url" method="post" name="fee_payment" novalidate>
-                                <input type="button" @click.prevent="submit" class="btn btn-primary" value="Pay and Submit"/>
-                            </form>
-                            -->
+                            <!--<input type="button" @click.prevent="submit" class="btn btn-primary" value="Pay and Submit" :disabled="!proposal.training_completed"/>-->
+                            <input type="button" @click.prevent="submit" class="btn btn-primary" value="Pay and Submit"/>
 
                             <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
                           </p>
@@ -305,12 +299,11 @@ export default {
         return vm.missing_fields.length
     },
 
-
     submit: function(){
         let vm = this;
         let formData = new FormData(vm.form);
         formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
-      formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
+        formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
         formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
 
         var num_missing_fields = vm.validate()
@@ -333,12 +326,54 @@ export default {
             showCancelButton: true,
             confirmButtonText: 'Submit'
         }).then(() => {
+            vm.save_wo_confirm();
+        }).then(() => {
+            /* redirect to the Django post() methon in ApplicationFeeView */
+            vm.post_and_redirect(vm.application_fee_url, {'csrfmiddlewaretoken' : vm.csrf_token});
+        },(error) => {
+        });
+    },
+
+   _submit: function(){
+        let vm = this;
+        let formData = new FormData(vm.form);
+        formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
+        formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
+        formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
+
+        var num_missing_fields = vm.validate()
+        if (num_missing_fields > 0) {
+            vm.highlight_missing_fields()
+            var top = ($('#error').offset() || { "top": NaN }).top;
+            $('html, body').animate({
+                scrollTop: top
+            }, 1);
+            return false;
+        }
+
+        // remove the confirm prompt when navigating away from window (on button 'Submit' click)
+        vm.submitting = true;
+
+        swal({
+            title: "Submit Proposal",
+            text: "Are you sure you want to submit this proposal?",
+            type: "question",
+            showCancelButton: true,
+            confirmButtonText: 'Submit'
+        }).then(() => {
+            //vm.$http.post(vm.application_fee_url, formData)
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/submit'),formData).then(res=>{
+            //vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposal_submit,vm.proposal.id+'/submit'),formData).then(res=>{
                 vm.proposal = res.body;
-                vm.$router.push({
-                    name: 'submit_proposal',
-                    params: { proposal: vm.proposal}
-                });
+                vm.$http.post(vm.application_fee_url, formData)
+                //location.href="/external/"
+                //location.href = vm.application_fee_url;
+                //vm.$router.push({
+                //    name: 'submit_proposal',
+                //    params: { proposal: vm.proposal}
+                //});
+            //}.then(res=>{
+            //    vm.$http.post(vm.application_fee_url, formData)
             },err=>{
                 swal(
                     'Submit Error',
@@ -346,20 +381,28 @@ export default {
                     'error'
                 )
             });
-        //}).then(() => {
-        //    this.fee_payment();
         },(error) => {
         });
     },
 
-    fee_payment: function () {
-        var isValid = true;
-        var form = document.forms.fee_payment;
-        if (isValid) {
-            form.submit();
-        }
-    },
+    post_and_redirect: function(url, postData) {
+        /* http.post and ajax do not allow redirect from Django View (post method), 
+           this function allows redirect by mimicking a form submit.
 
+           usage:  vm.post_and_redirect(vm.application_fee_url, {'csrfmiddlewaretoken' : vm.csrf_token});
+        */
+        var postFormStr = "<form method='POST' action='" + url + "'>";
+
+        for (var key in postData) {
+            if (postData.hasOwnProperty(key)) {
+                postFormStr += "<input type='hidden' name='" + key + "' value='" + postData[key] + "'>";
+            }
+        }
+        postFormStr += "</form>";
+        var formElement = $(postFormStr);
+        $('body').append(formElement);
+        $(formElement).submit();
+    },
 
   },
 

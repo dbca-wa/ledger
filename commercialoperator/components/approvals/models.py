@@ -109,9 +109,12 @@ class Approval(RevisionedMixin):
                 self.proxy_applicant.last_name)
         else:
             #return None
-            return "{} {}".format(
-                self.submitter.first_name,
-                self.submitter.last_name)
+            try:
+                return "{} {}".format(
+                    self.submitter.first_name,
+                    self.submitter.last_name)
+            except:
+                return "Applicant Not Set"
 
 
 #    @property

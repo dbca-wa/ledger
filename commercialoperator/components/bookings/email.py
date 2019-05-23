@@ -28,12 +28,12 @@ class ConfirmationTClassSendNotificationEmail(TemplateEmailBase):
     html_template = 'commercialoperator/emails/bookings/tclass/send_confirmation_notification.html'
     txt_template = 'commercialoperator/emails/bookings/tclass/send_confirmation_notification.txt'
 
-def send_application_fee_tclass_email_notification(request, booking, invoice, recipients):
+def send_application_fee_tclass_email_notification(request, proposal, invoice, recipients):
     email = ApplicationFeeTClassSendNotificationEmail()
     #url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
 
     context = {
-        'booking_number': booking.booking_number,
+        'lodgement_number': proposal.lodgement_number,
         #'url': url,
     }
 
@@ -43,8 +43,11 @@ def send_application_fee_tclass_email_notification(request, booking, invoice, re
 
     msg = email.send(recipients, attachments=[attachment], context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
-    _log_proposal_email(msg, booking.proposal, sender=sender)
-    _log_org_email(msg, booking.proposal.applicant, booking.proposal.submitter, sender=sender)
+    _log_proposal_email(msg, proposal, sender=sender)
+#    try:
+#        _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+#    except:
+#        _log_org_email(msg, proposal.submitter, proposal.submitter, sender=sender)
 
 
 def send_invoice_tclass_email_notification(request, booking, invoice, recipients):

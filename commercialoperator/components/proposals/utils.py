@@ -486,7 +486,7 @@ def save_trail_section_activity_data(instance,select_trails_activities, request)
                                                             else:
                                                                 activity=Activity.objects.get(id=act)
                                                                 ProposalTrailSectionActivity.objects.create(trail_section=section, activity=activity)
-                                                                instance.log_user_action(ProposalUserAction.ACTION_LINK_ACTIVITY_SECTION.format(activity.id,section.section.id, trail.trail.id),request)   
+                                                                instance.log_user_action(ProposalUserAction.ACTION_LINK_ACTIVITY_SECTION.format(activity.id,section.section.id, trail.trail.id),request)
                                                         except:
                                                             raise
                                             #Just to check the new activities. Next 3 lines can be deleted.
@@ -668,7 +668,11 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
 #            }
             data = {
             }
-            schema=request.data.get('schema')
+
+            try:
+                schema=request.data.get('schema')
+            except:
+                schema=request.POST.get('schema')
             import json
             sc=json.loads(schema)
             #import ipdb; ipdb.set_trace()
@@ -679,9 +683,16 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
             serializer.save()
             #select_parks_activities=sc['selected_parks_activities']
             #select_trails_activities=sc['selected_trails_activities']
-            select_parks_activities=json.loads(request.data.get('selected_parks_activities'))
-            select_trails_activities=json.loads(request.data.get('selected_trails_activities'))
-            marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
+
+            try:
+                select_parks_activities=json.loads(request.data.get('selected_parks_activities'))
+                select_trails_activities=json.loads(request.data.get('selected_trails_activities'))
+                marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
+            except:
+                select_parks_activities=json.loads(request.POST.get('selected_parks_activities'))
+                select_trails_activities=json.loads(request.POST.get('selected_trails_activities'))
+                marine_parks_activities=json.loads(request.POST.get('marine_parks_activities'))
+
             other_details=ProposalOtherDetails.objects.update_or_create(proposal=instance)
             # instance.save()
             serializer = SaveProposalSerializer(instance, data, partial=True)
@@ -706,14 +717,14 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
             if select_parks_activities:
                 try:
 
-                    save_park_activity_data(instance, select_parks_activities, request)                        
+                    save_park_activity_data(instance, select_parks_activities, request)
 
                 except:
                     raise
             if select_trails_activities:
                 try:
 
-                    save_trail_section_activity_data(instance, select_trails_activities, request)                    
+                    save_trail_section_activity_data(instance, select_trails_activities, request)
 
                 except:
                     raise
@@ -740,29 +751,37 @@ def save_assessor_data(instance,request,viewset):
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
             #Save activities
-            schema=request.data.get('schema')
+            try:
+                schema=request.data.get('schema')
+            except:
+                schema=request.POST.get('schema')
             import json
             sc=json.loads(schema)
             #select_parks_activities=sc['selected_parks_activities']
             #select_trails_activities=sc['selected_trails_activities']
             #import ipdb; ipdb.set_trace()
-            select_parks_activities=json.loads(request.data.get('selected_parks_activities'))
-            select_trails_activities=json.loads(request.data.get('selected_trails_activities'))
-            marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
+            try:
+                select_parks_activities=json.loads(request.data.get('selected_parks_activities'))
+                select_trails_activities=json.loads(request.data.get('selected_trails_activities'))
+                marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
+            except:
+                select_parks_activities=json.loads(request.POST.get('selected_parks_activities'))
+                select_trails_activities=json.loads(request.POST.get('selected_trails_activities'))
+                marine_parks_activities=json.loads(request.POST.get('marine_parks_activities'))
             #print select_parks_activities, selected_trails_activities
             if select_parks_activities:
                 try:
-                    save_park_activity_data(instance, select_parks_activities, request)                        
+                    save_park_activity_data(instance, select_parks_activities, request)
                 except:
                     raise
             if select_trails_activities:
                 try:
-                    save_trail_section_activity_data(instance, select_trails_activities, request)                    
+                    save_trail_section_activity_data(instance, select_trails_activities, request)
                 except:
                     raise
             if marine_parks_activities:
                 try:
-                    save_park_zone_activity_data(instance, marine_parks_activities, request)                    
+                    save_park_zone_activity_data(instance, marine_parks_activities, request)
                 except:
                     raise
             # Save Documents

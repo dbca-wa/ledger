@@ -331,12 +331,18 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     APPLICANT_TYPE_PROXY = 'PRX'
     APPLICANT_TYPE_SUBMITTER = 'SUB'
 
-    CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'),
-                               ('with_assessor', 'Under Review'),
-                               ('amendment_required', 'Amendment Required'),
-                               ('approved', 'Approved'),
-                               ('declined', 'Declined'),
-                               ('discarded', 'Discarded'),
+    CUSTOMER_STATUS_TEMP = 'temp'
+    CUSTOMER_STATUS_WITH_ASSESSOR = 'with_assessor'
+    CUSTOMER_STATUS_AMENDMENT_REQUIRED = 'amendment_required'
+    CUSTOMER_STATUS_APPROVED = 'approved'
+    CUSTOMER_STATUS_DECLINED = 'declined'
+    CUSTOMER_STATUS_DISCARDED = 'discarded'
+    CUSTOMER_STATUS_CHOICES = ((CUSTOMER_STATUS_TEMP, 'Temporary'), ('draft', 'Draft'),
+                               (CUSTOMER_STATUS_WITH_ASSESSOR, 'Under Review'),
+                               (CUSTOMER_STATUS_AMENDMENT_REQUIRED, 'Amendment Required'),
+                               (CUSTOMER_STATUS_APPROVED, 'Approved'),
+                               (CUSTOMER_STATUS_DECLINED, 'Declined'),
+                               (CUSTOMER_STATUS_DISCARDED, 'Discarded'),
                                )
 
     # List of statuses from above that allow a customer to edit an application.
@@ -872,6 +878,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     def submit(self,request,viewset):
         from commercialoperator.components.proposals.utils import save_proponent_data
         with transaction.atomic():
+            import ipdb; ipdb.set_trace()
             if self.can_user_edit:
                 # Save the data first
                 save_proponent_data(self,request,viewset)

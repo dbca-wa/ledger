@@ -7,7 +7,7 @@ from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.conf import settings
@@ -410,6 +410,67 @@ class VersionableModelViewSetMixin(viewsets.ModelViewSet):
         # check pagination
         return Response(_version_serializer.data)
 
+class ProposalSubmitViewSet(viewsets.ModelViewSet):
+    queryset = Proposal.objects.none()
+    serializer_class = ProposalSerializer
+    lookup_field = 'id'
+
+    @property
+    def excluded_type(self):
+        try:
+            return ApplicationType.objects.get(name='E Class')
+        except:
+            return ApplicationType.objects.none()
+
+    def get_queryset(self):
+        user = self.request.user
+        #import ipdb; ipdb.set_trace()
+        if is_internal(self.request): #user.is_authenticated():
+            return Proposal.objects.all().exclude(application_type=self.excluded_type)
+            #return Proposal.objects.filter(region__isnull=False)
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
+            queryset =  Proposal.objects.filter( Q(org_applicant_id__in = user_orgs) | Q(submitter = user) )
+            #queryset =  Proposal.objects.filter(region__isnull=False).filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
+            return queryset.exclude(application_type=self.excluded_type)
+        logger.warn("User is neither customer nor internal user: {} <{}>".format(user.get_full_name(), user.email))
+        return Proposal.objects.none()
+
+    def update(self, request, *args, **kwargs):
+        response = super(ProposalSubmitViewSet, self).create(request, *args, **kwargs)
+        # here may be placed additional operations for
+        # extracting id of the object and using reverse()
+        import ipdb; ipdb.set_trace()
+        return HttpResponseRedirect(redirect_to='https://google.com')
+
+#    def perform_create(self, serializer):
+#        serializer.partial = True
+#        serializer.save(created_by=self.request.user)
+
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def submit(self, request, *args, **kwargs):
+        try:
+            import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            #instance.submit(request,self)
+            #instance.tenure = search_tenure(instance)
+            #instance.save()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+            #return redirect(reverse('external'))
+            #return HttpResponseRedirect(redirect_to='https://google.com')
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
 
 class ProposalViewSet(viewsets.ModelViewSet):
@@ -931,6 +992,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
+            import ipdb; ipdb.set_trace()
             instance = self.get_object()
             instance.submit(request,self)
             instance.tenure = search_tenure(instance)
