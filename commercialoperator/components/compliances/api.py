@@ -61,7 +61,7 @@ class CompliancePaginatedViewSet(viewsets.ModelViewSet):
             return Compliance.objects.all().exclude(processing_status='discarded')
         elif is_customer(self.request):
             user_orgs = [org.id for org in self.request.user.commercialoperator_organisations.all()]
-            queryset =  Compliance.objects.filter( Q(proposal__applicant_id__in = user_orgs) | Q(proposal__submitter = self.request.user) ).exclude(processing_status='discarded')
+            queryset =  Compliance.objects.filter( Q(proposal__org_applicant_id__in = user_orgs) | Q(proposal__submitter = self.request.user) ).exclude(processing_status='discarded')
             return queryset
         return Compliance.objects.none()
 
@@ -90,8 +90,10 @@ class CompliancePaginatedViewSet(viewsets.ModelViewSet):
         # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation
         applicant_id = request.GET.get('org_id')
         if applicant_id:
-            qs = qs.filter(proposal__applicant_id=applicant_id)
-
+            qs = qs.filter(proposal__org_applicant_id=applicant_id)
+        submitter_id = request.GET.get('submitter_id', None)
+        if submitter_id:
+            qs = qs.filter(proposal__submitter_id=submitter_id)
         self.paginator.page_size = qs.count()
         result_page = self.paginator.paginate_queryset(qs, request)
         serializer = ComplianceSerializer(result_page, context={'request':request}, many=True)
@@ -108,7 +110,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
             return Compliance.objects.all().exclude(processing_status='discarded')
         elif is_customer(self.request):
             user_orgs = [org.id for org in self.request.user.commercialoperator_organisations.all()]
-            queryset =  Compliance.objects.filter( Q(proposal__applicant_id__in = user_orgs) | Q(proposal__submitter = self.request.user) ).exclude(processing_status='discarded')
+            queryset =  Compliance.objects.filter( Q(proposal__org_applicant_id__in = user_orgs) | Q(proposal__submitter = self.request.user) ).exclude(processing_status='discarded')
             return queryset
         return Compliance.objects.none()
 
@@ -117,7 +119,10 @@ class ComplianceViewSet(viewsets.ModelViewSet):
         # Filter by org
         org_id = request.GET.get('org_id',None)
         if org_id:
-            queryset = queryset.filter(proposal__applicant_id=org_id)
+            queryset = queryset.filter(proposal__org_applicant_id=org_id)
+        submitter_id = request.GET.get('submitter_id', None)
+        if submitter_id:
+            qs = qs.filter(proposal__submitter_id=submitter_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 

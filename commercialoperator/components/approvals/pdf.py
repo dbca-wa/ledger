@@ -178,14 +178,22 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     #Organization details
 
     #import ipdb; ipdb.set_trace()
-    address = proposal.applicant.organisation.postal_address
-    email = proposal.applicant.organisation.organisation_set.all().first().contacts.all().first().email
+    address = proposal.applicant_address
+    # address = proposal.applicant_address
+    if proposal.org_applicant:
+        email = proposal.org_applicant.organisation.organisation_set.all().first().contacts.all().first().email
+    else:
+        email= proposal.submitter.email    
     elements.append(Paragraph(email,styles['BoldLeft']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph(_format_name(approval.applicant),styles['BoldLeft']))
     elements.append(Paragraph(address.line1, styles['BoldLeft']))
     elements.append(Paragraph(address.line2, styles['BoldLeft']))
     elements.append(Paragraph(address.line3, styles['BoldLeft']))
+    # if proposal.org_applicant:
+    #     elements.append(Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['BoldLeft']))
+    # else:
+    #     elements.append(Paragraph('%s %s' % (address.state, address.postcode), styles['BoldLeft']))
     elements.append(Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['BoldLeft']))
     elements.append(Paragraph(address.country.name, styles['BoldLeft']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
@@ -476,11 +484,22 @@ def _create_renewal(renewal_buffer, approval, proposal):
     delegation = []
     # proponent details
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    address = proposal.applicant.organisation.postal_address
+    #address = proposal.applicant.organisation.postal_address
+    address = proposal.applicant_address
     address_paragraphs = [Paragraph(address.line1, styles['Left']), Paragraph(address.line2, styles['Left']),
                           Paragraph(address.line3, styles['Left']),
                           Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['Left']),
                           Paragraph(address.country.name, styles['Left'])]
+    # if proposal.org_applicant:
+    #     address_paragraphs = [Paragraph(address.line1, styles['Left']), Paragraph(address.line2, styles['Left']),
+    #                       Paragraph(address.line3, styles['Left']),
+    #                       Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['Left']),
+    #                       Paragraph(address.country.name, styles['Left'])]
+    # else:
+    #     address_paragraphs = [Paragraph(address.line1, styles['Left']), Paragraph(address.line2, styles['Left']),
+    #                       Paragraph(address.line3, styles['Left']),
+    #                       Paragraph('%s %s' % (address.state, address.postcode), styles['Left']),
+    #                       Paragraph(address.country.name, styles['Left'])]                
     delegation.append(Table([[[Paragraph('Licensee:', styles['BoldLeft']), Paragraph('Address', styles['BoldLeft'])],
                               [Paragraph(_format_name(approval.applicant),
                                          styles['Left'])] + address_paragraphs]],

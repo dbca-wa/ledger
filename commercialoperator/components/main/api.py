@@ -175,7 +175,7 @@ class RequiredDocumentViewSet(viewsets.ReadOnlyModelViewSet):
 class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
-    
+
 
 class PaymentViewSet(viewsets.ModelViewSet):
     #import ipdb; ipdb.set_trace()
@@ -186,7 +186,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def create(self, request, *args, **kwargs):
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         response = super(PaymentViewSet, self).create(request, *args, **kwargs)
         # here may be placed additional operations for
         # extracting id of the object and using reverse()
@@ -262,7 +262,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         return lines
 
     def checkout(self, request, proposal, lines, invoice_text=None, vouchers=[], internal=False):
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         basket_params = {
             'products': lines,
             'vouchers': vouchers,

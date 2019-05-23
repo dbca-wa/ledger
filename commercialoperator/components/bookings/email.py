@@ -70,7 +70,7 @@ def send_confirmation_tclass_email_notification(request, booking, invoice, recip
     email = ConfirmationTClassSendNotificationEmail()
     #url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
 
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
     context = {
         'booking_number': booking.booking_number,
         #'url': url,

@@ -67,9 +67,9 @@
               <!-- <div class="tab-pane fade show active" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">  -->
               <div class="tab-pane fade" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">
                   <div v-if="is_external">
-                    <Profile :isApplication="true"></Profile>
+                    <Profile :isApplication="true" v-if="applicantType == 'SUB'"></Profile>
               
-                    <Organisation :org_id="proposal.applicant" :isApplication="true"></Organisation> 
+                    <Organisation :org_id="proposal.org_applicant" :isApplication="true" v-if="applicantType == 'ORG'"></Organisation> 
                   </div>
                   <div v-else>
                     <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant>
@@ -172,6 +172,11 @@
             Profile,
             Organisation,
             Assessment
+        },
+        computed:{
+          applicantType: function(){
+            return this.proposal.applicant_type;
+        },
         },
         methods:{
         },

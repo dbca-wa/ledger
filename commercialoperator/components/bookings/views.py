@@ -38,7 +38,7 @@ class ApplicationFeeView(TemplateView):
     template_name = 'commercialoperator/booking/success.html'
 
     def post(self, request, *args, **kwargs):
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
 
         proposal_id = int(kwargs['proposal_pk'])
         proposal = Proposal.objects.get(id=proposal_id)
@@ -51,7 +51,6 @@ class ApplicationFeeView(TemplateView):
                 checkout_response = checkout(request, proposal, lines, invoice_text='Application Fee')
 
                 logger.info('{} built payment line item {} for Application Fee and handing over to payment gateway'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
-                #import ipdb; ipdb.set_trace()
                 return checkout_response
 
         except Exception, e:
@@ -67,7 +66,7 @@ class MakePaymentView(TemplateView):
     template_name = 'commercialoperator/booking/success.html'
 
     def post(self, request, *args, **kwargs):
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
 
         proposal_id = int(kwargs['proposal_pk'])
         proposal = Proposal.objects.get(id=proposal_id)
@@ -131,7 +130,7 @@ class BookingSuccessView(TemplateView):
             recipient = booking.proposal.applicant.email
         except:
             recipient = booking.proposal.submitter.email
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         send_invoice_tclass_email_notification(request, booking, invoice, recipients=[recipient])
         send_confirmation_tclass_email_notification(request, booking, invoice, recipients=[recipient])
 

@@ -13,7 +13,7 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <strong>Submitted by</strong><br/>
-                                {{ proposal.submitter }}
+                                {{ proposal.submitter.first_name }} {{ proposal.submitter.last_name }}
                             </div>
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Lodged on</strong><br/>
@@ -56,7 +56,7 @@
                                     </select>
                                     -->
 
-                                    <select :disabled="!isFinalised || proposal.can_user_edit" ref="referral_recipient_groups" class="form-control">
+                                    <select :disabled="  proposal.can_user_edit || isFinalised" ref="referral_recipient_groups" class="form-control">
                                         <option value="null"></option>
                                         <option v-for="group in referral_recipient_groups" :value="group">{{group}}</option>
                                     </select>
@@ -571,23 +571,20 @@ export default {
         },
         sendReferral: function(){
             let vm = this;
-            let formData = new FormData(vm.form); //save data before completing referral
+            
             vm.sendingReferral = true;
-            vm.$http.post(vm.proposal_form_url,formData).then(res=>{
-                //let data = {'email':vm.selected_referral, 'text': vm.referral_text};
-                //vm.sendingReferral = true;
-                //vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,(vm.referral.id+'/send_referral')),JSON.stringify(data),{
-                let data = {'email_group':vm.selected_referral, 'text': vm.referral_text};
+            let data = {'email_group':vm.selected_referral, 'text': vm.referral_text};
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assesor_send_referral')),JSON.stringify(data),{
                 emulateJSON:true
                 }).then((response) => {
                 vm.sendingReferral = false;
                 vm.referral = response.body;
-                vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
+                // vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
                 swal(
                     'Referral Sent',
                     //'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
-                    'The referral has been sent to '+vm.referral_recipient_groups.find(d => d.email == vm.selected_referral).name,
+                    // 'The referral has been sent to '+vm.referral_recipient_groups.find(d => d.email == vm.selected_referral).name,
+                    'The referral has been sent to '+vm.selected_referral,
                     'success'
                 )
                 $(vm.$refs.referral_recipient_groups).val(null).trigger("change");
@@ -604,10 +601,40 @@ export default {
                 vm.selected_referral = '';
                 vm.referral_text = '';
                 });
+            //let formData = new FormData(vm.form); //save data before completing referral
+            // vm.$http.post(vm.proposal_form_url,formData).then(res=>{
+                
+            //     let data = {'email_group':vm.selected_referral, 'text': vm.referral_text};
+            //     vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assesor_send_referral')),JSON.stringify(data),{
+            //     emulateJSON:true
+            //     }).then((response) => {
+            //     vm.sendingReferral = false;
+            //     vm.referral = response.body;
+            //     vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
+            //     swal(
+            //         'Referral Sent',
+            //         //'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
+            //         'The referral has been sent to '+vm.referral_recipient_groups.find(d => d.email == vm.selected_referral).name,
+            //         'success'
+            //     )
+            //     $(vm.$refs.referral_recipient_groups).val(null).trigger("change");
+            //     vm.selected_referral = '';
+            //     vm.referral_text = '';
+            //  }, (error) => {
+            //     console.log(error);
+            //     swal(
+            //         'Referral Error',
+            //         helpers.apiVueResourceError(error),
+            //         'error'
+            //     )
+            //     vm.sendingReferral = false;
+            //     vm.selected_referral = '';
+            //     vm.referral_text = '';
+            //     });
             
              
-             },err=>{
-             });
+            //  },err=>{
+            //  });
 
         },
         remindReferral:function(r){
@@ -710,14 +737,10 @@ export default {
                 showCancelButton: true,
                 confirmButtonText: 'Submit'
             }).then(() => { 
-                let formData = new FormData(vm.form);
-                vm.$http.post(vm.proposal_form_url,formData).then(res=>{
-                    
-                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete'),JSON.stringify(data),{
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete'),JSON.stringify(data),{
                 emulateJSON:true
                 }).then(res => {
                     vm.referral = res.body;
-                    vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
                 },
                 error => {
                     swal(
@@ -726,9 +749,25 @@ export default {
                         'error'
                     )
                 });
+                // let formData = new FormData(vm.form);
+                // vm.$http.post(vm.proposal_form_url,formData).then(res=>{
+                    
+                //     vm.$http.post(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete'),JSON.stringify(data),{
+                // emulateJSON:true
+                // }).then(res => {
+                //     vm.referral = res.body;
+                //     vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
+                // },
+                // error => {
+                //     swal(
+                //         'Referral Error',
+                //         helpers.apiVueResourceError(error),
+                //         'error'
+                //     )
+                // });
                 
-                 },err=>{
-                 });
+                //  },err=>{
+                //  });
 
                /* vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,vm.$route.params.referral_id+'/complete')).then(res => {
                     vm.referral = res.body;
@@ -751,6 +790,7 @@ export default {
         let vm = this;
         vm.fetchProposalGroupMembers();
         vm.fetchDeparmentUsers();
+        vm.fetchReferralRecipientGroups();
         //vm.fetchreferrallist()
         
     },
@@ -776,7 +816,7 @@ export default {
           Vue.http.get(helpers.add_endpoint_json(api_endpoints.referrals,to.params.referral_id)).then(res => {
               next(vm => {
                 vm.referral = res.body;
-                vm.referral.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                vm.referral.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 //vm.fetchreferrallist(vm.referral.id);
               });
             },

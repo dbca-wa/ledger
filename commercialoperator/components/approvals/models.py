@@ -81,6 +81,7 @@ class Approval(RevisionedMixin):
     expiry_date = models.DateField()
     surrender_details = JSONField(blank=True,null=True)
     suspension_details = JSONField(blank=True,null=True)
+    submitter = models.ForeignKey(EmailUser, on_delete=models.PROTECT, blank=True, null=True, related_name='commercialoperator_approvals')
     org_applicant = models.ForeignKey(Organisation,on_delete=models.PROTECT, blank=True, null=True, related_name='org_approvals')
     proxy_applicant = models.ForeignKey(EmailUser,on_delete=models.PROTECT, blank=True, null=True, related_name='proxy_approvals')
     extracted_fields = JSONField(blank=True, null=True)
@@ -107,7 +108,10 @@ class Approval(RevisionedMixin):
                 self.proxy_applicant.first_name,
                 self.proxy_applicant.last_name)
         else:
-            return None
+            #return None
+            return "{} {}".format(
+                self.submitter.first_name,
+                self.submitter.last_name)
 
 
 #    @property
@@ -132,7 +136,8 @@ class Approval(RevisionedMixin):
         elif self.proxy_applicant:
             return "proxy_applicant"
         else:
-            return None
+            #return None
+            return "submitter"
 
     @property
     def applicant_id(self):
@@ -142,7 +147,8 @@ class Approval(RevisionedMixin):
         elif self.proxy_applicant:
             return self.proxy_applicant.id
         else:
-            return None
+            #return None
+            return self.submitter.id
 
     @property
     def region(self):
