@@ -1140,6 +1140,9 @@ export default {
                 vm.proposal = res.body;
                 vm.original_proposal = helpers.copyObject(res.body);
                 vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
+                vm.proposal.selected_trails_activities=[];
+                vm.proposal.selected_parks_activities=[];
+                vm.proposal.marine_parks_activities=[];
               });
             },
             err => {
