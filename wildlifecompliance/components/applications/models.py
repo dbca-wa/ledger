@@ -1310,7 +1310,7 @@ class Application(RevisionedMixin):
         from wildlifecompliance.components.licences.models import WildlifeLicence
         current_date = timezone.now().date()
         try:
-            return WildlifeLicence.objects.get(
+            return WildlifeLicence.objects.filter(
                 Q(licence_category=self.get_licence_category()),
                 Q(current_application__org_applicant_id=self.org_applicant_id) if self.org_applicant_id else (
                     Q(current_application__submitter_id=self.proxy_applicant_id
@@ -1321,7 +1321,7 @@ class Application(RevisionedMixin):
                     current_application__selected_activities__expiry_date__gte=current_date,
                     current_application__selected_activities__activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT,
                 )
-            ), False
+            ).order_by('-id').distinct().first(), False
         except WildlifeLicence.DoesNotExist:
             return WildlifeLicence.objects.create(
                 current_application=self,
@@ -1361,7 +1361,6 @@ class Application(RevisionedMixin):
                             original_issue_date = latest_activity.original_issue_date
                             start_date = latest_activity.start_date
                             expiry_date = latest_activity.expiry_date
-
                         selected_activity.issue_date = timezone.now()
                         selected_activity.updated_by = request.user
                         selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
@@ -1909,8 +1908,13 @@ class ApplicationSelectedActivity(models.Model):
     @property
     def purposes(self):
         from wildlifecompliance.components.licences.models import LicencePurpose
+        activity_chain = self.application.get_activity_chain(
+            licence_activity_id=self.licence_activity_id,
+            activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+        )
+        application_ids = set([activity.application_id for activity in activity_chain] + [self.application_id])
         return LicencePurpose.objects.filter(
-            application__id=self.application_id,
+            application__id__in=application_ids,
             licence_activity_id=self.licence_activity_id
         )
 
