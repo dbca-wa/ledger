@@ -210,11 +210,11 @@ class BookingSuccessView(TemplateView):
         print ("BOOKING")
 
         try:
-            recipient = proposal.applicant.email
-            submitter = proposal.applicant
+            recipient = booking.proposal.applicant.email
+            submitter = booking.proposal.applicant
         except:
-            recipient = proposal.submitter.email
-            submitter = proposal.submitter
+            recipient = booking.proposal.submitter.email
+            submitter = booking.proposal.submitter
 
         #import ipdb; ipdb.set_trace()
         send_invoice_tclass_email_notification(request, booking, invoice, recipients=[recipient])

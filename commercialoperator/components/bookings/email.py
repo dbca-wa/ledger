@@ -66,7 +66,7 @@ def send_invoice_tclass_email_notification(request, booking, invoice, recipients
     msg = email.send(recipients, attachments=[attachment], context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, booking.proposal, sender=sender)
-    _log_org_email(msg, booking.proposal.applicant, booking.proposal.submitter, sender=sender)
+    #_log_org_email(msg, booking.proposal.applicant, booking.proposal.submitter, sender=sender)
 
 
 def send_confirmation_tclass_email_notification(request, booking, invoice, recipients):
@@ -86,7 +86,7 @@ def send_confirmation_tclass_email_notification(request, booking, invoice, recip
     msg = email.send(recipients, attachments=[attachment], context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, booking.proposal, sender=sender)
-    _log_org_email(msg, booking.proposal.applicant, booking.proposal.submitter, sender=sender)
+    #_log_org_email(msg, booking.proposal.applicant, booking.proposal.submitter, sender=sender)
 
 
 def send_proposal_approval_email_notification(proposal,request):

@@ -603,7 +603,8 @@ class SaveProposalSerializer(BaseProposalSerializer):
 
 class ApplicantSerializer(serializers.ModelSerializer):
     from commercialoperator.components.organisations.serializers import OrganisationAddressSerializer
-    address = OrganisationAddressSerializer()
+    address = OrganisationAddressSerializer(read_only=True)
+    #address = OrganisationAddressSerializer()
     class Meta:
         model = Organisation
         fields = (
