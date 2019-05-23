@@ -266,7 +266,7 @@ import FormSection from '@/components/forms/section.vue'
 import Group from '@/components/forms/group.vue'
 import Radio from '@/components/forms/radio.vue'
 import Conditions from '@/components/forms/conditions.vue'
-import SelectConditions from '@/components/forms/select-conditions.vue'
+// import SelectConditions from '@/components/forms/select-conditions.vue'
 import Checkbox from '@/components/forms/checkbox.vue'
 import Declaration from '@/components/forms/declarations.vue'
 import File from '@/components/forms/call_email_file.vue'
@@ -290,7 +290,7 @@ const ComplianceRendererBlock = {
       TextField,
       Group,
       SelectBlock,
-      SelectConditions,
+    //   SelectConditions,
       HelpText,
       HelpTextUrl,
       CommentBlock,
