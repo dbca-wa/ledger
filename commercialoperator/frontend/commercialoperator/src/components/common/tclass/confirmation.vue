@@ -34,6 +34,9 @@
             }
         },
         data:function () {
+            return {
+                
+            }
         },
         computed: {
             fee_invoice_url: function(){
