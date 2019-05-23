@@ -1,6 +1,8 @@
+import traceback
 from django.db.models import Q
-from rest_framework import viewsets
-from rest_framework.decorators import list_route
+from django.core.exceptions import ValidationError
+from rest_framework import viewsets, serializers
+from rest_framework.decorators import list_route, detail_route
 from rest_framework.response import Response
 from datetime import datetime, timedelta
 import pytz
@@ -8,6 +10,9 @@ from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.licences.models import (
     WildlifeLicence,
     LicenceCategory
+)
+from wildlifecompliance.components.applications.serializers import (
+    ExternalApplicationSelectedActivitySerializer
 )
 from wildlifecompliance.components.licences.serializers import (
     WildlifeLicenceSerializer,
@@ -19,7 +24,6 @@ from wildlifecompliance.components.applications.models import (
     Application,
     ApplicationSelectedActivity
 )
-
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
@@ -247,6 +251,23 @@ class LicenceViewSet(viewsets.ModelViewSet):
         queryset = list(set(qs))
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    @detail_route(methods=['GET', ])
+    def activities(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.current_activities
+            serializer = ExternalApplicationSelectedActivitySerializer(qs, many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
 
 class LicenceCategoryViewSet(viewsets.ModelViewSet):

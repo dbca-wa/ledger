@@ -469,7 +469,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.assessments
             serializer = AssessmentSerializer(qs, many=True)
-            print(qs)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -866,8 +865,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             qs = instance.get_proposed_decisions(request)
-            # qs = instance.decisions.filter(action='propose_issue')
-            # print(qs)
             serializer = ApplicationProposedIssueSerializer(qs, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -1001,22 +998,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-
-    # @detail_route(methods=['post'])
-    # @renderer_classes((JSONRenderer,))
-    # def assess_save(self, request, *args, **kwargs):
-    #     try:
-    #         instance = self.get_object()
-    #         save_assess_data(instance, request, self)
-    #         return redirect(reverse('external'))
-    #     except serializers.ValidationError:
-    #         print(traceback.print_exc())
-    #         raise
-    #     except ValidationError as e:
-    #         raise serializers.ValidationError(repr(e.error_dict))
-    #     except Exception as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(str(e))
 
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
@@ -1477,7 +1458,6 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
-            # print(request.data)
             amend_data = self.request.data
             reason = amend_data.pop('reason')
             application_id = amend_data.pop('application')

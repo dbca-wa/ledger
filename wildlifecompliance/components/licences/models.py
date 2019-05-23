@@ -198,10 +198,6 @@ class WildlifeLicence(models.Model):
             return int(licence_number_max.split('L')[1]) + 1
 
     @property
-    def activities(self):
-        return self.current_application.activities
-
-    @property
     def reference(self):
         return '{}-{}'.format(self.licence_number, self.licence_sequence)
 
