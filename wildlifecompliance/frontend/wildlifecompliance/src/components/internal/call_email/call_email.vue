@@ -67,9 +67,7 @@
                     <label class="col-sm-1">No</label>
                 </div></div>
 
-                <div class="col-sm-12 form-group"><div class="row">
-                  <SearchPerson />
-                </div></div>
+                <SearchPerson />
               </FormSection>
 
               <FormSection :formCollapse="false" label="Location" Index="1">

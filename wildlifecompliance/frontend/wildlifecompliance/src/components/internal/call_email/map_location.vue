@@ -58,12 +58,15 @@
 </template>
 
 <script>
+import L from 'leaflet';
+import 'leaflet-measure';  /* This should be imported after leaflet */
 import Awesomplete from 'awesomplete';
+import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
+
 import 'bootstrap/dist/css/bootstrap.css';
 import 'awesomplete/awesomplete.css';
-import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-measure/dist/leaflet-measure.css';
 
 export default {
     name: "map-leaflet",
@@ -90,8 +93,6 @@ export default {
         }),
     },
     mounted: function(){
-        console.log("this.call_email.location");
-        console.log(this.call_email.location);
         this.$nextTick(function() {
             console.debug('Start loading map');
             this.initMap();
@@ -332,6 +333,13 @@ export default {
 
             this.map.on('click', this.onClick);
             this.setBaseLayer('osm');
+            let measureControl = new L.Control.Measure({ 
+                position: 'topleft',
+                primaryLengthUnit: 'meters',
+                activeColor: '#ff7f50',
+                completedColor: '#228b22'
+            });
+            measureControl.addTo(this.map);
         },
         /* this function stores the coordinates into the vuex, then call refresh marker function */
         relocateMarker: function(latlng){ 
