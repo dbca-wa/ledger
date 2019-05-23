@@ -1,5 +1,5 @@
 <template lang="html">
-    <div class="container" >
+    <div class="container" v-if="application">
         <div class="row">
             <div class="col-sm-12">
                 <div class="panel panel-default">
@@ -18,22 +18,22 @@
                                 </div>
                                 <div class="radio">
                                     <label>
-                                      <input type="radio" name="select_licence" v-model="licence_select" value="New_licence" > apply for a new licence?
+                                      <input type="radio" name="select_licence" v-model="licence_select" value="new_licence" > apply for a new licence?
                                     </label>
                                 </div>
                                 <div class="radio">
                                     <label>
-                                      <input type="radio" name="select_licence" v-model="licence_select" value="New_activity"> apply for a new licensed activity on your licence?
+                                      <input type="radio" name="select_licence" v-model="licence_select" value="new_activity"> apply for a new licensed activity on your licence?
                                     </label>
                                 </div>
                                 <div class="radio">
                                      <label>
-                                      <input type="radio" name="select_licence" v-model="licence_select" value="Amend_activity"> amend one or more licensed activities on your licence?
+                                      <input type="radio" name="select_licence" v-model="licence_select" value="amend_activity"> amend one or more licensed activities on your licence?
                                     </label>
                                 </div>
                                 <div class="radio">
                                     <label>
-                                      <input type="radio" name="select_licence" v-model="licence_select" value="Renew_activity"> renew one or more licensed activities on your licence?
+                                      <input type="radio" name="select_licence" v-model="licence_select" value="renew_activity"> renew one or more licensed activities on your licence?
                                     </label>
                                 </div>
                             </div>
@@ -61,7 +61,8 @@ export default {
     return {
         "application": null,
         agent: {},
-        behalf_of: '',
+        behalf_of_org : this.$route.params.org_select,
+        behalf_of_proxy : this.$route.params.proxy_select,
         current_user: {
             wildlifecompliance_organisations: []
         },
@@ -77,51 +78,43 @@ export default {
     isLoading: function() {
       return this.loading.length > 0
     },
-    hasOrgs: function() {
-        return this.current_user.wildlifecompliance_organisations && this.current_user.wildlifecompliance_organisations.length > 0 ? true: false;
-    },
-    org: function() {
-        let vm = this;
-        if (vm.behalf_of != '' || vm.behalf_of != 'other'){
-            return vm.current_user.wildlifecompliance_organisations.find(org => parseInt(org.id) === parseInt(vm.behalf_of)).name;
-        }
-        return '';
-    }
   },
   methods: {
     submit: function() {
-        let vm = this;
-        vm.$router.push({
-            name: "apply_application_organisation",
-            params: { licence_select:vm.licence_select }
+        this.$router.push({
+            name: "apply_application_licence",
+            params: {
+                licence_select: this.licence_select,
+                org_select: this.behalf_of_org
+            }
         });
     },
-    createApplication:function () {
-        let vm = this;
-        vm.$http.post('/api/application.json',{
-            behalf_of: vm.behalf_of
-        }).then(res => {
-              vm.application = res.body;
-              
-          },
-          err => {
-            console.log(err);
-          });
-    }
   },
   mounted: function() {
     let vm = this;
     vm.form = document.forms.new_application;
   },
   beforeRouteEnter: function(to, from, next) {
-    let initialisers = [
-        utils.fetchCurrentUser(),
-        //utils.fetchApplication(to.params.application_id)
-    ]
     next(vm => {
+        const initialisers = [
+            utils.fetchCurrentUser(),
+            utils.fetchCurrentActiveLicenceApplication({
+                    "proxy_id": vm.behalf_of_proxy,
+                    "organisation_id": vm.behalf_of_org,
+                }),
+        ]
         Promise.all(initialisers).then(data => {
             vm.current_user = data[0];
-            //vm.application = data[1];
+            if(data[1].application == null) {
+                return vm.$router.push({
+                    name: "apply_application_licence",
+                    params: {
+                        licence_select: 'new_licence',
+                        org_select: vm.behalf_of_org
+                    }
+                });
+            }
+            vm.application = data[1].application;
         })
     })
   }

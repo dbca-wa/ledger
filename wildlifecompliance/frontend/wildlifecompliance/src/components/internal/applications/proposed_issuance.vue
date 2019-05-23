@@ -18,7 +18,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group" v-if="canEditLicenceDates">
                                 <div class="row">
                                     <div class="col-sm-3">
                                         
@@ -34,7 +34,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group" v-if="canEditLicenceDates">
                                 <div class="row">
                                     <div class="col-sm-3">
                                         <label class="control-label pull-left" for="Name">Proposed Expiry Date</label>
@@ -131,6 +131,9 @@ export default {
             'hasRole',
             'licenceActivities',
         ]),
+        canEditLicenceDates: function() {
+            return this.application.application_type && this.application.application_type.id !== 'amend_activity';
+        },
         showError: function() {
             var vm = this;
             return vm.errors;
@@ -209,10 +212,10 @@ export default {
         addFormValidations: function() {
             let vm = this;
             vm.validation_form = $(vm.form).validate({
-                rules: {
-                    start_date:"required",
-                    due_date:"required",
-                    licence_details:"required",
+                rules:  {
+                    start_date: { required: this.canEditLicenceDates },
+                    due_date: { required: this.canEditLicenceDates },
+                    licence_details: "required",
                 },
                 messages: {
                 },

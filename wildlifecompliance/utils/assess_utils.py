@@ -191,10 +191,6 @@ def pdflatex(request, application):
     logger.debug("Running: {0}".format(" ".join(cmd)))
     subprocess.call(cmd)
 
-    application.pdf_licence.name = url + filename
-    application.pdf_licence._file = url + filename
-    application.save()
-
     logger.debug("Reading PDF output from {}".format(filename))
     # response.write(open(directory + filename).read())
     # logger.debug("Finally: returning PDF response.")
