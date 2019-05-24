@@ -760,8 +760,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'can_edit_activities',
                 'reversion_ids',
                 'assessor_assessment',
-                'referral_assessments'
-                'fee_invoice_url'
+                'referral_assessments',
+                'fee_invoice_url',
                 'fee_paid'
                 )
         read_only_fields=('documents','requirements')
