@@ -232,12 +232,12 @@ class LicenceViewSet(viewsets.ModelViewSet):
         if submitter_id:
             queryset = queryset.filter(current_application__submitter_id=submitter_id)
         serializer = self.get_serializer(queryset, many=True)
-        # Display only the relevant Activity if activity_id param set
+        # Display only the relevant Activity if id and activity_id param set
         licence_id = request.GET.get('id', None)
         activity_id = request.GET.get('activity_id', None)
         if activity_id and licence_id:
-            queryset = queryset.get(id=licence_id).current_activities.filter(id=activity_id)
-            serializer = ExternalApplicationSelectedActivitySerializer(queryset, many=True)
+            queryset = queryset.get(id=licence_id).current_activities.get(id=activity_id)
+            serializer = ExternalApplicationSelectedActivitySerializer(queryset)
         return Response(serializer.data)
 
     @list_route(methods=['GET', ])
@@ -257,6 +257,32 @@ class LicenceViewSet(viewsets.ModelViewSet):
         queryset = list(set(qs))
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    @list_route(methods=['GET', ])
+    def cancel_selected_activity(self, request, *args, **kwargs):
+        try:
+            licence_id = request.GET.get('id', None)
+            activity_id = request.GET.get('activity_id', None)
+            if activity_id and licence_id:
+                instance = self.get_object()
+                if not request.user.has_perm('wildlifecompliance.licensing_officer'):
+                    raise serializers.ValidationError(
+                        'You are not authorised to cancel licenced activities')
+                instance.cancel(request)
+                serializer = ExternalApplicationSelectedActivitySerializer(instance)
+                return Response(serializer.data)
+            else:
+                raise serializers.ValidationError(
+                    'Licence ID and Activity ID must be specified')
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
 
 class LicenceCategoryViewSet(viewsets.ModelViewSet):

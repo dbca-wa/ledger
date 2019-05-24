@@ -1272,6 +1272,11 @@ class Application(RevisionedMixin):
                         activity.proposed_start_date = latest_activity.start_date
                         activity.proposed_end_date = latest_activity.expiry_date
                         activity.save()
+
+                        # Update the current (now old) activity
+                        latest_activity.updated_by = request.user
+                        latest_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
+                        latest_activity.save()
                 else:
                     ApplicationSelectedActivity.objects.filter(
                         application_id=self.id,
@@ -1837,13 +1842,15 @@ class ApplicationSelectedActivity(models.Model):
     ACTIVITY_STATUS_CANCELLED = 'cancelled'
     ACTIVITY_STATUS_SURRENDERED = 'surrendered'
     ACTIVITY_STATUS_SUSPENDED = 'suspended'
+    ACTIVITY_STATUS_REPLACED = 'replaced'
     ACTIVITY_STATUS_CHOICES = (
         (ACTIVITY_STATUS_DEFAULT, 'Default'),
         (ACTIVITY_STATUS_CURRENT, 'Current'),
         (ACTIVITY_STATUS_EXPIRED, 'Expired'),
         (ACTIVITY_STATUS_CANCELLED, 'Cancelled'),
         (ACTIVITY_STATUS_SURRENDERED, 'Surrendered'),
-        (ACTIVITY_STATUS_SUSPENDED, 'Suspended')
+        (ACTIVITY_STATUS_SUSPENDED, 'Suspended'),
+        (ACTIVITY_STATUS_REPLACED, 'Replaced')
     )
 
     PROCESSING_STATUS_DRAFT = 'draft'
@@ -1900,6 +1907,15 @@ class ApplicationSelectedActivity(models.Model):
     expiry_date = models.DateField(blank=True, null=True)
     is_inspection_required = models.BooleanField(default=False)
 
+    def __str__(self):
+        return "Application {id} Selected Activity: {activity_id}".format(
+            id=self.application_id,
+            activity_id=self.licence_activity_id
+        )
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
     @staticmethod
     def is_valid_status(status):
         return filter(lambda x: x[0] == status,
@@ -1920,6 +1936,7 @@ class ApplicationSelectedActivity(models.Model):
 
     @property
     def can_renew(self):
+        # Returns true if the activity can be included in a Renewal Application
         return ApplicationSelectedActivity.get_activities_for_application_type(
             Application.APPLICATION_TYPE_RENEWAL,
             activity_ids=[self.id]
@@ -1927,6 +1944,7 @@ class ApplicationSelectedActivity(models.Model):
 
     @property
     def can_amend(self):
+        # Returns true if the activity can be included in a Amendment Application
         return ApplicationSelectedActivity.get_activities_for_application_type(
             Application.APPLICATION_TYPE_AMENDMENT,
             activity_ids=[self.id]
@@ -1949,7 +1967,16 @@ class ApplicationSelectedActivity(models.Model):
         ).count() > 0
 
     @property
+    def can_suspend(self):
+        # TODO: clarify business logic for when an activity is allowed to be suspended.
+        return ApplicationSelectedActivity.get_activities_for_application_type(
+            Application.APPLICATION_TYPE_NEW_LICENCE,
+            activity_ids=[self.id]
+        ).count() > 0
+
+    @property
     def can_reissue(self):
+        # Returns true if the activity has expired, excluding if it was surrendered or cancelled
         current_date = timezone.now().date()
         return ApplicationSelectedActivity.objects.filter(
             Q(id=self.id, expiry_date__isnull=False),
@@ -1959,11 +1986,13 @@ class ApplicationSelectedActivity(models.Model):
             activity_status__in=[
                 ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
                 ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
             ]
         ).count() > 0
 
     @property
     def can_reinstate(self):
+        # Returns true if the activity has not yet expired and is currently suspended
         current_date = timezone.now().date()
         return self.expiry_date and\
             self.expiry_date >= current_date and\
@@ -1985,17 +2014,15 @@ class ApplicationSelectedActivity(models.Model):
                 ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
                 ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED,
                 ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
             ]
         ).distinct()
 
-    def __str__(self):
-        return "Application {id} Selected Activity: {activity_id}".format(
-            id=self.application_id,
-            activity_id=self.licence_activity_id
-        )
+    def cancel(self, request):
+        self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED
+        self.updated_by = request.user
+        self.save()
 
-    class Meta:
-        app_label = 'wildlifecompliance'
 
 
 @python_2_unicode_compatible

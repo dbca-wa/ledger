@@ -382,7 +382,7 @@ export default {
                                 <td>${activity['activity_name_str']}</td>
                                 <td>${activity['activity_purpose_names'].
                                     replace(/(?:\r\n|\r|\n|,)/g, '<br>')}</td>
-                                <td>${activity['processing_status']['name']}</td>
+                                <td>${activity['activity_status']['name']}</td>
                                 <td>${activity['expiry_date']}</td>
                                 <td>`;
                                     if (activity['can_amend']) {
