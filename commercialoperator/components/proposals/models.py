@@ -1015,9 +1015,9 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         #Create assessor checklist with the current assessor_list type questions
                         #Assessment instance already exits then skip.
                         try:
-                            referral_assessment=ProposalAssessment.objects.get(proposal=self,referral_group=referral_group, referral_assessment=True)
+                            referral_assessment=ProposalAssessment.objects.get(proposal=self,referral_group=referral_group, referral_assessment=True, referral=referral)
                         except ProposalAssessment.DoesNotExist:
-                            referral_assessment=ProposalAssessment.objects.create(proposal=self,referral_group=referral_group, referral_assessment=True)
+                            referral_assessment=ProposalAssessment.objects.create(proposal=self,referral_group=referral_group, referral_assessment=True, referral=referral)
                             checklist=ChecklistQuestion.objects.filter(list_type='referral_list', obsolete=False)
                             for chk in checklist:
                                 try:
@@ -2518,6 +2518,16 @@ class Referral(RevisionedMixin):
                             sent_from=2,
                             text=referral_text
                         )
+                        # try:
+                        #     referral_assessment=ProposalAssessment.objects.get(proposal=self,referral_group=referral_group, referral_assessment=True, referral=referral)
+                        # except ProposalAssessment.DoesNotExist:
+                        #     referral_assessment=ProposalAssessment.objects.create(proposal=self,referral_group=referral_group, referral_assessment=True, referral=referral)
+                        #     checklist=ChecklistQuestion.objects.filter(list_type='referral_list', obsolete=False)
+                        #     for chk in checklist:
+                        #         try:
+                        #             chk_instance=ProposalAssessmentAnswer.objects.get(question=chk, assessment=referral_assessment)
+                        #         except ProposalAssessmentAnswer.DoesNotExist:
+                        #             chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=referral_assessment) 
                     # Create a log entry for the proposal
                     self.proposal.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.proposal.id,'{}({})'.format(user.get_full_name(),user.email)),request)
                     # Create a log entry for the organisation

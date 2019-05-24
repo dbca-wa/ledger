@@ -3,7 +3,7 @@
         <div class="row">
             <div class="col-sm-12">
                 <div class="row">
-                    <div v-if="proposal && proposal.id" class="col-sm-offset-3 col-sm-6 borderDecoration">
+                    <div v-if="isProposal" class="col-sm-offset-3 col-sm-6 borderDecoration">
                         <strong>Your proposal has been successfully submitted.</strong>
                         <br/>
                         <table>
@@ -47,6 +47,9 @@ export default {
   components: {
   },
   computed: {
+    isProposal: function(){
+      return this.proposal && this.proposal.id ? true : false;
+    }
   },
   methods: {
   },
