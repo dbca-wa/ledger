@@ -192,9 +192,7 @@ class CompliancePermissionCollector(PermissionCollector):
         """
         A mapping of permission name to permission instance. If the permission does not exist, it is created.
         """
-        # import ipdb; ipdb.set_trace()
         default_permissions = self.default_objects()
-        print(default_permissions)
         actual = {}
 
         for permission_name, config in default_permissions.items():
@@ -240,7 +238,6 @@ class CompliancePermissionCollector(PermissionCollector):
                     ))
 
             actual[permission_name] = permission
-        print(actual)
 
         return actual
 
@@ -250,16 +247,12 @@ class ComplianceGroupCollector(PermissionCollector):
     COLLECTION_SOURCE = 'COMPLIANCE_PERMISSION_GROUPS'
 
     def get_or_create_group(self, group_name, config):
-        # import ipdb; ipdb.set_trace()
         created = None
-        print(group_name)
-        print(config)
         if settings.GROUP_PREFIX and settings.GROUP_PREFIX not in group_name:
             group_name = "{prefix} - {name}".format(
                 prefix=settings.GROUP_PREFIX,
                 name=group_name
             )
-        print(group_name)
         group = CompliancePermissionGroup.objects.filter(name=group_name).first()
         if not group:
             base_group = Group.objects.filter(name=group_name).first()
@@ -302,7 +295,6 @@ class ComplianceGroupCollector(PermissionCollector):
                     ))
                     raise 
 
-        print(group)
         return group
 
     def get_or_create_models(self):
