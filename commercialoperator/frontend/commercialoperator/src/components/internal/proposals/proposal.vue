@@ -241,7 +241,7 @@
                                             </table>
                                         </div>
 
-                                        <div v-else>
+                                        <div v-else class="col-sm-12">
                                             <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="proposal.can_user_edit" @click.prevent="withQAOfficer()">Send to QA Officer</button>
                                         </div>
                                     </div>
