@@ -193,13 +193,22 @@ class ApprovalSerializer(serializers.ModelSerializer):
         return None
 
     def get_applicant(self,obj):
-        return obj.applicant.name if isinstance(obj.applicant, Organisation) else obj.applicant
+        try:
+            return obj.applicant.name if isinstance(obj.applicant, Organisation) else obj.applicant
+        except:
+            return None
 
     def get_applicant_type(self,obj):
-        return obj.applicant_type
+        try:
+            return obj.applicant_type
+        except:
+            return None
 
     def get_applicant_id(self,obj):
-        return obj.applicant_id
+        try:
+            return obj.applicant.id
+        except:
+            return None
 
     def get_can_renew(self,obj):
         return obj.can_renew

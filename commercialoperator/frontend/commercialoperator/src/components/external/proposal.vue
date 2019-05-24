@@ -50,8 +50,7 @@
                           <p class="pull-right" style="margin-top:5px;">
                             <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                             <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                            <!--<input type="button" @click.prevent="submit" class="btn btn-primary" value="Pay and Submit" :disabled="!proposal.training_completed"/>-->
-                            <input type="button" @click.prevent="submit" class="btn btn-primary" value="Pay and Submit"/>
+                            <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed"/>
 
                             <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
                           </p>
@@ -124,7 +123,11 @@ export default {
 
   },
   methods: {
-    save: function(e) {
+    submit_text: function() {
+      let vm = this;
+      return vm.proposal.fee_paid ? 'Resubmit' : 'Pay and Submit';
+    },
+    set_formData: function(e) {
       let vm = this;
       //vm.form=document.forms.new_proposal;
       let formData = new FormData(vm.form);
@@ -133,6 +136,19 @@ export default {
       formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
       formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
       formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
+
+      return formData;
+    },
+    save: function(e) {
+      let vm = this;
+      //vm.form=document.forms.new_proposal;
+      let formData = vm.set_formData()
+
+//      let formData = new FormData(vm.form);
+      //console.log('land activities', vm.proposal.selected_parks_activities);
+//      formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
+//      formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
+//      formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
 
       vm.$http.post(vm.proposal_form_url,formData).then(res=>{
           swal(
@@ -156,13 +172,30 @@ export default {
 
     save_wo_confirm: function(e) {
       let vm = this;
-      let formData = new FormData(vm.form);
-      formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
-      formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
-      formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
+      let formData = vm.set_formData()
+
+//      let formData = new FormData(vm.form);
+//      formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
+//      formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
+//      formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
       vm.$http.post(vm.proposal_form_url,formData);
     },
 
+    save_and_redirect: function(e) {
+      let vm = this;
+      let formData = vm.set_formData()
+
+//      let formData = new FormData(vm.form);
+//      formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
+//      formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
+//      formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
+
+      vm.$http.post(vm.proposal_form_url,formData).then(res=>{
+          /* after the above save, redirect to the Django post() method in ApplicationFeeView */
+          vm.post_and_redirect(vm.application_fee_url, {'csrfmiddlewaretoken' : vm.csrf_token});
+      },err=>{
+      });
+    },
 
     setdata: function(readonly){
       this.proposal_readonly = readonly;
@@ -301,10 +334,12 @@ export default {
 
     submit: function(){
         let vm = this;
-        let formData = new FormData(vm.form);
-        formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
-        formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
-        formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
+        let formData = vm.set_formData()
+
+//        let formData = new FormData(vm.form);
+//        formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
+//        formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
+//        formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
 
         var num_missing_fields = vm.validate()
         if (num_missing_fields > 0) {
@@ -326,10 +361,25 @@ export default {
             showCancelButton: true,
             confirmButtonText: 'Submit'
         }).then(() => {
-            vm.save_wo_confirm();
-        }).then(() => {
-            /* redirect to the Django post() methon in ApplicationFeeView */
-            vm.post_and_redirect(vm.application_fee_url, {'csrfmiddlewaretoken' : vm.csrf_token});
+            if (!vm.proposal.fee_paid) {
+                vm.save_and_redirect();
+
+            } else {
+                /* just save and submit - no payment required (probably application was pushed back by assessor for amendment */
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/submit'),formData).then(res=>{
+                    vm.proposal = res.body;
+                    vm.$router.push({
+                        name: 'submit_proposal',
+                        params: { proposal: vm.proposal}
+                    });
+                },err=>{
+                    swal(
+                        'Submit Error',
+                        helpers.apiVueResourceError(err),
+                        'error'
+                    )
+                });
+            }
         },(error) => {
         });
     },

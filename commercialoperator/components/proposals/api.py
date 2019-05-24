@@ -992,7 +992,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             instance.submit(request,self)
             instance.tenure = search_tenure(instance)
@@ -1297,11 +1297,13 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 comms = serializer.save()
 
                 # Save the files
+                #import ipdb; ipdb.set_trace()
                 documents_qs = instance.onhold_documents.filter(input_name='on_hold_file', visible=True)
                 for f in documents_qs:
-                    document = comms.documents.create()
-                    document.name = f.name
-                    document._file = f._file #.strip('/media')
+                    document = comms.documents.create(_file=f._file, name=f.name)
+                    #document = comms.documents.create()
+                    #document.name = f.name
+                    #document._file = f._file #.strip('/media')
                     document.input_name = f.input_name
                     document.can_delete = True
                     document.save()
@@ -1345,9 +1347,10 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 # Save the files
                 documents_qs = instance.qaofficer_documents.filter(input_name='qaofficer_file', visible=True)
                 for f in documents_qs:
-                    document = comms.documents.create()
-                    document.name = f.name
-                    document._file = f._file #.strip('/media')
+                    document = comms.documents.create(_file=f._file, name=f.name)
+                    #document = comms.documents.create()
+                    #document.name = f.name
+                    #document._file = f._file #.strip('/media')
                     document.input_name = f.input_name
                     document.can_delete = True
                     document.save()

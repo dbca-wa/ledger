@@ -157,14 +157,15 @@ class ApplicationFeeSuccessView(TemplateView):
         invoice = Invoice.objects.get(order_number=order.number)
         invoice_ref = invoice.reference
         #book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
-#        if invoice.payment_status != 'paid' and invoice.payment_status != 'over_paid':
-#            proposal.fee_invoice_reference = invoice_ref
-#            proposal.processing_status = Proposal.PROCESSING_STATUS_WITH_ASSESSOR
-#            proposal.customer_status = Proposal.CUSTOMER_STATUS_WITH_ASSESSOR
-#            proposal.save()
-#        else:
-#            logger.error('Invoice payment status is {}'.format(invoice.payment_status))
-#            raise
+        if invoice.payment_status == 'paid' or invoice.payment_status == 'over_paid':
+            proposal.fee_invoice_reference = invoice_ref
+            proposal.processing_status = Proposal.PROCESSING_STATUS_WITH_ASSESSOR
+            proposal.customer_status = Proposal.CUSTOMER_STATUS_WITH_ASSESSOR
+            proposal.lodgement_date = datetime.now()
+            proposal.save()
+        else:
+            logger.error('Invoice payment status is {}'.format(invoice.payment_status))
+            raise
 
         print ("APPLICATION FEE")
         try:
@@ -179,8 +180,7 @@ class ApplicationFeeSuccessView(TemplateView):
         #delete_session_booking(request.session)
 
         context.update({
-            'lodgement_number': proposal.lodgement_number,
-            'proposal_id': proposal.id,
+            'proposal': proposal,
             'submitter': submitter,
             'fee_invoice': invoice
         })

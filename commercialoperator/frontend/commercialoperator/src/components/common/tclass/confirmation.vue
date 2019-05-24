@@ -5,7 +5,7 @@
             <div v-if="proposal.fee_paid" class="row">
                 <div class="col-sm-12">
                     <h2>Application Fee: Paid</h2>
-                    <p>A confirmation email has been sent to {{proposal.submitter }}. </p>
+                    <p>A confirmation email has been sent to {{proposal.applicant }}. </p>
                 </div>
             </div>
             <div v-else class="row">

@@ -878,7 +878,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     def submit(self,request,viewset):
         from commercialoperator.components.proposals.utils import save_proponent_data
         with transaction.atomic():
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             if self.can_user_edit:
                 # Save the data first
                 save_proponent_data(self,request,viewset)
