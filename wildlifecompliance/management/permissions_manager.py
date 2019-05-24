@@ -7,7 +7,7 @@ from django.db import transaction
 from ledger.accounts.utils import get_app_label
 from wildlifecompliance.components.licences.models import LicenceActivity
 from wildlifecompliance.components.applications.models import ActivityPermissionGroup
-from wildlifecompliance.components.users.models import CompliancePermissionGroup
+from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
 
 logger = logging.getLogger(__name__)
 
@@ -246,7 +246,7 @@ class ComplianceGroupCollector(PermissionCollector):
 
     COLLECTION_SOURCE = 'COMPLIANCE_PERMISSION_GROUPS'
 
-    def get_or_create_group(self, group_name, config):
+    def get_or_create_group(self, group_name, config, district=None):
         created = None
         if settings.GROUP_PREFIX and settings.GROUP_PREFIX not in group_name:
             group_name = "{prefix} - {name}".format(
@@ -266,9 +266,9 @@ class ComplianceGroupCollector(PermissionCollector):
                 # Do not re-create groups that have been manually re-named by admins.
                 if config['permissions']:
                     groups_by_permission = CompliancePermissionGroup.objects.filter(permissions__codename__in=config['permissions'])
-                    # if activity is not None:
-                    #     groups_by_permission = groups_by_permission.filter(
-                    #         licence_activities__id=activity.id)
+                    if district is not None:
+                        groups_by_permission = groups_by_permission.filter(
+                            region_district__id=district.id)
                     group = groups_by_permission.first()
                 if not group:
                     group = created = CompliancePermissionGroup.objects.create(name=group_name)
@@ -305,16 +305,13 @@ class ComplianceGroupCollector(PermissionCollector):
         actual = {}
 
         for group_name, config in default_groups.items():
-            group = self.get_or_create_group(group_name, config)
-        print(group)
-
-            # if config['per_activity']:
-            #     for activity in LicenceActivity.objects.all():
-            #         activity_group_name = "{}: {}".format(group_name, activity.name)
-            #         group = self.get_or_create_group(activity_group_name, config, activity)
-            #         group.licence_activities.add(activity)
-            # else:
-            #     group = self.get_or_create_group(group_name, config)
+            if config['per_district']:
+                for district in RegionDistrict.objects.all():
+                    compliance_group_name = "{}: {}".format(group_name, district.name)
+                    group = self.get_or_create_group(compliance_group_name, config, district)
+                    group.region_district.add(district)
+            else:
+                group = self.get_or_create_group(group_name, config)
 
         return actual
 

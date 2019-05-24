@@ -3,45 +3,20 @@
         <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Forward to Wildlife Protection Branch" large>
           <div class="container-fluid">
             <div class="row">
-                    <form class="form-horizontal" name="amendForm">
-                        <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
-                        <div class="col-sm-12">
-                            <div class="row">
-                                <label class="control-label">Request Amendment for the application</label>
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <label class="control-label pull-left" for="details">Details</label>
                             </div>
-                            <div class="row">
-                                <div class="form-group">
-                                    <div class="col-sm-offset-2 col-sm-8">
-                                        <label class="control-label" for="Name">Select licensed activities to amend</label>
-                                        <div v-for="activity in amendableActivities">
-                                            <div>
-                                                <input type="checkbox" :value ="activity.id" :name="activity.name" :id="activity.id" v-model="amendment.activity_list">{{activity.name}}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-sm-offset-2 col-sm-8">
-                                    <div class="form-group">
-                                        <label class="control-label pull-left"  for="Name">Reason</label>
-                                        <select class="form-control" name="reason" ref="reason" v-model="amendment.reason">
-                                            <option v-for="item in reason_choices" :value="item.key">{{item.value}}</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-sm-offset-2 col-sm-8">
-                                    <div class="form-group">
-                                        <label class="control-label pull-left"  for="Name">Additional Comments to User</label>
-                                        <textarea class="form-control" name="name" v-model="amendment.text">{{amendment.text}}</textarea>
-                                    </div>
-                                </div>
+                            <div class="col-sm-4">
+                                <textarea placeholder="write text" id="details" v-model="call_email.forwardDetails"/>
                             </div>
                         </div>
-                    </form>
+                    </div>
+
                 </div>
+            </div>
           </div>
         </modal>
     </div>
@@ -49,6 +24,7 @@
 <script>
 import Vue from "vue";
 import modal from '@vue-utils/bootstrap-modal.vue';
+import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 
 export default {
   name: "CallEmailWorking",
@@ -61,7 +37,9 @@ export default {
     modal,
   },
   computed: {
-    
+    ...mapGetters('callemailStore', {
+      call_email: "call_email",
+    }),
   },
   filters: {
     formatDate: function(data) {
@@ -69,20 +47,20 @@ export default {
     }
   },
   methods: {
-    ok: () => {
+    ok: function() {
             // if($(this.form).valid()){
             //     vm.sendData();
             // }
         this.isModalOpen = false;
-        this.close();
+        // this.close();
     },
-    cancel: () => {
+    cancel: function() {
         // let vm = this;
         // vm.close();
         this.isModalOpen = false;
-        this.close();
+        // this.close();
     },
-    close:function () {
+    close: function () {
         // let vm = this;
         // this.isModalOpen = false;
         // this.comms = {};

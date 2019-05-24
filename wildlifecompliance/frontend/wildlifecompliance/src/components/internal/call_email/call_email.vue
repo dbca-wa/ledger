@@ -55,10 +55,10 @@
                 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Anonymous call?</label>
-                    <input class="col-sm-1" type="radio" v-model="call_email.anonymous_call" v-bind:value="true">
-                    <label class="col-sm-1">Yes</label>
-                    <input class="col-sm-1" type="radio" v-model="call_email.anonymous_call" v-bind:value="false">
-                    <label class="col-sm-1">No</label>
+                    <input id="yes" type="radio" v-model="call_email.anonymous_call" v-bind:value="true">
+                    <label for="yes">Yes</label>
+                    <input id="no" type="radio" v-model="call_email.anonymous_call" v-bind:value="false">
+                    <label for="no">No</label>
                 </div></div>
 
                 <div class="col-sm-12 form-group"><div class="row">
