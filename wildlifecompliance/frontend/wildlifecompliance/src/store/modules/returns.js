@@ -5,7 +5,10 @@ import {
 
 export const returnsStore = {
     state: {
-        returns: {},
+        returns: {
+            submitter: '',
+            processing_status: '',
+        },
     },
     getters: {
         return_id: state => state.returns.id,

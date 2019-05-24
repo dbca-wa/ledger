@@ -66,6 +66,7 @@
 
 <script>
 import datatable from '@/utils/vue/datatable.vue'
+import utils from '@/components/internal/utils'
 import $ from 'jquery'
 import Vue from 'vue'
 import Returns from '../../returns_form.vue'
@@ -171,6 +172,8 @@ export default {
         'isReturnsLoaded',
         'returns',
         'species_list',
+        'current_user',
+        'isReturnComponentVisible',
     ]),
     sheetURL: function(){
       return helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
@@ -186,6 +189,7 @@ export default {
     ...mapActions([
         'setReturns',
         'setReturnsTab',
+        'loadCurrentUser',
     ]),
     save: function(e) {
       this.form=document.forms.enter_return_sheet;

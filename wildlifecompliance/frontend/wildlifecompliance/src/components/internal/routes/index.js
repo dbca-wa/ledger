@@ -8,7 +8,7 @@ import User from '../users/manage.vue'
 import Application from '../applications/application.vue'
 import LicenceDashTable from '../licences/dashboard.vue'
 import ReturnDashTable from '../returns/dashboard.vue'
-import Returns from '../returns/access.vue'
+import Returns from '../returns/return.vue'
 
 export default
 {
