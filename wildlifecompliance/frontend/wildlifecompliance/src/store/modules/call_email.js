@@ -118,9 +118,17 @@ export const callemailStore = {
                 console.log(state.call_email.report_type);
             }
         },
+        updateEmailUser(state, emailUser){
+            console.log("updateEmailUser");
+            console.log(emailUser);
+            Vue.set(state.call_email, 'email_user', emailUser);
+        },
+        updateResidentialAddress(state, address){
+            console.log("updateResidentialAddress");
+            console.log(address);
+            Vue.set(state.call_email.email_user, 'residential_address', address);
+        },
         updateLocation(state, location) {
-            console.log("location");
-            console.log(location);
             Vue.set(state.call_email, 'location', location);
         },
         updateLocationPoint(state, point) {
@@ -182,8 +190,15 @@ export const callemailStore = {
                     console.log("empty location loaded");
                 }
 
-                if(!returnedCallEmail.body.email_user.residential_address){
-                    returnedCallEmail.body.email_user.residential_address = {};
+                if (!returnedCallEmail.body.email_user){
+                    await dispatch("setEmailUser", {
+                        residential_address: {}
+                    });
+                } else if (!returnedCallEmail.body.email_user.residential_address){
+                    await dispatch("setResidentialAddress", {
+
+                    });
+                    //returnedCallEmail.body.email_user.residential_address = {};
                 }
 
                 for (let form_data_record of returnedCallEmail.body.data) {
@@ -304,6 +319,12 @@ export const callemailStore = {
         }, schema) {
             console.log("setSchema");
             commit("updateSchema", schema);
+        },
+        setEmailUser({commit}, emailUser){
+            commit("updateEmailUser", emailUser);
+        },
+        setResidentialAddress({commit}, address){
+            commit("updateResidentialAddress", address);
         },
         setLocation({
             commit,

@@ -396,7 +396,7 @@ module.exports = {
                     let l = L.tileLayer.wmts(
                         'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                         {
-                            layer: layers[i].layer_name,
+                            layer: layers[i].layer_name.trim(),
                             tilematrixSet: 'mercator',
                             format: 'image/png',
                         }

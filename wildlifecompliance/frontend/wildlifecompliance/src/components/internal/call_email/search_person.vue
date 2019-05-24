@@ -4,7 +4,7 @@
             <label class="col-sm-3 control-label">Search Person</label>
             <div class="col-sm-9">
                 <input class="col-sm-5 form-control" id="search-person" />
-                <input type="button" class="pull-right btn btn-primary" value="Create New Person" />
+                <!-- <input type="button" class="pull-right btn btn-primary" value="Create New Person" /> -->
             </div>
         </div>
         <div class="col-md-12">
@@ -344,7 +344,7 @@ export default {
 
 <style>
 .awesomplete {
-    z-index: 2000 !important;
+    z-index: 1050 !important;
 }
 .awesomplete > ul {
     z-index: 2001;
