@@ -603,7 +603,8 @@ class SaveProposalSerializer(BaseProposalSerializer):
 
 class ApplicantSerializer(serializers.ModelSerializer):
     from commercialoperator.components.organisations.serializers import OrganisationAddressSerializer
-    address = OrganisationAddressSerializer()
+    address = OrganisationAddressSerializer(read_only=True)
+    #address = OrganisationAddressSerializer()
     class Meta:
         model = Organisation
         fields = (
@@ -760,8 +761,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'can_edit_activities',
                 'reversion_ids',
                 'assessor_assessment',
-                'referral_assessments'
-                'fee_invoice_url'
+                'referral_assessments',
+                'fee_invoice_url',
                 'fee_paid'
                 )
         read_only_fields=('documents','requirements')

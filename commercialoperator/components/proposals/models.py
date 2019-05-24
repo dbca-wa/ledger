@@ -331,12 +331,18 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     APPLICANT_TYPE_PROXY = 'PRX'
     APPLICANT_TYPE_SUBMITTER = 'SUB'
 
-    CUSTOMER_STATUS_CHOICES = (('temp', 'Temporary'), ('draft', 'Draft'),
-                               ('with_assessor', 'Under Review'),
-                               ('amendment_required', 'Amendment Required'),
-                               ('approved', 'Approved'),
-                               ('declined', 'Declined'),
-                               ('discarded', 'Discarded'),
+    CUSTOMER_STATUS_TEMP = 'temp'
+    CUSTOMER_STATUS_WITH_ASSESSOR = 'with_assessor'
+    CUSTOMER_STATUS_AMENDMENT_REQUIRED = 'amendment_required'
+    CUSTOMER_STATUS_APPROVED = 'approved'
+    CUSTOMER_STATUS_DECLINED = 'declined'
+    CUSTOMER_STATUS_DISCARDED = 'discarded'
+    CUSTOMER_STATUS_CHOICES = ((CUSTOMER_STATUS_TEMP, 'Temporary'), ('draft', 'Draft'),
+                               (CUSTOMER_STATUS_WITH_ASSESSOR, 'Under Review'),
+                               (CUSTOMER_STATUS_AMENDMENT_REQUIRED, 'Amendment Required'),
+                               (CUSTOMER_STATUS_APPROVED, 'Approved'),
+                               (CUSTOMER_STATUS_DECLINED, 'Declined'),
+                               (CUSTOMER_STATUS_DISCARDED, 'Discarded'),
                                )
 
     # List of statuses from above that allow a customer to edit an application.
@@ -872,6 +878,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     def submit(self,request,viewset):
         from commercialoperator.components.proposals.utils import save_proponent_data
         with transaction.atomic():
+            #import ipdb; ipdb.set_trace()
             if self.can_user_edit:
                 # Save the data first
                 save_proponent_data(self,request,viewset)
@@ -1008,9 +1015,9 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         #Create assessor checklist with the current assessor_list type questions
                         #Assessment instance already exits then skip.
                         try:
-                            referral_assessment=ProposalAssessment.objects.get(proposal=self,referral_group=referral_group, referral_assessment=True)
+                            referral_assessment=ProposalAssessment.objects.get(proposal=self,referral_group=referral_group, referral_assessment=True, referral=referral)
                         except ProposalAssessment.DoesNotExist:
-                            referral_assessment=ProposalAssessment.objects.create(proposal=self,referral_group=referral_group, referral_assessment=True)
+                            referral_assessment=ProposalAssessment.objects.create(proposal=self,referral_group=referral_group, referral_assessment=True, referral=referral)
                             checklist=ChecklistQuestion.objects.filter(list_type='referral_list', obsolete=False)
                             for chk in checklist:
                                 try:
@@ -2511,6 +2518,16 @@ class Referral(RevisionedMixin):
                             sent_from=2,
                             text=referral_text
                         )
+                        # try:
+                        #     referral_assessment=ProposalAssessment.objects.get(proposal=self,referral_group=referral_group, referral_assessment=True, referral=referral)
+                        # except ProposalAssessment.DoesNotExist:
+                        #     referral_assessment=ProposalAssessment.objects.create(proposal=self,referral_group=referral_group, referral_assessment=True, referral=referral)
+                        #     checklist=ChecklistQuestion.objects.filter(list_type='referral_list', obsolete=False)
+                        #     for chk in checklist:
+                        #         try:
+                        #             chk_instance=ProposalAssessmentAnswer.objects.get(question=chk, assessment=referral_assessment)
+                        #         except ProposalAssessmentAnswer.DoesNotExist:
+                        #             chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=referral_assessment) 
                     # Create a log entry for the proposal
                     self.proposal.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.proposal.id,'{}({})'.format(user.get_full_name(),user.email)),request)
                     # Create a log entry for the organisation

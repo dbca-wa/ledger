@@ -304,7 +304,7 @@ def send_proposal_approval_email_notification(proposal,request):
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
     if proposal.org_applicant:
-        _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+        _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
 
 
 

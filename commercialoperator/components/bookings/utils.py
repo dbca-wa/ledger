@@ -5,7 +5,9 @@ from django.core.exceptions import ValidationError
 
 from datetime import datetime, timedelta
 from commercialoperator.components.main.models import Park
+from commercialoperator.components.proposals.models import Proposal
 from ledger.checkout.utils import create_basket_session, create_checkout_session
+from ledger.payments.models import Invoice
 import json
 from decimal import Decimal
 
@@ -67,6 +69,30 @@ def delete_session_booking(session):
         del session['cols_booking']
         session.modified = True
 
+def get_session_application_invoice(session):
+    """ Application Fee session ID """
+    if 'cols_app_invoice' in session:
+        proposal_id = session['cols_app_invoice']
+    else:
+        raise Exception('Application not in Session')
+
+    try:
+        #return Invoice.objects.get(id=application_invoice_id)
+        return Proposal.objects.get(id=proposal_id)
+    except Invoice.DoesNotExist:
+        raise Exception('Application not found for application {}'.format(application_invoice_id))
+
+def set_session_application_invoice(session, proposal):
+    """ Application Fee session ID """
+    session['cols_app_invoice'] = proposal.id
+    session.modified = True
+
+def delete_session_application_invoice(session):
+    """ Application Fee session ID """
+    if 'cols_app_invoice' in session:
+        del session['cols_app_invoice']
+        session.modified = True
+
 def create_fee_lines(proposal, invoice_text=None, vouchers=[], internal=False):
     """ Create the ledger lines - line item for application fee sent to payment system """
 
@@ -115,7 +141,7 @@ def create_lines(request, invoice_text=None, vouchers=[], internal=False):
 
     return lines
 
-def checkout(request, proposal, lines, invoice_text=None, vouchers=[], internal=False):
+def checkout(request, proposal, lines, return_url_ns='public_booking_success', return_preload_url_ns='public_booking_success', invoice_text=None, vouchers=[], internal=False):
     #import ipdb; ipdb.set_trace()
     basket_params = {
         'products': lines,
@@ -129,8 +155,8 @@ def checkout(request, proposal, lines, invoice_text=None, vouchers=[], internal=
     checkout_params = {
         'system': settings.PS_PAYMENT_SYSTEM_ID,
         'fallback_url': request.build_absolute_uri('/'),                                      # 'http://mooring-ria-jm.dbca.wa.gov.au/'
-        'return_url': request.build_absolute_uri(reverse('public_booking_success')),          # 'http://mooring-ria-jm.dbca.wa.gov.au/success/'
-        'return_preload_url': request.build_absolute_uri(reverse('public_booking_success')),  # 'http://mooring-ria-jm.dbca.wa.gov.au/success/'
+        'return_url': request.build_absolute_uri(reverse(return_url_ns)),          # 'http://mooring-ria-jm.dbca.wa.gov.au/success/'
+        'return_preload_url': request.build_absolute_uri(reverse(return_url_ns)),  # 'http://mooring-ria-jm.dbca.wa.gov.au/success/'
         #'fallback_url': fallback_url,
         #'return_url': fallback_url,
         #'return_preload_url': fallback_url,

@@ -24,7 +24,7 @@
                       </td>
                       <td v-if="col_types[index]=='date'" v-for="(value, index) in row">
                           <!--<input id="id_arrival_date" class="tbl_input" :type="col_types[index]" :max="expiry_date" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[0]=='' || row[0]==null" @change="calcPrice(row[index], row, row_idx)"/>-->
-                          <input id="id_arrival_date" class="tbl_input" :type="col_types[index]" :max="expiry_date" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[0]=='' || row[0]==null" @change="date_change(row[index], row, row_idx)"/>
+                          <input id="id_arrival_date" class="tbl_input" :type="col_types[index]" :max="expiry_date" :min="today()" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[0]=='' || row[0]==null" @change="date_change(row[index], row, row_idx)"/>
                       </td>
                       <td v-if="col_types[index]=='text' || col_types[index]=='number'" v-for="(value, index) in row">
                           <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" value="0" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[1]==''" @change="calcPrice(row[index], row, row_idx)"/>
@@ -200,6 +200,21 @@ export default {
         },
     },
     methods: {
+
+        today: function() {
+			var day = new Date();
+			var dd = day.getDate();
+			var mm = day.getMonth()+1; //January is 0!
+			var yyyy = day.getFullYear();
+			 if(dd<10){
+					dd='0'+dd
+				} 
+				if(mm<10){
+					mm='0'+mm
+				} 
+
+			return yyyy+'-'+mm+'-'+dd;
+        },
         reset_row: function() {
             var init_row = [];
             for(var i = 0, length = this.col_headers.length; i < length; i++) { init_row.push('')  }
