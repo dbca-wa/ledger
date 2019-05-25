@@ -1,6 +1,7 @@
 import re
 from django.db import transaction
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrail, ProposalTrailSectionActivity, ProposalTrailSection, ProposalParkZone, ProposalParkZoneActivity, ProposalOtherDetails, ProposalAccreditation, ProposalUserAction, ProposalAssessment, ProposalAssessmentAnswer, ChecklistQuestion
@@ -851,6 +852,7 @@ def proposal_submit(proposal,request):
                 proposal.submitter = request.user
                 #proposal.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
                 proposal.lodgement_date = timezone.now()
+                proposal.training_completed = True
                 if (proposal.amendment_requests):
                     qs = proposal.amendment_requests.filter(status = "requested")
                     if (qs):
@@ -890,6 +892,8 @@ def proposal_submit(proposal,request):
                             chk_instance=ProposalAssessmentAnswer.objects.get(question=chk, assessment=assessor_assessment)
                         except ProposalAssessmentAnswer.DoesNotExist:
                             chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=assessor_assessment)
+
+                return proposal
 
             else:
                 raise ValidationError('You can\'t edit this proposal at this moment')

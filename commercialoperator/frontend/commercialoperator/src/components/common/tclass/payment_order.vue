@@ -1,52 +1,18 @@
 <template lang="html">
     <div>
-        <p> In payment_order </p>
-		<form action="/payment/46/" method="post" name="new_payment" @submit.prevent="validate()" novalidate>
-			<input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-            <v-select  :options="licences" @change="proposal_parks()" v-model="selected_licence" />
-            <OrderTable ref="order_table" :expiry_date="selected_licence.expiry_date" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="Payment Form" id="id_payment" />
-
-            <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
-        </form> 
-
-        <!--
-			<input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-        <form :action="/payment/49" method="post" name="new_payment" enctype="multipart/form-data">
-            <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
-        </form> 
-
-		<form method="post" name="new_payment2" @submit.prevent="validate()" novalidate>
-			<button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
-			<button v-if="total >= 0" :disabled="!toc" type="submit" class="btn btn-primary btn-lg">Proceed to payment</button>
-        </form> 
-
-        <form :action="payment_form_url" method="post" name="new_payment" enctype="multipart/form-data">
-            <div>
-
-
+        <div class="container">
+            <div class="row"><div class="col-sm-12">
+            <form action="/payment/46/" method="post" name="new_payment" @submit.prevent="validate()" novalidate>
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-                <input type='hidden' name="new_payment_id" :value="1" />
-                <div class="row" style="margin-bottom: 50px">
-                  <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5;">
-                    <div class="navbar-inner">
-                        <div class="container">
-                          <p class="pull-right">
-                            <button :disabled="!parks_available" class="btn btn-primary pull-right" style="margin-top:5px;" @click.prevent="calc_order()">Next</button>
-                          </p>
-                        </div>
-                    </div>
-                  </div>
-                </div>
+                
+                <label>Licence</label><v-select :options="licences" @change="proposal_parks()" v-model="selected_licence" />
+                <OrderTable ref="order_table" :expiry_date="selected_licence.expiry_date" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="" id="id_payment" />
+
+                <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
+            </form>
+
             </div>
-
-        </form>
-        -->
-
-        <!--<Select :options="options" name="park" label="Park" id="id_park"/> -->
-        <!-- <Table headers='{"Species": "text", "Quantity": "number", "Date": "date", "Taken": "checkbox"}' :readonly="readonly" name="payment" label="Payment Form" id="id_payment" :isRequired="isRequired"/> -->
-        <!--
-        <PaymentCalc ref="payment_calc" @refreshFromResponse="refreshFromResponse"/>
-        -->
+        </div>
     </div>
 </template>
 
@@ -120,7 +86,7 @@ from '@/utils/hooks'
             payment_url: function(){
                 return `/api/payment/${to.params.proposal_id}.json`;
             },
-			csrf_token: function() {
+            csrf_token: function() {
                 return helpers.getCookie('csrftoken')
             },
 

@@ -45,11 +45,11 @@
                   </tr>
 
                   <tr>
-                      <td colspan="5">
+                      <td colspan="5" align="right" >
+                          <div><label>Total:</label></div>
                       </td>
                       <td align="left" >
-                          <!-- <div class="currencyinput"> ${{ net_park_prices | total_price() }} </div> -->
-                          <div class="currencyinput">{{ table.tbody | total_price(idx_price) }}</div>
+                          <div class="currencyinput"><input class="tbl_input" :type="number" min="0" :value="total_price()" disabled/> </div>
                       </td>
                   </tr>
 
@@ -174,7 +174,7 @@ export default {
                     }
                 }
             },
-            total_price: 0.0,
+            //total_price: 0.0,
 
         }
     },
@@ -190,30 +190,38 @@ export default {
         price: function(dict, key){
             return dict[key];
         },
-        total_price: function(data, idx_price) {
-            var total = 0.0;
-            for (var key in data) { 
-                //total += parseFloat(data[key][idx_price]) 
-                total += isNaN(parseFloat(data[key][idx_price])) ? 0.00 : parseFloat(data[key][idx_price]);
-            }
-            return total
-        },
+//        total_price: function(data, idx_price) {
+//            var total = 0.0;
+//            for (var key in data) { 
+//                //total += parseFloat(data[key][idx_price]) 
+//                total += isNaN(parseFloat(data[key][idx_price])) ? 0.00 : parseFloat(data[key][idx_price]);
+//            }
+//            return total
+//        },
     },
     methods: {
+        total_price: function() {
+            let vm = this;
+            var total = 0.0;
+            for (var key in vm.table.tbody) { 
+                total += isNaN(parseFloat(vm.table.tbody[key][vm.idx_price])) ? 0.00 : parseFloat(vm.table.tbody[key][vm.idx_price]);
+            }
+            return total.toFixed(2);
+        },
 
         today: function() {
-			var day = new Date();
-			var dd = day.getDate();
-			var mm = day.getMonth()+1; //January is 0!
-			var yyyy = day.getFullYear();
-			 if(dd<10){
-					dd='0'+dd
-				} 
-				if(mm<10){
-					mm='0'+mm
-				} 
+            var day = new Date();
+            var dd = day.getDate();
+            var mm = day.getMonth()+1; //January is 0!
+            var yyyy = day.getFullYear();
+             if(dd<10){
+                    dd='0'+dd
+                } 
+                if(mm<10){
+                    mm='0'+mm
+                } 
 
-			return yyyy+'-'+mm+'-'+dd;
+            return yyyy+'-'+mm+'-'+dd;
         },
         reset_row: function() {
             var init_row = [];

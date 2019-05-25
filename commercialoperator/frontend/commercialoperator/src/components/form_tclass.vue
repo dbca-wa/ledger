@@ -35,7 +35,7 @@
                   4. Other Details
                 </a>
               </li>
-              <li class="nav-item">
+              <li v-if="!proposal.training_completed" class="nav-item">
                 <a class="nav-link" id="pills-online-training-tab" data-toggle="pill" href="#pills-online-training" role="tab" aria-controls="pills-online-training" aria-selected="false">
                   5. Online Training
                 </a>
