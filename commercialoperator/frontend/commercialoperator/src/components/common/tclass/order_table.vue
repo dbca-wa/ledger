@@ -16,29 +16,23 @@
                 </thead>
 
                 <tbody>
-                  <!--<tr v-for="row in table.tbody">-->
                   <tr v-for="(row, row_idx) in table.tbody">
                       <td v-if="col_types[index]=='select'" width="30%" v-for="(value, index) in row">
-                          <!-- <v-select class="tbl_input" :options="options" v-model="row[index]" @change="calcPrice(row[index], row, row_idx)"/> -->
                           <v-select class="tbl_input" :options="options" v-model="row[index]" @change="park_change(row[index], row, row_idx)" :title="'Adult Price: '+ row[index] +  ', Child Price: ' + row[index]"i :disabled="disabled"/>
                       </td>
+
                       <td v-if="col_types[index]=='date'" v-for="(value, index) in row">
-                          <!--<input id="id_arrival_date" class="tbl_input" :type="col_types[index]" :max="expiry_date" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[0]=='' || row[0]==null" @change="calcPrice(row[index], row, row_idx)"/>-->
                           <input id="id_arrival_date" class="tbl_input" :type="col_types[index]" :max="expiry_date" :min="today()" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[0]=='' || row[0]==null" @change="date_change(row[index], row, row_idx)"/>
                       </td>
+
                       <td v-if="col_types[index]=='text' || col_types[index]=='number'" v-for="(value, index) in row">
                           <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" value="0" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[1]==''" @change="calcPrice(row[index], row, row_idx)"/>
                       </td>
+
                       <td v-if="col_types[index]=='total'" v-for="(value, index) in row">
-                          <!--${{ net_park_prices | price(row_idx) }}-->
                           <div class="currencyinput"><input class="tbl_input" :type="col_types[index]" min="0" value="0" v-model="row[index]" disabled/> </div>
                       </td>
 
-                      <!--
-                      <td>
-                          ${{ net_park_prices | price(row_idx) }}
-                      </td>
-                      -->
                       <td v-if="!readonly">
                           <a class="fa fa-trash-o" v-on:click="deleteRow(row)" title="Delete row" style="cursor: pointer; color:red;" :disabled="disabled"></a>
                       </td>
@@ -60,7 +54,6 @@
 
               <!-- for debugging -->
               <!--
-              -->
               <pre class="output">
                 {{ value }}
               </pre>
@@ -70,6 +63,7 @@
               <pre class="output">
                 {{ expiry_date }}
               </pre>
+              -->
             </div>
 
         </div>
@@ -174,7 +168,6 @@ export default {
                     }
                 }
             },
-            //total_price: 0.0,
 
         }
     },
@@ -190,14 +183,6 @@ export default {
         price: function(dict, key){
             return dict[key];
         },
-//        total_price: function(data, idx_price) {
-//            var total = 0.0;
-//            for (var key in data) { 
-//                //total += parseFloat(data[key][idx_price]) 
-//                total += isNaN(parseFloat(data[key][idx_price])) ? 0.00 : parseFloat(data[key][idx_price]);
-//            }
-//            return total
-//        },
     },
     methods: {
         total_price: function() {
