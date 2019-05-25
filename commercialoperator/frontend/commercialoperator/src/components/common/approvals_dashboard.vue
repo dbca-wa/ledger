@@ -135,8 +135,6 @@ export default {
             //Profile to check if user has access to process Proposal
             profile: {},
             // Filters for Proposals
-            filterProposalRegion: 'All',
-            filterProposalActivity: 'All',
             filterProposalStatus: 'All',
             filterProposalLodgedFrom: '',
             filterProposalLodgedTo: '',
@@ -150,11 +148,10 @@ export default {
                 allowInputToggle:true
             },
             approval_status:[],
-            proposal_activityTitles : [],
-            proposal_regions: [],
             proposal_submitters: [],
             proposal_headers:[
-                "Number","Licence Type","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action",
+                "Number","Licence Type","Holder","Status","Start Date","Expiry Date","Approval","Action",
+                //"Number","Licence Type","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action",
                 //"LodgementNo","CanReissue","CanAction","CanReinstate","SetToCancel","SetToSuspend","SetToSurrender","CurrentProposal","RenewalDoc","RenewalSent","CanAmend","CanRenew"
             ],
             proposal_options:{
@@ -170,7 +167,6 @@ export default {
 
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
-                        //d.regions = vm.filterProposalRegion.join(); // no need to add this since we can filter normally (filter is not multi-select in Approval table)
                         d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                     }
@@ -226,26 +222,6 @@ export default {
                     {
                         data: "application_type",
                         name: "current_proposal__application_type__name"
-                    },
-                    {
-                        data: "region",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn,
-                        name: 'current_proposal__region__name'// will be use like: Approval.objects.filter(current_proposal__region__name='Kimberley')
-                    },
-                    {
-                        data: "activity",
-                        name: "current_proposal__activity"
-                    },
-                    {
-                        data: "title",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn,
-                        name: "current_proposal__title"
                     },
                     {
                         data: "applicant",
@@ -337,29 +313,6 @@ export default {
                 processing: true,
                 /*
                 initComplete: function () {
-                    // Grab Regions from the data in the table
-                    var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
-                    regionColumn.data().unique().sort().each( function ( d, j ) {
-                        let regionTitles = [];
-                        $.each(d,(index,a) => {
-                            // Split region string to array
-                            if (a != null){
-                                $.each(a.split(','),(i,r) => {
-                                    r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
-                                });
-                            }
-                        })
-                        vm.proposal_regions = regionTitles;
-                    });
-                    // Grab Activity from the data in the table
-                    var titleColumn = vm.$refs.proposal_datatable.vmDataTable.columns(2);
-                    titleColumn.data().unique().sort().each( function ( d, j ) {
-                        let activityTitles = [];
-                        $.each(d,(index,a) => {
-                            a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
-                        })
-                        vm.proposal_activityTitles = activityTitles;
-                    });
                     // Grab Status from the data in the table
                     var statusColumn = vm.$refs.proposal_datatable.vmDataTable.columns(5);
                     statusColumn.data().unique().sort().each( function ( d, j ) {
@@ -377,39 +330,22 @@ export default {
         }
     },
     watch:{
-        filterProposalRegion: function(){
-            //this.$refs.proposal_datatable.vmDataTable.draw();
-            let vm = this;
-            if (vm.filterProposalRegion!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(1).search(vm.filterProposalRegion).draw();
-            } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(1).search('').draw();
-            }
-        },
-        filterProposalActivity: function() {
-            let vm = this;
-            if (vm.filterProposalActivity!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(2).search(vm.filterProposalActivity).draw();
-            } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
-            }
-        },
         filterProposalSubmitter: function(){
             //this.$refs.proposal_datatable.vmDataTable.draw();
             let vm = this;
             if (vm.filterProposalSubmitter!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalSubmitter).draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(2).search(vm.filterProposalSubmitter).draw();
             } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
             }
 
         },
         filterProposalStatus: function() {
             let vm = this;
             if (vm.filterProposalStatus!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(5).search(vm.filterProposalStatus).draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(3).search(vm.filterProposalStatus).draw();
             } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(5).search('').draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(3).search('').draw();
             }
         },
         filterProposalLodgedFrom: function(){
@@ -444,8 +380,6 @@ export default {
             let vm = this;
 
             vm.$http.get(api_endpoints.filter_list_approvals).then((response) => {
-                vm.proposal_regions = response.body.regions;
-                vm.proposal_activityTitles = response.body.activities;
                 vm.proposal_submitters = response.body.submitters;
                 vm.approval_status = response.body.approval_status_choices;
             },(error) => {
@@ -537,30 +471,7 @@ export default {
 
         },
         initialiseSearch:function(){
-            this.regionSearch();
             this.dateSearch();
-        },
-        regionSearch:function(){
-            let vm = this;
-            vm.$refs.proposal_datatable.table.dataTableExt.afnFiltering.push(
-                function(settings,data,dataIndex,original){
-                    let found = false;
-                    let filtered_regions = vm.filterProposalRegion.split(',');
-                    if (filtered_regions == 'All'){ return true; } 
-
-                    let regions = original.region != '' && original.region != null ? original.region.split(','): [];
-
-                    $.each(regions,(i,r) => {
-                        if (filtered_regions.indexOf(r) != -1){
-                            found = true;
-                            return false;
-                        }
-                    });
-                    if  (found) { return true; }
-
-                    return false;
-                }
-            );
         },
         submitterSearch:function(){
             let vm = this;
