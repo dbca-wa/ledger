@@ -40,19 +40,20 @@
                   5. Online Training
                 </a>
               </li>
-              <li v-if="!proposal.fee_paid" class="nav-item">
+              <li v-if="!proposal.fee_paid" class="nav-item disabled">
                 <!--
                 <a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="#pills-payment" role="tab" aria-controls="pills-payment" aria-selected="false">
                   6. Payment
                 </a>
                 -->
 
-                <a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="#" role="tab" aria-controls="pills-payment" aria-selected="false">
+                <a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="#" role="tab" aria-controls="pills-payment" aria-selected="false" style="background-color:#E5E8E8; color: #99A3A4;">
                   6. Payment
                 </a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link disabled" id="pills-confirm-tab" data-toggle="pill" href="#pills-confirm" role="tab" aria-controls="pills-confirm" aria-selected="false">
+              <li v-if="!proposal.fee_paid" class="nav-item disabled">
+                <!--<a class="nav-link disabled" id="pills-confirm-tab" data-toggle="pill" href="#pills-confirm" role="tab" aria-controls="pills-confirm" aria-selected="false" style="background-color:#E5E8E8; color: #99A3A4;">-->
+                <a class="nav-link disabled" id="pills-confirm-tab" data-toggle="pill" href="#" role="tab" aria-controls="pills-confirm" aria-selected="false" style="background-color:#E5E8E8; color: #99A3A4;">
                   <div v-if="proposal.fee_paid">
                     6. Confirmation
                   </div>
@@ -98,7 +99,7 @@
               <div class="tab-pane fade" id="pills-online-training" role="tabpanel" aria-labelledby="pills-online-training-tab">
                 <OnlineTraining :proposal="proposal" id="proposalStartOnlineTraining"></OnlineTraining>
               </div>
-              <div class="tab-pane fade" id="pills-payment" role="tabpanel" aria-labelledby="pills-payment-tab">
+              <div class="tab-pane fade" id="pills-payment" role="tabpanel" aria-labelledby="pills-payment-tab" style="color: green;" disabled>
                 <!-- This is a Dummy Tab -->
               </div>
               <div class="tab-pane fade" id="pills-confirm" role="tabpanel" aria-labelledby="pills-confirm-tab">

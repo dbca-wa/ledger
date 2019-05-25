@@ -2,15 +2,13 @@
     <div>
         <div class="form-group">
 
-            
-
             <!-- using num_files to determine if files have been uploaded for this question/label (used in commercialoperator/frontend/commercialoperator/src/components/external/proposal.vue) -->
             <label v-if="label" :id="id" :num_files="num_documents()">{{label}}</label>
             <div v-if="files">
                 <div v-for="v in documents">
                 <!-- <div v-for="v in files"> -->
                     <p>
-                        File: <a :href="v.file" target="_blank">{{v.name}}</a> &nbsp;
+                        File: <a :href="v.file" target="_blank" >{{v.name}}</a> &nbsp;
                         <span v-if="!readonly && v.can_delete">
                             <a @click="delete_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
                         </span>
@@ -21,7 +19,6 @@
                         </span>
                     </p>
                 </div>
-                <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
             </div>
             <div v-if="!readonly" v-for="n in repeat">
                 <div v-if="isRepeatable || (!isRepeatable && num_documents()==0)">
@@ -29,9 +26,10 @@
                     <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/></span>
                 </div>
             </div>
+            <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
 
         </div>
-        </div>
+    </div>
 </template>
 
 <script>
@@ -120,8 +118,8 @@ export default {
         },
         handleChange:function (e) {
             let vm = this;
-            console.log(e.target.name)
             vm.show_spinner = true;
+            console.log(e.target.name)
             if (vm.isRepeatable) {
                 let  el = $(e.target).attr('data-que');
                 let avail = $('input[name='+e.target.name+']');
@@ -147,22 +145,14 @@ export default {
             vm.files.push(e.target.files[0]);
 
             if (e.target.files.length > 0) {
-                //vm.upload_file(e)
                 vm.save_document(e);
             }
 
-            vm.show_spinner = false;
         },
-
-        /*
-        upload_file: function(e) {
-            let vm = this;
-            $("[id=save_and_continue_btn][value='Save Without Confirmation']").trigger( "click" );
-        },
-		*/
 
         get_documents: function() {
             let vm = this;
+            vm.show_spinner = true;
 
             var formData = new FormData();
             formData.append('action', 'list');
@@ -172,7 +162,6 @@ export default {
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
-                    //console.log(vm.documents);
                     vm.show_spinner = false;
                 });
 
@@ -199,6 +188,7 @@ export default {
         
         uploadFile(e){
             let vm = this;
+            vm.show_spinner = true;
             let _file = null;
 
             if (e.target.files && e.target.files[0]) {
@@ -206,9 +196,10 @@ export default {
                 reader.readAsDataURL(e.target.files[0]); 
                 reader.onload = function(e) {
                     _file = e.target.result;
+                    vm.show_spinner = false;
                 };
-                _file = e.target.files[0];
             }
+            _file = e.target.files[0];
             return _file
         },
 
