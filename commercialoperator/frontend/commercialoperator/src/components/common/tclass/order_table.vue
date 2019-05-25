@@ -54,6 +54,7 @@
 
               <!-- for debugging -->
               <!--
+              -->
               <pre class="output">
                 {{ value }}
               </pre>
@@ -147,7 +148,7 @@ export default {
             idx_arrival_date: 1,
             idx_adult: 2,
             idx_child: 3,
-            idx_senior: 4,
+            idx_free: 4,
             idx_price: 5,
 
             isClickable: "return true;" ,

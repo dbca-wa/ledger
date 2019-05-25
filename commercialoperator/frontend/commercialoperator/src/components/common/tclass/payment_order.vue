@@ -2,8 +2,17 @@
     <div>
         <div class="container">
             <div class="row"><div class="col-sm-12">
-                <form action="/payment/46/" method="post" name="new_payment" @submit.prevent="validate()" novalidate>
+                <form action="/payment/46/" method="post" name="new_payment" @submit.prevent="submit()" novalidate>
                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
+
+                    <div id="error" v-if="errors.length > 0" style="margin: 10px; padding: 5px; color: red; border:1px solid red;">
+                        <b>Please correct errors in row(s):</b>
+                        <ul>
+                            <li v-for="error in errors">
+                                {{error.name}}: {{ error.label }}
+                            </li>
+                        </ul>
+                    </div>
 
                     <label>Licence</label><v-select :options="licences" @change="proposal_parks()" v-model="selected_licence" />
                     <OrderTable ref="order_table" :expiry_date="selected_licence.expiry_date" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="" id="id_payment" />
@@ -47,6 +56,7 @@ from '@/utils/hooks'
                 land_parks: [],
                 parks_available: false,
                 licences: [],
+                errors: [],
                 table_values: null,
                 selected_licence:{
                     default:function () {
@@ -83,6 +93,21 @@ from '@/utils/hooks'
             }
         },
         methods:{
+            today: function() {
+                var day = new Date();
+                var dd = day.getDate();
+                var mm = day.getMonth()+1; //January is 0!
+                var yyyy = day.getFullYear();
+                 if(dd<10){
+                        dd='0'+dd
+                    } 
+                    if(mm<10){
+                        mm='0'+mm
+                    } 
+
+                return new Date(yyyy+'-'+mm+'-'+dd);
+            },
+
             resetTable: function(row) {
                 /* Removes the rows, keeos the first and clears the td contents */
                 let vm = this;
@@ -126,12 +151,48 @@ from '@/utils/hooks'
                 },err=>{
                 });
             },
-            validate: function (e) {
-                var isValid = true;
-                var form = document.forms.new_payment;
-                if (isValid) {
-                    form.submit();
+
+            check_form_valid: function () {
+                let vm = this;
+                var idx_park = vm.$refs.order_table.idx_park;
+                var idx_arrival_date = vm.$refs.order_table.idx_arrival_date;
+                var idx_adult = vm.$refs.order_table.idx_adult;
+                var idx_child = vm.$refs.order_table.idx_child;
+                var idx_free = vm.$refs.order_table.idx_free;
+                var idx_price = vm.$refs.order_table.idx_price;
+
+                var errors = [];
+                var tbody = vm.$refs.order_table.table.tbody;
+                for (var row_idx in tbody) {
+                    var row = tbody[row_idx];
+
+                    if ( !(row[idx_park] || row[idx_arrival_date]) || !(row[idx_adult] || row[idx_child] || row[idx_free]) ) {
+                        errors.push({id: parseInt(row_idx), name: "Row", label: parseInt(row_idx)+1})
+                    }
+
+                    var arrival_date = new Date(row[idx_arrival_date]);
+                    if ( arrival_date < vm.today() ) {
+                        errors.push({id: parseInt(row_idx), name: "Arrival Date", label: "Cannot be in the past" })
+                    }
+
+                    if ( arrival_date > new Date(vm.selected_licence.expiry_date) ) {
+                        errors.push({id: parseInt(row_idx), name: "Arrival Date", label: "Cannot be beyond Licence expiry (Expiry:" +vm.selected_licence.expiry_date+ ")"})
+                    }
                 }
+                return errors;
+            },
+
+            submit: function (e) {
+                let vm = this;
+                vm.errors = vm.check_form_valid();
+
+                var form = document.forms.new_payment;
+                if (vm.errors.length == 0) {
+                    form.submit();
+                } else {
+                    return;
+                }
+
             },
             get_user_approvals: function(e) {
                 let vm = this;
