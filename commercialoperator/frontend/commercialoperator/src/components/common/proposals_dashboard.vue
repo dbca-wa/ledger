@@ -11,6 +11,7 @@
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
                     <div class="row">
+                        <!--
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Region</label>
@@ -28,6 +29,7 @@
                                 </select>
                             </div>
                         </div>
+                        -->
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Status</label>

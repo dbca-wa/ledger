@@ -11,6 +11,7 @@
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
                     <div class="row">
+                        <!--
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Region</label>
@@ -29,6 +30,7 @@
                                 </select>
                             </div>
                         </div>
+                        -->
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Status</label>
@@ -38,29 +40,35 @@
                                 </select>
                             </div>
                         </div>
-                        <div v-if="is_internal" class="col-md-3">
-                            <label/>
-                            <!-- <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_proposal' }">New Proposal</router-link> -->
-                            <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="disabled" @click.prevent="createEClassLicence()">New E-Class licence</button>
-                        </div>
-                    </div>
-                    <div class="row">
                         <div class="col-md-3">
-                            <label for="">Expiry From</label>
-                            <div class="input-group date" ref="proposalDateFromPicker">
-                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedFrom">
-                                <span class="input-group-addon">
-                                    <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
+                            <div class="form-group">
+                                <label for="">Expiry From</label>
+                                <div class="input-group date" ref="proposalDateFromPicker">
+                                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedFrom">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <label for="">Expiry To</label>
-                            <div class="input-group date" ref="proposalDateToPicker">
-                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedTo">
-                                <span class="input-group-addon">
-                                    <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
+                            <div class="form-group">
+                                <label for="">Expiry To</label>
+                                <div class="input-group date" ref="proposalDateToPicker">
+                                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedTo">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="is_internal" class="col-md-3">
+                            <div class="form-group">
+                                <label/>
+                            <div>
+                                <!-- <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_proposal' }">New Proposal</router-link> -->
+                                <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="disabled" @click.prevent="createEClassLicence()">New E-Class licence</button>
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -327,7 +335,7 @@ export default {
                     
                 ],
                 processing: true,
-				/*
+                /*
                 initComplete: function () {
                     // Grab Regions from the data in the table
                     var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
@@ -364,7 +372,7 @@ export default {
                     // Fix the table rendering columns
                     vm.$refs.proposal_datatable.vmDataTable.columns.adjust().responsive.recalc();
                 }
-				*/
+                */
             }
         }
     },
@@ -823,7 +831,7 @@ export default {
 
     },
     mounted: function(){
-		this.fetchFilterLists();
+        this.fetchFilterLists();
         this.fetchProfile();
         let vm = this;
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
