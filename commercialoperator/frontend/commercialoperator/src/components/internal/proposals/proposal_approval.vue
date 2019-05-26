@@ -10,6 +10,7 @@
                 <p>The proposal was declined. The decision was emailed to {{proposal.applicant}}</p>
             </div>    
         </template>
+        <!--
         <div class="col-md-12">
             <div class="row">
                 <div class="panel panel-default">
@@ -21,12 +22,10 @@
                         </h3>
                     </div>
                     <div class="panel-body panel-collapse collapse in" :id="proposedLevel">
-
                         <div class="row">
                             <div class="col-sm-12">
                                     <template v-if="!isFinalised">
                                         <p><strong>Level of approval: {{proposal.approval_level}}</strong></p>
-                                        
                                     <div v-if="isApprovalLevel">    
                                         <p v-if="proposal.approval_level_document"><strong>Attach documents: <a :href="proposal.approval_level_document[1]" target="_blank">{{proposal.approval_level_document[0]}}</a>
                                         <span>
@@ -38,7 +37,6 @@
                                             <span class="btn btn-info btn-file pull-left">
                                             Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                             </span>
-                                            <!--<span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName()}}</span>-->
                                             </span>
                                             </p>
                                         </div>
@@ -48,18 +46,18 @@
 
                                     <template v-if="isFinalised">
                                         <p><strong>Level of approval: {{proposal.approval_level}}</strong></p>
-                                        
                                     <div v-if="isApprovalLevel">    
                                         <p v-if="proposal.approval_level_document"><strong>Attach documents: <a :href="proposal.approval_level_document[1]" target="_blank">{{proposal.approval_level_document[0]}}</a>
                                         </p>
                                     </div>
-                                    </template>                                    
+                                    </template>
                             </div>
                         </div> 
                     </div>
                 </div>
             </div>
         </div>
+        -->
         <div class="col-md-12">
             <div class="row">
                 <div class="panel panel-default">
