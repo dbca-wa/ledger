@@ -43,7 +43,7 @@
             </div>
             <div v-if="!readonly" v-for="n in repeat">
                 <div v-if="isRepeatable || (!isRepeatable && num_documents()==0)">
-                    <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/>
+                    <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange($event)" :required="isRequired"/>
                 </div>
             </div>
             <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
@@ -217,7 +217,6 @@ export default {
                 reader.readAsDataURL(e.target.files[0]); 
                 reader.onload = function(e) {
                     _file = e.target.result;
-                    vm.show_spinner = false;
                 };
                 _file = e.target.files[0];
             }
@@ -239,6 +238,7 @@ export default {
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
+                    vm.show_spinner = false;
                 },err=>{
                 });
 
