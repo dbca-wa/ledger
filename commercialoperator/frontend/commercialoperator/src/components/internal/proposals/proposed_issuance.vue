@@ -4,7 +4,6 @@
             <div class="container-fluid">
                 <div class="row">
                     <form class="form-horizontal" name="approvalForm">
-                        <alert v-if="isApprovalLevelDocument" type="warning"><strong>{{warningString}}</strong></alert>
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
                             <div class="form-group">
@@ -106,10 +105,6 @@ export default {
         proposal_type: {
             type: String,
             required: true
-        },
-        isApprovalLevelDocument: {
-            type: Boolean,
-            required: true
         }
     },
     data:function () {
@@ -136,7 +131,6 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            warningString: 'Please attach Level of Approval document before issuing Approval',
         }
     },
     computed: {
