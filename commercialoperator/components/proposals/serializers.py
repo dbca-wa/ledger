@@ -467,6 +467,7 @@ class ListProposalSerializer(BaseProposalSerializer):
                 'qaofficer_referrals',
                 'is_qa_officer',
                 'fee_invoice_url',
+                'fee_invoice_reference',
                 'fee_paid',
                 )
         # the serverSide functionality of datatables is such that only columns that have field 'data' defined are requested from the serializer. We
@@ -489,6 +490,8 @@ class ListProposalSerializer(BaseProposalSerializer):
                 'can_officer_process',
                 'assessor_process',
                 'allowed_assessors',
+                'fee_invoice_reference',
+                'fee_paid',
                 )
 
     def get_assigned_officer(self,obj):

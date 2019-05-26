@@ -178,6 +178,7 @@
                     /* Online Training tab */
                     $('#pills-online-training-tab').attr('style', 'background-color:#E5E8E8 !important; color: #99A3A4;');
                     $('#li-training').attr('class', 'nav-item disabled');
+                    $('#pills-online-training-tab').attr("href", "")
 
                     /* Payment tab */
                     $('#pills-payment-tab').attr('style', 'background-color:#E5E8E8 !important; color: #99A3A4;');

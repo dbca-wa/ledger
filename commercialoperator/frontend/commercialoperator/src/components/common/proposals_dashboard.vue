@@ -243,6 +243,9 @@ export default {
                                     links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
                                 }
                             }
+                            if (full.fee_paid){
+                                links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.fee_invoice_reference}' target='_blank'>#${full.fee_invoice_reference}</a><br/>`;
+                            }
                             return links;
                         },
                         name: '',
@@ -374,6 +377,9 @@ export default {
                                 else if (full.can_user_view) {
                                     links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
                                 }
+                            }
+                            if (full.fee_paid){
+                                links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.fee_invoice_reference}' target='_blank'>#${full.fee_invoice_reference}</a><br/>`;
                             }
                             return links;
                         },
