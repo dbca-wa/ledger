@@ -126,7 +126,8 @@ class ApprovalPaymentFilterViewSet(generics.ListAPIView):
         user_org_ids = OrganisationContact.objects.filter(email=user.email).values_list('organisation_id', flat=True)
 
         now = datetime.now().date()
-        return Approval.objects.filter(Q(proxy_applicant=user) | Q(org_applicant_id__in=user_org_ids)).exclude(current_proposal__application_type__name='E Class').exclude(expiry_date__lt=now)
+        return Approval.objects.filter(Q(proxy_applicant=user) | Q(org_applicant_id__in=user_org_ids) | Q(submitter_id=user)).exclude(current_proposal__application_type__name='E Class').exclude(expiry_date__lt=now
+        )
 
     @list_route(methods=['GET',])
     def _list(self, request, *args, **kwargs):

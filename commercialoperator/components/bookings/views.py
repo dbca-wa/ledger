@@ -138,16 +138,35 @@ class MakePaymentView(TemplateView):
             raise
 
 
+from commercialoperator.components.proposals.utils import proposal_submit
 class ApplicationFeeSuccessView(TemplateView):
     template_name = 'commercialoperator/booking/success_fee.html'
 
     def get(self, request, *args, **kwargs):
-        print (" APPLICATION FEE SUCCESS ")
 
         context = template_context(self.request)
         basket = None
         proposal = get_session_application_invoice(request.session)
 
+        if proposal.fee_paid:
+            #TODO must remove this ''if-block' - temp hack, the method is executing twice - need to FIX
+            invoice = Invoice.objects.get(reference=proposal.fee_invoice_reference)
+            try:
+                recipient = proposal.applicant.email
+                submitter = proposal.applicant
+            except:
+                recipient = proposal.submitter.email
+                submitter = proposal.submitter
+            send_application_fee_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+
+            context.update({
+                'proposal': proposal,
+                'submitter': submitter,
+                'fee_invoice': invoice
+            })
+            return render(request, self.template_name, context)
+
+        print (" APPLICATION FEE SUCCESS ")
         if self.request.user.is_authenticated():
             basket = Basket.objects.filter(status='Submitted', owner=request.user).order_by('-id')[:1]
         else:
@@ -157,11 +176,11 @@ class ApplicationFeeSuccessView(TemplateView):
         invoice = Invoice.objects.get(order_number=order.number)
         invoice_ref = invoice.reference
         #book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
-        if invoice.payment_status == 'paid' or invoice.payment_status == 'over_paid':
+
+        #import ipdb; ipdb.set_trace()
+        proposal = proposal_submit(proposal, request)
+        if proposal and (invoice.payment_status == 'paid' or invoice.payment_status == 'over_paid'):
             proposal.fee_invoice_reference = invoice_ref
-            proposal.processing_status = Proposal.PROCESSING_STATUS_WITH_ASSESSOR
-            proposal.customer_status = Proposal.CUSTOMER_STATUS_WITH_ASSESSOR
-            proposal.lodgement_date = datetime.now()
             proposal.save()
         else:
             logger.error('Invoice payment status is {}'.format(invoice.payment_status))

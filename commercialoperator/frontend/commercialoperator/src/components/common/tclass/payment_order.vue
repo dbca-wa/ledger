@@ -1,61 +1,33 @@
 <template lang="html">
     <div>
-        <p> In payment_order </p>
-		<form action="/payment/46/" method="post" name="new_payment" @submit.prevent="validate()" novalidate>
-			<input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-            <v-select  :options="licences" @change="proposal_parks()" v-model="selected_licence" />
-            <OrderTable ref="order_table" :expiry_date="selected_licence.expiry_date" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="Payment Form" id="id_payment" />
+        <div class="container">
+            <div class="row"><div class="col-sm-12">
+                <form action="/payment/46/" method="post" name="new_payment" @submit.prevent="submit()" novalidate>
+                    <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
 
-            <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
-        </form> 
-
-        <!--
-			<input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-        <form :action="/payment/49" method="post" name="new_payment" enctype="multipart/form-data">
-            <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
-        </form> 
-
-		<form method="post" name="new_payment2" @submit.prevent="validate()" novalidate>
-			<button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
-			<button v-if="total >= 0" :disabled="!toc" type="submit" class="btn btn-primary btn-lg">Proceed to payment</button>
-        </form> 
-
-        <form :action="payment_form_url" method="post" name="new_payment" enctype="multipart/form-data">
-            <div>
-
-
-                <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-                <input type='hidden' name="new_payment_id" :value="1" />
-                <div class="row" style="margin-bottom: 50px">
-                  <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5;">
-                    <div class="navbar-inner">
-                        <div class="container">
-                          <p class="pull-right">
-                            <button :disabled="!parks_available" class="btn btn-primary pull-right" style="margin-top:5px;" @click.prevent="calc_order()">Next</button>
-                          </p>
-                        </div>
+                    <div id="error" v-if="errors.length > 0" style="margin: 10px; padding: 5px; color: red; border:1px solid red;">
+                        <b>Please correct errors in row(s):</b>
+                        <ul>
+                            <li v-for="error in errors">
+                                {{error.name}}: {{ error.label }}
+                            </li>
+                        </ul>
                     </div>
-                  </div>
-                </div>
+
+                    <label>Licence</label><v-select :options="licences" @change="proposal_parks()" v-model="selected_licence" />
+                    <OrderTable ref="order_table" :expiry_date="selected_licence.expiry_date" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="" id="id_payment" />
+
+                    <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
+                </form>
             </div>
-
-        </form>
-        -->
-
-        <!--<Select :options="options" name="park" label="Park" id="id_park"/> -->
-        <!-- <Table headers='{"Species": "text", "Quantity": "number", "Date": "date", "Taken": "checkbox"}' :readonly="readonly" name="payment" label="Payment Form" id="id_payment" :isRequired="isRequired"/> -->
-        <!--
-        <PaymentCalc ref="payment_calc" @refreshFromResponse="refreshFromResponse"/>
-        -->
+        </div>
     </div>
 </template>
 
 <script>
 
-import TextArea from '@/components/forms/text-area.vue'
 import OrderTable from './order_table.vue'
 import Select from '@/components/forms/select.vue'
-//import CalcOrder from '@/components/common/payment_order.vue'
 import PaymentCalc from './payment_calc.vue'
 import {
     api_endpoints,
@@ -65,7 +37,6 @@ from '@/utils/hooks'
     export default {
         name:'payment',
         components:{
-            TextArea,
             OrderTable,
             Select,
             PaymentCalc,
@@ -76,32 +47,16 @@ from '@/utils/hooks'
                 required:true
             }
         },
-        /*
-        props:{
-            proposal_id:{
-                type:Number,
-            },
-            processing_status:{
-                type:String,
-            },
-        },
-        */
         data:function () {
             let vm = this;
             return{
                 values: null,
-                //headers: '{"Species": "text", "Quantity": "number", "Date": "date", "Taken": "checkbox"}',
                 headers: '{"Park": "select", "Arrival": "date", "Adults": "number", "Children": "number", "Free of Charge":"number", "Cost":"total"}',
-                _options: "[{'label': 'Nungarin', 'value': 'Nungarin'}, {'label': 'Nungarin_2', 'value': 'Nungarin_2'}]",
-                _parks: [
-                    {'label': 'Nungarin', 'value': 'Nungarin'},
-                    {'label': 'Ngaanyatjarraku', 'value': 'Ngaanyatjarraku'},
-                    {'label': 'Cuballing', 'value': 'Cuballing'}
-                ],
                 parks: [],
                 land_parks: [],
                 parks_available: false,
                 licences: [],
+                errors: [],
                 table_values: null,
                 selected_licence:{
                     default:function () {
@@ -112,22 +67,16 @@ from '@/utils/hooks'
                         }
                     }
                 },
-                columns: ['a','b','c'],
-                rows: [['a','b','c']],
             }
         },
         computed: {
             payment_url: function(){
                 return `/api/payment/${to.params.proposal_id}.json`;
             },
-			csrf_token: function() {
+            csrf_token: function() {
                 return helpers.getCookie('csrftoken')
             },
 
-            _headers: function() {
-                return '{\"Species\": \"text\", \"Quantity\": \"number\", \"Date\": \"date\", \"Taken\": \"checkbox\"}';
-                //return {"Species": "text", "Quantity": "number", "Date": "date", "Taken": "checkbox"};
-            },
             /*
             "type": "table",
             "headers": "{\"Species\": \"text\", \"Quantity\": \"number\", \"Date\": \"date\", \"Taken\": \"checkbox\"}",
@@ -144,6 +93,21 @@ from '@/utils/hooks'
             }
         },
         methods:{
+            today: function() {
+                var day = new Date();
+                var dd = day.getDate();
+                var mm = day.getMonth()+1; //January is 0!
+                var yyyy = day.getFullYear();
+                 if(dd<10){
+                        dd='0'+dd
+                    } 
+                    if(mm<10){
+                        mm='0'+mm
+                    } 
+
+                return new Date(yyyy+'-'+mm+'-'+dd);
+            },
+
             resetTable: function(row) {
                 /* Removes the rows, keeos the first and clears the td contents */
                 let vm = this;
@@ -164,13 +128,10 @@ from '@/utils/hooks'
                 }
             },
             calc_order: function(){
-                //this.save_wo();
                 let vm = this;
                 var formData = new FormData(document.forms.new_payment);
-                //vm.order_details = JSON.parse(formData.get('payment'))['tbody']
                 vm.order_details = formData.get('payment')
                 vm.$refs.payment_calc.order_details = vm.order_details;
-                //vm.$refs.payment_calc.land_parks = vm.proposal.land_parks;
                 vm.$refs.payment_calc.isModalOpen = true;
             },
             payment: function() {
@@ -179,13 +140,9 @@ from '@/utils/hooks'
 
                 let formData = new FormData(vm.form);
                 formData.append('tbody', JSON.stringify(vm.$refs.order_table.table.tbody))
-                //vm.$http.post(vm.payment_form_url,formData).then(res=>{
-                //vm.$http.post(`/api/payment/${vm.selected_licence.value}/park_payment/`, JSON.stringify(formData),{
-                //vm.$http.post(`/api/payment/${proposal_id}/park_payment/`, formData,{
                 vm.$http.post(`/payment/${proposal_id}/`, formData,{
                     emulateJSON:true
                 }).then((res) => {
-                //vm.$http.post(`/api/payment/${vm.selected_licence.value}/park_payment/`,formData).then(res=>{
                     swal(
                         'Payment',
                         'Your payment has been completed',
@@ -194,55 +151,65 @@ from '@/utils/hooks'
                 },err=>{
                 });
             },
-            validate: function (e) {
-                var isValid = true;
-                var form = document.forms.new_payment;
-//                var fields = $(form).find(':input');
-//                $('.tooltip-err').tooltip("destroy");
-//                $.each(fields, function(i, field) {
-//                    $(field).removeClass('tooltip-err');
-//                    $(field).closest('.form-group').removeClass('has-error');
-//                    if ($(field).attr('required') == 'required' || $(field).attr('required') == 'true') {
-//                        var inputStr = $(field).val();
-//                        if (inputStr == "" || inputStr == null) {
-//                             var errMsg = $(field).attr('data-error-msg') ? $(field).attr('data-error-msg') : "Field is required";
-//                             $(field).closest('.form-group').addClass('has-error');
-//                               $(field).focus();
-//                               $(field).select();
-//                               $(field).addClass('tooltip-err');
-//                               $(field).tooltip()
-//                                   .attr("data-original-title", errMsg)
-//                             isValid = false;
-//                         }
-//                    }
-//                });
-                if (isValid) {
-                    form.submit();
+
+            check_form_valid: function () {
+                let vm = this;
+                var idx_park = vm.$refs.order_table.idx_park;
+                var idx_arrival_date = vm.$refs.order_table.idx_arrival_date;
+                var idx_adult = vm.$refs.order_table.idx_adult;
+                var idx_child = vm.$refs.order_table.idx_child;
+                var idx_free = vm.$refs.order_table.idx_free;
+                var idx_price = vm.$refs.order_table.idx_price;
+
+                var errors = [];
+                var tbody = vm.$refs.order_table.table.tbody;
+                for (var row_idx in tbody) {
+                    var row = tbody[row_idx];
+
+                    if ( !(row[idx_park] || row[idx_arrival_date]) || !(row[idx_adult] || row[idx_child] || row[idx_free]) ) {
+                        errors.push({id: parseInt(row_idx), name: "Row", label: parseInt(row_idx)+1})
+                    }
+
+                    var arrival_date = new Date(row[idx_arrival_date]);
+                    if ( arrival_date < vm.today() ) {
+                        errors.push({id: parseInt(row_idx), name: "Arrival Date", label: "Cannot be in the past" })
+                    }
+
+                    if ( arrival_date > new Date(vm.selected_licence.expiry_date) ) {
+                        errors.push({id: parseInt(row_idx), name: "Arrival Date", label: "Cannot be beyond Licence expiry (Expiry:" +vm.selected_licence.expiry_date+ ")"})
+                    }
                 }
+                return errors;
             },
 
+            submit: function (e) {
+                let vm = this;
+                vm.errors = vm.check_form_valid();
+
+                var form = document.forms.new_payment;
+                if (vm.errors.length == 0) {
+                    form.submit();
+                } else {
+                    return;
+                }
+
+            },
             get_user_approvals: function(e) {
                 let vm = this;
-                //let formData = new FormData(vm.form);
-                //formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
                 vm.$http.get('/api/filtered_payments').then((res) => {
                     var licences = res.body;
                     for (var i in licences) {
                         vm.licences.push({value:licences[i].current_proposal, label:licences[i].lodgement_number, expiry_date:licences[i].expiry_date});
                     }
-                    //vm.table_values = null;
                     console.log(vm.licences);
                 },err=>{
                 });
             },
             proposal_parks: function(e) {
                 let vm = this;
-                //let formData = new FormData(vm.form);
-                //vm.$http.get('/api/proposal/49/proposal_parks').then((res)=>{
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,vm.selected_licence.value+'/proposal_parks')).then((res)=>{
                     vm.resetTable();
                     vm.land_parks = res.body.land_parks;
-                    //vm.parks = [];
                     vm.parks = [];
                     for (var i in vm.land_parks) {
                         vm.parks.push({
@@ -256,8 +223,6 @@ from '@/utils/hooks'
                         });
                     }
                     if (vm.parks.length==0) {
-                        //document.getElementById("new_payment").reset();
-                        //document.forms.new_payment.reset();
                         vm.parks_available = false;
                         vm.parks.push({value:0, label:'No parks available'});
                     } else{
@@ -267,12 +232,9 @@ from '@/utils/hooks'
                 },err=>{
                 });
             },
-
-
         },
         mounted:function () {
             let vm = this;
-            //vm.park_options();
             vm.get_user_approvals();
         }
     }

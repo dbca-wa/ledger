@@ -26,7 +26,7 @@ from django.core.cache import cache
 from ledger.accounts.models import EmailUser, Address
 from ledger.address.models import Country
 from datetime import datetime, timedelta, date
-from commercialoperator.components.proposals.utils import save_proponent_data,save_assessor_data
+from commercialoperator.components.proposals.utils import save_proponent_data,save_assessor_data, proposal_submit
 from commercialoperator.components.proposals.models import searchKeyWords, search_reference, ProposalUserAction
 from commercialoperator.utils import missing_required_fields, search_tenure
 
@@ -440,7 +440,7 @@ class ProposalSubmitViewSet(viewsets.ModelViewSet):
         response = super(ProposalSubmitViewSet, self).create(request, *args, **kwargs)
         # here may be placed additional operations for
         # extracting id of the object and using reverse()
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         return HttpResponseRedirect(redirect_to='https://google.com')
 
 #    def perform_create(self, serializer):
@@ -451,7 +451,7 @@ class ProposalSubmitViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             #instance.submit(request,self)
             #instance.tenure = search_tenure(instance)
@@ -994,7 +994,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
         try:
             #import ipdb; ipdb.set_trace()
             instance = self.get_object()
-            instance.submit(request,self)
+            #instance.submit(request,self)
+            proposal_submit(instance, request)
             instance.tenure = search_tenure(instance)
             instance.save()
             serializer = self.get_serializer(instance)

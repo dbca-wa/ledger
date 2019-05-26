@@ -146,22 +146,14 @@ export default {
             vm.files.push(e.target.files[0]);
 
             if (e.target.files.length > 0) {
-                //vm.upload_file(e)
                 vm.save_document(e);
             }
 
-            vm.show_spinner = false;
         },
-
-        /*
-        upload_file: function(e) {
-            let vm = this;
-            $("[id=save_and_continue_btn][value='Save Without Confirmation']").trigger( "click" );
-        },
-		*/
 
         get_documents: function() {
             let vm = this;
+            vm.show_spinner = true;
 
             var formData = new FormData();
             formData.append('action', 'list');
@@ -190,7 +182,6 @@ export default {
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = vm.get_documents()
-                    //vm.documents = res.body;
                     vm.show_spinner = false;
                 });
 
@@ -198,6 +189,7 @@ export default {
         
         uploadFile(e){
             let vm = this;
+            vm.show_spinner = true;
             let _file = null;
 
             if (e.target.files && e.target.files[0]) {
@@ -205,6 +197,7 @@ export default {
                 reader.readAsDataURL(e.target.files[0]); 
                 reader.onload = function(e) {
                     _file = e.target.result;
+                    vm.show_spinner = false;
                 };
                 _file = e.target.files[0];
             }

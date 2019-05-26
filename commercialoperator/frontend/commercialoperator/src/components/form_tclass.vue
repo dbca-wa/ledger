@@ -35,30 +35,19 @@
                   4. Other Details
                 </a>
               </li>
-              <li class="nav-item">
+              <li class="nav-item" id="li-training">
                 <a class="nav-link" id="pills-online-training-tab" data-toggle="pill" href="#pills-online-training" role="tab" aria-controls="pills-online-training" aria-selected="false">
                   5. Online Training
                 </a>
               </li>
-              <li v-if="!proposal.fee_paid" class="nav-item">
-                <!--
-                <a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="#pills-payment" role="tab" aria-controls="pills-payment" aria-selected="false">
-                  6. Payment
-                </a>
-                -->
-
-                <a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="#" role="tab" aria-controls="pills-payment" aria-selected="false">
+              <li class="nav-item" id="li-payment">
+                <a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="" role="tab" aria-controls="pills-payment" aria-selected="false">
                   6. Payment
                 </a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link disabled" id="pills-confirm-tab" data-toggle="pill" href="#pills-confirm" role="tab" aria-controls="pills-confirm" aria-selected="false">
-                  <div v-if="proposal.fee_paid">
-                    6. Confirmation
-                  </div>
-                  <div v-else>
+              <li class="nav-item" id="li-confirm">
+                <a class="nav-link disabled" id="pills-confirm-tab" data-toggle="pill" href="" role="tab" aria-controls="pills-confirm" aria-selected="false">
                     7. Confirmation
-                  </div>
                 </a>
               </li>
 
@@ -98,7 +87,7 @@
               <div class="tab-pane fade" id="pills-online-training" role="tabpanel" aria-labelledby="pills-online-training-tab">
                 <OnlineTraining :proposal="proposal" id="proposalStartOnlineTraining"></OnlineTraining>
               </div>
-              <div class="tab-pane fade" id="pills-payment" role="tabpanel" aria-labelledby="pills-payment-tab">
+              <div class="tab-pane fade" id="pills-payment" role="tabpanel" aria-labelledby="pills-payment-tab" style="color: green;" disabled>
                 <!-- This is a Dummy Tab -->
               </div>
               <div class="tab-pane fade" id="pills-confirm" role="tabpanel" aria-labelledby="pills-confirm-tab">
@@ -179,13 +168,35 @@
         },
         },
         methods:{
+            set_tabs:function(){
+                let vm = this;
+
+                /* set Applicant tab Active */
+                $('#pills-tab a[href="#pills-applicant"]').tab('show');
+
+                if (vm.proposal.fee_paid) {
+                    /* Online Training tab */
+                    $('#pills-online-training-tab').attr('style', 'background-color:#E5E8E8 !important; color: #99A3A4;');
+                    $('#li-training').attr('class', 'nav-item disabled');
+
+                    /* Payment tab */
+                    $('#pills-payment-tab').attr('style', 'background-color:#E5E8E8 !important; color: #99A3A4;');
+                    $('#li-payment').attr('class', 'nav-item disabled');
+
+                    /* Confirmation tab */
+                    $('#pills-confirm-tab').attr('style', 'background-color:#E5E8E8 !important; color: #99A3A4;');
+                    $('#li-confirm').attr('class', 'nav-item disabled');
+                }
+            }
+
         },
         mounted: function() {
             let vm = this;
-            $('#pills-tab a[href="#pills-applicant"]').tab('show');
+            vm.set_tabs();
             vm.form = document.forms.new_proposal;
             //window.addEventListener('beforeunload', vm.leaving);
             //indow.addEventListener('onblur', vm.leaving);
+
         }
  
     }

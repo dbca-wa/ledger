@@ -264,19 +264,23 @@ class Organisation(models.Model):
                 is_admin = False
 
             # Create contact person
-            OrganisationContact.objects.create(
-                organisation=self,
-                first_name=user.first_name,
-                last_name=user.last_name,
-                mobile_number=user.mobile_number,
-                phone_number=user.phone_number,
-                fax_number=user.fax_number,
-                email=user.email,
-                user_role=role,
-                user_status='pending',
-                is_admin=is_admin
+            try:
+                OrganisationContact.objects.create(
+                    organisation=self,
+                    first_name=user.first_name,
+                    last_name=user.last_name,
+                    mobile_number=user.mobile_number,
+                    phone_number=user.phone_number,
+                    fax_number=user.fax_number,
+                    email=user.email,
+                    user_role=role,
+                    user_status='pending',
+                    is_admin=is_admin
 
-            )
+                )
+            except:
+                pass # user already exists
+
             # log linking
             self.log_user_action(OrganisationAction.ACTION_LINK.format(
                 '{} {}({})'.format(delegate.user.first_name, delegate.user.last_name, delegate.user.email)), request)
