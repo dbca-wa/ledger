@@ -339,6 +339,32 @@ export default {
                 var licence_id = $(this).attr('lic-id');
                 console.log('cancel-activity: activity : ' + activity_id);
                 console.log('cancel-activity: licence : ' + licence_id);
+                swal({
+                    title: "Cancel Activity",
+                    text: "Are you sure you want to cancel this activity?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                       vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/cancel_activity/?activity_id=' + activity_id)).then(res=>{
+                            swal({
+                                title: "Cancel Activity",
+                                text: "The activity has been cancelled",
+                                type: "information"
+                            })
+                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
+                        },err=>{
+                            swal(
+                                'Submit Error',
+                                helpers.apiVueResourceError(err),
+                                'error'
+                            )
+                        });
+                    }
+                },(error) => {
+                });
+
             });
             // Suspend activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[suspend-activity]', function(e) {
