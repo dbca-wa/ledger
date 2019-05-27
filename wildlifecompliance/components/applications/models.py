@@ -1315,18 +1315,23 @@ class Application(RevisionedMixin):
         from wildlifecompliance.components.licences.models import WildlifeLicence
         current_date = timezone.now().date()
         try:
-            return WildlifeLicence.objects.filter(
+            existing_licence = WildlifeLicence.objects.filter(
                 Q(licence_category=self.get_licence_category()),
                 Q(current_application__org_applicant_id=self.org_applicant_id) if self.org_applicant_id else (
                     Q(current_application__submitter_id=self.proxy_applicant_id
                       ) | Q(current_application__proxy_applicant_id=self.proxy_applicant_id)
-                ) if self.proxy_applicant_id else Q(current_application__submitter_id=self.submitter_id),
+                ) if self.proxy_applicant_id else Q(current_application__submitter_id=self.submitter_id)
+            ).order_by('-id').distinct().first()
+
+            if existing_licence:
                 # Only load licence if any associated activities are still current.
-                Q(
-                    current_application__selected_activities__expiry_date__gte=current_date,
-                    current_application__selected_activities__activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT,
-                )
-            ).order_by('-id').distinct().first(), False
+                if not existing_licence.current_application.get_activity_chain(
+                    expiry_date__gte=current_date,
+                    activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+                ).first():
+                    raise WildlifeLicence.DoesNotExist
+
+            return existing_licence, False
         except WildlifeLicence.DoesNotExist:
             return WildlifeLicence.objects.create(
                 current_application=self,
