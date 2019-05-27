@@ -15,6 +15,8 @@ from commercialoperator.components.organisations.utils import (
                                 can_admin_org,
                                 is_consultant,
                                 can_approve,
+                                can_relink,
+                                is_last_admin,
                             )
 from rest_framework import serializers, status
 import rest_framework_gis.serializers as gis_serializers
