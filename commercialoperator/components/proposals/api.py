@@ -440,7 +440,7 @@ class ProposalSubmitViewSet(viewsets.ModelViewSet):
         response = super(ProposalSubmitViewSet, self).create(request, *args, **kwargs)
         # here may be placed additional operations for
         # extracting id of the object and using reverse()
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         return HttpResponseRedirect(redirect_to='https://google.com')
 
 #    def perform_create(self, serializer):
@@ -451,7 +451,7 @@ class ProposalSubmitViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             #instance.submit(request,self)
             #instance.tenure = search_tenure(instance)

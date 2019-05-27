@@ -21,14 +21,14 @@
                         </span>
                     </p>
                 </div>
-                <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
             </div>
             <div v-if="!readonly" v-for="n in repeat">
                 <div v-if="isRepeatable || (!isRepeatable && num_documents()==0)">
                     <span class="btn btn-link btn-file"><u>Attach Document</u>
-                    <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/></span>
+                    <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange($event)" :required="isRequired"/></span>
                 </div>
             </div>
+            <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
 
         </div>
         </div>
@@ -121,7 +121,6 @@ export default {
         handleChange:function (e) {
             let vm = this;
             //console.log(e.target.name)
-            vm.show_spinner = true;
             if (vm.isRepeatable) {
                 let  el = $(e.target).attr('data-que');
                 let avail = $('input[name='+e.target.name+']');
@@ -146,22 +145,14 @@ export default {
             vm.files.push(e.target.files[0]);
 
             if (e.target.files.length > 0) {
-                //vm.upload_file(e)
                 vm.save_document(e);
             }
 
-            vm.show_spinner = false;
         },
-
-        /*
-        upload_file: function(e) {
-            let vm = this;
-            $("[id=save_and_continue_btn][value='Save Without Confirmation']").trigger( "click" );
-        },
-		*/
 
         get_documents: function() {
             let vm = this;
+            vm.show_spinner = true;
 
             var formData = new FormData();
             formData.append('action', 'list');
@@ -190,7 +181,6 @@ export default {
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = vm.get_documents()
-                    //vm.documents = res.body;
                     vm.show_spinner = false;
                 });
 
@@ -198,6 +188,7 @@ export default {
         
         uploadFile(e){
             let vm = this;
+            vm.show_spinner = true;
             let _file = null;
 
             if (e.target.files && e.target.files[0]) {
@@ -226,6 +217,7 @@ export default {
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
+                    vm.show_spinner = false;
                 },err=>{
                 });
 

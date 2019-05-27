@@ -16,40 +16,34 @@
                 </thead>
 
                 <tbody>
-                  <!--<tr v-for="row in table.tbody">-->
                   <tr v-for="(row, row_idx) in table.tbody">
                       <td v-if="col_types[index]=='select'" width="30%" v-for="(value, index) in row">
-                          <!-- <v-select class="tbl_input" :options="options" v-model="row[index]" @change="calcPrice(row[index], row, row_idx)"/> -->
                           <v-select class="tbl_input" :options="options" v-model="row[index]" @change="park_change(row[index], row, row_idx)" :title="'Adult Price: '+ row[index] +  ', Child Price: ' + row[index]"i :disabled="disabled"/>
                       </td>
+
                       <td v-if="col_types[index]=='date'" v-for="(value, index) in row">
-                          <!--<input id="id_arrival_date" class="tbl_input" :type="col_types[index]" :max="expiry_date" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[0]=='' || row[0]==null" @change="calcPrice(row[index], row, row_idx)"/>-->
                           <input id="id_arrival_date" class="tbl_input" :type="col_types[index]" :max="expiry_date" :min="today()" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[0]=='' || row[0]==null" @change="date_change(row[index], row, row_idx)"/>
                       </td>
+
                       <td v-if="col_types[index]=='text' || col_types[index]=='number'" v-for="(value, index) in row">
                           <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" value="0" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[1]==''" @change="calcPrice(row[index], row, row_idx)"/>
                       </td>
+
                       <td v-if="col_types[index]=='total'" v-for="(value, index) in row">
-                          <!--${{ net_park_prices | price(row_idx) }}-->
                           <div class="currencyinput"><input class="tbl_input" :type="col_types[index]" min="0" value="0" v-model="row[index]" disabled/> </div>
                       </td>
 
-                      <!--
-                      <td>
-                          ${{ net_park_prices | price(row_idx) }}
-                      </td>
-                      -->
                       <td v-if="!readonly">
                           <a class="fa fa-trash-o" v-on:click="deleteRow(row)" title="Delete row" style="cursor: pointer; color:red;" :disabled="disabled"></a>
                       </td>
                   </tr>
 
                   <tr>
-                      <td colspan="5">
+                      <td colspan="5" align="right" >
+                          <div><label>Total:</label></div>
                       </td>
                       <td align="left" >
-                          <!-- <div class="currencyinput"> ${{ net_park_prices | total_price() }} </div> -->
-                          <div class="currencyinput">{{ table.tbody | total_price(idx_price) }}</div>
+                          <div class="currencyinput"><input class="tbl_input" :type="number" min="0" :value="total_price()" disabled/> </div>
                       </td>
                   </tr>
 
@@ -70,6 +64,7 @@
               <pre class="output">
                 {{ expiry_date }}
               </pre>
+              -->
             </div>
 
         </div>
@@ -153,7 +148,7 @@ export default {
             idx_arrival_date: 1,
             idx_adult: 2,
             idx_child: 3,
-            idx_senior: 4,
+            idx_free: 4,
             idx_price: 5,
 
             isClickable: "return true;" ,
@@ -174,7 +169,6 @@ export default {
                     }
                 }
             },
-            total_price: 0.0,
 
         }
     },
@@ -190,30 +184,30 @@ export default {
         price: function(dict, key){
             return dict[key];
         },
-        total_price: function(data, idx_price) {
-            var total = 0.0;
-            for (var key in data) { 
-                //total += parseFloat(data[key][idx_price]) 
-                total += isNaN(parseFloat(data[key][idx_price])) ? 0.00 : parseFloat(data[key][idx_price]);
-            }
-            return total
-        },
     },
     methods: {
+        total_price: function() {
+            let vm = this;
+            var total = 0.0;
+            for (var key in vm.table.tbody) { 
+                total += isNaN(parseFloat(vm.table.tbody[key][vm.idx_price])) ? 0.00 : parseFloat(vm.table.tbody[key][vm.idx_price]);
+            }
+            return total.toFixed(2);
+        },
 
         today: function() {
-			var day = new Date();
-			var dd = day.getDate();
-			var mm = day.getMonth()+1; //January is 0!
-			var yyyy = day.getFullYear();
-			 if(dd<10){
-					dd='0'+dd
-				} 
-				if(mm<10){
-					mm='0'+mm
-				} 
+            var day = new Date();
+            var dd = day.getDate();
+            var mm = day.getMonth()+1; //January is 0!
+            var yyyy = day.getFullYear();
+             if(dd<10){
+                    dd='0'+dd
+                } 
+                if(mm<10){
+                    mm='0'+mm
+                } 
 
-			return yyyy+'-'+mm+'-'+dd;
+            return yyyy+'-'+mm+'-'+dd;
         },
         reset_row: function() {
             var init_row = [];
