@@ -1547,7 +1547,7 @@ class Application(RevisionedMixin):
         date_filter = Application.get_activity_date_filter(
             for_application_type, 'selected_activities__')
         return Application.get_request_user_applications(request).filter(
-            selected_activities__processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
+            selected_activities__activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT,
             **date_filter
         ).distinct()
 
@@ -2019,9 +2019,11 @@ class ApplicationSelectedActivity(models.Model):
         ).distinct()
 
     def cancel(self, request):
-        self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED
-        self.updated_by = request.user
-        self.save()
+        with transaction.atomic():
+            self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED
+            self.updated_by = request.user
+            self.save()
+            # TODO: if last ASA, need to cancel the whole licence
 
 
 

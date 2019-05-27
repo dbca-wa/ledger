@@ -63,7 +63,7 @@ class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
         datatables_always_serialize = fields
 
     def get_last_issue_date(self, obj):
-        return obj.current_activities.first().issue_date
+        return obj.current_activities.first().issue_date if obj.current_activities else ''
 
 
 class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
@@ -89,7 +89,7 @@ class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
         datatables_always_serialize = fields
 
     def get_last_issue_date(self, obj):
-        return obj.current_activities.first().issue_date
+        return obj.current_activities.first().issue_date if obj.current_activities else ''
 
 
 class DefaultPurposeSerializer(serializers.ModelSerializer):

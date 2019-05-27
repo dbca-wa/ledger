@@ -179,7 +179,7 @@ export default {
                             let org_id = full.current_application.org_applicant ? full.current_application.org_applicant.id : ''
                             let proxy_id = full.current_application.proxy_applicant ? full.current_application.proxy_applicant.id : ''
                             let licence_category_id = full.current_application.category_id ? full.current_application.category_id : ''
-                            links += `<a add-activity-purpose='${full.id}' org_id='${org_id}' proxy_id='${proxy_id}' licence_category_id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
+                            links += `<a add-activity-purpose='${full.id}' org-id='${org_id}' proxy-id='${proxy_id}' licence-category-id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
                             links += `<a>Renew</a><br/>`
                             links += `<a>Reactivate Renew</a><br/>`
                             links += `<a>Surrender</a><br/>`
@@ -303,58 +303,60 @@ export default {
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[add-activity-purpose]', function(e) {
                 e.preventDefault();
                 var id = $(this).attr('add-activity-purpose');
-                var org_id = $(this).attr('org_id');
-                var proxy_id = $(this).attr('proxy_id');
-                var licence_category_id = $(this).attr('licence_category_id');
+                var org_id = $(this).attr('org-id');
+                var proxy_id = $(this).attr('proxy-id');
+                var licence_category_id = $(this).attr('licence-category-id');
                 vm.addActivityPurpose(id, org_id, proxy_id, licence_category_id);
             });
             // Amend activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[amend-activity]', function(e) {
                 e.preventDefault();
-                var id = $(this).attr('amend-activity');
-                console.log('amend-activity: ' + id);
+                var activity_id = $(this).attr('amend-activity');
+                console.log('amend-activity: ' + activity_id);
             });
             // Renew activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[renew-activity]', function(e) {
                 e.preventDefault();
-                var id = $(this).attr('renew-activity');
-                console.log('renew-activity: ' + id);
+                var activity_id = $(this).attr('renew-activity');
+                console.log('renew-activity: ' + activity_id);
             });
             // Reactivate Renew activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reactivate-renew-activity]', function(e) {
                 e.preventDefault();
-                var id = $(this).attr('reactivate-renew-activity');
-                console.log('reactivate-renew-activity: ' + id);
+                var activity_id = $(this).attr('reactivate-renew-activity');
+                console.log('reactivate-renew-activity: ' + activity_id);
             });
             // Surrender activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[surrender-activity]', function(e) {
                 e.preventDefault();
-                var id = $(this).attr('surrender-activity');
-                console.log('surrender-activity: ' + id);
+                var activity_id = $(this).attr('surrender-activity');
+                console.log('surrender-activity: ' + activity_id);
             });
             // Cancel activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[cancel-activity]', function(e) {
                 e.preventDefault();
-                var id = $(this).attr('cancel-activity');
-                console.log('cancel-activity: ' + id);
+                var activity_id = $(this).attr('cancel-activity');
+                var licence_id = $(this).attr('lic-id');
+                console.log('cancel-activity: activity : ' + activity_id);
+                console.log('cancel-activity: licence : ' + licence_id);
             });
             // Suspend activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[suspend-activity]', function(e) {
                 e.preventDefault();
-                var id = $(this).attr('suspend-activity');
-                console.log('suspend-activity: ' + id);
+                var activity_id = $(this).attr('suspend-activity');
+                console.log('suspend-activity: ' + activity_id);
             });
             // Reissue activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reissue-activity]', function(e) {
                 e.preventDefault();
-                var id = $(this).attr('reissue-activity');
-                console.log('reissue-activity: ' + id);
+                var activity_id = $(this).attr('reissue-activity');
+                console.log('reissue-activity: ' + activity_id);
             });
             // Reinstate activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reinstate-activity]', function(e) {
                 e.preventDefault();
-                var id = $(this).attr('reinstate-activity');
-                console.log('reinstate-activity: ' + id);
+                var activity_id = $(this).attr('reinstate-activity');
+                console.log('reinstate-activity: ' + activity_id);
             });
             // Child row listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'tr.licRecordRow', function(e) {
@@ -364,6 +366,7 @@ export default {
                 }
                 // Generate child row for application
                 var tr = $(this);
+                var licence_id = vm.$refs.licence_datatable.vmDataTable.row(tr).data().id;
                 var row = vm.$refs.licence_datatable.vmDataTable.row(tr);
 
                 if (row.child.isShown()) {
@@ -403,7 +406,7 @@ export default {
                                     }
                                     if (!vm.is_external && activity['can_cancel']) {
                                         activity_rows +=
-                                            `<a cancel-activity=` + activity['id'] + `>Cancel</a></br>`;
+                                            `<a cancel-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Cancel</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_suspend']) {
                                         activity_rows +=

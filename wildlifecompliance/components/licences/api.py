@@ -201,7 +201,7 @@ class LicencePaginatedViewSet(viewsets.ModelViewSet):
 
 class LicenceViewSet(viewsets.ModelViewSet):
     queryset = WildlifeLicence.objects.all()
-    serializer_class = WildlifeLicenceSerializer
+    serializer_class = DTExternalWildlifeLicenceSerializer
 
     def get_queryset(self):
         user = self.request.user
@@ -217,7 +217,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
             )
         return WildlifeLicence.objects.none()
 
-    def list(self, request, *args, **kwargs):
+    def list(self, request, pk=None, *args, **kwargs):
         queryset = self.get_queryset()
         # Filter by org
         org_id = request.GET.get('org_id', None)
@@ -232,11 +232,10 @@ class LicenceViewSet(viewsets.ModelViewSet):
         if submitter_id:
             queryset = queryset.filter(current_application__submitter_id=submitter_id)
         serializer = self.get_serializer(queryset, many=True)
-        # Display only the relevant Activity if id and activity_id param set
-        licence_id = request.GET.get('id', None)
+        # Display only the relevant Activity if activity_id param set
         activity_id = request.GET.get('activity_id', None)
-        if activity_id and licence_id:
-            queryset = queryset.get(id=licence_id).current_activities.get(id=activity_id)
+        if activity_id and pk:
+            queryset = queryset.get(id=pk).current_activities.get(id=activity_id)
             serializer = ExternalApplicationSelectedActivitySerializer(queryset)
         return Response(serializer.data)
 
@@ -258,13 +257,13 @@ class LicenceViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @list_route(methods=['GET', ])
-    def cancel_selected_activity(self, request, *args, **kwargs):
+    @detail_route(methods=['GET', ])
+    def cancel_activity(self, request, pk=None, *args, **kwargs):
         try:
-            licence_id = request.GET.get('id', None)
             activity_id = request.GET.get('activity_id', None)
-            if activity_id and licence_id:
+            if activity_id and pk:
                 instance = self.get_object()
+                instance = instance.current_activities.get(id=activity_id)
                 if not request.user.has_perm('wildlifecompliance.licensing_officer'):
                     raise serializers.ValidationError(
                         'You are not authorised to cancel licenced activities')
