@@ -37,6 +37,7 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     purposes = serializers.SerializerMethodField(read_only=True)
     activity_purpose_names = serializers.SerializerMethodField(read_only=True)
     processing_status = CustomChoiceField(read_only=True)
+    activity_status = CustomChoiceField(read_only=True)
     can_renew = serializers.BooleanField(read_only=True)
     can_amend = serializers.BooleanField(read_only=True)
     can_surrender = serializers.BooleanField(read_only=True)
@@ -90,7 +91,7 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
     start_date = serializers.SerializerMethodField(read_only=True)
     expiry_date = serializers.SerializerMethodField(read_only=True)
     activity_purpose_names = serializers.SerializerMethodField(read_only=True)
-    processing_status = CustomChoiceField(read_only=True)
+    activity_status = CustomChoiceField(read_only=True)
     can_renew = serializers.BooleanField(read_only=True)
     can_amend = serializers.BooleanField(read_only=True)
     can_surrender = serializers.BooleanField(read_only=True)
@@ -107,7 +108,7 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
             'start_date',
             'expiry_date',
             'activity_purpose_names',
-            'processing_status',
+            'activity_status',
             'can_renew',
             'can_amend',
             'can_surrender',
