@@ -257,7 +257,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @detail_route(methods=['GET', ])
+    @detail_route(methods=['POST', ])
     def cancel_activity(self, request, pk=None, *args, **kwargs):
         try:
             activity_id = request.GET.get('activity_id', None)
