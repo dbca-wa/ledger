@@ -139,12 +139,14 @@ class Application(RevisionedMixin):
 
     CUSTOMER_STATUS_DRAFT = 'draft'
     CUSTOMER_STATUS_UNDER_REVIEW = 'under_review'
+    CUSTOMER_STATUS_AWAITING_PAYMENT = 'awaiting_payment'
     CUSTOMER_STATUS_AMENDMENT_REQUIRED = 'amendment_required'
     CUSTOMER_STATUS_ACCEPTED = 'accepted'
     CUSTOMER_STATUS_PARTIALLY_APPROVED = 'partially_approved'
     CUSTOMER_STATUS_DECLINED = 'declined'
     CUSTOMER_STATUS_CHOICES = (
         (CUSTOMER_STATUS_DRAFT, 'Draft'),
+        (CUSTOMER_STATUS_AWAITING_PAYMENT, 'Awaiting Payment'),
         (CUSTOMER_STATUS_UNDER_REVIEW, 'Under Review'),
         (CUSTOMER_STATUS_AMENDMENT_REQUIRED, 'Amendment Required'),
         (CUSTOMER_STATUS_ACCEPTED, 'Accepted'),
@@ -155,6 +157,7 @@ class Application(RevisionedMixin):
     # List of statuses from above that allow a customer to edit an application.
     CUSTOMER_EDITABLE_STATE = [
         CUSTOMER_STATUS_DRAFT,
+        CUSTOMER_STATUS_AWAITING_PAYMENT,
         CUSTOMER_STATUS_AMENDMENT_REQUIRED,
     ]
 
@@ -418,12 +421,14 @@ class Application(RevisionedMixin):
     def is_discardable(self):
         """
         An application can be discarded by a customer if:
-        1 - It is a draft
+        1 - It is a draft or a draft awaiting payment
         2- or if the application has been pushed back to the user
         TODO: need to confirm regarding (2) here related to ApplicationSelectedActivity
         """
-        return self.customer_status == Application.CUSTOMER_STATUS_DRAFT\
-            or self.processing_status == Application.PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE
+        return self.customer_status in [
+            Application.CUSTOMER_STATUS_DRAFT,
+            Application.CUSTOMER_STATUS_AWAITING_PAYMENT,
+        ] or self.processing_status == Application.PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE
 
     @property
     def is_deletable(self):
@@ -431,16 +436,27 @@ class Application(RevisionedMixin):
         An application can be deleted only if it is a draft and it hasn't been lodged yet
         :return:
         """
-        return self.customer_status == Application.CUSTOMER_STATUS_DRAFT and not self.lodgement_number
+        return self.customer_status in [
+            Application.CUSTOMER_STATUS_DRAFT,
+            Application.CUSTOMER_STATUS_AWAITING_PAYMENT,
+        ] and not self.lodgement_number
+
+    @property
+    def application_fee_paid(self):
+        return self.payment_status in [
+            Invoice.PAYMENT_STATUS_NOT_REQUIRED,
+            Invoice.PAYMENT_STATUS_PAID,
+            Invoice.PAYMENT_STATUS_OVERPAID,
+        ]
 
     @property
     def payment_status(self):
         # TODO: needs more work, underpaid/overpaid statuses to be added, refactor to key/name like processing_status
         if self.application_fee == 0:
-            return 'payment_not_required'
+            return Invoice.PAYMENT_STATUS_NOT_REQUIRED
         else:
             if self.invoices.count() == 0:
-                return 'unpaid'
+                return Invoice.PAYMENT_STATUS_UNPAID
             else:
                 latest_invoice = Invoice.objects.get(
                     reference=self.invoices.latest('id').invoice_reference)
@@ -727,11 +743,14 @@ class Application(RevisionedMixin):
                 setattr(selected_activity, field, value)
                 selected_activity.save()
 
-    def submit(self, request, viewset):
+    def submit(self, request):
         from wildlifecompliance.components.licences.models import LicenceActivity
         with transaction.atomic():
             if self.can_user_edit:
-                # self.processing_status = Application.PROCESSING_STATUS_UNDER_REVIEW
+                if not self.application_fee_paid:
+                    self.customer_status = Application.CUSTOMER_STATUS_AWAITING_PAYMENT
+                    self.save()
+                    return
                 self.customer_status = Application.CUSTOMER_STATUS_UNDER_REVIEW
                 self.submitter = request.user
                 self.lodgement_date = timezone.now()
