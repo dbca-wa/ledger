@@ -490,6 +490,7 @@ class ListProposalSerializer(BaseProposalSerializer):
                 'can_officer_process',
                 'assessor_process',
                 'allowed_assessors',
+                'fee_invoice_url',
                 'fee_invoice_reference',
                 'fee_paid',
                 )

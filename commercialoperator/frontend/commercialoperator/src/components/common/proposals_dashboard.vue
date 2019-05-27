@@ -244,7 +244,8 @@ export default {
                                 }
                             }
                             if (full.fee_paid){
-                                links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.fee_invoice_reference}' target='_blank'>#${full.fee_invoice_reference}</a><br/>`;
+                                links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.fee_invoice_reference}' target='_blank'>View Payment</a><br/>`;
+                                links +=  `<a href='/cols/payments/invoice-pdf/${full.fee_invoice_reference}' target='_blank'>#${full.fee_invoice_reference}</a><br/>`;
                             }
                             return links;
                         },
@@ -379,7 +380,8 @@ export default {
                                 }
                             }
                             if (full.fee_paid){
-                                links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.fee_invoice_reference}' target='_blank'>#${full.fee_invoice_reference}</a><br/>`;
+                                links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.fee_invoice_reference}' target='_blank'>View Payment</a><br/>`;
+                                links +=  `<a href='/cols/payments/invoice-pdf/${full.fee_invoice_reference}' target='_blank'>#${full.fee_invoice_reference}</a><br/>`;
                             }
                             return links;
                         },
