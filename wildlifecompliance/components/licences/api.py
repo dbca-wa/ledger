@@ -305,6 +305,8 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
         licence_category = request.GET.get('licence_category')
 
         active_applications = Application.get_active_licence_applications(request, application_type)
+        print('active_applications')
+        print(active_applications)
         if not active_applications.count() and application_type == Application.APPLICATION_TYPE_RENEWAL:
             # Do not present with renewal options if no activities are within the renewal period
             queryset = LicenceCategory.objects.none()
@@ -313,22 +315,44 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
         elif active_applications.count():
             # Including inactive licences
             all_applications = Application.get_request_user_applications(request).distinct()
+            print('all_applications')
+            print(all_applications)
             # Activities relevant to the current application type
             current_activities = Application.get_active_licence_activities(request, application_type)
+            print('current_activities - this is working as expected')
+            print(current_activities)
 
             active_category_ids = current_activities.values_list(
                 'licence_activity__licence_category_id',
                 flat=True
             )
-            active_purpose_ids = all_applications.values_list(
-                'licence_purposes__id',
-                flat=True
-            ).exclude(
-                selected_activities__processing_status__in=[
-                    ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
-                    ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED,
-                ]
-            )
+            print('active_category_ids')
+            print(active_category_ids)
+
+            # active_purpose_ids = all_applications.values_list(
+            #     'licence_purposes__id',
+            #     flat=True
+            # ).exclude(
+            #     selected_activities__processing_status__in=[
+            #         ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
+            #         ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED,
+            #     ],
+            #     selected_activities__activity_status__in=[
+            #         ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
+            #         ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED,
+            #     ]
+            # )
+            #
+            # print('active_purpose_ids')
+            # print(active_purpose_ids)
+
+            # why is the above filter for selected ACTIVITIES when the values list is LICENCE PURPOSES?
+            # testing replace by the code following:
+            active_purpose_ids = []
+            for selected_activity in current_activities:
+                active_purpose_ids.extend([purpose.id for purpose in selected_activity.purposes])
+            print('active_purpose_ids - fixed')
+            print(active_purpose_ids)
 
             if application_type in [
                 Application.APPLICATION_TYPE_ACTIVITY,
