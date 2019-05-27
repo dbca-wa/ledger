@@ -1325,7 +1325,7 @@ class Application(RevisionedMixin):
 
             if existing_licence:
                 # Only load licence if any associated activities are still current.
-                if not self.get_activity_chain(
+                if not existing_licence.current_application.get_activity_chain(
                     expiry_date__gte=current_date,
                     activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
                 ).first():
