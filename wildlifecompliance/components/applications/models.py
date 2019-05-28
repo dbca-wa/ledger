@@ -1349,7 +1349,8 @@ class Application(RevisionedMixin):
                     activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
                 ).first():
                     raise WildlifeLicence.DoesNotExist
-
+            else:
+                raise WildlifeLicence.DoesNotExist
             return existing_licence, False
         except WildlifeLicence.DoesNotExist:
             return WildlifeLicence.objects.create(
@@ -1390,6 +1391,11 @@ class Application(RevisionedMixin):
                             original_issue_date = latest_activity.original_issue_date
                             start_date = latest_activity.start_date
                             expiry_date = latest_activity.expiry_date
+
+                            # Set activity_status for latest_activity to REPLACED
+                            latest_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
+                            latest_activity.save()
+
                         selected_activity.issue_date = timezone.now()
                         selected_activity.updated_by = request.user
                         selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
@@ -1580,7 +1586,6 @@ class Application(RevisionedMixin):
         proxy_details = request.user.get_wildlifecompliance_proxy_details(request)
         proxy_id = proxy_details.get('proxy_id')
         organisation_id = proxy_details.get('organisation_id')
-
         return Application.objects.filter(
             Q(org_applicant_id=organisation_id) if organisation_id
             else (
@@ -1948,6 +1953,22 @@ class ApplicationSelectedActivity(models.Model):
     @property
     def purposes(self):
         from wildlifecompliance.components.licences.models import LicencePurpose
+        return LicencePurpose.objects.filter(
+            application__id=self.application_id,
+            licence_activity_id=self.licence_activity_id
+        ).distinct()
+
+    @property
+    def current_purposes(self):
+        '''
+        need to clarify why ASA.purposes uses activity chain, should this be renamed to "current_purposes"?
+        should there be a separate function that just returns the purposes for the individual ASA?
+        after checking usage of .purposes, it seems maybe this was replaced by the creation of "current_activities"
+        may not need this if current_activities is correct, then purposes for an ASA should always
+        just show its own purposes, not full chain list
+        '''
+
+        from wildlifecompliance.components.licences.models import LicencePurpose
         activity_chain = self.application.get_activity_chain(
             licence_activity_id=self.licence_activity_id,
             activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
@@ -1956,7 +1977,7 @@ class ApplicationSelectedActivity(models.Model):
         return LicencePurpose.objects.filter(
             application__id__in=application_ids,
             licence_activity_id=self.licence_activity_id
-        )
+        ).distinct()
 
     @property
     def can_renew(self):
