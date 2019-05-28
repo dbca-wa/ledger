@@ -275,9 +275,14 @@ import moment from 'moment';
 import $ from 'jquery';
 
 
-var nowTemp = new Date();
-var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
+var span = 5;
 
+// get the current day WRT Perth time.
+// to avoid the horrors of timezone switching, assume every date is a UTC timestamp at midnight on that day
+var today = moment.utc().add(8, 'hours');
+today = moment.utc({year: today.year(), month: today.month(), day: today.date()})
+
+var later = moment(today).add(span, 'days')
 
 function getQueryParam(name, fallback) {
     name = name.replace(/[[\]]/g, "\\$&");
@@ -292,9 +297,9 @@ export default {
     data: function () {
         return {
             name: '',
-            arrivalDate: moment.utc(getQueryParam('arrival', moment.utc(now).format('YYYY/MM/DD')), 'YYYY/MM/DD'),
+            arrivalDate: moment.utc(getQueryParam('arrival', today)),
             arrivalData: null,
-            departureDate:  moment.utc(getQueryParam('departure', moment.utc(now).add(5, 'days').format('YYYY/MM/DD')), 'YYYY/MM/DD'),
+            departureDate:  moment.utc(getQueryParam('departure', later)),
             departureData: null,
             // order of preference:
             // - GET parameter 'site_id'
@@ -302,7 +307,7 @@ export default {
             // - '1'
             parkstayGroundId: parseInt(getQueryParam('site_id', 0)),
             parkstayGroundRatisId: parseInt(getQueryParam('parkstay_site_id', 0)),
-            days: 5,
+            days: span,
             numAdults: parseInt(getQueryParam('num_adult', 2)),
             numChildren: parseInt(getQueryParam('num_children', 0)),
             numConcessions: parseInt(getQueryParam('num_concession', 0)),
@@ -351,13 +356,13 @@ export default {
         arrivalDateString: {
             cache: false,
             get: function() {
-                return this.arrivalEl[0].value ? moment(this.arrivalData.getDate()).format('YYYY/MM/DD') : null; 
+                return this.arrivalEl[0].value ? moment.utc(this.arrivalData.getDate()).format('YYYY/MM/DD') : null;
             }
         },
         departureDateString: {
             cache: false,
             get: function() {
-                return this.departureEl[0].value ? moment(this.departureData.getDate()).format('YYYY/MM/DD') : null; 
+                return this.departureEl[0].value ? moment.utc(this.departureData.getDate()).format('YYYY/MM/DD') : null;
             }
         },
     },
@@ -366,7 +371,7 @@ export default {
             this.showMoreInfo ? this.showMoreInfo = false: this.showMoreInfo = true;
         },
         getDateString: function (date, offset) {
-            return moment(date).add(offset, 'days').format('ddd MMM D');
+            return moment.utc(date).add(offset, 'days').format('ddd MMM D');
         },
         toggleBreakdown: function (site) {
             if (site.showBreakdown) {
@@ -412,7 +417,7 @@ export default {
                     }
                 },
                 error: function(xhr, stat, err) {
-                    console.log('POST error');
+                    //console.log('POST error');
                     //console.log(xhr);
                     vm.errorMsg = (xhr.responseJSON && xhr.responseJSON.msg) ? xhr.responseJSON.msg : '"'+err+'" response when communicating with Parkstay.';
                     vm.update();
@@ -424,8 +429,8 @@ export default {
             var vm = this;
             var newHist = window.location.href.split('?')[0] +'?'+ $.param({
                 site_id: vm.parkstayGroundId,
-                arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
-                departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                arrival: moment.utc(vm.arrivalDate).format('YYYY/MM/DD'),
+                departure: moment.utc(vm.departureDate).format('YYYY/MM/DD'),
                 gear_type: vm.gearType,
                 num_adult: vm.numAdults,
                 num_child: vm.numChildren,
@@ -439,8 +444,8 @@ export default {
 
             debounce(function() {
                 var params = {
-                        arrival: moment(vm.arrivalDate).format('YYYY/MM/DD'),
-                        departure: moment(vm.departureDate).format('YYYY/MM/DD'),
+                        arrival: moment.utc(vm.arrivalDate).format('YYYY/MM/DD'),
+                        departure: moment.utc(vm.departureDate).format('YYYY/MM/DD'),
                         num_adult: parseInt(vm.numAdults) ? parseInt(vm.numAdults) : 0,
                         num_child: parseInt(vm.numChildren) ? parseInt(vm.numChildren) : 0,
                         num_concession: parseInt(vm.numConcessions) ? parseInt(vm.numConcessions) : 0,
@@ -456,7 +461,7 @@ export default {
                     vm.updateURL();
                     url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'.json/?'+$.param(params);
                 }
-                console.log('AJAX '+url);
+                //console.log('AJAX '+url);
                 $.ajax({
                     url: url,
                     dataType: 'json',
@@ -532,26 +537,28 @@ export default {
         this.arrivalEl = $('#date-arrival');
         this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
-            endDate: moment(this.arrivalEl).add(180, 'days').toDate(),
+            endDate: moment.utc(this.arrivalEl).add(180, 'days').toDate(),
             onRender: function (date) {
                 // disallow start dates before today
-                return date.valueOf() < now.valueOf() ? 'disabled': '';
+                //console.log(date);
+                //console.log(today.toDate());
+                return date.valueOf() < today.toDate().valueOf() ? 'disabled': '';
                 //return '';
             }
         }).on('changeDate', function (ev) {
-            console.log('arrivalEl changeDate');
+            //console.log('arrivalEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
-            console.log('arrivalEl change');
+            //console.log('arrivalEl change');
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
-                var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
+                var newDate = moment.utc(vm.arrivalData.date).add(1, 'days').toDate();
                 vm.departureData.date = newDate;
                 vm.departureData.setValue();
                 vm.departureData.fill();
                 vm.departureEl.trigger('changeDate');
             }
             vm.arrivalData.hide();
-            vm.arrivalDate = moment(vm.arrivalData.date);
+            vm.arrivalDate = moment.utc(vm.arrivalData.date);
             vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
             vm.sites = [];
         }).on('keydown', function (ev) {
@@ -567,12 +574,12 @@ export default {
                 return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
-            console.log('departureEl changeDate');
+            //console.log('departureEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
-            console.log('departureEl change');
+            //console.log('departureEl change');
             vm.departureData.hide();
-            vm.departureDate = moment(vm.departureData.date);
+            vm.departureDate = moment.utc(vm.departureData.date);
             vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
             vm.sites = [];
         }).on('keydown', function (ev) {
