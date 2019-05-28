@@ -41,7 +41,7 @@ class WildlifeLicenceSerializer(serializers.ModelSerializer):
 
 
 class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
-    licence_document = serializers.CharField(wildlifecompliance/components/licences/api.py
+    licence_document = serializers.CharField(
         source='licence_document._file.url')
     current_application = DTInternalApplicationSerializer(read_only=True)
     last_issue_date = serializers.SerializerMethodField(read_only=True)
