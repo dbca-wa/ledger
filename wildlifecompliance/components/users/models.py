@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth.models import Group
 from ledger.accounts.models import EmailUser
 
-@python_2_unicode_compatible
+
 class RegionDistrict(models.Model):
 
     DISTRICT_PERTH_HILLS = 'PHD'
@@ -67,15 +67,22 @@ class RegionDistrict(models.Model):
         (DISTRICT_OTHER, "Other")
     )
 
-    name = models.CharField(max_length=32, 
+    district = models.CharField(max_length=32, 
         choices=DISTRICT_CHOICES, 
         default=DISTRICT_OTHER)
 
+    region = models.ForeignKey(
+        'self',
+        blank=True,
+        null=True)
+
     class Meta:
         app_label = 'wildlifecompliance'
+        verbose_name = 'CM_Region District'
+        verbose_name_plural = 'CM_Region Districts'
 
     def __str__(self):
-        return self.district
+        return self.get_district_display()
 
 
 class CompliancePermissionGroup(Group):
@@ -88,6 +95,7 @@ class CompliancePermissionGroup(Group):
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_Compliance Permission group'
         verbose_name_plural = 'CM_Compliance permission groups'
+        # default_permissions = ()
 
     def __str__(self):
         return '{} ({} members)'.format(
