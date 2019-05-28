@@ -34,7 +34,7 @@ class WildlifeLicenceSerializer(serializers.ModelSerializer):
         )
 
     def get_last_issue_date(self, obj):
-        return obj.current_activities.first().issue_date if obj.current_activities else ''
+        return obj.latest_activities.first().issue_date if obj.latest_activities else ''
 
     def get_licence_number(self, obj):
         return obj.reference
@@ -45,7 +45,7 @@ class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
         source='licence_document._file.url')
     current_application = DTInternalApplicationSerializer(read_only=True)
     last_issue_date = serializers.SerializerMethodField(read_only=True)
-    latest_activities = ApplicationSelectedActivitySerializer(many=True, read_only=True)
+    latest_activities = ExternalApplicationSelectedActivitySerializer(many=True, read_only=True)
 
     class Meta:
         model = WildlifeLicence
@@ -63,7 +63,7 @@ class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
         datatables_always_serialize = fields
 
     def get_last_issue_date(self, obj):
-        return obj.current_activities.first().issue_date if obj.current_activities else ''
+        return obj.latest_activities.first().issue_date if obj.latest_activities else ''
 
 
 class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
@@ -89,7 +89,7 @@ class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
         datatables_always_serialize = fields
 
     def get_last_issue_date(self, obj):
-        return obj.current_activities.first().issue_date if obj.current_activities else ''
+        return obj.latest_activities.first().issue_date if obj.latest_activities else ''
 
 
 class DefaultPurposeSerializer(serializers.ModelSerializer):
