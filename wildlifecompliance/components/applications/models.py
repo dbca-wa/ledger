@@ -1567,7 +1567,7 @@ class Application(RevisionedMixin):
     @staticmethod
     def get_active_licence_activities(request, for_application_type=APPLICATION_TYPE_NEW_LICENCE):
         applications = Application.get_active_licence_applications(request, for_application_type)
-        return ApplicationSelectedActivity.get_activities_for_application_type(
+        return ApplicationSelectedActivity.get_current_activities_for_application_type(
             for_application_type,
             applications=applications
         )
@@ -1982,7 +1982,7 @@ class ApplicationSelectedActivity(models.Model):
     @property
     def can_renew(self):
         # Returns true if the activity can be included in a Renewal Application
-        return ApplicationSelectedActivity.get_activities_for_application_type(
+        return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_RENEWAL,
             activity_ids=[self.id]
         ).count() > 0
@@ -1990,7 +1990,7 @@ class ApplicationSelectedActivity(models.Model):
     @property
     def can_amend(self):
         # Returns true if the activity can be included in a Amendment Application
-        return ApplicationSelectedActivity.get_activities_for_application_type(
+        return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_AMENDMENT,
             activity_ids=[self.id]
         ).count() > 0
@@ -1998,7 +1998,7 @@ class ApplicationSelectedActivity(models.Model):
     @property
     def can_surrender(self):
         # TODO: clarify business logic for when an activity is allowed to be surrendered.
-        return ApplicationSelectedActivity.get_activities_for_application_type(
+        return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_NEW_LICENCE,
             activity_ids=[self.id]
         ).count() > 0
@@ -2006,7 +2006,7 @@ class ApplicationSelectedActivity(models.Model):
     @property
     def can_cancel(self):
         # TODO: clarify business logic for when an activity is allowed to be cancelled.
-        return ApplicationSelectedActivity.get_activities_for_application_type(
+        return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_NEW_LICENCE,
             activity_ids=[self.id]
         ).count() > 0
@@ -2014,7 +2014,7 @@ class ApplicationSelectedActivity(models.Model):
     @property
     def can_suspend(self):
         # TODO: clarify business logic for when an activity is allowed to be suspended.
-        return ApplicationSelectedActivity.get_activities_for_application_type(
+        return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_NEW_LICENCE,
             activity_ids=[self.id]
         ).count() > 0
@@ -2044,7 +2044,7 @@ class ApplicationSelectedActivity(models.Model):
             self.activity_status == ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
 
     @staticmethod
-    def get_activities_for_application_type(application_type, **kwargs):
+    def get_current_activities_for_application_type(application_type, **kwargs):
         applications = kwargs.get('applications', Application.objects.none())
         activity_ids = kwargs.get('activity_ids', [])
 
