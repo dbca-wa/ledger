@@ -50,6 +50,7 @@ class ReturnSerializer(serializers.ModelSerializer):
             'text',
             'format',
             'template',
+            'has_payment',
             'sheet_activity_list',
             'sheet_species_list',
             'sheet_species'
@@ -108,7 +109,7 @@ class ReturnActionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ReturnCommsSerializer(serializers.ModelSerializer):
+class ReturnLogEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = ReturnLogEntry
         fields = '__all__'
