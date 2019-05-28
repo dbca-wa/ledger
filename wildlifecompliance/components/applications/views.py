@@ -59,7 +59,8 @@ class ApplicationSuccessView(TemplateView):
                 bind_application_to_invoice(request, application, invoice_ref)
                 invoice_url = request.build_absolute_uri(
                     reverse('payments:invoice-pdf', kwargs={'reference': invoice_ref}))
-                if (application.payment_status == 'paid'):
+                if application.application_fee_paid:
+                    application.submit(request)
                     send_application_invoice_email_notification(
                         application, invoice_ref, request)
                 else:

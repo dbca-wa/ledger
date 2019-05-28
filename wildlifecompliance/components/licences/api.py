@@ -1,6 +1,8 @@
+import traceback
 from django.db.models import Q
-from rest_framework import viewsets
-from rest_framework.decorators import list_route
+from django.core.exceptions import ValidationError
+from rest_framework import viewsets, serializers
+from rest_framework.decorators import list_route, detail_route
 from rest_framework.response import Response
 from datetime import datetime, timedelta
 import pytz
@@ -8,6 +10,9 @@ from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.licences.models import (
     WildlifeLicence,
     LicenceCategory
+)
+from wildlifecompliance.components.applications.serializers import (
+    ExternalApplicationSelectedActivitySerializer
 )
 from wildlifecompliance.components.licences.serializers import (
     WildlifeLicenceSerializer,
@@ -19,7 +24,6 @@ from wildlifecompliance.components.applications.models import (
     Application,
     ApplicationSelectedActivity
 )
-
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
@@ -197,7 +201,7 @@ class LicencePaginatedViewSet(viewsets.ModelViewSet):
 
 class LicenceViewSet(viewsets.ModelViewSet):
     queryset = WildlifeLicence.objects.all()
-    serializer_class = WildlifeLicenceSerializer
+    serializer_class = DTExternalWildlifeLicenceSerializer
 
     def get_queryset(self):
         user = self.request.user
@@ -213,7 +217,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
             )
         return WildlifeLicence.objects.none()
 
-    def list(self, request, *args, **kwargs):
+    def list(self, request, pk=None, *args, **kwargs):
         queryset = self.get_queryset()
         # Filter by org
         org_id = request.GET.get('org_id', None)
@@ -228,6 +232,11 @@ class LicenceViewSet(viewsets.ModelViewSet):
         if submitter_id:
             queryset = queryset.filter(current_application__submitter_id=submitter_id)
         serializer = self.get_serializer(queryset, many=True)
+        # Display only the relevant Activity if activity_id param set
+        activity_id = request.GET.get('activity_id', None)
+        if activity_id and pk:
+            queryset = queryset.get(id=pk).current_activities.get(id=activity_id)
+            serializer = ExternalApplicationSelectedActivitySerializer(queryset)
         return Response(serializer.data)
 
     @list_route(methods=['GET', ])
@@ -248,6 +257,32 @@ class LicenceViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    @detail_route(methods=['POST', ])
+    def cancel_activity(self, request, pk=None, *args, **kwargs):
+        try:
+            activity_id = request.GET.get('activity_id', None)
+            if activity_id and pk:
+                instance = self.get_object()
+                instance = instance.current_activities.get(id=activity_id)
+                if not request.user.has_perm('wildlifecompliance.licensing_officer'):
+                    raise serializers.ValidationError(
+                        'You are not authorised to cancel licenced activities')
+                instance.cancel(request)
+                serializer = ExternalApplicationSelectedActivitySerializer(instance)
+                return Response(serializer.data)
+            else:
+                raise serializers.ValidationError(
+                    'Licence ID and Activity ID must be specified')
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 class LicenceCategoryViewSet(viewsets.ModelViewSet):
     queryset = LicenceCategory.objects.all()
@@ -267,24 +302,24 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         only_purpose_records = None
         application_type = request.GET.get('application_type')
+        licence_category = request.GET.get('licence_category')
 
-        active_applications = Application.get_active_licence_applications(request)
-        if active_applications.count():
-            # Including inactive licences
-            all_applications = Application.get_request_user_applications(request).distinct()
-            active_category_ids = active_applications.values_list(
-                'selected_activities__licence_activity__licence_category_id',
+        active_applications = Application.get_active_licence_applications(request, application_type)
+        if not active_applications.count() and application_type == Application.APPLICATION_TYPE_RENEWAL:
+            # Do not present with renewal options if no activities are within the renewal period
+            queryset = LicenceCategory.objects.none()
+            only_purpose_records = LicencePurpose.objects.none()
+
+        elif active_applications.count():
+            # Activities relevant to the current application type
+            current_activities = Application.get_active_licence_activities(request, application_type)
+            active_category_ids = current_activities.values_list(
+                'licence_activity__licence_category_id',
                 flat=True
             )
-            active_purpose_ids = all_applications.values_list(
-                'licence_purposes__id',
-                flat=True
-            ).exclude(
-                selected_activities__processing_status__in=[
-                    ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
-                    ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED,
-                ]
-            )
+            active_purpose_ids = []
+            for selected_activity in current_activities:
+                active_purpose_ids.extend([purpose.id for purpose in selected_activity.purposes])
 
             if application_type in [
                 Application.APPLICATION_TYPE_ACTIVITY,
@@ -293,15 +328,31 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
                 only_purpose_records = LicencePurpose.objects.exclude(
                     id__in=active_purpose_ids
                 )
-            elif application_type == Application.APPLICATION_TYPE_AMENDMENT:
+
+            elif application_type in [
+                Application.APPLICATION_TYPE_AMENDMENT,
+                Application.APPLICATION_TYPE_RENEWAL,
+            ]:
                 amendable_purpose_ids = active_applications.values_list(
                     'licence_purposes__id',
                     flat=True
                 )
+
                 queryset = queryset.filter(id__in=active_category_ids)
                 only_purpose_records = LicencePurpose.objects.filter(
                     id__in=amendable_purpose_ids,
+                    licence_activity_id__in=current_activities.values_list(
+                        'licence_activity_id', flat=True)
                 )
+
+        if licence_category:
+            only_purpose_records = only_purpose_records.filter(
+                licence_category_id=licence_category
+            )
+            if not only_purpose_records:
+                queryset = LicenceCategory.objects.none()
+            else:
+                queryset = queryset.filter(id=licence_category)
 
         serializer = LicenceCategorySerializer(queryset, many=True, context={
             'request': request,

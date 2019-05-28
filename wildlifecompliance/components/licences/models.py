@@ -198,10 +198,6 @@ class WildlifeLicence(models.Model):
             return int(licence_number_max.split('L')[1]) + 1
 
     @property
-    def activities(self):
-        return self.current_application.activities
-
-    @property
     def reference(self):
         return '{}-{}'.format(self.licence_number, self.licence_sequence)
 
@@ -251,7 +247,7 @@ class LicenceUserAction(UserAction):
     licence = models.ForeignKey(WildlifeLicence, related_name='action_logs')
 
 
-@receiver(pre_delete, sender=WildlifeLicence)
-def delete_documents(sender, instance, *args, **kwargs):
-    for document in instance.documents.all():
-        document.delete()
+# @receiver(pre_delete, sender=WildlifeLicence)
+# def delete_documents(sender, instance, *args, **kwargs):
+#     for document in instance.documents.all():
+#         document.delete()

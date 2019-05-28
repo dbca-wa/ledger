@@ -124,6 +124,9 @@ export default {
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
+                rowCallback: function (row, data){
+                    $(row).addClass('licRecordRow');
+                },
                 responsive: true,
                 ajax: {
                     "url": vm.url,
@@ -173,6 +176,22 @@ export default {
                     {
                         mRender:function (data,type,full) {
                             let links = '';
+                            let org_id = full.current_application.org_applicant ? full.current_application.org_applicant.id : ''
+                            let proxy_id = full.current_application.proxy_applicant ? full.current_application.proxy_applicant.id : ''
+                            let licence_category_id = full.current_application.category_id ? full.current_application.category_id : ''
+                            links += `<a add-activity-purpose='${full.id}' org-id='${org_id}' proxy-id='${proxy_id}' licence-category-id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
+                            links += `<a>Renew</a><br/>`
+                            links += `<a>Reactivate Renew</a><br/>`
+                            links += `<a>Surrender</a><br/>`
+                            if (!vm.is_external) {
+                                links += `<a>Cancel</a><br/>`
+                            }
+                            if (!vm.is_external) {
+                                links += `<a>Suspend</a><br/>`
+                            }
+                            if (!vm.is_external) {
+                                links += `<a>Reinstate</a><br/>`
+                            }
                             return links;
                         },
                         orderable: false,
@@ -280,6 +299,175 @@ export default {
                 var selected = $(e.currentTarget);
                 vm.filterLicenceHolder = selected.val();
             });
+            // Add Activity/Purpose listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[add-activity-purpose]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('add-activity-purpose');
+                var org_id = $(this).attr('org-id');
+                var proxy_id = $(this).attr('proxy-id');
+                var licence_category_id = $(this).attr('licence-category-id');
+                vm.addActivityPurpose(id, org_id, proxy_id, licence_category_id);
+            });
+            // Amend activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[amend-activity]', function(e) {
+                e.preventDefault();
+                var activity_id = $(this).attr('amend-activity');
+                console.log('amend-activity: ' + activity_id);
+            });
+            // Renew activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[renew-activity]', function(e) {
+                e.preventDefault();
+                var activity_id = $(this).attr('renew-activity');
+                console.log('renew-activity: ' + activity_id);
+            });
+            // Reactivate Renew activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reactivate-renew-activity]', function(e) {
+                e.preventDefault();
+                var activity_id = $(this).attr('reactivate-renew-activity');
+                console.log('reactivate-renew-activity: ' + activity_id);
+            });
+            // Surrender activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[surrender-activity]', function(e) {
+                e.preventDefault();
+                var activity_id = $(this).attr('surrender-activity');
+                console.log('surrender-activity: ' + activity_id);
+            });
+            // Cancel activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[cancel-activity]', function(e) {
+                e.preventDefault();
+                var activity_id = $(this).attr('cancel-activity');
+                var licence_id = $(this).attr('lic-id');
+                console.log('cancel-activity: activity : ' + activity_id);
+                console.log('cancel-activity: licence : ' + licence_id);
+                swal({
+                    title: "Cancel Activity",
+                    text: "Are you sure you want to cancel this activity?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                       vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/cancel_activity/?activity_id=' + activity_id)).then(res=>{
+                            swal({
+                                title: "Cancel Activity",
+                                text: "The activity has been cancelled",
+                                type: "information"
+                            })
+                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
+                        },err=>{
+                            swal(
+                                'Submit Error',
+                                helpers.apiVueResourceError(err),
+                                'error'
+                            )
+                        });
+                    }
+                },(error) => {
+                });
+
+            });
+            // Suspend activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[suspend-activity]', function(e) {
+                e.preventDefault();
+                var activity_id = $(this).attr('suspend-activity');
+                console.log('suspend-activity: ' + activity_id);
+            });
+            // Reissue activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reissue-activity]', function(e) {
+                e.preventDefault();
+                var activity_id = $(this).attr('reissue-activity');
+                console.log('reissue-activity: ' + activity_id);
+            });
+            // Reinstate activity listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reinstate-activity]', function(e) {
+                e.preventDefault();
+                var activity_id = $(this).attr('reinstate-activity');
+                console.log('reinstate-activity: ' + activity_id);
+            });
+            // Child row listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'tr.licRecordRow', function(e) {
+                // If a link is clicked, ignore
+                if($(e.target).is('a')){
+                    return;
+                }
+                // Generate child row for application
+                var tr = $(this);
+                var licence_id = vm.$refs.licence_datatable.vmDataTable.row(tr).data().id;
+                var row = vm.$refs.licence_datatable.vmDataTable.row(tr);
+
+                if (row.child.isShown()) {
+                    // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('shown');
+                }
+                else {
+                    // Open this row (the format() function would return the data to be shown)
+                    var child_row = ''
+                    // Generate rows for each activity
+                    var activity_rows = ''
+                    row.data()['current_activities'].forEach(function(activity) {
+                        activity_rows += `
+                            <tr>
+                                <td>${activity['activity_name_str']}</td>
+                                <td>${activity['activity_purpose_names'].
+                                    replace(/(?:\r\n|\r|\n|,)/g, '<br>')}</td>
+                                <td>${activity['activity_status']['name']}</td>
+                                <td>${activity['expiry_date']}</td>
+                                <td>`;
+                                    if (activity['can_amend']) {
+                                        activity_rows +=
+                                            `<a amend-activity=` + activity['id'] + `>Amend</a></br>`;
+                                    }
+                                    if (activity['can_renew']) {
+                                        activity_rows +=
+                                            `<a renew-activity=` + activity['id'] + `>Renew</a></br>`;
+                                    }
+                                    if (!vm.is_external && activity['can_reactivate_renew']) {
+                                        activity_rows +=
+                                            `<a reactivate-renew-activity=` + activity['id'] + `>Reactivate Renew</a></br>`;
+                                    }
+                                    if (activity['can_surrender']) {
+                                        activity_rows +=
+                                            `<a surrender-activity=` + activity['id'] + `>Surrender</a></br>`;
+                                    }
+                                    if (!vm.is_external && activity['can_cancel']) {
+                                        activity_rows +=
+                                            `<a cancel-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Cancel</a></br>`;
+                                    }
+                                    if (!vm.is_external && activity['can_suspend']) {
+                                        activity_rows +=
+                                            `<a suspend-activity=` + activity['id'] + `>Suspend</a></br>`;
+                                    }
+                                    if (!vm.is_external && activity['can_reissue']) {
+                                        activity_rows +=
+                                            `<a reissue-activity=` + activity['id'] + `>Reissue</a></br>`;
+                                    }
+                                    if (!vm.is_external && activity['can_reinstate']) {
+                                        activity_rows +=
+                                            `<a reinstate-activity=` + activity['id'] + `>Reinstate</a></br>`;
+                                    }
+                        activity_rows += `</td>
+                            </tr>`;
+                    });
+                    // Generate html for child row
+                    child_row += `
+                        <table class="table table-striped table-bordered child-row-table">
+                            <tr>
+                                <th>Activity</th>
+                                <th class="width_55pc">Purposes</th>
+                                <th class="width_20pc">Status</th>
+                                <th class="width_20pc">Expiry Date</th>
+                                <th class="width_20pc">Action</th>
+                            </tr>
+                            ${activity_rows}
+                        </table>`;
+                    // Show child row, dark-row className CSS applied from application.scss
+                    row.child(
+                        child_row
+                        , 'dark-row').show();
+                    tr.addClass('shown');
+                }
+            });
 
         },
         initialiseSearch:function(){
@@ -334,6 +522,17 @@ export default {
         },
         getColumnIndex: function(column_name) {
             return this.licence_headers.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
+        },
+        addActivityPurpose:function (licence_id, org_id, proxy_id, licence_category_id) {
+            return this.$router.push({
+                name: "apply_application_licence",
+                params: {
+                    licence_select: 'new_activity',
+                    licence_category: licence_category_id,
+                    org_select: org_id,
+                    proxy_select: proxy_id
+                }
+            });
         },
 //        filterByColumn: function(column, filterAttribute) {
 //            const column_idx = this.getColumnIndex(column);
