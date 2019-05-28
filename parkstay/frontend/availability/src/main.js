@@ -11,6 +11,7 @@ require('custom-event-polyfill');
 
 
 var availabilityApp = function (target, args) {
+    args = args || {};
     var options = {
         props: {
             parkstayUrl: args.parkstayUrl || '',
