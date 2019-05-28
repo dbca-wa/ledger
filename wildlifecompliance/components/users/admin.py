@@ -3,6 +3,7 @@ from wildlifecompliance.components.users import models
 from wildlifecompliance.components.users import forms
 from reversion.admin import VersionAdmin
 
+
 @admin.register(models.CompliancePermissionGroup)
 class CompliancePermissionGroupAdmin(admin.ModelAdmin):
     list_display = ['name', 'display_name']
@@ -15,3 +16,8 @@ class CompliancePermissionGroupAdmin(admin.ModelAdmin):
             self).has_delete_permission(
             request,
             obj)
+
+
+@admin.register(models.RegionDistrict)
+class RegionDistrictAdmin(admin.ModelAdmin):
+    pass

@@ -307,7 +307,7 @@ class ComplianceGroupCollector(PermissionCollector):
         for group_name, config in default_groups.items():
             if config['per_district']:
                 for region_district in RegionDistrict.objects.all():
-                    compliance_group_name = "{}: {}".format(group_name, region_district.district)
+                    compliance_group_name = "{}: {}".format(group_name, region_district.display_name)
                     group = self.get_or_create_group(compliance_group_name, config, region_district)
                     group.region_district.add(region_district)
             else:

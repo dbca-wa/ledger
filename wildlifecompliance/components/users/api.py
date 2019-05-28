@@ -13,7 +13,7 @@ from wildlifecompliance.components.applications.email import send_id_updated_not
 from wildlifecompliance.components.organisations.models import (
     OrganisationRequest,
 )
-
+from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.users.serializers import (
     UserSerializer,
@@ -24,7 +24,9 @@ from wildlifecompliance.components.users.serializers import (
     ContactSerializer,
     EmailIdentitySerializer,
     EmailUserActionSerializer,
-    MyUserDetailsSerializer
+    MyUserDetailsSerializer,
+    CompliancePermissionGroupSerializer,
+    RegionDistrictSerializer,
 )
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
@@ -410,3 +412,57 @@ class EmailIdentityViewSet(viewsets.ModelViewSet):
         if exclude_user is not None:
             queryset = queryset.exclude(user=exclude_user)
         return queryset
+
+
+class CompliancePermissionGroupViewSet(viewsets.ModelViewSet):
+    queryset = CompliancePermissionGroup.objects.none()
+    serializer_class = CompliancePermissionGroupSerializer
+    renderer_classes = [JSONRenderer, ]
+
+    def get_queryset(self):
+        if is_internal(self.request):
+            return CompliancePermissionGroup.objects.all()
+        elif is_customer(self.request):
+            return CompliancePermissionGroup.objects.none()
+        return CompliancePermissionGroup.objects.none()
+
+
+class RegionDistrictViewSet(viewsets.ModelViewSet):
+    queryset = RegionDistrict.objects.all()
+    serializer_class = RegionDistrictSerializer
+    renderer_classes = [JSONRenderer, ]
+
+    @list_route(methods=['GET', ])
+    def get_regions(self, request, *args, **kwargs):
+        try:
+            serializer = RegionDistrictSerializer(
+                RegionDistrict.objects.filter(region=None), 
+                many=True
+                )
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET', ])
+    def get_region_districts(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = RegionDistrictSerializer(
+                instance.districts.all(), many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))

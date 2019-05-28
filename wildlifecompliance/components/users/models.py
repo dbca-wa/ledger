@@ -74,7 +74,8 @@ class RegionDistrict(models.Model):
     region = models.ForeignKey(
         'self',
         blank=True,
-        null=True)
+        null=True,
+        related_name='districts')
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -83,6 +84,10 @@ class RegionDistrict(models.Model):
 
     def __str__(self):
         return self.get_district_display()
+
+    @property
+    def display_name(self):
+        return self.__str__
 
 
 class CompliancePermissionGroup(Group):
