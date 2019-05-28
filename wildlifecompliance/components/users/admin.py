@@ -6,7 +6,7 @@ from reversion.admin import VersionAdmin
 @admin.register(models.CompliancePermissionGroup)
 class CompliancePermissionGroupAdmin(admin.ModelAdmin):
     list_display = ['name', 'display_name']
-    filter_horizontal = ('region_district',)
+    # filter_horizontal = ('licence_activities',)
     form = forms.CompliancePermissionGroupAdminForm
 
     def has_delete_permission(self, request, obj=None):
@@ -15,8 +15,3 @@ class CompliancePermissionGroupAdmin(admin.ModelAdmin):
             self).has_delete_permission(
             request,
             obj)
-
-
-@admin.register(models.RegionDistrict)
-class RegionDistrict(admin.ModelAdmin):
-    pass

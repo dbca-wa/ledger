@@ -73,11 +73,9 @@ class RegionDistrict(models.Model):
 
     class Meta:
         app_label = 'wildlifecompliance'
-        verbose_name = 'CM_Region District'
-        verbose_name_plural = 'CM_Region Districts'
 
     def __str__(self):
-        return self.name
+        return self.district
 
 
 class CompliancePermissionGroup(Group):
