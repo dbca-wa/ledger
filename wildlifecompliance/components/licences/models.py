@@ -178,15 +178,25 @@ class WildlifeLicence(models.Model):
                 self.next_licence_number_id)
             self.save()
 
-    def get_activities_by_status(self, status):
+    def get_activities_by_activity_status(self, status):
         return self.current_application.get_activity_chain(activity_status=status).order_by(
             'licence_activity_id', '-issue_date'
         ).distinct('licence_activity_id')
 
+    def get_activities_by_processing_status(self, status):
+        return self.current_application.get_activity_chain(processing_status=status).order_by(
+            'licence_activity_id', '-issue_date'
+        ).distinct('licence_activity_id')
+
+    @property
+    def latest_activities(self):
+        from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
+        return self.get_activities_by_processing_status(ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED)
+
     @property
     def current_activities(self):
         from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
-        return self.get_activities_by_status(ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT)
+        return self.get_activities_by_activity_status(ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT)
 
     @property
     def next_licence_number_id(self):

@@ -351,7 +351,7 @@ export default {
                             swal({
                                 title: "Cancel Activity",
                                 text: "The activity has been cancelled",
-                                type: "information"
+                                type: "info"
                             })
                             vm.$refs.licence_datatable.vmDataTable.ajax.reload();
                         },err=>{
@@ -405,7 +405,7 @@ export default {
                     var child_row = ''
                     // Generate rows for each activity
                     var activity_rows = ''
-                    row.data()['current_activities'].forEach(function(activity) {
+                    row.data()['latest_activities'].forEach(function(activity) {
                         activity_rows += `
                             <tr>
                                 <td>${activity['activity_name_str']}</td>
