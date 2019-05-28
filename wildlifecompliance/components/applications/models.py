@@ -640,7 +640,6 @@ class Application(RevisionedMixin):
                 'IncreaseLicenceFee': 'licence',
                 'IncreaseApplicationFee': 'application',
             }
-            increase_licence_key = 'IncreaseLicenceFee'
             increase_limit_key = 'IncreaseTimesLimit'
             try:
                 increase_count = adjusted_by_fields[schema_name]
@@ -667,7 +666,7 @@ class Application(RevisionedMixin):
             ) and increase_fee(
                 dynamic_attributes['activity_attributes'][activity]['fees'],
                 field,
-                component[increase_licence_key]
+                component[key]
             ) for key, field in fee_modifier_keys.items())
 
             if adjustments_performed:
