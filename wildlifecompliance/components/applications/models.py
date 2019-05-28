@@ -303,8 +303,6 @@ class Application(RevisionedMixin):
         'self', on_delete=models.PROTECT, blank=True, null=True)
     application_fee = models.DecimalField(
         max_digits=8, decimal_places=2, default='0')
-    licence_fee = models.DecimalField(
-        max_digits=8, decimal_places=2, default='0')
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -662,7 +660,13 @@ class Application(RevisionedMixin):
                     return
 
             adjustments_performed = sum(key in component and increase_fee(
-                dynamic_attributes['fees'], field, component[key]
+                dynamic_attributes['fees'],
+                field,
+                component[key]
+            ) and increase_fee(
+                dynamic_attributes['activity_attributes'][activity]['fees'],
+                field,
+                component[key]
             ) for key, field in fee_modifier_keys.items())
 
             if adjustments_performed:
@@ -673,7 +677,8 @@ class Application(RevisionedMixin):
                 selected_activity.purposes.values_list('id', flat=True)
             )
             dynamic_attributes['activity_attributes'][selected_activity] = {
-                'is_inspection_required': False
+                'is_inspection_required': False,
+                'fees': selected_activity.base_fees,
             }
 
             # Adjust fees based on selected options (radios and checkboxes)
@@ -731,14 +736,17 @@ class Application(RevisionedMixin):
             Application.APPLICATION_TYPE_AMENDMENT,
         ]:
             self.application_fee = Decimal(0)
-            self.licence_fee = Decimal(0)
         else:
             self.application_fee = fees['application']
-            self.licence_fee = fees['licence']
         self.save()
 
         # Save any parsed per-activity modifiers
         for selected_activity, field_data in dynamic_attributes['activity_attributes'].items():
+            fees = field_data.pop('fees', {})
+            if self.application_type == Application.APPLICATION_TYPE_AMENDMENT:
+                selected_activity.licence_fee = Decimal(0)
+            else:
+                selected_activity.licence_fee = fees['licence']
             for field, value in field_data.items():
                 setattr(selected_activity, field, value)
                 selected_activity.save()
@@ -1935,6 +1943,8 @@ class ApplicationSelectedActivity(models.Model):
     start_date = models.DateField(blank=True, null=True)
     expiry_date = models.DateField(blank=True, null=True)
     is_inspection_required = models.BooleanField(default=False)
+    licence_fee = models.DecimalField(
+        max_digits=8, decimal_places=2, default='0')
 
     def __str__(self):
         return "Application {id} Selected Activity: {activity_id}".format(
@@ -2043,6 +2053,14 @@ class ApplicationSelectedActivity(models.Model):
             self.expiry_date >= current_date and\
             self.activity_status == ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
 
+    @property
+    def base_fees(self):
+        return Application.calculate_base_fees(
+            self.application.licence_purposes.filter(
+                licence_activity_id=self.licence_activity_id
+            ).values_list('id', flat=True)
+        )
+
     @staticmethod
     def get_current_activities_for_application_type(application_type, **kwargs):
         applications = kwargs.get('applications', Application.objects.none())
@@ -2069,6 +2087,30 @@ class ApplicationSelectedActivity(models.Model):
             self.updated_by = request.user
             self.save()
             # TODO: if last ASA, need to cancel the whole licence
+
+
+class ActivityInvoice(models.Model):
+    activity = models.ForeignKey(ApplicationSelectedActivity, related_name='invoices')
+    invoice_reference = models.CharField(
+        max_length=50, null=True, blank=True, default='')
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    def __str__(self):
+        return 'Activity {} : Invoice #{}'.format(
+            self.activity_id, self.invoice_reference)
+
+    # Properties
+    # ==================
+    @property
+    def active(self):
+        try:
+            invoice = Invoice.objects.get(reference=self.invoice_reference)
+            return False if invoice.voided else True
+        except Invoice.DoesNotExist:
+            pass
+        return False
 
 
 
