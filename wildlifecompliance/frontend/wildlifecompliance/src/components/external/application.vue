@@ -96,7 +96,9 @@ export default {
       return (this.application) ? `/api/application/${this.application.id}/form_data.json` : '';
     },
     requiresCheckout: function() {
-      return this.application.application_fee > 0 && this.application_customer_status_onload.id == 'draft'
+      return this.application.application_fee > 0 && [
+        'draft', 'awaiting_payment'
+      ].includes(this.application_customer_status_onload.id)
     },
     canDiscardActivity: function() {
       return this.application.activities.find(
