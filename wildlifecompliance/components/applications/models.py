@@ -2088,6 +2088,20 @@ class ApplicationSelectedActivity(models.Model):
             self.save()
             # TODO: if last ASA, need to cancel the whole licence
 
+    def surrender(self, request):
+        with transaction.atomic():
+            self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED
+            self.updated_by = request.user
+            self.save()
+            # TODO: if last ASA, need to surrender the whole licence
+
+    def suspend(self, request):
+        with transaction.atomic():
+            self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
+            self.updated_by = request.user
+            self.save()
+            # TODO: if last ASA, need to suspend the whole licence
+
 
 class ActivityInvoice(models.Model):
     activity = models.ForeignKey(ApplicationSelectedActivity, related_name='invoices')

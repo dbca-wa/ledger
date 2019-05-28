@@ -42,6 +42,7 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     can_amend = serializers.BooleanField(read_only=True)
     can_surrender = serializers.BooleanField(read_only=True)
     can_cancel = serializers.BooleanField(read_only=True)
+    can_suspend = serializers.BooleanField(read_only=True)
     can_reissue = serializers.SerializerMethodField(read_only=True)
     can_reinstate = serializers.BooleanField(read_only=True)
 
@@ -96,6 +97,7 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
     can_amend = serializers.BooleanField(read_only=True)
     can_surrender = serializers.BooleanField(read_only=True)
     can_cancel = serializers.BooleanField(read_only=True)
+    can_suspend = serializers.BooleanField(read_only=True)
     can_reissue = serializers.SerializerMethodField(read_only=True)
     can_reinstate = serializers.BooleanField(read_only=True)
 
@@ -113,6 +115,7 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
             'can_amend',
             'can_surrender',
             'can_cancel',
+            'can_suspend',
             'can_reissue',
             'can_reinstate'
         )

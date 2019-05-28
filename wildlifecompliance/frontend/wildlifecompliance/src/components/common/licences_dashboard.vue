@@ -330,15 +330,38 @@ export default {
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[surrender-activity]', function(e) {
                 e.preventDefault();
                 var activity_id = $(this).attr('surrender-activity');
-                console.log('surrender-activity: ' + activity_id);
+                var licence_id = $(this).attr('lic-id');
+                swal({
+                    title: "Surrender Activity",
+                    text: "Are you sure you want to surrender this activity?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                       vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/surrender_activity/?activity_id=' + activity_id)).then(res=>{
+                            swal({
+                                title: "Surrender Activity",
+                                text: "The activity has been surrendered",
+                                type: "info"
+                            })
+                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
+                        },err=>{
+                            swal(
+                                'Submit Error',
+                                helpers.apiVueResourceError(err),
+                                'error'
+                            )
+                        });
+                    }
+                },(error) => {
+                });
             });
             // Cancel activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[cancel-activity]', function(e) {
                 e.preventDefault();
                 var activity_id = $(this).attr('cancel-activity');
                 var licence_id = $(this).attr('lic-id');
-                console.log('cancel-activity: activity : ' + activity_id);
-                console.log('cancel-activity: licence : ' + licence_id);
                 swal({
                     title: "Cancel Activity",
                     text: "Are you sure you want to cancel this activity?",
@@ -364,13 +387,37 @@ export default {
                     }
                 },(error) => {
                 });
-
             });
             // Suspend activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[suspend-activity]', function(e) {
                 e.preventDefault();
                 var activity_id = $(this).attr('suspend-activity');
-                console.log('suspend-activity: ' + activity_id);
+                var licence_id = $(this).attr('lic-id');
+                swal({
+                    title: "Suspend Activity",
+                    text: "Are you sure you want to suspend this activity?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                       vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/suspend_activity/?activity_id=' + activity_id)).then(res=>{
+                            swal({
+                                title: "Suspend Activity",
+                                text: "The activity has been suspended",
+                                type: "info"
+                            })
+                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
+                        },err=>{
+                            swal(
+                                'Submit Error',
+                                helpers.apiVueResourceError(err),
+                                'error'
+                            )
+                        });
+                    }
+                },(error) => {
+                });
             });
             // Reissue activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reissue-activity]', function(e) {
@@ -416,19 +463,19 @@ export default {
                                 <td>`;
                                     if (activity['can_amend']) {
                                         activity_rows +=
-                                            `<a amend-activity=` + activity['id'] + `>Amend</a></br>`;
+                                            `<a amend-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Amend</a></br>`;
                                     }
                                     if (activity['can_renew']) {
                                         activity_rows +=
-                                            `<a renew-activity=` + activity['id'] + `>Renew</a></br>`;
+                                            `<a renew-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Renew</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reactivate_renew']) {
                                         activity_rows +=
-                                            `<a reactivate-renew-activity=` + activity['id'] + `>Reactivate Renew</a></br>`;
+                                            `<a reactivate-renew-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Reactivate Renew</a></br>`;
                                     }
                                     if (activity['can_surrender']) {
                                         activity_rows +=
-                                            `<a surrender-activity=` + activity['id'] + `>Surrender</a></br>`;
+                                            `<a surrender-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Surrender</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_cancel']) {
                                         activity_rows +=
@@ -436,15 +483,15 @@ export default {
                                     }
                                     if (!vm.is_external && activity['can_suspend']) {
                                         activity_rows +=
-                                            `<a suspend-activity=` + activity['id'] + `>Suspend</a></br>`;
+                                            `<a suspend-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Suspend</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reissue']) {
                                         activity_rows +=
-                                            `<a reissue-activity=` + activity['id'] + `>Reissue</a></br>`;
+                                            `<a reissue-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Reissue</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reinstate']) {
                                         activity_rows +=
-                                            `<a reinstate-activity=` + activity['id'] + `>Reinstate</a></br>`;
+                                            `<a reinstate-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Reinstate</a></br>`;
                                     }
                         activity_rows += `</td>
                             </tr>`;
