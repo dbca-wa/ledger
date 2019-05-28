@@ -19,7 +19,7 @@ from wildlifecompliance.components.returns.models import (
 from wildlifecompliance.components.returns.serializers import (
     ReturnSerializer,
     ReturnActionSerializer,
-    ReturnCommsSerializer,
+    ReturnLogEntrySerializer,
     ReturnTypeSerializer,
 )
 
@@ -89,7 +89,7 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             instance = self.get_object()
             if not instance.has_data:
                 return Response(
-                        {'error': 'Upload not applicable for Return Type.'}, status=status.HTTP_406_NOT_FOUND)
+                        {'error': 'Upload not applicable for Return Type.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
             spreadsheet = SpreadSheet(instance, request.FILES['spreadsheet']).factory()
             if not spreadsheet.is_valid():
                 return Response(
@@ -198,7 +198,7 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         try:
             instance = self.get_object()
             qs = instance.comms_logs.all()
-            serializer = ReturnCommsSerializer(qs, many=True)
+            serializer = ReturnLogEntrySerializer(qs, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -218,7 +218,7 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
                 instance = self.get_object()
                 request.data['compliance'] = u'{}'.format(instance.id)
                 request.data['staff'] = u'{}'.format(request.user.id)
-                serializer = ReturnCommsSerializer(data=request.data)
+                serializer = ReturnLogEntrySerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
                 comms = serializer.save()
                 # Save the files

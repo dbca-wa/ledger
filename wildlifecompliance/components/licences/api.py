@@ -311,24 +311,15 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
             only_purpose_records = LicencePurpose.objects.none()
 
         elif active_applications.count():
-            # Including inactive licences
-            all_applications = Application.get_request_user_applications(request).distinct()
             # Activities relevant to the current application type
             current_activities = Application.get_active_licence_activities(request, application_type)
-
             active_category_ids = current_activities.values_list(
                 'licence_activity__licence_category_id',
                 flat=True
             )
-            active_purpose_ids = all_applications.values_list(
-                'licence_purposes__id',
-                flat=True
-            ).exclude(
-                selected_activities__processing_status__in=[
-                    ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
-                    ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED,
-                ]
-            )
+            active_purpose_ids = []
+            for selected_activity in current_activities:
+                active_purpose_ids.extend([purpose.id for purpose in selected_activity.purposes])
 
             if application_type in [
                 Application.APPLICATION_TYPE_ACTIVITY,

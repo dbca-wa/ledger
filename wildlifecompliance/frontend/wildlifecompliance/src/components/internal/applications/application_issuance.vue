@@ -297,33 +297,45 @@ export default {
                     'error'
                 );
             }
-            let licence = JSON.parse(JSON.stringify(vm.licence));
-            licence.activity = this.licence.activity.map(activity => {
-                const date_formats = ["DD/MM/YYYY", "YYYY-MM-DD"];
-                return {
-                    ...activity,
-                    start_date: activity.start_date ?
-                        moment(activity.start_date, date_formats).format('YYYY-MM-DD') : null,
-                    end_date: activity.end_date ?
-                        moment(activity.end_date, date_formats).format('YYYY-MM-DD') : null,
-                }
-            });
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/final_decision'),JSON.stringify(licence),{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        swal(
-                             'Activities Finalised',
-                             'The selected activities have been successfully finalised!',
-                             'success'
-                        );
-                        vm.$parent.refreshFromResponse(response);
-                    },(error)=>{
-                        swal(
-                            'Application Error',
-                            helpers.apiVueResourceError(error),
-                            'error'
-                        )
+
+            swal({
+                title: "Issue/Decline Activities",
+                text: "Payment for issued licences will be charged from the applicant's last used card.",
+                type: "question",
+                showCancelButton: true,
+                confirmButtonText: 'Finalise'
+            }).then((result) => {
+                if (result.value) {
+                    let licence = JSON.parse(JSON.stringify(vm.licence));
+                    licence.activity = this.licence.activity.map(activity => {
+                        const date_formats = ["DD/MM/YYYY", "YYYY-MM-DD"];
+                        return {
+                            ...activity,
+                            start_date: activity.start_date ?
+                                moment(activity.start_date, date_formats).format('YYYY-MM-DD') : null,
+                            end_date: activity.end_date ?
+                                moment(activity.end_date, date_formats).format('YYYY-MM-DD') : null,
+                        }
                     });
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,vm.application.id+'/final_decision'),JSON.stringify(licence),{
+                                emulateJSON:true,
+                            }).then((response)=>{
+                                swal(
+                                    'Activities Finalised',
+                                    'The selected activities have been successfully finalised!',
+                                    'success'
+                                );
+                                vm.$parent.refreshFromResponse(response);
+                            },(error)=>{
+                                swal(
+                                    'Application Error',
+                                    helpers.apiVueResourceError(error),
+                                    'error'
+                                )
+                            });
+                }
+            },(error) => {
+            });
         },
         getActivity: function(id) {
             const activity = this.licence.activity.find(activity => activity.id == id);

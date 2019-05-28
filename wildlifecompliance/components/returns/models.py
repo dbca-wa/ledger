@@ -12,7 +12,7 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry, Us
 from wildlifecompliance.components.returns.email import send_external_submit_email_notification, \
                                                         send_return_accept_email_notification
 
-import json, ast
+import ast
 
 
 def template_directory_path(instance, filename):
@@ -180,14 +180,14 @@ class Return(models.Model):
         Return data presented in table format with column headers.
         :return: formatted data.
         """
-        table = []
         if self.has_sheet:
             return self.sheet.table
         if self.has_data:
             return self.data.table
         if self.has_question:
             return self.question.table
-        return table
+
+        return []
 
     @property
     def sheet(self):
@@ -255,38 +255,87 @@ class Return(models.Model):
 
         return workflow_mapper.get(self.processing_status, self.RETURN_CUSTOMER_STATUS_FUTURE)
 
+    @property
+    def payment_status(self):
+        """
+        Property defining fee status for this Return.
+        :return:
+        """
+        # TODO: provide status for the Return payment fee.
+        # if self.return_fee == 0:
+        #   return 'payment_not_required'
+        # else:
+        #    if self.invoices.count() == 0:
+        #    return 'unpaid'
+
+        return 'payment_not_required'
+
+    @property
+    def has_payment(self):
+        """
+        Property defining if payment is required for this Return.
+        :return:
+        """
+        if self.payment_status == 'payment_not_required':
+            return False
+
+        return True
+
+    @transaction.atomic
     def set_submitted(self, request):
-        with transaction.atomic():
-            try:
-                if self.processing_status == Return.RETURN_PROCESSING_STATUS_FUTURE\
-                        or self.processing_status == Return.RETURN_PROCESSING_STATUS_DUE:
-                            self.processing_status = Return.RETURN_PROCESSING_STATUS_WITH_CURATOR
-                            self.submitter = request.user
-                            self.save()
-
-                # code for amendment returns is still to be added, so
-                # lodgement_date is set outside if statement
-                self.lodgement_date = timezone.now()
+        try:
+            if self.processing_status == Return.RETURN_PROCESSING_STATUS_FUTURE\
+                     or self.processing_status == Return.RETURN_PROCESSING_STATUS_DUE:
+                self.processing_status = Return.RETURN_PROCESSING_STATUS_WITH_CURATOR
+                self.submitter = request.user
                 self.save()
-                # this below code needs to be reviewed
-                # self.save(version_comment='Return submitted:{}'.format(self.id))
-                # self.application.save(version_comment='Return submitted:{}'.format(self.id))
-                self.log_user_action(
-                    ReturnUserAction.ACTION_SUBMIT_REQUEST.format(
-                        self.id), request)
-                send_external_submit_email_notification(request, self)
-                # send_submit_email_notification(request,self)
-            except BaseException:
-                raise
 
+            # code for amendment returns is still to be added, so
+            # lodgement_date is set outside if statement
+            self.lodgement_date = timezone.now()
+            self.save()
+            # this below code needs to be reviewed
+            # self.save(version_comment='Return submitted:{}'.format(self.id))
+            # self.application.save(version_comment='Return submitted:{}'.format(self.id))
+            self.log_user_action(ReturnUserAction.ACTION_SUBMIT_REQUEST.format(self), request)
+            send_external_submit_email_notification(request, self)
+            # send_submit_email_notification(request,self)
+        except BaseException:
+            raise
+
+    @transaction.atomic
     def accept(self, request):
-        with transaction.atomic():
+        try:
             self.processing_status = Return.RETURN_PROCESSING_STATUS_ACCEPTED
             self.save()
-            self.log_user_action(
-                ReturnUserAction.ACTION_ACCEPT_REQUEST.format(
-                    self.id), request)
+            self.log_user_action(ReturnUserAction.ACTION_ACCEPT_REQUEST.format(self), request)
             send_return_accept_email_notification(self, request)
+        except BaseException:
+            raise
+
+    @transaction.atomic
+    def save_return_table(self, table_name, table_rows, request):
+        """
+        Persist Return Table of data to database.
+        :param table_name:
+        :param table_rows:
+        :param request:
+        :return:
+        """
+        try:
+            return_table = ReturnTable.objects.get_or_create(
+                name=table_name, ret=self)[0]
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in table_rows]
+            ReturnRow.objects.bulk_create(return_rows)
+            # log transaction
+            self.log_user_action(ReturnUserAction.ACTION_SAVE_REQUEST.format(self), request)
+        except BaseException:
+            raise
 
     def store(self, request):
         """
@@ -319,18 +368,6 @@ class Return(models.Model):
         :return:
         """
         pass
-
-    def create_return_data(self, table_name, table_rows):
-        if table_rows:
-            return_table = ReturnTable.objects.get_or_create(
-                name=table_name, ret=self._return)[0]
-            # delete any existing rows as they will all be recreated
-            return_table.returnrow_set.all().delete()
-            return_rows = [
-                ReturnRow(
-                    return_table=return_table,
-                    data=row) for row in table_rows]
-            ReturnRow.objects.bulk_create(return_rows)
 
     def log_user_action(self, action, request):
         return ReturnUserAction.log_action(self, action, request.user)
@@ -403,7 +440,7 @@ class ReturnData(object):
                     }
                 results.append(result)
                 table['data'] = results
-        tables.append(table)
+            tables.append(table)
 
         return tables
 
@@ -421,7 +458,10 @@ class ReturnData(object):
             if key == "nilNo":
                 returns_tables = request.data.get('table_name')
                 if self._is_post_data_valid(returns_tables.encode('utf-8'), request.data):
-                    self._create_return_data_from_post_data(returns_tables.encode('utf-8'), request.data)
+                    table_info = returns_tables.encode('utf-8')
+                    table_rows = self._get_table_rows(table_info, request.data)
+                    if table_rows:
+                        self._return.save_return_table(table_info, table_rows, request)
                 else:
                     raise FieldError('Enter data in correct format.')
 
@@ -432,7 +472,7 @@ class ReturnData(object):
         :param post_data:
         :return:
         """
-        table_rows = self._get_table_rows_from_post(tables_info, post_data)
+        table_rows = self._get_table_rows(tables_info, post_data)
         if len(table_rows) == 0:
             return False
         schema = Schema(self._return.return_type.get_schema_by_name(tables_info))
@@ -440,7 +480,7 @@ class ReturnData(object):
             return False
         return True
 
-    def _get_table_rows_from_post(self, table_name, post_data):
+    def _get_table_rows(self, table_name, post_data):
         """
         Build row of data.
         :param table_name:
@@ -501,37 +541,9 @@ class ReturnData(object):
                     }
                 results.append(result)
                 table['data'] = results
-        tables.append(table)
+            tables.append(table)
 
         return tables
-
-    def _create_return_data(self, table_name, table_rows):
-        """
-        Method to persist Return record.
-        :return:
-        """
-        self._return.create_return_data(table_name, table_rows)
-
-        return True
-
-    def _create_return_data_from_post_data(self, tables_info, post_data):
-        """
-        Writes to db.
-        :param tables_info:
-        :param post_data:
-        :return:
-        """
-        rows = self._get_table_rows_from_post(tables_info, post_data)
-        if rows:
-            return_table = ReturnTable.objects.get_or_create(
-                name=tables_info, ret=self._return)[0]
-            # delete any existing rows as they will all be recreated
-            return_table.returnrow_set.all().delete()
-            return_rows = [
-                ReturnRow(
-                    return_table=return_table,
-                    data=row) for row in rows]
-            ReturnRow.objects.bulk_create(return_rows)
 
     def __str__(self):
         return self._return.lodgement_number
@@ -585,7 +597,7 @@ class ReturnQuestion(object):
                     }
                 results.append(result)
                 table['data'] = results
-        tables.append(table)
+            tables.append(table)
         return tables
 
     def store(self, request):
@@ -594,38 +606,22 @@ class ReturnQuestion(object):
         :param request:
         :return:
         """
-        self._create_return_data(self._return, request.POST)
+        table_rows = self._get_table_rows(request.data)  # Nb: There is only ONE row where each Question is a header.
+        self._return.save_return_table(ReturnType.RETURN_TYPE_QUESTION, table_rows, request)
 
     def _get_table_rows(self, _data):
         """
-        Gets the formatted row of data from Species data
-        :param _data:
-        :return: by_column is of format {'col_header':[row1_val, row2_val,...],...}
-        """
-        by_column = dict([])
-        for key in _data.keys():
-            by_column[key] = _data[key]
-        self._rows = []
-        self._rows.append(by_column)
-
-    def _create_return_data(self, ret, _data):
-        """
-        Saves row of data to db.
-        :param ret:
+        Gets the formatted row of data from Questions and Answers.
         :param _data:
         :return:
         """
-        self._get_table_rows(_data)
-        if self._rows:
-            return_table = ReturnTable.objects.get_or_create(
-                name=ReturnType.RETURN_TYPE_QUESTION, ret=ret)[0]
-            # delete any existing rows as they will all be recreated
-            return_table.returnrow_set.all().delete()
-            return_rows = [
-                ReturnRow(
-                    return_table=return_table,
-                    data=row) for row in self._rows]
-            ReturnRow.objects.bulk_create(return_rows)
+        by_column = dict([])  # by_column is of format {'col_header':[row1_val, row2_val,...],...}
+        rows = []
+        for key in _data.keys():
+            by_column[key] = _data[key]
+        rows.append(by_column)
+
+        return rows
 
     def __str__(self):
         return self._return.lodgement_number
@@ -668,65 +664,6 @@ class ReturnSheet(object):
         for _species in ReturnTable.objects.filter(ret=a_return):
             self._species_list.append(_species.name)
             self._species = _species.name
-
-    def _get_table_rows(self, _data):
-        """
-        Gets the formatted row of data from Species data
-        :param _data:
-        :return: by_column is of format {'col_header':[row1_val, row2_val,...],...}
-        """
-        by_column = dict([])
-        key_values = []
-        num_rows = 0
-        if isinstance(_data, tuple):
-            for key in _data[0].keys():
-                for cnt in range(_data.__len__()):
-                    key_values.append(_data[cnt][key])
-                by_column[key] = key_values
-                key_values = []
-            num_rows = len(list(by_column.values())[0]) if len(by_column.values()) > 0 else 0
-        else:
-            for key in _data.keys():
-                by_column[key] = _data[key]
-            num_rows = num_rows + 1
-
-        self._rows = []
-        for row_num in range(num_rows):
-            row_data = {}
-            if num_rows > 1:
-                for key, value in by_column.items():
-                    row_data[key] = value[row_num]
-            else:
-                row_data = by_column
-            # filter empty rows.
-            is_empty = True
-            for value in row_data.values():
-                if value and len(value.strip()) > 0:
-                    is_empty = False
-                    break
-            if not is_empty:
-                row_data['rowId'] = str(row_num)
-                self._rows.append(row_data)
-
-    def _create_return_data(self, ret, _species_id, _data):
-        """
-        Saves row of data to db.
-        :param ret:
-        :param _species_id:
-        :param _data:
-        :return:
-        """
-        self._get_table_rows(_data)
-        if self._rows:
-            return_table = ReturnTable.objects.get_or_create(
-                name=_species_id, ret=ret)[0]
-            # delete any existing rows as they will all be recreated
-            return_table.returnrow_set.all().delete()
-            return_rows = [
-                ReturnRow(
-                    return_table=return_table,
-                    data=row) for row in self._rows]
-            ReturnRow.objects.bulk_create(return_rows)
 
     @property
     def table(self):
@@ -784,6 +721,21 @@ class ReturnSheet(object):
 
         return self._table
 
+    def store(self, request):
+        """
+        Save the current state of this Return Sheet.
+        :param request:
+        :return:
+        """
+        for species in self.species_list:
+            try:
+                _data = request.data.get(species).encode('utf-8')
+                _data = tuple(ast.literal_eval(_data))
+                table_rows = self._get_table_rows(_data)
+                self._return.save_return_table(species, table_rows, request)
+            except AttributeError:
+                continue
+
     def set_activity(self, _species, _data):
         """
         Sets Running Sheet Activity for the movement of Species stock.
@@ -791,8 +743,50 @@ class ReturnSheet(object):
         :param _data:
         :return:
         """
-        self._create_return_data(self._return, _species, _data)
+        table_rows = self._get_table_rows(_data)
+        # self._return.save_return_table(_species, table_rows) FIXME: this function is redundant.
         self.set_species(_species)
+
+    def _get_table_rows(self, _data):
+        """
+        Gets the formatted row of data from Species data.
+        :param _data:
+        :return:
+        """
+        by_column = dict([])  # by_column is of format {'col_header':[row1_val, row2_val,...],...}
+        key_values = []
+        num_rows = 0
+        if isinstance(_data, tuple):
+            for key in _data[0].keys():
+                for cnt in range(_data.__len__()):
+                    key_values.append(_data[cnt][key])
+                by_column[key] = key_values
+                key_values = []
+            num_rows = len(list(by_column.values())[0]) if len(by_column.values()) > 0 else 0
+        else:
+            for key in _data.keys():
+                by_column[key] = _data[key]
+            num_rows = num_rows + 1
+
+        rows = []
+        for row_num in range(num_rows):
+            row_data = {}
+            if num_rows > 1:
+                for key, value in by_column.items():
+                    row_data[key] = value[row_num]
+            else:
+                row_data = by_column
+            # filter empty rows.
+            is_empty = True
+            for value in row_data.values():
+                if value and len(value.strip()) > 0:
+                    is_empty = False
+                    break
+            if not is_empty:
+                row_data['rowId'] = str(row_num)
+                rows.append(row_data)
+
+        return rows
 
     def set_activity_from_previous(self):
         """
@@ -869,20 +863,6 @@ class ReturnSheet(object):
         """
         return None
 
-    def store(self, request):
-        """
-        Save the current state of this Return Sheet.
-        :param request:
-        :return:
-        """
-        for species in self.species_list:
-            try:
-                _data = request.data.get(species).encode('utf-8')
-                _data = tuple(ast.literal_eval(_data))
-                self.set_activity(species, _data)
-            except AttributeError:
-                continue
-
     def __str__(self):
         return self._return.lodgement_number
 
@@ -909,6 +889,7 @@ class ReturnUserAction(UserAction):
     ACTION_CREATE = "Lodge Return {}"
     ACTION_SUBMIT_REQUEST = "Submit Return {}"
     ACTION_ACCEPT_REQUEST = "Accept Return {}"
+    ACTION_SAVE_REQUEST = "Save Return {}"
     ACTION_ASSIGN_TO = "Assign to {}"
     ACTION_UNASSIGN = "Unassign"
     ACTION_DECLINE_REQUEST = "Decline request"

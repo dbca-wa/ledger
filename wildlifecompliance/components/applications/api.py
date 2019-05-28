@@ -540,7 +540,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             try:
-                instance.submit(request, self)
+                instance.submit(request)
             except MissingFieldsException as e:
                 return Response({
                     'missing': e.error_list},

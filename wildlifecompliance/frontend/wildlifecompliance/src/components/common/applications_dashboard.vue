@@ -283,10 +283,9 @@ export default {
                         }
                         else if (full.can_user_view) {
                             links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
-
-                            if (full.payment_status == 'unpaid'){
-                                links +=  `<a href='#${full.id}' data-pay-application-fee='${full.id}'>Pay Application Fee</a><br/>`;
-                            }
+                        }
+                        if (full.payment_status == 'unpaid'){
+                            links +=  `<a href='#${full.id}' data-pay-application-fee='${full.id}'>Pay Application Fee</a><br/>`;
                         }
                     }
                     return links;
