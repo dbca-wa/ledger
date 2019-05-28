@@ -18,7 +18,7 @@
                                 <div class="form-group" v-if="!isLoading">
                                     <div class="radio">
                                         <label>
-                                            <input type="radio"  name="behalf_of_org" v-model="yourself" value="yourself"> On behalf of yourself
+                                            <input type="radio"  name="behalf_of_org" v-model="org_applicant" value="yourself"> On behalf of yourself
                                         </label>
                                     </div>
                                     <div v-if="profile.commercialoperator_organisations.length > 0">
@@ -265,10 +265,10 @@ export default {
         // if (vm.org_applicant != '' || vm.org_applicant != 'submitter'){
         //     return vm.profile.commercialoperator_organisations.find(org => parseInt(org.id) === parseInt(vm.org_applicant)).name;
         // }
-        if (vm.org_applicant != ''){
+        if (vm.org_applicant != '' && vm.org_applicant != 'yourself'){   
             return vm.profile.commercialoperator_organisations.find(org => parseInt(org.id) === parseInt(vm.org_applicant)).name;
         }
-        return '';
+        return vm.org_applicant;
     },
     manyDistricts: function() {
       return this.districts.length > 1;
@@ -324,6 +324,9 @@ export default {
     createProposal:function () {
         let vm = this;
         vm.creatingProposal = true;
+        if(vm.org_applicant=='yourself'){
+            vm.org_applicant='';
+        }
 		vm.$http.post('/api/proposal.json',{
 			//behalf_of: vm.behalf_of,
             org_applicant:vm.org_applicant,
