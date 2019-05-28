@@ -46,12 +46,12 @@
                                             </div>
                                         </div>
                                         </div>
-                                        <!-- <div class="form-group">
+                                        <div class="form-group">
                                         <div class="col-sm-12">
                                                 <button v-if="!updatingPersonal" class="pull-right btn btn-primary" @click.prevent="updatePersonal()">Update</button>
                                                 <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
                                         </div>
-                                        </div> -->
+                                        </div>
                                     </form>
                                 </div>
                             </div>
@@ -109,12 +109,12 @@
                                             </div></div>
                                         </div>
                                         </div>
-                                        <!-- <div class="form-group">
+                                        <div class="form-group">
                                         <div class="col-sm-12">
                                             <button v-if="!updatingAddress" class="pull-right btn btn-primary" @click.prevent="updateAddress()">Update</button>
                                             <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
                                         </div>
-                                        </div> -->
+                                        </div>
                                     </form>
                                 </div>
                             </div>
@@ -169,9 +169,8 @@ export default {
     mounted: function(){
         this.$nextTick(function() {
             this.initAwesomplete();
+            this.loadCountries();
         });
-        // TODO: user should be loaded if call_email has.
-        // this.loadEmailUser(emailUser_id);
     },
     methods: {
         updateAddress: function() {
@@ -210,7 +209,8 @@ export default {
             params += '&first_name=' + vm.call_email.email_user.first_name;
             params += '&last_name=' + vm.call_email.email_user.last_name;
             params += '&dob=' + vm.call_email.email_user.dob;
-            if (vm.call_email.email_user.first_name == '' || vm.call_email.email_user.last_name == '' || (vm.call_email.email_user.dob == null || vm.call_email.email_user.dob == '')){
+            // if (vm.call_email.email_user.first_name == '' || vm.call_email.email_user.last_name == '' || (vm.call_email.email_user.dob == null || vm.call_email.email_user.dob == '')){
+            if (vm.call_email.email_user.first_name == '' || vm.call_email.email_user.last_name == ''){
                 let error_msg = 'Please ensure all fields are filled in.';
                 swal({
                     title: 'Update Personal Details',
@@ -248,15 +248,22 @@ export default {
 				})
 			});
         },
-        loadEmailUser: function(id){
+        loadCountries: function(){
             let vm = this;
             let initialisers = [
                 utils.fetchCountries(),
-                utils.fetchUser(id),
             ]
             Promise.all(initialisers).then(data => {
                 vm.countries = data[0];
-                vm.call_email.email_user = data[1];
+            });
+        },
+        loadEmailUser: function(id){
+            let vm = this;
+            let initialisers = [
+                utils.fetchUser(id),
+            ]
+            Promise.all(initialisers).then(data => {
+                vm.call_email.email_user = data[0];
                 vm.call_email.email_user.residential_address = vm.call_email.email_user.residential_address != null ? vm.call_email.email_user.residential_address : {};
             });
         },
@@ -264,6 +271,7 @@ export default {
             var vm = this;
             vm.suggest_list = [];
             vm.suggest_list.length = 0;
+            vm.awe.list = [];
 
             /* Cancel all the previous requests */
             if (vm.ajax_for_person_search != null){
@@ -331,11 +339,23 @@ export default {
                 /* Retrieve element id of the selected item from the list
                  * By parsing it, we can get the order-number of the item in the list
                  */
-                let elem_id = ev.originalEvent.origin.id;
+                console.log("origin");
+                console.log(ev.originalEvent.origin);
+                let origin = $(ev.originalEvent.origin)
+                let originTagName = origin[0].tagName;
+                if (originTagName == "SPAN"){
+                    origin = origin.parent();
+                }
+                let elem_id = origin[0].id;
                 let reg = /^.+(\d+)$/gi;
                 let result = reg.exec(elem_id)
-                let idx = result[1];
-                self.loadEmailUser(self.suggest_list[idx].id);
+                if(result[1]){
+                    let idx = result[1];
+                    self.loadEmailUser(self.suggest_list[idx].id);
+                }else{
+                    console.log("result");
+                    console.log(result);
+                }
             });
         },
     }

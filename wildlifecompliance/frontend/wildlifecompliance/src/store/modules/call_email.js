@@ -75,6 +75,49 @@ export const callemailStore = {
             }
         },
         updateCallEmail(state, call_email) {
+            if (!call_email.location) {
+                /* When location is null, set default object */
+                call_email.location =
+                {
+                    "type": "Feature",
+                    properties: {
+                        town_suburb: null,
+                        street: null,
+                        state: null,
+                        postcode: null,
+                        country: null,
+                    },
+                    id: null,
+                    geometry: {
+                        "type": "Point",
+                        "coordinates": [],
+                    },
+                };
+            }
+            if (!call_email.email_user){
+                /* When email_user is null, set default object */
+                call_email.email_user = { 
+                    first_name: '',
+                    last_name: '',
+                    dob: null,
+                    residential_address: {
+                        line1: '',
+                        locality: '',
+                        state: '',
+                        postcode: '',
+                        country: ''
+                    }
+                };
+            } else if (!call_email.email_user.residential_address){
+                /* When residential_address is null, set default object */
+                call_email.email_user.residential_address = {
+                    line1: '',
+                    locality: '',
+                    state: '',
+                    postcode: '',
+                    country: ''
+                };
+            }
             Vue.set(state, 'call_email', {
                 ...call_email
             });
@@ -151,55 +194,18 @@ export const callemailStore = {
         }
     },
     actions: {
-        async loadCallEmail({
-            dispatch,
-        }, {
-            call_email_id
-        }) {
+        async loadCallEmail({ dispatch, }, { call_email_id }) {
             console.log("loadCallEmail");
             console.log(call_email_id);
             try {
-
                 const returnedCallEmail = await Vue.http.get(
                     helpers.add_endpoint_json(
                         api_endpoints.call_email, 
                         call_email_id)
-                        );
-                        
+                    );
+
+                /* Set CallEmail object */
                 await dispatch("setCallEmail", returnedCallEmail.body);
-
-                // Set empty (not null) location to force map display
-                if (!returnedCallEmail.body.location) {
-                    console.log("null location");
-                    await dispatch("setLocation", 
-                    {
-                        "type": "Feature",
-                        properties: {
-                            town_suburb: null,
-                            street: null,
-                            state: null,
-                            postcode: null,
-                            country: null,
-                        },
-                        id: null,
-                        geometry: {
-                            "type": "Point",
-                            "coordinates": [],
-                        },
-                    });
-                    console.log("empty location loaded");
-                }
-
-                if (!returnedCallEmail.body.email_user){
-                    await dispatch("setEmailUser", {
-                        residential_address: {}
-                    });
-                } else if (!returnedCallEmail.body.email_user.residential_address){
-                    await dispatch("setResidentialAddress", {
-
-                    });
-                    //returnedCallEmail.body.email_user.residential_address = {};
-                }
 
                 for (let form_data_record of returnedCallEmail.body.data) {
                     dispatch("setFormValue", {
@@ -234,15 +240,12 @@ export const callemailStore = {
 
                 let payload = new Object();
                 Object.assign(payload, state.call_email);
-                //delete payload.report_type;
-                //delete payload.schema;
-                //delete payload.location;
                 if (payload.occurrence_date_from) {
                     payload.occurrence_date_from = moment(payload.occurrence_date_from).format('YYYY-MM-DD');
-                } 
+                }
                 if (payload.occurrence_date_to) {
                     payload.occurrence_date_to = moment(payload.occurrence_date_to).format('YYYY-MM-DD');
-                } 
+                }
                 if (crud == 'duplicate') {
                     payload.id = null;
                     payload.location_id = null;
@@ -256,39 +259,10 @@ export const callemailStore = {
                     payload.renderer_data = rootGetters.renderer_form_data;
                     }
                 }
-                
-                console.log("payload");
-                console.log(payload);
-                const savedCallEmail = await Vue.http.post(fetchUrl, 
-                    payload
-                    )
+                const savedCallEmail = await Vue.http.post(fetchUrl, payload)
                 console.log("savedCallEmail.body");
                 console.log(savedCallEmail.body);
                 await dispatch("setCallEmail", savedCallEmail.body);
-                
-                // Set empty (not null) location to force map display
-                if (!savedCallEmail.body.location) {
-                    
-                    console.log("null location");
-                    await dispatch("setLocation", 
-                    {
-                        type: "Feature",
-                        properties: {
-                            town_suburb: null,
-                            street: null,
-                            state: null,
-                            postcode: null,
-                            country: null,
-                        },
-                        id: null,
-                        geometry: {
-                            "type": "Point",
-                            "coordinates": [],
-                        },
-                    }
-                    );
-                    console.log("empty location loaded");
-                }
                 callId = savedCallEmail.body.id;
 
             } catch (err) {
@@ -308,15 +282,11 @@ export const callemailStore = {
                 return callId;
             }
         },
-        setCallID({
-            commit,
-        }, id) {
+        setCallID({ commit, }, id) {
             console.log("setCallID");
             commit("updateCallID", id);
         },
-        setSchema({
-            commit,
-        }, schema) {
+        setSchema({ commit, }, schema) {
             console.log("setSchema");
             commit("updateSchema", schema);
         },
@@ -326,67 +296,38 @@ export const callemailStore = {
         setResidentialAddress({commit}, address){
             commit("updateResidentialAddress", address);
         },
-        setLocation({
-            commit,
-        }, location) {
+        setLocation({ commit, }, location) {
             commit("updateLocation", location);
         },
-        setLocationAddress({
-            commit,
-        }, location_properties) {
+        setLocationAddress({ commit, }, location_properties) {
             commit("updateLocationAddress", location_properties);
         },
-        setLocationAddressEmpty({
-            commit,
-        }) {
+        setLocationAddressEmpty({ commit, }) {
             commit("updateLocationAddressEmpty");
         },
-        setLocationDetailsFieldEmpty({
-            commit,
-        }) {
+        setLocationDetailsFieldEmpty({ commit, }) {
             commit("updateLocationDetailsFieldEmpty");
         },
-        
-        setLocationPoint({
-            commit,
-        }, point) {
+        setLocationPoint({ commit, }, point) {
             console.log("setLocationPoint");
             commit("updateLocationPoint", point);
         },
-        setClassificationEntry({
-            commit,
-        },
-        classification_entry
-        ) {
+        setClassificationEntry({ commit, }, classification_entry) {
             commit("updateClassificationTypes", classification_entry);
         },
-        setReferrerEntry({
-            commit,
-        },
-            referrer_entry
-        ) {
+        setReferrerEntry({ commit, }, referrer_entry) {
             commit("updateReferrers", referrer_entry);
-        },        
-        setReportTypeEntry({
-            commit,
         },
-        report_type_entry
-        ) {
+        setReportTypeEntry({ commit, }, report_type_entry) {
             commit("updateReportTypes", report_type_entry);
         },
-        setCallEmail({
-            commit,
-        }, call_email) {
+        setCallEmail({ commit, }, call_email) {
             commit("updateCallEmail", call_email);
         },
-        setReportType({
-            commit,
-        }, report_type) {
+        setReportType({ commit, }, report_type) {
             commit("updateReportType", report_type)
         },
-        setClassification({
-            commit,
-        }, classification) {
+        setClassification({ commit, }, classification) {
             commit("updateClassification", classification)
         },
     },
