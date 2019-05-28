@@ -2617,7 +2617,7 @@ class ChecklistQuestion(RevisionedMixin):
     text = models.TextField()
     list_type = models.CharField('Checklist type', max_length=30, choices=TYPE_CHOICES,
                                          default=TYPE_CHOICES[0][0])
-    correct_answer= models.BooleanField(default=False)
+    #correct_answer= models.BooleanField(default=False)
     obsolete = models.BooleanField(default=False)
 
     def __str__(self):

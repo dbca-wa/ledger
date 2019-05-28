@@ -103,7 +103,7 @@ class HelpPageAdmin(admin.ModelAdmin):
 
 @admin.register(models.ChecklistQuestion)
 class ChecklistQuestionAdmin(admin.ModelAdmin):
-    list_display = ['text', 'correct_answer', 'list_type', 'obsolete',]
+    list_display = ['text', 'list_type', 'obsolete',]
     ordering = ('list_type',)
 
 @admin.register(SystemMaintenance)
