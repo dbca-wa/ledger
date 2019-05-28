@@ -18,7 +18,9 @@
     <script type="text/javascript">
 window.onload = function () {
     {% if ground_id %}
-    var availability = availabilityApp('#availability', null, parseInt('{{ ground_id|escapejs }}'));
+    var availability = availabilityApp('#availability', {
+        siteId: parseInt('{{ ground_id|escapejs }}')
+    });
     {% else %}
     var availability = availabilityApp('#availability');
     {% endif %}

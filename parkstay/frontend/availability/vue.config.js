@@ -1,5 +1,7 @@
 var webpack = require('webpack');
 
+var VERSION = process.env.npm_package_version;
+
 module.exports = {
     css: {
         extract: false,
@@ -7,7 +9,7 @@ module.exports = {
     },
 
     baseUrl: undefined,
-    outputDir: '../../static/availability',
+    outputDir: '../../static/availability/'+VERSION,
     assetsDir: undefined,
     runtimeCompiler: undefined,
     productionSourceMap: undefined,
