@@ -41,24 +41,20 @@
                               <label class="control-label pull-left"  for="Name">Attachments</label>
                           </div>
                           <div class="col-sm-9">
-                              <template v-for="(f,i) in files">
-                                  <div :class="'row top-buffer file-row-'+i">
-                                      <div class="col-sm-4">
-                                          <span v-if="f.file == null" class="btn btn-info btn-file pull-left">
-                                              Attach File <input type="file" :name="'file-upload-'+i" :class="'file-upload-'+i" @change="uploadFile('file-upload-'+i,f)"/>
-                                          </span>
-                                          <span v-else class="btn btn-info btn-file pull-left">
-                                              Update File <input type="file" :name="'file-upload-'+i" :class="'file-upload-'+i" @change="uploadFile('file-upload-'+i,f)"/>
-                                          </span>
-                                      </div>
-                                      <div class="col-sm-4">
-                                          <span>{{f.name}}</span>
-                                      </div>
-                                      <div class="col-sm-4">
-                                          <button @click="removeFile(i)" class="btn btn-danger">Remove</button>
-                                      </div>
-                                  </div>
-                              </template>
+                              <div class="col-sm-4">
+                                  <span v-if="files[0].file == null" class="btn btn-info btn-file pull-left">
+                                      Attach File <input type="file" @change="uploadFile"/>
+                                  </span>
+                                  <span v-else class="btn btn-info btn-file pull-left">
+                                      Update File <input type="file" @change="uploadFile"/>
+                                  </span>
+                              </div>
+                              <div class="col-sm-4">
+                                  <span>{{ files[0].name }}</span>
+                              </div>
+                              <div class="col-sm-4">
+                                  <button @click="removeFile(i)" class="btn btn-danger">Remove</button>
+                              </div>
                               <a href="" @click.prevent="attachAnother"><i class="fa fa-lg fa-plus top-buffer-2x"></i></a>
                           </div>
                         </div>
@@ -163,37 +159,20 @@ export default {
         }
         this.attachAnother();
     },
-    uploadFile(target,file_obj){
-        let vm = this;
-        let _file = null;
-        var input = $('.'+target)[0];
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.readAsDataURL(input.files[0]); 
-            reader.onload = function(e) {
-                _file = e.target.result;
-            };
-            _file = input.files[0];
-        }
-        console.log(file_obj)
-        file_obj.file = _file;
-        file_obj.name = _file.name;
+    uploadFile(e){
+        let uploaded_files = e.target.files || e.dataTransfer.files;
+        if (!uploaded_files.length)
+          return;
+        this.createFile(uploaded_files[0]);
     },
-    removeFile(index){
-        let length = this.files.length;
-        $('.file-row-'+index).remove();
-        this.files.splice(index,1);
-        this.$nextTick(() => {
-            length == 1 ? this.attachAnother() : '';
-        });
+    createFile(file) {
+      //let newfile = new File();
+      let reader = new FileReader();
+      reader.onload = (e) => {
+        let newfile = e.target.result;
+      };
+      reader.readAsDataURL(file);
     },
-    attachAnother(){
-        this.files.push({
-            'file': null,
-            'name': ''
-        })
-    },
-    
   },
   created: async function() {
     // regions
