@@ -2110,8 +2110,15 @@ class ApplicationSelectedActivity(models.Model):
         ).distinct()
 
     def process_licence_fee_payment(self, request, application):
+        from ledger.payments.models import BpointToken
+
         if self.licence_fee_paid:
             return True
+
+        card_owner_id = application.proxy_applicant_id if application.proxy_applicant_id else application.submitter_id
+        card_token = BpointToken.objects.filter(user_id=card_owner_id).order_by('-id').first()
+        if not card_token:
+            raise Exception("No card token found for user: %s" % card_owner_id)
 
         product_lines = []
         application_submission = u'Licence issued for {} application {}'.format(
@@ -2130,6 +2137,8 @@ class ApplicationSelectedActivity(models.Model):
             internal=True,
             add_checkout_params={
                 'basket_owner': request.user.id,
+                'payment_method': 'card',
+                'checkout_token': card_token.id,
             }
         )
         ActivityInvoice.objects.get_or_create(
