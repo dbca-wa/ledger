@@ -8,7 +8,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
 from ledger.accounts.models import Organisation as ledger_organisation
-from ledger.accounts.models import EmailUser, Document, RevisionedMixin
+from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.main.models import UserAction, CommunicationsLogEntry
 from wildlifecompliance.components.organisations.utils import random_generator, get_officer_email_list
 from wildlifecompliance.components.organisations.emails import (
@@ -493,8 +493,19 @@ class Organisation(models.Model):
         return self.organisation.postal_address
 
     @property
-    def phone_number(self):
-        return self.organisation.phone_number
+    def address_string(self):
+        org_address = self.organisation.postal_address
+        if org_address:
+            address_string = '{} {} {} {} {}'.format(
+                org_address.line1,
+                org_address.locality,
+                org_address.state,
+                org_address.postcode,
+                org_address.country
+            )
+            return address_string
+        else:
+            return ''
 
     @property
     def email(self):
@@ -781,10 +792,20 @@ class OrganisationRequest(models.Model):
         max_length=100,
         choices=ROLE_CHOICES,
         default=ORG_REQUEST_ROLE_EMPLOYEE)
+    lodgement_number = models.CharField(max_length=9, blank=True, default='')
     lodgement_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
+
+    # Append 'OAR' to Application id to generate Lodgement number. Lodgement
+    # number and lodgement sequence are used to generate Reference.
+    def save(self, *args, **kwargs):
+        super(OrganisationRequest, self).save(*args, **kwargs)
+        if self.lodgement_number == '':
+            new_lodgement_id = 'OAR{0:06d}'.format(self.pk)
+            self.lodgement_number = new_lodgement_id
+            self.save()
 
     def accept(self, request):
         with transaction.atomic():

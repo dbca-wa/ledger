@@ -11,14 +11,11 @@
                 <HelpText :help_text_url="help_text_url" />
             </template>
 
-
-            <template v-if="canViewComments">
-                <template v-if="!showingComment">
-                    <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
-                    <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
-                </template>
-                <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
-            </template>
+            <CommentBlock 
+                :label="label"
+                :name="name"
+                :field_data="field_data"
+                />
      
             <template v-if="readonly">
                 <select v-if="!isMultiple" disabled ref="selectB" :id="selectid" :name="name" class="form-control" :data-conditions="cons" style="width:100%">
@@ -48,10 +45,6 @@
             </template>
         </div>
 
-        
-        <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :value="comment_value"/>
-
-
     </div>
 </template>
 
@@ -59,10 +52,10 @@
 var select2 = require('select2');
 require("select2/dist/css/select2.min.css");
 require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
-import Comment from './comment.vue';
+import CommentBlock from './comment_block.vue';
 import HelpText from './help_text.vue';
 import HelpTextUrl from './help_text_url.vue';
-import { mapGetters } from 'vuex';
+
 export default {
     props:{
         'name':String,
@@ -72,7 +65,6 @@ export default {
         'help_text':String,
         'help_text_url':String,
         "field_data": Object,
-        "comment_value": String,
         "options":Array,
         "conditions":Object,
         "handleChange":null,
@@ -89,14 +81,9 @@ export default {
             selected: (this.isMultiple) ? [] : "",
             selectid: "select"+vm._uid,
             multipleSelected: [],
-            showingComment: false,
-           
         }
     },
     computed:{
-        ...mapGetters([
-            'canViewComments',
-        ]),
         cons: function () {
             return JSON.stringify(this.conditions);
         },
@@ -104,13 +91,8 @@ export default {
             return this.field_data.value;
         }
     },
-    components: { Comment, HelpText, HelpTextUrl,},
+    components: { CommentBlock, HelpText, HelpTextUrl, },
     methods:{
-        toggleComment(){
-            this.showingComment = ! this.showingComment;
-        },
-       
-
         multipleSelection: function(val){
             if (Array.isArray(this.value)){
                 if (this.value.find(v => v == val)){

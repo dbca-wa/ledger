@@ -18,7 +18,6 @@ def update_licence_doc_filename(instance, filename):
 
 
 class LicenceDocument(Document):
-    licence = models.ForeignKey('WildlifeLicence', related_name='documents')
     _file = models.FileField(upload_to=update_licence_doc_filename)
 
     class Meta:
@@ -177,15 +176,12 @@ class WildlifeLicence(models.Model):
         if not self.licence_number:
             self.licence_number = 'L{0:06d}'.format(
                 self.next_licence_number_id)
-            # self.licence_number = 'L{0:06d}'.format(self.pk)
             self.save()
 
     def get_activities_by_status(self, status):
-        from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
-        return ApplicationSelectedActivity.objects.filter(
-            application_id=self.current_application_id,
-            activity_status=status
-        )
+        return self.current_application.get_activity_chain(activity_status=status).order_by(
+            'licence_activity_id', '-issue_date'
+        ).distinct('licence_activity_id')
 
     @property
     def current_activities(self):
@@ -204,13 +200,6 @@ class WildlifeLicence(models.Model):
     @property
     def activities(self):
         return self.current_application.activities
-
-#    def seq_idx():
-#        no = WildlifeLicence.objects.get().aggregate(Max(order))
-#        if no == None:
-#            return 1
-#        else:
-#            return no + 1
 
     @property
     def reference(self):

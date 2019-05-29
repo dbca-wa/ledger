@@ -38,7 +38,7 @@
             </div>
         </div>
     </div>
-    <datatable ref="org_access_table" id="org-access-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders"></datatable>
+    <datatable ref="org_access_table" id="org-access-table" :dtOptions="org_access_request_options" :dtHeaders="org_access_request_headers"></datatable>
 </div>
 </template>
 <script>
@@ -63,19 +63,26 @@ export default {
         applicantChoices: [],
         roleChoices: [],
         statusChoices: [],
-        dtOptions:{
+        org_access_request_headers:["Request Number","Organisation","Applicant","Role","Status","Lodged on","Assigned To","Action"],
+        org_access_request_options:{
+                serverSide: true,
+                searchDelay: 1000,
+                lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+                order: [
+                    [0, 'desc']
+                ],
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
                 processing:true,
                 ajax: {
-                    "url": helpers.add_endpoint_json(api_endpoints.organisation_requests,'datatable_list'),
-                    "dataSrc": '',
+                    "url": helpers.add_endpoint_join(api_endpoints.organisation_requests_paginated,'datatable_list/?format=datatables'),
+                    "dataSrc": 'data',
                 },
                 columns:[
                     {
-                        data:"id",
+                        data:"lodgement_number",
                     },
                     {
                         data:"name",
@@ -87,7 +94,7 @@ export default {
                         data:"role",
                     },
                     {
-                        data:"status",
+                        data:"status.name",
                     },
                     {
                         data:"lodgement_date",
@@ -148,7 +155,6 @@ export default {
                     });
                 }
             },
-            dtHeaders:["Request Number","Organisation","Applicant","Role","Status","Lodged on","Assigned To","Action"],
         }
     },
     watch: {

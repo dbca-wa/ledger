@@ -1,6 +1,6 @@
 import InternalDashboard from '../dashboard.vue'
 import Search from '../search.vue'
-import OrgAccessTable from '../organisations/dashboard.vue'
+import OrgAccessTable from '../organisations/access_dashboard.vue'
 import OrgAccess from '../organisations/access.vue'
 import Organisation from '../organisations/manage.vue'
 import UserDashTable from '../users/dashboard.vue'
@@ -8,7 +8,7 @@ import User from '../users/manage.vue'
 import Application from '../applications/application.vue'
 import LicenceDashTable from '../licences/dashboard.vue'
 import CallEmailTableDash from '../call_email/call_email_dashboard.vue'
-import CreateCallEmail from '../call_email/create_call_email.vue'
+import CallEmail from '../call_email/call_email.vue'
 import ReturnDashTable from '../returns/dashboard.vue'
 import Returns from '../returns/access.vue'
 
@@ -46,10 +46,17 @@ export default
                     component: CallEmailTableDash,
                     name:"internal-call-email-dash"
                 },
+                
                 {
                     path: 'create_call_email',
-                    component: CreateCallEmail,
-                    name:"internal-create-call-email"
+                    component: CallEmail,
+                    name:"new-call-email"
+                },
+                
+                {
+                    path: ':call_email_id',
+                    component: CallEmail,
+                    name:"view-call-email"
                 },
             ]
         },
@@ -124,6 +131,7 @@ export default
                     return c('router-view')
                 }
             },
+            
             children: [
                 {
                     path: ':application_id',

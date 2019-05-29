@@ -10,10 +10,15 @@
                                 <label class="control-label">Request Amendment for the application</label>
                             </div>
                             <div class="row">
-                                <div class="col-sm-offset-2 col-sm-8">
-
-                                    <label class="control-label"  for="Name">Licensed activity to amend </label>
-                                    <div v-for="item in amendment.activity_name" v-model="amendment.activity_name">{{item}}</div>
+                                <div class="form-group">
+                                    <div class="col-sm-offset-2 col-sm-8">
+                                        <label class="control-label" for="Name">Select licensed activities to amend</label>
+                                        <div v-for="activity in amendableActivities">
+                                            <div>
+                                                <input type="checkbox" :value ="activity.id" :name="activity.name" :id="activity.id" v-model="amendment.activity_list">{{activity.name}}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="row">
@@ -29,7 +34,7 @@
                             <div class="row">
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
-                                        <label class="control-label pull-left"  for="Name">Details</label>
+                                        <label class="control-label pull-left"  for="Name">Additional Comments to User</label>
                                         <textarea class="form-control" name="name" v-model="amendment.text">{{amendment.text}}</textarea>
                                     </div>
                                 </div>
@@ -67,8 +72,7 @@ export default {
                 amendingApplication: false,
                 application: this.$store.getters.application_id,
                 text:null,
-                activity_name:null,
-                activity_id:[]
+                activity_list:[]
             },
             reason_choices: {},
             errors: false,
@@ -79,10 +83,21 @@ export default {
     computed: {
         ...mapGetters([
             'application_id',
+            'licenceActivities',
+            'hasRole',
         ]),
         showError: function() {
             var vm = this;
             return vm.errors;
+        },
+        amendableActivities: function() {
+            return this.licenceActivities([
+                'with_officer',
+                'with_assessor',
+                'with_officer_conditions'
+            ]).filter(
+                activity => this.hasRole('licensing_officer', activity.id)
+            );
         }
     },
     methods:{
@@ -101,7 +116,7 @@ export default {
                 application: this.application_id,
                 text:null,
                 licence_activity:null,
-                activity_name:null
+                activity_list: [],
             };
         },
         close:function () {
@@ -111,7 +126,7 @@ export default {
                 application: this.application_id,
                 text:null,
                 licence_activity:null,
-                activity_name:null
+                activity_list: [],
             };
             this.errors = false;
             $(this.$refs.reason).val(null).trigger('change');

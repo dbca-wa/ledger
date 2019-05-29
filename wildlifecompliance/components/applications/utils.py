@@ -3,12 +3,12 @@ from datetime import datetime
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from preserialize.serialize import serialize
-from ledger.accounts.models import EmailUser, Document
+from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.applications.models import ApplicationDocument
 from wildlifecompliance.components.applications.serializers import SaveApplicationSerializer
 import json
 from wildlifecompliance.components.licences.models import LicencePurpose, DefaultPurpose, LicenceActivity, DefaultActivity
-from wildlifecompliance.utils.assess_utils import pdflatex, get_activity_sys_answers
+from wildlifecompliance.utils.assess_utils import get_activity_sys_answers
 import traceback
 
 
@@ -417,7 +417,6 @@ def get_activity_schema(activity_ids):
         for type_activity in activities.filter(licence_activity__id=activity.id):
             schema_activity += type_activity.schema
 
-        update_schema_name(schema_activity, index)
         schema_tab.append({"type": "tab",
                            "id": activity.id,
                            "label": activity.name,
@@ -426,14 +425,3 @@ def get_activity_schema(activity_ids):
                            "children": schema_activity
                            })
     return schema_tab
-
-
-def update_schema_name(item_data, id):
-
-    for item in item_data:
-        # print('name')
-        item['name'] = item['name'] + '_' + str(id)
-        # print(item['name'])
-        if 'children' in item:
-            update_schema_name(item['children'], id)
-            # print(item['children'])

@@ -1,7 +1,7 @@
 <template lang="html">
     <div>
         <div class="col-md-3">
-            <h3>Return: {{ returns.id }}</h3>
+            <h3>Return: {{ returns.lodgement_number }}</h3>
         </div>
         <div :class="`${form_width ? form_width : 'col-md-9'}`" id="returns-tabs">
             <div >
@@ -10,10 +10,6 @@
               </ul>
             </div>
             <div class="tab-content">
-              <renderer-block :component="returns" :json_data="returnsData"
-                  v-if="returns.id"
-                  v-bind:key="`renderer_block_0`"
-              />
               {{ this.$slots.default }}
             </div>
         </div>
@@ -64,7 +60,6 @@ export default {
     },
   },
   mounted: function() {
-
   },
 }
 </script>

@@ -20,7 +20,9 @@ export const userStore = {
                 return false;
             }
             return rootGetters.application.user_roles.find(
-                role_record => role_record.role == role && (!activity_id || activity_id == role_record.activity_id)
+                role_record =>
+                (role.constructor === Array ? role : [role]
+                    ).includes(role_record.role) && (!activity_id || activity_id == role_record.activity_id)
             );
         },
         visibleConditionsFor: (state, getters, rootState, rootGetters) => (for_role, processing_status, tab_id) => {
@@ -29,8 +31,14 @@ export const userStore = {
                 (!tab_id || tab_id == activity.id)
             );
         },
-        canViewComments: (state, getters) => {
+        canViewDeficiencies: (state, getters) => {
+            return getters.hasRole('licensing_officer') || getters.application.can_current_user_edit;
+        },
+        canEditDeficiencies: (state, getters) => {
             return getters.hasRole('licensing_officer');
+        },
+        canViewComments: (state, getters) => {
+            return getters.hasRole('licensing_officer') || getters.hasRole('assessor');
         },
     },
     mutations: {
@@ -41,7 +49,7 @@ export const userStore = {
             state.selected_activity_tab_name = tab_name;
         },
         [UPDATE_CURRENT_USER] (state, user) {
-            Vue.set(state, 'user', {...user});
+            Vue.set(state, 'current_user', {...user});
         },
     },
     actions: {

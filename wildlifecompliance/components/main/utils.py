@@ -1,8 +1,9 @@
+import ast
 import requests
 import json
 import logging
 from django.conf import settings
-from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, calculate_excl_gst
@@ -168,3 +169,146 @@ def get_choice_value(key, choices):
         logger = logging.getLogger(__name__)
         logger.error("Key %s does not exist in choices: %s" % (key, choices))
         raise
+
+
+def search_keywords(search_words, search_application, search_licence, search_return, is_internal=True):
+    '''
+    :param search_words: list object, keywords to search for
+    :param search_application: Boolean, if true, search keywords against applications
+    :param search_licence: Boolean, if true, search keywords against licences
+    :param search_return: Boolean, if true, search keywords against returns
+    :param is_internal: Boolean, if true, pre-load application, licence, return objects to lists
+    :return:
+    '''
+    from wildlifecompliance.utils import search
+    from wildlifecompliance.components.applications.models import Application, ApplicationFormDataRecord
+    from wildlifecompliance.components.licences.models import WildlifeLicence
+    from wildlifecompliance.components.returns.models import Return
+    qs = []
+    application_list = []
+    licence_list = []
+    return_list = []
+    if is_internal:
+        application_list = Application.objects.all()\
+            .computed_exclude(processing_status__in=[
+                Application.PROCESSING_STATUS_DISCARDED
+            ])\
+            .order_by('lodgement_number', '-id')
+        licence_list = WildlifeLicence.objects.all()\
+            .order_by('licence_number', '-id')\
+            .distinct('licence_number')
+        return_list = Return.objects.all()\
+            .order_by('lodgement_number', '-id')
+    if search_words:
+        if search_application:
+            for app in application_list:
+                if app.data:
+                    try:
+                        app_data = {'data': []}
+                        for record in app.data:
+                            if 'thead' in record.value:
+                                app_data.get('data').append({'value': ast.literal_eval(record.value).get('tbody')})
+                            else:
+                                app_data.get('data').append({'value': record.value})
+                        results = search(app_data, search_words)
+                        final_results = {}
+                        if results:
+                            for r in results:
+                                for key, value in r.iteritems():
+                                    final_results.update({'key': key, 'value': value})
+                            res = {
+                                'number': app.lodgement_number,
+                                'record_id': app.id,
+                                'record_type': 'Application',
+                                'applicant': app.applicant,
+                                'text': final_results,
+                                'licence_document': None
+                            }
+                            qs.append(res)
+                    except BaseException:
+                        raise
+        if search_licence:
+            for lic in licence_list:
+                try:
+                    results = []
+                    final_results = {}
+                    for s in search_words:
+                        if s.lower() in lic.licence_number.lower():
+                            results.append({
+                                'number': lic.licence_number,
+                            })
+                    if results:
+                        for r in results:
+                            for key, value in r.iteritems():
+                                final_results.update({'key': key, 'value': value})
+                        res = {
+                            'number': lic.licence_number,
+                            'record_id': lic.id,
+                            'record_type': 'Licence',
+                            'applicant': lic.current_application.applicant,
+                            'text': final_results,
+                            'licence_document': lic.licence_document
+                        }
+                        qs.append(res)
+                except BaseException:
+                    raise
+        if search_return:
+            for ret in return_list:
+                try:
+                    results = []
+                    final_results = {}
+                    for s in search_words:
+                        if s.lower() in ret.lodgement_number.lower():
+                            results.append({
+                                'number': ret.lodgement_number,
+                            })
+                    if results:
+                        for r in results:
+                            for key, value in r.iteritems():
+                                final_results.update({'key': key, 'value': value})
+                        res = {
+                            'number': ret.lodgement_number,
+                            'record_id': ret.id,
+                            'record_type': 'Return',
+                            'applicant': ret.application.applicant,
+                            'text': final_results,
+                            'licence_document': None
+                        }
+                        qs.append(res)
+                except BaseException:
+                    raise
+        return qs
+
+
+def search_reference(reference_number):
+    from wildlifecompliance.components.applications.models import Application
+    from wildlifecompliance.components.organisations.models import OrganisationRequest
+    from wildlifecompliance.components.licences.models import WildlifeLicence
+    from wildlifecompliance.components.returns.models import Return
+    application_list = Application.objects.all().computed_exclude(processing_status__in=[
+        Application.PROCESSING_STATUS_DISCARDED])
+    licence_list = WildlifeLicence.objects.all().order_by('licence_number').distinct('licence_number')
+    returns_list = Return.objects.all().exclude(processing_status__in=[Return.RETURN_PROCESSING_STATUS_FUTURE])
+    org_access_request_list = OrganisationRequest.objects.all()
+    url_string = {}
+    try:
+        result = application_list.get(lodgement_number=reference_number)
+        url_string = {'url_string': '/internal/application/' + str(result.id)}
+    except Application.DoesNotExist:
+        try:
+            result = licence_list.get(licence_number=reference_number)
+            url_string = {'url_string': result.licence_document._file.url}
+        except WildlifeLicence.DoesNotExist:
+            try:
+                result = returns_list.get(lodgement_number=reference_number)
+                url_string = {'url_string': '/internal/return/' + str(result.id)}
+            except Return.DoesNotExist:
+                try:
+                    result = org_access_request_list.get(lodgement_number=reference_number)
+                    url_string = {'url_string': '/internal/organisations/access/' + str(result.id)}
+                except BaseException:
+                    raise ValidationError('Record with provided reference number does not exist')
+    if url_string:
+        return url_string
+    else:
+        raise ValidationError('Record with provided reference number does not exist')

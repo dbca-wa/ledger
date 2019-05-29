@@ -47,15 +47,15 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         # Filter by org
         org_id = request.GET.get('org_id', None)
         if org_id:
-            queryset = queryset.filter(current_application__org_applicant_id=org_id)
+            queryset = queryset.filter(application__org_applicant_id=org_id)
         # Filter by proxy_applicant
         proxy_applicant_id = request.GET.get('proxy_applicant_id', None)
         if proxy_applicant_id:
-            queryset = queryset.filter(current_application__proxy_applicant_id=proxy_applicant_id)
+            queryset = queryset.filter(application__proxy_applicant_id=proxy_applicant_id)
         # Filter by submitter
         submitter_id = request.GET.get('submitter_id', None)
         if submitter_id:
-            queryset = queryset.filter(current_application__submitter_id=submitter_id)
+            queryset = queryset.filter(application__submitter_id=submitter_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -65,32 +65,6 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
 
         serializer = ReturnSerializer(qs, many=True)
         return Response(serializer.data)
-
-    @detail_route(methods=['POST', ])
-    @renderer_classes((JSONRenderer,))
-    def update_details(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            if instance.has_data:
-                instance.data.store(request)
-            instance.set_submitted(request)
-            instance.submitter = request.user
-            instance.save()
-
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            if hasattr(e, 'error_dict'):
-                raise serializers.ValidationError(repr(e.error_dict))
-            else:
-                print e
-                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET', ])
     def accept(self, request, *args, **kwargs):
@@ -113,12 +87,16 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
     def upload_details(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            if request.method == 'POST':
-                spreadsheet = SpreadSheet(
-                    instance, request.FILES['spreadsheet']).factory()
-                if not spreadsheet.is_valid():
-                    return Response(
+            if not instance.has_data:
+                return Response(
+                        {'error': 'Upload not applicable for Return Type.'}, status=status.HTTP_406_NOT_FOUND)
+            spreadsheet = SpreadSheet(instance, request.FILES['spreadsheet']).factory()
+            if not spreadsheet.is_valid():
+                return Response(
                         {'error': 'Enter data in correct format.'}, status=status.HTTP_404_NOT_FOUND)
+            table = instance.data.build_table(spreadsheet.rows_list)
+
+            return Response(table)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -148,9 +126,61 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             if instance.has_sheet:
                 instance.sheet.store(request)
 
+            if instance.has_question:
+                instance.question.store(request)
+
+            instance.save()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    def pay(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    def submit(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
             instance.set_submitted(request)
             instance.submitter = request.user
             instance.save()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    def discard(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:

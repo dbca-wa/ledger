@@ -38,6 +38,7 @@ from wildlifecompliance.components.organisations.models import (
 
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationSerializer,
+    DTOrganisationSerializer,
     OrganisationAddressSerializer,
     DetailsSerializer,
     OrganisationRequestSerializer,
@@ -69,6 +70,97 @@ from wildlifecompliance.components.applications.models import (
     ApplicationRequest,
     ActivityPermissionGroup
 )
+
+from rest_framework_datatables.pagination import DatatablesPageNumberPagination
+from rest_framework_datatables.filters import DatatablesFilterBackend
+from rest_framework_datatables.renderers import DatatablesRenderer
+
+
+class OrganisationFilterBackend(DatatablesFilterBackend):
+    """
+    Custom filters
+    """
+    def filter_queryset(self, request, queryset, view):
+
+        # Get built-in DRF datatables queryset first to join with search text, then apply additional filters
+        super_queryset = super(OrganisationFilterBackend, self).filter_queryset(request, queryset, view).distinct()
+
+        total_count = queryset.count()
+        search_text = request.GET.get('search[value]')
+
+        if queryset.model is Organisation:
+            # search_text filter, join all custom search columns
+            # where ('searchable: false' in the datatable definition)
+            if search_text:
+                search_text = search_text.lower()
+                # join queries for the search_text search
+                search_text_org_ids = []
+                for organisation in queryset:
+                    if search_text in organisation.address_string.lower():
+                        search_text_org_ids.append(organisation.id)
+                # use pipe to join both custom and built-in DRF datatables querysets (returned by super call above)
+                # (otherwise they will filter on top of each other)
+                queryset = queryset.filter(id__in=search_text_org_ids).distinct() | super_queryset
+
+        if queryset.model is OrganisationRequest:
+            # search_text filter, join all custom search columns
+            # where ('searchable: false' in the datatable definition)
+            if search_text:
+                search_text = search_text.lower()
+                # join queries for the search_text search
+                search_text_org_request_ids = []
+                # for organisation_request in queryset:
+                #     if search_text in organisation_request.address_string.lower():
+                #         search_text_org_request_ids.append(organisation_request.id)
+                # use pipe to join both custom and built-in DRF datatables querysets (returned by super call above)
+                # (otherwise they will filter on top of each other)
+                queryset = queryset.filter(id__in=search_text_org_request_ids).distinct() | super_queryset
+
+        # override queryset ordering, required because the ordering is usually handled
+        # in the super call, but is then clobbered by the custom queryset joining above
+        # also needed to disable ordering for all fields for which data is not an
+        # Organisation model field, as property functions will not work with order_by
+        getter = request.query_params.get
+        fields = self.get_fields(getter)
+        ordering = self.get_ordering(getter, fields)
+        if len(ordering):
+            queryset = queryset.order_by(*ordering)
+
+        setattr(view, '_datatables_total_count', total_count)
+        return queryset
+
+
+class OrganisationRenderer(DatatablesRenderer):
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        if 'view' in renderer_context and hasattr(renderer_context['view'], '_datatables_total_count'):
+            data['recordsTotal'] = renderer_context['view']._datatables_total_count
+        return super(OrganisationRenderer, self).render(data, accepted_media_type, renderer_context)
+
+
+class OrganisationPaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (OrganisationFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (OrganisationRenderer,)
+    queryset = Organisation.objects.none()
+    serializer_class = DTOrganisationSerializer
+    page_size = 10
+
+    def get_queryset(self):
+        if is_internal(self.request):
+            return Organisation.objects.all()
+        elif is_customer(self.request):
+            return Organisation.objects.none()
+        return Organisation.objects.none()
+
+    @list_route(methods=['GET', ])
+    def datatable_list(self, request, *args, **kwargs):
+        self.serializer_class = DTOrganisationSerializer
+        queryset = self.get_queryset()
+        queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = DTOrganisationSerializer(result_page, context={'request': request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
 
 
 class OrganisationViewSet(viewsets.ModelViewSet):
@@ -540,6 +632,32 @@ class OrganisationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+class OrganisationRequestsPaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (OrganisationFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (OrganisationRenderer,)
+    queryset = OrganisationRequest.objects.none()
+    serializer_class = OrganisationRequestDTSerializer
+    page_size = 10
+
+    def get_queryset(self):
+        if is_internal(self.request):
+            return OrganisationRequest.objects.all()
+        elif is_customer(self.request):
+            return OrganisationRequest.objects.none()
+        return OrganisationRequest.objects.none()
+
+    @list_route(methods=['GET', ])
+    def datatable_list(self, request, *args, **kwargs):
+        self.serializer_class = OrganisationRequestDTSerializer
+        queryset = self.get_queryset()
+        queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = OrganisationRequestDTSerializer(result_page, context={'request': request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
 
 
 class OrganisationRequestsViewSet(viewsets.ModelViewSet):

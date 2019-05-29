@@ -12,7 +12,7 @@
             <div class="col-md-8">
                 <ul class="nav nav-tabs">
                     <li class="active"><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
-                    <li><a data-toggle="tab" :href="'#'+oTab">Other</a></li>
+                    <li><a data-toggle="tab" :href="'#'+oTab">Records</a></li>
                 </ul>
                 <div class="tab-content">
                     <div :id="dTab" class="tab-pane fade in active">
@@ -173,7 +173,6 @@
                                     <div class ="row">
                                         <form class="form-horizontal" action="index.html" method="post">
                                             <div class="col-sm-6">
-
                                                 <div class="form-group">
                                                     <label for="" class="col-sm-6 control-label"> Organisation User Pin Code 1:</label>
                                                     <div class="col-sm-6">
@@ -186,11 +185,8 @@
                                                         <label class="control-label">{{org.pins.four}}</label>
                                                     </div>
                                                 </div>
-                                       
-                              
                                              </div>
                                              <div class="col-sm-6">
-                                  
                                                 <div class="form-group" :disabled ='!myorgperms.is_admin'>
                                                     <label for="" class="col-sm-6 control-label"> Organisation Administrator Pin Code 1:</label>
                                                     <div class="col-sm-6">
@@ -206,7 +202,6 @@
                                             </div>
                                         </form>
                                     </div>
-
                                     <div class="row">
                                         <div class="col-sm-8">
                                             <div class="row">
@@ -215,17 +210,10 @@
                                                 </div>
                                             </div> 
                                         </div>
-                       
                                     </div>
                                     <div>
                                         <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref" v-model="filterOrgContactStatus"/>
-                                        <!-- <datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref"/> -->
                                     </div>
-
-
-
-
-                                    
                                   </div>
                                 </div>
                             </div>
@@ -250,11 +238,11 @@
 import Vue from 'vue'
 import { api_endpoints, helpers } from '@/utils/hooks'
 import datatable from '@vue-utils/datatable.vue'
-import AddContact from '@common-utils/add_contact.vue'
-import ApplicationDashTable from '@common-utils/applications_dashboard.vue'
-import LicenceDashTable from '@common-utils/licences_dashboard.vue'
-import ReturnDashTable from '@common-utils/returns_dashboard.vue'
-import CommsLogs from '@common-utils/comms_logs.vue'
+import AddContact from '@common-components/add_contact.vue'
+import ApplicationDashTable from '@common-components/applications_dashboard.vue'
+import LicenceDashTable from '@common-components/licences_dashboard.vue'
+import ReturnDashTable from '@common-components/returns_dashboard.vue'
+import CommsLogs from '@common-components/comms_logs.vue'
 import utils from '../utils'
 import api from '../api'
 export default {
@@ -291,8 +279,8 @@ export default {
             logs_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/action_log'),
             contacts_headers:["Name","Phone","Mobile","Fax","Email","Action"],
             contacts_headers_ref:["Name","Role","Email","Status"],
-            applications_url: helpers.add_endpoint_json(api_endpoints.organisations,vm.$route.params.org_id+'/applications'),
-            licences_url: api_endpoints.licences+'?org_id='+vm.$route.params.org_id,
+            applications_url: api_endpoints.applications_paginated+'internal_datatable_list?org_id='+vm.$route.params.org_id,
+            licences_url: api_endpoints.licences_paginated+'internal_datatable_list?org_id='+vm.$route.params.org_id,
             returns_url: api_endpoints.returns+'?org_id='+vm.$route.params.org_id,
             contacts_options:{
                 language: {

@@ -9,14 +9,19 @@
             <HelpTextUrl :help_text_url="help_text_url" />
         </template>
 
-        <div v-if="canViewComments">
-            <div v-if="!showingComment">
-                <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
-                <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
-            </div>
-            <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
-        </div>
+        <CommentBlock 
+            :label="label"
+            :name="name"
+            :field_data="field_data"
+            />
 
+        <div class="row header-titles-row">
+            <div :class="`col-xs-${Math.floor(12 / component.header.length)}`"
+                v-for="(header, index) in component.header"
+                v-bind:key="`expander_header_${component.name}_${index}`">
+                    {{ header.label }}
+            </div>
+        </div>
         <div class="expander-table" v-for="(table, tableIdx) in expanderTables">
             <div class="row header-row">
                 <div :class="`col-xs-${Math.floor(12 / component.header.length)}`"
@@ -26,7 +31,7 @@
                             v-on:click="toggleTableVisibility(table)"></span>
                         <span class="header-contents">
                             <renderer-block
-                            :component="header"
+                            :component="removeLabel(header)"
                             :json_data="value"
                             :instance="table"
                             v-bind:key="`expander_header_contents_${component.name}_${index}`"
@@ -57,7 +62,7 @@
 </template>
 
 <script>
-import Comment from './comment.vue';
+import CommentBlock from './comment_block.vue';
 import HelpText from './help_text.vue';
 import HelpTextUrl from './help_text_url.vue';
 import { mapGetters, mapActions } from 'vuex';
@@ -69,38 +74,34 @@ const ExpanderTable = {
         label: String,
         id: String,
         isRequired: String,
-        comment_value: String,
         help_text: String,
         help_text_url: String,
         component: {
             type: Object | null,
             required: true
         },
-        json_data: {
+        field_data: {
             type: Object | null,
             required: true
         },
         readonly:Boolean,
     },
     components: {
-        Comment,
+        CommentBlock,
         HelpText,
         HelpTextUrl
     },
     data(){
         return {
             expanded: {},
-            showingComment: false,
         };
     },
     methods: {
         ...mapActions([
             'removeFormInstance',
-            'setFormValue'
+            'setFormValue',
+            'refreshApplicationFees',
         ]),
-        toggleComment(){
-            this.showingComment = ! this.showingComment;
-        },
         isExpanded: function(tableId) {
             return this.expanded[tableId];
         },
@@ -122,6 +123,7 @@ const ExpanderTable = {
             this.updateVisibleTables(
                 this.existingTables.filter(table => table != tableId)
             );
+            this.refreshApplicationFees();
         },
         addNewTable: function(params={}) {
             let { tableId } = params;
@@ -132,6 +134,7 @@ const ExpanderTable = {
             this.updateVisibleTables(
                 this.existingTables
             );
+            this.refreshApplicationFees();
         },
         updateVisibleTables: function(tableList) {
             this.setFormValue({
@@ -147,10 +150,17 @@ const ExpanderTable = {
         getInstanceName: function(tableId) {
             return `__instance-${tableId}`
         },
+        removeLabel: function(header) {
+            let newHeader = {...header};
+            delete newHeader['label'];
+            return newHeader;
+        },
     },
     computed:{
         ...mapGetters([
             'canViewComments',
+            'canViewDeficiencies',
+            'canEditDeficiencies',
             'getFormValue',
         ]),
         lastTableId: function() {
@@ -171,7 +181,7 @@ const ExpanderTable = {
             return this.existingTables;
         },
         value: function() {
-            return this.json_data;
+            return this.field_data;
         },
     }
 }

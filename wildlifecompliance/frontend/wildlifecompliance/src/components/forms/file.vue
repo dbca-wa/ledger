@@ -10,13 +10,12 @@
                 <HelpTextUrl :help_text_url="help_text_url" />
             </template>
 
-            <template v-if="canViewComments">
-                <template v-if="!showingComment">
-                    <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
-                    <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
-                </template>
-                <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
-            </template>
+            <CommentBlock 
+                :label="label"
+                :name="name"
+                :field_data="field_data"
+                />
+
             <div v-if="files">
                 <div v-for="v in documents">
                     <p>
@@ -38,7 +37,6 @@
             </div>
 
         </div>
-        <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :value="comment_value" :required="isRequired"/>
     </div>
 </template>
 
@@ -48,7 +46,7 @@ import {
   helpers
 }
 from '@/utils/hooks';
-import Comment from './comment.vue';
+import CommentBlock from './comment_block.vue';
 import HelpText from './help_text.vue';
 import { mapGetters } from 'vuex';
 export default {
@@ -58,7 +56,6 @@ export default {
         label:String,
         id:String,
         isRequired:String,
-        comment_value: String,
         help_text:String,
         field_data:Object,
         fileTypes:{
@@ -78,12 +75,11 @@ export default {
         readonly:Boolean,
         docsUrl: String,
     },
-    components: {Comment, HelpText},
+    components: {CommentBlock, HelpText},
     data:function(){
         return {
             repeat:1,
             files:[],
-            showingComment: false,
             show_spinner: false,
             documents:[],
             filename:null,
@@ -91,9 +87,6 @@ export default {
         }
     },
     computed: {
-        ...mapGetters([
-            'canViewComments',
-        ]),
         csrf_token: function() {
             return helpers.getCookie('csrftoken')
         },
@@ -106,10 +99,6 @@ export default {
     },
 
     methods:{
-
-        toggleComment(){
-            this.showingComment = ! this.showingComment;
-        },
         handleChange:function (e) {
             let vm = this;
 

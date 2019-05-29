@@ -1,24 +1,25 @@
 <template>
     <div class="container" id="internalCallEmailDash">
+        <FormSection :label="`Call/Emails`" :Index="`0`">
+                  
+              
         <form class="form-horizontal" name="createForm" method="get">
             <div class="row">
                 <div class="col-md-3">
-                    <div class="form-group">
-                        <label for="">Call/Email status</label>
-                        <select class="form-control" v-model="filterCall">
-                            <option value="All">All</option>
-                            <option v-for="c in callChoices" :value="c">{{ c }}</option>
+                        <label for="">Call/Email Status</label>
+                        <select class="form-control" v-model="filterStatus">
+                            <option v-for="option in status_choices" :value="option.display" v-bind:key="option.id">
+                                {{ option.display }}
+                            </option>
                         </select>
-                    </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="form-group">
-                        <label for="">Call/Email classification</label>
+                        <label for="">Call/Email Classification</label>
                         <select class="form-control" v-model="filterClassification">
-                            <option value="All">All</option>
-                            <option v-for="i in classificationChoices" :value="i">{{ i }}</option>
-                        </select>
-                    </div>
+                            <option v-for="option in classification_types" :value="option.name" v-bind:key="option.id">
+                                {{ option.name }} 
+                            </option>
+                    </select>
                 </div>
             </div>
             <div class="row">
@@ -40,43 +41,47 @@
                         </span>
                     </div>
                 </div>
-                <div class="col-sm-12">
+                <div class="col-md-3 pull-right">
                     <button @click.prevent="createCallEmailUrl"
                         class="btn btn-primary pull-right">New Call/Email</button>
-                </div>
+                </div>    
             </div>
+            
         </form>
-                
-        <p></p>
-        
+
         <div class="row">
             <div class="col-lg-12">
                 <datatable ref="call_email_table" id="call-email-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders" />
             </div>
         </div>
+        </FormSection>
 
+        <FormSection :label="`Location`" :Index="`1`">
+            <MapLocations />
+        </FormSection>
     </div>
 </template>
 <script>
     import $ from 'jquery'
     import datatable from '@vue-utils/datatable.vue'
+    import MapLocations from "./map_locations.vue";
     import Vue from 'vue'
-    import {
-        api_endpoints,
-        helpers
-    }
-    from '@/utils/hooks'
+    import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
+    import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
+    import FormSection from "@/components/compliance_forms/section.vue";
     export default {
         name: 'CallEmailTableDash',
         data() {
             let vm = this;
             return {
+                classification_types: [],
+                // classificationChoices: [],
+                report_types: [],
                 // Filters
-                filterCall: 'All',
+                filterStatus: 'All',
                 filterClassification: 'All',
-                //filterLodgmentDate: null,
-                callChoices: [],
-                classificationChoices: [],
+                // statusChoices: [],
+                status_choices: [],
                 filterLodgedFrom: '',
                 filterLodgedTo: '',
                 dateFormat: 'DD/MM/YYYY',
@@ -99,13 +104,21 @@
                         "url": helpers.add_endpoint_json(api_endpoints.call_email, 'datatable_list'),
                         "dataSrc": '',
                     },
-                    columns: [{
+                    columns: [
+                        {
+                            data: "number",
+                        },
+                        {
                             data: "status",
                         },
                         {
                             data: "classification",
                             mRender: function (data, type, full) {
-                                return data.name
+                                if (data) {
+                                    return data.name;
+                                } else {
+                                    return '';
+                                }
                             }
                         },
                         {
@@ -114,9 +127,7 @@
                                 return data != '' && data != null ? moment(data).format(vm.dateFormat) : '';
                             }
                         },
-                        {
-                            data: "number",
-                        },
+                        
                         {
                             data: "caller",
                         },
@@ -125,67 +136,79 @@
                         },
                         {
                             mRender: function (data, type, full) {
-                                return `<a href="http://www.google.com">link</a>`
+                                return `<a href="/internal/call_email/${full.id}">View</a>`
                             }
                         }
                     ],
 
-                    initComplete: function () {
-                        var callColumn = vm.$refs.call_email_table.vmDataTable.columns(0);
-                        //vm.bbVar = callColumn;
-                        //console.log(vm.bbVar);
-                        callColumn.data().unique().sort().each(function (d, j) {
-                            let call_choices = [];
-                            $.each(d, (index, a) => {
-                                a != null && call_choices.indexOf(a) < 0 ? call_choices.push(a) :
-                                '';
-                            })
-                            vm.callChoices = call_choices;
-                            //console.log(vm.classificationChoices);
-                        });
-                        var classificationColumn = vm.$refs.call_email_table.vmDataTable.columns(1);
-                        //vm.bbVar = classificationColumn.data().eq(2);
-                        //console.log(vm.bbVar);
-                        classificationColumn.data().unique().sort().each(function (d, j) {
-                            let classification_choices = [];
-                            $.each(d, (index, a) => {
-                                a['name'] != null && classification_choices.indexOf(a['name']) < 0 ?
-                                    classification_choices.push(a['name']) : '';
-                            })
-                            vm.classificationChoices = classification_choices;
-                            //console.log(vm.classificationChoices);
-                        });
-                    }
+                    // initComplete: function () {
+                    //     var callColumn = vm.$refs.call_email_table.vmDataTable.columns(1);
+                    //     callColumn.data().unique().sort().each(function (d, j) {
+                    //         let status_choices = [];
+                    //         $.each(d, (index, a) => {
+                    //             a != null && status_choices.indexOf(a) < 0 ? status_choices.push(a) :
+                    //             '';
+                    //         })
+                    //         vm.statusChoices = status_choices;
+                    //     });
+                    //     var classificationColumn = vm.$refs.call_email_table.vmDataTable.columns(2);
+                    //     classificationColumn.data().unique().sort().each(function (d, j) {
+                    //         let classification_choices = [];
+                    //         $.each(d, (index, a) => {
+                    //             if (a) {
+                    //                 a['name'] != null && classification_choices.indexOf(a['name']) < 0 ?
+                    //                     classification_choices.push(a['name']) : '';
+                    //             }
+                    //         })
+                    //         vm.classificationChoices = classification_choices;
+                    //     });
+                    // }
 
                 },
                 dtHeaders: [
-                    "Call/Email Status",
+                    "Number",
+                    "Status",
                     "Classification",
-                    "lodgement_date",
-                    "number",
-                    "caller",
-                    "assigned_to",
+                    "Lodged on",
+                    "Caller",
+                    "Assigned to",
                     "Action",
                 ],
             }
         },
 
-        watch: {
-            filterCall: function () {
-                let vm = this;
+        created: async function() {
+            let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
+            console.log('classification types');
+            console.log(returned_classification_types);
+            Object.assign(this.classification_types, returned_classification_types);
+            console.log(this.classification_types);
+            this.classification_types.splice(0, 0, {id: 'all', name: 'All'});
 
-                if (vm.filterCall != 'All') {
-                    vm.$refs.call_email_table.vmDataTable.columns(0).search(vm.filterCall, false).draw();
+            let returned_status_choices = await cache_helper.getSetCacheList('CallEmail_StatusChoices', '/api/call_email/status_choices');
+            console.log('returned_status_choices');
+            console.log(returned_status_choices);
+            Object.assign(this.status_choices, returned_status_choices);
+            console.log(this.status_choices);
+            this.status_choices.splice(0, 0, {id: 'all', display: 'All'});
+        },
+        watch: {
+            filterStatus: function () {
+                let vm = this;
+                let regexSearch = helpers.datatableExactStringMatch(vm.filterStatus);
+                if (vm.filterStatus != 'All') {
+                    vm.$refs.call_email_table.vmDataTable.columns(1).search(regexSearch, true, false).draw();
                 } else {
-                    vm.$refs.call_email_table.vmDataTable.columns(0).search('').draw();
+                    vm.$refs.call_email_table.vmDataTable.columns(1).search('').draw();
                 }
             },
             filterClassification: function () {
                 let vm = this;
+                let regexSearch = helpers.datatableExactStringMatch(vm.filterClassification);
                 if (vm.filterClassification != 'All') {
-                    vm.$refs.call_email_table.vmDataTable.columns(1).search(vm.filterClassification, false).draw();
+                    vm.$refs.call_email_table.vmDataTable.columns(2).search(regexSearch, true, false).draw();
                 } else {
-                    vm.$refs.call_email_table.vmDataTable.columns(1).search('').draw();
+                    vm.$refs.call_email_table.vmDataTable.columns(2).search('').draw();
                 }
             },
             filterLodgedFrom: function () {
@@ -195,35 +218,28 @@
                 this.$refs.call_email_table.vmDataTable.draw();
             },
         },
-        beforeRouteEnter: function (to, from, next) {
-            console.log('BEFORE-ROUTE func()')
-            //Vue.http.get(`/api/returns/${to.params.return_id}.json`).then(res => {
-            Vue.http.get(`/api/call_email/datatable_list.json`).then(res => {
-                next(vm => {
-                    vm.table = res.body;
-                    console.log(vm);
-                    console.log(vm.table);
-                });
-            }, err => {
-                console.log(err);
-            });
-        },
         components: {
-            datatable
+            datatable,
+            FormSection,
+            MapLocations,
         },
         computed: {
-            isLoading: function () {
-                return this.loading.length == 0;
-            },
-            
+            ...mapGetters('callemailStore', {
+            }),
         },
         methods: {
-            createCallEmailUrl: function () {
-                //return `<a href="/api/call_email/create_call_email"/>`;
+            ...mapActions('callemailStore', {
+                saveCallEmail: "saveCallEmail",
+            }),
+            createCallEmailUrl: async function () {
+                const newCallId = await this.saveCallEmail({ route: false, crud: 'create'});
+                console.log("newCallId");
+                console.log(newCallId);
+
                 this.$router.push({
-                    //name: 'external-proposals-dash'
-                    name: 'internal-create-call-email' // defined in ../src/components/internal/routes/index.js
-                });
+                    name: 'view-call-email', 
+                    params: {call_email_id: newCallId}
+                    });
             },
             addEventListeners: function () {
                 let vm = this;
@@ -240,7 +256,6 @@
                 $(vm.$refs.lodgementDateFromPicker).on('dp.change', function (e) {
                     if ($(vm.$refs.lodgementDateFromPicker).data('DateTimePicker').date()) {
                         vm.filterLodgedFrom = e.date.format('DD/MM/YYYY');
-                        //$(vm.$refs.lodgementDateToPicker).data("DateTimePicker").minDate(e.date);
                     } else if ($(vm.$refs.lodgementDateFromPicker).data('date') === "") {
                         vm.filterLodgedFrom = "";
                     }
@@ -279,9 +294,9 @@
                         }
                     }
                 );
-            }
+            },
         },
-        mounted: function () {
+        mounted: async function () {
             let vm = this;
             $('a[data-toggle="collapse"]').on('click', function () {
                 var chev = $(this).children()[0];
@@ -289,12 +304,10 @@
                     $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
                 }, 100);
             });
-            this.$nextTick(() => {
-                vm.initialiseSearch();
-                vm.addEventListeners();
+            this.$nextTick(async () => {
+                await vm.initialiseSearch();
+                await vm.addEventListeners();
             });
         }
-
-
     }
 </script>

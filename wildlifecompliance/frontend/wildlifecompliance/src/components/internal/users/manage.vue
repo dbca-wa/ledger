@@ -10,7 +10,7 @@
             <div class="col-md-9">
                 <ul class="nav nav-tabs">
                     <li class="active"><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
-                    <li><a data-toggle="tab" :href="'#'+oTab">Other</a></li>
+                    <li><a data-toggle="tab" :href="'#'+oTab">Records</a></li>
                 </ul>
                 <div class="tab-content">
                     <div :id="dTab" class="tab-pane fade in active">
@@ -243,11 +243,11 @@
 import Vue from 'vue'
 import { api_endpoints, helpers } from '@/utils/hooks'
 import datatable from '@vue-utils/datatable.vue'
-import AddContact from '@common-utils/add_contact.vue'
-import ApplicationDashTable from '@common-utils/applications_dashboard.vue'
-import LicenceDashTable from '@common-utils/licences_dashboard.vue'
-import ReturnDashTable from '@common-utils/returns_dashboard.vue'
-import CommsLogs from '@common-utils/comms_logs.vue'
+import AddContact from '@common-components/add_contact.vue'
+import ApplicationDashTable from '@common-components/applications_dashboard.vue'
+import LicenceDashTable from '@common-components/licences_dashboard.vue'
+import ReturnDashTable from '@common-components/returns_dashboard.vue'
+import CommsLogs from '@common-components/comms_logs.vue'
 import utils from '../utils'
 import api from '../api'
 export default {
@@ -279,8 +279,8 @@ export default {
             activate_tables: false,
             comms_url: helpers.add_endpoint_json(api_endpoints.users,vm.$route.params.user_id+'/comms_log'),
             logs_url: helpers.add_endpoint_json(api_endpoints.users,vm.$route.params.user_id+'/action_log'),
-            applications_url: helpers.add_endpoint_json(api_endpoints.users,vm.$route.params.user_id+'/applications'),
-            licences_url: api_endpoints.licences+'?user_id='+vm.$route.params.user_id,
+            applications_url: api_endpoints.applications_paginated+'internal_datatable_list?user_id='+vm.$route.params.user_id,
+            licences_url: api_endpoints.licences_paginated+'internal_datatable_list?user_id='+vm.$route.params.user_id,
             returns_url: api_endpoints.returns+'?user_id='+vm.$route.params.user_id,
             orgRequest_pending: [],
         }

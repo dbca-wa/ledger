@@ -37,7 +37,17 @@ module.exports = {
                     error_str = text.non_field_errors[0].replace(/[\[\]"]/g, '');
                 }
                 else{
-                    error_str = text;
+                    for(const key in text) {
+                      const element = text[key];
+                      if(Array.isArray(element)) {
+                        for(let message of element) {
+                          error_str = message;
+                        }
+                      }
+                      else {
+                        error_str = element;
+                      }
+                    }
                 }
             }
             else{
@@ -131,4 +141,14 @@ module.exports = {
       newText = aText.split("\n");
       return newText;
     },
+    datatableExactStringMatch: function(inputString) {
+      // returns a var in regex form to be passed to datatables search function
+      // eg. .search(regexSearch, true, false)
+      let regexSearch = '^' +
+                          inputString
+                              .replace(/\(/g, '\\(') // escape parentheses
+                              .replace(/\)/g, '\\)') 
+                          + '$';
+      return regexSearch;
+    }
 };

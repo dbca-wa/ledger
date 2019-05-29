@@ -32,11 +32,12 @@ export const rendererStore = {
         },
         isActivityVisible: (state, getters, rootState, rootGetters) => (
             activity_id, hide_decisions, hide_processing_statuses, for_user_role) => {
-            return rootGetters.isApplicationActivityVisible(activity_id,
-                hide_decisions,
-                hide_processing_statuses,
-                for_user_role
-            );
+            return rootGetters.isApplicationActivityVisible({
+                activity_id: activity_id,
+                exclude_statuses: hide_decisions,
+                exclude_processing_statuses: hide_processing_statuses,
+                for_user_role: for_user_role
+            });
         },
         unfinishedActivities: (state, getters, rootState, rootGetters) => {
             return getters.visibleActivities(
@@ -118,14 +119,15 @@ export const rendererStore = {
                 commit(REMOVE_FORM_FIELD, key);
             }
         },
-        saveFormData({ dispatch, commit, getters }, { url }) {
+        saveFormData({ dispatch, commit, getters }, { url, draft }) {
             return new Promise((resolve, reject) => {
-                Vue.http.post(url, getters.renderer_form_data).then(res => {
-                    resolve();
+                const post_data = Object.assign({'__draft': draft}, getters.renderer_form_data);
+                Vue.http.post(url, post_data).then(res => {
+                    resolve(res);
                 },
                 err => {
                     console.log(err);
-                    reject();
+                    reject(err);
                 });
             })
         },

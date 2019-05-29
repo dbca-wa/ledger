@@ -11,13 +11,12 @@
                 <HelpTextUrl :help_text_url="help_text_url" />
             </template>
 
-            <template v-if="canViewComments">
-                <template v-if="!showingComment">
-                    <a v-if="comment_value != null && comment_value != undefined && comment_value != ''" href="" @click.prevent="toggleComment"><i style="color:red" class="fa fa-comment-o">&nbsp;</i></a>
-                    <a v-else href="" @click.prevent="toggleComment"><i class="fa fa-comment-o">&nbsp;</i></a>
-                </template>
-                <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
-            </template>
+            <CommentBlock 
+                :label="label"
+                :name="name"
+                :field_data="field_data"
+                />
+
             <div class='input-group date'>
                 <input type="text" :readonly="readonly" :name="name" class="form-control" placeholder="DD/MM/YYYY" v-model="value" :required="isRequired"/>
                 <span class="input-group-addon">
@@ -25,29 +24,29 @@
                 </span>
             </div>
         </div>
-        <Comment :question="label" :name="name+'-comment-field'" v-show="showingComment" :value="comment_value"/>
     </div>
 </template>
 
 <script>
+
 import moment from 'moment';
 import datetimepicker from 'datetimepicker';
-import Comment from './comment.vue';
+import CommentBlock from './comment_block.vue';
 import HelpText from './help_text.vue';
 import HelpTextUrl from './help_text_url.vue';
 import { mapGetters } from 'vuex';
 export default {
-    props: ["name", "label", "id", "readonly", "help_text", "field_data", "conditions", "handleChange",
-            "comment_value", "isRequired", "help_text_url"],
+    props: ["name", "label", "id", "readonly", "help_text", "field_data", "conditions", "handleChange", "isRequired", "help_text_url"],
     data(){
         return {
-            showingComment: false
         }
     },
-    components: {Comment, HelpText, HelpTextUrl},
+    components: {CommentBlock, HelpText, HelpTextUrl},
     computed: {
         ...mapGetters([
             'canViewComments',
+            'canViewDeficiencies',
+            'canEditDeficiencies',
         ]),
         isChecked: function() {
             //TODO return value from database
@@ -66,12 +65,9 @@ export default {
         },
     },
     methods:{
-        toggleComment(){
-            this.showingComment = ! this.showingComment;
-        }
     },
     mounted: function() {
-        $('.date').datetimepicker({
+        $(`[name=${this.name}]`).datetimepicker({
             format: 'DD/MM/YYYY'
         }).off('dp.change').on('dp.change', (e) => {
             this.value = $(e.target).data('DateTimePicker').date().format('DD/MM/YYYY');

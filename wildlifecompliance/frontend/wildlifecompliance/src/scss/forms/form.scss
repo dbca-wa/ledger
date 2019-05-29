@@ -65,3 +65,11 @@ $sections-menu-width: 249px;
 .nav-tabs {
     cursor: pointer;
 }
+
+.missing-field {
+    background-color: rgba(255,0,0,0.1) !important;
+}
+
+.inline-block {
+    display: inline-block;
+}
