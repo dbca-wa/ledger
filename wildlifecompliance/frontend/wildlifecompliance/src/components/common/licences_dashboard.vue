@@ -312,19 +312,68 @@ export default {
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[amend-activity]', function(e) {
                 e.preventDefault();
                 var activity_id = $(this).attr('amend-activity');
-                console.log('amend-activity: ' + activity_id);
+                var licence_id = $(this).attr('lic-id');
+                swal({
+                    title: "Amend Activity",
+                    text: "Are you sure you want to amend this activity?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        console.log('send user to create amend application for activity')
+                    }
+                },(error) => {
+                });
             });
             // Renew activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[renew-activity]', function(e) {
                 e.preventDefault();
                 var activity_id = $(this).attr('renew-activity');
-                console.log('renew-activity: ' + activity_id);
+                var licence_id = $(this).attr('lic-id');
+                swal({
+                    title: "Renew Activity",
+                    text: "Are you sure you want to renew this activity?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        console.log('send user to create renew application')
+                    }
+                },(error) => {
+                });
             });
             // Reactivate Renew activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reactivate-renew-activity]', function(e) {
                 e.preventDefault();
                 var activity_id = $(this).attr('reactivate-renew-activity');
-                console.log('reactivate-renew-activity: ' + activity_id);
+                var licence_id = $(this).attr('lic-id');
+                swal({
+                    title: "Reactivate Renew for Activity",
+                    text: "Are you sure you want to reactivate the renew option for this activity?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                       vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/reactivate_renew_activity/?activity_id=' + activity_id)).then(res=>{
+                            swal({
+                                title: "Reactivate Renew for Activity",
+                                text: "The renew option for this activity has been reactivated",
+                                type: "info"
+                            })
+                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
+                        },err=>{
+                            swal(
+                                'Submit Error',
+                                helpers.apiVueResourceError(err),
+                                'error'
+                            )
+                        });
+                    }
+                },(error) => {
+                });
             });
             // Surrender activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[surrender-activity]', function(e) {
@@ -423,13 +472,50 @@ export default {
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reissue-activity]', function(e) {
                 e.preventDefault();
                 var activity_id = $(this).attr('reissue-activity');
-                console.log('reissue-activity: ' + activity_id);
+                var licence_id = $(this).attr('lic-id');
+                swal({
+                    title: "Reissue Activity",
+                    text: "Are you sure you want to reissue this activity?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        console.log('send user to create reissue application')
+                    }
+                },(error) => {
+                });
             });
             // Reinstate activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reinstate-activity]', function(e) {
                 e.preventDefault();
                 var activity_id = $(this).attr('reinstate-activity');
-                console.log('reinstate-activity: ' + activity_id);
+                var licence_id = $(this).attr('lic-id');
+                swal({
+                    title: "Reinstate Activity",
+                    text: "Are you sure you want to reinstate this activity?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                       vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/reinstate_activity/?activity_id=' + activity_id)).then(res=>{
+                            swal({
+                                title: "Reinstate Activity",
+                                text: "The activity has been reinstated",
+                                type: "info"
+                            })
+                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
+                        },err=>{
+                            swal(
+                                'Submit Error',
+                                helpers.apiVueResourceError(err),
+                                'error'
+                            )
+                        });
+                    }
+                },(error) => {
+                });
             });
             // Child row listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'tr.licRecordRow', function(e) {

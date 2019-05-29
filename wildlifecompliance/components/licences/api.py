@@ -258,19 +258,19 @@ class LicenceViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @detail_route(methods=['POST', ])
-    def cancel_activity(self, request, pk=None, *args, **kwargs):
+    def reactivate_renew_activity(self, request, pk=None, *args, **kwargs):
         try:
             activity_id = request.GET.get('activity_id', None)
             if activity_id and pk:
                 instance = self.get_object()
-                instance = instance.current_activities.get(id=activity_id)
-                if not instance.can_cancel:
+                instance = instance.latest_activities.get(id=activity_id)
+                if not instance.can_reactivate_renew:
                     raise serializers.ValidationError(
-                        'This licenced activity cannot be cancelled')
-                if not request.user.has_perm('wildlifecompliance.licensing_officer'):
+                        'Renew for this licenced activity cannot be reactivated')
+                if not request.user.has_perm('wildlifecompliance.issuing_officer'):
                     raise serializers.ValidationError(
-                        'You are not authorised to cancel licenced activities')
-                instance.cancel(request)
+                        'You are not authorised to reactivate renew for licenced activities')
+                instance.reactivate_renew(request)
                 serializer = ExternalApplicationSelectedActivitySerializer(instance)
                 return Response(serializer.data)
             else:
@@ -292,11 +292,40 @@ class LicenceViewSet(viewsets.ModelViewSet):
             activity_id = request.GET.get('activity_id', None)
             if activity_id and pk:
                 instance = self.get_object()
-                instance = instance.current_activities.get(id=activity_id)
+                instance = instance.latest_activities.get(id=activity_id)
                 if not instance.can_surrender:
                     raise serializers.ValidationError(
                         'This licenced activity cannot be surrendered')
                 instance.surrender(request)
+                serializer = ExternalApplicationSelectedActivitySerializer(instance)
+                return Response(serializer.data)
+            else:
+                raise serializers.ValidationError(
+                    'Licence ID and Activity ID must be specified')
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    def cancel_activity(self, request, pk=None, *args, **kwargs):
+        try:
+            activity_id = request.GET.get('activity_id', None)
+            if activity_id and pk:
+                instance = self.get_object()
+                instance = instance.latest_activities.get(id=activity_id)
+                if not instance.can_cancel:
+                    raise serializers.ValidationError(
+                        'This licenced activity cannot be cancelled')
+                if not request.user.has_perm('wildlifecompliance.issuing_officer'):
+                    raise serializers.ValidationError(
+                        'You are not authorised to cancel licenced activities')
+                instance.cancel(request)
                 serializer = ExternalApplicationSelectedActivitySerializer(instance)
                 return Response(serializer.data)
             else:
@@ -318,14 +347,43 @@ class LicenceViewSet(viewsets.ModelViewSet):
             activity_id = request.GET.get('activity_id', None)
             if activity_id and pk:
                 instance = self.get_object()
-                instance = instance.current_activities.get(id=activity_id)
+                instance = instance.latest_activities.get(id=activity_id)
                 if not instance.can_suspend:
                     raise serializers.ValidationError(
                         'This licenced activity cannot be suspended')
-                if not request.user.has_perm('wildlifecompliance.licensing_officer'):
+                if not request.user.has_perm('wildlifecompliance.issuing_officer'):
                     raise serializers.ValidationError(
                         'You are not authorised to suspend licenced activities')
                 instance.suspend(request)
+                serializer = ExternalApplicationSelectedActivitySerializer(instance)
+                return Response(serializer.data)
+            else:
+                raise serializers.ValidationError(
+                    'Licence ID and Activity ID must be specified')
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    def reinstate_activity(self, request, pk=None, *args, **kwargs):
+        try:
+            activity_id = request.GET.get('activity_id', None)
+            if activity_id and pk:
+                instance = self.get_object()
+                instance = instance.latest_activities.get(id=activity_id)
+                if not instance.can_reinstate:
+                    raise serializers.ValidationError(
+                        'This licenced activity cannot be reinstated')
+                if not request.user.has_perm('wildlifecompliance.issuing_officer'):
+                    raise serializers.ValidationError(
+                        'You are not authorised to reissue licenced activities')
+                instance.reinstate(request)
                 serializer = ExternalApplicationSelectedActivitySerializer(instance)
                 return Response(serializer.data)
             else:
