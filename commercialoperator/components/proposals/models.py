@@ -3029,7 +3029,6 @@ class HelpPage(models.Model):
         unique_together = ('application_type', 'help_type', 'version')
 
 
-
 import reversion
 reversion.register(Referral, follow=['referral_documents', 'assessment'])
 reversion.register(ReferralDocument, follow=['referral_document'])
