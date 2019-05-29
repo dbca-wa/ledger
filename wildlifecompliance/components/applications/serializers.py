@@ -45,6 +45,9 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     can_suspend = serializers.BooleanField(read_only=True)
     can_reissue = serializers.SerializerMethodField(read_only=True)
     can_reinstate = serializers.BooleanField(read_only=True)
+    licence_fee = serializers.DecimalField(
+        max_digits=8, decimal_places=2, coerce_to_string=False, read_only=True),
+    payment_status = serializers.CharField(read_only=True)
 
     class Meta:
         model = ApplicationSelectedActivity
@@ -100,6 +103,9 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
     can_suspend = serializers.BooleanField(read_only=True)
     can_reissue = serializers.SerializerMethodField(read_only=True)
     can_reinstate = serializers.BooleanField(read_only=True)
+    licence_fee = serializers.DecimalField(
+        max_digits=8, decimal_places=2, coerce_to_string=False, read_only=True)
+    payment_status = serializers.CharField(read_only=True)
 
     class Meta:
         model = ApplicationSelectedActivity
@@ -117,7 +123,9 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
             'can_cancel',
             'can_suspend',
             'can_reissue',
-            'can_reinstate'
+            'can_reinstate',
+            'licence_fee',
+            'payment_status',
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render
@@ -315,8 +323,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
     return_check_status = CustomChoiceField(read_only=True)
     application_fee = serializers.DecimalField(
         max_digits=8, decimal_places=2, coerce_to_string=False, read_only=True)
-    licence_fee = serializers.DecimalField(
-        max_digits=8, decimal_places=2, coerce_to_string=False, read_only=True)
     category_id = serializers.SerializerMethodField(read_only=True)
     category_name = serializers.SerializerMethodField(read_only=True)
     activity_names = serializers.SerializerMethodField(read_only=True)
@@ -365,7 +371,6 @@ class BaseApplicationSerializer(serializers.ModelSerializer):
             'character_check_status',
             'return_check_status',
             'application_fee',
-            'licence_fee',
             'category_id',
             'category_name',
             'activity_names',
@@ -621,7 +626,6 @@ class SaveApplicationSerializer(BaseApplicationSerializer):
             'licence_type_name',
             'licence_category',
             'application_fee',
-            'licence_fee',
             'assigned_officer',
         )
         read_only_fields = ('documents', 'conditions')

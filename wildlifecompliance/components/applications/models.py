@@ -19,6 +19,8 @@ from django.utils.encoding import python_2_unicode_compatible
 
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.payments.invoice.models import Invoice
+from ledger.checkout.utils import calculate_excl_gst
+from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
 
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.organisations.emails import send_org_id_update_request_notification
@@ -1387,6 +1389,12 @@ class Application(RevisionedMixin):
 
                     if item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_ISSUED:
 
+                        # If there is an outstanding licence fee payment - attempt to charge the stored card.
+                        if not selected_activity.process_licence_fee_payment(request, self):
+                            raise Exception("Could not process licence fee payment for activity: \"%s\"" % (
+                                selected_activity.licence_activity.name
+                            ))
+
                         original_issue_date = start_date = item.get('start_date')
                         expiry_date = item.get('end_date')
 
@@ -2061,6 +2069,26 @@ class ApplicationSelectedActivity(models.Model):
             ).values_list('id', flat=True)
         )
 
+    @property
+    def licence_fee_paid(self):
+        return self.payment_status in [
+            Invoice.PAYMENT_STATUS_NOT_REQUIRED,
+            Invoice.PAYMENT_STATUS_PAID,
+            Invoice.PAYMENT_STATUS_OVERPAID,
+        ]
+
+    @property
+    def payment_status(self):
+        if self.licence_fee == 0:
+            return Invoice.PAYMENT_STATUS_NOT_REQUIRED
+        else:
+            if self.invoices.count() == 0:
+                return Invoice.PAYMENT_STATUS_UNPAID
+            else:
+                latest_invoice = Invoice.objects.get(
+                    reference=self.invoices.latest('id').invoice_reference)
+                return latest_invoice.payment_status
+
     @staticmethod
     def get_current_activities_for_application_type(application_type, **kwargs):
         applications = kwargs.get('applications', Application.objects.none())
@@ -2080,6 +2108,36 @@ class ApplicationSelectedActivity(models.Model):
                 ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
             ]
         ).distinct()
+
+    def process_licence_fee_payment(self, request, application):
+        if self.licence_fee_paid:
+            return True
+
+        product_lines = []
+        application_submission = u'Licence issued for {} application {}'.format(
+            u'{} {}'.format(application.submitter.first_name, application.submitter.last_name), application.lodgement_number)
+        set_session_application(request.session, application)
+        product_lines.append({
+            'ledger_description': '{}'.format(application.licence_type_name),
+            'quantity': 1,
+            'price_incl_tax': str(self.licence_fee),
+            'price_excl_tax': str(calculate_excl_gst(self.licence_fee)),
+            'oracle_code': ''
+        })
+        checkout(
+            request, application, lines=product_lines,
+            invoice_text=application_submission,
+            internal=True,
+            add_checkout_params={
+                'basket_owner': request.user.id,
+            }
+        )
+        ActivityInvoice.objects.get_or_create(
+            activity=self,
+            invoice_reference=request.session['checkout_invoice']
+        )
+        delete_session_application(request.session)
+        return self.licence_fee_paid
 
     def cancel(self, request):
         with transaction.atomic():
