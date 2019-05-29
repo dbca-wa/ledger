@@ -46,7 +46,7 @@
                 <input type='hidden' name="proposal_id" :value="1" />
 
                 <div class="row" style="margin-bottom: 50px">
-                        <div v-if="proposal && !proposal.readonly" class="container">
+                        <div  class="container">
                           <!-- <p class="pull-right" style="margin-top:5px;">
                             <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                             <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
@@ -57,7 +57,7 @@
                           <div class="row" style="margin-bottom: 50px">
                               <div class="navbar navbar-fixed-bottom"  style="background-color: #f5f5f5;">
                                   <div class="navbar-inner">
-                                    <div class="container">
+                                    <div v-if="proposal && !proposal.readonly" class="container">
                                       <p class="pull-right" style="margin-top:5px">
                                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
@@ -65,15 +65,20 @@
                                         <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
                                       </p>
                                     </div>
+                                    <div v-else class="container">
+                                      <p class="pull-right" style="margin-top:5px;">
+                                        <router-link class="btn btn-primary" :to="{name: 'external-proposals-dash'}">Back to Dashboard</router-link>
+                                      </p>
+                                    </div>
                                   </div>
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="container">
+                        <!-- <div v-else class="container">
                           <p class="pull-right" style="margin-top:5px;">
                             <router-link class="btn btn-primary" :to="{name: 'external-proposals-dash'}">Back to Dashboard</router-link>
                           </p>
-                        </div>
+                        </div> -->
                 </div>
             </div>
 
