@@ -76,23 +76,26 @@
               <div class="list-group list-group-root well">
               <div class="" v-for="r in api_regions">
                 <div class="form-check col-sm-12 list-group-item" style="">
-                  <input @click="clickRegion($event, r)" :inderminate.prop="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" :disabled="!canEditActivities" data-parsley-required />
+                  <input @click="clickRegion($event, r)" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" :disabled="!canEditActivities" data-parsley-required />
                   {{ r.name }}
                   <a data-toggle="collapse" :href="'#'+'r'+r.id" role="button" aria-expanded="true" aria controls="r.id" ><span class="glyphicon glyphicon-chevron-up pull-right "></span></a>
                 </div>
-                <div class="col-sm-12 list-group collapse" v-for="d in r.districts" :id="'r'+r.id">
-                  <div class="form-check list-group-item" style="padding-left: 30px;">
+                <div class="col-sm-12 list-group collapse" :id="'r'+r.id">
+                  <div v-for="d in r.districts">
+                  <div  style="padding-left: 30px;" class="form-check list-group-item col-sm-12">
                     <input @click="clickDistrict($event, d)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" :disabled="!canEditActivities" data-parsley-required />
                     {{ d.name }}
                    <a data-toggle="collapse" :href="'#'+'d'+d.id" role="button" aria-expanded="true" aria controls="d.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> 
                   </div>
-                  <div class="list-group collapse" v-for="p in d.land_parks" :id="'d'+d.id">
-                    <div class="form-check col-sm-12 list-group-item" style="padding-left: 45px;">
-                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" :id="'park'+p.id" :disabled="!canEditActivities" data-parsley-required />
+                  <div class="list-group collapse"  :id="'d'+d.id">
+                    <div class="form-check col-sm-12 list-group-item" style="padding-left: 45px;" v-for="p in d.land_parks">
+                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" :id="'park'+p.id" :disabled="!canEditActivities" data-parsley-required @click="clickPark($event, p, d)"/>
                     {{ p.name }}
                       <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit access and activities</a></span>
                     </div>
                   </div>
+                <!--</div>  -->
+                </div>
                 </div>
               </div>
             </div>
@@ -739,6 +742,64 @@ export default {
                 }
               }
             }
+          },
+
+          clickPark: function(e,p,d){
+            var inder_state=false;
+            var checked_state=false;
+            var checked_all=true;
+            var unchecked_all=true;
+            var elem=$("#district"+d.id)[0]
+            inder_state=elem.indeterminate
+            checked_state=elem.checked
+            if(e.target.checked){
+              if(!checked_state){
+                for(var i=0; i<d.land_parks.length; i++){
+                  var park = $("#park"+d.land_parks[i].id)[0]
+                  if(park.checked==false){
+                    checked_all=false;
+                  }
+                }
+                if(checked_all){
+                  elem.indeterminate=false;
+                  elem.checked=true;
+                  var index=this.selected_districts.indexOf(d.id);
+                  if(index==-1){
+                    this.selected_districts.push(d.id)
+                  }
+                }
+                else{
+                  elem.indeterminate=true;
+                  elem.checked=false;
+                }
+              }              
+            }
+            else{//if unselected
+              for(var i=0; i<d.land_parks.length; i++){
+                  var park = $("#park"+d.land_parks[i].id)[0]
+                  if(park.checked==true){
+                    unchecked_all=false;
+                  }
+                }
+                if(unchecked_all){
+                  elem.indeterminate=false;
+                  elem.checked=false;
+                  var index=this.selected_districts.indexOf(d.id);
+                  if(index>-1){
+                    this.selected_districts.splice(index,1)
+                  }
+                }
+                else{
+                  var index=this.selected_districts.indexOf(d.id);
+                  if(index>-1){
+                    this.selected_districts.splice(index,1)
+                  }
+                  elem.indeterminate=true;
+                  elem.checked=false;
+                }
+
+            }
+
           },
           
           find_recurring: function(array){
