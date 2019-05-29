@@ -1,67 +1,49 @@
 <template>
-  <form method="POST" name="enter_return_sheet" enctype="multipart/form-data">
-  <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
-  <div class="container" id="externalReturnRunningSheet">
-    <Returns v-if="isReturnsLoaded">
-    <div class="col-md-1" />
-    <div class="col-md-8">
-
-      <template>
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <h3 class="panel-title">{{ sheetTitle }}
-              <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">{{ sheetTitle }}
+            <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-              </a>
-            </h3>
-          </div>
-          <div class="panel-body panel-collapse in" :id="pdBody">
-            <div class="col-sm-12">
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label for="">Activity Type:</label>
-                    <select class="form-control">
-                      <option v-for="sa in sheet_activity_type" :value="sa">{{sa['label']}}</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <button class="btn btn-primary pull-right" @click.prevent="addSheetRow()" name="sheet_entry">New Entry</button>
-                  </div>
-                </div>
-              </div>
-              <div class = "row">
-                <div class="col-lg-12">
-                  <datatable ref="return_datatable" :id="datatable_id" :dtOptions="sheet_options" :dtHeaders="sheet_headers"/>
-                </div>
-              </div>
-              <!-- End of Sheet Return -->
-            </div>
-          </div>
-        </div>
-      </template>
-      <!-- End template for Return Tab -->
-
-      <div class="row" style="margin-bottom:50px;">
-        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
-          <div class="navbar-inner">
-            <div class="container">
-              <p class="pull-right" style="margin-top:5px;">
-                <button style="width:150px;" class="btn btn-primary btn-md" name="save_sheet" @click.prevent="save()">Save</button>
-               </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- End of Footer -->
-
+            </a>
+        </h3>
     </div>
-    </Returns>
-  </div>
-  <SheetEntry ref="sheet_entry"></SheetEntry>
-  </form>
+    <div class="panel-body panel-collapse in" :id="pdBody">
+        <div class="col-sm-12">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="">Species Available:</label>
+                        <select class="form-control" >
+                            <option class="change-species" v-for="specie in returns.sheet_species_list" :value="returns.sheet_species" :species_id="specie" >{{species_list[specie]}}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group" v-if="!readonly" >
+                        <button class="btn btn-primary pull-right" @click.prevent="addSheetRow()" name="sheet_entry">New Entry</button>
+                    </div>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="">Activity Type:</label>
+                        <select class="form-control">
+                            <option v-for="sa in sheet_activity_type" :value="sa">{{sa['label']}}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class = "row">
+                <div class="col-lg-12">
+                    <datatable ref="return_datatable" :id="datatable_id" :dtOptions="sheet_options" :dtHeaders="sheet_headers"/>
+                </div>
+            </div>
+            <!-- End of Sheet Return -->
+        </div>
+    </div>
+    <SheetEntry ref="sheet_entry"></SheetEntry>
+</div>
 </template>
 
 <script>
@@ -92,8 +74,7 @@ export default {
         pdBody: 'pdBody' + vm._uid,
         datatable_id: 'return-datatable',
         form: null,
-        species_cache: {},
-        selectedSpecies: 'selectedSpecies',
+        readonly: false,
         isModalOpen: false,
         sheetTitle: null,
         sheet_activity_type: [],
@@ -130,7 +111,7 @@ export default {
               { data: "comment" },
               { data: "editable",
                 mRender: function(data, type, full) {
-                  if (full.activity) {
+                  if (full.activity && vm.is_external) {
                      var column = `<a class="edit-row" data-rowid=\"__ROWID__\">Edit</a><br/>`
                      column = column.replace(/__ROWID__/g, full.rowId)
                      return column
@@ -149,6 +130,8 @@ export default {
               return _data.rowId
             },
             initComplete: function () {
+              // Cache the initial table load.
+              vm.species_cache[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.ajax.json()
               // Populate activity list from the data in the table
               var activityColumn = vm.$refs.return_datatable.vmDataTable.columns(1);
               activityColumn.data().unique().sort().each( function ( d, j ) {
@@ -172,8 +155,8 @@ export default {
         'isReturnsLoaded',
         'returns',
         'species_list',
-        'current_user',
-        'isReturnComponentVisible',
+        'species_cache',
+        'is_external',
     ]),
     sheetURL: function(){
       return helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
@@ -188,8 +171,8 @@ export default {
     }),
     ...mapActions([
         'setReturns',
-        'setReturnsTab',
-        'loadCurrentUser',
+        'setReturnsSpecies',
+        'setSpeciesCache',
     ]),
     save: function(e) {
       this.form=document.forms.enter_return_sheet;
@@ -216,77 +199,80 @@ export default {
                     });
     },
     addSheetRow: function () {
-      let vm = this;
-      vm.$refs.sheet_entry.isAddEntry = true;
-      vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable;
-      vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
-      vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species
-      vm.$refs.sheet_entry.entryActivity = Object.keys(vm.returns.sheet_activity_list)[0];
-      vm.$refs.sheet_entry.entryNumber = '';
-      vm.$refs.sheet_entry.entryTotal = '';
-      vm.$refs.sheet_entry.entryComment = '';
-      vm.$refs.sheet_entry.entryLicence = '';
-      vm.$refs.sheet_entry.entryDateTime = '';
-      vm.$refs.sheet_entry.isSubmitable = true;
-      vm.$refs.sheet_entry.isModalOpen = true;
+      this.$refs.sheet_entry.isAddEntry = true;
+      this.$refs.sheet_entry.row_of_data = this.$refs.return_datatable.vmDataTable;
+      this.$refs.sheet_entry.activityList = this.returns.sheet_activity_list;
+      this.$refs.sheet_entry.speciesType = this.returns.sheet_species
+      this.$refs.sheet_entry.entryActivity = Object.keys(this.returns.sheet_activity_list)[0];
+      this.$refs.sheet_entry.entryNumber = '';
+      this.$refs.sheet_entry.entryTotal = '';
+      this.$refs.sheet_entry.entryComment = '';
+      this.$refs.sheet_entry.entryLicence = '';
+      this.$refs.sheet_entry.entryDateTime = '';
+      this.$refs.sheet_entry.isSubmitable = true;
+      this.$refs.sheet_entry.isModalOpen = true;
     }
   },
-  beforeRouteEnter: function(to, from, next) {
-     next(vm => {
-        vm.load({ url: `/api/returns/${to.params.return_id}.json` }).then(() => {
-
-          // Instantiate Row Actions
-          vm.$refs.return_datatable.vmDataTable.on('click','.edit-row', function(e) {
-            e.preventDefault();
-            vm.$refs.sheet_entry.isChangeEntry = true;
-            vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
-            vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
-            vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
-            vm.$refs.sheet_entry.entrySpecies = vm.sheetTitle    ;
-            vm.$refs.sheet_entry.entryActivity = vm.$refs.sheet_entry.row_of_data.data().activity;
-            vm.$refs.sheet_entry.entryQty = vm.$refs.sheet_entry.row_of_data.data().qty;
-            vm.$refs.sheet_entry.entryTotal = vm.$refs.sheet_entry.row_of_data.data().total;
-            vm.$refs.sheet_entry.entryComment = vm.$refs.sheet_entry.row_of_data.data().comment;
-            vm.$refs.sheet_entry.entryLicence = vm.$refs.sheet_entry.row_of_data.data().licence;
-            vm.$refs.sheet_entry.isSubmitable = true;
-            vm.$refs.sheet_entry.isModalOpen = true;
-          });
-
-          vm.$refs.return_datatable.vmDataTable.on('click','.accept-decline-transfer', function(e) {
-            e.preventDefault();
-            vm.$refs.sheet_entry.isChangeEntry = true;
-            vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
-            vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
-            vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
-            vm.$refs.sheet_entry.isModalOpen = false;
-          });
-
-          // Instantiate Form Actions
-          $('form').on('click', '.change-species', function(e) {
-            e.preventDefault();
-            let selected_id = $(this).attr('species_id');
-            if (vm.species_cache[vm.returns.sheet_species] == null) {
-              // cache currently displayed species json
-              vm.species_cache[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.ajax.json()
-            }
-            vm.returns.sheet_species = selected_id;
-            if (vm.species_cache[selected_id] != null) {
-              // species json previously loaded from ajax
-              vm.$refs.return_datatable.vmDataTable.clear().draw()
-              vm.$refs.return_datatable.vmDataTable.rows.add(vm.species_cache[selected_id])
-              vm.$refs.return_datatable.vmDataTable.draw()
-            } else {
-              // load species json from ajax
-              vm.$refs.return_datatable.vmDataTable.clear().draw()
-              vm.$refs.return_datatable.vmDataTable.ajax.url = helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
-              vm.$refs.return_datatable.vmDataTable.ajax.reload()
-            };
-          });
-       });
-     });  // vm Return Store loaded.
-  },
   mounted: function(){
-     this.form = document.forms.enter_return_sheet;
+     var vm = this;
+     vm.form = document.forms.enter_return_sheet;
+     vm.readonly = !vm.is_external;
+     vm.select_species_list = this.species_list
+     vm.$refs.return_datatable.vmDataTable.on('click','.edit-row', function(e) {
+        e.preventDefault();
+        vm.$refs.sheet_entry.isChangeEntry = true;
+        vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
+        vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
+        vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
+        vm.$refs.sheet_entry.entrySpecies = vm.sheetTitle    ;
+        vm.$refs.sheet_entry.entryActivity = vm.$refs.sheet_entry.row_of_data.data().activity;
+        vm.$refs.sheet_entry.entryQty = vm.$refs.sheet_entry.row_of_data.data().qty;
+        vm.$refs.sheet_entry.entryTotal = vm.$refs.sheet_entry.row_of_data.data().total;
+        vm.$refs.sheet_entry.entryComment = vm.$refs.sheet_entry.row_of_data.data().comment;
+        vm.$refs.sheet_entry.entryLicence = vm.$refs.sheet_entry.row_of_data.data().licence;
+        vm.$refs.sheet_entry.isSubmitable = true;
+        vm.$refs.sheet_entry.isModalOpen = true;
+     });
+
+     vm.$refs.return_datatable.vmDataTable.on('click','.accept-decline-transfer', function(e) {
+        e.preventDefault();
+        vm.$refs.sheet_entry.isChangeEntry = true;
+        vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
+        vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
+        vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
+        vm.$refs.sheet_entry.isModalOpen = false;
+     });
+
+     vm.$refs.return_datatable.vmDataTable.on('click','.pay-transfer', function(e) {
+        e.preventDefault();
+        vm.$refs.sheet_entry.isChangeEntry = true;
+        vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
+        vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
+        vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
+        vm.$refs.sheet_entry.isModalOpen = false;
+     });
+
+     // Instantiate Form Actions
+     $('form').on('click', '.change-species', function(e) {
+        e.preventDefault();
+        let selected_id = $(this).attr('species_id');
+        if (vm.species_cache[vm.returns.sheet_species] == null) {
+            // cache currently displayed species json
+            vm.species_cache[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.ajax.json()
+        }
+        vm.returns.sheet_species = selected_id;
+        if (vm.species_cache[selected_id] != null) {
+            // species json previously loaded from ajax
+            vm.$refs.return_datatable.vmDataTable.clear().draw()
+            vm.$refs.return_datatable.vmDataTable.rows.add(vm.species_cache[selected_id])
+            vm.$refs.return_datatable.vmDataTable.draw()
+        } else {
+            // load species json from ajax
+            vm.$refs.return_datatable.vmDataTable.clear().draw()
+            vm.$refs.return_datatable.vmDataTable.ajax.url = helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
+            vm.$refs.return_datatable.vmDataTable.ajax.reload()
+        };
+     });
   },
 };
 </script>

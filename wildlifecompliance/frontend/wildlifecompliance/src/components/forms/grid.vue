@@ -18,7 +18,7 @@
                               <div v-if="header.type === 'date'" >
                                   <input type="text"
                                           :id="header.type"
-                                          :readonly="readonly"
+                                          :disabled="header.readonly"
                                           :name="name + '::' + header.name"
                                           class="form-control"
                                           placeholder="DD/MM/YYYY"
@@ -28,7 +28,7 @@
                               </div>
 
                               <div v-if="header.type === 'string'">
-                                <input :readonly="readonly"
+                                <input :disabled="header.readonly"
                                         :type="header.type"
                                        class="form-control"
                                        :name="name + '::' + header.name"
@@ -38,7 +38,7 @@
                               </div>
 
                               <div v-if="header.type === 'number'" >
-                                <input  :readonly="readonly"
+                                <input  :disabled="header.readonly"
                                         type="text"
                                         class="form-control"
                                         :name="name + '::' + header.name"
@@ -51,7 +51,9 @@
                   </label>
               </div>
           </div>
-          <button class="btn btn-link" @click.prevent="addRow()" >Add Row</button>
+          <div >
+             <button class="btn btn-link" @click.prevent="addRow()" >Add Row</button>
+          </div>
      </div>
 </template>
 <script>
@@ -85,7 +87,6 @@ const GridBlock = {
     addRow: function(e) {
       this.grid_item = this._props['field_data'];
       let index = this.grid_item.length
-      console.log(this)
       let fieldObj = Object.assign({}, this.grid_item[0]);
       // schema data type on each field is validated - error value required.
       for(let key in fieldObj) {

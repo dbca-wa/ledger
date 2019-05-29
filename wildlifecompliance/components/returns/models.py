@@ -413,7 +413,8 @@ class ReturnData(object):
                     "label": f.data['label'],
                     "name": f.data['name'],
                     "required": f.required,
-                    "type": f.type.name
+                    "type": f.type.name,
+                    "readonly": False,
                 }
                 if f.is_species:
                     header["species"] = f.species_type
@@ -573,6 +574,7 @@ class ReturnQuestion(object):
                     "name": f.data['name'],
                     "required": f.required,
                     "type": f.type.name,
+                    "readonly": False,
                 }
                 if f.is_species:
                     header["species"] = f.species_type
