@@ -668,6 +668,11 @@ export default {
               vm.selected_districts=new_district;
               vm.selected_parks=new_parks;
             }
+          if(!checked){
+            vm.selected_regions=[];
+            vm.selected_districts=[];
+            vm.selected_parks=[];
+          }
           },
           clickRegion: function(e, r){
             var checked=e.target.checked;
