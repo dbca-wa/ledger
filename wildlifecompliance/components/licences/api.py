@@ -264,10 +264,68 @@ class LicenceViewSet(viewsets.ModelViewSet):
             if activity_id and pk:
                 instance = self.get_object()
                 instance = instance.current_activities.get(id=activity_id)
+                if not instance.can_cancel:
+                    raise serializers.ValidationError(
+                        'This licenced activity cannot be cancelled')
                 if not request.user.has_perm('wildlifecompliance.licensing_officer'):
                     raise serializers.ValidationError(
                         'You are not authorised to cancel licenced activities')
                 instance.cancel(request)
+                serializer = ExternalApplicationSelectedActivitySerializer(instance)
+                return Response(serializer.data)
+            else:
+                raise serializers.ValidationError(
+                    'Licence ID and Activity ID must be specified')
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    def surrender_activity(self, request, pk=None, *args, **kwargs):
+        try:
+            activity_id = request.GET.get('activity_id', None)
+            if activity_id and pk:
+                instance = self.get_object()
+                instance = instance.current_activities.get(id=activity_id)
+                if not instance.can_surrender:
+                    raise serializers.ValidationError(
+                        'This licenced activity cannot be surrendered')
+                instance.surrender(request)
+                serializer = ExternalApplicationSelectedActivitySerializer(instance)
+                return Response(serializer.data)
+            else:
+                raise serializers.ValidationError(
+                    'Licence ID and Activity ID must be specified')
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    def suspend_activity(self, request, pk=None, *args, **kwargs):
+        try:
+            activity_id = request.GET.get('activity_id', None)
+            if activity_id and pk:
+                instance = self.get_object()
+                instance = instance.current_activities.get(id=activity_id)
+                if not instance.can_suspend:
+                    raise serializers.ValidationError(
+                        'This licenced activity cannot be suspended')
+                if not request.user.has_perm('wildlifecompliance.licensing_officer'):
+                    raise serializers.ValidationError(
+                        'You are not authorised to suspend licenced activities')
+                instance.suspend(request)
                 serializer = ExternalApplicationSelectedActivitySerializer(instance)
                 return Response(serializer.data)
             else:
