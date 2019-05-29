@@ -361,76 +361,75 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    def save_email_user_residential_address(self, request, email_user_data, *args, **kwargs):
-        email_user_request_data = request.data.get('email_user')
-
-        residential_address_request_data = {}
-        if email_user_request_data:
-            residential_address_request_data = email_user_request_data.get('residential_address')
-
-        residential_address_id = residential_address_request_data.get('id')
-        # residential_address_request_data.update({'user': email_user_data})
-        if residential_address_id:
-            # existing
-            address_instance = Address.objects.get(id=residential_address_id)
-            serializer = UserAddressSerializer(
-                instance=address_instance,
-                data=residential_address_request_data,
-                partial=True
-            )
-        else:
-            # new
-            serializer = UserAddressSerializer(
-                data=residential_address_request_data,
-                partial=True
-            )
-        serializer.is_valid(raise_exception=True)
-        # if serializer.is_valid():
-        #     serializer.save()
-
-        # serializer = UserAddressSerializer(data=request.data)
-        # serializer.is_valid(raise_exception=True)
-        address, created = Address.objects.get_or_create(
-            line1=serializer.validated_data['line1'],
-            locality=serializer.validated_data['locality'],
-            state=serializer.validated_data['state'],
-            country=serializer.validated_data['country'],
-            postcode=serializer.validated_data['postcode'],
-            user=email_user_data
-        )
-        serializer = UserAddressSerializer(instance=address)
-        return serializer.data
-
-
-    def save_email_user(self, request, *args, **kwargs):
-        email_user_request_data = request.data.get('email_user')
-        email_user_id = email_user_request_data.get('id')
-
-
-        if email_user_id:
-            email_user_instance = EmailUser.objects.get(id=email_user_id)
-            email_user_serializer = SaveEmailUserSerializer(
-                instance=email_user_instance,
-                data=email_user_request_data,
-                partial=True
-            )
-            email_user_serializer.is_valid(raise_exception=True)
-            if email_user_serializer.is_valid():
-                email_user_instance = email_user_serializer.save()
-        else:
-            email_user_serializer = SaveEmailUserSerializer(
-                data=email_user_request_data,
-                partial=True
-            )
-            email_user_serializer.is_valid(raise_exception=True)
-            if email_user_serializer.is_valid():
-                email_user_instance = email_user_serializer.save()
-
-        # Update residential address
-        # residential_address_saved = self.save_email_user_residential_address(request, email_user_instance)
-
-        return email_user_serializer.data #.update({'residential_address': residential_address_saved})
-        # return email_user_instance
+    # def save_email_user_residential_address(self, request, email_user_data, *args, **kwargs):
+    #     email_user_request_data = request.data.get('email_user')
+    #
+    #     residential_address_request_data = {}
+    #     if email_user_request_data:
+    #         residential_address_request_data = email_user_request_data.get('residential_address')
+    #
+    #     residential_address_id = residential_address_request_data.get('id')
+    #     # residential_address_request_data.update({'user': email_user_data})
+    #     if residential_address_id:
+    #         # existing
+    #         address_instance = Address.objects.get(id=residential_address_id)
+    #         serializer = UserAddressSerializer(
+    #             instance=address_instance,
+    #             data=residential_address_request_data,
+    #             partial=True
+    #         )
+    #     else:
+    #         # new
+    #         serializer = UserAddressSerializer(
+    #             data=residential_address_request_data,
+    #             partial=True
+    #         )
+    #     serializer.is_valid(raise_exception=True)
+    #     # if serializer.is_valid():
+    #     #     serializer.save()
+    #
+    #     # serializer = UserAddressSerializer(data=request.data)
+    #     # serializer.is_valid(raise_exception=True)
+    #     address, created = Address.objects.get_or_create(
+    #         line1=serializer.validated_data['line1'],
+    #         locality=serializer.validated_data['locality'],
+    #         state=serializer.validated_data['state'],
+    #         country=serializer.validated_data['country'],
+    #         postcode=serializer.validated_data['postcode'],
+    #         user=email_user_data
+    #     )
+    #     serializer = UserAddressSerializer(instance=address)
+    #     return serializer.data
+    #
+    #
+    # def save_email_user(self, request, *args, **kwargs):
+    #     email_user_request_data = request.data.get('email_user')
+    #     email_user_id = email_user_request_data.get('id')
+    #
+    #     if email_user_id:
+    #         email_user_instance = EmailUser.objects.get(id=email_user_id)
+    #         email_user_serializer = SaveEmailUserSerializer(
+    #             instance=email_user_instance,
+    #             data=email_user_request_data,
+    #             partial=True
+    #         )
+    #         email_user_serializer.is_valid(raise_exception=True)
+    #         if email_user_serializer.is_valid():
+    #             email_user_instance = email_user_serializer.save()
+    #     else:
+    #         email_user_serializer = SaveEmailUserSerializer(
+    #             data=email_user_request_data,
+    #             partial=True
+    #         )
+    #         email_user_serializer.is_valid(raise_exception=True)
+    #         if email_user_serializer.is_valid():
+    #             email_user_instance = email_user_serializer.save()
+    #
+    #     # Update residential address
+    #     residential_address_saved = self.save_email_user_residential_address(request, email_user_instance)
+    #
+    #     return email_user_serializer.data #.update({'residential_address': residential_address_saved})
+    #     # return email_user_instance
 
 
     def save_location(self, request, *args, **kwargs):
@@ -471,9 +470,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     if returned_location:
                         request_data.update({'location_id': returned_location.get('id')})
 
-                returned_email_user = self.save_email_user(request)
-                if returned_email_user:
-                    request_data.update({'email_user_id': returned_email_user.get('id')})
+                # returned_email_user = self.save_email_user(request)
+                # if returned_email_user:
+                #     request_data.update({'email_user_id': returned_email_user.get('id')})
+                email_user_id_requested = request_data.get('email_user', {}).get('id', {})
+                if email_user_id_requested:
+                    request_data.update({'email_user_id': email_user_id_requested})
 
                 if request_data.get('renderer_data'):
                     self.form_data(request)

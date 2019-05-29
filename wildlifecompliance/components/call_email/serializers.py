@@ -21,6 +21,15 @@ from wildlifecompliance.components.users.serializers import UserAddressSerialize
 
 class SaveEmailUserSerializer(serializers.ModelSerializer):
     residential_address = UserAddressSerializer(read_only=True)
+    residential_address_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
+
+    # residential_address = UserAddressSerializer()
+
+    # def create(self, validated_data):
+    #     return super(SaveEmailUserSerializer, self).create(validated_data)
+
+    # def update(self, instance, validated_data):
+    #     return super(SaveEmailUserSerializer, self).update(instance, validated_data)
 
     class Meta:
         model = EmailUser
@@ -30,6 +39,7 @@ class SaveEmailUserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'residential_address',
+            'residential_address_id',
             'phone_number',
             'mobile_number',
             'organisation',
@@ -37,7 +47,7 @@ class SaveEmailUserSerializer(serializers.ModelSerializer):
         )
         read_only_fields = (
             # 'id',
-            # 'residential_address',
+            'residential_address',
         )
 
 
@@ -241,8 +251,7 @@ class CallEmailOptimisedSerializer(serializers.ModelSerializer):
 class CallEmailSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source='get_status_display')
     classification = ClassificationSerializer(read_only=True)
-    lodgement_date = serializers.CharField(
-        source='lodged_on')
+    lodgement_date = serializers.CharField(source='lodged_on')
     report_type = ReportTypeSerializer(read_only=True)
     location = LocationSerializer(read_only=True)
     referrer = ReferrerSerializer(read_only=True)

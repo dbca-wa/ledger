@@ -96,7 +96,7 @@ export const callemailStore = {
             }
             if (!call_email.email_user){
                 /* When email_user is null, set default object */
-                call_email.email_user = { 
+                call_email.email_user = {
                     first_name: '',
                     last_name: '',
                     dob: null,
@@ -221,7 +221,7 @@ export const callemailStore = {
                 }
 
             } catch (err) {
-                console.error(err);
+                console.log(err);
             }
         },
         async saveCallEmail({ dispatch, state, rootGetters}, { route, crud }) {
