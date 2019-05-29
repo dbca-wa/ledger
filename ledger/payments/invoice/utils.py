@@ -93,26 +93,6 @@ class CreateInvoiceBasket(CoreOrderCreator):
             self.create_discount_model(order, application)
             self.record_discount(application)
 
-        # Record any discounts associated with this order
-        for application in basket.offer_applications:
-            # Trigger any deferred benefits from offers and capture the
-            # resulting message
-            application['message'] \
-                = application['offer'].apply_deferred_benefit(basket, order,
-                                                              application)
-            # Record offer application results
-            if application['result'].affects_shipping:
-                # Skip zero shipping discounts
-                shipping_discount = shipping_method.discount(basket)
-                if shipping_discount <= D('0.00'):
-                    continue
-                # If a shipping offer, we need to grab the actual discount off
-                # the shipping method instance, which should be wrapped in an
-                # OfferDiscount instance.
-                application['discount'] = shipping_discount
-            self.create_discount_model(order, application)
-            self.record_discount(application)
-
         for voucher in basket.vouchers.all():
             self.record_voucher_usage(order, voucher, user)
 
