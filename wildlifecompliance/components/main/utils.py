@@ -34,7 +34,8 @@ def checkout(
         lines=[],
         invoice_text=None,
         vouchers=[],
-        internal=False):
+        internal=False,
+        add_checkout_params={}):
     basket_params = {
         'products': lines,
         'vouchers': vouchers,
@@ -52,6 +53,7 @@ def checkout(
         'force_redirect': True,
         'proxy': True if internal else False,
         'invoice_text': invoice_text}
+    checkout_params.update(add_checkout_params)
     print(' -------- main utils > checkout > checkout_params ---------- ')
     print(checkout_params)
     create_checkout_session(request, checkout_params)
