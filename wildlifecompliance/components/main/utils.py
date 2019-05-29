@@ -43,6 +43,7 @@ def checkout(
         'custom_basket': True,
     }
     basket, basket_hash = create_basket_session(request, basket_params)
+    request.basket = basket
 
     checkout_params = {
         'system': settings.WC_PAYMENT_SYSTEM_ID,
@@ -111,6 +112,21 @@ def delete_session_application(session):
     if 'wc_application' in session:
         del session['wc_application']
         session.modified = True
+
+
+def flush_checkout_session(session):
+    keys = [
+        'checkout_data',
+        'checkout_invoice',
+        'checkout_order_id',
+        'checkout_return_url',
+        'checkout_data',
+    ]
+    for key in keys:
+        try:
+            del session[key]
+        except KeyError:
+            continue
 
 
 def bind_application_to_invoice(request, application, invoice_ref):
