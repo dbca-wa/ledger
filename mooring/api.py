@@ -2082,6 +2082,17 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
 #                print availability_map
                 
                 #print [v[2][start_date+timedelta(days=i)]['mooring'] for i in range(length)]
+#                k.mooringarea.vessel_beam_limit = 10000000
+                if k.mooringarea.mooring_physical_type == 0:
+                    vessel_beam_limit = 1000000
+                else:
+                    vessel_beam_limit = k.mooringarea.vessel_beam_limit
+
+                if k.mooringarea.mooring_physical_type == 1 or k.mooringarea.mooring_physical_type == 2:
+                    vessel_weight_limit = 1000000
+                else:
+                    vessel_weight_limit = k.mooringarea.vessel_weight_limit
+
                 site = {
                     'name': k.mooringarea.name,
                     'mooring_class' : k.mooringarea.mooring_class,
@@ -2101,8 +2112,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                     },
                     'vessel_size_limit': k.mooringarea.vessel_size_limit,
                     'vessel_draft_limit': k.mooringarea.vessel_draft_limit,
-                    'vessel_beam_limit': k.mooringarea.vessel_beam_limit,
-                    'vessel_weight_limit': k.mooringarea.vessel_weight_limit
+                    'vessel_beam_limit': vessel_beam_limit,
+                    'vessel_weight_limit': vessel_weight_limit
                 }
 
                 showmooring = True
@@ -2119,13 +2130,12 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                        showmooring = False
 
                 if vessel_beam > 0:
-                    if k.mooringarea.vessel_beam_limit >= vessel_beam:
+                    if vessel_beam_limit >= vessel_beam:
                           pass
                     else:
                        showmooring = False
-
                 if vessel_weight > 0:
-                    if k.mooringarea.vessel_weight_limit >= vessel_weight:
+                    if vessel_weight_limit >= vessel_weight:
                           pass
                     else:
                        showmooring = False
@@ -3962,9 +3972,15 @@ class BookingRefundsReportView(views.APIView):
             filename = 'Booking Refunds Report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
             # Generate Report
             report = reports.booking_refunds(serializer.validated_data['start'],serializer.validated_data['end'])
+            print ("REFUND REPORT")
+            print (report)
+
+
             if report:
                 response = HttpResponse(FileWrapper(report), content_type='text/csv')
                 response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
+                print ("RESPONSE")
+                print (response)
                 return response
             else:
                 raise serializers.ValidationError('No report was generated.')
