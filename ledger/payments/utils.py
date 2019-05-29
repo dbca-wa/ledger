@@ -36,7 +36,7 @@ def isLedgerURL(url):
 
 def checkURL(url):
     try:
-        resp = requests.get(url)
+        resp = requests.get(url, verify=False)
         resp.raise_for_status()
     except:
         raise
