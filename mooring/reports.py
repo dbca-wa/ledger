@@ -176,10 +176,10 @@ def booking_bpoint_settlement_report(_date):
 def bookings_report(_date):
     try:
         bpoint, cash = [], []
-        bookings = Booking.objects.filter(created__date=_date)
-        admission_bookings = AdmissionsBooking.objects.filter(created__date=_date)
+        bookings = Booking.objects.filter(created__date=_date).exclude(booking_type=3)
+        admission_bookings = AdmissionsBooking.objects.filter(created__date=_date).exclude(booking_type=3)
 
-        history_bookings = BookingHistory.objects.filter(created__date=_date)
+        history_bookings = BookingHistory.objects.filter(created__date=_date).exclude(booking__booking_type=3)
 
         strIO = StringIO()
         fieldnames = ['Date','Confirmation Number','Name','Amount','Override Price','Override Reason','Override Details','Invoice','Booking Type','Created By']
@@ -187,7 +187,7 @@ def bookings_report(_date):
         writer.writerow(fieldnames)
 
         types = dict(Booking.BOOKING_TYPE_CHOICES)
-
+        types_admissions = dict(AdmissionsBooking.BOOKING_TYPE_CHOICES)
         for b in bookings:
             b_name = 'No Name'
             if b.details:
@@ -208,7 +208,7 @@ def bookings_report(_date):
             if b.created_by is not None:
                  created_by = b.created_by
 
-            writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.confirmation_number,b_name.encode('utf-8'),b.active_invoice.amount if b.active_invoice else '','','','',b.active_invoice.reference if b.active_invoice else '', types[b.booking_type] if b.booking_type in types else b.booking_type, created_by])
+            writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.confirmation_number,b_name.encode('utf-8'),b.active_invoice.amount if b.active_invoice else '','','','',b.active_invoice.reference if b.active_invoice else '', types_admissions[b.booking_type] if b.booking_type in types_admissions else b.booking_type, created_by])
 
 
 
