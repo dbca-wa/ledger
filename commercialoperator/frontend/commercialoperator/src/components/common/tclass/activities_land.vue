@@ -797,9 +797,7 @@ export default {
                   elem.indeterminate=true;
                   elem.checked=false;
                 }
-
             }
-
           },
           
           find_recurring: function(array){
