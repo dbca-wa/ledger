@@ -474,8 +474,42 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 # if returned_email_user:
                 #     request_data.update({'email_user_id': returned_email_user.get('id')})
                 email_user_id_requested = request_data.get('email_user', {}).get('id', {})
+                first_name = request_data.get('email_user', {}).get('first_name', '')
+                last_name = request_data.get('email_user', {}).get('last_name', '')
+                dob = request_data.get('email_user', {}).get('dob', None)
+                dob = None if not dob else dob
+                email_add = request_data.get('email_user', {}).get('email', '')
+                mobile_number = request_data.get('email_user', {}).get('mobile_number', '')
+                phone_number = request_data.get('email_user', {}).get('phone_number', '')
+
                 if email_user_id_requested:
+                    email_user_request_data = request_data.get('email_user', {})
+                    email_user_instance = EmailUser.objects.get(id=email_user_id_requested)
+                    email_user_instance.first_name = first_name
+                    email_user_instance.last_name = last_name
+                    email_user_instance.dob = dob
+                    email_user_instance.email = email_add
+                    email_user_instance.mobile_number = mobile_number
+                    email_user_instance.phone_number = phone_number
+                    email_user_instance = email_user_instance.save()
+                    # email_user_serializer = SaveEmailUserSerializer(
+
+                    # email_user_serializer = EmailUser(
+                    #     instance=email_user_instance,
+                    #     data=email_user_request_data,
+                    #     partial=True
+                    # )
+                    # email_user_instance.is_valid(raise_exception=True)
+                    # if email_user_instance.is_valid():
+                    #     email_user_instance = email_user_instance.save()
+
                     request_data.update({'email_user_id': email_user_id_requested})
+                else:
+                    e = EmailUser(first_name=first_name, last_name=last_name)
+                    if not email_add:
+                        email_add = e.get_dummy_email()
+                    new_email_user = EmailUser.objects.create_user(email_add.strip('.'), '')
+                    request_data.update({'email_user_id': new_email_user.id})
 
                 if request_data.get('renderer_data'):
                     self.form_data(request)

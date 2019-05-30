@@ -68,7 +68,8 @@
                                 </h3>
                                 </div>
                                 <div v-if="loading.length == 0" class="panel-body collapse in" :id="adBody">
-                                    <form class="form-horizontal" action="index.html" method="post">
+                                    Under Construction
+                                    <!-- <form class="form-horizontal" action="index.html" method="post">
                                         <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Street</label>
                                         <div class="col-sm-6">
@@ -115,12 +116,58 @@
                                             <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
                                         </div>
                                         </div>
-                                    </form>
+                                    </form> -->
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div> 
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="panel panel-default">
+                                  <div class="panel-heading">
+                                    <h3 class="panel-title">Contact Details <small></small>
+                                        <a class="panelClicker" :href="'#'+cdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cdBody">
+                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                        </a>
+                                    </h3>
+                                  </div>
+                                  <div class="panel-body collapse in" :id="cdBody">
+                                      <form class="form-horizontal" action="index.html" method="post">
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Phone (work)</label>
+                                            <div class="col-sm-6">
+                                                <div v-if="call_email.email_user">
+                                                    <input type="text" class="form-control" name="phone" placeholder="" v-model="call_email.email_user.phone_number" v-bind:key="call_email.email_user.id">
+                                                </div>
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Mobile</label>
+                                            <div class="col-sm-6">
+                                                <div v-if="call_email.email_user">
+                                                    <input type="text" class="form-control" name="mobile" placeholder="" v-model="call_email.email_user.mobile_number" v-bind:key="call_email.email_user.id">
+                                                </div>
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Email</label>
+                                            <div class="col-sm-6">
+                                                <div v-if="call_email.email_user">
+                                                    <input type="email" class="form-control" name="email" placeholder="" v-model="call_email.email_user.email" v-bind:key="call_email.email_user.id"> </div>
+                                                </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <div class="col-sm-12">
+                                                <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="updateContact()">Update</button>
+                                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                                            </div>
+                                          </div>
+                                       </form>
+                                  </div>
+                                </div>
+                            </div>
+                        </div>
+                </div>
             </div>
         </div>
     </div>
@@ -159,6 +206,7 @@ export default {
             countries: [],
             updatingAddress: false,
             updatingPersonal: false,
+            updatingContact: false,
         }
     },
     computed: {
