@@ -302,35 +302,100 @@ export default {
             // Add Activity/Purpose listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[add-activity-purpose]', function(e) {
                 e.preventDefault();
-                var id = $(this).attr('add-activity-purpose');
-                var org_id = $(this).attr('org-id');
-                var proxy_id = $(this).attr('proxy-id');
-                var licence_category_id = $(this).attr('licence-category-id');
-                vm.addActivityPurpose(id, org_id, proxy_id, licence_category_id);
+                swal({
+                    title: "Add Activity/Purpose",
+                    text: "Are you sure you want to add an activity or purpose to this licence?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        var licence_select = 'new_activity';
+                        var licence_category_id = $(this).attr('licence-category-id');
+                        var activity_id = null;
+                        var proxy_id = $(this).attr('proxy-id');
+                        var org_id = $(this).attr('org-id');
+                        vm.routeApplyLicence(licence_select, licence_category_id, activity_id, proxy_id, org_id);
+                    }
+                },(error) => {
+                });
             });
             // Amend activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[amend-activity]', function(e) {
                 e.preventDefault();
-                var activity_id = $(this).attr('amend-activity');
-                console.log('amend-activity: ' + activity_id);
+                swal({
+                    title: "Amend Activity",
+                    text: "Are you sure you want to amend this activity?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        var licence_select = 'amend_activity';
+                        var licence_category_id = $(this).attr('licence-category-id');
+                        var activity_id = $(this).attr('amend-activity');
+                        var proxy_id = $(this).attr('proxy-id');
+                        var org_id = $(this).attr('org-id');
+                        vm.routeApplyLicence(licence_select, licence_category_id, activity_id, proxy_id, org_id);
+                    }
+                },(error) => {
+                });
             });
             // Renew activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[renew-activity]', function(e) {
                 e.preventDefault();
-                var activity_id = $(this).attr('renew-activity');
-                console.log('renew-activity: ' + activity_id);
+                swal({
+                    title: "Renew Activity",
+                    text: "Are you sure you want to renew this activity?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        var licence_select = 'renew_activity';
+                        var licence_category_id = $(this).attr('licence-category-id');
+                        var activity_id = $(this).attr('renew-activity');
+                        var proxy_id = $(this).attr('proxy-id');
+                        var org_id = $(this).attr('org-id');
+                        vm.routeApplyLicence(licence_select, licence_category_id, activity_id, proxy_id, org_id);
+                    }
+                },(error) => {
+                });
             });
             // Reactivate Renew activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reactivate-renew-activity]', function(e) {
                 e.preventDefault();
-                var activity_id = $(this).attr('reactivate-renew-activity');
-                console.log('reactivate-renew-activity: ' + activity_id);
+                swal({
+                    title: "Reactivate Renew for Activity",
+                    text: "Are you sure you want to reactivate the renew option for this activity?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        var activity_id = $(this).attr('reactivate-renew-activity');
+                        var licence_id = $(this).attr('lic-id');
+                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/reactivate_renew_activity/?activity_id=' + activity_id)).then(res=>{
+                            swal({
+                                title: "Reactivate Renew for Activity",
+                                text: "The renew option for this activity has been reactivated",
+                                type: "info"
+                            })
+                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
+                        },err=>{
+                            swal(
+                                'Submit Error',
+                                helpers.apiVueResourceError(err),
+                                'error'
+                            )
+                        });
+                    }
+                },(error) => {
+                });
             });
             // Surrender activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[surrender-activity]', function(e) {
                 e.preventDefault();
-                var activity_id = $(this).attr('surrender-activity');
-                var licence_id = $(this).attr('lic-id');
                 swal({
                     title: "Surrender Activity",
                     text: "Are you sure you want to surrender this activity?",
@@ -339,7 +404,9 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                       vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/surrender_activity/?activity_id=' + activity_id)).then(res=>{
+                        var activity_id = $(this).attr('surrender-activity');
+                        var licence_id = $(this).attr('lic-id');
+                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/surrender_activity/?activity_id=' + activity_id)).then(res=>{
                             swal({
                                 title: "Surrender Activity",
                                 text: "The activity has been surrendered",
@@ -360,8 +427,6 @@ export default {
             // Cancel activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[cancel-activity]', function(e) {
                 e.preventDefault();
-                var activity_id = $(this).attr('cancel-activity');
-                var licence_id = $(this).attr('lic-id');
                 swal({
                     title: "Cancel Activity",
                     text: "Are you sure you want to cancel this activity?",
@@ -370,7 +435,9 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                       vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/cancel_activity/?activity_id=' + activity_id)).then(res=>{
+                        var activity_id = $(this).attr('cancel-activity');
+                        var licence_id = $(this).attr('lic-id');
+                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/cancel_activity/?activity_id=' + activity_id)).then(res=>{
                             swal({
                                 title: "Cancel Activity",
                                 text: "The activity has been cancelled",
@@ -391,8 +458,6 @@ export default {
             // Suspend activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[suspend-activity]', function(e) {
                 e.preventDefault();
-                var activity_id = $(this).attr('suspend-activity');
-                var licence_id = $(this).attr('lic-id');
                 swal({
                     title: "Suspend Activity",
                     text: "Are you sure you want to suspend this activity?",
@@ -401,7 +466,9 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                       vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/suspend_activity/?activity_id=' + activity_id)).then(res=>{
+                        var activity_id = $(this).attr('suspend-activity');
+                        var licence_id = $(this).attr('lic-id');
+                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/suspend_activity/?activity_id=' + activity_id)).then(res=>{
                             swal({
                                 title: "Suspend Activity",
                                 text: "The activity has been suspended",
@@ -422,14 +489,51 @@ export default {
             // Reissue activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reissue-activity]', function(e) {
                 e.preventDefault();
-                var activity_id = $(this).attr('reissue-activity');
-                console.log('reissue-activity: ' + activity_id);
+                swal({
+                    title: "Reissue Activity",
+                    text: "Are you sure you want to reissue this activity?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        var activity_id = $(this).attr('reissue-activity');
+                        var licence_id = $(this).attr('lic-id');
+                        console.log('send user to create reissue application')
+                    }
+                },(error) => {
+                });
             });
             // Reinstate activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reinstate-activity]', function(e) {
                 e.preventDefault();
-                var activity_id = $(this).attr('reinstate-activity');
-                console.log('reinstate-activity: ' + activity_id);
+                swal({
+                    title: "Reinstate Activity",
+                    text: "Are you sure you want to reinstate this activity?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        var activity_id = $(this).attr('reinstate-activity');
+                        var licence_id = $(this).attr('lic-id');
+                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/reinstate_activity/?activity_id=' + activity_id)).then(res=>{
+                            swal({
+                                title: "Reinstate Activity",
+                                text: "The activity has been reinstated",
+                                type: "info"
+                            })
+                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
+                        },err=>{
+                            swal(
+                                'Submit Error',
+                                helpers.apiVueResourceError(err),
+                                'error'
+                            )
+                        });
+                    }
+                },(error) => {
+                });
             });
             // Child row listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'tr.licRecordRow', function(e) {
@@ -438,8 +542,11 @@ export default {
                     return;
                 }
                 // Generate child row for application
+                // Get licence row data
                 var tr = $(this);
                 var licence_id = vm.$refs.licence_datatable.vmDataTable.row(tr).data().id;
+                var proxy_id = vm.$refs.licence_datatable.vmDataTable.row(tr).data().current_application.proxy_applicant ? vm.$refs.licence_datatable.vmDataTable.row(tr).data().current_application.proxy_applicant.id : null;
+                var org_id = vm.$refs.licence_datatable.vmDataTable.row(tr).data().current_application.org_applicant ? vm.$refs.licence_datatable.vmDataTable.row(tr).data().current_application.org_applicant.id : null;
                 var row = vm.$refs.licence_datatable.vmDataTable.row(tr);
 
                 if (row.child.isShown()) {
@@ -463,11 +570,11 @@ export default {
                                 <td>`;
                                     if (activity['can_amend']) {
                                         activity_rows +=
-                                            `<a amend-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Amend</a></br>`;
+                                            `<a amend-activity=` + activity['id'] + ` proxy-id= ` + proxy_id + ` org-id= ` + org_id + `>Amend</a></br>`;
                                     }
                                     if (activity['can_renew']) {
                                         activity_rows +=
-                                            `<a renew-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Renew</a></br>`;
+                                            `<a renew-activity=` + activity['id'] + ` proxy-id= ` + proxy_id + ` org-id= ` + org_id + `>Renew</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reactivate_renew']) {
                                         activity_rows +=
@@ -487,7 +594,7 @@ export default {
                                     }
                                     if (!vm.is_external && activity['can_reissue']) {
                                         activity_rows +=
-                                            `<a reissue-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Reissue</a></br>`;
+                                            `<a reissue-activity=` + activity['id'] + ` proxy-id= ` + proxy_id + ` org-id= ` + org_id + `>Reissue</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reinstate']) {
                                         activity_rows +=
@@ -570,12 +677,13 @@ export default {
         getColumnIndex: function(column_name) {
             return this.licence_headers.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
         },
-        addActivityPurpose:function (licence_id, org_id, proxy_id, licence_category_id) {
+        routeApplyLicence:function (licence_select, licence_category_id, activity_id, proxy_id, org_id) {
             return this.$router.push({
                 name: "apply_application_licence",
                 params: {
-                    licence_select: 'new_activity',
+                    licence_select: licence_select,
                     licence_category: licence_category_id,
+                    activity_id: activity_id,
                     org_select: org_id,
                     proxy_select: proxy_id
                 }

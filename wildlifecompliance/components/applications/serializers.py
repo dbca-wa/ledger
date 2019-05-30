@@ -592,6 +592,7 @@ class CreateExternalApplicationSerializer(serializers.ModelSerializer):
             'submitter',
             'licence_purposes',
             'application_type',
+            'previous_application'
         )
 
 

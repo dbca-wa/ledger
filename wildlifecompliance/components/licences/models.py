@@ -181,12 +181,12 @@ class WildlifeLicence(models.Model):
     def get_activities_by_activity_status(self, status):
         return self.current_application.get_activity_chain(activity_status=status).order_by(
             'licence_activity_id', '-issue_date'
-        ).distinct('licence_activity_id')
+        )
 
     def get_activities_by_processing_status(self, status):
         return self.current_application.get_activity_chain(processing_status=status).order_by(
             'licence_activity_id', '-issue_date'
-        ).distinct('licence_activity_id')
+        )
 
     @property
     def latest_activities(self):

@@ -2020,6 +2020,14 @@ class ApplicationSelectedActivity(models.Model):
         ).distinct()
 
     @property
+    def can_amend(self):
+        # Returns true if the activity can be included in a Amendment Application
+        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+            Application.APPLICATION_TYPE_AMENDMENT,
+            activity_ids=[self.id]
+        ).count() > 0
+
+    @property
     def can_renew(self):
         # Returns true if the activity can be included in a Renewal Application
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
@@ -2028,10 +2036,10 @@ class ApplicationSelectedActivity(models.Model):
         ).count() > 0
 
     @property
-    def can_amend(self):
-        # Returns true if the activity can be included in a Amendment Application
+    def can_reactivate_renew(self):
+        # TODO: clarify business logic for when an activity renew is allowed to be reactivate.
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
-            Application.APPLICATION_TYPE_AMENDMENT,
+            Application.APPLICATION_TYPE_NEW_LICENCE,
             activity_ids=[self.id]
         ).count() > 0
 
@@ -2180,26 +2188,36 @@ class ApplicationSelectedActivity(models.Model):
         flush_checkout_session(request.session)
         return self.licence_fee_paid and send_activity_invoice_email_notification(application, self, invoice_ref, request)
 
-    def cancel(self, request):
-        with transaction.atomic():
-            self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED
-            self.updated_by = request.user
-            self.save()
-            # TODO: if last ASA, need to cancel the whole licence
+    def reactivate_renew(self, request):
+        pass
+        # with transaction.atomic():
+        #     self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED
+        #     self.updated_by = request.user
+        #     self.save()
 
     def surrender(self, request):
         with transaction.atomic():
             self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED
             self.updated_by = request.user
             self.save()
-            # TODO: if last ASA, need to surrender the whole licence
+
+    def cancel(self, request):
+        with transaction.atomic():
+            self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED
+            self.updated_by = request.user
+            self.save()
 
     def suspend(self, request):
         with transaction.atomic():
             self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
             self.updated_by = request.user
             self.save()
-            # TODO: if last ASA, need to suspend the whole licence
+
+    def reinstate(self, request):
+        with transaction.atomic():
+            self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+            self.updated_by = request.user
+            self.save()
 
 
 class ActivityInvoice(models.Model):
