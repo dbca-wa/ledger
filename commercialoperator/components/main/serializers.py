@@ -31,7 +31,7 @@ class CommunicationLogEntrySerializer(serializers.ModelSerializer):
 class SectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Section
-        fields = ('id', 'name', 'visible')
+        fields = ('id', 'name', 'visible', 'doc_url')
 
 class ActivitySerializer(serializers.ModelSerializer):
     class Meta:

@@ -133,7 +133,7 @@ class TrailAdmin(admin.ModelAdmin):
 
 @admin.register(Section)
 class SectionAdmin(admin.ModelAdmin):
-    list_display = ['name', 'visible', 'trail']
+    list_display = ['name', 'visible', 'trail', 'doc_url']
     ordering = ('name',)
 
 @admin.register(Zone)

@@ -208,6 +208,7 @@ class Section(models.Model):
     name = models.CharField(max_length=200, blank=True)
     visible = models.BooleanField(default=True)
     trail = models.ForeignKey(Trail, related_name='sections')
+    doc_url= models.CharField('Document URL',max_length=255, blank=True)
 
     class Meta:
         ordering = ['name']

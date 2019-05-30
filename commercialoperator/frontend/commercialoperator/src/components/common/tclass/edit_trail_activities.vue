@@ -21,8 +21,9 @@
                                 <div class="form-horizontal col-sm-3">
                                   <div class="" >
                                     <div class="form-check">
-                                      <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="s.checked"  data-parsley-required   />
-                                      {{ s.name }}
+                                      <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="s.checked"  data-parsley-required /><a v-if="s.doc_url" :href="s.doc_url" target="_blank" >
+                                        {{ s.name }}</a><span v-else>
+                                        {{ s.name }}</span>
                                     </div>
                                   </div>
                                 </div>
