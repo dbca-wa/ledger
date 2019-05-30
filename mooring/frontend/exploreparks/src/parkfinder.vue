@@ -61,7 +61,7 @@
                     <label>Vessel Beams (Meters)  <input v-model="vesselBeam" id="vesselBeam" name="vessel_beams" type="number" placeholder="3" :disabled="current_booking.length > 0" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Weight (Ton)  <input v-model="vesselWeight" id="vesselWeight" name="vessel_weight" type="number" placeholder="2" :disabled="current_booking.length > 0" /></label>
+                    <label>Vessel Weight (Tonnes)  <input v-model="vesselWeight" id="vesselWeight" name="vessel_weight" type="number" placeholder="2" :disabled="current_booking.length > 0" /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns" >
                         <label>
