@@ -1110,7 +1110,11 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
             }
             if end:
                 data['period_end'] = end
-            data['details'] = period_data['details'] if period_data['details'] else None
+            if 'details' in period_data:
+                data['details'] = period_data['details']
+            else:
+                data['details'] = ''
+
             self.set_periods(request, data, moorings)
             return Response('All Selected MooringAreas Period Updated')
         except Exception as e:
