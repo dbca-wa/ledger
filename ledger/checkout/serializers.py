@@ -68,7 +68,7 @@ class CheckoutSerializer(serializers.Serializer):
     force_redirect = serializers.BooleanField(default=False)
     send_email = serializers.BooleanField(default=False)
     proxy = serializers.BooleanField(default=False)
-    checkout_token = serializers.BooleanField(default=False)
+    checkout_token = serializers.IntegerField(required=False, default=0)
     bpay_format = serializers.ChoiceField(choices=['crn', 'icrn'], default='crn')
     icrn_format = serializers.ChoiceField(choices=['ICRNAMT', 'ICRNDATE', 'ICRNAMTDATE'], default='ICRNAMT')
     icrn_date = serializers.DateField(required=False, default=None)
