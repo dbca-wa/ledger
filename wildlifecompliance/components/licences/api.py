@@ -419,6 +419,7 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
         only_purpose_records = None
         application_type = request.GET.get('application_type')
         licence_category = request.GET.get('licence_category')
+        licence_activity = request.GET.get('licence_activity')
 
         active_applications = Application.get_active_licence_applications(request, application_type)
         if not active_applications.count() and application_type == Application.APPLICATION_TYPE_RENEWAL:
@@ -429,10 +430,15 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
         elif active_applications.count():
             # Activities relevant to the current application type
             current_activities = Application.get_active_licence_activities(request, application_type)
-            active_category_ids = current_activities.values_list(
+
+            if licence_activity:
+                current_activities = current_activities.filter(licence_activity__id=licence_activity)
+
+            active_licence_activity_ids = current_activities.values_list(
                 'licence_activity__licence_category_id',
                 flat=True
             )
+
             active_purpose_ids = []
             for selected_activity in current_activities:
                 active_purpose_ids.extend([purpose.id for purpose in selected_activity.purposes])
@@ -454,7 +460,7 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
                     flat=True
                 )
 
-                queryset = queryset.filter(id__in=active_category_ids)
+                queryset = queryset.filter(id__in=active_licence_activity_ids)
                 only_purpose_records = LicencePurpose.objects.filter(
                     id__in=amendable_purpose_ids,
                     licence_activity_id__in=current_activities.values_list(
