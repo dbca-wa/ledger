@@ -669,7 +669,7 @@ export default {
         canIssueDecline: function(){
             var activities_list = this.licence_type_data.activity;
             for(let activity of activities_list){
-                if(activity.processing_status.id == 'with_officer_finalisation' &&
+                if(['with_officer_finalisation', 'awaiting_licence_fee_payment'].includes(activity.processing_status.id) &&
                     this.userHasRole('issuing_officer', activity.id)){
                         return true;
                 }
