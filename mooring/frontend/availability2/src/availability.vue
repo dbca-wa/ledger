@@ -180,7 +180,7 @@
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
-                            <label for="vesselWeight" class="text-left">Vessel Weight (Ton)</label>
+                            <label for="vesselWeight" class="text-left">Vessel Weight (Tonnes)</label>
                         </div><div class="small-6 columns">
                             <input type="number" id="vesselWeight" ref="vesselWeight" name="vessel_weight" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselWeight" step="1" :disabled="current_booking.length > 0"/>
                         </div>

@@ -28,7 +28,7 @@
                                                 <input type="number" name="vessel_beam_limit" id="vessel_beam_limit" style="margin-top:10px;" class="form-control form-control-input" v-model="campground.vessel_beam_limit" @blur="validateBeamWeight()" required/>
                                             </div>
                                             <div class="col-md-4" v-else>
-                                                <label class="control-label" >Maximum Vessel Weight (Ton)</label>
+                                                <label class="control-label" >Maximum Vessel Weight (Tonnes)</label>
                                                 <input type="number" name="vessel_weight_limit" id="vessel_weight_limit" style="margin-top:10px;" class="form-control form-control-input" v-model="campground.vessel_weight_limit" @blur="validateBeamWeight()" required/>
                                             </div>
                                         </div>
