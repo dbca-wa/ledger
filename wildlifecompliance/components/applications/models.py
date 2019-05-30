@@ -20,7 +20,11 @@ from django.utils.encoding import python_2_unicode_compatible
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.payments.invoice.models import Invoice
 from ledger.checkout.utils import calculate_excl_gst
-from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
+from wildlifecompliance.components.main.utils import (
+    checkout, set_session_application,
+    delete_session_application,
+    flush_checkout_session
+)
 
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.organisations.emails import send_org_id_update_request_notification
@@ -35,6 +39,7 @@ from wildlifecompliance.components.applications.email import (
     send_application_decline_notification,
     send_id_update_request_notification,
     send_application_return_to_officer_conditions_notification,
+    send_activity_invoice_email_notification,
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
@@ -458,8 +463,11 @@ class Application(RevisionedMixin):
             if self.invoices.count() == 0:
                 return Invoice.PAYMENT_STATUS_UNPAID
             else:
-                latest_invoice = Invoice.objects.get(
-                    reference=self.invoices.latest('id').invoice_reference)
+                try:
+                    latest_invoice = Invoice.objects.get(
+                        reference=self.invoices.latest('id').invoice_reference)
+                except Invoice.DoesNotExist:
+                    return Invoice.PAYMENT_STATUS_UNPAID
                 return latest_invoice.payment_status
 
     @property
@@ -1369,6 +1377,8 @@ class Application(RevisionedMixin):
             ), True
 
     def final_decision(self, request):
+        failed_payment_activities = []
+
         with transaction.atomic():
             try:
                 parent_licence, created = self.get_parent_licence()
@@ -1383,7 +1393,10 @@ class Application(RevisionedMixin):
                         raise Exception("Licence activity %s is missing from Application ID %s!" % (
                             licence_activity_id, self.id))
 
-                    if selected_activity.processing_status != ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION:
+                    if selected_activity.processing_status not in [
+                        ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION,
+                        ApplicationSelectedActivity.PROCESSING_STATUS_AWAITING_LICENCE_FEE_PAYMENT,
+                    ]:
                         raise Exception("Activity \"%s\" has an invalid processing status: %s" % (
                             selected_activity.licence_activity.name, selected_activity.processing_status))
 
@@ -1391,9 +1404,8 @@ class Application(RevisionedMixin):
 
                         # If there is an outstanding licence fee payment - attempt to charge the stored card.
                         if not selected_activity.process_licence_fee_payment(request, self):
-                            raise Exception("Could not process licence fee payment for activity: \"%s\"" % (
-                                selected_activity.licence_activity.name
-                            ))
+                            failed_payment_activities.append(selected_activity)
+                            continue
 
                         original_issue_date = start_date = item.get('start_date')
                         expiry_date = item.get('end_date')
@@ -1488,6 +1500,14 @@ class Application(RevisionedMixin):
 
             except BaseException:
                 raise
+
+        if failed_payment_activities:
+            for activity in failed_payment_activities:
+                activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_AWAITING_LICENCE_FEE_PAYMENT
+                activity.save()
+            raise Exception("Could not process licence fee payment for: {}".format(
+                ", ".join([activity.licence_activity.name for activity in failed_payment_activities])
+            ))
 
     def generate_returns(self, licence, selected_activity, request):
         from wildlifecompliance.components.returns.models import Return
@@ -1903,6 +1923,7 @@ class ApplicationSelectedActivity(models.Model):
     PROCESSING_STATUS_WITH_ASSESSOR = 'with_assessor'
     PROCESSING_STATUS_OFFICER_CONDITIONS = 'with_officer_conditions'
     PROCESSING_STATUS_OFFICER_FINALISATION = 'with_officer_finalisation'
+    PROCESSING_STATUS_AWAITING_LICENCE_FEE_PAYMENT = 'awaiting_licence_fee_payment'
     PROCESSING_STATUS_ACCEPTED = 'accepted'
     PROCESSING_STATUS_DECLINED = 'declined'
     PROCESSING_STATUS_DISCARDED = 'discarded'
@@ -1912,6 +1933,7 @@ class ApplicationSelectedActivity(models.Model):
         (PROCESSING_STATUS_WITH_ASSESSOR, 'With Assessor'),
         (PROCESSING_STATUS_OFFICER_CONDITIONS, 'With Officer-Conditions'),
         (PROCESSING_STATUS_OFFICER_FINALISATION, 'With Officer-Finalisation'),
+        (PROCESSING_STATUS_AWAITING_LICENCE_FEE_PAYMENT, 'Awaiting Licence Fee Payment'),
         (PROCESSING_STATUS_ACCEPTED, 'Accepted'),
         (PROCESSING_STATUS_DECLINED, 'Declined'),
         (PROCESSING_STATUS_DISCARDED, 'Discarded'),
@@ -2085,8 +2107,11 @@ class ApplicationSelectedActivity(models.Model):
             if self.invoices.count() == 0:
                 return Invoice.PAYMENT_STATUS_UNPAID
             else:
-                latest_invoice = Invoice.objects.get(
-                    reference=self.invoices.latest('id').invoice_reference)
+                try:
+                    latest_invoice = Invoice.objects.get(
+                        reference=self.invoices.latest('id').invoice_reference)
+                except Invoice.DoesNotExist:
+                    return Invoice.PAYMENT_STATUS_UNPAID
                 return latest_invoice.payment_status
 
     @staticmethod
@@ -2110,15 +2135,23 @@ class ApplicationSelectedActivity(models.Model):
         ).distinct()
 
     def process_licence_fee_payment(self, request, application):
+        from ledger.payments.models import BpointToken
         if self.licence_fee_paid:
             return True
 
+        applicant = application.proxy_applicant if application.proxy_applicant else application.submitter
+        card_owner_id = applicant.id
+        card_token = BpointToken.objects.filter(user_id=card_owner_id).order_by('-id').first()
+        if not card_token:
+            logger.error("No card token found for user: %s" % card_owner_id)
+            return False
+
         product_lines = []
-        application_submission = u'Licence issued for {} application {}'.format(
-            u'{} {}'.format(application.submitter.first_name, application.submitter.last_name), application.lodgement_number)
+        application_submission = u'Activity licence issued for {} application {}'.format(
+            u'{} {}'.format(applicant.first_name, applicant.last_name), application.lodgement_number)
         set_session_application(request.session, application)
         product_lines.append({
-            'ledger_description': '{}'.format(application.licence_type_name),
+            'ledger_description': '{}'.format(self.licence_activity.name),
             'quantity': 1,
             'price_incl_tax': str(self.licence_fee),
             'price_excl_tax': str(calculate_excl_gst(self.licence_fee)),
@@ -2130,14 +2163,22 @@ class ApplicationSelectedActivity(models.Model):
             internal=True,
             add_checkout_params={
                 'basket_owner': request.user.id,
+                'payment_method': 'card',
+                'checkout_token': card_token.id,
             }
         )
+        try:
+            invoice_ref = request.session['checkout_invoice']
+        except KeyError:
+            logger.error("No invoice reference generated for Activity ID: %s" % self.licence_activity_id)
+            return False
         ActivityInvoice.objects.get_or_create(
             activity=self,
-            invoice_reference=request.session['checkout_invoice']
+            invoice_reference=invoice_ref
         )
         delete_session_application(request.session)
-        return self.licence_fee_paid
+        flush_checkout_session(request.session)
+        return self.licence_fee_paid and send_activity_invoice_email_notification(application, self, invoice_ref, request)
 
     def cancel(self, request):
         with transaction.atomic():

@@ -230,7 +230,10 @@ export default {
         },
         visibleLicenceActivities: function() {
             return this.filterActivityList({
-                activity_list: this.licenceActivities('with_officer_finalisation', 'issuing_officer'),
+                activity_list: this.licenceActivities([
+                    'with_officer_finalisation',
+                    'awaiting_licence_fee_payment'
+                ], 'issuing_officer'),
                 exclude_processing_statuses: ['discarded']
             });
         },
@@ -351,7 +354,7 @@ export default {
                     final_status="declined"
                 }
                 const processing_status = proposal.processing_status;
-                if(!['with_officer_finalisation'].includes(processing_status)) {
+                if(!['with_officer_finalisation', 'awaiting_licence_fee_payment'].includes(processing_status)) {
                     continue;
                 }
                 const activity_id = proposal.licence_activity.id;
