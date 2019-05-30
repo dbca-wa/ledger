@@ -418,8 +418,8 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         only_purpose_records = None
         application_type = request.GET.get('application_type')
-        licence_category = request.GET.get('licence_category')
-        licence_activity = request.GET.get('licence_activity')
+        licence_category_id = request.GET.get('licence_category')
+        licence_activity_id = request.GET.get('licence_activity')
 
         active_applications = Application.get_active_licence_applications(request, application_type)
         if not active_applications.count() and application_type == Application.APPLICATION_TYPE_RENEWAL:
@@ -431,8 +431,8 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
             # Activities relevant to the current application type
             current_activities = Application.get_active_licence_activities(request, application_type)
 
-            if licence_activity:
-                current_activities = current_activities.filter(licence_activity__id=licence_activity)
+            if licence_activity_id:
+                current_activities = current_activities.filter(licence_activity__id=licence_activity_id)
 
             active_licence_activity_ids = current_activities.values_list(
                 'licence_activity__licence_category_id',
@@ -467,14 +467,14 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
                         'licence_activity_id', flat=True)
                 )
 
-        if licence_category:
+        if licence_category_id:
             only_purpose_records = only_purpose_records.filter(
-                licence_category_id=licence_category
+                licence_category_id=licence_category_id
             )
             if not only_purpose_records:
                 queryset = LicenceCategory.objects.none()
             else:
-                queryset = queryset.filter(id=licence_category)
+                queryset = queryset.filter(id=licence_category_id)
 
         serializer = LicenceCategorySerializer(queryset, many=True, context={
             'request': request,

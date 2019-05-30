@@ -354,6 +354,7 @@ const RendererBlock = {
                     "officer_comment": '',
                     "assessor_comment": '',
                     "deficiency_value": '',
+                    "licence_activity_id": this.component.licence_activity_id,
                     "schema_name": this.component.name,
                     "component_type": this.component.type,
                     "instance_name": this.instance !== null ? this.instance: ''

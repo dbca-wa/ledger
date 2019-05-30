@@ -43,7 +43,7 @@ from wildlifecompliance.components.applications.email import (
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
-from wildlifecompliance.components.licences.models import LicenceCategory
+from wildlifecompliance.components.licences.models import LicenceCategory, LicenceActivity
 
 logger = logging.getLogger(__name__)
 
@@ -1188,8 +1188,7 @@ class Application(RevisionedMixin):
 
     def get_schema_fields(self, schema_json):
         fields = {}
-
-        def iterate_children(schema_group, fields, parent={}, parent_type='', condition={}):
+        def iterate_children(schema_group, fields, parent={}, parent_type='', condition={}, activity_id=None):
             children_keys = [
                 'children',
                 'header',
@@ -1204,19 +1203,25 @@ class Application(RevisionedMixin):
                 if isinstance(item, list):
                     if parent_type == 'conditions':
                         condition[parent['name']] = key
-                    iterate_children(item, fields, parent, parent_type, condition)
+                    iterate_children(item, fields, parent, parent_type, condition, activity_id)
                     continue
+
+                try:
+                    activity_id = item['id']
+                except BaseException:
+                    pass
 
                 name = item['name']
                 fields[name] = {}
                 fields[name].update(item)
                 fields[name]['condition'] = {}
                 fields[name]['condition'].update(condition)
+                fields[name]['activity_id'] = activity_id
 
                 for children_key in children_keys:
                     if children_key in fields[name]:
                         del fields[name][children_key]
-                        iterate_children(item[children_key], fields, fields[name], children_key, condition)
+                        iterate_children(item[children_key], fields, fields[name], children_key, condition, activity_id)
                 condition = {}
 
         iterate_children(schema_json, fields)
@@ -2302,6 +2307,7 @@ class ApplicationFormDataRecord(models.Model):
     officer_comment = models.TextField(blank=True)
     assessor_comment = models.TextField(blank=True)
     deficiency = models.TextField(blank=True)
+    licence_activity = models.ForeignKey(LicenceActivity, related_name='form_data_records')
 
     def __str__(self):
         return "Application {id} record {field}".format(
@@ -2345,6 +2351,7 @@ class ApplicationFormDataRecord(models.Model):
             officer_comment = field_data.get('officer_comment', '')
             assessor_comment = field_data.get('assessor_comment', '')
             deficiency = field_data.get('deficiency_value', '')
+            activity_id = field_data.get('licence_activity_id', '')
 
             if ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR in field_name:
                 [parsed_schema_name, parsed_instance_name] = field_name.split(
@@ -2361,6 +2368,7 @@ class ApplicationFormDataRecord(models.Model):
             form_data_record = ApplicationFormDataRecord.objects.filter(
                 application_id=application.id,
                 field_name=field_name,
+                licence_activity_id=activity_id,
             ).first()
 
             if not form_data_record:
@@ -2370,6 +2378,7 @@ class ApplicationFormDataRecord(models.Model):
                     schema_name=schema_name,
                     instance_name=instance_name,
                     component_type=component_type,
+                    licence_activity_id=activity_id
                 )
             if action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_VALUE:
                 if not is_draft and not value and schema_name in required_fields:

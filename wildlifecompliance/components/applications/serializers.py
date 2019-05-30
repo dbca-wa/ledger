@@ -300,6 +300,7 @@ class ApplicationFormDataRecordSerializer(serializers.ModelSerializer):
             'assessor_comment',
             'deficiency',
             'value',
+            'licence_activity_id',
         )
         read_only_fields = (
             'field_name',
@@ -310,6 +311,7 @@ class ApplicationFormDataRecordSerializer(serializers.ModelSerializer):
             'assessor_comment',
             'deficiency',
             'value',
+            'licence_activity_id',
         )
 
 
