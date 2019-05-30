@@ -9,18 +9,23 @@
                 <img id="basemap_sat" src="../../../assets/img/satellite_icon.jpg" @click.stop="setBaseLayer('sat')" />
                 <img id="basemap_osm" src="../../../assets/img/map_icon.png" @click.stop="setBaseLayer('osm')" />
             </div>
+            <div id="cursor-location">
+                <div v-if="cursor_location">
+                    <span id="cursor-location-lat">{{ cursor_location.lat.toFixed(5) }}, {{ cursor_location.lng.toFixed(5) }}</span>
+                </div>
+            </div>
         </div>
 
         <div id="lat" class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Latitude:</label>
             <div v-if="call_email.location">
-                <input class="form-control" v-model="call_latitude" readonly />
+                <input class="form-control" v-model="call_latitude" />
             </div>
         </div></div>
         <div id="lon" class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Longitude:</label>
             <div v-if="call_email.location">
-                <input class="form-control" v-model="call_longitude" readonly />
+                <input class="form-control" v-model="call_longitude" />
             </div>
         </div></div>
 
@@ -73,6 +78,13 @@ export default {
     data: function(){
         const defaultCentre = [13775786.985667605, -2871569.067879858];
 
+        let vm = this;
+        let baseDic = { shadowUrl: require('leaflet/dist/images/marker-shadow.png'), shadowSize: [41, 41], shadowAnchor: [12, 41], iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -20]};
+        vm.icon_default = L.icon({iconUrl: require('../../../assets/marker-gray-locked.svg'), ...baseDic });
+        vm.icon_enquiery = L.icon({iconUrl: require('../../../assets/marker-green-locked.svg'), ...baseDic });
+        vm.icon_complaint = L.icon({iconUrl: require('../../../assets/marker-red-locked.svg'), ...baseDic});
+        vm.icon_incident = L.icon({iconUrl: require('../../../assets/marker-yellow-locked.svg'), ...baseDic});
+
         return {
             defaultCenter: defaultCentre,
             projection: null,
@@ -83,6 +95,7 @@ export default {
             awe: null,
             suggest_list: [],
             feature_marker: null,
+            cursor_location: null
         };
     },
     computed: {
@@ -91,6 +104,24 @@ export default {
             call_latitude: 'call_latitude',
             call_longitude: 'call_longitude',
         }),
+    },
+    watch: {
+        call_email: {
+            handler: function (){
+                this.setMarkerIcon();
+            },
+            deep: true
+        },
+        call_latitude: {
+            handler: function(){
+                console.log('call_latitude: ' + this.call_latitude);
+            }
+        },
+        call_longitude: {
+            handler: function(){
+                console.log('call_longitude: ' + this.call_longitude);
+            }
+        }
     },
     mounted: function(){
         this.$nextTick(function() {
@@ -115,25 +146,32 @@ export default {
             setLocationAddressEmpty: 'setLocationAddressEmpty',
             setLocationDetailsFieldEmpty: 'setLocationDetailsFieldEmpty',
         }),
+        setMarkerIcon: function(){
+            let vm = this;
+            if (vm.feature_marker){
+                if (vm.call_email.classification_id){
+                    if (vm.call_email.classification_id == 1){
+                        vm.feature_marker.setIcon(vm.icon_incident);
+                    } else if (vm.call_email.classification_id == 2){
+                        vm.feature_marker.setIcon(vm.icon_enquiery);
+                    } else if (vm.call_email.classification_id == 3){
+                        vm.feature_marker.setIcon(vm.icon_complaint);
+                    }
+                } else {
+                    vm.feature_marker.setIcon(vm.icon_default);
+                }
+            }
+        },
         addMarker(latLngArr){
-            let self = this;
+            let vm = this;
 
-            let myIcon = L.icon({
-                iconUrl: require('../../../assets/marker-green-locked.svg'),
-                shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-                shadowSize: [41, 41],
-                shadowAnchor: [12, 41],
-                iconSize: [32, 32],
-                iconAnchor: [16, 32],
-                popupAnchor: [0, -20]
-            });
-
-            self.feature_marker = L.marker({lon: latLngArr[1], lat: latLngArr[0]}, {icon: myIcon}).on('click', function(ev){
+            vm.feature_marker = L.marker({lon: latLngArr[1], lat: latLngArr[0]}, {icon: vm.icon_default}).on('click', function(ev){
                 //ev.preventDefault();
-                self.feature_marker.setIcon(myIcon);
+                vm.feature_marker.setIcon(myIcon);
             });
-            //self.feature_marker.bindTooltip("click to lock/unlock");
-            self.feature_marker.addTo(self.map);
+            //vm.feature_marker.bindTooltip("click to lock/unlock");
+            vm.feature_marker.addTo(vm.map);
+            vm.setMarkerIcon();
         },
         saveInstanceLocation: async function() {
             await this.$nextTick();
@@ -331,7 +369,7 @@ export default {
                 }
             );
 
-            this.map.on('click', this.onClick);
+            this.map.on('click', this.onClick).on('mousemove', this.onMouseMove).on('mouseout', this.onMouseOut);
             this.setBaseLayer('osm');
             let measureControl = new L.Control.Measure({ 
                 position: 'topleft',
@@ -347,6 +385,13 @@ export default {
             this.setLocationPoint(lnglat);
             this.refreshMarkerLocation();
             this.reverseGeocoding(lnglat);
+        },
+        onMouseMove: function(e){
+            let vm = this;
+            vm.cursor_location = vm.map.mouseEventToLatLng(e.originalEvent);
+        },
+        onMouseOut: function(e){
+            this.cursor_location = null;
         },
         onClick: function(e){
             let self = this;
@@ -390,16 +435,17 @@ export default {
     position: absolute;
     top: 10px;
     right: 10px;
-    z-index: 1000;
-    -moz-box-shadow: 5px 5px 5px #555;
-    -webkit-box-shadow: 5px 5px 5px #555;
-    box-shadow: 5px 5px 5px #555;
+    z-index: 400;
+    -moz-box-shadow: 3px 3px 3px #777;
+    -webkit-box-shadow: 3px 3px 3px #777;
+    box-shadow: 3px 3px 3px #777;
     -moz-filter: brightness(1.0);
     -webkit-filter: brightness(1.0);
     filter: brightness(1.0);
+    border: 2px white solid;
 }
 #basemap_sat,#basemap_osm {
-    border-radius: 5px;
+    /* border-radius: 5px; */
 }
 #basemap-button:hover {
     cursor: pointer;
@@ -417,7 +463,26 @@ export default {
     -webkit-filter: brightness(0.8);
     filter: brightness(0.8);
 }
+#basemap-button:active {
+    top: 11px;
+    right: 9px;
+    -moz-box-shadow: 2px 2px 2px #555;
+    -webkit-box-shadow: 2px 2px 2px #555;
+    box-shadow: 2px 2px 2px #555;
+    -moz-filter: brightness(0.8);
+    -webkit-filter: brightness(0.8);
+    filter: brightness(0.8);
+}
 #location_address_field {
     resize: vertical;
+}
+#cursor-location {
+    position: absolute;
+    bottom: 0px;
+    color: white;
+    background-color: rgba(37, 45, 51, 0.6);
+    z-index: 1100;
+    font-size: 0.9em;
+    padding: 5px;
 }
 </style>
