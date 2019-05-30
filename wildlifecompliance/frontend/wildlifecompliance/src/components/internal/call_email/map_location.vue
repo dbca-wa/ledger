@@ -19,13 +19,15 @@
         <div id="lat" class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Latitude:</label>
             <div v-if="call_email.location">
-                <input class="form-control" v-model="call_latitude" />
+                <!-- <input class="form-control" v-model="call_latitude" /> -->
+                <input type="number" min="-90" max="90" class="form-control" v-model.number="call_email.location.geometry.coordinates[1]" />
             </div>
         </div></div>
         <div id="lon" class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Longitude:</label>
             <div v-if="call_email.location">
-                <input class="form-control" v-model="call_longitude" />
+                <!-- <input class="form-control" v-model="call_longitude" /> -->
+                <input type="number" min="-180" max="180" class="form-control" v-model.number="call_email.location.geometry.coordinates[0]" />
             </div>
         </div></div>
 
@@ -114,12 +116,12 @@ export default {
         },
         call_latitude: {
             handler: function(){
-                console.log('call_latitude: ' + this.call_latitude);
+                this.setMarkerLocation();
             }
         },
         call_longitude: {
             handler: function(){
-                console.log('call_longitude: ' + this.call_longitude);
+                this.setMarkerLocation();
             }
         }
     },
@@ -129,9 +131,13 @@ export default {
             this.initMap();
             this.setBaseLayer('osm');
             this.initAwesomplete();
-            if (this.call_latitude){
+            // if (this.call_latitude){
+            if (this.call_email.location && this.call_email.location && 
+                this.call_email.location.geometry && this.call_email.location.geometry.coordinates &&
+                this.call_email.location.geometry.coordinates.length > 0){
                 /* If there is a location loaded, add a marker to the map */
-                this.addMarker([this.call_latitude, this.call_longitude]);
+                // this.addMarker([this.call_latitude, this.call_longitude]);
+                this.addMarker([this.call_email.location.geometry.coordinates[1], this.call_email.location.geometry.coordinates[0]]);
                 this.refreshMarkerLocation();
             }        
             this.showHideAddressDetailsFields(false, false);
@@ -146,6 +152,24 @@ export default {
             setLocationAddressEmpty: 'setLocationAddressEmpty',
             setLocationDetailsFieldEmpty: 'setLocationDetailsFieldEmpty',
         }),
+        setMarkerLocation: function(){
+            let vm = this;
+            let lat = vm.call_email.location.geometry.coordinates[1];
+            let lng = vm.call_email.location.geometry.coordinates[0];
+            if (-90 < lat && lat < 90){
+                if(-180 < lng < 180){
+                    console.log(lat + ', ' + lng);
+                    let lnglat = [lng, lat];
+                    this.feature_marker.setLatLng({lat: lat, lng: lng });
+                    vm.map.flyTo({lat: lat, lng: lng}, 13,{
+                        animate: true,
+                        duration: 1.5
+                    });
+                    // this.refreshMarkerLocation();
+                    this.reverseGeocoding(lnglat);
+                }
+            }
+        },
         setMarkerIcon: function(){
             let vm = this;
             if (vm.feature_marker){
@@ -345,7 +369,8 @@ export default {
         /* this function retrieve the coordinates from vuex and applys it to the marker */
         refreshMarkerLocation: function(){
             if (this.call_email.location.geometry) {
-                this.feature_marker.setLatLng({lat: this.call_latitude, lng: this.call_longitude });
+                // this.feature_marker.setLatLng({lat: this.call_latitude, lng: this.call_longitude });
+                this.feature_marker.setLatLng({lat: this.call_email.location.geometry.coordinates[1], lng: this.call_email.location.geometry.coordinates[0] });
                 if (this.call_email.location.geometry) {
                     this.reverseGeocoding(this.call_email.location.geometry.coordinates);
                 }
