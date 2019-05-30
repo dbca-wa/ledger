@@ -1842,8 +1842,6 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                                               mooringarea__vessel_draft_limit__gte=vessel_draft,
                                               mooringarea__wkb_geometry__distance_lt=(ground.wkb_geometry, Distance(km=radius)))
 
-        print ("SITE QS")
-        print sites_qs
         #.filter(**context)
 
         # # If the pen type has been included in filtering and is not 'all' then loop through the sites selected.
@@ -3976,15 +3974,11 @@ class BookingRefundsReportView(views.APIView):
             filename = 'Booking Refunds Report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
             # Generate Report
             report = reports.booking_refunds(serializer.validated_data['start'],serializer.validated_data['end'])
-            print ("REFUND REPORT")
-            print (report)
 
 
             if report:
                 response = HttpResponse(FileWrapper(report), content_type='text/csv')
                 response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
-                print ("RESPONSE")
-                print (response)
                 return response
             else:
                 raise serializers.ValidationError('No report was generated.')
