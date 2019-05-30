@@ -45,10 +45,10 @@
                                   <div :class="'row top-buffer file-row-'+i">
                                       <div class="col-sm-4">
                                           <span v-if="f.file == null" class="btn btn-info btn-file pull-left">
-                                              Attach File <input type="file" :name="'file-upload-'+i" :class="'file-upload-'+i" @change="uploadFile('file-upload-'+i,f)"/>
+                                              Attach File <input type="file" :id="'workflow-file-upload-'+i" :name="'workflow-file-upload-'+i" :class="'workflow-file-upload-'+i" @change="uploadFile('workflow-file-upload-'+i,f)"/>
                                           </span>
                                           <span v-else class="btn btn-info btn-file pull-left">
-                                              Update File <input type="file" :name="'file-upload-'+i" :class="'file-upload-'+i" @change="uploadFile('file-upload-'+i,f)"/>
+                                              Update File <input type="file" :id="'workflow-file-upload-'+i" :name="'workflow-file-upload-'+i" :class="'workflow-file-upload-'+i" @change="uploadFile('workflow-file-upload-'+i,f)"/>
                                           </span>
                                       </div>
                                       <div class="col-sm-4">
@@ -134,12 +134,11 @@ export default {
         region: null,
       });
     },
-    ok: function() {
-            // if($(this.form).valid()){
-            //     vm.sendData();
-            // }
-        this.isModalOpen = false;
-        this.close();
+    ok: function () {
+        let vm =this;
+        if($(vm.form).valid()){
+            vm.sendData();
+        }
     },
     cancel: function() {
         // let vm = this;
@@ -163,17 +162,36 @@ export default {
         }
         this.attachAnother();
     },
+    sendData:function(){
+        let vm = this;
+        vm.errors = false;
+        let comms = new FormData(vm.form); 
+        vm.addingComms = true;
+        vm.$http.post(vm.url,comms,{
+            }).then((response)=>{
+                vm.addingComms = false;
+                vm.close();
+                //vm.$emit('refreshFromResponse',response);
+            },(error)=>{
+                vm.errors = true;
+                vm.addingComms = false;
+                vm.errorString = helpers.apiVueResourceError(error);
+            });
+    },
+    
     uploadFile(target,file_obj){
+        console.log($('.'+target)[0]);
         let vm = this;
         let _file = null;
-        var input = $('.'+target)[0];
-        if (input.files && input.files[0]) {
+        var file_input = $('.'+target)[0];
+
+        if (file_input.files && file_input.files[0]) {
             var reader = new FileReader();
-            reader.readAsDataURL(input.files[0]); 
+            reader.readAsDataURL(file_input.files[0]); 
             reader.onload = function(e) {
                 _file = e.target.result;
             };
-            _file = input.files[0];
+            _file = file_input.files[0];
         }
         console.log(file_obj)
         file_obj.file = _file;
@@ -192,6 +210,38 @@ export default {
             'file': null,
             'name': ''
         })
+    },
+    addFormValidations: function() {
+            let vm = this;
+            vm.validation_form = $(vm.form).validate({
+                rules: {
+                    // to:"required",
+                    // fromm:"required",
+                    // type:"required",
+                    // subject:"required",
+                    // text:"required",
+                },
+                messages: {
+                },
+                showErrors: function(errorMap, errorList) {
+                    $.each(this.validElements(), function(index, element) {
+                        var $element = $(element);
+                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+                    });
+                    // destroy tooltips on valid elements
+                    $("." + this.settings.validClass).tooltip("destroy");
+                    // add or update tooltips
+                    for (var i = 0; i < errorList.length; i++) {
+                        var error = errorList[i];
+                        $(error.element)
+                            .tooltip({
+                                trigger: "focus"
+                            })
+                            .attr("data-original-title", error.message)
+                            .parents('.form-group').addClass('has-error');
+                    }
+                }
+            });
     },
     
   },
@@ -216,7 +266,7 @@ export default {
   },
   mounted: function() {
     this.form = document.forms.forwardForm;
-        
+    this.addFormValidations();
   }
 };
 </script>
