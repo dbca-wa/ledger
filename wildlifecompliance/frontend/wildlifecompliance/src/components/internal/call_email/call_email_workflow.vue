@@ -196,12 +196,24 @@ export default {
         //         vm.addingComms = false;
         //         vm.errorString = helpers.apiVueResourceError(error);
         //     });
+        let region = () => {
+          return this.selectedRegion ? this.selectedRegion.id : null
+        } 
+        let district = () => {
+          this.selectedDistrict ? this.selectedDistrict : null
+        }
+        let documents = () => {
+          this.files[0].file ? this.files : []
+        }
+        console.log("documents");
+        console.log(documents);
         let post_url = '/api/call_email/' + this.call_email.id + '/add_workflow_log/'
         let res = await this.$http.post(post_url, { 
           'call_email': this.call_email.id,
-          'region': this.selectedRegion ? this.selectedRegion.id : null,
-          'district': this.selectedDistrict ? this.selectedDistrict : null,
-          'details': this.workflowDetails
+          'region': region,
+          'district': district,
+          'details': this.workflowDetails,
+          'documents': documents
           }
         )
         console.log(res)

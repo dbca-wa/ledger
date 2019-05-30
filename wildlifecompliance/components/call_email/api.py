@@ -481,11 +481,10 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 # request.data['staff'] = u'{}'.format(request.user.id)
                 serializer = ComplianceWorkflowLogEntrySerializer(data=request.data, partial=True)
                 serializer.is_valid(raise_exception=True)
-                workflow = serializer.save()
-                print(workflow)
+                workflow_entry = serializer.save()
                 # Save the files
                 for f in request.FILES:
-                    document = workflow.documents.create()
+                    document = workflow_entry.documents.create()
                     document.name = str(request.FILES[f])
                     document._file = request.FILES[f]
                     document.save()

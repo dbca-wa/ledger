@@ -401,7 +401,7 @@ class ComplianceUserAction(UserAction):
 
 
 class ComplianceWorkflowDocument(Document):
-    # log_entry = models.ForeignKey('ComplianceWorkflowLogEntry', related_name='workflow_documents')
+    workflow = models.ForeignKey('ComplianceWorkflowLogEntry', related_name='documents', null=True)
     _file = models.FileField(upload_to=update_compliance_workflow_log_filename)
     input_name = models.CharField(max_length=255, null=True, blank=True)
     # after initial submit prevent document from being deleted
@@ -421,7 +421,7 @@ class ComplianceWorkflowDocument(Document):
 
 
 class ComplianceWorkflowLogEntry(models.Model):
-    documents = models.ForeignKey(ComplianceWorkflowDocument, null=True)
+    # documents = models.ForeignKey(ComplianceWorkflowDocument, null=True)
     call_email = models.ForeignKey(CallEmail, related_name='workflow_logs', null=True)
     region = models.ForeignKey('RegionDistrict', related_name='callemail_region', null=True)
     district = models.ForeignKey('RegionDistrict', related_name='callemail_district', null=True)
