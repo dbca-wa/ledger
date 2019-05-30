@@ -11,7 +11,8 @@ from wildlifecompliance.components.call_email.models import (
     ComplianceLogEntry,
     Location,
     ComplianceUserAction,
-    MapLayer)
+    MapLayer,
+    ComplianceWorkflowLogEntry,)
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
@@ -315,6 +316,27 @@ class ComplianceLogEntrySerializer(CommunicationLogEntrySerializer):
         read_only_fields = (
             'customer',
         )
+
+    def get_documents(self, obj):
+        return [[d.name, d._file.url] for d in obj.documents.all()]
+
+
+class ComplianceWorkflowLogEntrySerializer(serializers.ModelSerializer):
+    documents = serializers.SerializerMethodField()
+    region = serializers.IntegerField(
+        required=False, 
+        write_only=True, 
+        allow_null=True
+    )
+    district = serializers.IntegerField(
+        required=False, 
+        write_only=True, 
+        allow_null=True
+    )
+
+    class Meta:
+        model = ComplianceWorkflowLogEntry
+        fields = '__all__'
 
     def get_documents(self, obj):
         return [[d.name, d._file.url] for d in obj.documents.all()]

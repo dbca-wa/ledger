@@ -7,33 +7,44 @@
 
                 <div class="col-sm-12">
                     
-                    <div class="form-group">
-                        <div class="row">
-                          <label class="col-sm-4">Region</label>
-                          <select class="form-control" @change.prevent="updateDistricts" v-model="selectedRegion">
-                            <option  v-for="option in regions" :value="option" v-bind:key="option.id">
-                              {{ option.display_name }} 
-                            </option>
-                          </select>
-                        </div>
-                        <div class="row">
-                          <label>District</label>
-                          <select class="form-control" v-model="call_email.district">
-                            <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
-                              {{ option.display_name }} 
-                            </option>
-                          </select>
-                        </div>
-                        
-                        <div class="row">
+                        <div class="form-group">
+                          <div class="row">
                             <div class="col-sm-3">
-                                <label class="control-label pull-left" for="details">Details</label>
+                              <label>Region</label>
                             </div>
-                            <div class="col-sm-4">
-                                <textarea placeholder="write text" id="details" v-model="call_email.forward_details"/>
+                            <div class="col-sm-9">
+                              <select class="form-control col-sm-9" @change.prevent="updateDistricts" v-model="selectedRegion">
+                                <option  v-for="option in regions" :value="option" v-bind:key="option.id">
+                                  {{ option.display_name }} 
+                                </option>
+                              </select>
                             </div>
+                          </div>
                         </div>
-                    </div>
+                        <div class="form-group">
+                          <div class="row">
+                            <div class="col-sm-3">
+                              <label>District</label>
+                            </div>
+                            <div class="col-sm-9">
+                              <select class="form-control" v-model="selectedDistrict">
+                                <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
+                                  {{ option.display_name }} 
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <div class="row">
+                              <div class="col-sm-3">
+                                  <label class="control-label pull-left" for="details">Details</label>
+                              </div>
+                              <div class="col-sm-6">
+                                  <textarea class="form-control" placeholder="add details" id="details" v-model="workflowDetails"/>
+                              </div>
+                          </div>
+                        </div>
                   <form class="form-horizontal" name="forwardForm">
                     <div class="form-group">
                       <div class="row">
@@ -95,6 +106,9 @@ export default {
       regionDistricts: [],
       availableDistricts: [],
       selectedRegion: null,
+      selectedDistrict: null,
+      workflowDetails: '',
+      
       //files: [],
       files: [
                 {
@@ -134,11 +148,13 @@ export default {
         region: null,
       });
     },
-    ok: function () {
-        let vm =this;
-        if($(vm.form).valid()){
-            vm.sendData();
-        }
+    ok: async function () {
+        // let vm =this;
+        // if($(vm.form).valid()){
+        //     vm.sendData();
+        // }
+        await this.sendData();
+        this.close();
     },
     cancel: function() {
         // let vm = this;
@@ -161,22 +177,34 @@ export default {
             });
         }
         this.attachAnother();
+        this.selectedRegion = null;
+        this.selectedDistrict = null;
+        this.workflowDetails = '';
     },
-    sendData:function(){
-        let vm = this;
-        vm.errors = false;
-        let comms = new FormData(vm.form); 
-        vm.addingComms = true;
-        vm.$http.post(vm.url,comms,{
-            }).then((response)=>{
-                vm.addingComms = false;
-                vm.close();
-                //vm.$emit('refreshFromResponse',response);
-            },(error)=>{
-                vm.errors = true;
-                vm.addingComms = false;
-                vm.errorString = helpers.apiVueResourceError(error);
-            });
+    sendData: async function(){
+        // let vm = this;
+        // vm.errors = false;
+        // let comms = new FormData(vm.form); 
+        // vm.addingComms = true;
+        // vm.$http.post(vm.url,comms,{
+        //     }).then((response)=>{
+        //         vm.addingComms = false;
+        //         vm.close();
+        //         //vm.$emit('refreshFromResponse',response);
+        //     },(error)=>{
+        //         vm.errors = true;
+        //         vm.addingComms = false;
+        //         vm.errorString = helpers.apiVueResourceError(error);
+        //     });
+        let post_url = '/api/call_email/' + this.call_email.id + '/add_workflow_log/'
+        let res = await this.$http.post(post_url, { 
+          'call_email': this.call_email.id,
+          'region': this.selectedRegion ? this.selectedRegion.id : null,
+          'district': this.selectedDistrict ? this.selectedDistrict : null,
+          'details': this.workflowDetails
+          }
+        )
+        console.log(res)
     },
     
     uploadFile(target,file_obj){

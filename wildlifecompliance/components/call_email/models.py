@@ -12,18 +12,23 @@ from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document
+from wildlifecompliance.components.users.models import RegionDistrict
 
 
 logger = logging.getLogger(__name__)
 
 
 def update_compliance_doc_filename(instance, filename):
-    return 'wildlifecompliance/compliance/{}/documents/{}'.format(
+    return 'compliancemanagement/call_email/{}/documents/{}'.format(
         instance.call_email.id, filename)
 
 
 def update_compliance_comms_log_filename(instance, filename):
-    return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
+    return 'compliancemanagement/call_email/{}/communications/{}/{}'.format(
+        instance.log_entry.call_email.id, instance.id, filename)
+
+def update_compliance_workflow_log_filename(instance, filename):
+    return 'compliancemanagement/call_email/{}/workflow/{}/{}'.format(
         instance.log_entry.call_email.id, instance.id, filename)
 
 
@@ -393,3 +398,35 @@ class ComplianceUserAction(UserAction):
         )
 
     call_email = models.ForeignKey(CallEmail, related_name='action_logs')
+
+
+class ComplianceWorkflowDocument(Document):
+    # log_entry = models.ForeignKey('ComplianceWorkflowLogEntry', related_name='workflow_documents')
+    _file = models.FileField(upload_to=update_compliance_workflow_log_filename)
+    input_name = models.CharField(max_length=255, null=True, blank=True)
+    # after initial submit prevent document from being deleted
+    can_delete = models.BooleanField(default=True)
+
+    def delete(self):
+        if self.can_delete:
+            return super(ComplianceWorkflowDocument, self).delete()
+        logger.info(
+            'Cannot delete existing document object after application has been submitted (including document submitted before\
+            application pushback to status Draft): {}'.format(
+                self.name)
+        )
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+
+class ComplianceWorkflowLogEntry(models.Model):
+    documents = models.ForeignKey(ComplianceWorkflowDocument, null=True)
+    call_email = models.ForeignKey(CallEmail, related_name='workflow_logs', null=True)
+    region = models.ForeignKey('RegionDistrict', related_name='callemail_region', null=True)
+    district = models.ForeignKey('RegionDistrict', related_name='callemail_district', null=True)
+    details = models.TextField(blank=True)
+    created = models.DateTimeField(auto_now_add=True, null=False, blank=False)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
