@@ -83,7 +83,7 @@
                 <div class="col-sm-12 list-group collapse" :id="'r'+r.id">
                   <div v-for="d in r.districts">
                   <div  style="padding-left: 30px;" class="form-check list-group-item col-sm-12">
-                    <input @click="clickDistrict($event, d)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" :disabled="!canEditActivities" data-parsley-required />
+                    <input @click="clickDistrict($event, d, r)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" :disabled="!canEditActivities" data-parsley-required />
                     {{ d.name }}
                    <a data-toggle="collapse" :href="'#'+'d'+d.id" role="button" aria-expanded="true" aria controls="d.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> 
                   </div>
@@ -716,8 +716,9 @@ export default {
               }
             }
           },
-          clickDistrict: function(e, d){
+          clickDistrict: function(e, d, r){
             let vm=this;
+            var original_region=r;
             var checked=e.target.checked;
             if(checked){
               for(var i=0; i<d.land_parks.length; i++){
@@ -732,6 +733,7 @@ export default {
               }
             }
             else{
+              if(e.target.indeterminate==false){
               for(var i=0; i<d.land_parks.length; i++){
                 var index=this.selected_parks.indexOf(d.land_parks[i].id);
                 if(index!=-1){
@@ -742,7 +744,73 @@ export default {
                 }
               }
             }
+            }
+            this.handleDistrictChange(e,d,original_region);
           },
+
+          handleDistrictChange: function(e,d, r){
+            console.log('here')
+            var inder_state=false;
+            var checked_state=false;
+            var checked_all=true;
+            var unchecked_all=true;
+            var elem=$("#region"+r.id)[0]
+            inder_state=elem.indeterminate
+            checked_state=elem.checked
+            if(e.target.checked){
+              if(!checked_state){
+                for(var i=0; i<r.districts.length; i++){
+                  var district = $("#district"+r.districts[i].id)[0]
+                  if(district.checked==false){
+                    checked_all=false;
+                  }
+                }
+                if(checked_all){
+                  elem.indeterminate=false;
+                  elem.checked=true;
+                  var index=this.selected_regions.indexOf(r.id);
+                  if(index==-1){
+                    this.selected_regions.push(r.id)
+                  }
+                }
+                else{
+                  elem.indeterminate=true;
+                  elem.checked=false;
+                }
+              }              
+            }
+            else{//if unselected
+              if(e.target.indeterminate==false){
+              for(var i=0; i<r.districts.length; i++){
+                  var district = $("#district"+r.districts[i].id)[0]
+                  if(district.checked==true){
+                    unchecked_all=false;
+                  }
+                }
+                if(unchecked_all){
+                  elem.indeterminate=false;
+                  elem.checked=false;
+                  var index=this.selected_regions.indexOf(r.id);
+                  if(index>-1){
+                    this.selected_regions.splice(index,1)
+                  }
+                }
+                else{
+                  var index=this.selected_regions.indexOf(r.id);
+                  if(index>-1){
+                    this.selected_regions.splice(index,1)
+                  }
+                  elem.indeterminate=true;
+                  elem.checked=false;
+                }
+              }
+              else{
+                elem.indeterminate=true;
+                  elem.checked=false;
+              }
+            }
+          },
+          
 
           clickPark: function(e,p,d){
             var inder_state=false;
@@ -798,6 +866,9 @@ export default {
                   elem.checked=false;
                 }
             }
+            var event = document.createEvent('HTMLEvents');
+            event.initEvent('click', true, true);
+            elem.dispatchEvent(event);
           },
           
           find_recurring: function(array){
