@@ -113,6 +113,8 @@ def abort_booking_view(request, *args, **kwargs):
         change_id = request.GET.get('change_id',None)
         change_to = None
         booking = utils.get_session_booking(request.session)
+        arrival = booking.arrival
+        departure = booking.departure
         if change_ratis:
             try:
                 c_id = Campground.objects.get(ratis_id=change_ratis).id
@@ -131,7 +133,7 @@ def abort_booking_view(request, *args, **kwargs):
         utils.delete_session_booking(request.session)
         if change:
             # Redirect to the availability screen
-            return redirect(reverse('campsite_availaiblity_selector') + '?site_id={}'.format(c_id)) 
+            return redirect(reverse('campsite_availaiblity_selector') + '?site_id={}&arrival={}&departure={}'.format(c_id, arrival.strftime('%Y/%m/%d'), departure.strftime('%Y/%m/%d')))
         else:
             # Redirect to explore parks
             return redirect(settings.EXPLORE_PARKS_URL+'/park-stay')

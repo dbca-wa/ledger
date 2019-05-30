@@ -5,22 +5,19 @@ import 'foundation-datepicker/css/foundation-datepicker.css';
 
 import Vue from 'vue';
 import availability from './availability';
+Vue.config.productionTip = (process.env.NODE_ENV === 'production');
 
 require('custom-event-polyfill');
 
 
-var availabilityApp = function (target, parkstayUrl, siteId, useAdminApi) {
-
-    Vue.config.productionTip = (process.env.NODE_ENV === 'production');
-
-    if (!parkstayUrl) {
-        parkstayUrl = process.env.PARKSTAY_URL || '';
-    }
-    siteId = siteId || 0;
-    useAdminApi = useAdminApi || false;
-
+var availabilityApp = function (target, args) {
+    args = args || {};
     var options = {
-        props: {parkstayUrl, siteId, useAdminApi}
+        props: {
+            parkstayUrl: args.parkstayUrl || '',
+            siteId: args.siteId || 0,
+            useAdminApi: args.useAdminApi || false,
+        }
     };
 
     /* eslint-disable no-new */
