@@ -98,6 +98,7 @@ class ReturnTypeSerializer(serializers.ModelSerializer):
             'id',
             'resources',
             'data_format',
+            'name',
         )
 
 
