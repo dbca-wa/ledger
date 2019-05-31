@@ -15,7 +15,10 @@ from wildlifecompliance.components.licences.serializers import (
     DTInternalWildlifeLicenceSerializer,
     DTExternalWildlifeLicenceSerializer
 )
-from wildlifecompliance.components.applications.models import Application
+from wildlifecompliance.components.applications.models import (
+    Application,
+    ApplicationSelectedActivity
+)
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
@@ -259,11 +262,51 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
     serializer_class = LicenceCategorySerializer
 
     def list(self, request, *args, **kwargs):
-        print(self.request)
-        print(self.request.GET)
-        print(self.request.GET.get('org_applicant', None))
+        from wildlifecompliance.components.licences.models import LicencePurpose
+
         queryset = self.get_queryset()
-        serializer = LicenceCategorySerializer(queryset, many=True, context={'request':request})
+        only_purpose_records = None
+        application_type = request.GET.get('application_type')
+
+        active_applications = Application.get_active_licence_applications(request)
+        if active_applications.count():
+            # Including inactive licences
+            all_applications = Application.get_request_user_applications(request).distinct()
+            active_category_ids = active_applications.values_list(
+                'selected_activities__licence_activity__licence_category_id',
+                flat=True
+            )
+            active_purpose_ids = all_applications.values_list(
+                'licence_purposes__id',
+                flat=True
+            ).exclude(
+                selected_activities__processing_status__in=[
+                    ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
+                    ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED,
+                ]
+            )
+
+            if application_type in [
+                Application.APPLICATION_TYPE_ACTIVITY,
+                Application.APPLICATION_TYPE_NEW_LICENCE,
+            ]:
+                only_purpose_records = LicencePurpose.objects.exclude(
+                    id__in=active_purpose_ids
+                )
+            elif application_type == Application.APPLICATION_TYPE_AMENDMENT:
+                amendable_purpose_ids = active_applications.values_list(
+                    'licence_purposes__id',
+                    flat=True
+                )
+                queryset = queryset.filter(id__in=active_category_ids)
+                only_purpose_records = LicencePurpose.objects.filter(
+                    id__in=amendable_purpose_ids,
+                )
+
+        serializer = LicenceCategorySerializer(queryset, many=True, context={
+            'request': request,
+            'purpose_records': only_purpose_records
+        })
         return Response(serializer.data)
 
     def get_serializer_context(self):

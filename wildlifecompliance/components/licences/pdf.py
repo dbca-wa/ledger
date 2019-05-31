@@ -266,6 +266,17 @@ def _create_licence(licence_buffer, licence, application):
         ), styles['Left'],) for selected_activity in licence.current_activities],
         bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
     elements.append(conditionList)
+
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph('Purposes', styles['BoldLeft']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    purposeList = ListFlowable(
+        [[Paragraph("{name}".format(
+            name=purpose.name,
+        ), styles['Left'],) for purpose in selected_activity.purposes] for selected_activity in licence.current_activities],
+        bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
+    elements.append(purposeList)
     elements.append(PageBreak())
 
     for selected_activity in licence.current_activities:
@@ -505,7 +516,7 @@ def create_licence_doc(licence, application):
 
     _create_licence(licence_buffer, licence, application)
     filename = 'licence-{}.pdf'.format(licence.id)
-    document = LicenceDocument.objects.create(licence=licence, name=filename)
+    document = LicenceDocument.objects.create(name=filename)
     document._file.save(filename, File(licence_buffer), save=True)
 
     licence_buffer.close()

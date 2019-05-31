@@ -16,7 +16,7 @@
                                     <p><strong>Note: If you are applying for a Taking licence, it cannot be applied for on behalf of an organisation.</strong></p>
                                     <div class="radio">
                                         <label>
-                                        <input type="radio"  name="behalf_of_org" v-model="yourself" value="yourself"> On behalf of yourself
+                                        <input type="radio"  name="behalf_of_org" v-model="org_applicant" value=""> On behalf of yourself
                                         </label>
                                     </div>
                                     <div v-for="org in current_user.wildlifecompliance_organisations" class="radio">
@@ -30,7 +30,7 @@
                             </div>
                            
                             <div class="col-sm-12">
-                                <button :disabled="org_applicant == '' && yourself == ''" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
+                                <button :disabled="org_applicant === null" @click.prevent="submit()" class="btn btn-primary pull-right">Continue</button>
                             </div>
                         </form>
                     </div>
@@ -54,8 +54,7 @@ export default {
         licence_select : this.$route.params.licence_select,
         "application": null,
         agent: {},
-        org_applicant: '',
-        yourself: '',
+        org_applicant: null,
         organisations:null,
 
         current_user: {
@@ -74,7 +73,7 @@ export default {
     },
     org: function() {
         let vm = this;
-        if (vm.org_applicant != '' || vm.org_applicant != 'submitter'){
+        if (vm.org_applicant && !isNaN(vm.org_applicant)) {
             return vm.current_user.wildlifecompliance_organisations.find(org => parseInt(org.id) === parseInt(vm.org_applicant)).name;
         }
         return '';
@@ -83,14 +82,13 @@ export default {
   methods: {
     submit: function() {
         let vm = this;
-        window.v_org_applicant = vm.org_applicant;
-         vm.$router.push({
-                      name:"apply_application_licence",
-                      params:{
-                        licence_select:vm.licence_select,
-                        org_select:vm.org_applicant
-                      }
-                  });
+        vm.$router.push({
+            name:"apply_application",
+            params: {
+                licence_select: vm.licence_select,
+                org_select: vm.org_applicant
+            }
+        });
     },
     
     fetchOrgContact:function (){

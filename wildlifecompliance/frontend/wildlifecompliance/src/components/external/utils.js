@@ -63,9 +63,9 @@ export default {
             });
         });
     },
-    fetchLicenceAvailablePurposes: function(data){
+    fetchLicenceAvailablePurposes: function(params){
         return new Promise ((resolve,reject) => {
-            Vue.http.get(helpers.add_endpoint_join(api.licence_available_purposes,''), JSON.stringify(data), {emulateJSON:true}).then((response) => {
+            Vue.http.get(api.licence_available_purposes, {"params": params}).then((response) => {
                 resolve(response.body);
             },
             (error) => {
@@ -78,6 +78,16 @@ export default {
             Vue.http.get(helpers.add_endpoint_json(api.organisations,id)).then((response) => {
                 resolve(response.body);
                 console.log(response.body)
+            },
+            (error) => {
+                reject(error);
+            });
+        });
+    },
+    fetchCurrentActiveLicenceApplication: function(params){
+        return new Promise ((resolve,reject) => {
+            Vue.http.get(`${api.applications}active_licence_application`, {"params": params}).then((response) => {
+                resolve(response.body);
             },
             (error) => {
                 reject(error);

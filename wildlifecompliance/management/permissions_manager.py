@@ -7,6 +7,7 @@ from django.db import transaction
 from ledger.accounts.utils import get_app_label
 from wildlifecompliance.components.licences.models import LicenceActivity
 from wildlifecompliance.components.applications.models import ActivityPermissionGroup
+from wildlifecompliance.components.users.models import CompliancePermissionGroup
 
 logger = logging.getLogger(__name__)
 
@@ -183,6 +184,82 @@ class CustomGroupCollector(PermissionCollector):
         return actual
 
 
+class ComplianceGroupCollector(PermissionCollector):
+
+    COLLECTION_SOURCE = 'COMPLIANCE_PERMISSION_GROUPS'
+
+    def get_or_create_group(self, group_name, config, activity=None):
+        created = None
+        if settings.GROUP_PREFIX and settings.GROUP_PREFIX not in group_name:
+            group_name = "{prefix} - {name}".format(
+                prefix=settings.GROUP_PREFIX,
+                name=group_name
+            )
+        group = CompliancePermissionGroup.objects.filter(name=group_name).first()
+        if not group:
+            base_group = Group.objects.filter(name=group_name).first()
+            if base_group:
+                group = created = CompliancePermissionGroup.objects.create(
+                    group_ptr_id=base_group.id,
+                    name=base_group.name
+                )
+            else:
+                # Check if groups with the same permissions (but a different name) already exist.
+                # Do not re-create groups that have been manually re-named by admins.
+                if config['permissions']:
+                    groups_by_permission = CompliancePermissionGroup.objects.filter(permissions__codename__in=config['permissions'])
+                    # if activity is not None:
+                    #     groups_by_permission = groups_by_permission.filter(
+                    #         licence_activities__id=activity.id)
+                    group = groups_by_permission.first()
+                if not group:
+                    group = created = CompliancePermissionGroup.objects.create(name=group_name)
+
+        if created:
+            logger.info("Created compliance group: %s" % (group_name))
+
+        if config['permissions'] and created:
+            for permission_codename in config['permissions']:
+                try:
+                    permission = Permission.objects.get(
+                        codename=permission_codename
+                    )
+
+                    group.permissions.add(permission)
+                    logger.info("Assigned permission {permission_name} to group: {group}".format(
+                        permission_name=permission_codename,
+                        group=group_name
+                    ))
+                except ObjectDoesNotExist:
+                    logger.error("Cannot assign non-existent permission {permission_name} to: {group}".format(
+                        permission_name=permission_codename,
+                        group=group_name
+                    ))
+                    raise 
+
+        return group
+
+    def get_or_create_models(self):
+        """
+        A mapping of group name to group instance. If the group does not exist, it is created.
+        """
+        default_groups = self.default_objects()
+        actual = {}
+
+        for group_name, config in default_groups.items():
+            group = self.get_or_create_group(group_name, config)
+
+            # if config['per_activity']:
+            #     for activity in LicenceActivity.objects.all():
+            #         activity_group_name = "{}: {}".format(group_name, activity.name)
+            #         group = self.get_or_create_group(activity_group_name, config, activity)
+            #         group.licence_activities.add(activity)
+            # else:
+            #     group = self.get_or_create_group(group_name, config)
+
+        return actual
+
+
 class CollectorManager(object):
 
     def __init__(self):
@@ -195,3 +272,9 @@ class CollectorManager(object):
             logger.info("Verifying presence of custom groups in the database...")
             CustomGroupCollector().get_or_create_models()
             logger.info("Finished collecting custom groups and permissions.")
+            
+            # logger.info("Verifying presence of compliance group permissions in the database...")
+            # CompliancePermissionCollector().get_or_create_models()
+            logger.info("Verifying presence of compliance groups in the database...")
+            ComplianceGroupCollector().get_or_create_models()
+            logger.info("Finished collecting compliance groups.")
