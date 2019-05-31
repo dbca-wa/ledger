@@ -129,6 +129,33 @@ def flush_checkout_session(session):
             continue
 
 
+def set_session_activity(session, activity):
+    session['wc_activity'] = activity.id
+    session.modified = True
+
+
+def get_session_activity(session):
+    from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
+    try:
+        activity_id = session['wc_activity']
+    except KeyError:
+        raise Exception('Session does not contain Activity ID')
+
+    try:
+        return ApplicationSelectedActivity.objects.get(id=activity_id)
+    except ApplicationSelectedActivity.DoesNotExist:
+        raise Exception(
+            'Activity ID not found: {}'.format(activity_id))
+
+
+def delete_session_activity(session):
+    try:
+        del session['wc_activity']
+        session.modified = True
+    except KeyError:
+        pass
+
+
 def bind_application_to_invoice(request, application, invoice_ref):
     from wildlifecompliance.components.applications.models import ApplicationInvoice
     logger = logging.getLogger('application_checkout')
