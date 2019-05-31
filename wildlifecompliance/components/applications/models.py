@@ -1188,6 +1188,10 @@ class Application(RevisionedMixin):
 
     def get_schema_fields(self, schema_json):
         fields = {}
+
+        print('\n\nschema_json')
+        print(schema_json)
+        print('schema_json\n\n')
         def iterate_children(schema_group, fields, parent={}, parent_type='', condition={}, activity_id=None):
             children_keys = [
                 'children',
@@ -1225,6 +1229,9 @@ class Application(RevisionedMixin):
                 condition = {}
 
         iterate_children(schema_json, fields)
+        print('\n\nfields')
+        print(fields)
+        print('fields\n\n')
         return fields
 
     def get_visible_form_data_tree(self, form_data_records=None):
