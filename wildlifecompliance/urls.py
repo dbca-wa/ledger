@@ -124,7 +124,7 @@ urlpatterns = [
     url(r'^application_submit/submit_with_invoice/',
         ApplicationSuccessView.as_view(),
         name='external-application-success-invoice'),
-    url(r'^application_submit/finish_licence_fee_payment/',
+    url(r'^application/finish_licence_fee_payment/',
         LicenceFeeSuccessView.as_view(),
         name='external-licence-fee-success-invoice'),
 
