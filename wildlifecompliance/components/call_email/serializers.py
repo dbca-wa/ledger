@@ -19,6 +19,56 @@ from django.core.exceptions import ValidationError
 from wildlifecompliance.components.users.serializers import UserAddressSerializer
 
 
+class SaveEmailUserSerializer(serializers.ModelSerializer):
+    residential_address = UserAddressSerializer(read_only=True)
+    residential_address_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
+
+    # residential_address = UserAddressSerializer()
+
+    # def create(self, validated_data):
+    #     return super(SaveEmailUserSerializer, self).create(validated_data)
+
+    # def update(self, instance, validated_data):
+    #     return super(SaveEmailUserSerializer, self).update(instance, validated_data)
+
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'email',
+            'first_name',
+            'last_name',
+            'residential_address',
+            'residential_address_id',
+            'phone_number',
+            'mobile_number',
+            'organisation',
+            'dob',
+        )
+        read_only_fields = (
+            # 'id',
+            'residential_address',
+        )
+
+
+class EmailUserSerializer(serializers.ModelSerializer):
+    residential_address = UserAddressSerializer()
+
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'email',
+            'first_name',
+            'last_name',
+            'residential_address',
+            'phone_number',
+            'mobile_number',
+            'organisation',
+            'dob',
+        )
+
+
 class ComplianceFormDataRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComplianceFormDataRecord
@@ -64,7 +114,7 @@ class ReferrerSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'name', )
 
 
-class LocationSerializerMinimum(GeoFeatureModelSerializer):
+class LocationSerializerOptimized(GeoFeatureModelSerializer):
     class Meta:
         model = Location
         geo_field = 'wkb_geometry'
@@ -117,14 +167,12 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
     location = LocationSerializer(read_only=True)
     report_type = ReportTypeSerializer(read_only=True)
     referrer = ReferrerSerializer(read_only=True)
-    classification_id = serializers.IntegerField(
-        required=False, write_only=True, allow_null=True)
-    report_type_id = serializers.IntegerField(
-        required=False, write_only=True, allow_null=True)        
-    location_id = serializers.IntegerField(
-        required=False, write_only=True, allow_null=True)        
-    referrer_id = serializers.IntegerField(
-        required=False, write_only=True, allow_null=True)        
+    email_user = EmailUserSerializer(read_only=True)
+    classification_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
+    report_type_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
+    location_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
+    referrer_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
+    email_user_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
 
     class Meta:
         model = CallEmail
@@ -153,6 +201,8 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             'occurrence_time_to',
             'advice_given',
             'advice_details',
+            'email_user',
+            'email_user_id',
         )
         read_only_fields = (
             'id', 
@@ -161,6 +211,7 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             'classification',
             'report_type',
             'referrer',
+            'email_user',
             )
 
 
@@ -182,7 +233,7 @@ class ReportTypeSchemaSerializer(serializers.ModelSerializer):
 
 class CallEmailOptimisedSerializer(serializers.ModelSerializer):
     classification = ClassificationSerializer(read_only=True)
-    location = LocationSerializerMinimum()
+    location = LocationSerializerOptimized()
     report_type = ReportTypeSerializer(read_only=True)
 
     class Meta:
@@ -197,29 +248,10 @@ class CallEmailOptimisedSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', )
 
 
-class EmailUserSerializer(serializers.ModelSerializer):
-    residential_address = UserAddressSerializer()
-
-    class Meta:
-        model = EmailUser
-        fields = (
-            'id',
-            'email',
-            'first_name',
-            'last_name',
-            'residential_address',
-            'phone_number',
-            'mobile_number',
-            'organisation',
-            'dob',
-        )
-
-
 class CallEmailSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source='get_status_display')
     classification = ClassificationSerializer(read_only=True)
-    lodgement_date = serializers.CharField(
-        source='lodged_on')
+    lodgement_date = serializers.CharField(source='lodged_on')
     report_type = ReportTypeSerializer(read_only=True)
     location = LocationSerializer(read_only=True)
     referrer = ReferrerSerializer(read_only=True)

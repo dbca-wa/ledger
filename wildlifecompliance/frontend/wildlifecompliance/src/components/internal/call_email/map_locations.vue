@@ -46,6 +46,11 @@
                 <img id="basemap_sat" src="../../../assets/img/satellite_icon.jpg" @click="setBaseLayer('sat')" />
                 <img id="basemap_osm" src="../../../assets/img/map_icon.png" @click="setBaseLayer('osm')" />
             </div>
+            <div id="cursor-location">
+                <div v-if="cursor_location">
+                    <span id="cursor-location-lat">{{ cursor_location.lat.toFixed(5) }}, {{ cursor_location.lng.toFixed(5) }}</span>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -200,6 +205,7 @@ module.exports = {
 
             classification_types: [],
             status_choices: [],
+            cursor_location: null,
         }
     },
     created: async function() {
@@ -360,6 +366,12 @@ module.exports = {
         onClick(e){
             console.log(e.latlng.toString());
         },
+        onMouseMove: function(e){
+            this.cursor_location = this.map.mouseEventToLatLng(e.originalEvent);
+        },
+        onMouseOut: function(e){
+            this.cursor_location = null;
+        },
         initMap(){
             console.log('Start initMap()');
 
@@ -381,7 +393,7 @@ module.exports = {
             );
 
             this.popup = L.popup();
-            this.map.on('click', this.onClick);
+            this.map.on('click', this.onClick).on('mousemove', this.onMouseMove).on('mouseout', this.onMouseOut);
             this.setBaseLayer('osm');
             this.addOtherLayers();
             this.map.addLayer(this.mcg);
@@ -396,7 +408,7 @@ module.exports = {
                     let l = L.tileLayer.wmts(
                         'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                         {
-                            layer: layers[i].layer_name,
+                            layer: layers[i].layer_name.trim(),
                             tilematrixSet: 'mercator',
                             format: 'image/png',
                         }
@@ -559,15 +571,16 @@ module.exports = {
     top: 10px;
     right: 10px;
     z-index: 400;
-    -moz-box-shadow: 5px 5px 5px #555;
-    -webkit-box-shadow: 5px 5px 5px #555;
-    box-shadow: 5px 5px 5px #555;
+    -moz-box-shadow: 3px 3px 3px #777;
+    -webkit-box-shadow: 3px 3px 3px #777;
+    box-shadow: 3px 3px 3px #777;
     -moz-filter: brightness(1.0);
     -webkit-filter: brightness(1.0);
     filter: brightness(1.0);
+    border: 2px white solid;
 }
 #basemap_sat,#basemap_osm {
-    border-radius: 5px;
+    /* border-radius: 5px; */
 }
 #basemap-button:hover {
     cursor: pointer;
@@ -619,5 +632,14 @@ module.exports = {
     display: flex;
     justify-content: space-evenly;
     padding: 10px;
+}
+#cursor-location {
+    position: absolute;
+    bottom: 0px;
+    color: white;
+    background-color: rgba(37, 45, 51, 0.6);
+    z-index: 1100;
+    font-size: 0.9em;
+    padding: 5px;
 }
 </style>
