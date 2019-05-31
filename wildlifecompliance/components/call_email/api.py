@@ -474,6 +474,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def add_workflow_log(self, request, *args, **kwargs):
+        print("request.data")
+        print(request.data)
         try:
             with transaction.atomic():
                 instance = self.get_object()

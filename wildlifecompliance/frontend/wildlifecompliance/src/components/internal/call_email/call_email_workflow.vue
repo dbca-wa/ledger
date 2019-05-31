@@ -125,6 +125,15 @@ export default {
     ...mapGetters('callemailStore', {
       call_email: "call_email",
     }),
+    region: function() {
+      return this.selectedRegion ? this.selectedRegion.id : null;
+    }, 
+    district: function() {
+      return this.selectedDistrict ? this.selectedDistrict : null
+    },
+    documents: function() {
+      return this.files[0].file ? this.files : [];
+    },
   },
   filters: {
     formatDate: function(data) {
@@ -196,24 +205,14 @@ export default {
         //         vm.addingComms = false;
         //         vm.errorString = helpers.apiVueResourceError(error);
         //     });
-        let region = () => {
-          return this.selectedRegion ? this.selectedRegion.id : null
-        } 
-        let district = () => {
-          this.selectedDistrict ? this.selectedDistrict : null
-        }
-        let documents = () => {
-          this.files[0].file ? this.files : []
-        }
-        console.log("documents");
-        console.log(documents);
+        
         let post_url = '/api/call_email/' + this.call_email.id + '/add_workflow_log/'
         let res = await this.$http.post(post_url, { 
           'call_email': this.call_email.id,
-          'region': region,
-          'district': district,
+          'region': this.region,
+          'district': this.district,
           'details': this.workflowDetails,
-          'documents': documents
+          'documents': this.documents
           }
         )
         console.log(res)
