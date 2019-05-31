@@ -153,13 +153,11 @@ class ReportTypeSerializer(serializers.ModelSerializer):
             'id', 
             'report_type',
             'version',
-            #'schema',
         )
         read_only_fields = (
             'id', 
             'report_type',
             'version',
-            #'schema',
              )
 
 

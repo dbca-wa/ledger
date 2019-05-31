@@ -121,12 +121,12 @@
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-3">{{ occurrenceTimeLabel }}</label>
                   <div class="col-sm-3">
-                    <input class="form-control" v-model="call_email.occurrence_time_from"/>
+                    <input type="time" class="form-control" v-model="call_email.occurrence_time_from"/>
                   </div>
                   <div v-if="call_email.occurrence_from_to">
                       <label class="col-sm-3">Occurrence time to</label>
                       <div class="col-sm-3">
-                        <input class="form-control" v-model="call_email.occurrence_time_to"/>
+                        <input type="time" class="form-control" v-model="call_email.occurrence_time_to"/>
                       </div>
                   </div>
                 </div></div>
