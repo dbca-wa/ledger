@@ -161,10 +161,20 @@ export const callemailStore = {
                 console.log(state.call_email.report_type);
             }
         },
-        updateEmailUser(state, emailUser){
-            console.log("updateEmailUser");
-            console.log(emailUser);
-            Vue.set(state.call_email, 'email_user', emailUser);
+        updateEmailUserEmpty(state){
+            let email_user_empty = {
+                first_name: '',
+                last_name: '',
+                dob: null,
+                residential_address: {
+                    line1: '',
+                    locality: '',
+                    state: '',
+                    postcode: '',
+                    country: ''
+                }
+            };
+            Vue.set(state.call_email, 'email_user', email_user_empty);
         },
         updateResidentialAddress(state, address){
             console.log("updateResidentialAddress");
@@ -290,10 +300,10 @@ export const callemailStore = {
             console.log("setSchema");
             commit("updateSchema", schema);
         },
-        setEmailUser({commit}, emailUser){
-            commit("updateEmailUser", emailUser);
+        setEmailUserEmpty({ commit, }){
+            commit("updateEmailUserEmpty");
         },
-        setResidentialAddress({commit}, address){
+        setResidentialAddress({ commit }, address){
             commit("updateResidentialAddress", address);
         },
         setLocation({ commit, }, location) {

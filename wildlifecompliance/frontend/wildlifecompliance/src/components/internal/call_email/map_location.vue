@@ -14,6 +14,9 @@
                     <span id="cursor-location-lat">{{ cursor_location.lat.toFixed(5) }}, {{ cursor_location.lng.toFixed(5) }}</span>
                 </div>
             </div>
+            <div id="centre_marker" @click.stop="setMarkerCentre()">
+                CenterMarker
+            </div>
         </div>
 
         <div id="lat" class="col-sm-4 form-group"><div class="row">
@@ -152,6 +155,12 @@ export default {
             setLocationAddressEmpty: 'setLocationAddressEmpty',
             setLocationDetailsFieldEmpty: 'setLocationDetailsFieldEmpty',
         }),
+        setMarkerCentre: function(){
+            let vm = this;
+            let lat = vm.call_email.location.geometry.coordinates[1];
+            let lng = vm.call_email.location.geometry.coordinates[0];
+            vm.map.flyTo({lat: lat, lng: lng}, 12, { animate: true, duration: 1.5 });
+        },
         setMarkerLocation: function(){
             let vm = this;
             let lat = vm.call_email.location.geometry.coordinates[1];
@@ -161,7 +170,7 @@ export default {
                     console.log(lat + ', ' + lng);
                     let lnglat = [lng, lat];
                     this.feature_marker.setLatLng({lat: lat, lng: lng });
-                    vm.map.flyTo({lat: lat, lng: lng}, 13,{
+                    vm.map.flyTo({lat: lat, lng: lng}, 12,{
                         animate: true,
                         duration: 1.5
                     });
@@ -504,6 +513,15 @@ export default {
 #cursor-location {
     position: absolute;
     bottom: 0px;
+    color: white;
+    background-color: rgba(37, 45, 51, 0.6);
+    z-index: 1100;
+    font-size: 0.9em;
+    padding: 5px;
+}
+#centre_marker {
+    position: absolute;
+    bottom: 30px;
     color: white;
     background-color: rgba(37, 45, 51, 0.6);
     z-index: 1100;

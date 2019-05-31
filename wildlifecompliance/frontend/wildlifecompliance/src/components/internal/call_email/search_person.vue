@@ -4,7 +4,7 @@
             <label class="col-sm-3 control-label">Search Person</label>
             <div class="col-sm-9">
                 <input class="col-sm-5 form-control" id="search-person" />
-                <!-- <input type="button" class="pull-right btn btn-primary" value="Create New Person" /> -->
+                <input type="button" class="pull-right btn btn-primary" value="Create New Person"@click.prevent="createNewPerson()" />
             </div>
         </div>
         <div class="col-md-12">
@@ -221,6 +221,13 @@ export default {
         });
     },
     methods: {
+        ...mapActions('callemailStore', {
+            setEmailUserEmpty: "setEmailUserEmpty",
+        }),
+        createNewPerson: function() {
+            let vm = this;
+            vm.setEmailUserEmpty();
+        },
         updateAddress: function() {
             let vm = this;
             vm.updatingAddress = true;
