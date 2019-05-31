@@ -5,6 +5,7 @@ from wildlifecompliance.components.organisations.models import (
     OrganisationRequest,
     OrganisationContact
 )
+from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
 from wildlifecompliance.components.organisations.utils import can_admin_org, is_consultant
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
@@ -305,3 +306,30 @@ class EmailIdentitySerializer(serializers.ModelSerializer):
             'user',
             'email'
         )
+
+
+class RegionDistrictSerializer(serializers.ModelSerializer):
+    # region = RegionDistrictSerializer(many=True)
+
+    class Meta:
+        model = RegionDistrict
+        fields = (
+            'id',
+            'district',
+            'region',
+            'display_name',
+            'districts'
+        )
+
+
+class CompliancePermissionGroupSerializer(serializers.ModelSerializer):
+    region_district = RegionDistrictSerializer(many=True)
+
+    class Meta:
+        model = CompliancePermissionGroup
+        fields = (
+            'id',
+            'name',
+            'region_district',
+            'display_name',
+            )
