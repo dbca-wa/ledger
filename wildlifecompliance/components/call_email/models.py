@@ -29,7 +29,7 @@ def update_compliance_comms_log_filename(instance, filename):
 
 def update_compliance_workflow_log_filename(instance, filename):
     return 'compliancemanagement/call_email/{}/workflow/{}/{}'.format(
-        instance.log_entry.call_email.id, instance.id, filename)
+        instance.workflow.call_email.id, instance.id, filename)
 
 
 class Classification(models.Model):
@@ -421,10 +421,9 @@ class ComplianceWorkflowDocument(Document):
 
 
 class ComplianceWorkflowLogEntry(models.Model):
-    # documents = models.ForeignKey(ComplianceWorkflowDocument, null=True)
     call_email = models.ForeignKey(CallEmail, related_name='workflow_logs', null=True)
-    region = models.ForeignKey('RegionDistrict', related_name='callemail_region', null=True)
-    district = models.ForeignKey('RegionDistrict', related_name='callemail_district', null=True)
+    region = models.ForeignKey(RegionDistrict, related_name='callemail_region', null=True)
+    district = models.ForeignKey(RegionDistrict, related_name='callemail_district', null=True)
     details = models.TextField(blank=True)
     created = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 

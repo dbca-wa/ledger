@@ -20,23 +20,40 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <strong>Status</strong><br/>
-                                {{ call_email.name }}<br/>
-                                <div class ="col-sm-12" v-for="item in call_email.schema">
-                                    
-                                    <div v-for="item1 in item">
-                                        <div v-if="item1.name">
-                                            <strong>{{item1.name}}: </strong>{{item1.label}}
-                                        </div>
-                                    </div>
-                                </div>
+                                {{ call_email.status }}<br/>
                             </div>
-                        </div>
-                        <div class="col-sm-5">
-                              <a ref="addWorkflowBtn" @click="addWorkflow()" class="actionBtn pull-right">Forward</a>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <div class="row">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        Action 
+                    </div>
+                    <div class="panel-body panel-collapse">
+                        <div class="row">
+                          <div class="col-sm-12">
+                                <a ref="forwardToWildlifeProtectionBranch" @click="addWorkflow()" class=" btn btn-primary">
+                                  Forward to Wildlife Protection Branch
+                                </a>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-sm-12"/>
+                        </div>
+                        <div class="row">
+                          <div class="col-sm-12">
+                                <a ref="forwardToRegions" @click="addWorkflow('regions')" class=" btn btn-primary">
+                                  Forward to Regions
+                                </a>
+                          </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
           </div>
           <div class="col-md-1"/>        
           <div class="col-md-8">  
@@ -272,8 +289,13 @@ export default {
     ...mapActions({
       saveFormData: "saveFormData",
     }),
-    addWorkflow() {
-    this.$refs.add_workflow.isModalOpen = true;
+    addWorkflow(workflow_type) {
+      if (workflow_type === 'regions') {
+        this.$refs.add_workflow.forwardToRegions = true;
+      } else {
+        this.$refs.add_workflow.forwardToRegions = false;
+      }
+      this.$refs.add_workflow.isModalOpen = true;
     },
     save: async function() {
       if (this.call_email.id) {

@@ -323,12 +323,17 @@ class ComplianceLogEntrySerializer(CommunicationLogEntrySerializer):
 
 class ComplianceWorkflowLogEntrySerializer(serializers.ModelSerializer):
     documents = serializers.SerializerMethodField()
-    region = serializers.IntegerField(
+    call_email_id = serializers.IntegerField(
         required=False, 
         write_only=True, 
         allow_null=True
     )
-    district = serializers.IntegerField(
+    region_id = serializers.IntegerField(
+        required=False, 
+        write_only=True, 
+        allow_null=True
+    )
+    district_id = serializers.IntegerField(
         required=False, 
         write_only=True, 
         allow_null=True

@@ -1,13 +1,13 @@
 <template lang="html">
     <div id="CallWorkflow">
-        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Forward to Wildlife Protection Branch" large>
+        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="modalTitle" large>
           <div class="container-fluid">
             <div class="row">
               
 
                 <div class="col-sm-12">
                     
-                        <div class="form-group">
+                        <div v-if="forwardToRegions" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Region</label>
@@ -21,7 +21,7 @@
                             </div>
                           </div>
                         </div>
-                        <div class="form-group">
+                        <div v-if="forwardToRegions" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>District</label>
@@ -99,6 +99,7 @@ export default {
   name: "CallEmailWorking",
   data: function() {
     return {
+      forwardToRegions: false,
       isModalOpen: false,
       processingDetails: false,
       form: null,
@@ -108,8 +109,6 @@ export default {
       selectedRegion: null,
       selectedDistrict: null,
       workflowDetails: '',
-      
-      //files: [],
       files: [
                 {
                     'file': null,
@@ -126,14 +125,18 @@ export default {
       call_email: "call_email",
     }),
     region: function() {
-      return this.selectedRegion ? this.selectedRegion.id : null;
+      return this.selectedRegion ? this.selectedRegion.id : '';
     }, 
     district: function() {
-      return this.selectedDistrict ? this.selectedDistrict : null
+      return this.selectedDistrict ? this.selectedDistrict : '';
     },
-    documents: function() {
-      return this.files[0].file ? this.files : [];
-    },
+    modalTitle: function() {
+      if (this.forwardToRegions) {
+        return "Forward to Regions";
+      } else { 
+        return "Forward to Wildlife Protection Branch";
+      }
+    }
   },
   filters: {
     formatDate: function(data) {
@@ -158,26 +161,16 @@ export default {
       });
     },
     ok: async function () {
-        // let vm =this;
-        // if($(vm.form).valid()){
-        //     vm.sendData();
-        // }
         await this.sendData();
         this.close();
     },
     cancel: function() {
-        // let vm = this;
-        // vm.close();
         this.isModalOpen = false;
         this.close();
     },
     close: function () {
         let vm = this;
         this.isModalOpen = false;
-        // this.comms = {};
-        // this.errors = false;
-        // $('.has-error').removeClass('has-error');
-        // this.validation_form.resetForm();
         let file_length = vm.files.length;
         this.files = [];
         for (var i = 0; i < file_length;i++){
@@ -190,36 +183,18 @@ export default {
         this.selectedDistrict = null;
         this.workflowDetails = '';
     },
-    sendData: async function(){
-        // let vm = this;
-        // vm.errors = false;
-        // let comms = new FormData(vm.form); 
-        // vm.addingComms = true;
-        // vm.$http.post(vm.url,comms,{
-        //     }).then((response)=>{
-        //         vm.addingComms = false;
-        //         vm.close();
-        //         //vm.$emit('refreshFromResponse',response);
-        //     },(error)=>{
-        //         vm.errors = true;
-        //         vm.addingComms = false;
-        //         vm.errorString = helpers.apiVueResourceError(error);
-        //     });
-        
+    sendData: async function(){        
         let post_url = '/api/call_email/' + this.call_email.id + '/add_workflow_log/'
-        let res = await this.$http.post(post_url, { 
-          'call_email': this.call_email.id,
-          'region': this.region,
-          'district': this.district,
-          'details': this.workflowDetails,
-          'documents': this.documents
-          }
-        )
+        let payload = new FormData(this.form);
+        payload.append('call_email_id', this.call_email.id);
+        payload.append('region_id', this.region);
+        payload.append('district_id', this.district);
+        payload.append('details', this.workflowDetails);
+        let res = await this.$http.post(post_url, payload);
         console.log(res)
     },
     
     uploadFile(target,file_obj){
-        console.log($('.'+target)[0]);
         let vm = this;
         let _file = null;
         var file_input = $('.'+target)[0];
@@ -232,7 +207,6 @@ export default {
             };
             _file = file_input.files[0];
         }
-        console.log(file_obj)
         file_obj.file = _file;
         file_obj.name = _file.name;
     },
@@ -249,38 +223,6 @@ export default {
             'file': null,
             'name': ''
         })
-    },
-    addFormValidations: function() {
-            let vm = this;
-            vm.validation_form = $(vm.form).validate({
-                rules: {
-                    // to:"required",
-                    // fromm:"required",
-                    // type:"required",
-                    // subject:"required",
-                    // text:"required",
-                },
-                messages: {
-                },
-                showErrors: function(errorMap, errorList) {
-                    $.each(this.validElements(), function(index, element) {
-                        var $element = $(element);
-                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
-                    });
-                    // destroy tooltips on valid elements
-                    $("." + this.settings.validClass).tooltip("destroy");
-                    // add or update tooltips
-                    for (var i = 0; i < errorList.length; i++) {
-                        var error = errorList[i];
-                        $(error.element)
-                            .tooltip({
-                                trigger: "focus"
-                            })
-                            .attr("data-original-title", error.message)
-                            .parents('.form-group').addClass('has-error');
-                    }
-                }
-            });
     },
     
   },
@@ -305,7 +247,6 @@ export default {
   },
   mounted: function() {
     this.form = document.forms.forwardForm;
-    this.addFormValidations();
   }
 };
 </script>

@@ -474,13 +474,10 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def add_workflow_log(self, request, *args, **kwargs):
-        print("request.data")
-        print(request.data)
         try:
             with transaction.atomic():
                 instance = self.get_object()
                 request.data['call_email'] = u'{}'.format(instance.id)
-                # request.data['staff'] = u'{}'.format(request.user.id)
                 serializer = ComplianceWorkflowLogEntrySerializer(data=request.data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 workflow_entry = serializer.save()
