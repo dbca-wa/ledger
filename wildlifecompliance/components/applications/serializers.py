@@ -101,6 +101,7 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
     can_cancel = serializers.BooleanField(read_only=True)
     can_reissue = serializers.SerializerMethodField(read_only=True)
     can_reinstate = serializers.BooleanField(read_only=True)
+    can_pay_licence_fee = serializers.SerializerMethodField()
     licence_fee = serializers.DecimalField(
         max_digits=8, decimal_places=2, coerce_to_string=False, read_only=True)
     payment_status = serializers.CharField(read_only=True)
@@ -123,6 +124,7 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
             'can_reinstate',
             'licence_fee',
             'payment_status',
+            'can_pay_licence_fee',
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render
@@ -156,6 +158,9 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
                 'issuing_officer',
             ], obj.licence_activity_id) and obj.can_reissue
         )
+
+    def get_can_pay_licence_fee(self, obj):
+        return not obj.licence_fee_paid and obj.processing_status == ApplicationSelectedActivity.PROCESSING_STATUS_AWAITING_LICENCE_FEE_PAYMENT
 
 
 class EmailUserSerializer(serializers.ModelSerializer):
@@ -521,6 +526,7 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
     can_current_user_edit = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
     application_type = CustomChoiceField(read_only=True)
+    activities = ExternalApplicationSelectedActivitySerializer(many=True, read_only=True)
 
     class Meta:
         model = Application
@@ -542,7 +548,8 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
             'can_user_view',
             'can_current_user_edit',
             'payment_status',
-            'application_type'
+            'application_type',
+            'activities',
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render

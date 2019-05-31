@@ -5,9 +5,18 @@ from django.views.generic import View, TemplateView
 from django.conf import settings
 from django.template.loader import render_to_string
 from wildlifecompliance.components.applications.utils import SchemaParser
-from wildlifecompliance.components.applications.models import Application
-from wildlifecompliance.components.applications.email import send_application_invoice_email_notification
-from wildlifecompliance.components.main.utils import get_session_application, delete_session_application, bind_application_to_invoice
+from wildlifecompliance.components.applications.models import Application, ActivityInvoice
+from wildlifecompliance.components.applications.email import (
+    send_application_invoice_email_notification,
+    send_activity_invoice_email_notification,
+)
+from wildlifecompliance.components.main.utils import (
+    get_session_application,
+    delete_session_application,
+    get_session_activity,
+    delete_session_activity,
+    bind_application_to_invoice,
+)
 import json
 from wildlifecompliance.exceptions import BindApplicationException
 import xlwt
@@ -85,6 +94,41 @@ class ApplicationSuccessView(TemplateView):
             'invoice_url': invoice_url
         }
         delete_session_application(request.session)
+        return render(request, self.template_name, context)
+
+
+class LicenceFeeSuccessView(TemplateView):
+    template_name = 'wildlifecompliance/licence_fee_success.html'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            activity = get_session_activity(request.session)
+            invoice_ref = request.GET.get('invoice')
+
+            ActivityInvoice.objects.get_or_create(
+                activity=activity,
+                invoice_reference=invoice_ref
+            )
+            if not activity.licence_fee_paid:
+                raise Exception("Licence fee payment failed!")
+
+            activity.application.issue_activity(request, activity, generate_licence=True)
+            send_activity_invoice_email_notification(activity.application, activity, invoice_ref, request)
+            invoice_url = request.build_absolute_uri(
+                reverse('payments:invoice-pdf', kwargs={'reference': invoice_ref}))
+        except Exception as e:
+            print(e)
+            traceback.print_exc
+            delete_session_activity(request.session)
+            return redirect(reverse('external'))
+
+        context = {
+            'application': activity.application,
+            'activity': activity,
+            'invoice_ref': invoice_ref,
+            'invoice_url': invoice_url
+        }
+        delete_session_activity(request.session)
         return render(request, self.template_name, context)
 
 

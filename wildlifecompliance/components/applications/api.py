@@ -18,7 +18,12 @@ from wildlifecompliance.components.applications.utils import (
     SchemaParser,
     MissingFieldsException,
 )
-from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
+from wildlifecompliance.components.main.utils import (
+    checkout,
+    set_session_application,
+    set_session_activity,
+    delete_session_application
+)
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.applications.email import (
     send_application_amendment_notification,
@@ -33,6 +38,7 @@ from wildlifecompliance.components.applications.models import (
     AmendmentRequest,
     ApplicationUserAction,
     ApplicationFormDataRecord,
+    ActivityInvoice,
 )
 from wildlifecompliance.components.applications.serializers import (
     ApplicationSerializer,
@@ -592,6 +598,53 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def licence_fee_checkout(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            activity_id = request.data.get('activity_id')
+            if not activity_id:
+                raise Exception(
+                    'No activity selected for payment!')
+            activity = ApplicationSelectedActivity.objects.get(id=activity_id)
+
+            product_lines = []
+            application_submission = u'Activity licence issued for {} application {}'.format(
+                u'{} {}'.format(request.user.first_name, request.user.last_name), instance.lodgement_number)
+
+            set_session_activity(request.session, activity)
+            product_lines.append({
+                'ledger_description': '{}'.format(activity.licence_activity.name),
+                'quantity': 1,
+                'price_incl_tax': str(activity.licence_fee),
+                'price_excl_tax': str(calculate_excl_gst(activity.licence_fee)),
+                'oracle_code': ''
+            })
+            checkout_result = checkout(
+                request, instance,
+                lines=product_lines,
+                invoice_text=application_submission,
+                add_checkout_params={
+                    'return_url': request.build_absolute_uri(
+                        reverse('external-licence-fee-success-invoice'))
+                },
+            )
+            return checkout_result
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
     @detail_route(methods=['POST', ])
     def accept_id_check(self, request, *args, **kwargs):

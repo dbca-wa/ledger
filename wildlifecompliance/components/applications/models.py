@@ -1376,6 +1376,51 @@ class Application(RevisionedMixin):
                 licence_category=self.get_licence_category()
             ), True
 
+    def issue_activity(self, request, selected_activity, parent_licence=None, generate_licence=False):
+
+        if not selected_activity.licence_fee_paid:
+            raise Exception("Cannot issue activity: licence fee has not been paid!")
+
+        if parent_licence is None:
+            parent_licence, created = self.get_parent_licence()
+
+        if not parent_licence:
+            raise Exception("Cannot issue activity: licence not found!")
+
+        selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
+        selected_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+
+        self.generate_returns(parent_licence, selected_activity, request)
+        # Log application action
+        self.log_user_action(
+            ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
+                selected_activity.licence_activity.name), request)
+        # Log entry for organisation
+        if self.org_applicant:
+            self.org_applicant.log_user_action(
+                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
+                    selected_activity.licence_activity.name), request)
+        elif self.proxy_applicant:
+            self.proxy_applicant.log_user_action(
+                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
+                    selected_activity.licence_activity.name), request)
+        else:
+            self.submitter.log_user_action(
+                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
+                    selected_activity.licence_activity.name), request)
+
+        selected_activity.save()
+        if generate_licence:
+            # Re-generate PDF document using all finalised activities
+            parent_licence.current_application = self
+            parent_licence.generate_doc()
+            send_application_issue_notification(
+                activities=[selected_activity],
+                application=self,
+                request=request,
+                licence=parent_licence
+            )
+
     def final_decision(self, request):
         failed_payment_activities = []
 
@@ -1402,11 +1447,6 @@ class Application(RevisionedMixin):
 
                     if item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_ISSUED:
 
-                        # If there is an outstanding licence fee payment - attempt to charge the stored card.
-                        if not selected_activity.process_licence_fee_payment(request, self):
-                            failed_payment_activities.append(selected_activity)
-                            continue
-
                         original_issue_date = start_date = item.get('start_date')
                         expiry_date = item.get('end_date')
 
@@ -1424,37 +1464,26 @@ class Application(RevisionedMixin):
                             latest_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
                             latest_activity.save()
 
-                        selected_activity.issue_date = timezone.now()
-                        selected_activity.updated_by = request.user
-                        selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
-                        selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
+                        # If there is an outstanding licence fee payment - attempt to charge the stored card.
+                        payment_successful = selected_activity.process_licence_fee_payment(request, self)
+                        if not payment_successful:
+                            failed_payment_activities.append(selected_activity)
+                        else:
+                            issued_activities.append(selected_activity)
+                            self.issue_activity(request, selected_activity, parent_licence, generate_licence=False)
+
+                        # Populate fields below even if the token payment has failed.
+                        # They will be reused after a successful payment by the applicant.
                         selected_activity.original_issue_date = original_issue_date
+                        selected_activity.issue_date = timezone.now()
+                        selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
+                        selected_activity.updated_by = request.user
                         selected_activity.start_date = start_date
                         selected_activity.expiry_date = expiry_date
                         selected_activity.cc_email = item['cc_email']
                         selected_activity.reason = item['reason']
-                        selected_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
                         selected_activity.save()
-                        issued_activities.append(selected_activity)
 
-                        self.generate_returns(parent_licence, selected_activity, request)
-                        # Log application action
-                        self.log_user_action(
-                            ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
-                                item['name']), request)
-                        # Log entry for organisation
-                        if self.org_applicant:
-                            self.org_applicant.log_user_action(
-                                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
-                                    item['name']), request)
-                        elif self.proxy_applicant:
-                            self.proxy_applicant.log_user_action(
-                                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
-                                    item['name']), request)
-                        else:
-                            self.submitter.log_user_action(
-                                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
-                                    item['name']), request)
                     elif item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_DECLINED:
                         selected_activity.updated_by = request.user
                         selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED
@@ -2195,6 +2224,7 @@ class ActivityInvoice(models.Model):
 
     class Meta:
         app_label = 'wildlifecompliance'
+        unique_together = ('activity', 'invoice_reference',)
 
     def __str__(self):
         return 'Activity {} : Invoice #{}'.format(
