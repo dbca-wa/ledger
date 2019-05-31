@@ -70,6 +70,7 @@
 <script>
 import L from 'leaflet';
 import 'leaflet-measure';  /* This should be imported after leaflet */
+import 'leaflet.locatecontrol';
 import Awesomplete from 'awesomplete';
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 
@@ -77,6 +78,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'awesomplete/awesomplete.css';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-measure/dist/leaflet-measure.css';
+import 'leaflet.locatecontrol/dist/L.Control.Locate.min.css'
 
 export default {
     name: "map-leaflet",
@@ -412,6 +414,7 @@ export default {
                 completedColor: '#228b22'
             });
             measureControl.addTo(this.map);
+            L.control.locate().addTo(this.map);
         },
         /* this function stores the coordinates into the vuex, then call refresh marker function */
         relocateMarker: function(latlng){ 
