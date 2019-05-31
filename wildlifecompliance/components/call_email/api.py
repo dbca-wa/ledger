@@ -293,12 +293,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 request_data = request.data
                 # Create location then include in request to create new Call/Email
                 returned_location = None
-                if not request.user.has_perm('wildlifecompliance.licensing_officer'):
-                    raise serializers.ValidationError(
-                    'You are not authorised to assign officers to applications')
-                else:
-                    print(request.user.has_perm('wildlifecompliance.licensing_officer'))
-                    print('You are authorised to assign officers to applications')
 
                 if (
                     request_data.get('location', {}).get('geometry', {}).get('coordinates', {}) or
@@ -309,13 +303,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     if returned_location:
                         request_data.update({'location_id': returned_location.get('id')})
                 
-                print("returned_location")
-                print(returned_location)
-                print("request_data")
-                print(request_data)
-
-                # if request_data.get('classification'):
-                #     request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
                 if request_data.get('report_type'):
                     request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
                 
