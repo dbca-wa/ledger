@@ -189,6 +189,7 @@ def send_activity_invoice_email_notification(
     invoice = Invoice.objects.filter(
         reference__in=references).order_by('-created')[0]
     invoice_pdf = create_invoice_pdf_bytes(filename, invoice)
+
     context = {
         'application': application,
         'url': url,
