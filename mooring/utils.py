@@ -486,8 +486,16 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                     if date_rotate_forward < today:
                         booking_period[bp.pk] = 'closed'
                     if today == date_rotate_forward:
-                         if nowtime > start_dt:
-                               booking_period[bp.pk] = 'closed' 
+                         if ongoing_booking:
+                               if ongoing_booking.old_booking is None:
+                                  pass
+                               else:
+                                   if nowtime > start_dt:
+                                        booking_period[bp.pk] = 'closed'
+                         else:
+                              pass
+                              #if nowtime > start_dt:
+                              #     booking_period[bp.pk] = 'closed'
 
                     for closure in cgbr_qs:
                         # CLOSURE INFORMATION

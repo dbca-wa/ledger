@@ -618,8 +618,17 @@ def delete_booking(request, *args, **kwargs):
             if msb > nowtime:
                   ms_booking.delete()
             else:
-                  response_data['result'] = 'error'
-                  response_data['message'] = 'Unable to delete booking'
+                 if msb.date() == nowtime.date():
+                     if booking.old_booking is None:
+                          ms_booking.delete() 
+                     else:
+                         response_data['result'] = 'error'
+                         response_data['message'] = 'Unable to delete booking'
+
+                 else:
+
+                     response_data['result'] = 'error'
+                     response_data['message'] = 'Unable to delete booking'
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 
 @csrf_exempt
@@ -2069,7 +2078,16 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                                #   bp['past_booking'] = True
                                bp_dt = datetime.strptime(str(bp['date'])+' '+str(bp['start_time']), '%Y-%m-%d %H:%M:%S')
                                if bp_dt <= datetime.now():
-                                  bp['past_booking'] = True
+                                  if bp_dt.date() == datetime.now().date():
+                                      if ongoing_booking:
+                                           if ongoing_booking.old_booking is None:
+                                               pass
+                                           else:
+                                               bp['past_booking'] = True
+                                      else:
+                                          pass
+                                  else:
+                                     bp['past_booking'] = True
 
  
                          bp_new.append(bp)
@@ -4281,6 +4299,7 @@ def get_current_booking(ongoing_booking):
            #print ms.from_dt.astimezone(pytimezone('Australia/Perth'))
          row['item'] = ms.campsite.name + ' from '+ms.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')+' to '+ms.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%y %H:%M %p')
          row['amount'] = str(ms.amount)
+         
          row['past_booking'] = False
 #         if ms.from_dt.date() <= datetime.now().date():
          ms_from_ft = datetime.strptime(ms.from_dt.strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
@@ -4288,8 +4307,15 @@ def get_current_booking(ongoing_booking):
 #         print datetime.utcnow()+timedelta(hours=8)
          nowtime = datetime.strptime(str(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')
          #+timedelta(hours=8)
-         if ms_from_ft  <= nowtime:
-              row['past_booking'] = True 
+         if ms_from_ft <= nowtime:
+              
+              if ms_from_ft.date() == nowtime.date():
+                 if ongoing_booking.old_booking is None:
+                     pass 
+                 else:
+                     row['past_booking'] = True              
+              else:
+                  row['past_booking'] = True 
 #           row['item'] = ms.campsite.name
          total_price = str(Decimal(total_price) +Decimal(ms.amount))
          current_booking.append(row)
