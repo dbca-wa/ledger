@@ -63,8 +63,12 @@ from wildlifecompliance.components.call_email.serializers import (
     CreateCallEmailSerializer,
     ReportTypeSchemaSerializer,
     ReferrerSerializer,
-    LocationSerializerOptimized, CallEmailOptimisedSerializer, EmailUserSerializer, MapLayerSerializer,
-    SaveEmailUserSerializer)
+    LocationSerializerOptimized, 
+    CallEmailOptimisedSerializer, 
+    EmailUserSerializer,
+    SaveEmailUserSerializer, 
+    MapLayerSerializer,
+    ComplianceWorkflowLogEntrySerializer)
 from utils import SchemaParser
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
@@ -552,33 +556,51 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
     
-    # @detail_route(methods=['POST', ])
-    # def update_schema(self, request, *args, **kwargs):
-    #     print("request.data")
-    #     print(request.data)
-    #     instance = self.get_object()
-    #     if request.data.get('report_type_id'):
-    #         try:
-    #             serializer = UpdateSchemaSerializer(instance, data=request.data)
-    #             serializer.is_valid(raise_exception=True)
-    #             if serializer.is_valid():
-    #                 serializer.save()
-    #                 headers = self.get_success_headers(serializer.data)
-    #                 returned_data = serializer.data
-    #                 return Response(
-    #                     serializer.data,
-    #                     status=status.HTTP_201_CREATED,
-    #                     headers=headers
-    #                     )
-    #         except serializers.ValidationError:
-    #             print(traceback.print_exc())
-    #             raise
-    #         except ValidationError as e:
-    #             print(traceback.print_exc())
-    #             raise serializers.ValidationError(repr(e.error_dict))
-    #         except Exception as e:
-    #             print(traceback.print_exc())
-    #             raise serializers.ValidationError(str(e))
+    @detail_route(methods=['GET', ])
+    def workflow_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.workflow_logs.all()
+            serializer = ComplianceWorkflowLogEntrySerializer(qs, many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
+    def add_workflow_log(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                instance = self.get_object()
+                request.data['call_email'] = u'{}'.format(instance.id)
+                serializer = ComplianceWorkflowLogEntrySerializer(data=request.data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                workflow_entry = serializer.save()
+                # Save the files
+                for f in request.FILES:
+                    document = workflow_entry.documents.create()
+                    document.name = str(request.FILES[f])
+                    document._file = request.FILES[f]
+                    document.save()
+                # End Save Documents
+
+                return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
 
 class ClassificationViewSet(viewsets.ModelViewSet):
