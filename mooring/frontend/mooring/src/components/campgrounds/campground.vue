@@ -801,7 +801,9 @@ export default {
         validateSize: function(){
             let vm = this;
             var isValid = true;
-            if(!parseInt(vm.campground.vessel_size_limit) > 0){
+            console.log('VESSEL SIZE'); 
+            console.log(vm.campground.vessel_size_limit)
+            if(!parseFloat(vm.campground.vessel_size_limit) > 0){
                 isValid = false;
                 var error = {
                     title : "Invalid Size",
@@ -836,7 +838,7 @@ export default {
         validateDraft: function(){
             let vm = this;
             var isValid = true;
-            if(!parseInt(vm.campground.vessel_draft_limit) > 0){
+            if(!parseFloat(vm.campground.vessel_draft_limit) > 0){
                 isValid = false;
                 var error = {
                     title : "Invalid Draft",
@@ -847,7 +849,7 @@ export default {
                 vm.swalMessage(error);
             }
             if (isValid){
-                if (parseInt(vm.campground.vessel_draft_limit) > vm.limits[vm.class_val + 3].value){
+                if (parseFloat(vm.campground.vessel_draft_limit) > vm.limits[vm.class_val + 3].value){
                     isValid = false;
                     var error = {
                         title : "Invalid Draft",
@@ -863,8 +865,8 @@ export default {
         validateBeamWeight: function(){
             let vm = this;
             var isValid = true;
-            if(vm.campground.mooring_physical_type == 1) {
-                if(!parseInt(vm.campground.vessel_beam_limit) > 0){
+            if(vm.campground.mooring_physical_type == 1 || vm.campground.mooring_physical_type == 2) {
+                if(!parseFloat(vm.campground.vessel_beam_limit) > 0){
                     isValid = false;
                     var error = {
                         title : "Invalid Beam",
@@ -875,7 +877,7 @@ export default {
                     vm.swalMessage(error);
                 }
                 if (isValid){
-                    if (parseInt(vm.campground.vessel_beam_limit) > vm.limits[vm.class_val + 6].value){
+                    if (parseFloat(vm.campground.vessel_beam_limit) > vm.limits[vm.class_val + 6].value){
                         isValid = false;
                         var error = {
                             title : "Invalid Beam",
@@ -887,7 +889,7 @@ export default {
                     }
                 }
             } else {
-                if(!parseInt(vm.campground.vessel_weight_limit) > 0){
+                if(!parseFloat(vm.campground.vessel_weight_limit) > 0){
                     isValid = false;
                     var error = {
                         title : "Invalid Weight",
@@ -898,7 +900,7 @@ export default {
                     vm.swalMessage(error);
                 }
                 if (isValid){
-                    if (parseInt(vm.campground.vessel_weight_limit) > vm.limits[vm.class_val + 9].value){
+                    if (parseFloat(vm.campground.vessel_weight_limit) > vm.limits[vm.class_val + 9].value){
                         isValid = false;
                         var error = {
                             title : "Invalid Weight",

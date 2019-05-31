@@ -66,7 +66,9 @@
         {% for row in failedrefunds %}
             <tr>
                 <td>{{ row.fr.id }}</td>
-                <td>PS{{ row.fr.booking.id }}</td>
+                <td>{% if row.fr.booking %}PS{{ row.fr.booking.id }}{% endif %}
+                    {% if row.fr.admission_booking %}AD{{ row.fr.admission_booking.id }}{% endif %}
+               </td>
                 <td>${{ row.fr.refund_amount }}</td>
                 {% if show == "TRUE" %}
                 <!-- only works with cancelled booking not changed booking, work in progress --> 
@@ -85,7 +87,10 @@
 
                 <td>{{ row.fr.created }}</td>
                 <td>
+                   {% if row.fr.booking %}
                    <a href='{% url 'view_booking_history' row.fr.booking.id %}'>View History</a><BR>
+		   {% endif %}
+                    
                    <a href='{% url 'dash-complete_failed_refund' row.fr.id %}'>Mark Completed</a><BR>
                 </td>
             </tr>
