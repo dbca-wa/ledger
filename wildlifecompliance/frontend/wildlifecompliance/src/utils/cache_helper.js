@@ -28,7 +28,6 @@ module.exports = {
         await storeInstance.ready();
 
         try {
-            nothing = true;
             let retrieved_val = await storeInstance.getItem(
               key);
             if (retrieved_val) {
@@ -72,7 +71,6 @@ module.exports = {
     },
     getSetCacheList: async (store_name, url, expiry) => {
         try {
-            nothing = true;
             let returned_list = [];  
             if (expiry) {
                 expiryDiff = expiry;
