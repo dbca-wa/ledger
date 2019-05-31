@@ -599,7 +599,7 @@ export default {
                                 <td>${activity['activity_name_str']}</td>
                                 <td>${activity['activity_purpose_names'].
                                     replace(/(?:\r\n|\r|\n|,)/g, '<br>')}</td>
-                                ${vm.is_external ? '' : <td>${activity['processing_status']['name']}</td>}
+                                ${vm.is_external ? '' : `<td>${activity['processing_status']['name']}</td>`}
                                 <td>
                                     ${activity['can_pay_licence_fee'] ?
                                     `<a pay-licence-fee-for='${activity['id']}' application-id='${row.data()['id']}'>Pay licence fee</a>` : ''}

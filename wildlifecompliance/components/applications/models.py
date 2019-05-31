@@ -1510,11 +1510,13 @@ class Application(RevisionedMixin):
                                 ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(
                                     item['name']), request)
 
+                if (issued_activities or failed_payment_activities) and not created:
+                    parent_licence.licence_sequence += 1
+                    parent_licence.save()
+
                 if issued_activities:
                     # Re-generate PDF document using all finalised activities
                     parent_licence.current_application = self
-                    if not created:
-                        parent_licence.licence_sequence += 1
                     parent_licence.generate_doc()
                     send_application_issue_notification(
                         activities=issued_activities,

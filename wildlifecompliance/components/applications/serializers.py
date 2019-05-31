@@ -47,6 +47,7 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     licence_fee = serializers.DecimalField(
         max_digits=8, decimal_places=2, coerce_to_string=False, read_only=True),
     payment_status = serializers.CharField(read_only=True)
+    can_pay_licence_fee = serializers.SerializerMethodField()
 
     class Meta:
         model = ApplicationSelectedActivity
@@ -86,6 +87,9 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
                 'issuing_officer',
             ], obj.licence_activity_id) and obj.can_reissue
         )
+
+    def get_can_pay_licence_fee(self, obj):
+        return not obj.licence_fee_paid and obj.processing_status == ApplicationSelectedActivity.PROCESSING_STATUS_AWAITING_LICENCE_FEE_PAYMENT
 
 
 class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer):
