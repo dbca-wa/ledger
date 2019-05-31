@@ -9,15 +9,44 @@
           </template>
           <div class="grid-container">
               <div>
-                  <label v-if="headers" v-for="header in headers">
-                      <input class="form-control" v-model="header.label"  disabled="disabled">
-                  </label>
-              </div>
-              <div>
-                  <label v-if="headers" v-for="header in headers">
-                      <div v-for ="field in field_data">
-                          <input v-for="(title,key) in field" v-if="key == header.label" class="form-control"
-                              :name="`${name}::${header.label}`" v-model="title.value" >
+                  <label v-if="headers" v-for="header in headers" >
+                      <input class="form-control" v-model="header.label" disabled="disabled" /> <br/>
+                      <div v-for ="field in field_data" >
+                          <div v-for="(title,key) in field" v-if="key == header.name"
+                              :name="`${name}::${header.name}`" v-model="title.value" v-bind:key="`f_${key}`" >
+                              <TextField v-if="header.type === 'date'"
+                                type="string"
+                                :label="title.label"
+                                :field_data="title"
+                                :name="name + '::' + header.name"
+                                :readonly="header.is_readonly"
+                                :help_text="help_text"
+                                :isRequired="header.isRequired"
+                                :help_text_url="help_text_url"
+                              />
+                              <TextField v-if="header.type === 'number'"
+                                type="string"
+                                :name="name + '::' + header.name"
+                                :field_data="title"
+                                :min="header.min"
+                                :max="header.max"
+                                :label="title.label"
+                                :help_text="help_text"
+                                :readonly="header.is_readonly"
+                                :isRequired="header.isRequired"
+                                :help_text_url="help_text_url"
+                              />
+                              <TextField v-if="header.type === 'string'"
+                                type="string"
+                                :name="name + '::' + header.name"
+                                :field_data="title"
+                                :label="title.label"
+                                :help_text="help_text"
+                                :readonly="header.is_readonly"
+                                :isRequired="header.isRequired"
+                                :help_text_url="help_text_url"
+                              />
+                          </div>
                       </div>
                   </label>
               </div>
@@ -28,6 +57,8 @@
 <script>
 import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
+import DateField from './date-field.vue'
+import TextField from './text.vue'
 const GridBlock = {
   /* Example schema config
      {
@@ -38,7 +69,7 @@ const GridBlock = {
      }
   */
   props: ['field_data','headers','name', 'label', 'value', 'id', 'help_text', 'help_text_url', "readonly", "isRequired"],
-  components: {HelpText, HelpTextUrl},
+  components: {HelpText, HelpTextUrl, TextField, DateField},
   data: function() {
     let vm = this;
     if(vm.readonly) {
@@ -99,14 +130,16 @@ export default GridBlock;
     .grid-container {
         display: grid;
         width: 100%;
+        height: 300px;
+        border: 1px solid #ffffff;
         grid-template-columns: [labels] 2048px;
         overflow: scroll;
+        background-color: #ffffff;
+        justify-content: start;
     }
     .grid-container > label {
         grid-column: labels;
         grid-row: auto;
-        border: 5px solid #000000;
-        background-color: #ffffff;
     }
 </style>
 
