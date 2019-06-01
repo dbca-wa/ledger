@@ -30,10 +30,10 @@ export default {
         },
         panel_collapse_class: function() {
             if (this.formCollapse) {
-                this.panel_chevron_class = "glyphicon glyphicon-chevron-up pull-right ";
+                this.panel_chevron_class = "glyphicon glyphicon-chevron-down pull-right ";
                 return "panel-body collapse";
             } else {
-                this.panel_chevron_class = "glyphicon glyphicon-chevron-down pull-right ";
+                this.panel_chevron_class = "glyphicon glyphicon-chevron-up pull-right ";
                 return "panel-body collapse in";
             }
         },
@@ -46,7 +46,7 @@ export default {
                 $('.panelClicker[data-toggle="collapse"]').on('click',function () {
                     var chev = $(this).children()[0];
                     window.setTimeout(function () {
-                        $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
+                        $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-down");
                     },100);
                 });
                 this.eventInitialised = true;
