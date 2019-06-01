@@ -63,26 +63,26 @@
                 
                 <div class="row"><div class="col-sm-8 form-group">
                   <label class="col-sm-12">Caller name</label>
-                  <input class="form-control" v-model="call_email.caller"/>
+                  <input :readonly="isReadonly" class="form-control" v-model="call_email.caller"/>
                 </div></div>
                 <div class="col-sm-4 form-group"><div class="row">
                   <label class="col-sm-12">Caller contact number</label>
-                <input class="form-control" v-model="call_email.caller_phone_number"/>
+                <input :readonly="isReadonly" class="form-control" v-model="call_email.caller_phone_number"/>
                 </div></div>
                 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Anonymous call?</label>
-                    <input id="yes" type="radio" v-model="call_email.anonymous_call" v-bind:value="true">
-                    <label for="yes">Yes</label>
-                    <input id="no" type="radio" v-model="call_email.anonymous_call" v-bind:value="false">
-                    <label for="no">No</label>
+                    <input :disabled="isReadonly" class="col-sm-1" id="yes" type="radio" v-model="call_email.anonymous_call" v-bind:value="true">
+                    <label class="col-sm-1" for="yes">Yes</label>
+                    <input :disabled="isReadonly" class="col-sm-1" id="no" type="radio" v-model="call_email.anonymous_call" v-bind:value="false">
+                    <label class="col-sm-1" for="no">No</label>
                 </div></div>
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Caller wishes to remain anonymous?</label>
-                    <input class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
                     <label class="col-sm-1">Yes</label>
-                    <input class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
                     <label class="col-sm-1">No</label>
                 </div></div>
 
@@ -99,21 +99,21 @@
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Use occurrence from/to</label>
-                    <input class="col-sm-1" type="radio" v-model="call_email.occurrence_from_to" v-bind:value="true">
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.occurrence_from_to" v-bind:value="true">
                     <label class="col-sm-1">Yes</label>
-                    <input class="col-sm-1" type="radio" v-model="call_email.occurrence_from_to" v-bind:value="false">
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.occurrence_from_to" v-bind:value="false">
                     <label class="col-sm-1">No</label>
                 </div></div>
 
                 <div class="col-sm-12 form-group"><div class="row">
                     <label class="col-sm-3">{{ occurrenceDateLabel }}</label>
                     <div class="col-sm-3">
-                      <datepicker input-class="form-control col-sm-3" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_from" name="datefrom"/>
+                      <datepicker :disabled="isReadonly" :disabledDates="disabledDates" input-class="form-control col-sm-3" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_from" name="datefrom"/>
                     </div>
                     <div v-if="call_email.occurrence_from_to">
                       <label class="col-sm-3">Occurrence date to</label>
                       <div class="col-sm-3">
-                        <datepicker input-class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_to" name="dateto"/>
+                        <datepicker :disabled="isReadonly" :disabledDates="disabledDates" input-class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_to" name="dateto"/>
                       </div>
                     </div>
                 </div></div>
@@ -121,19 +121,19 @@
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-3">{{ occurrenceTimeLabel }}</label>
                   <div class="col-sm-3">
-                    <input type="time" class="form-control" v-model="call_email.occurrence_time_from"/>
+                    <input :readonly="isReadonly" type="time" class="form-control" v-model="call_email.occurrence_time_from"/>
                   </div>
                   <div v-if="call_email.occurrence_from_to">
                       <label class="col-sm-3">Occurrence time to</label>
                       <div class="col-sm-3">
-                        <input type="time" class="form-control" v-model="call_email.occurrence_time_to"/>
+                        <input :readonly="isReadonly" type="time" class="form-control" v-model="call_email.occurrence_time_to"/>
                       </div>
                   </div>
                 </div></div>
   
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Classification</label>
-                  <select class="form-control" v-model="call_email.classification_id">
+                  <select :disabled="isReadonly" class="form-control" v-model="call_email.classification_id">
                         <option v-for="option in classification_types" :value="option.id" v-bind:key="option.id">
                           {{ option.name }} 
                         </option>
@@ -142,7 +142,7 @@
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Report Type</label>
-                  <select @change.prevent="loadSchema" class="form-control" v-model="call_email.report_type_id">
+                  <select :disabled="isReadonly" @change.prevent="loadSchema" class="form-control" v-model="call_email.report_type_id">
                           <option v-for="option in report_types" :value="option.id" v-bind:key="option.id">
                             {{ option.report_type }} 
                           </option>
@@ -160,7 +160,7 @@
               <FormSection :formCollapse="true" label="Outcome" Index="3">
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Referrer</label>
-                  <select class="form-control" v-model="call_email.referrer_id">
+                  <select :disabled="isReadonly" class="form-control" v-model="call_email.referrer_id">
                           <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
                             {{ option.name }} 
                           </option>
@@ -168,14 +168,14 @@
                 </div></div>
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Advice given</label>
-                    <input class="col-sm-1" type="radio" v-model="call_email.advice_given" v-bind:value="true">
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.advice_given" v-bind:value="true">
                     <label class="col-sm-1">Yes</label>
-                    <input class="col-sm-1" type="radio" v-model="call_email.advice_given" v-bind:value="false">
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.advice_given" v-bind:value="false">
                     <label class="col-sm-1">No</label>
                 </div></div>
                 <div v-if="call_email.advice_given" class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Advice details</label>
-                  <textarea class="form-control" rows="5" v-model="call_email.advice_details"/>
+                  <textarea :readonly="isReadonly" class="form-control" rows="5" v-model="call_email.advice_details"/>
                 </div></div>
               </FormSection>
               
@@ -219,6 +219,10 @@ export default {
   name: "ViewCallEmail",
   data: function() {
     return {
+      disabledDates: {
+        from: new Date(),
+      },
+      isReadonly: true,
       classification_types: [],
       report_types: [],
       referrers: [],
@@ -274,6 +278,11 @@ export default {
       } else {
         return "Occurrence time";
       }
+    },
+    toggleIsReadonly: function() {
+      if (this.call_email.status === 'Draft') {
+        this.isReadonly = false; 
+      } 
     },
   },
   filters: {

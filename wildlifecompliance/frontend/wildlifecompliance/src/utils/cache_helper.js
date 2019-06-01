@@ -65,6 +65,7 @@ module.exports = {
                 }
             }
         } catch(err) {
+            // on cache failure, request data from backend directly
             const returnedFromUrl = await Vue.http.get(url);
             return returnedFromUrl.body;
         }
@@ -129,6 +130,7 @@ module.exports = {
             return returned_list;
 
         } catch(err) {
+            // on cache failure, request data from backend directly
             const returnedFromUrl = await Vue.http.get(url);
             if (returnedFromUrl.body.results) {
                 return returnedFromUrl.body.results;
