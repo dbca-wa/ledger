@@ -75,6 +75,9 @@ from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
 
+from wildlifecompliance.components.call_email.email import (
+    send_call_email_forward_email)
+
 
 class CallEmailViewSet(viewsets.ModelViewSet):
     queryset = CallEmail.objects.all()
@@ -508,7 +511,24 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     document._file = request.FILES[f]
                     document.save()
                 # End Save Documents
+                print(workflow_entry.id)
 
+                attachments = []
+                for document in workflow_entry.documents.all():
+                    attachments.append(document)
+                print("attachments")
+                print(attachments)
+
+                user = EmailUser.objects.filter(email='brendan.blackford@dbca.wa.gov.au')
+                # send email
+                send_call_email_forward_email(
+                user, 
+                instance,
+                workflow_entry.documents,
+                request)
+
+                print("Response")
+                print(Response)
                 return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())

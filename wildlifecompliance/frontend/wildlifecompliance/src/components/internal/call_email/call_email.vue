@@ -20,7 +20,7 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <strong>Status</strong><br/>
-                                {{ call_email.status }}<br/>
+                                {{ call_email.status_display }}<br/>
                             </div>
                         </div>
                     </div>
@@ -222,7 +222,7 @@ export default {
       disabledDates: {
         from: new Date(),
       },
-      isReadonly: true,
+      // isReadonly: true,
       classification_types: [],
       report_types: [],
       referrers: [],
@@ -279,10 +279,8 @@ export default {
         return "Occurrence time";
       }
     },
-    toggleIsReadonly: function() {
-      if (this.call_email.status === 'Draft') {
-        this.isReadonly = false; 
-      } 
+    isReadonly: function() {
+        return this.call_email.status === 'draft' ? false : true;
     },
   },
   filters: {

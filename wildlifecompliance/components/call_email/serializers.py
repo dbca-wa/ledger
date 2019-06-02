@@ -162,6 +162,7 @@ class ReportTypeSerializer(serializers.ModelSerializer):
 
 
 class SaveCallEmailSerializer(serializers.ModelSerializer):
+    status_display = serializers.CharField(source='get_status_display')
     classification = ClassificationSerializer(read_only=True)
     location = LocationSerializer(read_only=True)
     report_type = ReportTypeSerializer(read_only=True)
@@ -178,7 +179,8 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'number',
-            #'status',
+            'status',
+            'status_display',
             'schema',
             'location',
             'classification',
@@ -248,7 +250,7 @@ class CallEmailOptimisedSerializer(serializers.ModelSerializer):
 
 
 class CallEmailSerializer(serializers.ModelSerializer):
-    status = serializers.CharField(source='get_status_display')
+    status_display = serializers.CharField(source='get_status_display')
     classification = ClassificationSerializer(read_only=True)
     lodgement_date = serializers.CharField(source='lodged_on')
     report_type = ReportTypeSerializer(read_only=True)
@@ -262,6 +264,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'status',
+             'status_display',
             'location',
             'location_id',
             'classification',
@@ -292,6 +295,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
 
 
 class CreateCallEmailSerializer(serializers.ModelSerializer):
+    status_display = serializers.CharField(source='get_status_display')
     lodgement_date = serializers.CharField(
         source='lodged_on')
     classification_id = serializers.IntegerField(
@@ -307,7 +311,8 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
         model = CallEmail
         fields = (
             'id',
-            # 'status',
+            'status',
+            'status_display',
             'location_id',
             'classification_id',
             'lodgement_date',

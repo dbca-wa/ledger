@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from wildlifecompliance.helpers import is_internal
 from wildlifecompliance.forms import *
 from wildlifecompliance.components.applications.models import Application
+from wildlifecompliance.components.call_email.models import CallEmail
 from wildlifecompliance.components.returns.models import Return
 from wildlifecompliance.components.main import utils
 from wildlifecompliance.exceptions import BindApplicationException
@@ -19,6 +20,11 @@ from django.core.management import call_command
 
 class ApplicationView(DetailView):
     model = Application
+    template_name = 'wildlifecompliance/dash/index.html'
+
+
+class CallEmailView(DetailView):
+    model = CallEmail
     template_name = 'wildlifecompliance/dash/index.html'
 
 
