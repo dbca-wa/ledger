@@ -31,7 +31,6 @@ def prepare_attachments(attachments):
     return returned_attachments
 
 def send_call_email_forward_email(select_group, call_email, attachments, request=None):
-    # An email reminding assessors of a pending assessment request
     email = CallEmailForwardNotificationEmail()
     url = request.build_absolute_uri(
         reverse(
@@ -42,18 +41,17 @@ def send_call_email_forward_email(select_group, call_email, attachments, request
         'url': url,
         'call_email': call_email,
     }
-    #email_group = [item.email for item in select_group]
+    email_group = [item.email for item in select_group]
     for document in attachments.all():
         print(document._file.name)
-    email_group = 'main@localhost.com'
+    # email_group = 'main@localhost.com'
     msg = email.send(email_group, 
         context=context,
         attachments= 
-        # [(document._file.name, document._file.read()) for document in attachments.all()] 
         prepare_attachments(attachments)
         )
-    #sender = request.user if request else settings.DEFAULT_FROM_EMAIL
-    sender = 'main@localhost.com'
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    # sender = 'main@localhost.com'
     _log_call_email_comms(msg, call_email, sender=sender)
 
 def _log_call_email_comms(email_message, call_email, sender=None):
