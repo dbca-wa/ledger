@@ -142,18 +142,11 @@
                         {
                         // Actions
                             width: "10%",
-                            // data: "base_compliance_permissions",
                             mRender: function(data,type,full) {
-                                // console.log("full.base_compliance_permissions");
-                                // console.log(full.base_compliance_permissions);
                                 let links = '';
-                                if (full.base_compliance_permissions.includes('officer')) {
-                                    
-                                    links +=  `<a href="/internal/call_email/${full.id}">Process</a>`;
-                                    links +=  `<a href="/internal/call_email/${full.id}">View</a>`;
-                                } else {
-                                    links +=  `<a href="/internal/call_email/${full.id}">View</a>`;
-                                }
+                                    links += full.user_is_officer ? 
+                                        `<a href="/internal/call_email/${full.id}">Process</a>` :
+                                        `<a href="/internal/call_email/${full.id}">View</a>`;
                                 return links;
                             },
                             orderable: false,
