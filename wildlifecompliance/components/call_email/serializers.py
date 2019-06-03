@@ -303,7 +303,7 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
     status_display = CustomChoiceField(read_only=True)
     classification = ClassificationSerializer(read_only=True)
     lodgement_date = serializers.CharField(source='lodged_on')
-    base_compliance_permissions = serializers.SerializerMethodField()
+    user_is_officer = serializers.SerializerMethodField()
 
     class Meta:
         model = CallEmail
@@ -311,27 +311,27 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
             'id',
             'status',
             'status_display',
-            'base_compliance_permissions',
+            'user_is_officer',
             'classification',
             'classification_id',
             'lodgement_date',
             'number',
             'caller',
             'assigned_to',
-            
         )
         read_only_fields = (
             'id', 
             'status_display',
             )
 
-    def get_base_compliance_permissions(self, obj):
+    def get_user_is_officer(self, obj):
         user = EmailUser.objects.get(id=self.context.get('request', {}).user.id)
         compliance_permissions = []
         for group in user.groups.all():
             for permission in group.permissions.all():
                 compliance_permissions.append(permission.codename)
-        return compliance_permissions
+        if 'officer' in compliance_permissions:
+            return True
 
 
 class CreateCallEmailSerializer(serializers.ModelSerializer):
