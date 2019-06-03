@@ -68,12 +68,20 @@ from wildlifecompliance.components.call_email.serializers import (
     EmailUserSerializer,
     SaveEmailUserSerializer, 
     MapLayerSerializer,
-    ComplianceWorkflowLogEntrySerializer)
+    ComplianceWorkflowLogEntrySerializer,
+    CallEmailDatatableSerializer
+    )
+from wildlifecompliance.components.users.serializers import (
+    ComplianceUserDetailsSerializer,
+)
 from utils import SchemaParser
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
+
+from wildlifecompliance.components.call_email.email import (
+    send_call_email_forward_email)
 
 
 class CallEmailViewSet(viewsets.ModelViewSet):
@@ -118,7 +126,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     def datatable_list(self, request, *args, **kwargs):
         try:
             qs = self.get_queryset()
-            serializer = self.get_serializer(
+            serializer = CallEmailDatatableSerializer(
                 qs, many=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -508,7 +516,24 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     document._file = request.FILES[f]
                     document.save()
                 # End Save Documents
+                print(workflow_entry.id)
 
+                attachments = []
+                for document in workflow_entry.documents.all():
+                    attachments.append(document)
+                print("attachments")
+                print(attachments)
+
+                user = EmailUser.objects.filter(email='brendan.blackford@dbca.wa.gov.au')
+                # send email
+                send_call_email_forward_email(
+                user, 
+                instance,
+                workflow_entry.documents,
+                request)
+
+                print("Response")
+                print(Response)
                 return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())

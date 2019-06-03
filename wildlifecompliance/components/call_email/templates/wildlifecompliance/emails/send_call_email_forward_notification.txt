@@ -1,0 +1,12 @@
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
+
+{%  block content %}
+        This Call/Email has been forwarded to you:
+
+        Call/Email : {{ call_email.number }}
+
+        Link: {{url}}
+
+        Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.
+
+{%  endblock %}

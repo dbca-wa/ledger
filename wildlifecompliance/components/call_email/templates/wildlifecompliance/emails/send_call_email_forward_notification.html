@@ -1,0 +1,8 @@
+{%  extends 'wildlifecompliance/emails/base_email.html' %}
+
+{%  block content %}
+        <p>This Call/Email has been forwarded to you:</p>
+        <p><strong>Call/Email : {{ call_email.number }}</strong></p>
+        <p><strong>Link: <a href="{{url}}">{{url}}</a></strong></p>
+        <p>Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.</p>
+{%  endblock %}
