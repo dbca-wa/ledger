@@ -278,6 +278,56 @@ class MyUserDetailsSerializer(serializers.ModelSerializer):
         return serialized_orgs
 
 
+class ComplianceUserDetailsSerializer(serializers.ModelSerializer):
+    residential_address = UserAddressSerializer()
+    personal_details = serializers.SerializerMethodField()
+    address_details = serializers.SerializerMethodField()
+    contact_details = serializers.SerializerMethodField()
+    # compliance_permissions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmailUser
+        fields = (
+            'title',
+            'id',
+            'last_name',
+            'first_name',
+            'dob',
+            'email',
+            'residential_address',
+            'phone_number',
+            'mobile_number',
+            'fax_number',
+            # 'compliance_permissions',
+            'personal_details',
+            'address_details',
+            'contact_details'
+        )
+
+    def get_personal_details(self, obj):
+        return True if obj.last_name and obj.first_name and obj.dob else False
+
+    def get_address_details(self, obj):
+        return True if obj.residential_address else False
+
+    def get_contact_details(self, obj):
+        if obj.mobile_number and obj.email:
+            return True
+        elif obj.phone_number and obj.email:
+            return True
+        elif obj.mobile_number and obj.phone_number:
+            return True
+        else:
+            return False
+
+    # def get_wildlifecompliance_organisations(self, obj):
+    #     wildlifecompliance_organisations = obj.wildlifecompliance_organisations
+    #     serialized_orgs = UserOrganisationSerializer(
+    #         wildlifecompliance_organisations, many=True, context={
+    #             'user_id': obj.id}).data
+    #     return serialized_orgs
+
+
 class EmailUserActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
 

@@ -68,7 +68,12 @@ from wildlifecompliance.components.call_email.serializers import (
     EmailUserSerializer,
     SaveEmailUserSerializer, 
     MapLayerSerializer,
-    ComplianceWorkflowLogEntrySerializer)
+    ComplianceWorkflowLogEntrySerializer,
+    CallEmailDatatableSerializer
+    )
+from wildlifecompliance.components.users.serializers import (
+    ComplianceUserDetailsSerializer,
+)
 from utils import SchemaParser
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
@@ -121,7 +126,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     def datatable_list(self, request, *args, **kwargs):
         try:
             qs = self.get_queryset()
-            serializer = self.get_serializer(
+            serializer = CallEmailDatatableSerializer(
                 qs, many=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:

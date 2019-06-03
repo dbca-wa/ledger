@@ -16,6 +16,7 @@ from wildlifecompliance.components.call_email.models import (
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
+from wildlifecompliance.components.main.fields import CustomChoiceField
 
 from wildlifecompliance.components.users.serializers import UserAddressSerializer
 
@@ -162,7 +163,7 @@ class ReportTypeSerializer(serializers.ModelSerializer):
 
 
 class SaveCallEmailSerializer(serializers.ModelSerializer):
-    status_display = serializers.CharField(source='get_status_display')
+    status_display = CustomChoiceField(read_only=True)
     classification = ClassificationSerializer(read_only=True)
     location = LocationSerializer(read_only=True)
     report_type = ReportTypeSerializer(read_only=True)
@@ -207,6 +208,7 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
         )
         read_only_fields = (
             'id', 
+            'status_display',
             'number', 
             'location',
             'classification',
@@ -250,7 +252,7 @@ class CallEmailOptimisedSerializer(serializers.ModelSerializer):
 
 
 class CallEmailSerializer(serializers.ModelSerializer):
-    status_display = serializers.CharField(source='get_status_display')
+    status_display = CustomChoiceField(read_only=True)
     classification = ClassificationSerializer(read_only=True)
     lodgement_date = serializers.CharField(source='lodged_on')
     report_type = ReportTypeSerializer(read_only=True)
@@ -264,7 +266,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'status',
-             'status_display',
+            'status_display',
             'location',
             'location_id',
             'classification',
@@ -291,11 +293,52 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'advice_details',
             'email_user',
         )
-        read_only_fields = ('id', )
+        read_only_fields = (
+            'id', 
+            'status_display',
+            )
+
+
+class CallEmailDatatableSerializer(serializers.ModelSerializer):
+    status_display = CustomChoiceField(read_only=True)
+    classification = ClassificationSerializer(read_only=True)
+    lodgement_date = serializers.CharField(source='lodged_on')
+    base_compliance_permissions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CallEmail
+        fields = (
+            'id',
+            'status',
+            'status_display',
+            'base_compliance_permissions',
+            'classification',
+            'classification_id',
+            'lodgement_date',
+            'number',
+            'caller',
+            'assigned_to',
+            
+        )
+        read_only_fields = (
+            'id', 
+            'status_display',
+            )
+
+    def get_base_compliance_permissions(self, obj):
+        user = EmailUser.objects.get(id=self.context.get('request', {}).user.id)
+        compliance_permissions = []
+        for group in user.groups.all():
+            for permission in group.permissions.all():
+                compliance_permissions.append(permission.codename)
+        return compliance_permissions
 
 
 class CreateCallEmailSerializer(serializers.ModelSerializer):
-    status_display = serializers.CharField(source='get_status_display')
+    # status_display = serializers.CharField(source='get_status_display')
+    status_display = CustomChoiceField(read_only=True)
+    # customer_status = CustomChoiceField(read_only=True)
+
     lodgement_date = serializers.CharField(
         source='lodged_on')
     classification_id = serializers.IntegerField(
@@ -331,7 +374,10 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
             'advice_details',
             'referrer_id',
         )
-        read_only_fields = ('id', )
+        read_only_fields = (
+            'id', 
+            'status_display',
+            )
 
 
 class ComplianceUserActionSerializer(serializers.ModelSerializer):
