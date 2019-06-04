@@ -515,14 +515,14 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     document.name = str(request.FILES[f])
                     document._file = request.FILES[f]
                     document.save()
-                # End Save Documents
-                print(workflow_entry.id)
+
+                # Set CallEmail status to open
+                instance.status = 'open'
+                instance.save()
 
                 attachments = []
                 for document in workflow_entry.documents.all():
                     attachments.append(document)
-                print("attachments")
-                print(attachments)
 
                 user = EmailUser.objects.filter(email='brendan.blackford@dbca.wa.gov.au')
                 # send email
@@ -532,8 +532,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 workflow_entry.documents,
                 request)
 
-                print("Response")
-                print(Response)
                 return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
