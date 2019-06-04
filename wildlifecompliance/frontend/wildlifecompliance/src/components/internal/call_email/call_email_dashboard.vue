@@ -109,7 +109,7 @@
                             data: "number",
                         },
                         {
-                            data: "status",
+                            data: "status.name",
                         },
                         {
                             data: "classification",
@@ -134,36 +134,25 @@
                         {
                             data: "assigned_to",
                         },
+                        // {
+                        //     mRender: function (data, type, full) {
+                        //         return `<a href="/internal/call_email/${full.id}">View</a>`
+                        //     }
+                        // }
                         {
-                            mRender: function (data, type, full) {
-                                return `<a href="/internal/call_email/${full.id}">View</a>`
-                            }
+                        // Actions
+                            width: "10%",
+                            mRender: function(data,type,full) {
+                                let links = '';
+                                    links += full.user_is_officer ? 
+                                        `<a href="/internal/call_email/${full.id}">Process</a>` :
+                                        `<a href="/internal/call_email/${full.id}">View</a>`;
+                                return links;
+                            },
+                            orderable: false,
+                            searchable: false
                         }
                     ],
-
-                    // initComplete: function () {
-                    //     var callColumn = vm.$refs.call_email_table.vmDataTable.columns(1);
-                    //     callColumn.data().unique().sort().each(function (d, j) {
-                    //         let status_choices = [];
-                    //         $.each(d, (index, a) => {
-                    //             a != null && status_choices.indexOf(a) < 0 ? status_choices.push(a) :
-                    //             '';
-                    //         })
-                    //         vm.statusChoices = status_choices;
-                    //     });
-                    //     var classificationColumn = vm.$refs.call_email_table.vmDataTable.columns(2);
-                    //     classificationColumn.data().unique().sort().each(function (d, j) {
-                    //         let classification_choices = [];
-                    //         $.each(d, (index, a) => {
-                    //             if (a) {
-                    //                 a['name'] != null && classification_choices.indexOf(a['name']) < 0 ?
-                    //                     classification_choices.push(a['name']) : '';
-                    //             }
-                    //         })
-                    //         vm.classificationChoices = classification_choices;
-                    //     });
-                    // }
-
                 },
                 dtHeaders: [
                     "Number",
@@ -177,7 +166,15 @@
             }
         },
 
+        beforeRouteEnter: function(to, from, next) {
+            next(async (vm) => {
+                await vm.loadCurrentUser({ url: `/api/my_compliance_user_details` });
+                // await this.datatablePermissionsToggle();
+            });
+        },
+        
         created: async function() {
+            
             let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
             console.log('classification types');
             console.log(returned_classification_types);
@@ -191,6 +188,7 @@
             Object.assign(this.status_choices, returned_status_choices);
             console.log(this.status_choices);
             this.status_choices.splice(0, 0, {id: 'all', display: 'All'});
+
         },
         watch: {
             filterStatus: function () {
@@ -226,11 +224,22 @@
         computed: {
             ...mapGetters('callemailStore', {
             }),
+            ...mapGetters({
+                current_user: 'current_user',
+            }),
+            
         },
         methods: {
             ...mapActions('callemailStore', {
                 saveCallEmail: "saveCallEmail",
             }),
+            ...mapActions({
+                loadCurrentUser: "loadCurrentUser",
+                // userhasComplianceRole: "hasComplianceRole",
+            }),
+            // datatablePermissionsToggle: function() {
+            //     return this.current_user.base_compliance_permissions.includes('officer');
+            // },
             createCallEmailUrl: async function () {
                 const newCallId = await this.saveCallEmail({ route: false, crud: 'create'});
                 console.log("newCallId");
@@ -308,6 +317,8 @@
                 await vm.initialiseSearch();
                 await vm.addEventListeners();
             });
+            
+            
         }
     }
 </script>
