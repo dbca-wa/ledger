@@ -160,6 +160,7 @@ export const applicationStore = {
                                 "component_type": form_data_record.component_type,
                                 "instance_name": form_data_record.instance_name,
                                 "licence_activity_id": form_data_record.licence_activity_id,
+                                "licence_purpose_id": form_data_record.licence_purpose_id,
                             }
                         });
                     }

@@ -408,7 +408,10 @@ def get_activity_schema(activity_ids):
         schema_purpose = []
 
         for purpose in purposes.filter(licence_activity__id=activity.id):
-            schema_purpose += purpose.schema
+            purpose_schema = purpose.schema
+            for item in purpose_schema:
+                item['purpose_id'] = purpose.id
+            schema_purpose += purpose_schema
 
         schema_group.append({"type": "tab",
                              "id": activity.id,
@@ -420,7 +423,7 @@ def get_activity_schema(activity_ids):
 
     # Iterate through the schema to add licence_activity_id to all form fields for storing in database
 
-    def iterate_children(schema_group, parent={}, parent_type='', condition={}, activity_id=None):
+    def iterate_children(schema_group, parent={}, parent_type='', condition={}, activity_id=None, purpose_id=None):
         children_keys = [
             'children',
             'header',
@@ -438,20 +441,34 @@ def get_activity_schema(activity_ids):
             except BaseException:
                 pass
 
+            try:
+                purpose_id = item['purpose_id']
+            except BaseException:
+                pass
+
             if isinstance(item, list):
                 if parent_type == 'conditions':
                     condition[parent['name']] = key
-                iterate_children(item, parent, parent_type, condition, activity_id)
+                iterate_children(item, parent, parent_type, condition, activity_id, purpose_id)
                 continue
 
             item['licence_activity_id'] = activity_id
+            item['licence_purpose_id'] = purpose_id
 
             for children_key in children_keys:
                 if children_key in item:
-                    iterate_children(item[children_key], item, children_key, condition, activity_id)
+                    iterate_children(item[children_key], item, children_key, condition, activity_id, purpose_id)
 
             condition = {}
 
+    print('\n\nschema_group')
+    print(schema_group)
+    print('schema_group\n\n')
+
     iterate_children(schema_group)
+
+    print('\n\nschema_group')
+    print(schema_group)
+    print('schema_group\n\n')
 
     return schema_group
