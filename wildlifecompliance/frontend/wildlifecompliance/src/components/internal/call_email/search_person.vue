@@ -8,6 +8,10 @@
             </div>
         </div>
         <div class="col-md-12">
+            <ul class="nav nav-tabs">
+                <li class="active"><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
+                <li><a data-toggle="tab" :href="'#'+oTab">Licensing</a></li>
+            </ul>
             <div class="tab-content">
                 <div :id="dTab" class="tab-pane fade in active">
                     <div class="row">
@@ -46,12 +50,12 @@
                                             </div>
                                         </div>
                                         </div>
-                                        <div class="form-group">
+                                        <!-- <div class="form-group">
                                         <div class="col-sm-12">
                                                 <button v-if="!updatingPersonal" class="pull-right btn btn-primary" @click.prevent="updatePersonal()">Update</button>
                                                 <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
                                         </div>
-                                        </div>
+                                        </div> -->
                                     </form>
                                 </div>
                             </div>
@@ -69,7 +73,7 @@
                                 </div>
                                 <div v-if="loading.length == 0" class="panel-body collapse in" :id="adBody">
                                     Under Construction
-                                    <!-- <form class="form-horizontal" action="index.html" method="post">
+                                    <!--  <form class="form-horizontal" action="index.html" method="post">
                                         <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Street</label>
                                         <div class="col-sm-6">
@@ -78,7 +82,7 @@
                                             </div></div>
                                         </div>
                                         </div>
-                                        <div class="form-group">
+                                       <div class="form-group">
                                         <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
                                         <div class="col-sm-6">
                                             <div v-if="call_email.email_user"><div v-if="call_email.email_user.residential_address">
@@ -115,58 +119,69 @@
                                             <button v-if="!updatingAddress" class="pull-right btn btn-primary" @click.prevent="updateAddress()">Update</button>
                                             <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
                                         </div>
-                                        </div>
-                                    </form> -->
+                                        </div> -->
+                                    </form>
                                 </div>
                             </div>
                         </div>
                     </div>
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="panel panel-default">
-                                  <div class="panel-heading">
-                                    <h3 class="panel-title">Contact Details <small></small>
-                                        <a class="panelClicker" :href="'#'+cdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cdBody">
-                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                                        </a>
-                                    </h3>
-                                  </div>
-                                  <div class="panel-body collapse in" :id="cdBody">
-                                      <form class="form-horizontal" action="index.html" method="post">
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label">Phone (work)</label>
-                                            <div class="col-sm-6">
-                                                <div v-if="call_email.email_user">
-                                                    <input type="text" class="form-control" name="phone" placeholder="" v-model="call_email.email_user.phone_number" v-bind:key="call_email.email_user.id">
-                                                </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                <h3 class="panel-title">Contact Details <small></small>
+                                    <a class="panelClicker" :href="'#'+cdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cdBody">
+                                        <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                    </a>
+                                </h3>
+                                </div>
+                                <div class="panel-body collapse in" :id="cdBody">
+                                    <form class="form-horizontal" action="index.html" method="post">
+                                        <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Phone (work)</label>
+                                        <div class="col-sm-6">
+                                            <div v-if="call_email.email_user">
+                                                <input type="text" class="form-control" name="phone" placeholder="" v-model="call_email.email_user.phone_number" v-bind:key="call_email.email_user.id">
                                             </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label" >Mobile</label>
-                                            <div class="col-sm-6">
-                                                <div v-if="call_email.email_user">
-                                                    <input type="text" class="form-control" name="mobile" placeholder="" v-model="call_email.email_user.mobile_number" v-bind:key="call_email.email_user.id">
-                                                </div>
+                                        </div>
+                                        </div>
+                                        <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label" >Mobile</label>
+                                        <div class="col-sm-6">
+                                            <div v-if="call_email.email_user">
+                                                <input type="text" class="form-control" name="mobile" placeholder="" v-model="call_email.email_user.mobile_number" v-bind:key="call_email.email_user.id">
                                             </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label" >Email</label>
-                                            <div class="col-sm-6">
-                                                <div v-if="call_email.email_user">
-                                                    <input type="email" class="form-control" name="email" placeholder="" v-model="call_email.email_user.email" v-bind:key="call_email.email_user.id"> </div>
-                                                </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <div class="col-sm-12">
-                                                <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="updateContact()">Update</button>
-                                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                                        </div>
+                                        </div>
+                                        <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label" >Email</label>
+                                        <div class="col-sm-6">
+                                            <div v-if="call_email.email_user">
+                                                <input type="email" class="form-control" name="email" placeholder="" v-model="call_email.email_user.email" v-bind:key="call_email.email_user.id"> </div>
                                             </div>
-                                          </div>
-                                       </form>
-                                  </div>
+                                        </div>
+                                        <div class="form-group">
+                                        <!-- <div class="col-sm-12">
+                                            <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="updateContact()">Update</button>
+                                            <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                                        </div> -->
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="save">Update</button>
+                            <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                        </div>
+                    </div>
+                </div>
+                <div :id="oTab" class="tab-pane fade">
+                    <!-- <ApplicationDashTable ref="applications_table" level='internal' :url='applications_url'/>
+                    <LicenceDashTable ref="licences_table" level='internal' :url='licences_url'/>
+                    <ReturnDashTable ref="returns_table" level='internal' :url='returns_url'/> -->
                 </div>
             </div>
         </div>
@@ -223,10 +238,49 @@ export default {
     methods: {
         ...mapActions('callemailStore', {
             setEmailUserEmpty: "setEmailUserEmpty",
+            saveCallEmail: 'saveCallEmail',
         }),
+        save: async function() {
+          if (this.call_email.id) {
+            await this.saveCallEmail({ route: false, crud: 'save' });
+          } else {
+            await this.saveCallEmail({ route: false, crud: 'create'});
+            this.$nextTick(function() {
+              this.$router.push({name: 'view-call-email', params: {call_email_id: this.call_email.id}});
+            });
+          }
+        },
         createNewPerson: function() {
             let vm = this;
             vm.setEmailUserEmpty();
+        },
+        updateContact: function() {
+            console.log('aho');
+            let vm = this;
+            vm.updatingContact = true;
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.call_email.email_user.id+'/update_contact')),JSON.stringify(vm.call_email.email_user),{
+                emulateJSON:true
+            }).then((response) => {
+                vm.updatingContact = false;
+                // vm.user = response.body;
+                if (vm.call_email.email_user.residential_address == null){ vm.call_email.email_user.residential_address = {}; }
+                swal({
+                    title: 'Update Contact Details',
+                    html: 'User contact details has been successfully updated.',
+                    type: 'success',
+                })
+            }, (error) => {
+                vm.updatingContact = false;
+                let error_msg = '<br/>';
+                for (var key in error.body) {
+                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                }
+                swal({
+                    title: 'Update Contact Details',
+                    html: 'There was an error updating the user contact details.<br/>' + error_msg,
+                    type: 'error'
+                })
+            });
         },
         updateAddress: function() {
             let vm = this;
@@ -431,6 +485,13 @@ export default {
 }
 .full_name {
     color: green;
+}
+.tab-content {
+    padding: 10px;
+    border: solid 1px lightgray;
+}
+.nav-tabs {
+    border-bottom: none !important;
 }
 #search-person {
     z-index: 1000;
