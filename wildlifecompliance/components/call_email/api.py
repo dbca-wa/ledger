@@ -68,12 +68,20 @@ from wildlifecompliance.components.call_email.serializers import (
     EmailUserSerializer,
     SaveEmailUserSerializer, 
     MapLayerSerializer,
-    ComplianceWorkflowLogEntrySerializer)
+    ComplianceWorkflowLogEntrySerializer,
+    CallEmailDatatableSerializer
+    )
+from wildlifecompliance.components.users.serializers import (
+    ComplianceUserDetailsSerializer,
+)
 from utils import SchemaParser
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
+
+from wildlifecompliance.components.call_email.email import (
+    send_call_email_forward_email)
 
 
 class CallEmailViewSet(viewsets.ModelViewSet):
@@ -118,7 +126,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     def datatable_list(self, request, *args, **kwargs):
         try:
             qs = self.get_queryset()
-            serializer = self.get_serializer(
+            serializer = CallEmailDatatableSerializer(
                 qs, many=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -288,17 +296,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     def create(self, request, *args, **kwargs):
+        print(request.data)
         try:
             with transaction.atomic():
                 request_data = request.data
                 # Create location then include in request to create new Call/Email
                 returned_location = None
-                if not request.user.has_perm('wildlifecompliance.licensing_officer'):
-                    raise serializers.ValidationError(
-                    'You are not authorised to assign officers to applications')
-                else:
-                    print(request.user.has_perm('wildlifecompliance.licensing_officer'))
-                    print('You are authorised to assign officers to applications')
 
                 if (
                     request_data.get('location', {}).get('geometry', {}).get('coordinates', {}) or
@@ -309,13 +312,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     if returned_location:
                         request_data.update({'location_id': returned_location.get('id')})
                 
-                print("returned_location")
-                print(returned_location)
-                print("request_data")
-                print(request_data)
-
-                # if request_data.get('classification'):
-                #     request_data.update({'classification_id': request_data.get('classification', {}).get('id')})
                 if request_data.get('report_type'):
                     request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
                 
@@ -370,78 +366,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-
-    # def save_email_user_residential_address(self, request, email_user_data, *args, **kwargs):
-    #     email_user_request_data = request.data.get('email_user')
-    #
-    #     residential_address_request_data = {}
-    #     if email_user_request_data:
-    #         residential_address_request_data = email_user_request_data.get('residential_address')
-    #
-    #     residential_address_id = residential_address_request_data.get('id')
-    #     # residential_address_request_data.update({'user': email_user_data})
-    #     if residential_address_id:
-    #         # existing
-    #         address_instance = Address.objects.get(id=residential_address_id)
-    #         serializer = UserAddressSerializer(
-    #             instance=address_instance,
-    #             data=residential_address_request_data,
-    #             partial=True
-    #         )
-    #     else:
-    #         # new
-    #         serializer = UserAddressSerializer(
-    #             data=residential_address_request_data,
-    #             partial=True
-    #         )
-    #     serializer.is_valid(raise_exception=True)
-    #     # if serializer.is_valid():
-    #     #     serializer.save()
-    #
-    #     # serializer = UserAddressSerializer(data=request.data)
-    #     # serializer.is_valid(raise_exception=True)
-    #     address, created = Address.objects.get_or_create(
-    #         line1=serializer.validated_data['line1'],
-    #         locality=serializer.validated_data['locality'],
-    #         state=serializer.validated_data['state'],
-    #         country=serializer.validated_data['country'],
-    #         postcode=serializer.validated_data['postcode'],
-    #         user=email_user_data
-    #     )
-    #     serializer = UserAddressSerializer(instance=address)
-    #     return serializer.data
-    #
-    #
-    # def save_email_user(self, request, *args, **kwargs):
-    #     email_user_request_data = request.data.get('email_user')
-    #     email_user_id = email_user_request_data.get('id')
-    #
-    #     if email_user_id:
-    #         email_user_instance = EmailUser.objects.get(id=email_user_id)
-    #         email_user_serializer = SaveEmailUserSerializer(
-    #             instance=email_user_instance,
-    #             data=email_user_request_data,
-    #             partial=True
-    #         )
-    #         email_user_serializer.is_valid(raise_exception=True)
-    #         if email_user_serializer.is_valid():
-    #             email_user_instance = email_user_serializer.save()
-    #     else:
-    #         email_user_serializer = SaveEmailUserSerializer(
-    #             data=email_user_request_data,
-    #             partial=True
-    #         )
-    #         email_user_serializer.is_valid(raise_exception=True)
-    #         if email_user_serializer.is_valid():
-    #             email_user_instance = email_user_serializer.save()
-    #
-    #     # Update residential address
-    #     residential_address_saved = self.save_email_user_residential_address(request, email_user_instance)
-    #
-    #     return email_user_serializer.data #.update({'residential_address': residential_address_saved})
-    #     # return email_user_instance
-
-
+    
     def save_location(self, request, *args, **kwargs):
         location_request_data = request.data.get('location')
         if location_request_data.get('id'):
@@ -498,6 +423,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     def call_email_save(self, request, *args, **kwargs):
+        print(request.data)
         instance = self.get_object()
         try:
             with transaction.atomic():
@@ -582,7 +508,22 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     document.name = str(request.FILES[f])
                     document._file = request.FILES[f]
                     document.save()
-                # End Save Documents
+
+                # Set CallEmail status to open
+                instance.status = 'open'
+                instance.save()
+
+                attachments = []
+                for document in workflow_entry.documents.all():
+                    attachments.append(document)
+
+                user = EmailUser.objects.filter(email='brendan.blackford@dbca.wa.gov.au')
+                # send email
+                send_call_email_forward_email(
+                user, 
+                instance,
+                workflow_entry.documents,
+                request)
 
                 return Response(serializer.data)
         except serializers.ValidationError:
@@ -725,4 +666,3 @@ class MapLayerViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return MapLayer.objects.filter(availability__exact=True)
         return MapLayer.objects.none()
-

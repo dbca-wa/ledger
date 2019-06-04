@@ -39,7 +39,7 @@ module.exports = {
                 }
             }
             else {
-                let returnedFromUrl = await Vue.http.get(url);
+                const returnedFromUrl = await Vue.http.get(url);
                 // url returns individual record (eg. @detail_route)
                 if (returnedFromUrl.body.id) {
                     // assumes that every record has an id element
@@ -65,7 +65,9 @@ module.exports = {
                 }
             }
         } catch(err) {
-            console.error(err);
+            // on cache failure, request data from backend directly
+            const returnedFromUrl = await Vue.http.get(url);
+            return returnedFromUrl.body;
         }
     },
     getSetCacheList: async (store_name, url, expiry) => {
@@ -128,7 +130,13 @@ module.exports = {
             return returned_list;
 
         } catch(err) {
-            console.log(err);
+            // on cache failure, request data from backend directly
+            const returnedFromUrl = await Vue.http.get(url);
+            if (returnedFromUrl.body.results) {
+                return returnedFromUrl.body.results;
+            } else {
+                return returnedFromUrl.body;
+            }
         }
     }
 };

@@ -27,6 +27,7 @@ from wildlifecompliance.components.users.serializers import (
     MyUserDetailsSerializer,
     CompliancePermissionGroupSerializer,
     RegionDistrictSerializer,
+    ComplianceUserDetailsSerializer,
 )
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
@@ -43,6 +44,29 @@ class GetMyUserDetails(views.APIView):
     def get(self, request, format=None):
         serializer = MyUserDetailsSerializer(request.user, context={'request': request})
         return Response(serializer.data)
+
+
+class GetComplianceUserDetails(views.APIView):
+    renderer_classes = [JSONRenderer, ]
+
+    def get(self, request, format=None):
+        serializer = ComplianceUserDetailsSerializer(request.user, context={'request': request})
+        returned_data = serializer.data
+        if returned_data.get('id'):
+            user_id = returned_data.get('id')
+            user = EmailUser.objects.get(id=user_id)
+            
+            
+            compliance_permissions = []
+            for group in user.groups.all():
+                for permission in group.permissions.all():
+                    compliance_permissions.append(permission.codename)
+                returned_data.update({ 'base_compliance_permissions': compliance_permissions })
+            if 'officer' in compliance_permissions:
+                returned_data.update({ 'is_officer': True })
+            else:
+                returned_data.update({ 'is_officer': False })
+        return Response(returned_data)
 
 
 class GetUser(views.APIView):

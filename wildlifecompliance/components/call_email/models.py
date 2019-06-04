@@ -14,21 +14,18 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document
 from wildlifecompliance.components.users.models import RegionDistrict
 
-
 logger = logging.getLogger(__name__)
 
-
 def update_compliance_doc_filename(instance, filename):
-    return 'compliancemanagement/call_email/{}/documents/{}'.format(
+    return 'wildlifecompliance/compliance/{}/documents/{}'.format(
         instance.call_email.id, filename)
 
-
 def update_compliance_comms_log_filename(instance, filename):
-    return 'compliancemanagement/call_email/{}/communications/{}/{}'.format(
+    return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
         instance.log_entry.call_email.id, instance.id, filename)
 
 def update_compliance_workflow_log_filename(instance, filename):
-    return 'compliancemanagement/call_email/{}/workflow/{}/{}'.format(
+    return 'wildlifecompliance/compliance/{}/workflow/{}/{}'.format(
         instance.workflow.call_email.id, instance.id, filename)
 
 

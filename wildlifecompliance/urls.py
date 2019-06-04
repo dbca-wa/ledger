@@ -73,6 +73,9 @@ router.register(r'region_district', users_api.RegionDistrictViewSet)
 api_patterns = [url(r'^api/my_user_details/$',
                     users_api.GetMyUserDetails.as_view(),
                     name='get-my-user-details'),
+                url(r'^api/my_compliance_user_details/$',
+                    users_api.GetComplianceUserDetails.as_view(),
+                    name='get-my-compliance-user-details'),
                 url(r'^api/is_new_user/$',
                     users_api.IsNewUser.as_view(),
                     name='is-new-user'),
@@ -138,6 +141,11 @@ urlpatterns = [
         ApplicationSuccessView.as_view(),
         name='external-application-success-invoice'),
 
+    # following url is defined so that to include url path when sending
+    # call_email emails to users
+    url(r'^internal/call_email/(?P<call_email_id>\d+)/$', views.ApplicationView.as_view(),
+        name='internal-call-email-detail'),
+    
     # url(r'^export/xls/$', application_views.export_applications, name='export_applications'),
     url(r'^export/pdf/$', application_views.pdflatex, name='pdf_latex'),
     url(r'^mgt-commands/$',
