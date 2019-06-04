@@ -3,10 +3,7 @@
         <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="modalTitle" large>
           <div class="container-fluid">
             <div class="row">
-              
-
                 <div class="col-sm-12">
-                    
                         <div v-if="workflow_type === 'to_regions'" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
@@ -30,6 +27,59 @@
                               <select class="form-control" v-model="selectedDistrict">
                                 <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
                                   {{ option.display_name }} 
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div v-if="workflow_type.includes('allocate')" class="form-group">
+                          <div class="row">
+                            <div class="col-sm-3">
+                              <label>Allocate to</label>
+                            </div>
+                            <div class="col-sm-9">
+                              <select class="form-control" v-model="selectedDistrict">
+                                <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
+                                  Allocate to
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div v-if="workflow_type === 'allocate_for_inspection'" class="form-group">
+                          <div class="row">
+                            <div class="col-sm-3">
+                              <label>Inspection Type</label>
+                            </div>
+                            <div class="col-sm-9">
+                              <select class="form-control" v-model="selectedDistrict">
+                                <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div v-if="workflow_type === 'allocate_for_case'" class="form-group">
+                          <div class="row">
+                            <div class="col-sm-3">
+                              <label>Priority</label>
+                            </div>
+                            <div class="col-sm-9">
+                              <select class="form-control" v-model="selectedDistrict">
+                                <option v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div v-if="workflow_type === 'close'" class="form-group">
+                          <div class="row">
+                            <div class="col-sm-3">
+                              <label>Complaint forwarded to external party for follow-up</label>
+                            </div>
+                            <div class="col-sm-9">
+                              <select class="form-control" v-model="selectedDistrict">
+                                <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
                                 </option>
                               </select>
                             </div>
@@ -107,6 +157,7 @@ export default {
       regions: [],
       regionDistricts: [],
       availableDistricts: [],
+      compliance_permission_groups: [],
       selectedRegion: null,
       selectedDistrict: null,
       workflowDetails: '',
@@ -138,10 +189,18 @@ export default {
       return this.selectedDistrict ? this.selectedDistrict : '';
     },
     modalTitle: function() {
-      if (this.forwardToRegions) {
+      if (this.workflow_type === 'forward_to_regions') {
         return "Forward to Regions";
-      } else { 
+      } else if (this.workflow_type === 'forward_to_wildlife_protection_branch') {
         return "Forward to Wildlife Protection Branch";
+      } else if (this.workflow_type === 'allocate_for_follow_up') {
+        return "Allocate for Follow Up";
+      } else if (this.workflow_type === 'allocate_for_inspection') {
+        return "Allocate for Inspection";
+      } else if (this.workflow_type === 'allocate_for_case') {
+        return "Allocate for Case";
+      } else if (this.workflow_type === 'close') {
+        return "Close complaint";
       }
     }
   },
@@ -197,6 +256,7 @@ export default {
         payload.append('region_id', this.region);
         payload.append('district_id', this.district);
         payload.append('details', this.workflowDetails);
+        payload.append('workflow_type', this.workflow_type);
         let res = await this.$http.post(post_url, payload);
         // console.log(res);
         if (res.ok) {
@@ -252,7 +312,16 @@ export default {
     // regionDistricts
     let returned_region_districts = await cache_helper.getSetCacheList('CallEmail_RegionDistricts', '/api/region_district/');
     Object.assign(this.regionDistricts, returned_region_districts);
+
+    // CompliancePermissionGroups
+    let returned_compliance_permission_groups = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Members', '/api/compliancepermissiongroup/get_detailed_list/');
+    Object.assign(this.compliance_permission_groups, returned_compliance_permission_groups);
     // blank entry allows user to clear selection
+    // this.compliance_permission_groups.splice(0, 0, 
+    //   {
+    //     id: "", 
+    //     name: "",
+    //   });
     
   },
   mounted: function() {

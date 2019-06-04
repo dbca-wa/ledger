@@ -35,7 +35,7 @@
                     <div class="panel-body panel-collapse">
                         <div v-if="statusId ==='draft'" class="row">
                           <div class="col-sm-12">
-                                <a ref="forwardToWildlifeProtectionBranch" @click="addWorkflow('to_wildlife_protection_branch')" class=" btn btn-primary">
+                                <a ref="forwardToWildlifeProtectionBranch" @click="addWorkflow('forward_to_wildlife_protection_branch')" class=" btn btn-primary">
                                   Forward to Wildlife Protection Branch
                                 </a>
                           </div>
@@ -45,7 +45,7 @@
                         </div>
                         <div v-if="statusId ==='draft'" class="row">
                           <div class="col-sm-12">
-                                <a ref="forwardToRegions" @click="addWorkflow('to_regions')" class=" btn btn-primary">
+                                <a ref="forwardToRegions" @click="addWorkflow('forward_to_regions')" class=" btn btn-primary">
                                   Forward to Regions
                                 </a>
                           </div>
@@ -276,6 +276,7 @@ export default {
       classification_types: [],
       report_types: [],
       referrers: [],
+      compliance_permission_groups: [],
       current_schema: [],
       sectionLabel: "Details",
       sectionIndex: 1,
@@ -343,6 +344,17 @@ export default {
     statusId: function() {
       return this.call_email.status ? this.call_email.status.id : '';
     },
+    listOfficers: function() {
+      officers = [];
+      for (let group of this.compliance_permission_groups) {
+        if (group.permissions && group.permissions.includes('officer')) {
+          for (member in group.members) {
+            officers.push(member);
+          }
+        }
+      }
+      
+    }
   },
   filters: {
     formatDate: function(data) {
@@ -441,6 +453,16 @@ export default {
         id: "", 
         name: "",
       });
+
+    // CompliancePermissionGroups
+    let returned_compliance_permission_groups = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Members', '/api/compliancepermissiongroup/get_detailed_list/');
+    Object.assign(this.compliance_permission_groups, returned_compliance_permission_groups);
+    // blank entry allows user to clear selection
+    // this.compliance_permission_groups.splice(0, 0, 
+    //   {
+    //     id: "", 
+    //     name: "",
+    //   });
 
     // load current CallEmail renderer schema
     if (this.call_email.report_type_id) {
