@@ -409,26 +409,19 @@ def get_activity_schema(activity_ids):
         schema_purpose = []
 
         for purpose in purposes.filter(licence_activity__id=activity.id):
-            # print('\n\npurpose.schema')
-            # print(purpose.schema)
-            # print('purpose.schema\n\n')
             schema_purpose += purpose.schema
-            # schema_purpose.append({'licence_activity'})
+
         schema_group.append({"type": "tab",
-                           "id": activity.id,
-                           "label": activity.name,
-                           "name": activity.name,
-                           "status": ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT,
-                           "children": schema_purpose
+                             "id": activity.id,
+                             "label": activity.name,
+                             "name": activity.name,
+                             "status": ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT,
+                             "children": schema_purpose
                            })
 
-    print('\n\nschema_group')
-    print(schema_group)
-    print('schema_group\n\n')
+    # Iterate through the schema to add licence_activity_id to all form fields
 
-    fields = {}
-
-    def iterate_children(schema_group, fields, parent={}, parent_type='', condition={}, activity_id=None):
+    def iterate_children(schema_group, parent={}, parent_type='', condition={}, activity_id=None):
         children_keys = [
             'children',
             'header',
@@ -440,31 +433,26 @@ def get_activity_schema(activity_ids):
         } if isinstance(schema_group, list) else schema_group
 
         for key, item in container.items():
-            if isinstance(item, list):
-                if parent_type == 'conditions':
-                    condition[parent['name']] = key
-                iterate_children(item, fields, parent, parent_type, condition, activity_id)
-                continue
 
             try:
                 activity_id = item['id']
             except BaseException:
                 pass
 
-            name = item['name']
-            fields[name] = {}
-            fields[name].update(item)
-            fields[name]['condition'] = {}
-            fields[name]['condition'].update(condition)
-            fields[name]['activity_id'] = activity_id
+            if isinstance(item, list):
+                if parent_type == 'conditions':
+                    condition[parent['name']] = key
+                iterate_children(item, parent, parent_type, condition, activity_id)
+                continue
+
+            item['licence_activity_id'] = activity_id
 
             for children_key in children_keys:
-                if children_key in fields[name]:
-                    del fields[name][children_key]
-                    iterate_children(item[children_key], fields, fields[name], children_key, condition, activity_id)
+                if children_key in item:
+                    iterate_children(item[children_key], item, children_key, condition, activity_id)
+
             condition = {}
 
-    # output of schema tab is the same as schema json passed to the get_schema_fields function in applications.models
-    # maybe use the iterate children function and update schema tab to have activity id in a similar fashion
+    iterate_children(schema_group)
 
     return schema_group

@@ -1189,9 +1189,6 @@ class Application(RevisionedMixin):
     def get_schema_fields(self, schema_json):
         fields = {}
 
-        print('\n\nschema_json')
-        print(schema_json)
-        print('schema_json\n\n')
         def iterate_children(schema_group, fields, parent={}, parent_type='', condition={}, activity_id=None):
             children_keys = [
                 'children',
@@ -1204,23 +1201,24 @@ class Application(RevisionedMixin):
             } if isinstance(schema_group, list) else schema_group
 
             for key, item in container.items():
-                if isinstance(item, list):
-                    if parent_type == 'conditions':
-                        condition[parent['name']] = key
-                    iterate_children(item, fields, parent, parent_type, condition, activity_id)
-                    continue
 
                 try:
                     activity_id = item['id']
                 except BaseException:
                     pass
 
+                if isinstance(item, list):
+                    if parent_type == 'conditions':
+                        condition[parent['name']] = key
+                    iterate_children(item, fields, parent, parent_type, condition, activity_id)
+                    continue
+
                 name = item['name']
                 fields[name] = {}
                 fields[name].update(item)
                 fields[name]['condition'] = {}
                 fields[name]['condition'].update(condition)
-                fields[name]['activity_id'] = activity_id
+                fields[name]['licence_activity_id'] = activity_id
 
                 for children_key in children_keys:
                     if children_key in fields[name]:
@@ -1229,10 +1227,6 @@ class Application(RevisionedMixin):
                 condition = {}
 
         iterate_children(schema_json, fields)
-        print('\n\nfields')
-        print(fields)
-        print('fields\n\n')
-        return fields
 
     def get_visible_form_data_tree(self, form_data_records=None):
         data_tree = {}
