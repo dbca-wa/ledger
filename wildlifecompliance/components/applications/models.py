@@ -1228,6 +1228,8 @@ class Application(RevisionedMixin):
 
         iterate_children(schema_json, fields)
 
+        return fields
+
     def get_visible_form_data_tree(self, form_data_records=None):
         data_tree = {}
         schema_fields = self.schema_fields

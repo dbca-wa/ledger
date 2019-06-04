@@ -394,7 +394,6 @@ class SpecialFieldsSearch(object):
 
 def get_activity_schema(activity_ids):
     from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
-    schema_activity = []
     schema_group = []
     try:
         purposes = LicencePurpose.objects.filter(
@@ -419,7 +418,7 @@ def get_activity_schema(activity_ids):
                              "children": schema_purpose
                            })
 
-    # Iterate through the schema to add licence_activity_id to all form fields
+    # Iterate through the schema to add licence_activity_id to all form fields for storing in database
 
     def iterate_children(schema_group, parent={}, parent_type='', condition={}, activity_id=None):
         children_keys = [
