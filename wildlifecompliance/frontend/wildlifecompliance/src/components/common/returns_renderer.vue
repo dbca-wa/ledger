@@ -55,7 +55,7 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-12 top-buffer-s">
-                                    <strong>Action</strong><br/>
+                                    <strong>Action</strong><br/><br/>
                                     <button style="width:255px;" class="btn btn-primary btn-md" @click.prevent="acceptReturn()">Accept</button><br/><br/>
                                     <button style="width:255px;" class="btn btn-primary btn-md" @click.prevent="amendmentRequest()">Request Amendment</button>
                                     <br/><br/>
@@ -78,12 +78,16 @@
             </div>
             {{ this.$slots.default }}
         </div>
+
+        <AmendmentRequest ref="amendment_request" ></AmendmentRequest>
+
     </div>
 </template>
 
 
 <script>
 import Vue from 'vue';
+import AmendmentRequest from '../internal/returns/amendment_request.vue';
 import { mapActions, mapGetters } from 'vuex';
 import CommsLogs from '@common-components/comms_logs.vue'
 import '@/scss/forms/form.scss';
@@ -106,6 +110,7 @@ export default {
   },
   components: {
     CommsLogs,
+    AmendmentRequest,
   },
   filters: {
     formatDate: function(data){
@@ -146,21 +151,28 @@ export default {
       'setReturnsTabs',
       'setReturnsSpecies',
       'setReturnsExternal',
+      'setReturns',
     ]),
     selectReturnsTab: function(component) {
         this.returns_tab_id = component.id;
         this.setReturnsTab({id: component.id, name: component.label});
     },
-    initReturnsTab: function() {
-        let tabs_list = [{name: 'step-0', label: '1. Return', id: 0},
-                         {name: 'step-1', label: '2. Confirmation', id: 1},
-                        ];
-        this.setReturnsTabs(tabs_list);
+    amendmentRequest: function(){
+      let vm = this;
+      //vm.save_wo();
+
+      vm.$refs.amendment_request.amendment.text = '';
+      vm.$refs.amendment_request.isModalOpen = true;
     },
   },
-
   mounted: function() {
-    this.setReturnsExternal({'external': this.level == 'external'})
+      if (this.returns.format != 'sheet') {
+      var headers = this.returns.table[0]['headers']
+      for(let i = 0; i<headers.length; i++) {
+        headers[i]['readonly'] = !this.is_external
+      }
+      this.setReturns(this.returns);
+    }
   }
 }
 </script>
