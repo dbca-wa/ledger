@@ -485,14 +485,23 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             email_user_instance.email = email_add
             email_user_instance.mobile_number = mobile_number
             email_user_instance.phone_number = phone_number
-            email_user_instance = email_user_instance.save()
+            email_user_instance.save()
 
+            # request_data['email_user'].update({'id': email_user_id_requested})
             request_data.update({'email_user_id': email_user_id_requested})
         else:
             e = EmailUser(first_name=first_name, last_name=last_name)
             if not email_add:
                 email_add = e.get_dummy_email()
             new_email_user = EmailUser.objects.create_user(email_add.strip('.'), '')
+            new_email_user.first_name = first_name
+            new_email_user.last_name = last_name
+            new_email_user.dob = dob
+            new_email_user.mobile_number = mobile_number
+            new_email_user.phone_number = phone_number
+            new_email_user.save()
+
+            # request_data['email_user'].update({'id': new_email_user.id})
             request_data.update({'email_user_id': new_email_user.id})
 
 

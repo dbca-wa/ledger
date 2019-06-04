@@ -50,12 +50,12 @@
                                             </div>
                                         </div>
                                         </div>
-                                        <div class="form-group">
+                                        <!-- <div class="form-group">
                                         <div class="col-sm-12">
                                                 <button v-if="!updatingPersonal" class="pull-right btn btn-primary" @click.prevent="updatePersonal()">Update</button>
                                                 <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
                                         </div>
-                                        </div>
+                                        </div> -->
                                     </form>
                                 </div>
                             </div>
@@ -125,52 +125,56 @@
                             </div>
                         </div>
                     </div>
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="panel panel-default">
-                                  <div class="panel-heading">
-                                    <h3 class="panel-title">Contact Details <small></small>
-                                        <a class="panelClicker" :href="'#'+cdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cdBody">
-                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                                        </a>
-                                    </h3>
-                                  </div>
-                                  <div class="panel-body collapse in" :id="cdBody">
-                                      <form class="form-horizontal" action="index.html" method="post">
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label">Phone (work)</label>
-                                            <div class="col-sm-6">
-                                                <div v-if="call_email.email_user">
-                                                    <input type="text" class="form-control" name="phone" placeholder="" v-model="call_email.email_user.phone_number" v-bind:key="call_email.email_user.id">
-                                                </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                <h3 class="panel-title">Contact Details <small></small>
+                                    <a class="panelClicker" :href="'#'+cdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cdBody">
+                                        <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                                    </a>
+                                </h3>
+                                </div>
+                                <div class="panel-body collapse in" :id="cdBody">
+                                    <form class="form-horizontal" action="index.html" method="post">
+                                        <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label">Phone (work)</label>
+                                        <div class="col-sm-6">
+                                            <div v-if="call_email.email_user">
+                                                <input type="text" class="form-control" name="phone" placeholder="" v-model="call_email.email_user.phone_number" v-bind:key="call_email.email_user.id">
                                             </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label" >Mobile</label>
-                                            <div class="col-sm-6">
-                                                <div v-if="call_email.email_user">
-                                                    <input type="text" class="form-control" name="mobile" placeholder="" v-model="call_email.email_user.mobile_number" v-bind:key="call_email.email_user.id">
-                                                </div>
+                                        </div>
+                                        </div>
+                                        <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label" >Mobile</label>
+                                        <div class="col-sm-6">
+                                            <div v-if="call_email.email_user">
+                                                <input type="text" class="form-control" name="mobile" placeholder="" v-model="call_email.email_user.mobile_number" v-bind:key="call_email.email_user.id">
                                             </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label" >Email</label>
-                                            <div class="col-sm-6">
-                                                <div v-if="call_email.email_user">
-                                                    <input type="email" class="form-control" name="email" placeholder="" v-model="call_email.email_user.email" v-bind:key="call_email.email_user.id"> </div>
-                                                </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <div class="col-sm-12">
-                                                <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="updateContact()">Update</button>
-                                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                                        </div>
+                                        </div>
+                                        <div class="form-group">
+                                        <label for="" class="col-sm-3 control-label" >Email</label>
+                                        <div class="col-sm-6">
+                                            <div v-if="call_email.email_user">
+                                                <input type="email" class="form-control" name="email" placeholder="" v-model="call_email.email_user.email" v-bind:key="call_email.email_user.id"> </div>
                                             </div>
-                                          </div>
-                                       </form>
-                                  </div>
+                                        </div>
+                                        <div class="form-group">
+                                        <!-- <div class="col-sm-12">
+                                            <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="updateContact()">Update</button>
+                                            <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                                        </div> -->
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                                        <div class="col-sm-12">
+                                            <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="save">Update</button>
+                                            <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                                        </div>
                 </div>
                 <div :id="oTab" class="tab-pane fade">
                     <!-- <ApplicationDashTable ref="applications_table" level='internal' :url='applications_url'/>
@@ -232,7 +236,18 @@ export default {
     methods: {
         ...mapActions('callemailStore', {
             setEmailUserEmpty: "setEmailUserEmpty",
+            saveCallEmail: 'saveCallEmail',
         }),
+        save: async function() {
+          if (this.call_email.id) {
+            await this.saveCallEmail({ route: false, crud: 'save' });
+          } else {
+            await this.saveCallEmail({ route: false, crud: 'create'});
+            this.$nextTick(function() {
+              this.$router.push({name: 'view-call-email', params: {call_email_id: this.call_email.id}});
+            });
+          }
+        },
         createNewPerson: function() {
             let vm = this;
             vm.setEmailUserEmpty();
