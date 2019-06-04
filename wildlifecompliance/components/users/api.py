@@ -55,11 +55,17 @@ class GetComplianceUserDetails(views.APIView):
         if returned_data.get('id'):
             user_id = returned_data.get('id')
             user = EmailUser.objects.get(id=user_id)
+            
+            
             compliance_permissions = []
             for group in user.groups.all():
                 for permission in group.permissions.all():
                     compliance_permissions.append(permission.codename)
                 returned_data.update({ 'base_compliance_permissions': compliance_permissions })
+            if 'officer' in compliance_permissions:
+                returned_data.update({ 'is_officer': True })
+            else:
+                returned_data.update({ 'is_officer': False })
         return Response(returned_data)
 
 

@@ -261,6 +261,7 @@ export default {
     }),
     ...mapGetters({
       renderer_form_data: 'renderer_form_data',
+      current_user: 'current_user',
     }),
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
@@ -295,6 +296,9 @@ export default {
     }),
     ...mapActions({
       saveFormData: "saveFormData",
+    }),
+    ...mapActions({
+      loadCurrentUser: "loadCurrentUser",
     }),
     addWorkflow(workflow_type) {
       if (workflow_type === 'regions') {
@@ -340,6 +344,12 @@ export default {
         
       });
     },
+  },
+  beforeRouteEnter: function(to, from, next) {
+            next(async (vm) => {
+                await vm.loadCurrentUser({ url: `/api/my_compliance_user_details` });
+                // await this.datatablePermissionsToggle();
+            });
   },
   created: async function() {
     
