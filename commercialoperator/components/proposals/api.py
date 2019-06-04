@@ -51,7 +51,8 @@ from commercialoperator.components.proposals.models import (
     ProposalAccreditation,
     ChecklistQuestion,
     ProposalAssessment,
-    ProposalAssessmentAnswer
+    ProposalAssessmentAnswer,
+    RequirementDocument,
 )
 from commercialoperator.components.proposals.serializers import (
     SendReferralSerializer,
@@ -436,13 +437,6 @@ class ProposalSubmitViewSet(viewsets.ModelViewSet):
         logger.warn("User is neither customer nor internal user: {} <{}>".format(user.get_full_name(), user.email))
         return Proposal.objects.none()
 
-    def update(self, request, *args, **kwargs):
-        response = super(ProposalSubmitViewSet, self).create(request, *args, **kwargs)
-        # here may be placed additional operations for
-        # extracting id of the object and using reverse()
-        #import ipdb; ipdb.set_trace()
-        return HttpResponseRedirect(redirect_to='https://google.com')
-
 #    def perform_create(self, serializer):
 #        serializer.partial = True
 #        serializer.save(created_by=self.request.user)
@@ -458,8 +452,6 @@ class ProposalSubmitViewSet(viewsets.ModelViewSet):
             #instance.save()
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
-            #return redirect(reverse('external'))
-            #return HttpResponseRedirect(redirect_to='https://google.com')
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -1278,7 +1270,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def on_hold(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
-                #import ipdb; ipdb.set_trace()
                 instance = self.get_object()
                 is_onhold =  eval(request.data.get('onhold'))
                 data = {}
@@ -1297,18 +1288,18 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 comms = serializer.save()
 
-                # Save the files
+                # save the files
                 #import ipdb; ipdb.set_trace()
-                documents_qs = instance.onhold_documents.filter(input_name='on_hold_file', visible=True)
+                documents_qs = instance.onhold_documents.filter(input_name='on_hold_file', visible=true)
                 for f in documents_qs:
                     document = comms.documents.create(_file=f._file, name=f.name)
                     #document = comms.documents.create()
                     #document.name = f.name
                     #document._file = f._file #.strip('/media')
                     document.input_name = f.input_name
-                    document.can_delete = True
+                    document.can_delete = true
                     document.save()
-                # End Save Documents
+                # end save documents
 
                 return Response(serializer.data)
         except serializers.ValidationError:
@@ -1826,6 +1817,71 @@ class ProposalRequirementViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def delete_document(self, request, *args, **kwargs):
+        try:
+            #import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            RequirementDocument.objects.get(id=request.data.get('id')).delete()
+            return Response([dict(id=i.id, name=i.name,_file=i._file.url) for i in instance.requirement_documents.all()])
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    def update(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=json.loads(request.data.get('data')))
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            instance.add_documents(request)
+            return Response(serializer.data)
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+    def create(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
+        try:
+#            data = {
+#                'due_date': request.data.get('due_date'),
+#                'standard': request.data.get('standard'),
+#                'recurrence': reqeust.data.get('recurrence'),
+#                'recurrence_pattern': request.data.get('recurrence_pattern'),
+#                'proposal': request.data.get('proposal'),
+#                'referral_group': request.data.get('referral_group'),
+#            }
+
+            #serializer = self.get_serializer(data= request.data)
+            serializer = self.get_serializer(data= json.loads(request.data.get('data')))
+            #serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception = True)
+            instance = serializer.save()
+            instance.add_documents(request)
+            #serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
 class ProposalStandardRequirementViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ProposalStandardRequirement.objects.all()
     serializer_class = ProposalStandardRequirementSerializer
@@ -1855,7 +1911,7 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             #serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception = True)
             instance = serializer.save()
-            instance.generate_amendment(request)
+            #instance.generate_amendment(request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:

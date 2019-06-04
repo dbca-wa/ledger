@@ -30,6 +30,7 @@ from commercialoperator.components.proposals.models import (
                                     ChecklistQuestion,
                                     ProposalAssessmentAnswer,
                                     ProposalAssessment,
+                                    RequirementDocument,
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
@@ -911,12 +912,35 @@ class DTReferralSerializer(serializers.ModelSerializer):
         docs =  [[d.name,d._file.url] for d in obj.referral_documents.all()]
         return docs[0] if docs else None
 
+class RequirementDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RequirementDocument
+        fields = ('id', 'name', '_file')
+        #fields = '__all__'
+
 class ProposalRequirementSerializer(serializers.ModelSerializer):
     due_date = serializers.DateField(input_formats=['%d/%m/%Y'],required=False,allow_null=True)
     can_referral_edit=serializers.SerializerMethodField()
+    requirement_documents = RequirementDocumentSerializer(many=True, read_only=True)
     class Meta:
         model = ProposalRequirement
-        fields = ('id','due_date','free_requirement','standard_requirement','standard','order','proposal','recurrence','recurrence_schedule','recurrence_pattern','requirement','is_deleted','copied_from', 'referral_group', 'can_referral_edit')
+        fields = (
+            'id',
+            'due_date',
+            'free_requirement',
+            'standard_requirement',
+            'standard','order',
+            'proposal',
+            'recurrence',
+            'recurrence_schedule',
+            'recurrence_pattern',
+            'requirement',
+            'is_deleted',
+            'copied_from',
+            'referral_group',
+            'can_referral_edit',
+            'requirement_documents'
+        )
         read_only_fields = ('order','requirement', 'copied_from')
 
     def get_can_referral_edit(self,obj):

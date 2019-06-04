@@ -51,6 +51,9 @@ def update_referral_doc_filename(instance, filename):
 def update_proposal_required_doc_filename(instance, filename):
     return 'proposals/{}/required_documents/{}/{}'.format(instance.proposal.id,instance.required_doc.id,filename)
 
+def update_requirement_doc_filename(instance, filename):
+    return 'proposals/{}/requirement_documents/{}/{}'.format(instance.requirement.proposal.id, instance.requirement.id,filename)
+
 def update_proposal_comms_log_filename(instance, filename):
     return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
 
@@ -194,16 +197,28 @@ class ProposalApproverGroup(models.Model):
     def members_email(self):
         return [i.email for i in self.members.all()]
 
+
+class DefaultDocument(Document):
+    input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+    visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
+
+    class Meta:
+        app_label = 'commercialoperator'
+        abstract =True
+
+    def delete(self):
+        if self.can_delete:
+            return super(DefaultDocument, self).delete()
+        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+
+
+
 class ProposalDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='documents')
     _file = models.FileField(upload_to=update_proposal_doc_filename)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
-
-    def delete(self):
-        if self.can_delete:
-            return super(ProposalDocument, self).delete()
-        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
 
     class Meta:
         app_label = 'commercialoperator'
@@ -264,6 +279,18 @@ class ReferralDocument(Document):
 
     class Meta:
         app_label = 'commercialoperator'
+
+class RequirementDocument(Document):
+    requirement = models.ForeignKey('ProposalRequirement',related_name='requirement_documents')
+    _file = models.FileField(upload_to=update_requirement_doc_filename)
+    input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+    visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
+
+    def delete(self):
+        if self.can_delete:
+            return super(RequirementDocument, self).delete()
+
 
 class ProposalApplicantDetails(models.Model):
     first_name = models.CharField(max_length=24, blank=True, default='')
@@ -2039,6 +2066,7 @@ class AmendmentRequest(ProposalRequest):
     class Meta:
         app_label = 'commercialoperator'
 
+
     def generate_amendment(self,request):
         with transaction.atomic():
             try:
@@ -2527,7 +2555,7 @@ class Referral(RevisionedMixin):
                         #         try:
                         #             chk_instance=ProposalAssessmentAnswer.objects.get(question=chk, assessment=referral_assessment)
                         #         except ProposalAssessmentAnswer.DoesNotExist:
-                        #             chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=referral_assessment) 
+                        #             chk_instance=ProposalAssessmentAnswer.objects.create(question=chk, assessment=referral_assessment)
                     # Create a log entry for the proposal
                     self.proposal.log_user_action(ProposalUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.proposal.id,'{}({})'.format(user.get_full_name(),user.email)),request)
                     # Create a log entry for the organisation
@@ -2587,7 +2615,6 @@ class ProposalRequirement(OrderedModel):
     referral_group = models.ForeignKey(ReferralRecipientGroup,null=True,blank=True,related_name='requirement_referral_groups')
     #order = models.IntegerField(default=1)
 
-
     class Meta:
         app_label = 'commercialoperator'
 
@@ -2606,6 +2633,28 @@ class ProposalRequirement(OrderedModel):
                 else:
                     return False
         return False
+
+    def add_documents(self, request):
+        with transaction.atomic():
+            try:
+                # save the files
+                data = json.loads(request.data.get('data'))
+                if not data.get('update'):
+                    documents_qs = self.requirement_documents.filter(input_name='requirement_doc', visible=True)
+                    documents_qs.delete()
+                for idx in range(data['num_files']):
+                    _file = request.data.get('file-'+str(idx))
+                    document = self.requirement_documents.create(_file=_file, name=_file.name)
+                    document.input_name = data['input_name']
+                    document.can_delete = True
+                    document.save()
+                # end save documents
+                self.save()
+            except:
+                raise
+        return
+
+
 
 @python_2_unicode_compatible
 #class ProposalStandardRequirement(models.Model):
