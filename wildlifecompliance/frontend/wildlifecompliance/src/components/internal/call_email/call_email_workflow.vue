@@ -7,7 +7,7 @@
 
                 <div class="col-sm-12">
                     
-                        <div v-if="forwardToRegions" class="form-group">
+                        <div v-if="workflow_type === 'to_regions'" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Region</label>
@@ -21,7 +21,7 @@
                             </div>
                           </div>
                         </div>
-                        <div v-if="forwardToRegions" class="form-group">
+                        <div v-if="workflow_type === 'to_wildlife_protection_branch'" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>District</label>
@@ -99,7 +99,8 @@ export default {
   name: "CallEmailWorking",
   data: function() {
     return {
-      forwardToRegions: false,
+      // forwardToRegions: false,
+      // workflowType: '',
       isModalOpen: false,
       processingDetails: false,
       form: null,
@@ -120,6 +121,12 @@ export default {
   components: {
     modal,
   },
+  props:{
+        workflow_type: {
+            type: String,
+            default: false,
+        },
+    },
   computed: {
     ...mapGetters('callemailStore', {
       call_email: "call_email",

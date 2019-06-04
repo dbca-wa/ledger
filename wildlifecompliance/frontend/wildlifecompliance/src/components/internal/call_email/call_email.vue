@@ -20,7 +20,7 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <strong>Status</strong><br/>
-                                {{ call_email.status.name }}<br/>
+                                {{ statusDisplay }}<br/>
                             </div>
                         </div>
                     </div>
@@ -33,9 +33,9 @@
                         Action 
                     </div>
                     <div class="panel-body panel-collapse">
-                        <div class="row">
+                        <div v-if="statusId ==='draft'" class="row">
                           <div class="col-sm-12">
-                                <a ref="forwardToWildlifeProtectionBranch" @click="addWorkflow()" class=" btn btn-primary">
+                                <a ref="forwardToWildlifeProtectionBranch" @click="addWorkflow('to_wildlife_protection_branch')" class=" btn btn-primary">
                                   Forward to Wildlife Protection Branch
                                 </a>
                           </div>
@@ -43,13 +43,63 @@
                         <div class="row">
                           <div class="col-sm-12"/>
                         </div>
-                        <div class="row">
+                        <div v-if="statusId ==='draft'" class="row">
                           <div class="col-sm-12">
-                                <a ref="forwardToRegions" @click="addWorkflow('regions')" class=" btn btn-primary">
+                                <a ref="forwardToRegions" @click="addWorkflow('to_regions')" class=" btn btn-primary">
                                   Forward to Regions
                                 </a>
                           </div>
                         </div>
+
+                        <div v-if="statusId ==='open'" class="row">
+                          <div class="col-sm-12">
+                                <a ref="save" @click="save()" class=" btn btn-primary">
+                                  Save
+                                </a>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-sm-12"/>
+                        </div>
+                        <div v-if="statusId ==='open'" class="row">
+                          <div class="col-sm-12">
+                                <a ref="allocateForFollowUp" @click="addWorkflow('allocate_for_follow_up')" class=" btn btn-primary">
+                                  Allocate for Follow Up
+                                </a>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-sm-12"/>
+                        </div>
+                        <div v-if="statusId ==='open'" class="row">
+                          <div class="col-sm-12">
+                                <a ref="allocateForInspection" @click="addWorkflow('allocate_for_inspection')" class=" btn btn-primary">
+                                  Allocate for Inspection
+                                </a>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-sm-12"/>
+                        </div>
+
+                        <div v-if="statusId ==='open'" class="row">
+                          <div class="col-sm-12">
+                                <a ref="allocateForCase" @click="addWorkflow('allocate_for_case')" class=" btn btn-primary">
+                                  Allocate for Case
+                                </a>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-sm-12"/>
+                        </div>
+                        <div v-if="statusId ==='open'" class="row">
+                          <div class="col-sm-12">
+                                <a ref="close" @click="addWorkflow('close')" class=" btn btn-primary">
+                                  Close
+                                </a>
+                          </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -186,8 +236,7 @@
             </div>          
           </div>
 
-
-        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+        <div v-if="statusId ==='draft'" class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                         <div class="navbar-inner">
                             <div class="container">
                                 <p class="pull-right" style="margin-top:5px;">
@@ -198,7 +247,7 @@
                             </div>
                         </div>
         </div>          
-        <CallWorkflow ref="add_workflow"/>
+        <CallWorkflow ref="add_workflow" :workflow_type="workflow_type" />
     </div>
 </template>
 <script>
@@ -223,6 +272,7 @@ export default {
         from: new Date(),
       },
       // isReadonly: true,
+      workflow_type: '',
       classification_types: [],
       report_types: [],
       referrers: [],
@@ -281,7 +331,17 @@ export default {
       }
     },
     isReadonly: function() {
-        return this.call_email.status.id === 'draft' ? false : true;
+        if (this.call_email.status && this.call_email.status.id === 'draft') {
+          return false;
+        } else {
+          return true;
+        }
+    },
+    statusDisplay: function() {
+      return this.call_email.status ? this.call_email.status.name : '';
+    },
+    statusId: function() {
+      return this.call_email.status ? this.call_email.status.id : '';
     },
   },
   filters: {
@@ -301,11 +361,7 @@ export default {
       loadCurrentUser: "loadCurrentUser",
     }),
     addWorkflow(workflow_type) {
-      if (workflow_type === 'regions') {
-        this.$refs.add_workflow.forwardToRegions = true;
-      } else {
-        this.$refs.add_workflow.forwardToRegions = false;
-      }
+      this.workflow_type = workflow_type;
       this.$refs.add_workflow.isModalOpen = true;
     },
     save: async function() {
@@ -348,7 +404,6 @@ export default {
   beforeRouteEnter: function(to, from, next) {
             next(async (vm) => {
                 await vm.loadCurrentUser({ url: `/api/my_compliance_user_details` });
-                // await this.datatablePermissionsToggle();
             });
   },
   created: async function() {
