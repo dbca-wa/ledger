@@ -191,7 +191,8 @@ class WildlifeLicence(models.Model):
     @property
     def latest_activities(self):
         from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
-        return self.get_activities_by_processing_status(ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED)
+        return self.get_activities_by_processing_status(ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED)\
+            .exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED)
 
     @property
     def current_activities(self):

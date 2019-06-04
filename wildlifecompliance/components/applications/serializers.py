@@ -36,6 +36,7 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     approve_options = serializers.SerializerMethodField(read_only=True)
     purposes = serializers.SerializerMethodField(read_only=True)
     activity_purpose_names = serializers.SerializerMethodField(read_only=True)
+    activity_purpose_ids = serializers.SerializerMethodField(read_only=True)
     processing_status = CustomChoiceField(read_only=True)
     activity_status = CustomChoiceField(read_only=True)
     can_renew = serializers.BooleanField(read_only=True)
@@ -76,6 +77,9 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     def get_activity_purpose_names(self, obj):
         return ','.join([p.short_name for p in obj.purposes])
 
+    def get_activity_purpose_ids(self, obj):
+        return [p.id for p in obj.purposes]
+
     def get_can_reissue(self, obj):
         try:
             user = self.context['request'].user
@@ -99,6 +103,7 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
     start_date = serializers.SerializerMethodField(read_only=True)
     expiry_date = serializers.SerializerMethodField(read_only=True)
     activity_purpose_names = serializers.SerializerMethodField(read_only=True)
+    activity_purpose_ids = serializers.SerializerMethodField(read_only=True)
     activity_status = CustomChoiceField(read_only=True)
     can_renew = serializers.BooleanField(read_only=True)
     can_amend = serializers.BooleanField(read_only=True)
@@ -121,6 +126,7 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
             'start_date',
             'expiry_date',
             'activity_purpose_names',
+            'activity_purpose_ids',
             'activity_status',
             'can_renew',
             'can_amend',
@@ -152,6 +158,9 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
 
     def get_activity_purpose_names(self, obj):
         return ','.join([p.short_name for p in obj.purposes])
+
+    def get_activity_purpose_ids(self, obj):
+        return [p.id for p in obj.purposes]
 
     def get_can_reissue(self, obj):
         try:
