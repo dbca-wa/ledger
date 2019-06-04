@@ -394,34 +394,81 @@ class SpecialFieldsSearch(object):
 
 def get_activity_schema(activity_ids):
     from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
-    schema_activity = []
-    schema_tab = []
+    schema_group = []
     try:
-        activities = LicencePurpose.objects.filter(
+        purposes = LicencePurpose.objects.filter(
             id__in=activity_ids
         )
     except ValueError:
-        return schema_tab
-    unique_type_activities = activities.distinct('licence_activity')
+        return schema_group
+    unique_type_purposes = purposes.distinct('licence_activity')
 
-    for index, activity in enumerate(unique_type_activities):
+    for index, activity in enumerate(unique_type_purposes):
         activity = activity.licence_activity
-        schema_activity = []
-        activity_item = {}
-        activity_item.update(
-            {key: value for key, value in activity.__dict__.items()}
-        )
-        activity_item["name"] = activity.name
-        activity_item["proposed_decline"] = False
+        schema_purpose = []
 
-        for type_activity in activities.filter(licence_activity__id=activity.id):
-            schema_activity += type_activity.schema
+        for purpose in purposes.filter(licence_activity__id=activity.id):
+            purpose_schema = purpose.schema
+            for item in purpose_schema:
+                item['purpose_id'] = purpose.id
+            schema_purpose += purpose_schema
 
-        schema_tab.append({"type": "tab",
-                           "id": activity.id,
-                           "label": activity.name,
-                           "name": activity.name,
-                           "status": ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT,
-                           "children": schema_activity
+        schema_group.append({"type": "tab",
+                             "id": activity.id,
+                             "label": activity.name,
+                             "name": activity.name,
+                             "status": ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT,
+                             "children": schema_purpose
                            })
-    return schema_tab
+
+    # Iterate through the schema to add licence_activity_id to all form fields for storing in database
+
+    def iterate_children(schema_group, parent={}, parent_type='', condition={}, activity_id=None, purpose_id=None):
+        children_keys = [
+            'children',
+            'header',
+            'expander',
+            'conditions',
+        ]
+        container = {
+            i: schema_group[i] for i in range(len(schema_group))
+        } if isinstance(schema_group, list) else schema_group
+
+        for key, item in container.items():
+
+            try:
+                activity_id = item['id']
+            except BaseException:
+                pass
+
+            try:
+                purpose_id = item['purpose_id']
+            except BaseException:
+                pass
+
+            if isinstance(item, list):
+                if parent_type == 'conditions':
+                    condition[parent['name']] = key
+                iterate_children(item, parent, parent_type, condition, activity_id, purpose_id)
+                continue
+
+            item['licence_activity_id'] = activity_id
+            item['licence_purpose_id'] = purpose_id
+
+            for children_key in children_keys:
+                if children_key in item:
+                    iterate_children(item[children_key], item, children_key, condition, activity_id, purpose_id)
+
+            condition = {}
+
+    print('\n\nschema_group')
+    print(schema_group)
+    print('schema_group\n\n')
+
+    iterate_children(schema_group)
+
+    print('\n\nschema_group')
+    print(schema_group)
+    print('schema_group\n\n')
+
+    return schema_group

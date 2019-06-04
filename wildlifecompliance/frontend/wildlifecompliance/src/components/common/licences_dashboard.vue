@@ -176,9 +176,9 @@ export default {
                     {
                         mRender:function (data,type,full) {
                             let links = '';
-                            let org_id = full.current_application.org_applicant ? full.current_application.org_applicant.id : ''
-                            let proxy_id = full.current_application.proxy_applicant ? full.current_application.proxy_applicant.id : ''
-                            let licence_category_id = full.current_application.category_id ? full.current_application.category_id : ''
+                            let org_id = full.current_application.org_applicant ? full.current_application.org_applicant.id : '';
+                            let proxy_id = full.current_application.proxy_applicant ? full.current_application.proxy_applicant.id : '';
+                            let licence_category_id = full.current_application.category_id ? full.current_application.category_id : '';
                             links += `<a add-activity-purpose='${full.id}' org-id='${org_id}' proxy-id='${proxy_id}' licence-category-id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
                             links += `<a>Renew</a><br/>`
                             links += `<a>Reactivate Renew</a><br/>`
@@ -545,8 +545,10 @@ export default {
                 // Get licence row data
                 var tr = $(this);
                 var licence_id = vm.$refs.licence_datatable.vmDataTable.row(tr).data().id;
-                var proxy_id = vm.$refs.licence_datatable.vmDataTable.row(tr).data().current_application.proxy_applicant ? vm.$refs.licence_datatable.vmDataTable.row(tr).data().current_application.proxy_applicant.id : null;
-                var org_id = vm.$refs.licence_datatable.vmDataTable.row(tr).data().current_application.org_applicant ? vm.$refs.licence_datatable.vmDataTable.row(tr).data().current_application.org_applicant.id : null;
+                var current_application = vm.$refs.licence_datatable.vmDataTable.row(tr).data().current_application
+                var proxy_id = current_application.proxy_applicant ? current_application.proxy_applicant.id : "";
+                console.log(proxy_id);
+                var org_id = current_application.org_applicant ? current_application.org_applicant.id : "";
                 var row = vm.$refs.licence_datatable.vmDataTable.row(tr);
 
                 if (row.child.isShown()) {
@@ -570,35 +572,35 @@ export default {
                                 <td>`;
                                     if (activity['can_amend']) {
                                         activity_rows +=
-                                            `<a amend-activity=` + activity['id'] + ` proxy-id= ` + proxy_id + ` org-id= ` + org_id + `>Amend</a></br>`;
+                                            `<a amend-activity='${activity["id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Amend</a></br>`;
                                     }
                                     if (activity['can_renew']) {
                                         activity_rows +=
-                                            `<a renew-activity=` + activity['id'] + ` proxy-id= ` + proxy_id + ` org-id= ` + org_id + `>Renew</a></br>`;
+                                            `<a renew-activity='${activity["id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Renew</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reactivate_renew']) {
                                         activity_rows +=
-                                            `<a reactivate-renew-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Reactivate Renew</a></br>`;
+                                            `<a reactivate-renew-activity='${activity["id"]}' lic-id='${licence_id}'>Reactivate Renew</a></br>`;
                                     }
                                     if (activity['can_surrender']) {
                                         activity_rows +=
-                                            `<a surrender-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Surrender</a></br>`;
+                                            `<a surrender-activity='${activity["id"]}' lic-id='${licence_id}'>Surrender</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_cancel']) {
                                         activity_rows +=
-                                            `<a cancel-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Cancel</a></br>`;
+                                            `<a cancel-activity='${activity["id"]}' lic-id='${licence_id}'>Cancel</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_suspend']) {
                                         activity_rows +=
-                                            `<a suspend-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Suspend</a></br>`;
+                                            `<a suspend-activity='${activity["id"]}' lic-id='${licence_id}'>Suspend</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reissue']) {
                                         activity_rows +=
-                                            `<a reissue-activity=` + activity['id'] + ` proxy-id= ` + proxy_id + ` org-id= ` + org_id + `>Reissue</a></br>`;
+                                            `<a reissue-activity='${activity["id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Reissue</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reinstate']) {
                                         activity_rows +=
-                                            `<a reinstate-activity=` + activity['id'] + ` lic-id= ` + licence_id + `>Reinstate</a></br>`;
+                                            `<a reinstate-activity='${activity["id"]}' lic-id='${licence_id}'>Reinstate</a></br>`;
                                     }
                         activity_rows += `</td>
                             </tr>`;

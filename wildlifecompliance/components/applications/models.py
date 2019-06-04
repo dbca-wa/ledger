@@ -43,7 +43,7 @@ from wildlifecompliance.components.applications.email import (
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
-from wildlifecompliance.components.licences.models import LicenceCategory
+from wildlifecompliance.components.licences.models import LicenceCategory, LicenceActivity, LicencePurpose
 
 logger = logging.getLogger(__name__)
 
@@ -1189,7 +1189,7 @@ class Application(RevisionedMixin):
     def get_schema_fields(self, schema_json):
         fields = {}
 
-        def iterate_children(schema_group, fields, parent={}, parent_type='', condition={}):
+        def iterate_children(schema_group, fields, parent={}, parent_type='', condition={}, activity_id=None, purpose_id=None):
             children_keys = [
                 'children',
                 'header',
@@ -1201,10 +1201,21 @@ class Application(RevisionedMixin):
             } if isinstance(schema_group, list) else schema_group
 
             for key, item in container.items():
+
+                try:
+                    activity_id = item['id']
+                except BaseException:
+                    pass
+
+                try:
+                    purpose_id = item['purpose_id']
+                except BaseException:
+                    pass
+
                 if isinstance(item, list):
                     if parent_type == 'conditions':
                         condition[parent['name']] = key
-                    iterate_children(item, fields, parent, parent_type, condition)
+                    iterate_children(item, fields, parent, parent_type, condition, activity_id, purpose_id)
                     continue
 
                 name = item['name']
@@ -1212,14 +1223,17 @@ class Application(RevisionedMixin):
                 fields[name].update(item)
                 fields[name]['condition'] = {}
                 fields[name]['condition'].update(condition)
+                fields[name]['licence_activity_id'] = activity_id
+                fields[name]['licence_purpose_id'] = purpose_id
 
                 for children_key in children_keys:
                     if children_key in fields[name]:
                         del fields[name][children_key]
-                        iterate_children(item[children_key], fields, fields[name], children_key, condition)
+                        iterate_children(item[children_key], fields, fields[name], children_key, condition, activity_id, purpose_id)
                 condition = {}
 
         iterate_children(schema_json, fields)
+
         return fields
 
     def get_visible_form_data_tree(self, form_data_records=None):
@@ -2334,6 +2348,8 @@ class ApplicationFormDataRecord(models.Model):
     officer_comment = models.TextField(blank=True)
     assessor_comment = models.TextField(blank=True)
     deficiency = models.TextField(blank=True)
+    licence_activity = models.ForeignKey(LicenceActivity, related_name='form_data_records')
+    licence_purpose = models.ForeignKey(LicencePurpose, related_name='form_data_records')
 
     def __str__(self):
         return "Application {id} record {field}".format(
@@ -2377,6 +2393,8 @@ class ApplicationFormDataRecord(models.Model):
             officer_comment = field_data.get('officer_comment', '')
             assessor_comment = field_data.get('assessor_comment', '')
             deficiency = field_data.get('deficiency_value', '')
+            activity_id = field_data.get('licence_activity_id', '')
+            purpose_id = field_data.get('licence_purpose_id', '')
 
             if ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR in field_name:
                 [parsed_schema_name, parsed_instance_name] = field_name.split(
@@ -2393,6 +2411,8 @@ class ApplicationFormDataRecord(models.Model):
             form_data_record = ApplicationFormDataRecord.objects.filter(
                 application_id=application.id,
                 field_name=field_name,
+                licence_activity_id=activity_id,
+                licence_purpose_id=purpose_id,
             ).first()
 
             if not form_data_record:
@@ -2402,6 +2422,8 @@ class ApplicationFormDataRecord(models.Model):
                     schema_name=schema_name,
                     instance_name=instance_name,
                     component_type=component_type,
+                    licence_activity_id=activity_id,
+                    licence_purpose_id=purpose_id
                 )
             if action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_VALUE:
                 if not is_draft and not value and schema_name in required_fields:
