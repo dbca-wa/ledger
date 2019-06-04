@@ -11,41 +11,44 @@
               <div>
                   <label v-if="headers" v-for="header in headers" >
                       <input class="form-control" v-model="header.label" disabled="disabled" />
-                      <div class="grid-item" v-for ="(field, cnt) in field_data" >
-                          <div v-for="(title,key) in field" v-if="key == header.name"
-                              :name="`${name}::${header.name}`" :v-model="title.value" :key="`f_${key}`" >
+                      <div class="grid-item" v-for ="(field, row_no) in field_data" >
+                          <div id="header.name" v-for="(title,key) in field" v-if="key == header.name"
+                              :name="`${name}::${header.name}`" :key="`f_${key}`" >
 
                               <div v-if="header.type === 'date'" >
                                   <input type="text"
-                                          :id="header.type"
-                                          :disabled="header.readonly"
-                                          :name="name + '::' + header.name"
-                                          class="form-control"
-                                          placeholder="DD/MM/YYYY"
-                                          v-model="title.value"
-                                          :required="isRequired"
+                                         :id="header.name + '::' + row_no"
+                                         :disabled="header.readonly"
+                                         :name="name + '::' + header.name"
+                                         class="form-control"
+                                         placeholder="DD/MM/YYYY"
+                                         :v-model="setDateValue(title.value, row_no, header.name)"
+                                         :required="isRequired"
                                   />
                               </div>
 
                               <div v-if="header.type === 'string'">
-                                <input :disabled="header.readonly"
-                                        :type="header.type"
-                                       class="form-control"
-                                       :name="name + '::' + header.name"
-                                       v-model="title.value"
-                                       :required="isRequired"
-                                />
+                                  <input :disabled="header.readonly"
+                                         type="text"
+                                         :id="header.name + '::' + row_no"
+                                         class="form-control"
+                                         :name="name + '::' + header.name"
+                                         v-model="title.value"
+                                         :required="isRequired"
+                                  />
                               </div>
 
                               <div v-if="header.type === 'number'" >
-                                <input  :disabled="header.readonly"
-                                        type="text"
-                                        class="form-control"
-                                        :name="name + '::' + header.name"
-                                        v-model="title.value"
-                                        :required="isRequired"
-                                 />
+                                  <input :disabled="header.readonly"
+                                         :id="header.name + '::' + row_no"
+                                         type="text"
+                                         class="form-control"
+                                         :name="name + '::' + header.name"
+                                         v-model="title.value"
+                                         :required="isRequired"
+                                  />
                               </div>
+
                           </div>
                       </div>
                   </label>
@@ -60,8 +63,6 @@
 import datetimepicker from 'datetimepicker';
 import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
-import DateField from './date-field.vue'
-import TextField from './text.vue'
 const GridBlock = {
   /* Example schema config
      Note: Each grid-item requires a unique name ie.'Table-Name::location'.
@@ -73,14 +74,11 @@ const GridBlock = {
       "data" : "{'key': 'value'}"
      }
   */
-  props: ['field_data','headers','name', 'label', 'id', 'help_text', 'help_text_url', "readonly", "isRequired"],
-  components: {HelpText, HelpTextUrl, TextField, DateField},
+  props: ['field_data','headers','name', 'label', 'id', 'help_text', 'help_text_url', 'readonly', 'isRequired'],
+  components: {HelpText, HelpTextUrl},
   data: function() {
-    let vm = this;
-    if(vm.readonly) {
-      return { isClickable: "return false;" }
-    } else {
-      return { isClickable: "return true;" }
+    var grid_item = [{'id': 0, 'name': '', 'value': ''}];
+    return {
     }
   },
   methods: {
@@ -98,42 +96,39 @@ const GridBlock = {
     },
     addArea: function(e) {
     },
-  },
-  computed: {
-    isChecked: function() {
-      return (this.value == 'on');
-    },
-    options: function() {
-      return JSON.stringify(this.conditions);
-    },
-    value: {
-      get: function() {
-         return this.field_data.value;
-      },
-      set: function(value) {
-         this.field_data.value = value;
+    setDateValue: function(value, row, name) {
+      if (value !== '') {
+         this.field_data[row][name].value = value
+         this.value = value
       }
+      return this.field_data[row][name].value
     },
+    setDatePicker: function() {
+      var vm = this
+      for (let row=0; row<vm.field_data.length; row++) {
+        Object.keys(vm.field_data[row]).forEach(function(key) {
+          if (key.indexOf('date')>-1) {
+            var val = key + '::' + row
+            var dateVal = vm.field_data[row][key].value != null ? vm.field_data[row][key].value : ''
+            var parts = dateVal.split('/')
+            var newDate = new Date(parts[2], parts[1] - 1, parts[0]); // format new Date(YYYY,MM,DD)
+            $(`[id='${val}']`).datetimepicker({
+              format: 'DD/MM/YYYY',
+              defaultDate: dateVal != '' ? newDate : null
+            }).off('dp.change').on('dp.change', (e) => {
+              vm.value = $(e.target).data('DateTimePicker').date($(e.target)[0].value).format('DD/MM/YYYY');
+            });
+          }
+        });
+      }
+    } // end of function to set the DatePicker widget for each Grid Item date.
+  },
+  updated:function () {
+      this.setDatePicker();
   },
   mounted:function () {
-      $(`[id='date']`).datetimepicker({
-          format: 'DD/MM/YYYY'
-      }).off('dp.change').on('dp.change', (e) => {
-          this.value = $(e.target).data('DateTimePicker').date().format('DD/MM/YYYY');
-      });
-      if (this.isChecked) {
-          var input = this.$refs.Checkbox;
-          var e = document.createEvent('HTMLEvents');
-          e.initEvent('change', true, true);
-
-          /* replacing input.disabled with onclick because disabled checkbox does NOT get posted with form on submit */
-          if(this.readonly) {
-              this.isClickable = "return false;";
-          } else {
-              this.isClickable = "return true;";
-		  }
-          input.dispatchEvent(e);
-      }
+      console.log('mounted')
+      this.setDatePicker();
   }
 }
 
