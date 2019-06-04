@@ -191,7 +191,10 @@ export default {
         payload.append('district_id', this.district);
         payload.append('details', this.workflowDetails);
         let res = await this.$http.post(post_url, payload);
-        console.log(res)
+        // console.log(res);
+        if (res.ok) {
+          this.$router.push({ name: 'internal-call-email-dash' });
+        }
     },
     
     uploadFile(target,file_obj){

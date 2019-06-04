@@ -20,7 +20,7 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <strong>Status</strong><br/>
-                                {{ call_email.status_display }}<br/>
+                                {{ call_email.status.name }}<br/>
                             </div>
                         </div>
                     </div>
@@ -280,7 +280,7 @@ export default {
       }
     },
     isReadonly: function() {
-        return this.call_email.status === 'draft' ? false : true;
+        return this.call_email.status.id === 'draft' ? false : true;
     },
   },
   filters: {
