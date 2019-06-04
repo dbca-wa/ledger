@@ -330,6 +330,7 @@ class ComplianceUserDetailsSerializer(serializers.ModelSerializer):
 
 
 class ComplianceUserDetailsOptimisedSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
 
     class Meta:
         model = EmailUser
@@ -339,7 +340,12 @@ class ComplianceUserDetailsOptimisedSerializer(serializers.ModelSerializer):
             'last_name',
             'first_name',
             'email',
+            'full_name',
         )
+    
+    def get_full_name(self, obj):
+        if obj.first_name and obj.last_name:
+            return obj.first_name + ' ' + obj.last_name
 
 
 class EmailUserActionSerializer(serializers.ModelSerializer):

@@ -277,6 +277,7 @@ export default {
       report_types: [],
       referrers: [],
       compliance_permission_groups: [],
+      officers: [],
       current_schema: [],
       sectionLabel: "Details",
       sectionIndex: 1,
@@ -463,6 +464,10 @@ export default {
     //     id: "", 
     //     name: "",
     //   });
+
+    // CompliancePermissionGroups - officers
+    let returned_officers = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Officers', '/api/compliancepermissiongroup/get_officers/');
+    Object.assign(this.officers, returned_officers);
 
     // load current CallEmail renderer schema
     if (this.call_email.report_type_id) {

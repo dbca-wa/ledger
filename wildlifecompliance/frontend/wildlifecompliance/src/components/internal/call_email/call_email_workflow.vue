@@ -4,7 +4,7 @@
           <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-12">
-                        <div v-if="workflow_type === 'to_regions'" class="form-group">
+                        <div v-if="workflow_type === 'forward_to_regions'" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Region</label>
@@ -18,7 +18,7 @@
                             </div>
                           </div>
                         </div>
-                        <div v-if="workflow_type === 'to_wildlife_protection_branch'" class="form-group">
+                        <div v-if="workflow_type === 'forward_to_regions'" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>District</label>
@@ -38,9 +38,9 @@
                               <label>Allocate to</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" v-model="selectedDistrict">
-                                <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
-                                  Allocate to
+                              <select class="form-control" v-model="call_email.assigned_to">
+                                <option  v-for="option in officers" :value="option.id" v-bind:key="option.id">
+                                  {{ option.full_name }}
                                 </option>
                               </select>
                             </div>
@@ -151,6 +151,7 @@ export default {
     return {
       // forwardToRegions: false,
       // workflowType: '',
+      officers: [],
       isModalOpen: false,
       processingDetails: false,
       form: null,
@@ -253,12 +254,16 @@ export default {
         let post_url = '/api/call_email/' + this.call_email.id + '/add_workflow_log/'
         let payload = new FormData(this.form);
         payload.append('call_email_id', this.call_email.id);
-        payload.append('region_id', this.region);
-        payload.append('district_id', this.district);
+        if (this.selectedRegion) {
+          payload.append('region_id', this.selectedRegion.id);
+        }
+        if (this.selectedDistrict) {
+          payload.append('district_id', this.selectedDistrict);
+        }
         payload.append('details', this.workflowDetails);
         payload.append('workflow_type', this.workflow_type);
         let res = await this.$http.post(post_url, payload);
-        // console.log(res);
+        console.log(res);
         if (res.ok) {
           this.$router.push({ name: 'internal-call-email-dash' });
         }
@@ -316,7 +321,12 @@ export default {
     // CompliancePermissionGroups
     let returned_compliance_permission_groups = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Members', '/api/compliancepermissiongroup/get_detailed_list/');
     Object.assign(this.compliance_permission_groups, returned_compliance_permission_groups);
+
+    // CompliancePermissionGroups - officers
+    let returned_officers = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Officers', '/api/compliancepermissiongroup/get_officers/');
+    Object.assign(this.officers, returned_officers);
     // blank entry allows user to clear selection
+
     // this.compliance_permission_groups.splice(0, 0, 
     //   {
     //     id: "", 
