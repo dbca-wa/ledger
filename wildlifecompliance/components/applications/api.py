@@ -1078,7 +1078,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 serializer = CreateExternalApplicationSerializer(data=data)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-
                 licence_purposes_queryset = LicencePurpose.objects.filter(
                     id__in=licence_purposes
                 )
@@ -1113,7 +1112,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
                 serializer.instance.update_dynamic_attributes()
 
-            return Response(serializer.data)
+                response = Response(serializer.data)
+
+            return response
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))

@@ -314,6 +314,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     def cancel_activity(self, request, pk=None, *args, **kwargs):
+        # TODO: change this to cancel selected purpose ids
         try:
             activity_id = request.GET.get('activity_id', None)
             if activity_id and pk:

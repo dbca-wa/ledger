@@ -67,10 +67,12 @@
                 </div>
             </div>
         </div>
+        <CancelLicencePurposes ref="cancel_licence_purposes" :activity_purpose_ids="cancel_purpose_list" @refreshFromResponse="refreshFromResponse"></CancelLicencePurposes>
     </div>
 </template>
 <script>
 import datatable from '@/utils/vue/datatable.vue'
+import CancelLicencePurposes from './licence_cancel_purposes.vue'
 import {
     api_endpoints,
     helpers
@@ -101,6 +103,7 @@ export default {
             filterLicenceIssuedFrom: '',
             filterLicenceIssuedTo: '',
             filterLicenceHolder: 'All',
+            cancel_purpose_list: [],
             dateFormat: 'DD/MM/YYYY',
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -237,7 +240,8 @@ export default {
         }
     },
     components:{
-        datatable
+        datatable,
+        CancelLicencePurposes
     },
     watch:{
         filterLicenceType: function(){
@@ -424,33 +428,35 @@ export default {
                 },(error) => {
                 });
             });
-            // Cancel activity listener
-            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[cancel-activity]', function(e) {
+            // Cancel purposes listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[cancel-purposes]', function(e) {
                 e.preventDefault();
                 swal({
-                    title: "Cancel Activity",
-                    text: "Are you sure you want to cancel this activity?",
+                    title: "Cancel Purposes",
+                    text: "Are you sure you want to cancel purposes for this activity?",
                     type: "question",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var activity_id = $(this).attr('cancel-activity');
+                        var activity_id = $(this).attr('cancel-purposes');
                         var licence_id = $(this).attr('lic-id');
-                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/cancel_activity/?activity_id=' + activity_id)).then(res=>{
-                            swal({
-                                title: "Cancel Activity",
-                                text: "The activity has been cancelled",
-                                type: "info"
-                            })
-                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
-                        },err=>{
-                            swal(
-                                'Submit Error',
-                                helpers.apiVueResourceError(err),
-                                'error'
-                            )
-                        });
+                        var purposes_list = $(this).attr('purposes');
+                        vm.cancel_purpose_list = purposes_list.split(',').map(Number);
+//                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/cancel_activity/?activity_id=' + activity_id)).then(res=>{
+//                            swal({
+//                                title: "Cancel Activity",
+//                                text: "The activity has been cancelled",
+//                                type: "info"
+//                            })
+//                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
+//                        },err=>{
+//                            swal(
+//                                'Submit Error',
+//                                helpers.apiVueResourceError(err),
+//                                'error'
+//                            )
+//                        });
                     }
                 },(error) => {
                 });
@@ -547,7 +553,6 @@ export default {
                 var licence_id = vm.$refs.licence_datatable.vmDataTable.row(tr).data().id;
                 var current_application = vm.$refs.licence_datatable.vmDataTable.row(tr).data().current_application
                 var proxy_id = current_application.proxy_applicant ? current_application.proxy_applicant.id : "";
-                console.log(proxy_id);
                 var org_id = current_application.org_applicant ? current_application.org_applicant.id : "";
                 var row = vm.$refs.licence_datatable.vmDataTable.row(tr);
 
@@ -588,7 +593,7 @@ export default {
                                     }
                                     if (!vm.is_external && activity['can_cancel']) {
                                         activity_rows +=
-                                            `<a cancel-activity='${activity["id"]}' lic-id='${licence_id}'>Cancel</a></br>`;
+                                            `<a cancel-purposes='${activity["id"]}' lic-id='${licence_id}' purposes='${activity["activity_purpose_ids"]}'>Cancel</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_suspend']) {
                                         activity_rows +=
@@ -625,6 +630,8 @@ export default {
                 }
             });
 
+        },
+        refreshFromResponse:function(response){
         },
         initialiseSearch:function(){
             this.dateSearch();
@@ -691,15 +698,6 @@ export default {
                 }
             });
         },
-//        filterByColumn: function(column, filterAttribute) {
-//            const column_idx = this.getColumnIndex(column);
-//            const filterValue = typeof(filterAttribute) == 'string' ? filterAttribute : filterAttribute.name;
-//            if (filterValue!= 'All') {
-//                this.$refs.licence_datatable.vmDataTable.columns(column_idx).search('^' + filterValue +'$', true, false).draw();
-//            } else {
-//                this.$refs.licence_datatable.vmDataTable.columns(column_idx).search('').draw();
-//            }
-//        },
     },
     mounted: function(){
         let vm = this;

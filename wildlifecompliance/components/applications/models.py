@@ -592,6 +592,12 @@ class Application(RevisionedMixin):
         logger.info("Application: %s Activity ID: %s changed processing to: %s" % (self.id, activity_id, processing_status))
 
     def get_selected_activity(self, activity_id):
+        '''
+        :param activity_id: LicenceActivity ID, used to filter ApplicationSelectedActivity (ASA)
+        :return: first ApplicationSelectedActivity record filtered by application id and ASA id
+
+        If ASA not found, create one and set application and ASA id fields
+        '''
         if activity_id is None:
             return ApplicationSelectedActivity.objects.none()
 
@@ -1928,6 +1934,7 @@ class Assessment(ApplicationRequest):
 
 
 class ApplicationSelectedActivity(models.Model):
+    from wildlifecompliance.components.licences.models import WildlifeLicence
     PROPOSED_ACTION_DEFAULT = 'default'
     PROPOSED_ACTION_DECLINE = 'propose_decline'
     PROPOSED_ACTION_ISSUE = 'propose_issue'
@@ -2003,6 +2010,15 @@ class ApplicationSelectedActivity(models.Model):
         choices=ACTIVITY_STATUS_CHOICES,
         default=ACTIVITY_STATUS_DEFAULT)
     application = models.ForeignKey(Application, related_name='selected_activities')
+    # licence = models.ForeignKey(
+    #     WildlifeLicence,
+    #     blank=True,
+    #     null=True,
+    #     related_name='selected_activities')
+    # licence_purposes = models.ManyToManyField(
+    #     'wildlifecompliance.LicencePurpose',
+    #     blank=True
+    # )
     updated_by = models.ForeignKey(EmailUser, null=True)
     reason = models.TextField(blank=True)
     cc_email = models.TextField(null=True)
