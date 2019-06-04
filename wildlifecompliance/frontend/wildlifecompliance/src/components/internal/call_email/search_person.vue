@@ -171,10 +171,12 @@
                             </div>
                         </div>
                     </div>
-                                        <div class="col-sm-12">
-                                            <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="save">Update</button>
-                                            <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
-                                        </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="save">Update</button>
+                            <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                        </div>
+                    </div>
                 </div>
                 <div :id="oTab" class="tab-pane fade">
                     <!-- <ApplicationDashTable ref="applications_table" level='internal' :url='applications_url'/>
@@ -483,6 +485,13 @@ export default {
 }
 .full_name {
     color: green;
+}
+.tab-content {
+    padding: 10px;
+    border: solid 1px lightgray;
+}
+.nav-tabs {
+    border-bottom: none !important;
 }
 #search-person {
     z-index: 1000;
