@@ -77,6 +77,7 @@ export default {
         readonly: false,
         isModalOpen: false,
         sheetTitle: null,
+        sheet_running_total: 0,
         sheet_activity_type: [],
         sheet_headers:["Date","Activity","Qty","Total","Comments","Action"],
         sheet_options:{
@@ -107,25 +108,36 @@ export default {
                 }
               },
               { data: "qty" },
-              { data: "total" },
+              { data: "total",
+                mRender: function(data, type, full) {
+                   if (full.activity in vm.returns.sheet_activity_inward) { // Tansfer-Ins
+                      vm.sheet_running_total += parseInt(full.qty)
+                   } else {
+                      vm.sheet_running_total -= parseInt(full.qty)
+                   }
+                   return vm.sheet_running_total
+                }
+              },
               { data: "comment" },
               { data: "editable",
                 mRender: function(data, type, full) {
-                  if (full.activity && vm.is_external) {
-                     var column = `<a class="edit-row" data-rowid=\"__ROWID__\">Edit</a><br/>`
-                     column = column.replace(/__ROWID__/g, full.rowId)
-                     return column
-                  } else {
-                     return "";
-                  }
+                   if (full.activity && vm.is_external) {
+                      var column = `<a class="edit-row" data-rowid=\"__ROWID__\">Edit</a><br/>`
+                      column = column.replace(/__ROWID__/g, full.rowId)
+                      return column
+                   } else {
+                      return "";
+                   }
                 }
               }
             ],
+            order: [0, 'desc'],
             drawCallback: function() {
+              vm.sheet_running_total = 0
               vm.sheetTitle = vm.species_list[vm.returns.sheet_species]
             },
             processing: true,
-            ordering: false,
+            ordering: true,
             rowId: function(_data) {
               return _data.rowId
             },
@@ -174,38 +186,17 @@ export default {
         'setReturnsSpecies',
         'setSpeciesCache',
     ]),
-    save: function(e) {
-      this.form=document.forms.enter_return_sheet;
-      var data = new FormData(this.form);
-      for (const speciesID in this.species_cache) {
-        let speciesJSON = []
-        for (let i=0;i<this.species_cache[speciesID].length;i++){
-          speciesJSON[i] = JSON.stringify(this.species_cache[speciesID][i])
-        }
-        data.append(speciesID, speciesJSON)
-      };
-      this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/save'),data,{
-                      emulateJSON:true,
-                    }).then((response)=>{
-                       let species_id = this.returns.sheet_species;
-                       this.setReturns(response.body);
-                       this.returns.sheet_species = species_id;
-                       swal('Save',
-                            'Return Sheet for Species Saved',
-                            'success'
-                       );
-                    },(error)=>{
-                        console.log(error);
-                    });
-    },
     addSheetRow: function () {
+      let rows = this.$refs.return_datatable.vmDataTable
+      let last = rows.data().count() - 1 + ''
       this.$refs.sheet_entry.isAddEntry = true;
-      this.$refs.sheet_entry.row_of_data = this.$refs.return_datatable.vmDataTable;
+      this.$refs.sheet_entry.row_of_data = rows;
       this.$refs.sheet_entry.activityList = this.returns.sheet_activity_list;
       this.$refs.sheet_entry.speciesType = this.returns.sheet_species
+      this.$refs.sheet_entry.entrySpecies = this.sheetTitle;
       this.$refs.sheet_entry.entryActivity = Object.keys(this.returns.sheet_activity_list)[0];
-      this.$refs.sheet_entry.entryNumber = '';
-      this.$refs.sheet_entry.entryTotal = '';
+      this.$refs.sheet_entry.entryQty = '';
+      this.$refs.sheet_entry.entryTotal = parseInt(rows.context[0].aoData[last]._aData['total'])
       this.$refs.sheet_entry.entryComment = '';
       this.$refs.sheet_entry.entryLicence = '';
       this.$refs.sheet_entry.entryDateTime = '';
@@ -224,7 +215,7 @@ export default {
         vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
         vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
         vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
-        vm.$refs.sheet_entry.entrySpecies = vm.sheetTitle    ;
+        vm.$refs.sheet_entry.entrySpecies = vm.sheetTitle;
         vm.$refs.sheet_entry.entryActivity = vm.$refs.sheet_entry.row_of_data.data().activity;
         vm.$refs.sheet_entry.entryQty = vm.$refs.sheet_entry.row_of_data.data().qty;
         vm.$refs.sheet_entry.entryTotal = vm.$refs.sheet_entry.row_of_data.data().total;

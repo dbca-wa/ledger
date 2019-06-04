@@ -33,11 +33,6 @@ export const returnsStore = {
                                 value: {"value" :  obj[form_data_record] }
                             });
                         }
-                        // Set readonly privileges for Return Table.
-                        var headers = res.body.table[0]['headers']
-                        for(let i = 0; i<headers.length; i++) {
-                            headers[i]['readonly'] = true
-                        }
                     }
 
                     dispatch('setReturns', res.body);

@@ -695,9 +695,22 @@ class ReturnSheet(object):
     def activity_list(self):
         """
         List of stock movement activities applicable for Running Sheet.
+        Format: "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false"}
+        Label: Activity Description.
+        Auto: Flag indicating automated activity.
+        Licence: Flag indicating licence required for activity.
+        Pay: Flag indicating payment required for activity.
         :return: List of Activities applicable for Running Sheet.
         """
         return self._ACTIVITY_TYPES
+
+    @property
+    def activity_inward(self):
+        """
+        Activities associated with in-coming Stock transfers.
+        :return:
+        """
+        return {"SA01": True, "SA02": True, "SA03": True, "SA04": True}
 
     def get_activity(self, _species_id):
         """

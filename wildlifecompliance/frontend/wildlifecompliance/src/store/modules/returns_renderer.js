@@ -3,6 +3,7 @@ import {
     UPDATE_RETURNS_TABS,
     UPDATE_RETURNS_SELECTED_SPECIES,
     UPDATE_RETURNS_SPECIES,
+    UPDATE_RETURNS_EXTERNAL,
     UPDATE_SELECTED_TAB_ID,
 } from '@/store/mutation-types';
 
@@ -32,7 +33,7 @@ export const returnsRendererStore = {
         [UPDATE_RETURNS_SPECIES] (state, species) {
             Vue.set(state, 'species', species);
         },
-        ['UPDATE_RETURNS_EXTERNAL'] (state, external) {
+        [UPDATE_RETURNS_EXTERNAL] (state, external) {
             Vue.set(state, 'external_user', external);
         },
         [UPDATE_RETURNS_SELECTED_SPECIES] (state, selected_species) {
@@ -50,7 +51,7 @@ export const returnsRendererStore = {
             commit(UPDATE_RETURNS_SPECIES, fullSpeciesList);
         },
         setReturnsExternal({ commit }, { external }) {
-            commit('UPDATE_RETURNS_EXTERNAL', external);
+            commit(UPDATE_RETURNS_EXTERNAL, external);
         },
         setSpeciesCache({ commit }, { species_cache }) {
             commit(UPDATE_RETURNS_SELECTED_SPECIES, species_cache);

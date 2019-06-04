@@ -72,6 +72,7 @@ export default {
     }),
     ...mapActions([
         'setReturns',
+        'setReturnsExternal',
     ]),
     save: function(e) {
       this.form=document.forms.external_returns_form;
@@ -85,7 +86,6 @@ export default {
         }
         data.append(speciesID, speciesJSON)
       };
-
       this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/save'),data,{
                       emulateJSON:true,
                     }).then((response)=>{
@@ -110,6 +110,7 @@ export default {
   beforeRouteEnter: function(to, from, next) {
      next(vm => {
        vm.load({ url: `/api/returns/${to.params.return_id}.json` });
+       vm.setReturnsExternal({'external': true});
      });  // User and Return Store loaded.
   },
 }
