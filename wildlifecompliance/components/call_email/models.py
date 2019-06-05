@@ -191,6 +191,8 @@ class CallEmail(RevisionedMixin):
     )
     advice_given = models.BooleanField(default=False)
     advice_details = models.TextField(blank=True, null=True)
+    region = models.ForeignKey(RegionDistrict, related_name='callemail_region', null=True)
+    district = models.ForeignKey(RegionDistrict, related_name='callemail_district', null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -419,8 +421,8 @@ class ComplianceWorkflowDocument(Document):
 
 class ComplianceWorkflowLogEntry(models.Model):
     call_email = models.ForeignKey(CallEmail, related_name='workflow_logs', null=True)
-    region = models.ForeignKey(RegionDistrict, related_name='callemail_region', null=True)
-    district = models.ForeignKey(RegionDistrict, related_name='callemail_district', null=True)
+    region = models.ForeignKey(RegionDistrict, related_name='callemail_workflow_region', null=True)
+    district = models.ForeignKey(RegionDistrict, related_name='callemail_workflow_district', null=True)
     details = models.TextField(blank=True)
     created = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 

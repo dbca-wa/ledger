@@ -169,11 +169,20 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
     report_type = ReportTypeSerializer(read_only=True)
     referrer = ReferrerSerializer(read_only=True)
     email_user = EmailUserSerializer(read_only=True)
-    classification_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
-    report_type_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
-    location_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
-    referrer_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
-    email_user_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
+    classification_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    report_type_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    location_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    referrer_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    email_user_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    region_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    district_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
 
     class Meta:
         model = CallEmail
@@ -205,6 +214,8 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             'advice_details',
             'email_user',
             'email_user_id',
+            'region_id',
+            'district_id',
         )
         read_only_fields = (
             'id', 
@@ -260,6 +271,10 @@ class CallEmailSerializer(serializers.ModelSerializer):
     referrer = ReferrerSerializer(read_only=True)
     data = ComplianceFormDataRecordSerializer(many=True)
     email_user = EmailUserSerializer()
+    region_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    district_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
 
     class Meta:
         model = CallEmail
@@ -292,6 +307,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'advice_given',
             'advice_details',
             'email_user',
+            'region_id',
+            'district_id',
         )
         read_only_fields = (
             'id', 
@@ -349,6 +366,10 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)        
     referrer_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)   
+    region_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    district_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
 
     class Meta:
         model = CallEmail
@@ -373,6 +394,8 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
             'advice_given',
             'advice_details',
             'referrer_id',
+            'region_id',
+            'district_id',
         )
         read_only_fields = (
             'id', 

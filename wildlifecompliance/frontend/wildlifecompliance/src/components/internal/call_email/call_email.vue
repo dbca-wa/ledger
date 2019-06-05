@@ -345,17 +345,22 @@ export default {
     statusId: function() {
       return this.call_email.status ? this.call_email.status.id : '';
     },
-    listOfficers: function() {
-      officers = [];
+    setRegionalOfficers: function() {
+      let regional_officers = [];
       for (let group of this.compliance_permission_groups) {
-        if (group.permissions && group.permissions.includes('officer')) {
-          for (member in group.members) {
-            officers.push(member);
+        if (group.region_district.length > 0 && 
+        group.members.length > 0 && 
+        this.selectedRegion.id > 0 &&
+        group.region_district[0].region === this.selectedRegion.id) {
+          
+          for (let member of group.members) {
+            regional_officers.push(member);
           }
         }
       }
-      
-    }
+      console.log(regional_officers);
+      this.regionalOfficers = regional_officers;
+    },
   },
   filters: {
     formatDate: function(data) {
@@ -468,6 +473,12 @@ export default {
     // CompliancePermissionGroups - officers
     let returned_officers = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Officers', '/api/compliancepermissiongroup/get_officers/');
     Object.assign(this.officers, returned_officers);
+    // blank entry allows user to clear selection
+    this.officers.splice(0, 0, 
+      {
+        id: "", 
+        full_name: "",
+      });
 
     // load current CallEmail renderer schema
     if (this.call_email.report_type_id) {
