@@ -136,7 +136,9 @@
                     <label class="col-sm-1">No</label>
                 </div></div>
 
-                <SearchPerson />
+                <div v-if="personSearchVisible">
+                    <SearchPerson />
+                </div>
               </FormSection>
 
               <FormSection :formCollapse="false" label="Location" Index="1">
@@ -329,6 +331,13 @@ export default {
       } else {
         return "Occurrence time";
       }
+    },
+    personSearchVisible: function(){
+        if (this.call_email.status && this.call_email.status.id === 'draft') {
+          return false;
+        } else {
+          return true;
+        }
     },
     isReadonly: function() {
         if (this.call_email.status && this.call_email.status.id === 'draft') {
