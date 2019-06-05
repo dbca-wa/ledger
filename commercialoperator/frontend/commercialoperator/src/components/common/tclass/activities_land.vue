@@ -89,7 +89,7 @@
                   </div>
                   <div class="list-group collapse"  :id="'d'+d.id">
                     <div class="form-check col-sm-12 list-group-item" style="padding-left: 45px;" v-for="p in d.land_parks">
-                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" :id="'park'+p.id" :disabled="!canEditActivities" data-parsley-required @click="clickPark($event, p, d)"/>
+                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" :ref="'park'+p.id" type="checkbox" :id="'park'+p.id" :disabled="!canEditActivities" data-parsley-required @click="clickPark($event, p, d)"/>
                     {{ p.name }}
                       <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit access and activities</a></span>
                     </div>
@@ -749,7 +749,7 @@ export default {
           },
 
           handleDistrictChange: function(e,d, r){
-            console.log('here')
+            //console.log('here')
             var inder_state=false;
             var checked_state=false;
             var checked_all=true;
@@ -928,6 +928,15 @@ export default {
           //console.log(trail_list)
           vm.trail_activities = vm.find_recurring(all_activities)
         },
+        createParkEvent: function(selected_parks){
+          let vm= this;
+          for(var i=0;i<selected_parks.length; i++){
+            var elem=$("#park"+selected_parks[i])[0];
+            var event = document.createEvent('HTMLEvents');
+            event.initEvent('click', true, true);
+            elem.dispatchEvent(event);
+          }
+        },
     },
 
         mounted: function() {
@@ -984,6 +993,11 @@ export default {
             vm.selected_activities = vm.find_recurring(activity_list)
             vm.selected_access=vm.find_recurring(access_list)
             vm.selected_parks=park_list
+            
+            this.$nextTick(() => {
+              //vm.createParkEvent(vm.selected_parks)
+            });
+            
 
             vm.store_trails(vm.proposal.trails);
 
