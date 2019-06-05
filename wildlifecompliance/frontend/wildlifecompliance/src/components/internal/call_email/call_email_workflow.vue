@@ -186,6 +186,7 @@ export default {
   computed: {
     ...mapGetters('callemailStore', {
       call_email: "call_email",
+      
     }),
     region: function() {
       return this.call_email.region ? this.call_email.region.id : '';
@@ -216,6 +217,9 @@ export default {
     }
   },
   methods: {
+    ...mapActions('callemailStore', {
+      setAllocatedTo: "setAllocatedTo",
+    }),
     updateDistrictsAndOfficers: function() {
       this.call_email.district_id = null;
       this.availableDistricts = [];
@@ -236,7 +240,7 @@ export default {
     },
     setRegionalOfficers: function() {
       this.regionalOfficers = [];
-      // let regional_officers = [];
+      let member_ids = [];
       for (let group of this.compliance_permission_groups) {
         if (group.region_district.length > 0 && 
         group.members.length > 0 && 
@@ -246,18 +250,18 @@ export default {
         group.region_district[0].id == this.call_email.region.id)
         ) {
           for (let member of group.members) {
-            // regional_officers.push(member);
             this.regionalOfficers.push(member);
+            member_ids.push(member.id);  
           }
         }
       }
+      this.setAllocatedTo(member_ids);
       // blank entry allows user to clear selection
       this.regionalOfficers.splice(0, 0, 
       {
         id: "", 
         full_name: "",
       });
-      // this.regionalOfficers = regional_officers;
     },
 
     ok: async function () {
@@ -293,13 +297,21 @@ export default {
         if (this.call_email.district_id) {
           payload.append('district_id', this.call_email.district_id);
         }
+        if (this.call_email.allocated_to) {
+          payload.append('allocated_to_group', this.call_email.allocated_to);
+        }
+        if (this.call_email.assigned_to) {
+          payload.append('assigned_to', this.call_email.assigned_to);
+        }
+        
         payload.append('details', this.workflowDetails);
         payload.append('workflow_type', this.workflow_type);
+        
         let res = await this.$http.post(post_url, payload);
         console.log(res);
-        if (res.ok) {
-          this.$router.push({ name: 'internal-call-email-dash' });
-        }
+        // if (res.ok) {
+        //   this.$router.push({ name: 'internal-call-email-dash' });
+        // }
     },
     
     uploadFile(target,file_obj){
