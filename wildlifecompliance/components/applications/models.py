@@ -769,6 +769,86 @@ class Application(RevisionedMixin):
                 setattr(selected_activity, field, value)
                 selected_activity.save()
 
+    def copy_application_purposes_for_status(self, purpose_ids_list, new_activity_status):
+        '''
+        Creates a copy of the Application and associated records
+        for the specified purposes and activity status.
+        '''
+
+        # Get the ID of the original application
+        original_app_id = self.id
+
+        # Validate purpose_ids_list against LicencePurpose records for the application
+        if purpose_ids_list:
+            try:
+                for licence_purpose_id in purpose_ids_list:
+                    LicencePurpose.objects.get(id=licence_purpose_id, application__id=original_app_id)
+            except BaseException:
+                raise ValidationError('One or more IDs in the purpose list are not valid')
+        else:
+            raise ValidationError('Purpose list is empty')
+
+        # Confirm all purposes are of the same LicenceActivity type and then set licence_activity_id
+        if LicencePurpose.objects.filter(id__in=purpose_ids_list) \
+                .values_list('licence_activity_id', flat=True).distinct().count() > 1:
+            raise ValidationError('Purpose list contains purposes of different licence activities')
+        else:
+            licence_activity_id = LicencePurpose.objects.filter(id__in=purpose_ids_list).first().licence_activity_id
+
+        # Only continue if valid and current licence exists and original application is part of the chain
+        try:
+            parent_licence, created = self.get_parent_licence(auto_create=False)
+            application_chain = parent_licence.current_application.get_application_children()
+            if self in application_chain:
+                pass
+            else:
+                raise ValidationError('Application you are trying to copy'
+                                      ' is not associated with a valid current licence')
+        except BaseException:
+            raise ValidationError('Application you are trying to copy'
+                                  ' is not associated with a valid current licence')
+
+        with transaction.atomic():
+
+            # Create new application as a clone of the original application
+            new_app = Application.objects.get(id=original_app_id)
+            new_app.id = None
+            new_app.application_type = Application.APPLICATION_TYPE_SYSTEM_GENERATED
+            new_app.lodgement_number = ''
+            new_app.application_fee = Decimal('0.00')
+            # Use parent_licence.current_application to always retrieve the latest application in the chain
+            new_app.previous_application = parent_licence.current_application
+            new_app.save()
+
+            # Set the associated licence's current_application to the new application
+            parent_licence.current_application = new_app
+            parent_licence.save()
+
+            # Link the target LicencePurpose IDs to the new application
+            for licence_purpose_id in purpose_ids_list:
+                new_app.licence_purposes.add(licence_purpose_id)  # e.g. new_app.licence_purposes.add(3)
+
+            # Create ApplicationSelectedActivity record for the new application
+            selected_activity = Application.objects.get(id=original_app_id)\
+                .selected_activities.get(licence_activity_id=licence_activity_id)
+            selected_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
+            selected_activity.save()
+            new_activity = selected_activity
+            new_activity.id = None
+            new_activity.licence_fee = Decimal('0.00')
+            new_activity.application = new_app
+            new_activity.activity_status = new_activity_status
+            new_activity.save()
+
+            # Copy ApplicationFormDataRecord rows from old application, licence_activity and licence_purpose
+            for licence_purpose_id in purpose_ids_list:
+                for data_row in ApplicationFormDataRecord.objects.filter(application_id=original_app_id,
+                                                                         licence_activity_id=licence_activity_id,
+                                                                         licence_purpose_id=licence_purpose_id):
+                    data_row.id = None
+                    data_row.application_id = new_app.id
+                    data_row.save()
+
     def submit(self, request):
         from wildlifecompliance.components.licences.models import LicenceActivity
         with transaction.atomic():
@@ -1177,6 +1257,12 @@ class Application(RevisionedMixin):
             **activity_filters
         ) if self.previous_application and self.previous_application != self else activity_chain
 
+    def get_application_children(self):
+        application_self_queryset = Application.objects.filter(id=self.id)
+        return application_self_queryset | self.previous_application.get_application_children()\
+            if self.previous_application and self.previous_application != self\
+            else application_self_queryset
+
     def get_latest_current_activity(self, activity_id):
         return self.get_activity_chain(
             licence_activity_id=activity_id,
@@ -1370,16 +1456,20 @@ class Application(RevisionedMixin):
             except BaseException:
                 raise
 
-    def get_parent_licence(self):
+    def get_parent_licence(self, auto_create=True):
         from wildlifecompliance.components.licences.models import WildlifeLicence
         current_date = timezone.now().date()
         try:
             existing_licence = WildlifeLicence.objects.filter(
                 Q(licence_category=self.get_licence_category()),
                 Q(current_application__org_applicant_id=self.org_applicant_id) if self.org_applicant_id else (
-                    Q(current_application__submitter_id=self.proxy_applicant_id
-                      ) | Q(current_application__proxy_applicant_id=self.proxy_applicant_id)
-                ) if self.proxy_applicant_id else Q(current_application__submitter_id=self.submitter_id)
+                    Q(current_application__submitter_id=self.proxy_applicant_id,
+                      current_application__org_applicant_id=None
+                      ) | Q(current_application__proxy_applicant_id=self.proxy_applicant_id,
+                            current_application__org_applicant_id=None)
+                ) if self.proxy_applicant_id else Q(current_application__submitter_id=self.submitter_id,
+                                                    current_application__org_applicant_id=None,
+                                                    current_application__proxy_applicant_id=None)
             ).order_by('-id').distinct().first()
 
             if existing_licence:
@@ -1393,10 +1483,13 @@ class Application(RevisionedMixin):
                 raise WildlifeLicence.DoesNotExist
             return existing_licence, False
         except WildlifeLicence.DoesNotExist:
-            return WildlifeLicence.objects.create(
-                current_application=self,
-                licence_category=self.get_licence_category()
-            ), True
+            if auto_create:
+                return WildlifeLicence.objects.create(
+                    current_application=self,
+                    licence_category=self.get_licence_category()
+                ), True
+            else:
+                return WildlifeLicence.objects.none(), False
 
     def issue_activity(self, request, selected_activity, parent_licence=None, generate_licence=False):
 
@@ -1404,7 +1497,7 @@ class Application(RevisionedMixin):
             raise Exception("Cannot issue activity: licence fee has not been paid!")
 
         if parent_licence is None:
-            parent_licence, created = self.get_parent_licence()
+            parent_licence, created = self.get_parent_licence(auto_create=True)
 
         if not parent_licence:
             raise Exception("Cannot issue activity: licence not found!")
@@ -1448,7 +1541,7 @@ class Application(RevisionedMixin):
 
         with transaction.atomic():
             try:
-                parent_licence, created = self.get_parent_licence()
+                parent_licence, created = self.get_parent_licence(auto_create=True)
                 issued_activities = []
                 declined_activities = []
                 for item in request.data.get('activity'):
