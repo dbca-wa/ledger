@@ -1934,7 +1934,6 @@ class Assessment(ApplicationRequest):
 
 
 class ApplicationSelectedActivity(models.Model):
-    from wildlifecompliance.components.licences.models import WildlifeLicence
     PROPOSED_ACTION_DEFAULT = 'default'
     PROPOSED_ACTION_DECLINE = 'propose_decline'
     PROPOSED_ACTION_ISSUE = 'propose_issue'
@@ -2010,15 +2009,6 @@ class ApplicationSelectedActivity(models.Model):
         choices=ACTIVITY_STATUS_CHOICES,
         default=ACTIVITY_STATUS_DEFAULT)
     application = models.ForeignKey(Application, related_name='selected_activities')
-    # licence = models.ForeignKey(
-    #     WildlifeLicence,
-    #     blank=True,
-    #     null=True,
-    #     related_name='selected_activities')
-    # licence_purposes = models.ManyToManyField(
-    #     'wildlifecompliance.LicencePurpose',
-    #     blank=True
-    # )
     updated_by = models.ForeignKey(EmailUser, null=True)
     reason = models.TextField(blank=True)
     cc_email = models.TextField(null=True)
@@ -2056,27 +2046,6 @@ class ApplicationSelectedActivity(models.Model):
         from wildlifecompliance.components.licences.models import LicencePurpose
         return LicencePurpose.objects.filter(
             application__id=self.application_id,
-            licence_activity_id=self.licence_activity_id
-        ).distinct()
-
-    @property
-    def current_purposes(self):
-        '''
-        need to clarify why ASA.purposes uses activity chain, should this be renamed to "current_purposes"?
-        should there be a separate function that just returns the purposes for the individual ASA?
-        after checking usage of .purposes, it seems maybe this was replaced by the creation of "current_activities"
-        may not need this if current_activities is correct, then purposes for an ASA should always
-        just show its own purposes, not full chain list
-        '''
-
-        from wildlifecompliance.components.licences.models import LicencePurpose
-        activity_chain = self.application.get_activity_chain(
-            licence_activity_id=self.licence_activity_id,
-            activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
-        )
-        application_ids = set([activity.application_id for activity in activity_chain] + [self.application_id])
-        return LicencePurpose.objects.filter(
-            application__id__in=application_ids,
             licence_activity_id=self.licence_activity_id
         ).distinct()
 

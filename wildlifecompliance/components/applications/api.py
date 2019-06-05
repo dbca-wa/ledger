@@ -1111,10 +1111,10 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                     serializer.instance.save()
 
                 serializer.instance.update_dynamic_attributes()
-
                 response = Response(serializer.data)
 
             return response
+
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
