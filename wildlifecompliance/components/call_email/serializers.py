@@ -23,8 +23,8 @@ from wildlifecompliance.components.users.serializers import UserAddressSerialize
 
 
 class SaveEmailUserSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(allow_blank=True)
-    last_name = serializers.CharField(allow_blank=True)
+    first_name = serializers.CharField(allow_blank=True)  # We need allow_blank=True otherwise blank is not allowed by blank=False setting in the model
+    last_name = serializers.CharField(allow_blank=True)  # We need allow_blank=True otherwise blank is not allowed by blank=False setting in the model
     # residential_address = UserAddressSerializer(read_only=True)
     # residential_address_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
 
@@ -36,12 +36,19 @@ class SaveEmailUserSerializer(serializers.ModelSerializer):
     # def update(self, instance, validated_data):
     #     return super(SaveEmailUserSerializer, self).update(instance, validated_data)
     def validate_first_name(self, value):
+        # if not value:
+        #     raise serializers.ValidationError('First name must not be null.')
+        return value
+
+    def validate_last_name(self, value):
+        # if not value:
+        #     raise serializers.ValidationError('Last name must not be null.')
         return value
 
     def validate(self, data):
-        return data
+        # return data
         if not data['first_name'] and not data['last_name']:
-            raise serializers.ValidationError('Please fill in at least one of first name or last name.')
+            raise serializers.ValidationError('Please fill in at least Given Name(s) field or Last Name field.')
         else:
             return data
 

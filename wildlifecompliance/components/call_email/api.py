@@ -395,11 +395,11 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         email_user_id_requested = request_data.get('email_user', {}).get('id', {})
         first_name = request_data.get('email_user', {}).get('first_name', '')
         last_name = request_data.get('email_user', {}).get('last_name', '')
-        dob = request_data.get('email_user', {}).get('dob', None)
-        dob = None if not dob else dob
+        # dob = request_data.get('email_user', {}).get('dob', None)
+        # dob = None if not dob else dob
         email_address = request_data.get('email_user', {}).get('email', '')
-        mobile_number = request_data.get('email_user', {}).get('mobile_number', '')
-        phone_number = request_data.get('email_user', {}).get('phone_number', '')
+        # mobile_number = request_data.get('email_user', {}).get('mobile_number', '')
+        # phone_number = request_data.get('email_user', {}).get('phone_number', '')
 
         if email_user_id_requested:
             email_user_instance = EmailUser.objects.get(id=email_user_id_requested)
@@ -411,10 +411,9 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             email_user_instance = EmailUser.objects.create_user(email_address.strip('.'), '')
 
         s = SaveEmailUserSerializer(email_user_instance, data=request.data['email_user'])
-        if s.is_valid():
+        if s.is_valid(raise_exception=True):
             s.save()
-        else:
-            pass
+            return s.data
 
         # email_user_instance.first_name = first_name
         # email_user_instance.last_name = last_name
@@ -424,7 +423,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         # email_user_instance.save()
 
         # Update foreign key value in the call_email object
-        request_data.update({'email_user_id': email_user_instance.id})
+        # request_data.update({'email_user_id': email_user_instance.id})
 
 
     @detail_route(methods=['POST', ])
@@ -433,8 +432,33 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
         try:
             with transaction.atomic():
-                request_data = request.data
-                self.save_email_user(request)
+                # Email user
+                email_user_id_requested = request.data.get('email_user', {}).get('id', {})
+                email_address = request.data.get('email_user', {}).get('email', '')
+
+                if email_user_id_requested:
+                    email_user_instance = EmailUser.objects.get(id=email_user_id_requested)
+                    email_user_instance.email = email_address
+                else:
+                    if not email_address:
+                        # Generate email address
+                        first_name = request.data.get('email_user', {}).get('first_name', '')
+                        last_name = request.data.get('email_user', {}).get('last_name', '')
+                        e = EmailUser(first_name=first_name, last_name=last_name)
+                        email_address = e.get_dummy_email().strip('.').replace('..', '.')  # Make the email address generated valid even if first_name/last_name is empty.
+                    email_user_instance = EmailUser.objects.create_user(email_address, '')
+                    request.data['email_user'].update({'email': email_address})
+
+                s = SaveEmailUserSerializer(email_user_instance, data=request.data['email_user'])
+                if s.is_valid(raise_exception=True):
+                    s.save()
+                    headers = self.get_success_headers(s.data)
+                    returned_data = s.data
+                    return Response(
+                        returned_data,
+                        status=status.HTTP_201_CREATED,
+                        headers=headers
+                    )
 
         except serializers.ValidationError:
             print(traceback.print_exc())

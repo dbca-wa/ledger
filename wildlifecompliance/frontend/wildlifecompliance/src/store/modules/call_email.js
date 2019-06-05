@@ -154,11 +154,12 @@ export const callemailStore = {
         },
         updateReportType(state, report_type) {
             if (report_type) {
-                console.log("report_type");
-                console.log(report_type);
                 Vue.set(state.call_email, 'report_type', report_type);
-                console.log("state.call_email.report_type");
-                console.log(state.call_email.report_type);
+            }
+        },
+        updateEmailUser(state, email_user){
+            if (email_user){
+                Vue.set(state.call_email, 'email_user', email_user);
             }
         },
         updateEmailUserEmpty(state){
@@ -237,11 +238,16 @@ export const callemailStore = {
         async saveCallEmailPerson({dispatch, state}){
             try{
                 let fetchUrl = helpers.add_endpoint_join(api_endpoints.call_email, state.call_email.id + "/call_email_save_person/");
-                const savedCallEmail = await Vue.http.post(fetchUrl, state.call_email);
-                await dispatch("setCallEmail", savedCallEmail.body);
+                const savedEmailUser = await Vue.http.post(fetchUrl, state.call_email);
+                await dispatch("setEmailUser", savedEmailUser.body);
+                await swal("Saved", "The record has been saved", "success");
             } catch (err) {
                 console.log(err);
-                await swal("Error", "There was an error saving the record", "error");
+                if (err.body.non_field_errors){
+                    await swal("Error", err.body.non_field_errors[0], "error");
+                } else {
+                    await swal("Error", "There was an error saving the record", "error");
+                }
             }
         },
         async saveCallEmail({ dispatch, state, rootGetters}, { route, crud }) {
@@ -309,6 +315,9 @@ export const callemailStore = {
         setSchema({ commit, }, schema) {
             console.log("setSchema");
             commit("updateSchema", schema);
+        },
+        setEmailUser({ commit, }, email_user) {
+            commit("updateEmailUser", email_user);
         },
         setEmailUserEmpty({ commit, }){
             commit("updateEmailUserEmpty");
