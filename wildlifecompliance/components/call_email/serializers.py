@@ -1,5 +1,6 @@
 import traceback
 
+from rest_framework.fields import CharField
 from rest_framework_gis.serializers import GeoFeatureModelSerializer, GeometryField
 
 from ledger.accounts.models import EmailUser
@@ -22,8 +23,10 @@ from wildlifecompliance.components.users.serializers import UserAddressSerialize
 
 
 class SaveEmailUserSerializer(serializers.ModelSerializer):
-    residential_address = UserAddressSerializer(read_only=True)
-    residential_address_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
+    first_name = serializers.CharField(allow_blank=True)
+    last_name = serializers.CharField(allow_blank=True)
+    # residential_address = UserAddressSerializer(read_only=True)
+    # residential_address_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
 
     # residential_address = UserAddressSerializer()
 
@@ -32,6 +35,15 @@ class SaveEmailUserSerializer(serializers.ModelSerializer):
 
     # def update(self, instance, validated_data):
     #     return super(SaveEmailUserSerializer, self).update(instance, validated_data)
+    def validate_first_name(self, value):
+        return value
+
+    def validate(self, data):
+        return data
+        if not data['first_name'] and not data['last_name']:
+            raise serializers.ValidationError('Please fill in at least one of first name or last name.')
+        else:
+            return data
 
     class Meta:
         model = EmailUser
@@ -40,8 +52,8 @@ class SaveEmailUserSerializer(serializers.ModelSerializer):
             'email',
             'first_name',
             'last_name',
-            'residential_address',
-            'residential_address_id',
+            # 'residential_address',
+            # 'residential_address_id',
             'phone_number',
             'mobile_number',
             'organisation',
@@ -49,7 +61,7 @@ class SaveEmailUserSerializer(serializers.ModelSerializer):
         )
         read_only_fields = (
             # 'id',
-            'residential_address',
+            # 'residential_address',
         )
 
 

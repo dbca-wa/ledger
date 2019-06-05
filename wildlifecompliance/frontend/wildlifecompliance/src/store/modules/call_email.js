@@ -234,6 +234,16 @@ export const callemailStore = {
                 console.log(err);
             }
         },
+        async saveCallEmailPerson({dispatch, state}){
+            try{
+                let fetchUrl = helpers.add_endpoint_join(api_endpoints.call_email, state.call_email.id + "/call_email_save_person/");
+                const savedCallEmail = await Vue.http.post(fetchUrl, state.call_email);
+                await dispatch("setCallEmail", savedCallEmail.body);
+            } catch (err) {
+                console.log(err);
+                await swal("Error", "There was an error saving the record", "error");
+            }
+        },
         async saveCallEmail({ dispatch, state, rootGetters}, { route, crud }) {
             console.log("saveCallEmail");
             let callId = null;

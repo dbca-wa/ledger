@@ -397,25 +397,31 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         last_name = request_data.get('email_user', {}).get('last_name', '')
         dob = request_data.get('email_user', {}).get('dob', None)
         dob = None if not dob else dob
-        email_add = request_data.get('email_user', {}).get('email', '')
+        email_address = request_data.get('email_user', {}).get('email', '')
         mobile_number = request_data.get('email_user', {}).get('mobile_number', '')
         phone_number = request_data.get('email_user', {}).get('phone_number', '')
 
         if email_user_id_requested:
             email_user_instance = EmailUser.objects.get(id=email_user_id_requested)
-            email_user_instance.email = email_add
+            email_user_instance.email = email_address
         else:
             e = EmailUser(first_name=first_name, last_name=last_name)
-            if not email_add:
-                email_add = e.get_dummy_email()
-            email_user_instance = EmailUser.objects.create_user(email_add.strip('.'), '')
+            if not email_address:
+                email_address = e.get_dummy_email()
+            email_user_instance = EmailUser.objects.create_user(email_address.strip('.'), '')
 
-        email_user_instance.first_name = first_name
-        email_user_instance.last_name = last_name
-        email_user_instance.dob = dob
-        email_user_instance.mobile_number = mobile_number
-        email_user_instance.phone_number = phone_number
-        email_user_instance.save()
+        s = SaveEmailUserSerializer(email_user_instance, data=request.data['email_user'])
+        if s.is_valid():
+            s.save()
+        else:
+            pass
+
+        # email_user_instance.first_name = first_name
+        # email_user_instance.last_name = last_name
+        # email_user_instance.dob = dob
+        # email_user_instance.mobile_number = mobile_number
+        # email_user_instance.phone_number = phone_number
+        # email_user_instance.save()
 
         # Update foreign key value in the call_email object
         request_data.update({'email_user_id': email_user_instance.id})
@@ -424,9 +430,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     def call_email_save_person(self, request, *args, **kwargs):
         instance = self.get_object()
+
         try:
             with transaction.atomic():
                 request_data = request.data
+                self.save_email_user(request)
+
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

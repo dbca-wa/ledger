@@ -270,16 +270,18 @@ export default {
         ...mapActions('callemailStore', {
             setEmailUserEmpty: "setEmailUserEmpty",
             saveCallEmail: 'saveCallEmail',
+            saveCallEmailPerson: 'saveCallEmailPerson',
         }),
         save: async function() {
-          if (this.call_email.id) {
-            await this.saveCallEmail({ route: false, crud: 'save' });
-          } else {
-            await this.saveCallEmail({ route: false, crud: 'create'});
-            this.$nextTick(function() {
-              this.$router.push({name: 'view-call-email', params: {call_email_id: this.call_email.id}});
-            });
-          }
+            await this.saveCallEmailPerson();
+        //   if (this.call_email.id) {
+        //     await this.saveCallEmail({ route: false, crud: 'save' });
+        //   } else {
+        //     await this.saveCallEmail({ route: false, crud: 'create'});
+        //     this.$nextTick(function() {
+        //       this.$router.push({name: 'view-call-email', params: {call_email_id: this.call_email.id}});
+        //     });
+        //   }
         },
         createNewPerson: function() {
             let vm = this;
