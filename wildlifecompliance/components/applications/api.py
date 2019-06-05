@@ -230,12 +230,14 @@ class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if is_internal(self.request):
-            return Application.objects.all()
+            return Application.objects.all()\
+                .exclude(application_type=Application.APPLICATION_TYPE_SYSTEM_GENERATED)
         elif is_customer(self.request):
             user_orgs = [
                 org.id for org in user.wildlifecompliance_organisations.all()]
             return Application.objects.filter(Q(org_applicant_id__in=user_orgs) | Q(
-                proxy_applicant=user) | Q(submitter=user))
+                proxy_applicant=user) | Q(submitter=user))\
+                .exclude(application_type=Application.APPLICATION_TYPE_SYSTEM_GENERATED)
         return Application.objects.none()
 
     @list_route(methods=['GET', ])
