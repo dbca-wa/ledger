@@ -4,13 +4,13 @@
           <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-12">
-                        <div v-if="workflow_type === 'forward_to_regions'" class="form-group">
+                        <div v-if="regionVisibility" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Region</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control col-sm-9" @change.prevent="updateDistrictsAndOfficers" v-model="call_email.region">
+                              <select class="form-control col-sm-9" @change.prevent="updateDistrictsAndOfficers('triage_call_email')" v-model="call_email.region">
                                 <option  v-for="option in regions" :value="option" v-bind:key="option.id">
                                   {{ option.display_name }} 
                                 </option>
@@ -18,7 +18,7 @@
                             </div>
                           </div>
                         </div>
-                        <div v-if="workflow_type === 'forward_to_regions'" class="form-group">
+                        <div v-if="regionVisibility" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>District</label>
@@ -33,16 +33,15 @@
                           </div>
                         </div>
                         <!--
-                        <div v-if="workflow_type.includes('allocate')" class="form-group">
-                          -->
-                        <div v-if="!(workflow_type === 'forward_to_wildlife_protection_branch')" class="form-group">
+
+                        <div v-if="assignedToVisibility" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
-                              <label>Allocate to</label>
+                              <label>Assign to</label>
                             </div>
                             <div class="col-sm-9">
                               <select class="form-control" v-model="call_email.assigned_to">
-                                <option  v-for="option in regionalOfficers" :value="option.id" v-bind:key="option.id">
+                                <option  v-for="option in allocatedGroup" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }}
                                 </option>
                               </select>
@@ -88,6 +87,8 @@
                             </div>
                           </div>
                         </div>
+                        -->
+
                         <div class="form-group">
                           <div class="row">
                               <div class="col-sm-3">
@@ -155,7 +156,7 @@ export default {
       // forwardToRegions: false,
       // workflowType: '',
       officers: [],
-      regionalOfficers: [],
+      allocatedGroup: [],
       isModalOpen: false,
       processingDetails: false,
       form: null,
@@ -180,14 +181,27 @@ export default {
   props:{
         workflow_type: {
             type: String,
-            default: false,
+            default: '',
         },
     },
   computed: {
     ...mapGetters('callemailStore', {
       call_email: "call_email",
-      
     }),
+    regionVisibility: function() {
+      if (this.workflow_type === 'forward_to_regions') {
+        return true;
+      } else {
+        return false;
+      }
+    },
+    assignedToVisibility: function() {
+      if (this.workflow_type.includes('allocate')) {
+        return true;
+      } else {
+        return false;
+      }
+    },
     region: function() {
       return this.call_email.region ? this.call_email.region.id : '';
     }, 
@@ -220,7 +234,7 @@ export default {
     ...mapActions('callemailStore', {
       setAllocatedTo: "setAllocatedTo",
     }),
-    updateDistrictsAndOfficers: function() {
+    updateDistrictsAndOfficers: function(group_permission) {
       this.call_email.district_id = null;
       this.availableDistricts = [];
       for (let record of this.regionDistricts) {
@@ -236,10 +250,10 @@ export default {
         districts: [],
         region: null,
       });
-      this.setRegionalOfficers();
+      this.setAllocatedGroup(group_permission);
     },
-    setRegionalOfficers: function() {
-      this.regionalOfficers = [];
+    setAllocatedGroup: function(group_permission) {
+      this.allocatedGroup = [];
       let member_ids = [];
       for (let group of this.compliance_permission_groups) {
         if (group.region_district.length > 0 && 
@@ -247,17 +261,23 @@ export default {
         this.call_email.region.id &&
         // parent or child Region/District
         (group.region_district[0].region == this.call_email.region.id ||
-        group.region_district[0].id == this.call_email.region.id)
+        group.region_district[0].id == this.call_email.region.id) &&
+        // filter by group permission
+        group.permissions_list &&
+        group.permissions_list.includes(group_permission)
         ) {
+          console.log(group)
+          console.log(group.permissions_list)
+          console.log(group_permission)
           for (let member of group.members) {
-            this.regionalOfficers.push(member);
+            this.allocatedGroup.push(member);
             member_ids.push(member.id);  
           }
         }
       }
       this.setAllocatedTo(member_ids);
       // blank entry allows user to clear selection
-      this.regionalOfficers.splice(0, 0, 
+      this.allocatedGroup.splice(0, 0, 
       {
         id: "", 
         full_name: "",
@@ -308,10 +328,12 @@ export default {
         payload.append('workflow_type', this.workflow_type);
         
         let res = await this.$http.post(post_url, payload);
-        console.log(res);
-        // if (res.ok) {
-        //   this.$router.push({ name: 'internal-call-email-dash' });
-        // }
+        console.log(this);
+        if (res.ok) {
+          // this.$parent.save();
+          this.$router.push({ name: 'internal-call-email-dash' });
+
+        }
     },
     
     uploadFile(target,file_obj){

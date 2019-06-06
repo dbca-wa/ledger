@@ -456,18 +456,14 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 serializer = SaveCallEmailSerializer(instance, data=request_data)
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
-                    serializer.save()
+                    saved_instance = serializer.save()
                     instance.log_user_action(
                         ComplianceUserAction.ACTION_SAVE_CALL_EMAIL_.format(
                         instance.number), request)
                     headers = self.get_success_headers(serializer.data)
-                    returned_data = serializer.data
-                    # Ensure classification_id and report_type_id is returned for Vue template evaluation
-                    returned_data.update({'classification_id': request_data.get('classification_id')})
-                    returned_data.update({'report_type_id': request_data.get('report_type_id')})
-                    returned_data.update({'referrer_id': request_data.get('referrer_id')})
+                    return_serializer = CallEmailSerializer(instance=saved_instance)
                     return Response(
-                        returned_data,
+                        return_serializer.data,
                         status=status.HTTP_201_CREATED,
                         headers=headers
                     )
@@ -516,21 +512,20 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     document._file = request.FILES[f]
                     document.save()
 
-                # Set CallEmail status to open
-                instance.status = 'open'
-                instance.save()
-
                 attachments = []
                 for document in workflow_entry.documents.all():
                     attachments.append(document)
 
                 # user = EmailUser.objects.filter(email='brendan.blackford@dbca.wa.gov.au')
+                print("request.data.get('allocated_to_group')")
                 print(request.data.get('allocated_to_group'))
                 email_group = []
                 if request.data.get('assigned_to'):
                     try:
                         user_id_int = int(request.data.get('assigned_to'))
                         email_group.append(EmailUser.objects.get(id=user_id_int))
+                        # update CallEmail
+                        instance.assigned_to = (EmailUser.objects.get(id=user_id_int))
                     except Exception as e:
                             print(traceback.print_exc())
                             raise
@@ -540,18 +535,26 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                         try:
                             user_id_int = int(user_id)
                             email_group.append(EmailUser.objects.get(id=user_id_int))
+                            # update CallEmail
+                            instance.allocated_to.add(EmailUser.objects.get(id=user_id_int))
                         except Exception as e:
                             print(traceback.print_exc())
                             raise
                 else:
                     email_group = request.user
 
+                # Set CallEmail status to open
+                instance.status = 'open'
+                # instance.allocated_to = request.data.get('allocated_to_group')
+                # instance.assigned_to = request.data.get('assigned_to')
+                instance.save()
+
                 # send email
-                send_call_email_forward_email(
-                email_group, 
-                instance,
-                workflow_entry.documents,
-                request)
+                # send_call_email_forward_email(
+                # email_group, 
+                # instance,
+                # workflow_entry.documents,
+                # request)
 
                 return Response(serializer.data)
         except serializers.ValidationError:
