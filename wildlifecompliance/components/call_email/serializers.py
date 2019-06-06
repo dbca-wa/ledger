@@ -282,8 +282,13 @@ class CallEmailSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)
     district_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
-    allocated_to = ComplianceUserDetailsOptimisedSerializer(many=True)
-    assigned_to = ComplianceUserDetailsOptimisedSerializer(read_only=True)
+    # allocated_to = ComplianceUserDetailsOptimisedSerializer(many=True)
+    # assigned_to = ComplianceUserDetailsOptimisedSerializer(read_only=True)
+    # allocated_to = serializers.ListField(
+    #     required=False, read_only=True, allow_empty=True)
+    allocated_to = serializers.SerializerMethodField()
+    assigned_to = serializers.IntegerField(
+        required=False, read_only=True, allow_null=True)
 
     class Meta:
         model = CallEmail
@@ -325,6 +330,12 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'id', 
             # 'status_display',
             )
+        
+    def get_allocated_to(self, obj):
+        allocated_group = []
+        for allocated_user in obj.allocated_to.all():
+            allocated_group.append(allocated_user.id)
+        return allocated_group
 
 
 class CallEmailDatatableSerializer(serializers.ModelSerializer):
