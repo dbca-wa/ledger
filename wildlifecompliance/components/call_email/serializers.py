@@ -14,6 +14,7 @@ from wildlifecompliance.components.call_email.models import (
     MapLayer,
     ComplianceWorkflowLogEntry,)
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
+from wildlifecompliance.components.users.serializers import ComplianceUserDetailsOptimisedSerializer
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from wildlifecompliance.components.main.fields import CustomChoiceField
@@ -169,11 +170,24 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
     report_type = ReportTypeSerializer(read_only=True)
     referrer = ReferrerSerializer(read_only=True)
     email_user = EmailUserSerializer(read_only=True)
-    classification_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
-    report_type_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
-    location_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
-    referrer_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
-    email_user_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
+    classification_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    report_type_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    location_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    referrer_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    email_user_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    region_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    district_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    allocated_to = serializers.ListField(
+        required=False, write_only=True, allow_empty=True)
+    assigned_to = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
 
     class Meta:
         model = CallEmail
@@ -181,6 +195,8 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             'id',
             'number',
             'status',
+            'assigned_to',
+            'allocated_to',
             # 'status_display',
             'schema',
             'location',
@@ -190,7 +206,7 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             'classification_id',
             'report_type_id',
             'caller',
-            'assigned_to',
+            
             'referrer_id',
             'referrer',
             'caller_phone_number',
@@ -205,6 +221,8 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             'advice_details',
             'email_user',
             'email_user_id',
+            'region_id',
+            'district_id',
         )
         read_only_fields = (
             'id', 
@@ -259,7 +277,13 @@ class CallEmailSerializer(serializers.ModelSerializer):
     location = LocationSerializer(read_only=True)
     referrer = ReferrerSerializer(read_only=True)
     data = ComplianceFormDataRecordSerializer(many=True)
-    email_user = EmailUserSerializer()
+    email_user = EmailUserSerializer(read_only=True)
+    region_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    district_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    allocated_to = ComplianceUserDetailsOptimisedSerializer(many=True)
+    assigned_to = ComplianceUserDetailsOptimisedSerializer(read_only=True)
 
     class Meta:
         model = CallEmail
@@ -267,6 +291,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'id',
             'status',
             # 'status_display',
+            'assigned_to',
+            'allocated_to',
             'location',
             'location_id',
             'classification',
@@ -275,7 +301,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'lodgement_date',
             'number',
             'caller',
-            'assigned_to',
+            
             'report_type',
             'report_type_id',
             'data',
@@ -292,6 +318,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'advice_given',
             'advice_details',
             'email_user',
+            'region_id',
+            'district_id',
         )
         read_only_fields = (
             'id', 
@@ -304,6 +332,7 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
     classification = ClassificationSerializer(read_only=True)
     lodgement_date = serializers.CharField(source='lodged_on')
     user_is_officer = serializers.SerializerMethodField()
+    assigned_to = ComplianceUserDetailsOptimisedSerializer(read_only=True)
 
     class Meta:
         model = CallEmail
@@ -349,18 +378,27 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)        
     referrer_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)   
+    region_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    district_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    allocated_to = serializers.ListField(
+        required=False, write_only=True, allow_empty=True)
+    assigned_to = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
 
     class Meta:
         model = CallEmail
         fields = (
             'id',
             'status',
-            # 'status_display',
+            'assigned_to',
+            'allocated_to',
             'location_id',
             'classification_id',
             'lodgement_date',
             'caller',
-            'assigned_to',
+            
             'report_type_id',
             'caller_phone_number',
             'anonymous_call',
@@ -373,6 +411,8 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
             'advice_given',
             'advice_details',
             'referrer_id',
+            'region_id',
+            'district_id',
         )
         read_only_fields = (
             'id', 
