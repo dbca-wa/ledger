@@ -3,7 +3,7 @@ import traceback
 from rest_framework.fields import CharField
 from rest_framework_gis.serializers import GeoFeatureModelSerializer, GeometryField
 
-from ledger.accounts.models import EmailUser
+from ledger.accounts.models import EmailUser, Address
 from wildlifecompliance.components.call_email.models import (
     CallEmail,
     Classification,
@@ -25,8 +25,8 @@ from wildlifecompliance.components.users.serializers import UserAddressSerialize
 class SaveEmailUserSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(allow_blank=True)  # We need allow_blank=True otherwise blank is not allowed by blank=False setting in the model
     last_name = serializers.CharField(allow_blank=True)  # We need allow_blank=True otherwise blank is not allowed by blank=False setting in the model
-    # residential_address = UserAddressSerializer(read_only=True)
-    # residential_address_id = serializers.IntegerField( required=False, write_only=True, allow_null=True)
+    residential_address = UserAddressSerializer(read_only=True)
+    residential_address_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
 
     # residential_address = UserAddressSerializer()
 
@@ -59,8 +59,8 @@ class SaveEmailUserSerializer(serializers.ModelSerializer):
             'email',
             'first_name',
             'last_name',
-            # 'residential_address',
-            # 'residential_address_id',
+            'residential_address',
+            'residential_address_id',
             'phone_number',
             'mobile_number',
             'organisation',
@@ -69,6 +69,28 @@ class SaveEmailUserSerializer(serializers.ModelSerializer):
         read_only_fields = (
             # 'id',
             # 'residential_address',
+        )
+
+
+class SaveUserAddressSerializer(serializers.ModelSerializer):
+    line1 = serializers.CharField(allow_blank=True)  # We need allow_blank=True otherwise blank is not allowed by blank=False setting in the model
+    postcode = serializers.CharField(allow_blank=True)  # We need allow_blank=True otherwise blank is not allowed by blank=False setting in the model
+    locality = serializers.CharField(allow_blank=True)  # We need allow_blank=True otherwise blank is not allowed by blank=False setting in the model
+    country = serializers.CharField(allow_blank=True)  # We need allow_blank=True otherwise blank is not allowed by blank=False setting in the model
+    user_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+
+    class Meta:
+        model = Address
+        fields = (
+            'id',
+            'line1',
+            'line2',
+            'line3',
+            'locality',
+            'state',
+            'country',
+            'postcode',
+            'user_id',
         )
 
 

@@ -63,14 +63,14 @@ from wildlifecompliance.components.call_email.serializers import (
     CreateCallEmailSerializer,
     ReportTypeSchemaSerializer,
     ReferrerSerializer,
-    LocationSerializerOptimized, 
-    CallEmailOptimisedSerializer, 
+    LocationSerializerOptimized,
+    CallEmailOptimisedSerializer,
     EmailUserSerializer,
-    SaveEmailUserSerializer, 
+    SaveEmailUserSerializer,
     MapLayerSerializer,
     ComplianceWorkflowLogEntrySerializer,
-    CallEmailDatatableSerializer
-    )
+    CallEmailDatatableSerializer,
+    SaveUserAddressSerializer)
 from wildlifecompliance.components.users.serializers import (
     ComplianceUserDetailsSerializer,
 )
@@ -431,6 +431,9 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
 
         try:
+            email_user_serializer = None
+            address_serializer = None
+
             with transaction.atomic():
                 # Email user
                 email_user_id_requested = request.data.get('email_user', {}).get('id', {})
@@ -449,16 +452,53 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     email_user_instance = EmailUser.objects.create_user(email_address, '')
                     request.data['email_user'].update({'email': email_address})
 
-                s = SaveEmailUserSerializer(email_user_instance, data=request.data['email_user'])
-                if s.is_valid(raise_exception=True):
-                    s.save()
-                    headers = self.get_success_headers(s.data)
-                    returned_data = s.data
-                    return Response(
-                        returned_data,
-                        status=status.HTTP_201_CREATED,
-                        headers=headers
-                    )
+                email_user_serializer = SaveEmailUserSerializer(
+                    email_user_instance,
+                    data=request.data['email_user'],
+                    partial=True)
+
+                if email_user_serializer.is_valid(raise_exception=True):
+                    email_user_serializer.save()
+
+                    # UPDATE user_id of residential address in order to save the address
+                    request.data['email_user']['residential_address'].update({'user_id': email_user_serializer.data['id']})
+
+                    # Residential address
+                    residential_address_id_requested = request.data.get('email_user', {}).get('residential_address', {}).get('id', {})
+                    if residential_address_id_requested:
+                        residential_address_instance = Address.objects.get(id=residential_address_id_requested)
+                        address_serializer = SaveUserAddressSerializer(
+                            instance=residential_address_instance,
+                            data=request.data['email_user']['residential_address'],
+                            partial=True)
+                    else:
+                        address_serializer = SaveUserAddressSerializer(
+                            data=request.data['email_user']['residential_address'],
+                            partial=True)
+                    if address_serializer.is_valid(raise_exception=True):
+                        address_serializer.save()
+
+                    # Update relation between email_user and residential_address
+                    request.data['email_user'].update({'residential_address_id': address_serializer.data['id']})
+                    email_user = EmailUser.objects.get(id=email_user_serializer.instance.id)
+                    email_user_serializer = SaveEmailUserSerializer(email_user, request.data['email_user'])
+                    if email_user_serializer.is_valid():
+                        email_user_serializer.save()
+
+                    # Update relation between call_email and email_user
+                    request.data.update({'email_user_id': email_user_serializer.data['id']})
+                    call_email_serializer = SaveCallEmailSerializer(instance, data=request.data)
+                    if call_email_serializer.is_valid():
+                        call_email_serializer.save()
+
+            # Reload data via serializer
+            email_user = EmailUser.objects.get(id=email_user_serializer.instance.id)
+            email_user_serializer = SaveEmailUserSerializer(email_user)
+            return Response(
+                email_user_serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=self.get_success_headers(email_user_serializer.data)
+            )
 
         except serializers.ValidationError:
             print(traceback.print_exc())

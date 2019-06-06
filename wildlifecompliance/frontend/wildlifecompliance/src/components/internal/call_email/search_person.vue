@@ -75,8 +75,7 @@
                                 </h3>
                                 </div>
                                 <div v-if="loading.length == 0" class="panel-body collapse in" :id="adBody">
-                                    Under Construction
-                                    <!--  <form class="form-horizontal" action="index.html" method="post">
+                                    <form class="form-horizontal" action="index.html" method="post">
                                         <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Street</label>
                                         <div class="col-sm-6">
@@ -85,7 +84,7 @@
                                             </div></div>
                                         </div>
                                         </div>
-                                       <div class="form-group">
+                                    <div class="form-group">
                                         <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
                                         <div class="col-sm-6">
                                             <div v-if="call_email.email_user"><div v-if="call_email.email_user.residential_address">
@@ -117,12 +116,12 @@
                                             </div></div>
                                         </div>
                                         </div>
-                                        <div class="form-group">
+                                        <!-- <div class="form-group">
                                         <div class="col-sm-12">
                                             <button v-if="!updatingAddress" class="pull-right btn btn-primary" @click.prevent="updateAddress()">Update</button>
                                             <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
                                         </div>
-                                        </div> -->
+                                        </div>  -->
                                     </form>
                                 </div>
                             </div>
@@ -274,14 +273,6 @@ export default {
         }),
         save: async function() {
             await this.saveCallEmailPerson();
-        //   if (this.call_email.id) {
-        //     await this.saveCallEmail({ route: false, crud: 'save' });
-        //   } else {
-        //     await this.saveCallEmail({ route: false, crud: 'create'});
-        //     this.$nextTick(function() {
-        //       this.$router.push({name: 'view-call-email', params: {call_email_id: this.call_email.id}});
-        //     });
-        //   }
         },
         createNewPerson: function() {
             let vm = this;
@@ -406,6 +397,15 @@ export default {
             ]
             Promise.all(initialisers).then(data => {
                 vm.call_email.email_user = data[0];
+                if(vm.call_email.email_user.residential_address == null){
+                    vm.call_email.email_user.residential_address = {
+                        line1: '',
+                        locality: '',
+                        state: 'WA',
+                        postcode: '',
+                        country: 'AU'
+                    }
+                }
                 vm.call_email.email_user.residential_address = vm.call_email.email_user.residential_address != null ? vm.call_email.email_user.residential_address : {};
             });
         },

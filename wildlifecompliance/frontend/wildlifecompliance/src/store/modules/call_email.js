@@ -103,9 +103,9 @@ export const callemailStore = {
                     residential_address: {
                         line1: '',
                         locality: '',
-                        state: '',
+                        state: 'WA',
                         postcode: '',
-                        country: ''
+                        country: 'AU'
                     }
                 };
             } else if (!call_email.email_user.residential_address){
@@ -113,9 +113,9 @@ export const callemailStore = {
                 call_email.email_user.residential_address = {
                     line1: '',
                     locality: '',
-                    state: '',
+                    state: 'WA',
                     postcode: '',
-                    country: ''
+                    country: 'AU'
                 };
             }
             Vue.set(state, 'call_email', {
@@ -170,9 +170,9 @@ export const callemailStore = {
                 residential_address: {
                     line1: '',
                     locality: '',
-                    state: '',
+                    state: 'WA',
                     postcode: '',
-                    country: ''
+                    country: 'AU'
                 }
             };
             Vue.set(state.call_email, 'email_user', email_user_empty);
