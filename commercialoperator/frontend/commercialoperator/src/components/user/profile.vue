@@ -679,7 +679,7 @@ export default {
 
         fetchOrgRequestList: function() { //Fetch all the Organisation requests submitted by user which are pending for approval.
             let vm = this;
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'user_list')).then((response) => {
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'get_pending_requests')).then((response) => {
                 
                 vm.orgRequest_list=response.body; 
             }, (error) => {
