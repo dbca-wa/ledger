@@ -10,6 +10,7 @@ from wildlifecompliance.components.organisations.utils import can_admin_org, is_
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from rest_framework.fields import CurrentUserDefault
+from django.contrib.auth.models import Permission
 
 
 class DocumentSerializer(serializers.ModelSerializer):
@@ -328,6 +329,25 @@ class ComplianceUserDetailsSerializer(serializers.ModelSerializer):
     #     return serialized_orgs
 
 
+class ComplianceUserDetailsOptimisedSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmailUser
+        fields = (
+            'title',
+            'id',
+            'last_name',
+            'first_name',
+            'email',
+            'full_name',
+        )
+    
+    def get_full_name(self, obj):
+        if obj.first_name and obj.last_name:
+            return obj.first_name + ' ' + obj.last_name
+
+
 class EmailUserActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
 
@@ -383,3 +403,31 @@ class CompliancePermissionGroupSerializer(serializers.ModelSerializer):
             'region_district',
             'display_name',
             )
+
+
+class PermissionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Permission
+        fields = '__all__'
+
+
+class CompliancePermissionGroupDetailedSerializer(serializers.ModelSerializer):
+    region_district = RegionDistrictSerializer(many=True)
+    members = ComplianceUserDetailsOptimisedSerializer(many=True)
+    permissions = PermissionSerializer(many=True)
+
+    class Meta:
+        model = CompliancePermissionGroup
+        fields = (
+            'id',
+            'name',
+            'region_district',
+            'display_name',
+            'members',
+            'permissions',
+            )
+    # def get_permissions(self, obj):
+    #     return obj.permissions.all()
+
+
