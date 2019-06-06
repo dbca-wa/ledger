@@ -428,14 +428,13 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     def call_email_save_person(self, request, *args, **kwargs):
-        instance = self.get_object()
+        call_email_instance = self.get_object()
 
         try:
-            email_user_serializer = None
-            address_serializer = None
-
             with transaction.atomic():
+                #####
                 # Email user
+                #####
                 email_user_id_requested = request.data.get('email_user', {}).get('id', {})
                 email_address = request.data.get('email_user', {}).get('email', '')
 
@@ -460,10 +459,11 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 if email_user_serializer.is_valid(raise_exception=True):
                     email_user_serializer.save()
 
-                    # UPDATE user_id of residential address in order to save the address
-                    request.data['email_user']['residential_address'].update({'user_id': email_user_serializer.data['id']})
-
+                    #####
                     # Residential address
+                    #####
+                    # UPDATE user_id of residential address in order to save the residential address
+                    request.data['email_user']['residential_address'].update({'user_id': email_user_serializer.data['id']})
                     residential_address_id_requested = request.data.get('email_user', {}).get('residential_address', {}).get('id', {})
                     if residential_address_id_requested:
                         residential_address_instance = Address.objects.get(id=residential_address_id_requested)
@@ -487,7 +487,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
                     # Update relation between call_email and email_user
                     request.data.update({'email_user_id': email_user_serializer.data['id']})
-                    call_email_serializer = SaveCallEmailSerializer(instance, data=request.data)
+                    call_email_serializer = SaveCallEmailSerializer(call_email_instance, data=request.data)
                     if call_email_serializer.is_valid():
                         call_email_serializer.save()
 
