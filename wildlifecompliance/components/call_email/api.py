@@ -632,16 +632,16 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
                 # Set CallEmail status to open
                 instance.status = 'open'
-                # instance.allocated_to = request.data.get('allocated_to_group')
-                # instance.assigned_to = request.data.get('assigned_to')
+                instance.region_id = request.data.get('region_id')
+                instance.district_id = request.data.get('district_id')
                 instance.save()
 
                 # send email
-                # send_call_email_forward_email(
-                # email_group, 
-                # instance,
-                # workflow_entry.documents,
-                # request)
+                send_call_email_forward_email(
+                email_group, 
+                instance,
+                workflow_entry.documents,
+                request)
 
                 return Response(serializer.data)
         except serializers.ValidationError:
