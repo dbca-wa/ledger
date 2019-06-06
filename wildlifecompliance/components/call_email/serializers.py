@@ -186,7 +186,7 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)
     allocated_to = serializers.ListField(
         required=False, write_only=True, allow_empty=True)
-    assigned_to = serializers.IntegerField(
+    assigned_to_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
 
     class Meta:
@@ -195,7 +195,7 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             'id',
             'number',
             'status',
-            'assigned_to',
+            'assigned_to_id',
             'allocated_to',
             # 'status_display',
             'schema',
@@ -287,7 +287,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
     # allocated_to = serializers.ListField(
     #     required=False, read_only=True, allow_empty=True)
     allocated_to = serializers.SerializerMethodField()
-    assigned_to = serializers.IntegerField(
+    assigned_to_id = serializers.IntegerField(
         required=False, read_only=True, allow_null=True)
 
     class Meta:
@@ -296,7 +296,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'id',
             'status',
             # 'status_display',
-            'assigned_to',
+            'assigned_to_id',
             'allocated_to',
             'location',
             'location_id',
@@ -395,7 +395,7 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)
     allocated_to = serializers.ListField(
         required=False, write_only=True, allow_empty=True)
-    assigned_to = serializers.IntegerField(
+    assigned_to_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
 
     class Meta:
@@ -403,7 +403,7 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'status',
-            'assigned_to',
+            'assigned_to_id',
             'allocated_to',
             'location_id',
             'classification_id',

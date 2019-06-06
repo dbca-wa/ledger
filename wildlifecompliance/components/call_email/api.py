@@ -456,20 +456,14 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 serializer = SaveCallEmailSerializer(instance, data=request_data)
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
-                    serializer.save()
-                    # saved_instance = serializer.save()
+                    saved_instance = serializer.save()
                     instance.log_user_action(
                         ComplianceUserAction.ACTION_SAVE_CALL_EMAIL_.format(
                         instance.number), request)
                     headers = self.get_success_headers(serializer.data)
-                    returned_data = serializer.data
-                    # Ensure classification_id and report_type_id is returned for Vue template evaluation
-                    returned_data.update({'classification_id': request_data.get('classification_id')})
-                    returned_data.update({'report_type_id': request_data.get('report_type_id')})
-                    returned_data.update({'referrer_id': request_data.get('referrer_id')})
                     return_serializer = CallEmailSerializer(instance=saved_instance)
                     return Response(
-                        returned_data,
+                        return_serializer.data,
                         status=status.HTTP_201_CREATED,
                         headers=headers
                     )

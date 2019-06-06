@@ -457,8 +457,6 @@ class CompliancePermissionGroupViewSet(viewsets.ModelViewSet):
     def get_officers(self, request, *args, **kwargs):
         try:
             officers = EmailUser.objects.filter(groups__in=CompliancePermissionGroup.objects.filter(permissions__in=Permission.objects.filter(codename='officer')))
-            print(officers)
-
             serializer = ComplianceUserDetailsOptimisedSerializer(officers, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -475,10 +473,7 @@ class CompliancePermissionGroupViewSet(viewsets.ModelViewSet):
     def get_users(self, request, *args, **kwargs):
         try:
             users = (EmailUser.objects.filter(id__in=request.data.get('user_list')))
-            print("users")
-            print(users)
             serializer = ComplianceUserDetailsOptimisedSerializer(users, many=True)
-            print(serializer.data)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())

@@ -32,7 +32,7 @@
                           </div>
                           <div class="row">
                             <div class="col-sm-12">
-                              <select class="form-control" v-model="call_email.assigned_to" >
+                              <select class="form-control" v-model="call_email.assigned_to_id" >
                                 <option  v-for="option in triage_group" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
