@@ -319,17 +319,17 @@ class CallEmailSerializer(serializers.ModelSerializer):
     referrer = ReferrerSerializer(read_only=True)
     data = ComplianceFormDataRecordSerializer(many=True)
     email_user = EmailUserSerializer(read_only=True)
-    region_id = serializers.IntegerField(
-        required=False, write_only=True, allow_null=True)
-    district_id = serializers.IntegerField(
-        required=False, write_only=True, allow_null=True)
+    # region_id = serializers.IntegerField(
+    #     required=False, read_only=True, allow_null=True)
+    # district_id = serializers.IntegerField(
+    #     required=False, read_only=True, allow_null=True)
     # allocated_to = ComplianceUserDetailsOptimisedSerializer(many=True)
     # assigned_to = ComplianceUserDetailsOptimisedSerializer(read_only=True)
     # allocated_to = serializers.ListField(
     #     required=False, read_only=True, allow_empty=True)
     allocated_to = serializers.SerializerMethodField()
-    assigned_to_id = serializers.IntegerField(
-        required=False, read_only=True, allow_null=True)
+    # assigned_to_id = serializers.IntegerField(
+    #     required=False, read_only=True, allow_null=True)
 
     class Meta:
         model = CallEmail
