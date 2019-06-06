@@ -16,8 +16,7 @@ RUN pip install --upgrade pip \
 
 # Install the project (ensure that frontend projects have been built prior to this step).
 FROM python_libs_parkstay
-COPY gunicorn.ini ./
-COPY manage_ps.py ./manage.py
+COPY gunicorn.ini manage.py ./
 COPY ledger ./ledger
 COPY parkstay ./parkstay
 RUN python manage.py collectstatic --noinput

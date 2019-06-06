@@ -204,6 +204,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(os.path.join(BASE_DIR, 'ledger', 'static')),
+# Removed as these should be in the individual app settings.py and not in ledger.
+# leaving hashed in case issues are caused by this.
+#    os.path.join(os.path.join(BASE_DIR, 'wildlifelicensing', 'static')),
+#    os.path.join(os.path.join(BASE_DIR, 'wildlifecompliance', 'static')),
 ]
 if not os.path.exists(os.path.join(BASE_DIR, 'media')):
     os.mkdir(os.path.join(BASE_DIR, 'media'))
@@ -227,27 +231,20 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'ledger.log'),
-            'formatter': 'verbose',
-            'maxBytes': 5242880
-        },
     },
     'loggers': {
         '': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': env('LOG_CONSOLE_LEVEL', 'WARNING'),
             'propagate': True
         },
         'django': {
-            'handlers': ['file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
         },
         'log': {
-            'handlers': ['file'],
+            'handlers': ['console'],
             'level': 'INFO'
         },
     }
