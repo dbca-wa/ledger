@@ -1,4 +1,5 @@
 import json
+import re
 import operator
 import traceback
 import os
@@ -63,14 +64,14 @@ from wildlifecompliance.components.call_email.serializers import (
     CreateCallEmailSerializer,
     ReportTypeSchemaSerializer,
     ReferrerSerializer,
-    LocationSerializerOptimized, 
-    CallEmailOptimisedSerializer, 
+    LocationSerializerOptimized,
+    CallEmailOptimisedSerializer,
     EmailUserSerializer,
-    SaveEmailUserSerializer, 
+    SaveEmailUserSerializer,
     MapLayerSerializer,
     ComplianceWorkflowLogEntrySerializer,
-    CallEmailDatatableSerializer
-    )
+    CallEmailDatatableSerializer,
+    SaveUserAddressSerializer)
 from wildlifecompliance.components.users.serializers import (
     ComplianceUserDetailsSerializer,
 )
@@ -395,35 +396,128 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         email_user_id_requested = request_data.get('email_user', {}).get('id', {})
         first_name = request_data.get('email_user', {}).get('first_name', '')
         last_name = request_data.get('email_user', {}).get('last_name', '')
-        dob = request_data.get('email_user', {}).get('dob', None)
-        dob = None if not dob else dob
-        email_add = request_data.get('email_user', {}).get('email', '')
-        mobile_number = request_data.get('email_user', {}).get('mobile_number', '')
-        phone_number = request_data.get('email_user', {}).get('phone_number', '')
+        # dob = request_data.get('email_user', {}).get('dob', None)
+        # dob = None if not dob else dob
+        email_address = request_data.get('email_user', {}).get('email', '')
+        # mobile_number = request_data.get('email_user', {}).get('mobile_number', '')
+        # phone_number = request_data.get('email_user', {}).get('phone_number', '')
 
         if email_user_id_requested:
             email_user_instance = EmailUser.objects.get(id=email_user_id_requested)
-            email_user_instance.email = email_add
+            email_user_instance.email = email_address
         else:
             e = EmailUser(first_name=first_name, last_name=last_name)
-            if not email_add:
-                email_add = e.get_dummy_email()
-            email_user_instance = EmailUser.objects.create_user(email_add.strip('.'), '')
+            if not email_address:
+                email_address = e.get_dummy_email()
+            email_user_instance = EmailUser.objects.create_user(email_address.strip('.'), '')
 
-        email_user_instance.first_name = first_name
-        email_user_instance.last_name = last_name
-        email_user_instance.dob = dob
-        email_user_instance.mobile_number = mobile_number
-        email_user_instance.phone_number = phone_number
-        email_user_instance.save()
+        s = SaveEmailUserSerializer(email_user_instance, data=request.data['email_user'])
+        if s.is_valid(raise_exception=True):
+            s.save()
+            return s.data
+
+        # email_user_instance.first_name = first_name
+        # email_user_instance.last_name = last_name
+        # email_user_instance.dob = dob
+        # email_user_instance.mobile_number = mobile_number
+        # email_user_instance.phone_number = phone_number
+        # email_user_instance.save()
 
         # Update foreign key value in the call_email object
-        request_data.update({'email_user_id': email_user_instance.id})
+        # request_data.update({'email_user_id': email_user_instance.id})
+    def generate_dummy_email(self, first_name, last_name):
+        e = EmailUser(first_name=first_name, last_name=last_name)
+        email_address = e.get_dummy_email().strip().strip('.').lower()
+        email_address = re.sub(r'\.+', '.', email_address)
+        email_address = re.sub(r'\s+', '_', email_address)
+        return email_address
+
+
+    @detail_route(methods=['POST', ])
+    def call_email_save_person(self, request, *args, **kwargs):
+        call_email_instance = self.get_object()
+
+        try:
+            with transaction.atomic():
+                #####
+                # Email user
+                #####
+                email_user_id_requested = request.data.get('email_user', {}).get('id', {})
+                email_address = request.data.get('email_user', {}).get('email', '')
+                if not email_address:
+                    first_name = request.data.get('email_user', {}).get('first_name', '')
+                    last_name = request.data.get('email_user', {}).get('last_name', '')
+                    email_address = self.generate_dummy_email(first_name, last_name)
+
+                if email_user_id_requested:
+                    email_user_instance = EmailUser.objects.get(id=email_user_id_requested)
+                    email_user_instance.email = email_address
+                else:
+                    email_user_instance = EmailUser.objects.create_user(email_address, '')
+                    request.data['email_user'].update({'email': email_address})
+
+                email_user_serializer = SaveEmailUserSerializer(
+                    email_user_instance,
+                    data=request.data['email_user'],
+                    partial=True)
+
+                if email_user_serializer.is_valid(raise_exception=True):
+                    email_user_serializer.save()
+
+                    #####
+                    # Residential address
+                    #####
+                    # UPDATE user_id of residential address in order to save the residential address
+                    request.data['email_user']['residential_address'].update({'user_id': email_user_serializer.data['id']})
+                    residential_address_id_requested = request.data.get('email_user', {}).get('residential_address', {}).get('id', {})
+                    if residential_address_id_requested:
+                        residential_address_instance = Address.objects.get(id=residential_address_id_requested)
+                        address_serializer = SaveUserAddressSerializer(
+                            instance=residential_address_instance,
+                            data=request.data['email_user']['residential_address'],
+                            partial=True)
+                    else:
+                        address_serializer = SaveUserAddressSerializer(
+                            data=request.data['email_user']['residential_address'],
+                            partial=True)
+                    if address_serializer.is_valid(raise_exception=True):
+                        address_serializer.save()
+
+                    # Update relation between email_user and residential_address
+                    request.data['email_user'].update({'residential_address_id': address_serializer.data['id']})
+                    email_user = EmailUser.objects.get(id=email_user_serializer.instance.id)
+                    email_user_serializer = SaveEmailUserSerializer(email_user, request.data['email_user'])
+                    if email_user_serializer.is_valid():
+                        email_user_serializer.save()
+
+                    # Update relation between call_email and email_user
+                    request.data.update({'email_user_id': email_user_serializer.data['id']})
+                    call_email_serializer = SaveCallEmailSerializer(call_email_instance, data=request.data)
+                    if call_email_serializer.is_valid():
+                        call_email_serializer.save()
+
+            # Reload data via serializer
+            email_user = EmailUser.objects.get(id=email_user_serializer.instance.id)
+            email_user_serializer = SaveEmailUserSerializer(email_user)
+            return Response(
+                email_user_serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=self.get_success_headers(email_user_serializer.data)
+            )
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
 
     @detail_route(methods=['POST', ])
     def call_email_save(self, request, *args, **kwargs):
-        print(request.data)
         instance = self.get_object()
         try:
             with transaction.atomic():
@@ -438,7 +532,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     if returned_location:
                         request_data.update({'location_id': returned_location.get('id')})
 
-                self.save_email_user(request)
+                # self.save_email_user(request)
 
                 if request_data.get('renderer_data'):
                     self.form_data(request)

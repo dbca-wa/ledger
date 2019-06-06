@@ -1,10 +1,10 @@
 <template lang="html">
     <div class="col-sm-12 form-group">
-        <div class="row">
+        <div class="row" v-if="isEditable">
             <label class="col-sm-3 control-label">Search Person</label>
             <div class="col-sm-9">
-                <input class="col-sm-5 form-control" id="search-person" />
-                <input type="button" class="pull-right btn btn-primary" value="Create New Person"@click.prevent="createNewPerson()" />
+                <input :readonly="!isEditable" class="col-sm-5 form-control" id="search-person" />
+                <input :readonly="!isEditable" type="button" class="pull-right btn btn-primary" value="Create New Person"@click.prevent="createNewPerson()" />
             </div>
         </div>
         <div class="col-md-12">
@@ -25,30 +25,33 @@
                                 </h3>
                                 </div>
                                 <div class="panel-body collapse in" :id="pdBody">
+                                    <div v-if="objectAlert" class="alert alert-danger">
+                                        <p>test alert</p>
+                                    </div>
                                     <form class="form-horizontal" name="personal_form" method="post">
-                                        <div class="form-group">
-                                        <label for="" class="col-sm-3 control-label">Given Name(s)</label>
-                                        <div class="col-sm-6">
-                                            <div v-if="call_email.email_user">
-                                                <input type="text" class="form-control" name="first_name" placeholder="" v-model="call_email.email_user.first_name" v-bind:key="call_email.email_user.id">
+                                        <div class="form-group" v-bind:class="{ 'has-error': errorGivenName }">
+                                            <label for="" class="col-sm-3 control-label">Given Name(s)</label>
+                                            <div class="col-sm-6">
+                                                <div v-if="call_email.email_user">
+                                                    <input :readonly="!isEditable" type="text" class="form-control" name="first_name" placeholder="" v-model="call_email.email_user.first_name" v-bind:key="call_email.email_user.id">
+                                                </div>
                                             </div>
                                         </div>
-                                        </div>
-                                        <div class="form-group">
-                                        <label for="" class="col-sm-3 control-label">Last Name</label>
-                                        <div class="col-sm-6">
-                                            <div v-if="call_email.email_user">
-                                                <input type="text" class="form-control" name="last_name" placeholder="" v-model="call_email.email_user.last_name" v-bind:key="call_email.email_user.id">
+                                        <div class="form-group" v-bind:class="{ 'has-error': errorLastName }">
+                                            <label for="" class="col-sm-3 control-label">Last Name</label>
+                                            <div class="col-sm-6">
+                                                <div v-if="call_email.email_user">
+                                                    <input :readonly="!isEditable" type="text" class="form-control" name="last_name" placeholder="" v-model="call_email.email_user.last_name" v-bind:key="call_email.email_user.id">
+                                                </div>
                                             </div>
                                         </div>
-                                        </div>
-                                        <div class="form-group">
-                                        <label for="" class="col-sm-3 control-label" >Date of Birth</label>
-                                        <div class="col-sm-6">
-                                            <div v-if="call_email.email_user">
-                                                <input type="date" class="form-control" name="dob" placeholder="" v-model="call_email.email_user.dob" v-bind:key="call_email.email_user.id">
+                                        <div class="form-group" v-bind:class="{ 'has-error': errorDob }">
+                                            <label for="" class="col-sm-3 control-label" >Date of Birth</label>
+                                            <div class="col-sm-6">
+                                                <div v-if="call_email.email_user">
+                                                    <input :readonly="!isEditable" type="date" class="form-control" name="dob" placeholder="" v-model="call_email.email_user.dob" v-bind:key="call_email.email_user.id">
+                                                </div>
                                             </div>
-                                        </div>
                                         </div>
                                         <!-- <div class="form-group">
                                         <div class="col-sm-12">
@@ -72,8 +75,7 @@
                                 </h3>
                                 </div>
                                 <div v-if="loading.length == 0" class="panel-body collapse in" :id="adBody">
-                                    Under Construction
-                                    <!--  <form class="form-horizontal" action="index.html" method="post">
+                                    <form class="form-horizontal" action="index.html" method="post">
                                         <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Street</label>
                                         <div class="col-sm-6">
@@ -82,7 +84,7 @@
                                             </div></div>
                                         </div>
                                         </div>
-                                       <div class="form-group">
+                                    <div class="form-group">
                                         <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
                                         <div class="col-sm-6">
                                             <div v-if="call_email.email_user"><div v-if="call_email.email_user.residential_address">
@@ -114,12 +116,12 @@
                                             </div></div>
                                         </div>
                                         </div>
-                                        <div class="form-group">
+                                        <!-- <div class="form-group">
                                         <div class="col-sm-12">
                                             <button v-if="!updatingAddress" class="pull-right btn btn-primary" @click.prevent="updateAddress()">Update</button>
                                             <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
                                         </div>
-                                        </div> -->
+                                        </div>  -->
                                     </form>
                                 </div>
                             </div>
@@ -141,7 +143,7 @@
                                         <label for="" class="col-sm-3 control-label">Phone (work)</label>
                                         <div class="col-sm-6">
                                             <div v-if="call_email.email_user">
-                                                <input type="text" class="form-control" name="phone" placeholder="" v-model="call_email.email_user.phone_number" v-bind:key="call_email.email_user.id">
+                                                <input :readonly="!isEditable" type="text" class="form-control" name="phone" placeholder="" v-model="call_email.email_user.phone_number" v-bind:key="call_email.email_user.id">
                                             </div>
                                         </div>
                                         </div>
@@ -149,7 +151,7 @@
                                         <label for="" class="col-sm-3 control-label" >Mobile</label>
                                         <div class="col-sm-6">
                                             <div v-if="call_email.email_user">
-                                                <input type="text" class="form-control" name="mobile" placeholder="" v-model="call_email.email_user.mobile_number" v-bind:key="call_email.email_user.id">
+                                                <input :readonly="!isEditable" type="text" class="form-control" name="mobile" placeholder="" v-model="call_email.email_user.mobile_number" v-bind:key="call_email.email_user.id">
                                             </div>
                                         </div>
                                         </div>
@@ -157,7 +159,7 @@
                                         <label for="" class="col-sm-3 control-label" >Email</label>
                                         <div class="col-sm-6">
                                             <div v-if="call_email.email_user">
-                                                <input type="email" class="form-control" name="email" placeholder="" v-model="call_email.email_user.email" v-bind:key="call_email.email_user.id"> </div>
+                                                <input :readonly="!isEditable" type="email" class="form-control" name="email" placeholder="" v-model="call_email.email_user.email" v-bind:key="call_email.email_user.id"> </div>
                                             </div>
                                         </div>
                                         <div class="form-group">
@@ -171,7 +173,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row">
+                    <div class="row" v-if="isEditable">
                         <div class="col-sm-12">
                             <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="save">Update</button>
                             <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
@@ -222,12 +224,40 @@ export default {
             updatingAddress: false,
             updatingPersonal: false,
             updatingContact: false,
+            errorGivenName: false,
+            errorLastName: false,
+            errorDob: false,
+            objectAlert: false,
+
+            forDemo: false,
         }
     },
     computed: {
         ...mapGetters('callemailStore', {
             call_email: "call_email",
         }),
+        ...mapGetters({
+            // renderer_form_data: 'renderer_form_data',
+            current_user: 'current_user',
+        }),
+        isReadonly: function() {
+            if (this.call_email.status && this.call_email.status.id === 'draft') {
+                return false;
+            } else {
+                return true;
+            }
+        },
+        isEditable: function() {
+            if (!this.forDemo){
+                return true;
+            }
+
+            if (this.call_email.status && this.call_email.status.id === 'open' && this.current_user.is_officer) {
+                return true;
+            } else {
+                return false;
+            }
+        }
     },
     mounted: function(){
         this.$nextTick(function() {
@@ -239,16 +269,10 @@ export default {
         ...mapActions('callemailStore', {
             setEmailUserEmpty: "setEmailUserEmpty",
             saveCallEmail: 'saveCallEmail',
+            saveCallEmailPerson: 'saveCallEmailPerson',
         }),
         save: async function() {
-          if (this.call_email.id) {
-            await this.saveCallEmail({ route: false, crud: 'save' });
-          } else {
-            await this.saveCallEmail({ route: false, crud: 'create'});
-            this.$nextTick(function() {
-              this.$router.push({name: 'view-call-email', params: {call_email_id: this.call_email.id}});
-            });
-          }
+            await this.saveCallEmailPerson();
         },
         createNewPerson: function() {
             let vm = this;
@@ -373,6 +397,15 @@ export default {
             ]
             Promise.all(initialisers).then(data => {
                 vm.call_email.email_user = data[0];
+                if(vm.call_email.email_user.residential_address == null){
+                    vm.call_email.email_user.residential_address = {
+                        line1: '',
+                        locality: '',
+                        state: 'WA',
+                        postcode: '',
+                        country: 'AU'
+                    }
+                }
                 vm.call_email.email_user.residential_address = vm.call_email.email_user.residential_address != null ? vm.call_email.email_user.residential_address : {};
             });
         },
