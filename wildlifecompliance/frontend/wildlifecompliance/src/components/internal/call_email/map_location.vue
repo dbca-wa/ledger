@@ -534,7 +534,7 @@ export default {
     bottom: 0px;
     color: white;
     background-color: rgba(37, 45, 51, 0.6);
-    z-index: 1100;
+    z-index: 1050;
     font-size: 0.9em;
     padding: 5px;
 }
@@ -543,8 +543,9 @@ export default {
     bottom: 30px;
     color: white;
     background-color: rgba(37, 45, 51, 0.6);
-    z-index: 1100;
+    z-index: 1050;
     font-size: 0.9em;
     padding: 5px;
+    cursor: pointer;
 }
 </style>

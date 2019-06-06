@@ -1,4 +1,5 @@
 import json
+import re
 import operator
 import traceback
 import os
@@ -424,6 +425,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
         # Update foreign key value in the call_email object
         # request_data.update({'email_user_id': email_user_instance.id})
+    def generate_dummy_email(self, first_name, last_name):
+        e = EmailUser(first_name=first_name, last_name=last_name)
+        email_address = e.get_dummy_email().strip().strip('.').lower()
+        email_address = re.sub(r'\.+', '.', email_address)
+        email_address = re.sub(r'\s+', '_', email_address)
+        return email_address
 
 
     @detail_route(methods=['POST', ])
@@ -437,17 +444,15 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 #####
                 email_user_id_requested = request.data.get('email_user', {}).get('id', {})
                 email_address = request.data.get('email_user', {}).get('email', '')
+                if not email_address:
+                    first_name = request.data.get('email_user', {}).get('first_name', '')
+                    last_name = request.data.get('email_user', {}).get('last_name', '')
+                    email_address = self.generate_dummy_email(first_name, last_name)
 
                 if email_user_id_requested:
                     email_user_instance = EmailUser.objects.get(id=email_user_id_requested)
                     email_user_instance.email = email_address
                 else:
-                    if not email_address:
-                        # Generate email address
-                        first_name = request.data.get('email_user', {}).get('first_name', '')
-                        last_name = request.data.get('email_user', {}).get('last_name', '')
-                        e = EmailUser(first_name=first_name, last_name=last_name)
-                        email_address = e.get_dummy_email().strip('.').replace('..', '.')  # Make the email address generated valid even if first_name/last_name is empty.
                     email_user_instance = EmailUser.objects.create_user(email_address, '')
                     request.data['email_user'].update({'email': email_address})
 
@@ -527,7 +532,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     if returned_location:
                         request_data.update({'location_id': returned_location.get('id')})
 
-                self.save_email_user(request)
+                # self.save_email_user(request)
 
                 if request_data.get('renderer_data'):
                     self.form_data(request)
