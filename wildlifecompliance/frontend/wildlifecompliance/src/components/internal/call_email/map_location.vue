@@ -22,38 +22,36 @@
         <div id="lat" class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Latitude:</label>
             <div v-if="call_email.location">
-                <!-- <input class="form-control" v-model="call_latitude" /> -->
-                <input type="number" min="-90" max="90" class="form-control" v-model.number="call_email.location.geometry.coordinates[1]" />
+                <input :readonly="isReadonly" type="number" min="-90" max="90" class="form-control" v-model.number="call_email.location.geometry.coordinates[1]" />
             </div>
         </div></div>
         <div id="lon" class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Longitude:</label>
             <div v-if="call_email.location">
-                <!-- <input class="form-control" v-model="call_longitude" /> -->
-                <input type="number" min="-180" max="180" class="form-control" v-model.number="call_email.location.geometry.coordinates[0]" />
+                <input :readonly="isReadonly" type="number" min="-180" max="180" class="form-control" v-model.number="call_email.location.geometry.coordinates[0]" />
             </div>
         </div></div>
 
         <div id="location_fields_address">
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Street</label>
-                <input class="form-control" v-model="call_email.location.properties.street" readonly />
+                <input :readonly="isReadonly" class="form-control" v-model="call_email.location.properties.street" readonly />
             </div></div>
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Town/Suburb</label>
-                <input class="form-control" v-model="call_email.location.properties.town_suburb" readonly />
+                <input :readonly="isReadonly" class="form-control" v-model="call_email.location.properties.town_suburb" readonly />
             </div></div>
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">State</label>
-                <input class="form-control" v-model="call_email.location.properties.state" readonly />
+                <input :readonly="isReadonly" class="form-control" v-model="call_email.location.properties.state" readonly />
             </div></div>
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Postcode</label>
-                <input class="form-control" v-model="call_email.location.properties.postcode" readonly />
+                <input :readonly="isReadonly" class="form-control" v-model="call_email.location.properties.postcode" readonly />
             </div></div>
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Country</label>
-                <input class="form-control" v-model="call_email.location.properties.country" readonly />
+                <input :readonly="isReadonly" class="form-control" v-model="call_email.location.properties.country" readonly />
             </div></div>
         </div>
 
@@ -70,6 +68,7 @@
 <script>
 import L from 'leaflet';
 import 'leaflet-measure';  /* This should be imported after leaflet */
+import 'leaflet.locatecontrol';
 import Awesomplete from 'awesomplete';
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 
@@ -77,6 +76,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'awesomplete/awesomplete.css';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-measure/dist/leaflet-measure.css';
+import 'leaflet.locatecontrol/dist/L.Control.Locate.min.css'
 
 export default {
     name: "map-leaflet",
@@ -109,6 +109,13 @@ export default {
             call_latitude: 'call_latitude',
             call_longitude: 'call_longitude',
         }),
+        isReadonly: function() {
+            if (this.call_email.status && this.call_email.status.id === 'draft') {
+                return false;
+            } else {
+                return true;
+            }
+        },
     },
     watch: {
         call_email: {
@@ -163,19 +170,21 @@ export default {
         },
         setMarkerLocation: function(){
             let vm = this;
-            let lat = vm.call_email.location.geometry.coordinates[1];
-            let lng = vm.call_email.location.geometry.coordinates[0];
-            if (-90 < lat && lat < 90){
-                if(-180 < lng < 180){
-                    console.log(lat + ', ' + lng);
-                    let lnglat = [lng, lat];
-                    this.feature_marker.setLatLng({lat: lat, lng: lng });
-                    vm.map.flyTo({lat: lat, lng: lng}, 12,{
-                        animate: true,
-                        duration: 1.5
-                    });
-                    // this.refreshMarkerLocation();
-                    this.reverseGeocoding(lnglat);
+            if (!vm.isReadonly){
+                let lat = vm.call_email.location.geometry.coordinates[1];
+                let lng = vm.call_email.location.geometry.coordinates[0];
+                if (-90 < lat && lat < 90){
+                    if(-180 < lng < 180){
+                        console.log(lat + ', ' + lng);
+                        let lnglat = [lng, lat];
+                        this.feature_marker.setLatLng({lat: lat, lng: lng });
+                        vm.map.flyTo({lat: lat, lng: lng}, 12,{
+                            animate: true,
+                            duration: 1.5
+                        });
+                        // this.refreshMarkerLocation();
+                        this.reverseGeocoding(lnglat);
+                    }
                 }
             }
         },
@@ -197,7 +206,6 @@ export default {
         },
         addMarker(latLngArr){
             let vm = this;
-
             vm.feature_marker = L.marker({lon: latLngArr[1], lat: latLngArr[0]}, {icon: vm.icon_default}).on('click', function(ev){
                 //ev.preventDefault();
                 vm.feature_marker.setIcon(myIcon);
@@ -297,19 +305,21 @@ export default {
                             duration: 1.5
                         });
 
-                        if (!self.feature_marker){
-                            self.addMarker([latlng.lat, latlng.lng]);
-                        }
+                        if (!vm.isReadonly){
+                            if (!self.feature_marker){
+                                self.addMarker([latlng.lat, latlng.lng]);
+                            }
 
-                        self.relocateMarker(latlng);
-                        if(self.suggest_list[i].feature.place_type.includes('address')){
-                            /* Selection has address ==> Update address fields */
-                            self.showHideAddressDetailsFields(true, false);
-                            self.updateAddressFields(self.suggest_list[i].feature);
-                            self.setLocationDetailsFieldEmpty();
-                        } else {
-                            self.showHideAddressDetailsFields(false, true);
-                            self.setLocationAddressEmpty();
+                            self.relocateMarker(latlng);
+                            if(self.suggest_list[i].feature.place_type.includes('address')){
+                                /* Selection has address ==> Update address fields */
+                                self.showHideAddressDetailsFields(true, false);
+                                self.updateAddressFields(self.suggest_list[i].feature);
+                                self.setLocationDetailsFieldEmpty();
+                            } else {
+                                self.showHideAddressDetailsFields(false, true);
+                                self.setLocationAddressEmpty();
+                            }
                         }
                     }
                 }
@@ -317,37 +327,39 @@ export default {
             });
         },
         updateAddressFields(feature){
-            console.log('updateAddressField');
-            let properties_for_update = new Object();
-            let state_abbr_list = {
-                    "New South Wales": "NSW",
-                    "Queensland": "QLD",
-                    "South Australia": "SA",
-                    "Tasmania": "TAS",
-                    "Victoria": "VIC",
-                    "Western Australia": "WA",
-                    "Northern Territory": "NT",
-                    "Australian Capital Territory": "ACT",
-            };
-            let address_arr = feature.place_name.split(',');
-            /* street */
-            properties_for_update.street = address_arr[0];
-            /*
-             * Split the string into suburb, state and postcode
-             */
-            let reg = /^([a-zA-Z0-9\s]*)\s(New South Wales|Queensland|South Australia|Tasmania|Victoria|Western Australia|Northern Territory|Australian Capital Territory){1}\s+(\d{4})$/gi;
-            let result = reg.exec(address_arr[1]);
-            /* suburb */
-            properties_for_update.town_suburb = result[1].trim();
-            /* state */
-            let state_abbr = state_abbr_list[result[2].trim()]
-            properties_for_update.state = state_abbr;
-            /* postcode */
-            properties_for_update.postcode = result[3].trim();
-            /* country */
-            properties_for_update.country = 'Australia';
-            /* update Vuex */
-            this.setLocationAddress(properties_for_update);
+            if(!this.isReadonly){
+                console.log('updateAddressField');
+                let properties_for_update = new Object();
+                let state_abbr_list = {
+                        "New South Wales": "NSW",
+                        "Queensland": "QLD",
+                        "South Australia": "SA",
+                        "Tasmania": "TAS",
+                        "Victoria": "VIC",
+                        "Western Australia": "WA",
+                        "Northern Territory": "NT",
+                        "Australian Capital Territory": "ACT",
+                };
+                let address_arr = feature.place_name.split(',');
+                /* street */
+                properties_for_update.street = address_arr[0];
+                /*
+                * Split the string into suburb, state and postcode
+                */
+                let reg = /^([a-zA-Z0-9\s]*)\s(New South Wales|Queensland|South Australia|Tasmania|Victoria|Western Australia|Northern Territory|Australian Capital Territory){1}\s+(\d{4})$/gi;
+                let result = reg.exec(address_arr[1]);
+                /* suburb */
+                properties_for_update.town_suburb = result[1].trim();
+                /* state */
+                let state_abbr = state_abbr_list[result[2].trim()]
+                properties_for_update.state = state_abbr;
+                /* postcode */
+                properties_for_update.postcode = result[3].trim();
+                /* country */
+                properties_for_update.country = 'Australia';
+                /* update Vuex */
+                this.setLocationAddress(properties_for_update);
+            }
         },
         setBaseLayer: function(selected_layer_name){
             if (selected_layer_name == 'sat') {
@@ -377,13 +389,15 @@ export default {
         },
         /* this function retrieve the coordinates from vuex and applys it to the marker */
         refreshMarkerLocation: function(){
-            if (this.call_email.location.geometry) {
-                // this.feature_marker.setLatLng({lat: this.call_latitude, lng: this.call_longitude });
-                this.feature_marker.setLatLng({lat: this.call_email.location.geometry.coordinates[1], lng: this.call_email.location.geometry.coordinates[0] });
+            if (!this.isReadonly){
                 if (this.call_email.location.geometry) {
-                    this.reverseGeocoding(this.call_email.location.geometry.coordinates);
-                }
-            } 
+                    // this.feature_marker.setLatLng({lat: this.call_latitude, lng: this.call_longitude });
+                    this.feature_marker.setLatLng({lat: this.call_email.location.geometry.coordinates[1], lng: this.call_email.location.geometry.coordinates[0] });
+                    if (this.call_email.location.geometry) {
+                        this.reverseGeocoding(this.call_email.location.geometry.coordinates);
+                    }
+                } 
+            }
         },
         initMap: function(){
             this.map = L.map('mapLeaf').setView([-31.9505, 115.8605], 4);
@@ -412,13 +426,16 @@ export default {
                 completedColor: '#228b22'
             });
             measureControl.addTo(this.map);
+            L.control.locate().addTo(this.map);
         },
         /* this function stores the coordinates into the vuex, then call refresh marker function */
         relocateMarker: function(latlng){ 
-            let lnglat = [latlng.lng, latlng.lat];
-            this.setLocationPoint(lnglat);
-            this.refreshMarkerLocation();
-            this.reverseGeocoding(lnglat);
+            if(!this.isReadonly){
+                let lnglat = [latlng.lng, latlng.lat];
+                this.setLocationPoint(lnglat);
+                this.refreshMarkerLocation();
+                this.reverseGeocoding(lnglat);
+            }
         },
         onMouseMove: function(e){
             let vm = this;
@@ -429,14 +446,16 @@ export default {
         },
         onClick: function(e){
             let self = this;
-            let latlng = this.map.mouseEventToLatLng(e.originalEvent);
-            console.log(latlng);
-            if(!self.feature_marker){
-                self.addMarker([latlng.lat, latlng.lng]);
+            if(!self.isReadonly){
+                let latlng = this.map.mouseEventToLatLng(e.originalEvent);
+                console.log(latlng);
+                if(!self.feature_marker){
+                    self.addMarker([latlng.lat, latlng.lng]);
+                }
+                
+                /* User clicked on a map, not on any feature */
+                this.relocateMarker(latlng);
             }
-            
-            /* User clicked on a map, not on any feature */
-            this.relocateMarker(latlng);
         }
     },
 }
@@ -515,7 +534,7 @@ export default {
     bottom: 0px;
     color: white;
     background-color: rgba(37, 45, 51, 0.6);
-    z-index: 1100;
+    z-index: 1050;
     font-size: 0.9em;
     padding: 5px;
 }
@@ -524,8 +543,9 @@ export default {
     bottom: 30px;
     color: white;
     background-color: rgba(37, 45, 51, 0.6);
-    z-index: 1100;
+    z-index: 1050;
     font-size: 0.9em;
     padding: 5px;
+    cursor: pointer;
 }
 </style>
