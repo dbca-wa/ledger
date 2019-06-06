@@ -12,6 +12,8 @@ from ledger.catalogue.models import Product
 from ledger.basket.models import Basket
 from ledger.basket.middleware import BasketMiddleware
 from django.core.signing import BadSignature, Signer
+from django.core.exceptions import ValidationError
+from confy import env
 
 Selector = get_class('partner.strategy', 'Selector')
 selector = Selector()
@@ -372,6 +374,10 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
         basket.custom_ledger = True
         # Check if there are products to be added to the cart and if they are valid products
         defaults = ('ledger_description','quantity','price_incl_tax','oracle_code')
+        UPDATE_PAYMENT_ALLOCATION = env('UPDATE_PAYMENT_ALLOCATION', False)
+        if UPDATE_PAYMENT_ALLOCATION is True:
+             defaults = ('ledger_description','quantity','price_incl_tax','oracle_code','line_status') 
+
         for p in product_list:
             if not all(d in p for d in defaults):
                 raise ValidationError('Please make sure that the product format is valid')
