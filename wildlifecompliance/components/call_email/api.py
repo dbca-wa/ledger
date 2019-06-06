@@ -611,10 +611,31 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 for document in workflow_entry.documents.all():
                     attachments.append(document)
 
-                user = EmailUser.objects.filter(email='brendan.blackford@dbca.wa.gov.au')
+                # user = EmailUser.objects.filter(email='brendan.blackford@dbca.wa.gov.au')
+                print(request.data.get('allocated_to_group'))
+                email_group = []
+                if request.data.get('assigned_to'):
+                    try:
+                        user_id_int = int(request.data.get('assigned_to'))
+                        email_group.append(EmailUser.objects.get(id=user_id_int))
+                    except Exception as e:
+                            print(traceback.print_exc())
+                            raise
+                elif request.data.get('allocated_to_group'):
+                    users = request.data.get('allocated_to_group').split(",")
+                    for user_id in users:
+                        try:
+                            user_id_int = int(user_id)
+                            email_group.append(EmailUser.objects.get(id=user_id_int))
+                        except Exception as e:
+                            print(traceback.print_exc())
+                            raise
+                else:
+                    email_group = request.user
+
                 # send email
                 send_call_email_forward_email(
-                user, 
+                email_group, 
                 instance,
                 workflow_entry.documents,
                 request)

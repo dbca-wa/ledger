@@ -167,7 +167,11 @@ class CallEmail(RevisionedMixin):
     number = models.CharField(max_length=50, blank=True, null=True)
     caller = models.CharField(max_length=100, blank=True, null=True)
     caller_phone_number = models.CharField(max_length=50, blank=True, null=True)
-    assigned_to = models.CharField(max_length=100, blank=True, null=True)
+    assigned_to = models.ForeignKey(
+        EmailUser, 
+        related_name='callemail_assigned_to',
+        null=True
+    )
     anonymous_call = models.BooleanField(default=False)
     caller_wishes_to_remain_anonymous = models.BooleanField(default=False)
     occurrence_from_to = models.BooleanField(default=False)
@@ -191,6 +195,21 @@ class CallEmail(RevisionedMixin):
     )
     advice_given = models.BooleanField(default=False)
     advice_details = models.TextField(blank=True, null=True)
+    region = models.ForeignKey(
+        RegionDistrict, 
+        related_name='callemail_region', 
+        null=True
+    )
+    district = models.ForeignKey(
+        RegionDistrict, 
+        related_name='callemail_district', 
+        null=True
+    )
+    allocated_to = models.ManyToManyField(
+        EmailUser, 
+        related_name='callemail_allocated_to',
+        blank=True
+    )
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -419,8 +438,8 @@ class ComplianceWorkflowDocument(Document):
 
 class ComplianceWorkflowLogEntry(models.Model):
     call_email = models.ForeignKey(CallEmail, related_name='workflow_logs', null=True)
-    region = models.ForeignKey(RegionDistrict, related_name='callemail_region', null=True)
-    district = models.ForeignKey(RegionDistrict, related_name='callemail_district', null=True)
+    region = models.ForeignKey(RegionDistrict, related_name='callemail_workflow_region', null=True)
+    district = models.ForeignKey(RegionDistrict, related_name='callemail_workflow_district', null=True)
     details = models.TextField(blank=True)
     created = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 

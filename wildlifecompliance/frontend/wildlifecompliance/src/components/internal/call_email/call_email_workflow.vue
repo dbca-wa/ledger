@@ -3,17 +3,14 @@
         <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="modalTitle" large>
           <div class="container-fluid">
             <div class="row">
-              
-
                 <div class="col-sm-12">
-                    
-                        <div v-if="workflow_type === 'to_regions'" class="form-group">
+                        <div v-if="workflow_type === 'forward_to_regions'" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Region</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control col-sm-9" @change.prevent="updateDistricts" v-model="selectedRegion">
+                              <select class="form-control col-sm-9" @change.prevent="updateDistrictsAndOfficers" v-model="call_email.region">
                                 <option  v-for="option in regions" :value="option" v-bind:key="option.id">
                                   {{ option.display_name }} 
                                 </option>
@@ -21,15 +18,71 @@
                             </div>
                           </div>
                         </div>
-                        <div v-if="workflow_type === 'to_wildlife_protection_branch'" class="form-group">
+                        <div v-if="workflow_type === 'forward_to_regions'" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>District</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" v-model="selectedDistrict">
+                              <select class="form-control" v-model="call_email.district_id" >
                                 <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
                                   {{ option.display_name }} 
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <!--
+                        <div v-if="workflow_type.includes('allocate')" class="form-group">
+                          -->
+                        <div v-if="!(workflow_type === 'forward_to_wildlife_protection_branch')" class="form-group">
+                          <div class="row">
+                            <div class="col-sm-3">
+                              <label>Allocate to</label>
+                            </div>
+                            <div class="col-sm-9">
+                              <select class="form-control" v-model="call_email.assigned_to">
+                                <option  v-for="option in regionalOfficers" :value="option.id" v-bind:key="option.id">
+                                  {{ option.full_name }}
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div v-if="workflow_type === 'allocate_for_inspection'" class="form-group">
+                          <div class="row">
+                            <div class="col-sm-3">
+                              <label>Inspection Type</label>
+                            </div>
+                            <div class="col-sm-9">
+                              <select class="form-control" v-model="call_email.district_id">
+                                <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div v-if="workflow_type === 'allocate_for_case'" class="form-group">
+                          <div class="row">
+                            <div class="col-sm-3">
+                              <label>Priority</label>
+                            </div>
+                            <div class="col-sm-9">
+                              <select class="form-control" v-model="call_email.district_id">
+                                <option v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div v-if="workflow_type === 'close'" class="form-group">
+                          <div class="row">
+                            <div class="col-sm-3">
+                              <label>Complaint forwarded to external party for follow-up</label>
+                            </div>
+                            <div class="col-sm-9">
+                              <select class="form-control" v-model="call_email.district_id">
+                                <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
                                 </option>
                               </select>
                             </div>
@@ -101,14 +154,17 @@ export default {
     return {
       // forwardToRegions: false,
       // workflowType: '',
+      officers: [],
+      regionalOfficers: [],
       isModalOpen: false,
       processingDetails: false,
       form: null,
       regions: [],
       regionDistricts: [],
       availableDistricts: [],
-      selectedRegion: null,
-      selectedDistrict: null,
+      compliance_permission_groups: [],
+      // call_email.region: null,
+      // call_email.district_id: null,
       workflowDetails: '',
       files: [
                 {
@@ -130,20 +186,30 @@ export default {
   computed: {
     ...mapGetters('callemailStore', {
       call_email: "call_email",
+      
     }),
     region: function() {
-      return this.selectedRegion ? this.selectedRegion.id : '';
+      return this.call_email.region ? this.call_email.region.id : '';
     }, 
     district: function() {
-      return this.selectedDistrict ? this.selectedDistrict : '';
+      return this.call_email.district_id ? this.call_email.district_id : '';
     },
     modalTitle: function() {
-      if (this.forwardToRegions) {
+      if (this.workflow_type === 'forward_to_regions') {
         return "Forward to Regions";
-      } else { 
+      } else if (this.workflow_type === 'forward_to_wildlife_protection_branch') {
         return "Forward to Wildlife Protection Branch";
+      } else if (this.workflow_type === 'allocate_for_follow_up') {
+        return "Allocate for Follow Up";
+      } else if (this.workflow_type === 'allocate_for_inspection') {
+        return "Allocate for Inspection";
+      } else if (this.workflow_type === 'allocate_for_case') {
+        return "Allocate for Case";
+      } else if (this.workflow_type === 'close') {
+        return "Close complaint";
       }
-    }
+    },
+
   },
   filters: {
     formatDate: function(data) {
@@ -151,10 +217,14 @@ export default {
     }
   },
   methods: {
-    updateDistricts: function() {
+    ...mapActions('callemailStore', {
+      setAllocatedTo: "setAllocatedTo",
+    }),
+    updateDistrictsAndOfficers: function() {
+      this.call_email.district_id = null;
       this.availableDistricts = [];
       for (let record of this.regionDistricts) {
-        if (this.selectedRegion && this.selectedRegion.districts.includes(record.id)) {
+        if (this.call_email.region && this.call_email.region.districts.includes(record.id)) {
           this.availableDistricts.push(record)
         }
       }
@@ -166,7 +236,34 @@ export default {
         districts: [],
         region: null,
       });
+      this.setRegionalOfficers();
     },
+    setRegionalOfficers: function() {
+      this.regionalOfficers = [];
+      let member_ids = [];
+      for (let group of this.compliance_permission_groups) {
+        if (group.region_district.length > 0 && 
+        group.members.length > 0 && 
+        this.call_email.region.id &&
+        // parent or child Region/District
+        (group.region_district[0].region == this.call_email.region.id ||
+        group.region_district[0].id == this.call_email.region.id)
+        ) {
+          for (let member of group.members) {
+            this.regionalOfficers.push(member);
+            member_ids.push(member.id);  
+          }
+        }
+      }
+      this.setAllocatedTo(member_ids);
+      // blank entry allows user to clear selection
+      this.regionalOfficers.splice(0, 0, 
+      {
+        id: "", 
+        full_name: "",
+      });
+    },
+
     ok: async function () {
         await this.sendData();
         this.close();
@@ -186,22 +283,35 @@ export default {
             });
         }
         this.attachAnother();
-        this.selectedRegion = null;
-        this.selectedDistrict = null;
+        this.call_email.region = null;
+        this.call_email.district_id = null;
         this.workflowDetails = '';
     },
     sendData: async function(){        
         let post_url = '/api/call_email/' + this.call_email.id + '/add_workflow_log/'
         let payload = new FormData(this.form);
         payload.append('call_email_id', this.call_email.id);
-        payload.append('region_id', this.region);
-        payload.append('district_id', this.district);
-        payload.append('details', this.workflowDetails);
-        let res = await this.$http.post(post_url, payload);
-        // console.log(res);
-        if (res.ok) {
-          this.$router.push({ name: 'internal-call-email-dash' });
+        if (this.call_email.region) {
+          payload.append('region_id', this.call_email.region.id);
         }
+        if (this.call_email.district_id) {
+          payload.append('district_id', this.call_email.district_id);
+        }
+        if (this.call_email.allocated_to) {
+          payload.append('allocated_to_group', this.call_email.allocated_to);
+        }
+        if (this.call_email.assigned_to) {
+          payload.append('assigned_to', this.call_email.assigned_to);
+        }
+        
+        payload.append('details', this.workflowDetails);
+        payload.append('workflow_type', this.workflow_type);
+        
+        let res = await this.$http.post(post_url, payload);
+        console.log(res);
+        // if (res.ok) {
+        //   this.$router.push({ name: 'internal-call-email-dash' });
+        // }
     },
     
     uploadFile(target,file_obj){
@@ -252,7 +362,20 @@ export default {
     // regionDistricts
     let returned_region_districts = await cache_helper.getSetCacheList('CallEmail_RegionDistricts', '/api/region_district/');
     Object.assign(this.regionDistricts, returned_region_districts);
+
+    // CompliancePermissionGroups
+    let returned_compliance_permission_groups = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Members', '/api/compliancepermissiongroup/get_detailed_list/');
+    Object.assign(this.compliance_permission_groups, returned_compliance_permission_groups);
+
+    // CompliancePermissionGroups - officers
+    let returned_officers = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Officers', '/api/compliancepermissiongroup/get_officers/');
+    Object.assign(this.officers, returned_officers);
     // blank entry allows user to clear selection
+    this.officers.splice(0, 0, 
+      {
+        id: "", 
+        full_name: "",
+      });
     
   },
   mounted: function() {

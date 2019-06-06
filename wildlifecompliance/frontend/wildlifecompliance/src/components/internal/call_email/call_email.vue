@@ -35,7 +35,7 @@
                     <div class="panel-body panel-collapse">
                         <div v-if="statusId ==='draft'" class="row">
                           <div class="col-sm-12">
-                                <a ref="forwardToWildlifeProtectionBranch" @click="addWorkflow('to_wildlife_protection_branch')" class=" btn btn-primary">
+                                <a ref="forwardToWildlifeProtectionBranch" @click="addWorkflow('forward_to_wildlife_protection_branch')" class=" btn btn-primary">
                                   Forward to Wildlife Protection Branch
                                 </a>
                           </div>
@@ -45,7 +45,7 @@
                         </div>
                         <div v-if="statusId ==='draft'" class="row">
                           <div class="col-sm-12">
-                                <a ref="forwardToRegions" @click="addWorkflow('to_regions')" class=" btn btn-primary">
+                                <a ref="forwardToRegions" @click="addWorkflow('forward_to_regions')" class=" btn btn-primary">
                                   Forward to Regions
                                 </a>
                           </div>
@@ -278,6 +278,8 @@ export default {
       classification_types: [],
       report_types: [],
       referrers: [],
+      compliance_permission_groups: [],
+      officers: [],
       current_schema: [],
       sectionLabel: "Details",
       sectionIndex: 1,
@@ -351,6 +353,22 @@ export default {
     },
     statusId: function() {
       return this.call_email.status ? this.call_email.status.id : '';
+    },
+    setRegionalOfficers: function() {
+      let regional_officers = [];
+      for (let group of this.compliance_permission_groups) {
+        if (group.region_district.length > 0 && 
+        group.members.length > 0 && 
+        this.selectedRegion.id > 0 &&
+        group.region_district[0].region === this.selectedRegion.id) {
+          
+          for (let member of group.members) {
+            regional_officers.push(member);
+          }
+        }
+      }
+      console.log(regional_officers);
+      this.regionalOfficers = regional_officers;
     },
   },
   filters: {
@@ -449,6 +467,26 @@ export default {
       {
         id: "", 
         name: "",
+      });
+
+    // CompliancePermissionGroups
+    let returned_compliance_permission_groups = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Members', '/api/compliancepermissiongroup/get_detailed_list/');
+    Object.assign(this.compliance_permission_groups, returned_compliance_permission_groups);
+    // blank entry allows user to clear selection
+    // this.compliance_permission_groups.splice(0, 0, 
+    //   {
+    //     id: "", 
+    //     name: "",
+    //   });
+
+    // CompliancePermissionGroups - officers
+    let returned_officers = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Officers', '/api/compliancepermissiongroup/get_officers/');
+    Object.assign(this.officers, returned_officers);
+    // blank entry allows user to clear selection
+    this.officers.splice(0, 0, 
+      {
+        id: "", 
+        full_name: "",
       });
 
     // load current CallEmail renderer schema

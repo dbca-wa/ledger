@@ -7,6 +7,7 @@ from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from ledger.accounts.models import EmailUser, Address, Profile, EmailIdentity, EmailUserAction
+from django.contrib.auth.models import Permission
 from datetime import datetime
 from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.applications.email import send_id_updated_notification
@@ -28,6 +29,8 @@ from wildlifecompliance.components.users.serializers import (
     CompliancePermissionGroupSerializer,
     RegionDistrictSerializer,
     ComplianceUserDetailsSerializer,
+    CompliancePermissionGroupDetailedSerializer,
+    ComplianceUserDetailsOptimisedSerializer,
 )
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
@@ -450,6 +453,42 @@ class CompliancePermissionGroupViewSet(viewsets.ModelViewSet):
             return CompliancePermissionGroup.objects.none()
         return CompliancePermissionGroup.objects.none()
 
+    @list_route(methods=['GET', ])
+    def get_officers(self, request, *args, **kwargs):
+        try:
+            officers = EmailUser.objects.filter(groups__in=CompliancePermissionGroup.objects.filter(permissions__in=Permission.objects.filter(codename='officer')))
+
+            serializer = ComplianceUserDetailsOptimisedSerializer(officers, many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    
+    @list_route(methods=['GET', ])
+    def get_detailed_list(self, request, *args, **kwargs):
+        try:
+            serializer = CompliancePermissionGroupDetailedSerializer(
+                CompliancePermissionGroup.objects.all(), 
+                many=True
+                )
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 class RegionDistrictViewSet(viewsets.ModelViewSet):
     queryset = RegionDistrict.objects.all()
@@ -463,6 +502,7 @@ class RegionDistrictViewSet(viewsets.ModelViewSet):
                 RegionDistrict.objects.filter(region=None), 
                 many=True
                 )
+            print(serializer.data)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())

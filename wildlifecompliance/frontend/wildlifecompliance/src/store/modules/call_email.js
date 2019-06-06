@@ -147,6 +147,15 @@ export const callemailStore = {
                 state.report_types = [];
             }
         },
+        updateAllocatedTo(state, member_ids) {
+            console.log("updateAllocatedTo");
+            if (member_ids) {
+                state.call_email.allocated_to = [];
+                for (let member_id of member_ids) {
+                    state.call_email.allocated_to.push(member_id);
+                }
+            }
+        },
         updateClassification(state, classification) {
             if (classification) {
                 Vue.set(state.call_email, 'classification', classification);
@@ -307,6 +316,10 @@ export const callemailStore = {
             } else {
                 return callId;
             }
+        },
+        setAllocatedTo({ commit, }, member_ids) {
+            console.log("setAllocatedTo");
+            commit("updateAllocatedTo", member_ids);
         },
         setCallID({ commit, }, id) {
             console.log("setCallID");
