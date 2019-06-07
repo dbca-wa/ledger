@@ -457,7 +457,6 @@ class CompliancePermissionGroupViewSet(viewsets.ModelViewSet):
     def get_officers(self, request, *args, **kwargs):
         try:
             officers = EmailUser.objects.filter(groups__in=CompliancePermissionGroup.objects.filter(permissions__in=Permission.objects.filter(codename='officer')))
-
             serializer = ComplianceUserDetailsOptimisedSerializer(officers, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -470,6 +469,21 @@ class CompliancePermissionGroupViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @list_route(methods=['POST'])
+    def get_users(self, request, *args, **kwargs):
+        try:
+            users = (EmailUser.objects.filter(id__in=request.data.get('user_list')))
+            serializer = ComplianceUserDetailsOptimisedSerializer(users, many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
     
     @list_route(methods=['GET', ])
     def get_detailed_list(self, request, *args, **kwargs):
