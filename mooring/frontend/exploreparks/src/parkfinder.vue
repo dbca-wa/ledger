@@ -2103,6 +2103,11 @@ export default {
                 altShiftDragRotate: false,
                 pinchRotate: false,
             }),
+            interactions: ol.interaction.defaults({}).extend([
+                  new ol.interaction.PinchZoom({
+                  constrainResolution: true
+            })
+            ]),
             layers: [
                 this.streets,
                 this.tenure,
@@ -2559,7 +2564,6 @@ export default {
        });
 
        map.addOverlay(popup);
-
        // another loop to spawn the popup on click
        this.olmap.on('singleclick', function(ev) {
           var feature = ev.map.forEachFeatureAtPixel(ev.pixel, 

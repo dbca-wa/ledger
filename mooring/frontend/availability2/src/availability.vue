@@ -191,9 +191,9 @@
             <div class="small-6 medium-6 large-2 columns" >
                 <label>
                     Guests 
-                    <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
+                    <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown" id='guests-button' />
                 </label>
-                <div style='position: relative;'>
+                <div style='iiiiposition: relative;'>
                 <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
                     <div class="row">
                         <div class="small-6 columns">
@@ -1346,6 +1346,12 @@ export default {
 //                    window.location = loc.protocol + '//' + loc.host + loc.pathname;
                }
             }, 1000);
+        // Fix white space which appears on the right of the availablity screen START
+        $('#guests-button').click();
+        $('#guests-button').click();
+        // Fix white space which appears on the right of the availablity screen END
+
+
 
     }
 }
