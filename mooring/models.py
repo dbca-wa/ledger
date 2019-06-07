@@ -1979,6 +1979,7 @@ class RefundFailed(models.Model):
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
     refund_amount = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)            
     status = models.SmallIntegerField(choices=STATUS, default=0)
+    basket_json = JSONField(null=True,blank=True)
     created = models.DateTimeField(default=timezone.now)
     completed_date = models.DateTimeField(null=True, blank=True)
     completed_by = models.ForeignKey(EmailUser, blank=True, null=True) 

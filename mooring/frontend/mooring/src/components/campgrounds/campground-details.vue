@@ -9,8 +9,8 @@
 			<alert :show.sync="showError" type="danger">
 				<p>{{errorString}}<p/>
 			</alert>
-					<div class="row">
-						<div class="col-lg-12">
+			<div class="row">
+			<div class="col-lg-12">
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="form-group">
@@ -134,7 +134,7 @@ import {
     api_endpoints,
     helpers,
     validate,
-    select2
+    // select2
 }
 from '../../hooks.js'
 import {
