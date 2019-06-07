@@ -30,7 +30,6 @@ class ReturnSerializer(serializers.ModelSerializer):
     sheet_activity_list = serializers.SerializerMethodField()
     sheet_species_list = serializers.SerializerMethodField()
     sheet_species = serializers.SerializerMethodField()
-    sheet_activity_inward = serializers.SerializerMethodField()
 
     class Meta:
         model = Return
@@ -55,7 +54,6 @@ class ReturnSerializer(serializers.ModelSerializer):
             'sheet_activity_list',
             'sheet_species_list',
             'sheet_species',
-            'sheet_activity_inward',
         )
 
     def get_lodgement_number(self, _return):
@@ -89,14 +87,6 @@ class ReturnSerializer(serializers.ModelSerializer):
         :return: species identifier for a Return Running Sheet.
         """
         return _return.sheet.species if _return.has_sheet else None
-
-    def get_sheet_activity_inward(self, _return):
-        """
-        Gets activity codes for Return Running Sheet transfer-ins.
-        :param _return: Return instance.
-        :return: List of Activities associated with inward transfers.
-        """
-        return _return.sheet.activity_inward if _return.has_sheet else None
 
 
 class ReturnTypeSerializer(serializers.ModelSerializer):

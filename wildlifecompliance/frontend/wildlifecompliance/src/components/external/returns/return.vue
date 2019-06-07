@@ -64,6 +64,7 @@ export default {
         'returns',
         'species_list',
         'species_cache',
+        'species_transfer',
     ]),
   },
   methods: {

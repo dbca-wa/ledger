@@ -14,6 +14,7 @@ export const returnsRendererStore = {
         selected_returns_tab_id: 0,
         species: {},
         selected_species: {},
+        transfer_species: {},
     },
     getters: {
         returns_tabs: state => state.tabs,
@@ -22,6 +23,7 @@ export const returnsRendererStore = {
         returns_access: state => state.access,
         species_cache: state => state.selected_species,
         is_external: state => state.external_user,
+        species_transfer: state => state.transfer_species,
     },
     mutations: {
         [UPDATE_RETURNS_TABS] (state, tabs) {
@@ -39,6 +41,9 @@ export const returnsRendererStore = {
         [UPDATE_RETURNS_SELECTED_SPECIES] (state, selected_species) {
             Vue.set(state, 'selected_species', selected_species);
         },
+        ['UPDATE_RETURNS_TRANSFER_SPECIES'] (state, transfer_species) {
+            Vue.set(state, 'transfer_species', transfer_species);
+        },
     },
     actions: {
         setReturnsTabs({ commit }, { tabs }) {
@@ -55,6 +60,9 @@ export const returnsRendererStore = {
         },
         setSpeciesCache({ commit }, { species_cache }) {
             commit(UPDATE_RETURNS_SELECTED_SPECIES, species_cache);
+        },
+        setSpeciesTransfer({ commit }, { species_transfer }) {
+            commit('UPDATE_RETURNS_TRANSFER_SPECIES', species_transfer);
         },
     }
 }

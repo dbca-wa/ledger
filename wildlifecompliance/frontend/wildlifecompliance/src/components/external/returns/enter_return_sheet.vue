@@ -110,7 +110,7 @@ export default {
               { data: "qty" },
               { data: "total",
                 mRender: function(data, type, full) {
-                   if (full.activity in vm.returns.sheet_activity_inward) { // Tansfer-Ins
+                   if ('inward' in vm.returns.sheet_activity_list[full.activity]) { // Tansfer-Ins
                       vm.sheet_running_total += parseInt(full.qty)
                    } else {
                       vm.sheet_running_total -= parseInt(full.qty)
@@ -121,8 +121,21 @@ export default {
               { data: "comment" },
               { data: "editable",
                 mRender: function(data, type, full) {
-                   if (full.activity && vm.is_external) {
+                   if (full.activity && vm.is_external
+                                && !vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])) {
                       var column = `<a class="edit-row" data-rowid=\"__ROWID__\">Edit</a><br/>`
+                      column = column.replace(/__ROWID__/g, full.rowId)
+                      return column
+                   }
+                   if (full.activity && vm.is_external
+                                && vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])) {
+                      var column = `<a class="accept-row" data-rowid=\"__ROWID__\">Accept</a><br/>`
+                      column = column.replace(/__ROWID__/g, full.rowId)
+                      return column
+                   }
+                   if (full.activity && vm.is_external
+                                && vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])) {
+                      var column = `<a class="decline-row" data-rowid=\"__ROWID__\">Decline</a><br/>`
                       column = column.replace(/__ROWID__/g, full.rowId)
                       return column
                    } else {
@@ -186,6 +199,9 @@ export default {
         'setReturnsSpecies',
         'setSpeciesCache',
     ]),
+    isTrue: function(_value) {
+      return (_value === 'true')
+    },
     addSheetRow: function () {
       let rows = this.$refs.return_datatable.vmDataTable
       let last = rows.data().count() - 1 + ''
@@ -196,7 +212,8 @@ export default {
       this.$refs.sheet_entry.entrySpecies = this.sheetTitle;
       this.$refs.sheet_entry.entryActivity = Object.keys(this.returns.sheet_activity_list)[0];
       this.$refs.sheet_entry.entryQty = '';
-      this.$refs.sheet_entry.entryTotal = parseInt(rows.context[0].aoData[last]._aData['total'])
+      this.$refs.sheet_entry.entryTotal = rows.context[0].aoData[last]._aData['total'];
+      this.$refs.sheet_entry.currentStock = rows.context[0].aoData[last]._aData['total'];
       this.$refs.sheet_entry.entryComment = '';
       this.$refs.sheet_entry.entryLicence = '';
       this.$refs.sheet_entry.entryDateTime = '';
@@ -204,11 +221,13 @@ export default {
       this.$refs.sheet_entry.isModalOpen = true;
     }
   },
+  created: function(){
+     this.form = document.forms.enter_return_sheet;
+     this.readonly = !this.is_external;
+     this.select_species_list = this.species_list
+  },
   mounted: function(){
      var vm = this;
-     vm.form = document.forms.enter_return_sheet;
-     vm.readonly = !vm.is_external;
-     vm.select_species_list = this.species_list
      vm.$refs.return_datatable.vmDataTable.on('click','.edit-row', function(e) {
         e.preventDefault();
         vm.$refs.sheet_entry.isChangeEntry = true;
@@ -219,13 +238,23 @@ export default {
         vm.$refs.sheet_entry.entryActivity = vm.$refs.sheet_entry.row_of_data.data().activity;
         vm.$refs.sheet_entry.entryQty = vm.$refs.sheet_entry.row_of_data.data().qty;
         vm.$refs.sheet_entry.entryTotal = vm.$refs.sheet_entry.row_of_data.data().total;
+        vm.$refs.sheet_entry.currentStock = vm.$refs.sheet_entry.row_of_data.data().total;
         vm.$refs.sheet_entry.entryComment = vm.$refs.sheet_entry.row_of_data.data().comment;
         vm.$refs.sheet_entry.entryLicence = vm.$refs.sheet_entry.row_of_data.data().licence;
         vm.$refs.sheet_entry.isSubmitable = true;
         vm.$refs.sheet_entry.isModalOpen = true;
      });
 
-     vm.$refs.return_datatable.vmDataTable.on('click','.accept-decline-transfer', function(e) {
+     vm.$refs.return_datatable.vmDataTable.on('click','.accept-row', function(e) {
+        e.preventDefault();
+        vm.$refs.sheet_entry.isChangeEntry = true;
+        vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
+        vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
+        vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
+        vm.$refs.sheet_entry.isModalOpen = false;
+     });
+
+     vm.$refs.return_datatable.vmDataTable.on('click','.decline-row', function(e) {
         e.preventDefault();
         vm.$refs.sheet_entry.isChangeEntry = true;
         vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;

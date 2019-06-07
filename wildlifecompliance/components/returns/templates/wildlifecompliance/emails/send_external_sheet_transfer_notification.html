@@ -1,0 +1,15 @@
+{%  extends 'wildlifecompliance/emails/base_email.html' %}
+
+{%  block content %}
+	Stock has been transferred to this Licence Return. Please Accept or Decline the transfer.
+    <p>
+    Licence No: {{licence_no}}
+    Return No: {{return_no}}
+    </p>
+    <p>
+    If you are currently logged into the Wildlife Licensing System, access this Return using the following link:
+    </p>
+    <p><a href="{{url}}">{{url}}</a></p>
+
+
+{%  endblock %}

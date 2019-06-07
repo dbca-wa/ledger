@@ -26,6 +26,12 @@ class ReturnAcceptNotificationEmail(TemplateEmailBase):
     txt_template = 'wildlifecompliance/emails/send_external_return_accept_notification.txt'
 
 
+class ReturnExternalSheetTransferNotification(TemplateEmailBase):
+    subject = 'Stock has been transferred to your Licence.'
+    html_template = 'wildlifecompliance/emails/send_external_sheet_transfer_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_external_sheet_transfer_notification.txt'
+
+
 def send_return_accept_email_notification(return_obj, request):
     email = ReturnAcceptNotificationEmail()
 
@@ -56,8 +62,26 @@ def send_external_submit_email_notification(request, return_obj):
 
     msg = email.send(return_obj.submitter.email, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
-    _log_return_email(msg, return_obj, sender=sender)
+    _log_return_email(msg, return_obj._return, sender=sender)
     # _log_org_email(msg, return_obj.proposal.applicant, return_obj.submitter, sender=sender)
+
+
+def send_sheet_transfer_email_notification(request, return_obj, licence):
+    email = ReturnExternalSheetTransferNotification()
+    url = request.build_absolute_uri(
+        '/external/return/{}'.format(return_obj.id)
+    )
+
+    context = {
+        'return_no': return_obj.id,
+        'licence_no': licence.id,
+        'submitter': request.user.email,
+        'url': url
+    }
+
+    msg = email.send(request.user.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_return_email(msg, return_obj, sender=sender)
 
 
 def _log_return_email(email_message, return_obj, sender=None):

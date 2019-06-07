@@ -4,13 +4,14 @@ from django.db.models.signals import post_save
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.dispatch import receiver
 from django.utils import timezone
-from django.core.exceptions import FieldError
+from django.core.exceptions import FieldError, ValidationError
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from wildlifecompliance.components.returns.utils_schema import Schema
 from wildlifecompliance.components.applications.models import ApplicationCondition, Application
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction
 from wildlifecompliance.components.returns.email import send_external_submit_email_notification, \
-                                                        send_return_accept_email_notification
+                                                        send_return_accept_email_notification, \
+                                                        send_sheet_transfer_email_notification
 
 import ast
 
@@ -634,6 +635,10 @@ class ReturnSheet(object):
     Informational Running Sheet of Species requirements supporting licence condition.
     """
     _DEFAULT_SPECIES = '0000000'
+    _TRANSFER_STATUS_NONE = 'none'
+    _TRANSFER_STATUS_SENT = 'sent'
+    _TRANSFER_STATUS_ACCEPT = 'accept'
+    _TRANSFER_STATUS_DECLINE = 'decline'
 
     _SHEET_SCHEMA = {"name": "sheet", "title": "Running Sheet of Return Data", "resources": [{"name":
                      "SpecieID", "path": "", "title": "Return Data for Specie", "schema": {"fields": [{"name":
@@ -641,20 +646,20 @@ class ReturnSheet(object):
                      "activity", "type": "string", "constraints": {"required": True}}, {"name": "qty", "type":
                      "number", "constraints": {"required": True}}, {"name": "total", "type": "number",
                      "constraints": {"required": True}}, {"name": "licence", "type": "string"}, {"name": "comment",
-                     "type": "string"}, {"name": "transfer", "type": "boolean"}]}}]}
+                     "type": "string"}, {"name": "transfer", "type": "string"}]}}]}
 
     _NO_ACTIVITY = {"echo": 1, "totalRecords": "0", "totalDisplayRecords": "0", "data": []}
 
     _ACTIVITY_TYPES = {
-        "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false"},
-        "SA02": {"label": "In through import", "auto": "false", "licence": "false", "pay": "false"},
-        "SA03": {"label": "In through birth", "auto": "false", "licence": "false", "pay": "false"},
-        "SA04": {"label": "In through transfer", "auto": "true", "licence": "false", "pay": "false"},
-        "SA05": {"label": "Out through export", "auto": "false", "licence": "false", "pay": "false"},
-        "SA06": {"label": "Out through death", "auto": "false", "licence": "false", "pay": "false"},
-        "SA07": {"label": "Out through transfer other", "auto": "false", "licence": "true", "pay": "true"},
-        "SA08": {"label": "Out through transfer dealer", "auto": "false", "licence": "true", "pay": "false"},
-        "": {"label": "", "auto": "false", "licence": "false", "pay": "false"}}
+        "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false", "inward": ""},
+        "SA02": {"label": "In through import", "auto": "false", "licence": "false", "pay": "false", "inward": ""},
+        "SA03": {"label": "In through birth", "auto": "false", "licence": "false", "pay": "false", "inward": ""},
+        "SA04": {"label": "In through transfer", "auto": "true", "licence": "false", "pay": "false", "inward": ""},
+        "SA05": {"label": "Out through export", "auto": "false", "licence": "false", "pay": "false", "outward": ""},
+        "SA06": {"label": "Out through death", "auto": "false", "licence": "false", "pay": "false", "outward": ""},
+        "SA07": {"label": "Out through transfer other", "auto": "false", "licence": "true", "pay": "true", "outward": "SA04"},
+        "SA08": {"label": "Out through transfer dealer", "auto": "false", "licence": "true", "pay": "false", "outward": "SA04"},
+        "0": {"label": "", "auto": "false", "licence": "false", "pay": "false", "inward": ""}}
 
     def __init__(self, a_return):
         self._return = a_return
@@ -695,22 +700,15 @@ class ReturnSheet(object):
     def activity_list(self):
         """
         List of stock movement activities applicable for Running Sheet.
-        Format: "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false"}
+        Format: "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false", "outward": "SA04"}
         Label: Activity Description.
         Auto: Flag indicating automated activity.
         Licence: Flag indicating licence required for activity.
         Pay: Flag indicating payment required for activity.
+        Inward/Outward: Transfer type with Activity Type code for outward transfer.
         :return: List of Activities applicable for Running Sheet.
         """
         return self._ACTIVITY_TYPES
-
-    @property
-    def activity_inward(self):
-        """
-        Activities associated with in-coming Stock transfers.
-        :return:
-        """
-        return {"SA01": True, "SA02": True, "SA03": True, "SA04": True}
 
     def get_activity(self, _species_id):
         """
@@ -805,7 +803,7 @@ class ReturnSheet(object):
 
     def set_activity_from_previous(self):
         """
-        Sets Running Sheet Activity for the movement of Species stock from previous Licence Running Sheet.
+        Sets Running Sheet Species stock total from previous Licence Running Sheet.
         :return:
         """
         previous_licence = self._return.application.previous_application.licence
@@ -838,6 +836,53 @@ class ReturnSheet(object):
         #    self.set_activity(_species, _data)
         pass
 
+    def notify_transfer(self, request):
+        """
+        Validates a receiving transfer licence and sends out email notification for the movement of stock.
+        :param request:
+        :return:
+        """
+        _licence_no = self._return.application.licence
+        if self.is_valid_licence(_licence_no):
+            send_sheet_transfer_email_notification(request, self._return, self._return)
+            # TODO: add transfer row to licence holder.
+        else:
+            raise ValidationError('Invalid Licence')
+
+    def add_transfer_activity(self, request, to_return):
+        for species in self.species_list:
+            try:
+                _data = request.data.get(species).encode('utf-8')
+                _data = tuple(ast.literal_eval(_data))
+                table_rows = to_return._get_table_rows(_data)
+                to_return.save_return_table(species, table_rows, request)
+            except AttributeError:
+                continue
+
+    def pay_transfer(self, request):
+        """
+        Payment associated with the movement of stock.
+        :param request:
+        :return:
+        """
+        self.notify_transfer(request)
+
+        # TODO: Call to payment process either from here or api.
+
+    def send_transfer_date(self):
+        pass
+
+    def send_transfer_sender(self):
+        return self._return.submitter
+
+    def send_transfer_notification(self, request):
+        """
+        send email notification for transfer of stock to receiving license holder.
+        :param request:
+        :return: boolean
+        """
+        send_sheet_transfer_email_notification(request, self._return, self._return)
+
     def set_species(self, _species):
         """
         Sets the species for the current Running Sheet.
@@ -854,20 +899,25 @@ class ReturnSheet(object):
         """
         return self._species
 
+    def is_valid_transfer(self, request):
+        """
+        Validate transfer request details.
+        :param request:
+        :return:
+        """
+        if not self.is_valid_licence(request):
+            raise ValidationError({'error': 'not a valid licence'})
+
+        return True
+
     def is_valid_licence(self, _licence_no):
         """
         Method to check if licence is current.
         :param _licence_no:
         :return: boolean
         """
-        return False
-
-    def send_transfer_notification(self, _license_no):
-        """
-        send email notification for transfer of stock to receiving license holder.
-        :param _license_no:
-        :return: boolean
-        """
+        # TODO: check current licence.
+        # TODO: check for Return Running Sheet for valid licence
         return False
 
     def get_licensee_contact(self, _license_no):

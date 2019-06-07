@@ -165,8 +165,8 @@ export default {
       vm.$refs.amendment_request.isModalOpen = true;
     },
   },
-  mounted: function() {
-      if (this.returns.format != 'sheet') {
+  created: function() {
+    if (this.returns.format != 'sheet') {
       var headers = this.returns.table[0]['headers']
       for(let i = 0; i<headers.length; i++) {
         headers[i]['readonly'] = !this.is_external

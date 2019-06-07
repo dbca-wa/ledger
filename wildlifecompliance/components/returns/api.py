@@ -116,6 +116,42 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(instance.table)
 
     @detail_route(methods=['POST', ])
+    def sheet_check_transfer(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+
+            if instance.has_sheet:
+                instance.sheet.is_valid_transfer(request)
+
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    def sheet_pay_transfer(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
     def save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -130,22 +166,6 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
                 instance.question.store(request)
 
             instance.save()
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['POST', ])
-    def pay(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
