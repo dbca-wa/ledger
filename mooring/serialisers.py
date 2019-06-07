@@ -616,8 +616,8 @@ class RateDetailSerializer(serializers.Serializer):
         return value
 
     def validate(self,obj):
-        if obj.get('reason') == 1 and not obj.get('details'):
-            raise serializers.ValidationError('Details required if reason is other.')
+        #if obj.get('reason') == 1 and not obj.get('details'):
+        #    raise serializers.ValidationError('Details required if reason is other.')
         return obj
 
 class BookingPeriodOptionsSerializer(serializers.ModelSerializer):

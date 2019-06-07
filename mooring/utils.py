@@ -16,12 +16,13 @@ from django.utils import timezone
 from dateutil.tz.tz import tzoffset
 from pytz import timezone as pytimezone
 from ledger.payments.models import Invoice,OracleInterface,CashTransaction
-from ledger.payments.utils import oracle_parser,update_payments
+from ledger.payments.utils import oracle_parser_on_invoice,update_payments
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
-from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod, GlobalSettings, MooringAreaGroup, AdmissionsLocation, ChangeGroup, CancelGroup, BookingPeriod, BookingPeriodOption)
+from mooring.models import (MooringArea, Mooringsite, MooringsiteRate, MooringsiteBooking, Booking, BookingInvoice, MooringsiteBookingRange, Rate, MooringAreaBookingRange,MooringAreaStayHistory, MooringsiteRate, MarinaEntryRate, BookingVehicleRego, AdmissionsBooking, AdmissionsOracleCode, AdmissionsRate, AdmissionsLine, ChangePricePeriod, CancelPricePeriod, GlobalSettings, MooringAreaGroup, AdmissionsLocation, ChangeGroup, CancelGroup, BookingPeriod, BookingPeriodOption, AdmissionsBookingInvoice)
 from mooring.serialisers import BookingRegoSerializer, MooringsiteRateSerializer, MarinaEntryRateSerializer, RateSerializer, MooringsiteRateReadonlySerializer, AdmissionsRateSerializer
 from mooring.emails import send_booking_invoice,send_booking_confirmation
-
+from oscar.apps.order.models import Order
+from ledger.payments.invoice import utils
 
 def create_booking_by_class(campground_id, campsite_class_id, start_date, end_date, num_adult=0, num_concession=0, num_child=0, num_infant=0, num_mooring=0, vessel_size=0):
     """Create a new temporary booking in the system."""
@@ -246,13 +247,15 @@ def check_mooring_available_by_time(campsite_id, start_date_time, end_date_time)
           ( Q(from_dt__lte=end_date_time)  & Q(to_dt__gte=end_date_time))
      ).count()
 
-
      if start_time_count > 0 or end_time_count > 0 or start_time_temp_count > 0 or end_time_temp_count >0:
         return True
+
      return False
 
 def check_mooring_availablity(campsites_qs, start_date, end_date):
+
     avail_results = get_campsite_availability(campsites_qs, start_date, end_date,None, None)
+
     cs_array = {}
     for av in avail_results:
        open_periods = 0
@@ -266,7 +269,6 @@ def check_mooring_availablity(campsites_qs, start_date, end_date):
                else:
                    closed_periods = closed_periods + 1
        cs_array[av] = { 'open_periods': open_periods, 'closed_periods': closed_periods}
-
     return cs_array 
 
 def get_open_marinas(campsites_qs, start_date, end_date):
@@ -274,10 +276,11 @@ def get_open_marinas(campsites_qs, start_date, end_date):
     # short circuit: if start date is before today, return nothing
     exclude_moorings = []
     today = date.today()
-    if start_date < today:
-        return set()
+    #if start_date < today:
+    #    return set()
 
     campsites_qs = check_mooring_availablity(campsites_qs,start_date, end_date)
+
     # remove from the campsite list any entries with bookings
 #    campsites_qs = campsites_qs.exclude(
 #        id__in=exclude_moorings
@@ -316,6 +319,7 @@ def get_open_marinas(campsites_qs, start_date, end_date):
         mooring_map[cs] = campsites_qs[cs]
         #mooring_map.append(row)
 
+
 #    for cs in campsites_qs:
         
 #        if (cs.pk in csbr) or (cs.mooringarea.pk in cgbr):
@@ -325,11 +329,67 @@ def get_open_marinas(campsites_qs, start_date, end_date):
 #        mooring_map[cs.mooringarea.pk].append(cs.pk)
     return mooring_map
 
+def generate_mooring_rate(mooringsites_qs,start_date, end_date, duration):
+     mooring_rate = {} 
+     mooring_site_ids = []
+     search_filter = Q()
+
+     for ms in mooringsites_qs:
+         mooring_site_ids.append(ms.id)
+         search_filter |= Q(campsite_id=ms.id)
+
+     #print (mooring_site_ids)
+     mooring_rate_search_filter = Q()
+     mooring_rate_search_filter &= Q(search_filter)# & Q(date_start__lte=start_date) & Q(Q(date_end__gte=start_date)  | Q(date_end=None))
+     #& Q(date_end__gte=end_date) 
+     #& Q(date_end__lte=end_date)
+     mr_resp = MooringsiteRate.objects.filter(mooring_rate_search_filter).order_by('date_start')
+     #print (mr_resp)
+     for i in range(duration):
+         date_rotate_forward = start_date+timedelta(days=i)
+         mooring_rate[date_rotate_forward] = {}
+         for mrr in mr_resp:
+            # this is to account for None end dates..
+            if mrr.date_end is None:
+                mrr.date_end = datetime.today().date()+timedelta(days=90)
+                #+timedelta(days=90)
+            if mrr.date_start <= date_rotate_forward and mrr.date_end >= date_rotate_forward:
+                #print (str(mrr.id)+' '+str(mrr.date_start)+' '+str(mrr.date_end)+' '+str(mrr.campsite.id) )
+            #mooring_rate[date_rotate_forward] = {}
+                mooring_rate[date_rotate_forward][mrr.campsite_id] = mrr
+        
+     #print (mooring_rate)
+     return mooring_rate 
+
+     #for i in range(duration):
+     #    date_rotate_forward = start_date+timedelta(days=i)    
+     #    print (date_rotate_forward)
+     #    mooring_rate_search_filter = Q()
+     #    mooring_rate_search_filter &= Q(search_filter) & Q(date_start__lte=date_rotate_forward) & Q(date_end__gte=date_rotate_forward)
+     #    #print MooringsiteRate.objects.filter(campsite_id__in=[mooring_site_ids])
+     #    #campsite_id__in=mooring_site_ids
+     #    print (MooringsiteRate.objects.filter(mooring_rate_search_filter).query)
+     #    mr = MooringsiteRate.objects.filter(mooring_rate_search_filter).order_by('date_start')
+     #    #mr = MooringsiteRate.objects.filter(campsite_id__in=[1,2,3,4,5,6],date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward).order_by('date_start')
+     #    for msr in mr:
+     #        mooring_rate[date_rotate_forward] = {}
+     #        mooring_rate[date_rotate_forward][msr.campsite.id] = msr 
+#    #         mooring_rate[date_rotate_forward][mr.campsite_id] = msr
+     #    print (mr)
+     #    print ("MOOO RATE")
+     #    print (mooring_rate)
+#     if MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward).count() > 0:
+#           mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward).order_by('-date_start')[0]
+#     else:
+##          if MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end=None).count() > 0:
+#               mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end=None).order_by('-date_start')[0]
+
 
 
 def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_booking, request=None):
     """Fetch the availability of each mooring in a queryset over a range of visit dates."""
     # fetch all of the single-day MooringsiteBooking objects within the date range for the sites
+
     end_date =end_date+timedelta(days=1)
     start_date_time = datetime.strptime(str(start_date)+str(' 00:00'), '%Y-%m-%d %H:%M')
     end_date_time = datetime.strptime(str(end_date)+str(' 23:59'), '%Y-%m-%d %H:%M')
@@ -338,9 +398,11 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
     today = date.today()
     nowtime =  datetime.today() 
     mooring_date_selected = {} 
+
     if ongoing_booking:
        booking_id = ongoing_booking.id
        #booking_period_option = ongoing_booking.booking_period_option
+
     booking_old_id=None
     if request is not None:
         #if request.get('session', None):
@@ -356,7 +418,6 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                         to_dt__lt=end_date_time,
                         #booking__expiry_time__gte=datetime.now()
                     ).exclude(booking__id=booking_old_id).order_by('date', 'campsite__name')
-
  
     # booking__expiry_time__gte=datetime.now()
     booking_qs = None
@@ -364,9 +425,13 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
     duration = (end_date-start_date).days 
     #results = {site.pk: {start_date+timedelta(days=i): ['open', ] for i in range(duration)} for site in campsites_qs}
     # Build Hash of open periods
+    mooring_rate_hash = generate_mooring_rate(campsites_qs,start_date, end_date, duration)
+
     results = {}
+#    return results
     for site in campsites_qs:
         results[site.pk] = {}
+
         cgbr_qs = MooringAreaBookingRange.objects.filter(
             Q(campground=site.mooringarea),
             Q(status=1),
@@ -377,11 +442,25 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
             date_rotate_forward = start_date+timedelta(days=i)
             mooring_date_selected[date_rotate_forward] = 'notselected'
             mooring_rate = None
-            if MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward).count() > 0:
-                mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward).order_by('-date_start')[0]
-            else:
-                if MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end=None).count() > 0:
-                     mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end=None).order_by('-date_start')[0]
+            if date_rotate_forward in mooring_rate_hash:
+                 if site.pk in mooring_rate_hash[date_rotate_forward]:
+                    mooring_rate =  mooring_rate_hash[date_rotate_forward][site.pk]
+                    #print mooring_rate
+                    #print ("BOOKING PERIOD")
+                    #print (mooring_rate.booking_period.booking_period.all())
+
+
+            #print ("MOORING RATE")
+            #print (mooring_rate)
+            #if MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward).count() > 0:
+            #    mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward).order_by('-date_start')[0]
+            #else:
+            #    if MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end=None).count() > 0:
+            #         mooring_rate = MooringsiteRate.objects.filter(campsite_id=site.pk,date_start__lte=date_rotate_forward, date_end=None).order_by('-date_start')[0]
+            #print (mooring_rate)
+            #print ("GET CMA 9")
+            #print (datetime.utcnow())
+
             booking_period = {}
             selection_period = {}
             bp_result = []
@@ -407,8 +486,16 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                     if date_rotate_forward < today:
                         booking_period[bp.pk] = 'closed'
                     if today == date_rotate_forward:
-                         if nowtime > start_dt:
-                               booking_period[bp.pk] = 'closed' 
+                         if ongoing_booking:
+                               if ongoing_booking.old_booking is None:
+                                  pass
+                               else:
+                                   if nowtime > start_dt:
+                                        booking_period[bp.pk] = 'closed'
+                         else:
+                              pass
+                              #if nowtime > start_dt:
+                              #     booking_period[bp.pk] = 'closed'
 
                     for closure in cgbr_qs:
                         # CLOSURE INFORMATION
@@ -434,9 +521,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
             results[site.pk][date_rotate_forward] = ['closed',booking_period,selection_period, bp_result]
             #results[site.pk][start_date+timedelta(days=i)] = ['closed',booking_period,selection_period, bp_result]
 
-
     # Determine availablity
-
     for b in bookings_qs:
         if b.booking.id == booking_old_id:
              continue
@@ -457,12 +542,18 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
 #        mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite).order_by('-date_start')[0]
 #        if mooring_rate:
             mooring_rate = None
-            if MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward ).count() > 0:
-                mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward ).order_by('-date_start')[0]
-            else:
-                if MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end=None).count() > 0:
-                     mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end=None).order_by('-date_start')[0]
 
+            if date_rotate_forward in mooring_rate_hash:
+                 if site.pk in mooring_rate_hash[date_rotate_forward]:
+                    mooring_rate =  mooring_rate_hash[date_rotate_forward][b.campsite.id]
+
+
+#            if MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward ).count() > 0:
+#                mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward ).order_by('-date_start')[0]
+#            else:
+#                if MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end=None).count() > 0:
+#                     mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end=None).order_by('-date_start')[0]
+#
             if mooring_rate:
                for bp in mooring_rate.booking_period.booking_period.all():
                 #for i in range(duration):
@@ -478,6 +569,10 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                     if from_dt.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'):
                         if from_dt.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
                             if date_rotate_forward in results[b.campsite.id]:
+                               #print ("REST BOOK ID")
+                               #print results[b.campsite.id][date_rotate_forward]
+                               #print results[b.campsite.id][date_rotate_forward][1]
+                               #if bp.id in results[b.campsite.id][date_rotate_forward][1]:
                                 if results[b.campsite.id][date_rotate_forward][1][bp.id] != 'selected':
                                     results[b.campsite.id][date_rotate_forward][1][bp.id] = 'closed'
                                 if b.booking.id == booking_id:
@@ -489,6 +584,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                     if to_dt.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'):
                         if to_dt.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
                             if date_rotate_forward in results[b.campsite.id]:
+                               if bp.id in results[b.campsite.id][date_rotate_forward][1]:
                                 if results[b.campsite.id][date_rotate_forward][1][bp.id] != 'selected':
                                     results[b.campsite.id][date_rotate_forward][1][bp.id] = 'closed'
                                 if b.booking.id == booking_id:
@@ -499,6 +595,7 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                                 pass
                     if from_dt.strftime('%Y-%m-%d %H:%M:%S') <= start_dt.strftime('%Y-%m-%d %H:%M:%S') and to_dt.strftime('%Y-%m-%d %H:%M:%S') >= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
                         if date_rotate_forward in results[b.campsite.id]:
+                           if bp.id in results[b.campsite.id][date_rotate_forward][1]:
                             if results[b.campsite.id][date_rotate_forward][1][bp.id] != 'selected':
                                results[b.campsite.id][date_rotate_forward][1][bp.id] = 'closed'
                             if b.booking.id == booking_id:
@@ -583,7 +680,6 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                 for b in results[site.pk][stop_mark+timedelta(days=i)][1]:
                      if results[site.pk][stop_mark+timedelta(days=i)][1][b] == 'open': 
                          results[site.pk][stop_mark+timedelta(days=i)][1][b] = 'maxstay'
-
 
 
     return results
@@ -777,14 +873,18 @@ def nononline_booking_lineitems(oracle_code, request):
         group = MooringAreaGroup.objects.filter(members__in=[request.user])
         value = GlobalSettings.objects.get(mooring_group=group, key=0).value
         if Decimal(value) > 0:
-            invoice_line.append({'ledger_description': 'Phone Booking Fee', 'quantity': 1, 'price_incl_tax': Decimal(value), 'oracle_code': oracle_code})
+            invoice_line.append({'ledger_description': 'Phone Booking Fee', 'quantity': 1, 'price_incl_tax': Decimal(value), 'oracle_code': oracle_code, 'line_status': 1})
+#            invoice_line.append({'ledger_description': 'Phone Booking Fee', 'quantity': 1, 'price_incl_tax': Decimal(value), 'oracle_code': oracle_code})
     return invoice_line
 
 def admission_lineitems(lines):
     invoice_lines = []
     if lines:
         for line in lines:
-            invoice_lines.append({'ledger_description': 'Admissions {} - {} ({} guests)'.format(line['from'], line['to'], line['guests']), "quantity": 1, 'price_incl_tax': line['admissionFee'], "oracle_code": line['oracle_code']})
+            if line['guests'] > 0:
+                invoice_lines.append({'ledger_description': 'Admissions {} - {} ({} guests)'.format(line['from'], line['to'], line['guests']), "quantity": 1, 'price_incl_tax': line['admissionFee'], "oracle_code": line['oracle_code'], 'line_status': 1})
+
+#            invoice_lines.append({'ledger_description': 'Admissions {} - {} ({} guests)'.format(line['from'], line['to'], line['guests']), "quantity": 1, 'price_incl_tax': line['admissionFee'], "oracle_code": line['oracle_code']})
 
     return invoice_lines
 
@@ -835,11 +935,14 @@ def calculate_price_booking_cancellation(booking):
              description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
 
              if datetime.strptime(ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S') < current_date_time:
-                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Past Booking - '+description,'amount': Decimal('0.00'), 'mooring_group': mooring_group})
+                 #cancellation_fees.append({'additional_fees': 'true', 'description': 'Past Booking - '+description,'amount': Decimal('0.00'), 'mooring_group': mooring_group})
+                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Past Booking - '+description,'amount': Decimal('0.00'), 'mooring_group': mooring_group, 'oracle_code': str(ob.campsite.mooringarea.oracle_code)})
              else:
                  #change_fees['amount'] = str(refund_amount)
-                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Cancel Fee - '+description,'amount': cancel_fee_amount, 'mooring_group': mooring_group})
-                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount), 'mooring_group': mooring_group})
+                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Cancel Fee - '+description,'amount': cancel_fee_amount, 'mooring_group': mooring_group, 'oracle_code': str(ob.campsite.mooringarea.oracle_code)})
+                 cancellation_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount), 'mooring_group': mooring_group, 'oracle_code': str(ob.campsite.mooringarea.oracle_code)})
+                 #cancellation_fees.append({'additional_fees': 'true', 'description': 'Cancel Fee - '+description,'amount': cancel_fee_amount, 'mooring_group': mooring_group})
+                 #cancellation_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount), 'mooring_group': mooring_group})
          else:
 
              print ("NO CANCELATION POLICY")
@@ -897,8 +1000,10 @@ def calculate_price_booking_change(old_booking, new_booking):
                     # Fixed Pricing
                 description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
                   #change_fees['amount'] = str(refund_amount)
-                change_fees.append({'additional_fees': 'true', 'description': 'Change Fee - '+description,'amount': float(change_fee_amount), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group})
-                change_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group})
+                #change_fees.append({'additional_fees': 'true', 'description': 'Change Fee - '+description,'amount': float(change_fee_amount), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group})
+                #change_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group})
+                change_fees.append({'additional_fees': 'true', 'description': 'Change Fee - '+description,'amount': float(change_fee_amount), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group, 'line_status': 2})
+                change_fees.append({'additional_fees': 'true', 'description': 'Refund - '+description,'amount': str(ob.amount - ob.amount - ob.amount), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group, 'line_status': 3})
              else:
                  print ("NO REFUND POLICY")
                
@@ -907,7 +1012,8 @@ def calculate_price_booking_change(old_booking, new_booking):
              adjustment_fee = float('0.00')
              adjustment_fee = float(ob.amount) + adjustment_fee
              description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
-             change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - '+description ,'amount': str(adjustment_fee - adjustment_fee - adjustment_fee), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group})   
+#             change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - '+description ,'amount': str(adjustment_fee - adjustment_fee - adjustment_fee), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group})   
+             change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - '+description ,'amount': str(adjustment_fee - adjustment_fee - adjustment_fee), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group, 'line_status': 2})
 
     return change_fees
 
@@ -918,9 +1024,11 @@ def calculate_price_admissions_changecancel(adBooking, change_fees):
             description = "Admission ({}) for {} guest(s)".format(datetime.strftime(line.arrivalDate, '%d/%m/%Y'), adBooking.total_admissions)
             oracle_code = AdmissionsOracleCode.objects.filter(mooring_group=line.location.mooring_group)[0]
             if not change_fees == []:
-                change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code), 'mooring_group': line.location.mooring_group.id})
+#                change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code), 'mooring_group': line.location.mooring_group.id})
+                change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code.oracle_code), 'mooring_group': line.location.mooring_group.id, 'line_status': 3 })
             else:
-                change_fees.append({'additional_fees': 'true', 'description': 'Refund - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code), 'mooring_group': line.location.mooring_group.id})
+#                change_fees.append({'additional_fees': 'true', 'description': 'Refund - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code), 'mooring_group': line.location.mooring_group.id})
+                change_fees.append({'additional_fees': 'true', 'description': 'Refund - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code.oracle_code), 'mooring_group': line.location.mooring_group.id, 'line_status': 3})
         else:
             # 0 line
             pass
@@ -929,11 +1037,24 @@ def calculate_price_admissions_changecancel(adBooking, change_fees):
 def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None):
     total_price = Decimal(0)
     booking_mooring = MooringsiteBooking.objects.filter(booking=booking)
+    booking_mooring_old = []
+    if booking.old_booking:
+        booking_mooring_old = MooringsiteBooking.objects.filter(booking=booking.old_booking)
+    print ("OLD Booking")
+    print (booking_mooring_old)
+
     invoice_lines = []
     if lines:
         for bm in booking_mooring:
+            line_status = 1
+            for ob in booking_mooring_old:
+                if bm.campsite == ob.campsite and ob.from_dt == bm.from_dt and ob.to_dt == bm.to_dt and ob.booking_period_option == bm.booking_period_option:
+                      line_status = 2
+            invoice_lines.append({'ledger_description':'Mooring {} ({} - {})'.format(bm.campsite.mooringarea.name,bm.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),bm.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p')),"quantity":1,"price_incl_tax":bm.amount,"oracle_code":bm.campsite.mooringarea.oracle_code, 'line_status': line_status})
 
-            invoice_lines.append({'ledger_description':'Mooring {} ({} - {})'.format(bm.campsite.mooringarea.name,bm.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),bm.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p')),"quantity":1,"price_incl_tax":bm.amount,"oracle_code":bm.campsite.mooringarea.oracle_code})
+
+
+#            invoice_lines.append({'ledger_description':'Mooring {} ({} - {})'.format(bm.campsite.mooringarea.name,bm.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),bm.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p')),"quantity":1,"price_incl_tax":bm.amount,"oracle_code":bm.campsite.mooringarea.oracle_code})
         return invoice_lines
     else:
         return total_price
@@ -942,7 +1063,8 @@ def price_or_lineitems_extras(request,booking,change_fees,invoice_lines=[]):
     total_price = Decimal(0)
     booking_mooring = MooringsiteBooking.objects.filter(booking=booking)
     for cf in change_fees:
-       invoice_lines.append({'ledger_description':cf['description'],"quantity":1,"price_incl_tax":cf['amount'],"oracle_code":cf['oracle_code']})
+#       invoice_lines.append({'ledger_description':cf['description'],"quantity":1,"price_incl_tax":cf['amount'],"oracle_code":cf['oracle_code']})
+       invoice_lines.append({'ledger_description':cf['description'],"quantity":1,"price_incl_tax":cf['amount'],"oracle_code":cf['oracle_code'], 'line_status': cf['line_status']})
     return invoice_lines 
 
 def old_price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None):
@@ -988,7 +1110,8 @@ def old_price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=
                         #if not booking.mooringarea.oracle_code:
                         #    raise Exception('The mooringarea selected does not have an Oracle code attached to it.')
                         end_date = end + timedelta(days=1)
-                        invoice_lines.append({'ledger_description':'Mooring fee {} ({} - {})'.format(k,start.strftime('%d-%m-%Y'),end_date.strftime('%d-%m-%Y')),"quantity":v,"price_incl_tax":price,"oracle_code":booking.mooringarea.oracle_code})
+#                        invoice_lines.append({'ledger_description':'Mooring fee {} ({} - {})'.format(k,start.strftime('%d-%m-%Y'),end_date.strftime('%d-%m-%Y')),"quantity":v,"price_incl_tax":price,"oracle_code":booking.mooringarea.oracle_code})
+                        invoice_lines.append({'ledger_description':'Admission fee on {} ({}) {}'.format(adLine.arrivalDate, group, overnightStay),"quantity":amount,"price_incl_tax":price, "oracle_code":oracle_code, 'line_status': 1})
                     else:
                         price = (num_days * Decimal(r[k])) * v
                         total_price += price
@@ -1121,7 +1244,7 @@ def admissions_price_or_lineitems(request, admissionsBooking,lines=True):
                     oracle_codes = AdmissionsOracleCode.objects.filter(mooring_group=adLine.location.mooring_group)
                     if oracle_codes.count() > 0:
                         oracle_code = oracle_codes[0].oracle_code
-                    invoice_lines.append({'ledger_description':'Admission fee on {} ({}) {}'.format(adLine.arrivalDate, group, overnightStay),"quantity":amount,"price_incl_tax":price, "oracle_code":oracle_code})
+                    invoice_lines.append({'ledger_description':'Admission fee on {} ({}) {}'.format(adLine.arrivalDate, group, overnightStay),"quantity":amount,"price_incl_tax":price, "oracle_code":oracle_code, 'line_status': 1})
                 
             else:
                 daily_rate = daily_rates[adLine.arrivalDate.strftime('%d/%m/%Y')]
@@ -1593,53 +1716,31 @@ def checkout(request, booking, lines, invoice_text=None, vouchers=[], internal=F
         )
     return response
 
-def iiicheckout(request, booking, lines, invoice_text=None, vouchers=[], internal=False):
-    JSON_REQUEST_HEADER_PARAMS = {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Referer": request.META.get('HTTP_REFERER'),
-        "X-CSRFToken": request.COOKIES.get('csrftoken')
-    }
-    try:
-        parameters = {
-            'system': 'S019',
-            'fallback_url': request.build_absolute_uri('/'),
-            'return_url': request.build_absolute_uri(reverse('public_booking_success')),
-            'forceRedirect': True,
-            'proxy': True if internal else False,
-            "products": lines,
-            "custom_basket": True,
-            "invoice_text": invoice_text,
-            "vouchers": vouchers,
+
+def allocate_failedrefund_to_unallocated(request, booking, lines, invoice_text=None, internal=False, order_total='0.00',user=None):
+        basket_params = {
+            'products': lines,
+            'vouchers': [],
+            'system': settings.PS_PAYMENT_SYSTEM_ID,
+            'custom_basket': True,
         }
 
-        if not internal:
-            parameters["check_url"] = request.build_absolute_uri('/api/booking/{}/booking_checkout_status.json'.format(booking.id))
-        if internal or request.user.is_anonymous():
-            parameters['basket_owner'] = booking.customer.id
+        basket, basket_hash = create_basket_session(request, basket_params)
+        ci = utils.CreateInvoiceBasket()
+        order  = ci.create_invoice_and_order(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=user, status='Submitted', invoice_text='Refund Allocation Pool', )
+        #basket.status = 'Submitted'
+        #basket.save()
+        new_order = Order.objects.get(basket=basket)
+        new_invoice = Invoice.objects.get(order_number=new_order.number)
+        update_payments(new_invoice.reference)
+        if booking.__class__.__name__ == 'AdmissionsBooking':
+            print ("AdmissionsBooking")
+            book_inv, created = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=booking, invoice_reference=new_invoice.reference)
+        else:
+            book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference)
 
-        url = request.build_absolute_uri(
-            reverse('payments:ledger-initial-checkout')
-        )
-        COOKIES = request.COOKIES
-        if 'ps_booking' in request.session:
-            COOKIES['ps_booking_internal'] = str(request.session['ps_booking'])
-        response = requests.post(url, headers=JSON_REQUEST_HEADER_PARAMS, cookies=COOKIES,
-                                 data=json.dumps(parameters))
-        response.raise_for_status()
-        return response
+        return order
 
-
-    except requests.exceptions.HTTPError as e:
-        if 400 <= e.response.status_code < 500:
-            http_error_msg = '{} Client Error: {} for url: {} > {}'.format(e.response.status_code, e.response.reason, e.response.url,e.response._content)
-
-        elif 500 <= e.response.status_code < 600:
-            http_error_msg = '{} Server Error: {} for url: {}'.format(e.response.status_code, e.response.reason, e.response.url)
-        e.message = http_error_msg
-
-        e.args = (http_error_msg,)
-        raise
 
 def old_internal_create_booking_invoice(booking, checkout_response):
     if not checkout_response.history:
@@ -1775,7 +1876,7 @@ def daterange(start_date, end_date):
 
 def oracle_integration(date,override):
     system = '0516'
-    oracle_codes = oracle_parser(date,system,'Mooring Booking',override=override)
+    oracle_codes = oracle_parser_on_invoice(date,system,'Mooring Booking',override=override)
 
 def admissions_lines(booking_mooring):
     lines = []
