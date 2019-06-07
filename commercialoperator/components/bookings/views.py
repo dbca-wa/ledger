@@ -253,18 +253,6 @@ class InvoicePDFView(InvoiceOwnerMixin,View):
     def get(self, request, *args, **kwargs):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         response = HttpResponse(content_type='application/pdf')
-        response.write(create_invoice_pdf_bytes('application_fee.pdf',invoice))
-        return response
-
-    def get_object(self):
-        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
-        return invoice
-
-
-class InvoicePDFView(InvoiceOwnerMixin,View):
-    def get(self, request, *args, **kwargs):
-        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
-        response = HttpResponse(content_type='application/pdf')
         response.write(create_invoice_pdf_bytes('invoice.pdf',invoice))
         return response
 
@@ -276,7 +264,7 @@ class InvoicePDFView(InvoiceOwnerMixin,View):
 class ConfirmationPDFView(InvoiceOwnerMixin,View):
     def get(self, request, *args, **kwargs):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
-        bi=BookingInvoice.objects.get(invoice_reference=invoice.reference)
+        bi=BookingInvoice.objects.filter(invoice_reference=invoice.reference).last()
 
         response = HttpResponse(content_type='application/pdf')
         response.write(create_confirmation_pdf_bytes('confirmation.pdf',invoice, bi.booking))

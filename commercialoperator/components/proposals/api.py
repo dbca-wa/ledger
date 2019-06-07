@@ -174,7 +174,6 @@ class ProposalFilterBackend(DatatablesFilterBackend):
 
         date_from = request.GET.get('date_from')
         date_to = request.GET.get('date_to')
-        #import ipdb; ipdb.set_trace()
         if queryset.model is Proposal:
             if date_from:
                 queryset = queryset.filter(lodgement_date__gte=date_from)
@@ -199,7 +198,6 @@ class ProposalFilterBackend(DatatablesFilterBackend):
 
             if date_to:
                 queryset = queryset.filter(proposal__lodgement_date__lte=date_to)
-
 
         queryset = super(ProposalFilterBackend, self).filter_queryset(request, queryset, view)
         setattr(view, '_datatables_total_count', total_count)

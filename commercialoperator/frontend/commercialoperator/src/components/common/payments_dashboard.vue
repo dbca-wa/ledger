@@ -80,12 +80,6 @@
                 </div>
             </div>
         </div>
-        <ApprovalExtend ref="approval_extend"  @refreshFromResponse="refreshFromResponse"></ApprovalExtend>
-        <ApprovalCancellation ref="approval_cancellation"  @refreshFromResponse="refreshFromResponse"></ApprovalCancellation>
-        <ApprovalSuspension ref="approval_suspension"  @refreshFromResponse="refreshFromResponse"></ApprovalSuspension>
-        <ApprovalSurrender ref="approval_surrender"  @refreshFromResponse="refreshFromResponse"></ApprovalSurrender>
-        <!--<EClassLicence ref="eclass_licence" :processing_status="proposal.processing_status" :proposal_id="proposal.id"></EClassLicence>-->
-        <EClassLicence ref="eclass_licence"></EClassLicence>
 
 
     </div>
@@ -93,11 +87,6 @@
 <script>
 import datatable from '@/utils/vue/datatable.vue'
 import Vue from 'vue'
-import ApprovalExtend from '../internal/approvals/approval_extend.vue'
-import ApprovalCancellation from '../internal/approvals/approval_cancellation.vue'
-import ApprovalSuspension from '../internal/approvals/approval_suspension.vue'
-import ApprovalSurrender from '../internal/approvals/approval_surrender.vue'
-import EClassLicence from '../internal/approvals/approval_eclass.vue'
 
 import {
     api_endpoints,
@@ -121,11 +110,6 @@ export default {
     },
     components:{
         datatable,
-        ApprovalExtend,
-        ApprovalCancellation,
-        ApprovalSuspension,
-        ApprovalSurrender,
-        EClassLicence,
     },
     data() {
         let vm = this;
@@ -147,12 +131,16 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            approval_status:[],
+            approval_status:[
+                'Paid',
+                'Over Paid',
+                'Partially Paid',
+                'Unpaid',
+
+            ],
             proposal_submitters: [],
             proposal_headers:[
-                "Number","Licence Type","Holder","Status","Start Date","Expiry Date","Approval","Action",
-                //"Number","Licence Type","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action",
-                //"LodgementNo","CanReissue","CanAction","CanReinstate","SetToCancel","SetToSuspend","SetToSurrender","CurrentProposal","RenewalDoc","RenewalSent","CanAmend","CanRenew"
+                "Number","Approval Number","Holder","Status","Arrival","Park","Invoice/Confirmation","Action",
             ],
             proposal_options:{
                 language: {
@@ -162,7 +150,9 @@ export default {
                 serverSide: true,
                 lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                 ajax: {
-                    "url": vm.url,
+                    //"url": vm.url,
+                    //"url": '/api/booking_paginated/bookings_external/?format=datatables',
+                    "url": api_endpoints.payments_paginated_internal,
                     "dataSrc": 'data',
 
                     // adding extra GET params for Custom filtering
@@ -178,137 +168,60 @@ export default {
                 columns: [
                     {
                         data: "id",
-                        'render':function(data,type,full){
-                        if(!vm.is_external){
-                            var result = '';
-                            var popTemplate = '';
-                            var message = '';
-                            let tick = '';
-                            tick = "<i class='fa fa-exclamation-triangle' style='color:red'></i>"
-                            result = '<span>' + full.lodgement_number + '</span>';
-                            if(full.can_reissue){
-                                if(!full.can_action){
-                                    if(full.set_to_cancel){
-                                        message = 'This Approval is marked for cancellation to future date';
-                                    }
-                                    if(full.set_to_suspend){
-                                        message = 'This Approval is marked for suspension to future date';
-                                    }
-                                    if(full.set_to_surrender){
-                                        message = 'This Approval is marked for surrendering to future date';
-                                    }
-                                    popTemplate = _.template('<a href="#" ' +
-                                            'role="button" ' +
-                                            'data-toggle="popover" ' +
-                                            'data-trigger="hover" ' +
-                                            'data-placement="top auto"' +
-                                            'data-html="true" ' +
-                                            'data-content="<%= text %>" ' +
-                                            '><%= tick %></a>');
-                                    result += popTemplate({
-                                        text: message,
-                                        tick: tick
-                                    });
-
-                                }
-                            }
-                            return result;
-                        }
-                        else { return full.lodgement_number }
-                        },
-                        'createdCell': helpers.dtPopoverCellFn,
-                        name: "id, lodgement_number",
+                        name: "id"
                     },
                     {
-                        data: "application_type",
-                        name: "current_proposal__application_type__name"
+                        data: "approval_number",
+                        name: "booking__proposal__approval__lodgement_number"
                     },
                     {
                         data: "applicant",
-                        name: "applicant__organisation__name" // will be use like: Approval.objects.all().order_by('applicant__organisation__nane')
+                        name: "applicant"
                     },
-                    {data: "status"},
                     {
-                        data: "start_date",
+                        data: "payment_status",
+                        name: "payment_status"
+                    },
+                    {
+                        data: "arrival",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
                         },
-                        searchable: false
+                        searchable: false,
+                        orderable: true
                     },
                     {
-                        data: "expiry_date",
-                        mRender:function (data,type,full) {
-                            return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                        },
-                        searchable: false
-                    },
-                    {
-                        data: "licence_document",
-                        mRender:function(data,type,full){
-                            return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
-                        },
-                        name: 'licence_document__name'
+                        data: "park",
+                        name: "park__name"
                     },
                     {
                         data: '',
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (!vm.is_external){
-                                if(vm.check_assessor(full)){
-                                    if(full.can_reissue){
-                                        links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
-                                    }
-                                    if(full.application_type=='E Class' && full.can_extend){
-                                        links +=  `<a href='#${full.id}' data-extend-approval='${full.id}'>Extend</a><br/>`;
-                                    } else if (full.application_type=='E Class'){
-                                        links +=  `<a class='disabled' title='Licence has already been extended' style="color: grey;text-decoration: none;">Extend</a><br/>`;
-                                    }
-                                    if(full.can_reissue && full.can_action){
-                                        links +=  `<a href='#${full.id}' data-cancel-approval='${full.id}'>Cancel</a><br/>`;
-                                        links +=  `<a href='#${full.id}' data-surrender-approval='${full.id}'>Surrender</a><br/>`;
-                                    }
-                                    if(full.status == 'Current' && full.can_action){
-                                        links +=  `<a href='#${full.id}' data-suspend-approval='${full.id}'>Suspend</a><br/>`;
-                                    }
-                                    if(full.can_reinstate)
-                                    {
-                                        links +=  `<a href='#${full.id}' data-reinstate-approval='${full.id}'>Reinstate</a><br/>`;
-                                    }
-                                    links +=  `<a href='/internal/approval/${full.id}'>View</a><br/>`;
-                                }
-                                else{
-                                    links +=  `<a href='/internal/approval/${full.id}'>View</a><br/>`;
-                                }
-                                if(full.renewal_document && full.renewal_sent){
-                                  links +=  `<a href='${full.renewal_document}' target='_blank'>Renewal Notice</a><br/>`;  
-
-                                }
-                            }
-                            else{
-                                if (full.can_reissue) {
-                                    links +=  `<a href='/external/approval/${full.id}'>View</a><br/>`;
-                                    if(full.can_action){
-                                        links +=  `<a href='#${full.id}' data-surrender-approval='${full.id}'>Surrender</a><br/>`;
-                                        if(full.can_amend){
-                                           links +=  `<a href='#${full.id}' data-amend-approval='${full.current_proposal}'>Amend</a><br/>`; 
-                                       }                                        
-                                    }
-                                    if(full.renewal_document && full.renewal_sent && full.can_renew) {
-                                    links +=  `<a href='#${full.id}' data-renew-approval='${full.current_proposal}'>Renew</a><br/>`;
-                                    }                                    
-                                }
-                                else {
-                                    links +=  `<a href='/external/approval/${full.id}'>View</a><br/>`;
-
-                                }
+                            if (full.payment_status=='paid'){
+                                links +=  `<a href='/cols/payments/invoice-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a> &nbsp`;
+                                links +=  `<a href='/cols/payments/confirmation-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
                             }
                             return links;
                         },
+                        name: '',
                         searchable: false,
-                        orderable: false,
-                        name: ''
+                        orderable: false
                     },
-                    
+                    {
+                        data: "",
+                        mRender:function (data,type,full) {
+                            let links = '';
+                            if (full.payment_status=='paid'){
+                                links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>View Payment</a><br/>`;
+                            }
+                            return links;
+                        },
+                        name: '',
+                        searchable: false,
+                        orderable: false
+                    }
+
                 ],
                 processing: true,
                 /*
@@ -366,16 +279,8 @@ export default {
         is_internal: function(){
             return this.level == 'internal';
         },
-        is_referral: function(){
-            return this.level == 'referral';
-        }
     },
     methods:{
-        createEClassLicence: function(){
-            //this.save_wo();
-            this.$refs.eclass_licence.isModalOpen = true;
-        },
-
         fetchFilterLists: function(){
             let vm = this;
 
@@ -529,220 +434,13 @@ export default {
             })
         },
 
-        check_assessor: function(proposal){
-            let vm = this;
-
-            var assessor = proposal.allowed_assessors.filter(function(elem){
-                    return(elem.id=vm.profile.id)
-                });
-            if (assessor.length > 0)
-                return true;
-            else
-                return false;
-            return false;
-        },
-
-        reissueApproval:function (proposal_id) {
-            let vm = this;
-            let status= 'with_approver'
-            let data = {'status': status}
-            swal({
-                title: "Reissue Approval",
-                text: "Are you sure you want to reissue this approval?",
-                type: "warning",
-                confirmButtonText: 'Reissue approval',
-                //confirmButtonColor:'#d9534f'
-            }).then(() => {
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/reissue')),JSON.stringify(data),{
-                emulateJSON:true,
-                })
-                .then((response) => {
-                    vm.$router.push({
-                    name:"internal-proposal",
-                    params:{proposal_id:proposal_id}
-                    });
-                }, (error) => {
-                    console.log(error);
-                    swal({
-                    title: "Reissue Approval",
-                    text: error.body,
-                    type: "error",
-                    })
-                });
-            },(error) => {
-
-            });
-        },
-
-        _extendApproval:function (approval_id) {
-            let vm = this;
-            let status= 'with_approver'
-            let data = {'status': status}
-            swal({
-                title: "Renew Approval",
-                //text: "Are you sure you want to extend this approval?",
-                //type: "warning",
-                text: "<input type='email' class='form-control' name='email' id='email'/>",
-                type: "input",
-                showCancelButton: true,
-                showCancelButton: true,
-                confirmButtonText: 'Extend approval',
-            }).then(() => {
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.approvals,(approval_id+'/approval_extend')),JSON.stringify(data),{
-                emulateJSON:true,
-                })
-                .then((response) => {
-                    vm.$router.push({
-                    name:"internal-proposal",
-                    params:{approval_id:approval_id}
-                    });
-                }, (error) => {
-                    console.log(error);
-                    swal({
-                    title: "Extend Approval",
-                    text: error.body,
-                    type: "error",
-                    })
-                });
-            },(error) => {
-
-            });
-        },
-
-        extendApproval: function(approval_id){
-            this.$refs.approval_extend.approval_id = approval_id;
-            this.$refs.approval_extend.isModalOpen = true;
-        },
-
-        reinstateApproval:function (approval_id) {
-            let vm = this;
-            let status= 'with_approver'
-            //let data = {'status': status}
-            swal({
-                title: "Reinstate Approval",
-                text: "Are you sure you want to reinstate this approval?",
-                type: "warning",
-                showCancelButton: true,
-                confirmButtonText: 'Reinstate approval',
-                //confirmButtonColor:'#d9534f'
-            }).then(() => {
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.approvals,(approval_id+'/approval_reinstate')),{
-                })
-                .then((response) => {
-                    swal(
-                        'Reinstate',
-                        'Your approval has been reinstated',
-                        'success'
-                    )
-                    vm.$refs.proposal_datatable.vmDataTable.ajax.reload();
-                }, (error) => {
-                    console.log(error);
-                    swal({
-                    title: "Reinstate Approval",
-                    text: error.body,
-                    type: "error",
-                    })
-                });
-            },(error) => {
-
-            });
-        },
-
-        renewApproval:function (proposal_id) {
-            let vm = this;
-            let status= 'with_approver'
-            //let data = {'status': status}
-            swal({
-                title: "Renew Approval",
-                text: "Are you sure you want to renew this approval?",
-                type: "warning",
-                showCancelButton: true,
-                confirmButtonText: 'Renew approval',
-                //confirmButtonColor:'#d9534f'
-            }).then(() => {
-                vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/renew_approval')),{
-                
-                })
-                .then((response) => {
-                   let proposal = {}
-                   proposal = response.body
-                   vm.$router.push({
-                    name:"draft_proposal",
-                    params:{proposal_id: proposal.id}
-                   });
-                    
-                }, (error) => {
-                    console.log(error);
-                    swal({
-                    title: "Renew Approval",
-                    text: error.body,
-                    type: "error",                   
-                    })
-                });
-            },(error) => {
-
-            });
-        },
-
-        amendApproval:function (proposal_id) {
-            let vm = this;
-            swal({
-                title: "Amend Approval",
-                text: "Are you sure you want to amend this approval?",
-                type: "warning",
-                showCancelButton: true,
-                confirmButtonText: 'Amend approval',
-                //confirmButtonColor:'#d9534f'
-            }).then(() => {
-                vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/amend_approval')),{
-                
-                })
-                .then((response) => {
-                   let proposal = {}
-                   proposal = response.body
-                   vm.$router.push({
-                    name:"draft_proposal",
-                    params:{proposal_id: proposal.id}
-                   });
-                    
-                }, (error) => {
-                    console.log(error);
-                    swal({
-                    title: "Amend Approval",
-                    text: error.body,
-                    type: "error",                   
-                    })
-
-                });
-            },(error) => {
-
-            });
-        },
-
-        cancelApproval: function(approval_id){
-            this.$refs.approval_cancellation.approval_id = approval_id;
-            this.$refs.approval_cancellation.isModalOpen = true;
-        },
-
-        suspendApproval: function(approval_id){
-            this.$refs.approval_suspension.approval = {};
-            this.$refs.approval_suspension.approval_id = approval_id;
-            this.$refs.approval_suspension.isModalOpen = true;
-        },
-
-        surrenderApproval: function(approval_id){
-            this.$refs.approval_surrender.approval_id = approval_id;
-            this.$refs.approval_surrender.isModalOpen = true;
-        },
-
         refreshFromResponse: function(){
             this.$refs.proposal_datatable.vmDataTable.ajax.reload();
         },
 
-
     },
     mounted: function(){
-        this.fetchFilterLists();
+        //this.fetchFilterLists();
         this.fetchProfile();
         let vm = this;
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {

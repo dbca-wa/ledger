@@ -48,17 +48,17 @@ class BookingPaginatedViewSet(viewsets.ModelViewSet):
     pagination_class = DatatablesPageNumberPagination
     renderer_classes = (ProposalRenderer,)
     page_size = 10
-    queryset = Booking.objects.none()
-    serializer_class = BookingSerializer
+    queryset = ParkBooking.objects.none()
+    serializer_class = ParkBookingSerializer
 
     def get_queryset(self):
         if is_internal(self.request):
-            return Booking.objects.all()
+            return ParkBooking.objects.all()
 #        elif is_customer(self.request):
 #            user_orgs = [org.id for org in self.request.user.commercialoperator_organisations.all()]
 #            queryset =  Approval.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(submitter = self.request.user))
 #            return queryset
-        return Booking.objects.none()
+        return ParkBooking.objects.none()
 
 #    def list(self, request, *args, **kwargs):
 #        response = super(ProposalPaginatedViewSet, self).list(request, args, kwargs)
@@ -76,7 +76,7 @@ class BookingPaginatedViewSet(viewsets.ModelViewSet):
             http://localhost:8000/api/booking_paginated/bookings_external/?format=datatables&draw=1&length=2
         """
 
-        qs = Booking.objects.all()
+        qs = ParkBooking.objects.all()
 #        ids = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number').values_list('id', flat=True)
 #        qs = Approval.objects.filter(id__in=ids)
 #        qs = self.filter_queryset(qs)
@@ -89,9 +89,12 @@ class BookingPaginatedViewSet(viewsets.ModelViewSet):
 #        if submitter_id:
 #            qs = qs.filter(submitter_id=submitter_id)
 
+        #import ipdb; ipdb.set_trace()
+        qs = self.filter_queryset(qs)
+
         self.paginator.page_size = qs.count()
         result_page = self.paginator.paginate_queryset(qs, request)
-        serializer = BookingSerializer(result_page, context={'request':request}, many=True)
+        serializer = ParkBookingSerializer(result_page, context={'request':request}, many=True)
         return self.paginator.get_paginated_response(serializer.data)
 
 
