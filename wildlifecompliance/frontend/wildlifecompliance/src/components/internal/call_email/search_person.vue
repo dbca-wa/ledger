@@ -237,7 +237,7 @@ export default {
             //licences_url: api_endpoints.licences_paginated+'internal_datatable_list?user_id='+vm.$route.params.user_id,
             //returns_url: api_endpoints.returns+'?user_id='+vm.$route.params.user_id,
 
-            forDemo: true,
+            forDemo: false,
         }
     },
     components: {
