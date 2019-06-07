@@ -182,7 +182,7 @@ def bookings_report(_date):
         history_bookings = BookingHistory.objects.filter(created__date=_date).exclude(booking__booking_type=3)
 
         strIO = StringIO()
-        fieldnames = ['Date','Confirmation Number','Name','Amount','Override Price','Override Reason','Override Details','Invoice','Booking Type','Created By']
+        fieldnames = ['Date','Confirmation Number','Name','Invoice Total','Override Price','Override Reason','Override Details','Invoice','Booking Type','Created By']
         writer = csv.writer(strIO)
         writer.writerow(fieldnames)
 
