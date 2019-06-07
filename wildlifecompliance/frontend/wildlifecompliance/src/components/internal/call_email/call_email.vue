@@ -23,6 +23,23 @@
                                 {{ statusDisplay }}<br/>
                             </div>
                         </div>
+
+                        <div v-if="call_email.allocated_to && call_email.allocated_to.length > 0" class="form-group">
+                          <div class="row">
+                            <div class="col-sm-12 top-buffer-s">
+                              <strong>Currently assigned to</strong><br/>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-sm-12">
+                              <select class="form-control" v-model="call_email.assigned_to_id" >
+                                <option  v-for="option in triage_group" :value="option.id" v-bind:key="option.id">
+                                  {{ option.full_name }} 
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -280,6 +297,7 @@ export default {
       referrers: [],
       compliance_permission_groups: [],
       officers: [],
+      triage_group: [],
       current_schema: [],
       sectionLabel: "Details",
       sectionIndex: 1,
@@ -354,22 +372,10 @@ export default {
     statusId: function() {
       return this.call_email.status ? this.call_email.status.id : '';
     },
-    setRegionalOfficers: function() {
-      let regional_officers = [];
-      for (let group of this.compliance_permission_groups) {
-        if (group.region_district.length > 0 && 
-        group.members.length > 0 && 
-        this.selectedRegion.id > 0 &&
-        group.region_district[0].region === this.selectedRegion.id) {
-          
-          for (let member of group.members) {
-            regional_officers.push(member);
-          }
-        }
-      }
-      console.log(regional_officers);
-      this.regionalOfficers = regional_officers;
-    },
+
+    // assignedToVisibility: function() {
+    //   if (call_email.allocated_to.length > 0 || call_email.assigned_to
+    // },
   },
   filters: {
     formatDate: function(data) {
@@ -484,6 +490,17 @@ export default {
     Object.assign(this.officers, returned_officers);
     // blank entry allows user to clear selection
     this.officers.splice(0, 0, 
+      {
+        id: "", 
+        full_name: "",
+      });
+
+    // Triage group
+    let returned_triage_group = await Vue.http.post('/api/compliancepermissiongroup/get_users/', { 'user_list': this.call_email.allocated_to });
+    console.log(returned_triage_group)
+    Object.assign(this.triage_group, returned_triage_group.body);
+    // blank entry allows user to clear selection
+    this.triage_group.splice(0, 0, 
       {
         id: "", 
         full_name: "",

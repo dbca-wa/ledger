@@ -409,13 +409,19 @@ class PermissionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Permission
-        fields = '__all__'
+        fields = (
+            'codename',
+        )
+        read_only_fields = (
+            'codename',
+        )
 
 
 class CompliancePermissionGroupDetailedSerializer(serializers.ModelSerializer):
     region_district = RegionDistrictSerializer(many=True)
     members = ComplianceUserDetailsOptimisedSerializer(many=True)
-    permissions = PermissionSerializer(many=True)
+    # permissions = PermissionSerializer(many=True)
+    permissions_list = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = CompliancePermissionGroup
@@ -425,9 +431,13 @@ class CompliancePermissionGroupDetailedSerializer(serializers.ModelSerializer):
             'region_district',
             'display_name',
             'members',
-            'permissions',
+            # 'permissions',
+            'permissions_list',
             )
-    # def get_permissions(self, obj):
-    #     return obj.permissions.all()
 
+    def get_permissions_list(self, obj):
+        permissions_list = []
+        for permission in obj.permissions.all():
+            permissions_list.append(permission.codename)
+        return permissions_list
 
