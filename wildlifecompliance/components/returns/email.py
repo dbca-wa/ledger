@@ -2,10 +2,7 @@ import logging
 
 from django.core.mail import EmailMultiAlternatives, EmailMessage
 from django.utils.encoding import smart_text
-from django.core.urlresolvers import reverse
 from django.conf import settings
-from ledger.payments.pdf import create_invoice_pdf_bytes
-from ledger.payments.models import Invoice
 
 from wildlifecompliance.components.emails.emails import TemplateEmailBase
 
@@ -34,9 +31,13 @@ class ReturnExternalSheetTransferNotification(TemplateEmailBase):
 
 def send_return_accept_email_notification(return_obj, request):
     email = ReturnAcceptNotificationEmail()
+    url = request.build_absolute_uri(
+        '/external/return/{}'.format(return_obj.id)
+    )
 
     context = {
-        'Return': return_obj
+        'Return': return_obj,
+        'url': url
     }
     msg = email.send(return_obj.submitter.email, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
@@ -46,18 +47,14 @@ def send_return_accept_email_notification(return_obj, request):
 
 def send_external_submit_email_notification(request, return_obj):
     email = ReturnExternalSubmitSendNotificationEmail()
-    # Below code adds url
-    # url = request.build_absolute_uri(reverse('external-return-detail',kwargs={'return_pk': return_obj.id}))
-    # url = ''.join(url.split('-internal'))
-    # context = {
-    #     'Return': return_obj,
-    #     'submitter': return_obj.submitter.get_full_name(),
-    #     'url': url
-    # }
+    url = request.build_absolute_uri(
+        '/external/return/{}'.format(return_obj.id)
+    )
 
     context = {
         'Return': return_obj,
-        'submitter': return_obj.submitter.get_full_name()
+        'submitter': return_obj.submitter.get_full_name(),
+        'url': url
     }
 
     msg = email.send(return_obj.submitter.email, context=context)
