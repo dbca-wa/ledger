@@ -51,6 +51,7 @@ from oscar.apps.order.models import Order
 import logging
 logger = logging.getLogger('payment_checkout')
 
+
 class ApplicationFeeView(TemplateView):
     template_name = 'commercialoperator/booking/success.html'
 
@@ -85,7 +86,6 @@ class ApplicationFeeView(TemplateView):
             if booking:
                 booking.delete()
             raise
-
 
 
 class MakePaymentView(TemplateView):

@@ -355,11 +355,11 @@ export default {
         vm.submitting = true;
 
         swal({
-            title: "Submit Proposal",
-            text: "Are you sure you want to submit this proposal?",
+            title: "Pay and Submit Application",
+            text: "Are you sure you want to pay and submit this application?",
             type: "question",
             showCancelButton: true,
-            confirmButtonText: 'Submit'
+            confirmButtonText: 'Pay and Submit'
         }).then(() => {
             if (!vm.proposal.fee_paid) {
                 vm.save_and_redirect();

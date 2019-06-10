@@ -41,7 +41,7 @@
                             </div>
                         </div>
                         <!--<div v-if="is_internal" class="col-md-3">-->
-                        <div v-if="true" class="col-md-3">
+                        <div v-if="is_external" class="col-md-3">
                             <div class="form-group">
                                 <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'payment_order'  }">Make Payment</router-link>
                             </div>
