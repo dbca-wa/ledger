@@ -254,7 +254,7 @@
                         <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
                         <p>Mooring Limits</p>
                         <div class="row">
-                            <div class="col-md-7">
+                            <div class="col-md-7"  style='display:none'>
                                 <small>Max Stay: <span id='max_stay_period'></span> day/s</small>
                             </div>
                             <div class="col-md-5">
@@ -295,7 +295,7 @@
                                 <p ><i><small>Max Stay Period: {{ f.max_advance_booking }} day/s </small></i></p> -->
                                 <p>Mooring Limits</p>
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-6"  style='display:none'>
                                         <small>Max Stay: {{ f.max_advance_booking }} day/s</small>
                                     </div>
                                     <div class="col-md-6">
@@ -2585,8 +2585,6 @@ export default {
                 $('#mapPopupName').html(properties.props.name);
                 $('#mapPopupInfo').attr('href', properties.props.info_url);
                 if (properties.props.mooring_type == 0 || properties.props.mooring_type == 1 || properties.props.mooring_type == 2) {
-                    console.log('MOOR');
-                    console.log(properties.props.mooring_type);
                     $('#mapPopupMooringType').val(properties.props.mooring_physical_type);
                     if (properties.bookable == true) { 
                         $('#mapPopupBook').show();
