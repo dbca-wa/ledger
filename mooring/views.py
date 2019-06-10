@@ -887,7 +887,8 @@ class MakeBookingsView(TemplateView):
                 else:
                     form_context['phone'] = request.user.phone_number
                 if  Address.objects.filter(user=request.user).count() > 0:
-                    address = Address.objects.get(user=request.user)
+                    address = Address.objects.filter(user=request.user)[0]
+                        
                     form_context['postcode'] = address.postcode
                     form_context['country'] = address.country
                 form = MakeBookingsForm(form_context)

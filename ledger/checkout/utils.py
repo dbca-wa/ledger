@@ -353,8 +353,9 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
             if not isinstance(owner, User):
                 owner = User.objects.get(id=owner)
             # Check if owner has previous baskets
-            if owner.baskets.filter(status='Open'):
-                old_basket = owner.baskets.get(status='Open')
+            open_baskets = Basket.objects.filter(status='Open',system=system,owner=owner).count()
+            if open_baskets > 0:
+                old_basket = Basket.objects.filter(status='Open',system=system,owner=owner)[0]
 
         # Use the previously open basket if its present or create a new one
         if old_basket:
