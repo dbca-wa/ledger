@@ -54,7 +54,6 @@
 
               <!-- for debugging -->
               <!--
-              -->
               <pre class="output">
                 {{ value }}
               </pre>

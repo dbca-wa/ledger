@@ -21,28 +21,37 @@
                                 </select>
                             </div>
                         </div>
+                        -->
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="">Activity</label>
-                                <select class="form-control" v-model="filterProposalActivity">
+                                <label for="">Park</label>
+                                <select class="form-control" v-model="filterProposalPark">
                                     <option value="All">All</option>
-                                    <option v-for="a in proposal_activityTitles" :value="a">{{a}}</option>
+                                    <option v-for="p in proposal_parks" :value="p.id">{{p.name}}</option>
                                 </select>
                             </div>
                         </div>
-                        -->
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Status</label>
                                 <select class="form-control" v-model="filterProposalStatus">
                                     <option value="All">All</option>
-                                    <option v-for="s in approval_status" :value="s">{{s}}</option>
+                                    <option v-for="s in payment_status" :value="s.value">{{s.name}}</option>
                                 </select>
                             </div>
                         </div>
+                        <!--<div v-if="is_internal" class="col-md-3">-->
+                        <div v-if="true" class="col-md-3">
+                            <div class="form-group">
+                                <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'payment_order'  }">Make Payment</router-link>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="">Expiry From</label>
+                                <label for="">Arrival From</label>
                                 <div class="input-group date" ref="proposalDateFromPicker">
                                     <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedFrom">
                                     <span class="input-group-addon">
@@ -53,22 +62,13 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="">Expiry To</label>
+                                <label for="">Arrival To</label>
                                 <div class="input-group date" ref="proposalDateToPicker">
                                     <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedTo">
                                     <span class="input-group-addon">
                                         <span class="glyphicon glyphicon-calendar"></span>
                                     </span>
                                 </div>
-                            </div>
-                        </div>
-                        <div v-if="is_internal" class="col-md-3">
-                            <div class="form-group">
-                                <label/>
-                            <div>
-                                <!-- <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_proposal' }">New Proposal</router-link> -->
-                                <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="disabled" @click.prevent="createEClassLicence()">New E-Class licence</button>
-                            </div>
                             </div>
                         </div>
                     </div>
@@ -119,6 +119,7 @@ export default {
             //Profile to check if user has access to process Proposal
             profile: {},
             // Filters for Proposals
+            filterProposalPark: 'All',
             filterProposalStatus: 'All',
             filterProposalLodgedFrom: '',
             filterProposalLodgedTo: '',
@@ -131,14 +132,14 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            approval_status:[
-                'Paid',
-                'Over Paid',
-                'Partially Paid',
-                'Unpaid',
-
+            payment_status:[
+                {name:'Paid', value:'paid'},
+                {name:'Over Paid', value:'over_paid'},
+                {name:'Partially Paid', value:'partially_paid'},
+                {name:'Unpaid', value:'unpaid'}
             ],
             proposal_submitters: [],
+            proposal_parks: [],
             proposal_headers:[
                 "Number","Approval Number","Holder","Status","Arrival","Park","Invoice/Confirmation","Action",
             ],
@@ -157,6 +158,7 @@ export default {
 
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
+                        d.payment_status = vm.filterProposalStatus != 'All' && vm.filterProposalStatus != null ? vm.filterProposalStatus : '';
                         d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                     }
@@ -176,11 +178,13 @@ export default {
                     },
                     {
                         data: "applicant",
-                        name: "applicant"
+                        name: "booking__proposal__approval__org_applicant__organisation__name, booking__proposal__approval__proxy_applicant__email"
                     },
                     {
                         data: "payment_status",
-                        name: "payment_status"
+                        name: "payment_status",
+                        searchable: false,
+                        orderable: false
                     },
                     {
                         data: "arrival",
@@ -192,7 +196,7 @@ export default {
                     },
                     {
                         data: "park",
-                        name: "park__name"
+                        name: "park__id, park__name"
                     },
                     {
                         data: '',
@@ -251,7 +255,6 @@ export default {
             } else {
                 vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
             }
-
         },
         filterProposalStatus: function() {
             let vm = this;
@@ -261,6 +264,15 @@ export default {
                 vm.$refs.proposal_datatable.vmDataTable.columns(3).search('').draw();
             }
         },
+        filterProposalPark: function() {
+            let vm = this;
+            if (vm.filterProposalPark!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(5).search(vm.filterProposalPark).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(5).search('').draw();
+            }
+        },
+
         filterProposalLodgedFrom: function(){
             this.$refs.proposal_datatable.vmDataTable.draw();
         },
@@ -286,10 +298,17 @@ export default {
 
             vm.$http.get(api_endpoints.filter_list_approvals).then((response) => {
                 vm.proposal_submitters = response.body.submitters;
-                vm.approval_status = response.body.approval_status_choices;
+                //vm.approval_status = response.body.approval_status_choices;
             },(error) => {
                 console.log(error);
             })
+            
+            vm.$http.get(api_endpoints.filter_list_parks).then((response) => {
+                vm.proposal_parks = response.body;
+            },(error) => {
+                console.log(error);
+            })
+
             //console.log(vm.regions);
         },
 
@@ -440,7 +459,7 @@ export default {
 
     },
     mounted: function(){
-        //this.fetchFilterLists();
+        this.fetchFilterLists();
         this.fetchProfile();
         let vm = this;
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {

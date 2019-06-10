@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, B
 from rest_framework.pagination import PageNumberPagination
 from django.urls import reverse
 from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, ActivityCategory, Activity, RequiredDocument, Question
-from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer,  AccessTypeSerializer, ParkSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, RequiredDocumentSerializer, QuestionSerializer
+from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer,  AccessTypeSerializer, ParkSerializer, ParkFilterSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, RequiredDocumentSerializer, QuestionSerializer
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from commercialoperator.components.proposals.models import Proposal
@@ -108,9 +108,18 @@ class AccessTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AccessType.objects.all().order_by('id')
     serializer_class = AccessTypeSerializer
 
+class ParkFilterViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Park.objects.all().order_by('id')
+    serializer_class = ParkFilterSerializer
+
 class ParkViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Park.objects.all().order_by('id')
     serializer_class = ParkSerializer
+
+    @list_route(methods=['GET',])
+    def filter_list(self, request, *args, **kwargs):
+        serializer = ParkFilterSerializer(self.get_queryset(),context={'request':request}, many=True)
+        return Response(serializer.data)
 
     @list_route(methods=['GET',])
     def marine_parks(self, request, *args, **kwargs):

@@ -88,10 +88,12 @@ from commercialoperator.components.proposals.serializers import (
     ProposalAssessmentSerializer,
     ProposalAssessmentAnswerSerializer
 )
+from commercialoperator.components.bookings.models import ParkBooking, BookingInvoice
 from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.approvals.serializers import ApprovalSerializer
 from commercialoperator.components.compliances.models import Compliance
 from commercialoperator.components.compliances.serializers import ComplianceSerializer
+from ledger.payments.invoice.models import Invoice
 
 from commercialoperator.helpers import is_customer, is_internal
 from django.core.files.base import ContentFile
@@ -146,7 +148,6 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                     return i[0]
             return None
 
-        #import ipdb; ipdb.set_trace()
         # on the internal dashboard, the Region filter is multi-select - have to use the custom filter below
         regions = request.GET.get('regions')
         if regions:
@@ -154,23 +155,23 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(region__name__iregex=regions.replace(',', '|'))
             elif queryset.model is Referral or queryset.model is Compliance:
                 queryset = queryset.filter(proposal__region__name__iregex=regions.replace(',', '|'))
-            #elif queryset.model is Approval:
-            #    queryset = queryset.filter(region__iregex=regions.replace(',', '|'))
 
-        # since in proposal_datatables.vue, the 'region' data field is declared 'searchable=false'
-        #global_search = request.GET.get('search[value]')
-        #if global_search:
-        #    queryset = queryset.filter(region__name__iregex=global_search)
+        # on the internal dashboard, the Payment Status filter is a property field (not a DB field) - have to use the custom filter below
+        payment_status = request.GET.get('payment_status')
+        if payment_status:
+            if queryset.model is ParkBooking:
+                #invoice_refs = BookingInvoice.objects.all().values_list('invoice_reference', flat=True).distinct()
+                #filtered_refs = [x.reference for x in Invoice.objects.filter(reference__in=invoice_refs) if x.payment_status==payment_status]
+                #queryset = queryset.filter(booking__invoices__invoice_reference__in=filtered_refs)
 
+                #[ParkBooking.objects.filter(booking__invoices__invoice_reference=x).latest('id') for x in refs if Invoice.objects.get(reference=x).payment_status==payment_status]
+                #queryset = queryset.filter(booking__invoices__invoice_reference__in=filtered_refs)
 
-        # on the internal dashboard, the Referral 'Status' filter - have to use the custom filter below
-        #import ipdb; ipdb.set_trace()
-#        processing_status = request.GET.get('processing_status')
-#        processing_status = get_choice(processing_status, Proposal.PROCESSING_STATUS_CHOICES)
-#        if processing_status:
-#            if queryset.model is Referral:
-#                #processing_status_id = [i for i in Proposal.PROCESSING_STATUS_CHOICES if i[1]==processing_status][0][0]
-#                queryset = queryset.filter(processing_status=processing_status)
+                #import ipdb; ipdb.set_trace()
+                refs = [i.booking.invoices.last().invoice_reference  for i in ParkBooking.objects.all() if i.booking and i.booking.invoices.last()]
+                filtered_refs = [i.reference for i in Invoice.objects.filter(reference__in=refs) if i.payment_status==payment_status]
+                queryset = queryset.filter(booking__invoices__invoice_reference__in=filtered_refs).distinct('id')
+
 
         date_from = request.GET.get('date_from')
         date_to = request.GET.get('date_to')
@@ -198,6 +199,14 @@ class ProposalFilterBackend(DatatablesFilterBackend):
 
             if date_to:
                 queryset = queryset.filter(proposal__lodgement_date__lte=date_to)
+        elif queryset.model is ParkBooking:
+            if date_from:
+                queryset = queryset.filter(arrival__gte=date_from)
+
+            if date_to:
+                queryset = queryset.filter(arrival__lte=date_to)
+
+
 
         queryset = super(ProposalFilterBackend, self).filter_queryset(request, queryset, view)
         setattr(view, '_datatables_total_count', total_count)
