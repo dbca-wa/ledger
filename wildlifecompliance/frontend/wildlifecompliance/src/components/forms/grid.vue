@@ -83,40 +83,42 @@ const GridBlock = {
   },
   methods: {
     addRow: function(e) {
-      this.grid_item = this._props['field_data'];
-      let index = this.grid_item.length
-      let fieldObj = Object.assign({}, this.grid_item[0]);
+      const self = this;
+      self.grid_item = self._props['field_data'];
+      let index = self.grid_item.length;
+      let fieldObj = Object.assign({}, self.grid_item[0]);
       // schema data type on each field is validated - error value required.
       for(let key in fieldObj) {
-        fieldObj[key] = {'value':'', 'error':''}
+        fieldObj[key] = {'value':'', 'error':''};
       };
-      this.grid_item.push(fieldObj);
+      self.grid_item.push(fieldObj);
     },
     addColumn: function(e) {
     },
     addArea: function(e) {
     },
     setDateValue: function(value, row, name) {
+      const self = this;
       if (value !== '') {
-         this.field_data[row][name].value = value
-         this.value = value
+         self.field_data[row][name].value = value;
+         self.value = value;
       }
-      return this.field_data[row][name].value
+      return self.field_data[row][name].value;
     },
     setDatePicker: function() {
-      var vm = this
-      for (let row=0; row<vm.field_data.length; row++) {
-        Object.keys(vm.field_data[row]).forEach(function(key) {
+      const self = this;
+      for (let row=0; row<self.field_data.length; row++) {
+        Object.keys(self.field_data[row]).forEach(function(key) {
           if (key.indexOf('date')>-1) {
-            var val = key + '::' + row
-            var dateVal = vm.field_data[row][key].value != null ? vm.field_data[row][key].value : ''
-            var parts = dateVal.split('/')
+            let val = key + '::' + row;
+            let dateVal = self.field_data[row][key].value != null ? self.field_data[row][key].value : '';
+            let parts = dateVal.split('/');
             var newDate = new Date(parts[2], parts[1] - 1, parts[0]); // format new Date(YYYY,MM,DD)
             $(`[id='${val}']`).datetimepicker({
               format: 'DD/MM/YYYY',
               defaultDate: dateVal != '' ? newDate : null
             }).off('dp.change').on('dp.change', (e) => {
-              vm.value = $(e.target).data('DateTimePicker').date($(e.target)[0].value).format('DD/MM/YYYY');
+              self.value = $(e.target).data('DateTimePicker').date($(e.target)[0].value).format('DD/MM/YYYY');
             });
           }
         });
@@ -127,7 +129,6 @@ const GridBlock = {
       this.setDatePicker();
   },
   mounted:function () {
-      console.log('mounted')
       this.setDatePicker();
   }
 }
