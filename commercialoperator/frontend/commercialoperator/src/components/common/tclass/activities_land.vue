@@ -938,10 +938,7 @@ export default {
           }
         },
         eventListeners: function(){
-            let vm = this;
-            // Fix the table responsiveness when tab is shown
             
-            vm.$refs.vehicles_table.$refs.vehicle_datatable.vmDataTable.columns.adjust().responsive.recalc();
         },
     },
 
@@ -1001,9 +998,9 @@ export default {
             vm.selected_parks=park_list
             
             this.$nextTick(() => {
-              //vm.createParkEvent(vm.selected_parks)
+              //vm.eventListeners();
             });
-            
+            //vm.eventListeners();
 
             vm.store_trails(vm.proposal.trails);
 
