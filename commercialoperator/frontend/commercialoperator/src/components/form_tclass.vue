@@ -183,11 +183,11 @@
                     /* Payment tab */
                     $('#pills-payment-tab').attr('style', 'background-color:#E5E8E8 !important; color: #99A3A4;');
                     $('#li-payment').attr('class', 'nav-item disabled');
-
-                    /* Confirmation tab */
-                    $('#pills-confirm-tab').attr('style', 'background-color:#E5E8E8 !important; color: #99A3A4;');
-                    $('#li-confirm').attr('class', 'nav-item disabled');
                 }
+
+                /* Confirmation tab - Always Disabled */
+                $('#pills-confirm-tab').attr('style', 'background-color:#E5E8E8 !important; color: #99A3A4;');
+                $('#li-confirm').attr('class', 'nav-item disabled');
             }
 
         },

@@ -38,6 +38,8 @@ class ParkBookingSerializer(serializers.ModelSerializer):
     approval_number = serializers.SerializerMethodField(read_only=True)
     booking = BookingSerializer(read_only=True)
     applicant = serializers.SerializerMethodField(read_only=True)
+    org_applicant = serializers.SerializerMethodField(read_only=True)
+    proxy_applicant = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
     invoice_reference = serializers.SerializerMethodField(read_only=True)
     class Meta:
@@ -53,11 +55,27 @@ class ParkBookingSerializer(serializers.ModelSerializer):
             'booking',
             'approval_number',
             'applicant',
+            'org_applicant',
+            'proxy_applicant',
             'payment_status',
             'invoice_reference',
         )
         datatables_always_serialize = (
+            'id',
+            'park',
+            'arrival',
+            'no_adults',
+            'no_children',
+            'no_free_of_charge',
+            'cost',
+            'booking',
+            'approval_number',
+            'applicant',
+            'org_applicant',
+            'proxy_applicant',
+            'payment_status',
             'invoice_reference',
+
         )
 
     def get_park(self,obj):
@@ -71,6 +89,12 @@ class ParkBookingSerializer(serializers.ModelSerializer):
     def get_applicant(self,obj):
         #import ipdb; ipdb.set_trace()
         return obj.booking.proposal.approval.applicant if obj.booking else ''
+
+    def get_org_applicant(self,obj):
+        return obj.booking.proposal.approval.org_applicant.name if obj.booking else ''
+
+    def get_proxy_applicant(self,obj):
+        return obj.booking.proposal.approval.proxy_applicant if obj.booking else ''
 
     def get_invoice_reference(self,obj):
         #import ipdb; ipdb.set_trace()

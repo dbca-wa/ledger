@@ -52,20 +52,15 @@ class BookingPaginatedViewSet(viewsets.ModelViewSet):
     serializer_class = ParkBookingSerializer
 
     def get_queryset(self):
+        #import ipdb; ipdb.set_trace()
+        user = self.request.user
         if is_internal(self.request):
             return ParkBooking.objects.all()
-#        elif is_customer(self.request):
-#            user_orgs = [org.id for org in self.request.user.commercialoperator_organisations.all()]
-#            queryset =  Approval.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(submitter = self.request.user))
-#            return queryset
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
+            return  ParkBooking.objects.filter( Q(booking__proposal__org_applicant_id__in = user_orgs) | Q(booking__proposal__submitter = user) )
         return ParkBooking.objects.none()
 
-#    def list(self, request, *args, **kwargs):
-#        response = super(ProposalPaginatedViewSet, self).list(request, args, kwargs)
-#
-#        # Add extra data to response.data
-#        #response.data['regions'] = self.get_queryset().filter(region__isnull=False).values_list('region__name', flat=True).distinct()
-#        return response
 
     @list_route(methods=['GET',])
     def bookings_external(self, request, *args, **kwargs):
@@ -76,20 +71,8 @@ class BookingPaginatedViewSet(viewsets.ModelViewSet):
             http://localhost:8000/api/booking_paginated/bookings_external/?format=datatables&draw=1&length=2
         """
 
-        qs = ParkBooking.objects.all()
-#        ids = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number').values_list('id', flat=True)
-#        qs = Approval.objects.filter(id__in=ids)
-#        qs = self.filter_queryset(qs)
-#
-#        # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation
-#        applicant_id = request.GET.get('org_id')
-#        if applicant_id:
-#            qs = qs.filter(org_applicant_id=applicant_id)
-#        submitter_id = request.GET.get('submitter_id', None)
-#        if submitter_id:
-#            qs = qs.filter(submitter_id=submitter_id)
-
         #import ipdb; ipdb.set_trace()
+        qs = self.get_queryset()
         qs = self.filter_queryset(qs)
 
         self.paginator.page_size = qs.count()
@@ -103,12 +86,12 @@ class BookingViewSet(viewsets.ModelViewSet):
     serializer_class = BookingSerializer
 
     def get_queryset(self):
+        user = self.request.user
         if is_internal(self.request):
             return Booking.objects.all()
-#        elif is_customer(self.request):
-#            user_orgs = [org.id for org in self.request.user.commercialoperator_organisations.all()]
-#            queryset =  Approval.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(submitter = request.user))
-#            return queryset
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
+            return  Booking.objects.filter( Q(proposal__org_applicant_id__in = user_orgs) | Q(proposal__submitter = user) )
         return Booking.objects.none()
 
 
@@ -117,12 +100,12 @@ class ParkBookingViewSet(viewsets.ModelViewSet):
     serializer_class = ParkBookingSerializer
 
     def get_queryset(self):
+        #import ipdb; ipdb.set_trace()
+        user = self.request.user
         if is_internal(self.request):
             return ParkBooking.objects.all()
-#        elif is_customer(self.request):
-#            user_orgs = [org.id for org in self.request.user.commercialoperator_organisations.all()]
-#            queryset =  Approval.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(submitter = request.user))
-#            return queryset
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
+            return  ParkBooking.objects.filter( Q(booking__proposal__org_applicant_id__in = user_orgs) | Q(booking__proposal__submitter = user) )
         return ParkBooking.objects.none()
-
 
