@@ -116,7 +116,7 @@
           </div>
           <div class="borderDecoration col-sm-12">
             <label class="control-label">Provide details of every vehicle you plan to use when accessing the parks</label>
-              <VehicleTable :url="vehicles_url" :proposal="proposal"></VehicleTable>
+              <VehicleTable :url="vehicles_url" :proposal="proposal" ref="vehicles_table"></VehicleTable>
           </div>
         </div>
       </div>
@@ -936,6 +936,12 @@ export default {
             event.initEvent('click', true, true);
             elem.dispatchEvent(event);
           }
+        },
+        eventListeners: function(){
+            let vm = this;
+            // Fix the table responsiveness when tab is shown
+            
+            vm.$refs.vehicles_table.$refs.vehicle_datatable.vmDataTable.columns.adjust().responsive.recalc();
         },
     },
 

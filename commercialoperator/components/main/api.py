@@ -9,8 +9,8 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
 from rest_framework.pagination import PageNumberPagination
 from django.urls import reverse
-from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, ActivityCategory, Activity, RequiredDocument, Question
-from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer,  AccessTypeSerializer, ParkSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, RequiredDocumentSerializer, QuestionSerializer
+from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, ActivityCategory, Activity, RequiredDocument, Question, GlobalSettings
+from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer,  AccessTypeSerializer, ParkSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, RequiredDocumentSerializer, QuestionSerializer, GlobalSettingsSerializer
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from commercialoperator.components.proposals.models import Proposal
@@ -107,6 +107,10 @@ class ApplicationTypeViewSet(viewsets.ReadOnlyModelViewSet):
 class AccessTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AccessType.objects.all().order_by('id')
     serializer_class = AccessTypeSerializer
+
+class GlobalSettingsViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = GlobalSettings.objects.all().order_by('id')
+    serializer_class = GlobalSettingsSerializer
 
 class ParkViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Park.objects.all().order_by('id')

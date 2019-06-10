@@ -385,6 +385,20 @@ class Document(models.Model):
     def __str__(self):
         return self.name or self.filename
 
+class GlobalSettings(models.Model):
+    keys = (
+        ('credit_facility_link', 'Credit Facility Link'),
+        ('deed_poll', 'Deed poll'),
+        ('online_training_document', 'Online Training Document'),
+        
+    )
+    key = models.CharField(max_length=255, choices=keys, blank=False, null=False,)
+    value = models.CharField(max_length=255)
+
+    class Meta:
+        app_label = 'commercialoperator'
+        verbose_name_plural = "Global Settings"
+
 
 @python_2_unicode_compatible
 class SystemMaintenance(models.Model):

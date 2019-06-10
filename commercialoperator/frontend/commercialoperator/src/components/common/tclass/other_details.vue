@@ -291,7 +291,8 @@
                         <div class="form-group">
                            <div class="row">
                                 <div class="col-sm-12">
-                                    <label>Print the deed poll, sign it, have it witnessed and attach it to this application</label>
+                                    <label v-if="deed_poll_url">Print the <a :href="deed_poll_url" target="_blank">deed poll</a>, sign it, have it witnessed and attach it to this application</label>
+                                    <label v-else>Print the deed poll, sign it, have it witnessed and attach it to this application</label>
                                 </div>   
                             </div>
                             <div class="row">
@@ -342,6 +343,7 @@ export default {
                 selected_accreditations:[],
                 licence_period_choices:[],
                 mooring: [''],
+                global_settings:[],
                 //mooring:[{'value':''}],
                 datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -357,7 +359,17 @@ export default {
           Accreditation
         },
         computed: {
-            
+            deed_poll_url: function(){
+                let vm=this;
+                if(vm.global_settings){
+                    for(var i=0; i<vm.global_settings.length; i++){
+                        if(vm.global_settings[i].key=='deed_poll'){
+                            return vm.global_settings[i].value;
+                        }
+                    }
+                }
+                return '';
+            }
         },
         watch:{
             
@@ -425,6 +437,15 @@ export default {
                 let vm = this;
                 vm.$http.get('/api/licence_period_choices.json').then((response) => {
                     vm.licence_period_choices = response.body;
+                    
+                },(error) => {
+                    console.log(error);
+                } );
+            },
+            fetchGlobalSettings: function(){
+                let vm = this;
+                vm.$http.get('/api/global_settings.json').then((response) => {
+                    vm.global_settings = response.body;
                     
                 },(error) => {
                     console.log(error);
@@ -543,6 +564,7 @@ export default {
             let vm = this;
             vm.fetchAccreditationChoices();
             vm.fetchLicencePeriodChoices();
+            vm.fetchGlobalSettings();
             vm.checkProposalAccreditation();
             vm.showDockteNumber();
             this.$nextTick(()=>{

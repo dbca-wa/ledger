@@ -16,7 +16,8 @@ from commercialoperator.components.main.models import (
     Section,
     Zone,
     RequiredDocument,
-    Question
+    Question,
+    GlobalSettings
 )
 #from commercialoperator.components.main.models import Activity, SubActivityLevel1, SubActivityLevel2, SubCategory
 from reversion.admin import VersionAdmin
@@ -172,6 +173,11 @@ class Activity(admin.ModelAdmin):
 class VehicleAdmin(admin.ModelAdmin):
     list_display = ['id','name','visible']
     ordering = ('id',)
+
+@admin.register(GlobalSettings)
+class GlobalSettingsAdmin(admin.ModelAdmin):
+    list_display = ['key', 'value']
+    ordering = ('key',)
 
 @admin.register(models.ReferralRecipientGroup)
 class ReferralRecipientGroupAdmin(admin.ModelAdmin):
