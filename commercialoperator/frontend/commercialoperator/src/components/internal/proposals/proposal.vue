@@ -1,6 +1,6 @@
 <template lang="html">
     <div v-if="proposal" class="container" id="internalProposal">
-      <div class="row">
+      <div class="row" style="padding-bottom: 50px;">
         <h3>Proposal: {{ proposal.lodgement_number }}</h3>
         <h4>Proposal Type: {{proposal.proposal_type }}</h4>
         <div class="col-md-3">
