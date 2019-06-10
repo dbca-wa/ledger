@@ -156,6 +156,12 @@ export const callemailStore = {
                 }
             }
         },
+        updateAllocatedGroup(state, id) {
+            console.log("updateAllocatedGroup");
+            if (id) {
+                Vue.set(state.call_email, 'allocated_group_id', id);
+            }
+        },
         updateClassification(state, classification) {
             if (classification) {
                 Vue.set(state.call_email, 'classification', classification);
@@ -211,7 +217,13 @@ export const callemailStore = {
         },
         updateLocationDetailsFieldEmpty(state) {
             state.call_email.location.properties.details = "";
-        }
+        },
+        updateAllocatedGroupList(state, data) {
+            Vue.set(state.call_email, 'allocated_group', data);
+        },
+        updateAllocatedGroupId(state, id) {
+            state.call_email.allocated_group_id = id;
+        },
     },
     actions: {
         async loadCallEmail({ dispatch, }, { call_email_id }) {
@@ -317,9 +329,33 @@ export const callemailStore = {
                 return callId;
             }
         },
-        setAllocatedTo({ commit, }, member_ids) {
-            console.log("setAllocatedTo");
-            commit("updateAllocatedTo", member_ids);
+        setAllocatedGroupList({ commit }, data) {
+            console.log("setAllocatedGroupList");
+            commit('updateAllocatedGroupList', data);
+        },
+        async loadAllocatedGroup({ dispatch }, { region_district_id, group_permission } ) {
+            console.log(region_district_id);
+            console.log(group_permission);
+            let url = helpers.add_endpoint_join(
+                api_endpoints.region_district,
+                region_district_id + '/get_group_id_by_region_district/'
+                );
+            console.log(url);
+            let returned = await Vue.http.post(
+                url, 
+                { 'group_permission': group_permission
+            });
+            console.log(returned.body);
+            if (returned.body.group_id) {
+                await dispatch('setAllocatedGroupId', returned.body.group_id);
+            }
+            if (returned.body.allocated_group) {
+                await dispatch('setAllocatedGroupList', returned.body.allocated_group);
+            }
+        },
+        setAllocatedGroupId({ commit, }, id) {
+            console.log("setAllocatedGroupId");
+            commit("updateAllocatedGroupId", id);
         },
         setCallID({ commit, }, id) {
             console.log("setCallID");

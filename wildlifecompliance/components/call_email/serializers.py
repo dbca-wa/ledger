@@ -225,9 +225,11 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)
     district_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
-    allocated_to = serializers.ListField(
-        required=False, write_only=True, allow_empty=True)
+    # allocated_to = serializers.ListField(
+    #     required=False, write_only=True, allow_empty=True)
     assigned_to_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    allocated_group_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
 
     class Meta:
@@ -237,7 +239,8 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             'number',
             'status',
             'assigned_to_id',
-            'allocated_to',
+            # 'allocated_to',
+            'allocated_group_id',
             # 'status_display',
             'schema',
             'location',
@@ -327,7 +330,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
     # assigned_to = ComplianceUserDetailsOptimisedSerializer(read_only=True)
     # allocated_to = serializers.ListField(
     #     required=False, read_only=True, allow_empty=True)
-    allocated_to = serializers.SerializerMethodField()
+    allocated_to = ComplianceUserDetailsOptimisedSerializer(many=True)
     # assigned_to_id = serializers.IntegerField(
     #     required=False, read_only=True, allow_null=True)
 
@@ -339,6 +342,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             # 'status_display',
             'assigned_to_id',
             'allocated_to',
+            'allocated_group_id',
             'location',
             'location_id',
             'classification',
@@ -372,11 +376,11 @@ class CallEmailSerializer(serializers.ModelSerializer):
             # 'status_display',
             )
         
-    def get_allocated_to(self, obj):
-        allocated_group = []
-        for allocated_user in obj.allocated_to.all():
-            allocated_group.append(allocated_user.id)
-        return allocated_group
+    # def get_allocated_to(self, obj):
+    #     allocated_group = []
+    #     for allocated_user in obj.allocated_to.all():
+    #         allocated_group.append(allocated_user.id)
+    #     return allocated_group
 
 
 class CallEmailDatatableSerializer(serializers.ModelSerializer):
@@ -434,9 +438,11 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)
     district_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
-    allocated_to = serializers.ListField(
-        required=False, write_only=True, allow_empty=True)
+    # allocated_to = serializers.ListField(
+    #     required=False, write_only=True, allow_empty=True)
     assigned_to_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    allocated_group_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
 
     class Meta:
@@ -445,7 +451,8 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
             'id',
             'status',
             'assigned_to_id',
-            'allocated_to',
+            # 'allocated_to',
+            'allocated_group_id',
             'location_id',
             'classification_id',
             'lodgement_date',

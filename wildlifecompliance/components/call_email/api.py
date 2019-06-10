@@ -604,8 +604,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     attachments.append(document)
 
                 # user = EmailUser.objects.filter(email='brendan.blackford@dbca.wa.gov.au')
-                print("request.data.get('allocated_to_group')")
-                print(request.data.get('allocated_to_group'))
+                
                 email_group = []
                 if request.data.get('assigned_to'):
                     try:
@@ -630,10 +629,21 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 else:
                     email_group = request.user
 
-                # Set CallEmail status to open
-                instance.status = 'open'
+                # Set CallEmail status depending on workflow type
+                workflow_type = request.data.get('region_id')
+                if workflow_type in ('forward_to_regions', 'forward_to_wildlife_protection_branch'):
+                    instance.status = 'open'
+                elif workflow_type in ('allocate_for_follow_up'):
+                    instance.status = 'open_followup'
+                elif workflow_type in ('allocate_for_inspection'):
+                    instance.status = 'open_inspection'
+                elif workflow_type in ('allocate_for_case'):
+                    instance.status = 'open_case'
+                elif workflow_type in ('close'):
+                    instance.status = 'closed'
                 instance.region_id = request.data.get('region_id')
                 instance.district_id = request.data.get('district_id')
+                instance.allocated_group_id = request.data.get('allocated_group_id')
                 instance.save()
 
                 # send email

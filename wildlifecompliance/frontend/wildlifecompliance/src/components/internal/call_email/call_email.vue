@@ -33,7 +33,7 @@
                           <div class="row">
                             <div class="col-sm-12">
                               <select class="form-control" v-model="call_email.assigned_to_id" >
-                                <option  v-for="option in triage_group" :value="option.id" v-bind:key="option.id">
+                                <option  v-for="option in call_email.allocated_to" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
                               </select>
@@ -297,7 +297,7 @@ export default {
       referrers: [],
       compliance_permission_groups: [],
       officers: [],
-      triage_group: [],
+      allocated_group: [],
       current_schema: [],
       sectionLabel: "Details",
       sectionIndex: 1,
@@ -334,6 +334,7 @@ export default {
     ...mapGetters({
       renderer_form_data: 'renderer_form_data',
       current_user: 'current_user',
+      compliance_allocated_group: 'compliance_allocated_group',
     }),
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
@@ -386,12 +387,15 @@ export default {
     ...mapActions('callemailStore', {
       loadCallEmail: "loadCallEmail",
       saveCallEmail: 'saveCallEmail',
+      // setAllocatedTo: "setAllocatedTo",
+      setAllocatedGroup: "setAllocatedGroup",
     }),
     ...mapActions({
       saveFormData: "saveFormData",
     }),
     ...mapActions({
       loadCurrentUser: "loadCurrentUser",
+      loadComplianceAllocatedGroup: "loadComplianceAllocatedGroup",
     }),
     addWorkflow(workflow_type) {
       this.workflow_type = workflow_type;
@@ -437,6 +441,7 @@ export default {
   beforeRouteEnter: function(to, from, next) {
             next(async (vm) => {
                 await vm.loadCurrentUser({ url: `/api/my_compliance_user_details` });
+                
             });
   },
   created: async function() {
@@ -444,6 +449,7 @@ export default {
     if (this.$route.params.call_email_id) {
       await this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
     }
+    await this.loadComplianceAllocatedGroup(this.call_email.allocated_group_id);
     // load drop-down select lists
     // classification_types
     let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
@@ -495,16 +501,19 @@ export default {
         full_name: "",
       });
 
-    // Triage group
-    let returned_triage_group = await Vue.http.post('/api/compliancepermissiongroup/get_users/', { 'user_list': this.call_email.allocated_to });
-    console.log(returned_triage_group)
-    Object.assign(this.triage_group, returned_triage_group.body);
-    // blank entry allows user to clear selection
-    this.triage_group.splice(0, 0, 
-      {
-        id: "", 
-        full_name: "",
-      });
+    // // Allocated group
+    // let returned_allocated_group = await Vue.http.post('/api/compliancepermissiongroup/get_users/', { 'user_list': this.call_email.allocated_to });
+    // console.log(returned_allocated_group)
+    // Object.assign(this.allocated_group, returned_allocated_group.body);
+    // // blank entry allows user to clear selection
+    // this.allocated_group.splice(0, 0, 
+    //   {
+    //     id: "", 
+    //     full_name: "",
+    //   });
+
+    // set Vuex allocated group
+
 
     // load current CallEmail renderer schema
     if (this.call_email.report_type_id) {

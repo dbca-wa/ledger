@@ -40,6 +40,6 @@ module.exports = {
   site_url: site_url,
   system_name: 'Wildlife Licensing System',
   compliancepermissiongroup: '/api/compliancepermissiongroup/',
-  region_district: '/api/region_district',
+  region_district: '/api/region_district/',
 
 }

@@ -10,8 +10,8 @@
                               <label>Region</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control col-sm-9" @change.prevent="updateDistrictsAndOfficers('triage_call_email')" v-model="call_email.region">
-                                <option  v-for="option in regions" :value="option" v-bind:key="option.id">
+                              <select class="form-control col-sm-9" @change.prevent="updateDistricts(group_permission)" v-model="call_email.region_id">
+                                <option  v-for="option in regions" :value="option.id" v-bind:key="option.id">
                                   {{ option.display_name }} 
                                 </option>
                               </select>
@@ -24,9 +24,23 @@
                               <label>District</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" v-model="call_email.district_id" >
+                              <select class="form-control" v-model="call_email.district_id" @change.prevent="updateAllocatedGroup(group_permission)">
                                 <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
                                   {{ option.display_name }} 
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div v-if="allocateToVisibility" class="form-group">
+                          <div class="row">
+                            <div class="col-sm-3">
+                              <label>Allocate to</label>
+                            </div>
+                            <div class="col-sm-9">
+                              <select class="form-control" v-model="call_email.assigned_to_id" >
+                                <option  v-for="option in call_email.allocated_to" :value="option.id" v-bind:key="option.id">
+                                  {{ option.full_name }} 
                                 </option>
                               </select>
                             </div>
@@ -163,7 +177,8 @@ export default {
       regions: [],
       regionDistricts: [],
       availableDistricts: [],
-      compliance_permission_groups: [],
+      // compliance_permission_groups: [],
+      group_permission: '',
       // call_email.region: null,
       // call_email.district_id: null,
       workflowDetails: '',
@@ -189,35 +204,50 @@ export default {
       call_email: "call_email",
     }),
     regionVisibility: function() {
-      if (this.workflow_type === 'forward_to_regions') {
+      if (!(this.workflow_type === 'forward_to_wildlife_protection_branch' || 
+        this.workflow_type === 'close')
+      ) {
         return true;
       } else {
         return false;
       }
     },
-    assignedToVisibility: function() {
+    // assignedToVisibility: function() {
+    //   if (this.workflow_type.includes('allocate')) {
+    //     return true;
+    //   } else {
+    //     return false;
+    //   }
+    // },
+    allocateToVisibility: function() {
       if (this.workflow_type.includes('allocate')) {
         return true;
       } else {
         return false;
       }
     },
-    region: function() {
-      return this.call_email.region ? this.call_email.region.id : '';
-    }, 
-    district: function() {
-      return this.call_email.district_id ? this.call_email.district_id : '';
-    },
+    
+    // region: function() {
+    //   return this.call_email.region ? this.call_email.region.id : '';
+    // }, 
+    // district: function() {
+    //   return this.call_email.district_id ? this.call_email.district_id : '';
+    // },
     modalTitle: function() {
       if (this.workflow_type === 'forward_to_regions') {
+        this.group_permission = 'triage_call_email';
         return "Forward to Regions";
       } else if (this.workflow_type === 'forward_to_wildlife_protection_branch') {
+        this.group_permission = 'triage_call_email';
         return "Forward to Wildlife Protection Branch";
       } else if (this.workflow_type === 'allocate_for_follow_up') {
+        this.group_permission = 'officer';
         return "Allocate for Follow Up";
       } else if (this.workflow_type === 'allocate_for_inspection') {
+        this.group_permission = 'officer';
         return "Allocate for Inspection";
       } else if (this.workflow_type === 'allocate_for_case') {
+        this.group_permission = 'officer';
         return "Allocate for Case";
       } else if (this.workflow_type === 'close') {
         return "Close complaint";
@@ -233,13 +263,25 @@ export default {
   methods: {
     ...mapActions('callemailStore', {
       setAllocatedTo: "setAllocatedTo",
+      loadAllocatedGroup: "loadAllocatedGroup",
     }),
-    updateDistrictsAndOfficers: function(group_permission) {
-      this.call_email.district_id = null;
+    ...mapActions({
+      loadCurrentUser: "loadCurrentUser",
+    }),
+    updateDistricts: function(group_permission) {
+      // this.call_email.district_id = null;
       this.availableDistricts = [];
       for (let record of this.regionDistricts) {
-        if (this.call_email.region && this.call_email.region.districts.includes(record.id)) {
-          this.availableDistricts.push(record)
+        if (this.call_email.region_id === (record.id)) {
+        // if (record.districts.includes(this.call_email.district_id)) {
+          for (let district of record.districts) {
+          console.log(district)
+            for (let district_record of this.regionDistricts) {
+              if (district_record.id === district) {
+                this.availableDistricts.push(district_record)
+              }
+            }
+          }
         }
       }
       this.availableDistricts.splice(0, 0, 
@@ -250,38 +292,61 @@ export default {
         districts: [],
         region: null,
       });
-      this.setAllocatedGroup(group_permission);
+
     },
-    setAllocatedGroup: function(group_permission) {
-      this.allocatedGroup = [];
-      let member_ids = [];
-      for (let group of this.compliance_permission_groups) {
-        if (group.region_district.length > 0 && 
-        group.members.length > 0 && 
-        this.call_email.region.id &&
-        // parent or child Region/District
-        (group.region_district[0].region == this.call_email.region.id ||
-        group.region_district[0].id == this.call_email.region.id) &&
-        // filter by group permission
-        group.permissions_list &&
-        group.permissions_list.includes(group_permission)
-        ) {
-          console.log(group)
-          console.log(group.permissions_list)
-          console.log(group_permission)
-          for (let member of group.members) {
-            this.allocatedGroup.push(member);
-            member_ids.push(member.id);  
-          }
-        }
-      }
-      this.setAllocatedTo(member_ids);
-      // blank entry allows user to clear selection
-      this.allocatedGroup.splice(0, 0, 
-      {
-        id: "", 
-        full_name: "",
-      });
+
+    // updateAllocatedGroup: function(group_permission) {
+    //   for (let group of this.compliance_permission_groups) {
+    //     if (group.region_district.length > 0 && 
+    //     this.call_email.region_id &&
+    //     this.call_email.district_id &&
+    //     group.region_district[0].region === this.call_email.region_id &&
+    //     group.region_district[0].id === this.call_email.district_id &&
+    //     // filter by group permission
+    //     group.permissions_list &&
+    //     group.permissions_list.includes(group_permission)
+    //     ) {
+    //         this.setAllocatedGroup(group.id);
+    //     }
+    //     }
+
+    //   this.allocatedGroup = [];
+    //   let member_ids = [];
+    //   for (let group of this.compliance_permission_groups) {
+    //     if (group.region_district.length > 0 && 
+    //     group.members.length > 0 && 
+    //     this.call_email.region_id &&
+    //     // parent or child Region/District
+    //     (group.region_district[0].region == this.call_email.region_id ||
+    //     group.region_district[0].id == this.call_email.region_id) &&
+    //     // filter by group permission
+    //     group.permissions_list &&
+    //     group.permissions_list.includes(group_permission)
+    //     ) {
+    //       for (let member of group.members) {
+    //         this.allocatedGroup.push(member);
+    //         member_ids.push(member.id);  
+    //       }
+    //     }
+    //   }
+    //   this.setAllocatedTo(member_ids);
+    //   // blank entry allows user to clear selection
+    //   this.allocatedGroup.splice(0, 0, 
+    //   {
+    //     id: "", 
+    //     full_name: "",
+    //   });
+    // },
+    updateAllocatedGroup: async function() {
+      await this.loadAllocatedGroup({
+        'region_district_id': this.call_email.district_id, 
+        'group_permission': this.group_permission,
+        });
+      // this.$nextTick(async function() {
+      //     await this.loadComplianceAllocatedGroup(this.call_email.allocated_group_id);
+      //   });
+      
+
     },
 
     ok: async function () {
@@ -303,22 +368,25 @@ export default {
             });
         }
         this.attachAnother();
-        this.call_email.region = null;
-        this.call_email.district_id = null;
+        // this.call_email.region = null;
+        // this.call_email.district_id = null;
         this.workflowDetails = '';
     },
     sendData: async function(){        
         let post_url = '/api/call_email/' + this.call_email.id + '/add_workflow_log/'
         let payload = new FormData(this.form);
         payload.append('call_email_id', this.call_email.id);
-        if (this.call_email.region) {
-          payload.append('region_id', this.call_email.region.id);
+        if (this.call_email.region_id) {
+          payload.append('region_id', this.call_email.region_id);
         }
         if (this.call_email.district_id) {
           payload.append('district_id', this.call_email.district_id);
         }
         if (this.call_email.allocated_to) {
           payload.append('allocated_to_group', this.call_email.allocated_to);
+        }
+        if (this.call_email.allocated_group_id) {
+          payload.append('allocated_group_id', this.call_email.allocated_group_id);
         }
         if (this.call_email.assigned_to) {
           payload.append('assigned_to', this.call_email.assigned_to);
@@ -385,20 +453,20 @@ export default {
     let returned_region_districts = await cache_helper.getSetCacheList('CallEmail_RegionDistricts', '/api/region_district/');
     Object.assign(this.regionDistricts, returned_region_districts);
 
-    // CompliancePermissionGroups
-    let returned_compliance_permission_groups = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Members', '/api/compliancepermissiongroup/get_detailed_list/');
-    Object.assign(this.compliance_permission_groups, returned_compliance_permission_groups);
+    // // CompliancePermissionGroups
+    // let returned_compliance_permission_groups = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Members', '/api/compliancepermissiongroup/get_detailed_list/');
+    // Object.assign(this.compliance_permission_groups, returned_compliance_permission_groups);
 
-    // CompliancePermissionGroups - officers
-    let returned_officers = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Officers', '/api/compliancepermissiongroup/get_officers/');
-    Object.assign(this.officers, returned_officers);
-    // blank entry allows user to clear selection
-    this.officers.splice(0, 0, 
-      {
-        id: "", 
-        full_name: "",
-      });
-    
+    // // CompliancePermissionGroups - officers
+    // let returned_officers = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Officers', '/api/compliancepermissiongroup/get_officers/');
+    // Object.assign(this.officers, returned_officers);
+    // // blank entry allows user to clear selection
+    // this.officers.splice(0, 0, 
+    //   {
+    //     id: "", 
+    //     full_name: "",
+    //   });
+    this.updateDistricts(this.group_permission);
   },
   mounted: function() {
     this.form = document.forms.forwardForm;

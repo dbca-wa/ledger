@@ -12,7 +12,7 @@ from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document
-from wildlifecompliance.components.users.models import RegionDistrict
+from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 
 logger = logging.getLogger(__name__)
 
@@ -209,6 +209,11 @@ class CallEmail(RevisionedMixin):
         EmailUser, 
         related_name='callemail_allocated_to',
         blank=True
+    )
+    allocated_group = models.ForeignKey(
+        CompliancePermissionGroup,
+        related_name='callemail_allocated_group', 
+        null=True
     )
 
     class Meta:
