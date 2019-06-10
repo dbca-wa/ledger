@@ -325,6 +325,13 @@ class LicenceViewSet(viewsets.ModelViewSet):
                     'You are not authorised to cancel licenced activities')
             if licence_activity_id and purpose_ids_list and pk:
                 instance = self.get_object()
+                purpose_ids_list = list(set(purpose_ids_list))
+                can_cancel_purposes = instance.get_latest_purposes_for_licence_activity_and_action(
+                    licence_activity_id, 'cancel')
+                can_cancel_purposes_ids_list = [purpose.id for purpose in can_cancel_purposes.order_by('id')]
+                if not set(purpose_ids_list) & set(can_cancel_purposes_ids_list):
+                    raise serializers.ValidationError(
+                        'Selected purposes cannot be cancelled')
                 instance.cancel_purposes(request)
                 serializer = DTExternalWildlifeLicenceSerializer(instance, context={'request': request})
                 return Response(serializer.data)

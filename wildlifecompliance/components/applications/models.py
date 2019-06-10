@@ -591,7 +591,21 @@ class Application(RevisionedMixin):
         selected_activity = self.get_selected_activity(activity_id)
         selected_activity.processing_status = processing_status
         selected_activity.save()
-        logger.info("Application: %s Activity ID: %s changed processing to: %s" % (self.id, activity_id, processing_status))
+        logger.info("Application: %s Activity ID: %s changed processing status to: %s" % (self.id, activity_id, processing_status))
+
+    def set_activity_activity_status(self, activity_id, activity_status):
+        if not activity_id:
+            logger.error("Application: %s cannot update activity status (%s) for an empty activity_id!" %
+                         (self.id, activity_status))
+            return
+        if activity_status not in dict(ApplicationSelectedActivity.ACTIVITY_STATUS_CHOICES):
+            logger.error("Application: %s cannot update activity status (%s) for invalid activity status!" %
+                         (self.id, activity_status))
+            return
+        selected_activity = self.get_selected_activity(activity_id)
+        selected_activity.activity_status = activity_status
+        selected_activity.save()
+        logger.info("Application: %s Activity ID: %s changed activity status to: %s" % (self.id, activity_id, activity_status))
 
     def get_selected_activity(self, activity_id):
         '''
@@ -848,6 +862,8 @@ class Application(RevisionedMixin):
                     data_row.id = None
                     data_row.application_id = new_app.id
                     data_row.save()
+
+        return new_app
 
     def submit(self, request):
         from wildlifecompliance.components.licences.models import LicenceActivity
@@ -2341,6 +2357,12 @@ class ApplicationSelectedActivity(models.Model):
     def reinstate(self, request):
         with transaction.atomic():
             self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+            self.updated_by = request.user
+            self.save()
+
+    def mark_as_replaced(self, request):
+        with transaction.atomic():
+            self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
             self.updated_by = request.user
             self.save()
 

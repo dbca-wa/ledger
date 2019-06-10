@@ -252,27 +252,106 @@ class WildlifeLicence(models.Model):
 
     def cancel_purposes(self, request):
         '''
-        Cancel's a licence's purposes for a selected licence_activity_id and purposes list
+        Cancels a licence's purposes for a selected licence_activity_id and purposes list
         '''
+        from wildlifecompliance.components.applications.models import (
+            Application, ApplicationSelectedActivity, ApplicationFormDataRecord
+        )
         licence_activity_id = request.data.get('licence_activity_id', None)
         purpose_ids_list = request.data.get('purpose_ids_list', None)
+        purpose_ids_list = list(set(purpose_ids_list))
         purpose_ids_list.sort()
         can_cancel_purposes = self.get_latest_purposes_for_licence_activity_and_action(licence_activity_id, 'cancel')
+        can_cancel_purposes_ids_list = [purpose.id for purpose in can_cancel_purposes.order_by('id')]
+
         # if all purposes were selected by the user for cancel, cancel all current ApplicationSelectedActivity records
-        if purpose_ids_list == [purpose.id for purpose in can_cancel_purposes.order_by('id')]:
+        if purpose_ids_list == can_cancel_purposes_ids_list:
             activities_to_cancel = self.get_latest_activities_for_licence_activity_and_action(
                 licence_activity_id, 'cancel')
             with transaction.atomic():
                 # cancel target activities
                 for activity in activities_to_cancel:
                     activity.cancel(request)
-        # if not all purposes were selected by the user for cancel:
-        #  - create new Application and ApplicationSelectedActivity for the purposes to remain current
-        #  - create new Application and ApplicationSelectedActivity for the purposes to be cancelled
-        #  - mark all previously current ApplicationSelectedActivity records as REPLACED
-        # else:
-        #     activities_to_set_replace = self.get_latest_activities_for_licence_activity_and_action(
-        #         licence_activity_id, 'cancel')
+
+        # else, if not all purposes were selected by the user for cancel:
+        #  - if any ApplicationSelectedActivity records can be cancelled completely (i.e. all purposes in the
+        #        Application record are selected for cancel), cancel them
+        #  - create new Application for the purposes to remain current, using the first application found
+        #        to have a purpose_id to remain current
+        #  - create new Application for the purposes to be cancelled, using the first application found
+        #        to have a purpose_id to cancel
+        #  - add purposes from other relevant applications to either the new current or new cancelled application,
+        #        copying data from their respective Applications
+        #  - mark all previously current and not cancelled ApplicationSelectedActivity records as REPLACED
+        else:
+            new_current_application = None
+            new_cancelled_application = None
+
+            licence_latest_activities = self.get_latest_activities_for_licence_activity_and_action(
+                licence_activity_id, 'cancel')
+            original_application_ids = licence_latest_activities.filter(
+                application__licence_purposes__in=purpose_ids_list).values_list('application_id', flat=True)
+            original_applications = Application.objects.filter(id__in=original_application_ids)
+            with transaction.atomic():
+                for application in original_applications:
+                    # get purpose_ids linked with application
+                    application_licence_purpose_ids_list = application.licence_purposes.all().values_list('id', flat=True)
+
+                    # if application's purpose_ids are all listed in the purpose_ids_list,
+                    # completely cancel ApplicationSelectedActivity
+                    if not set(application_licence_purpose_ids_list) - set(purpose_ids_list):
+                        activity = application.selected_activities.get(licence_activity_id=licence_activity_id)
+                        activity.cancel(request)
+
+                    # if application still has current purposes after cancelling selected purposes
+                    if set(application_licence_purpose_ids_list) - set(purpose_ids_list):
+                        common_cancelled_purpose_ids = set(application_licence_purpose_ids_list) & set(purpose_ids_list)
+                        remaining_current_purpose_ids = set(application_licence_purpose_ids_list) - set(purpose_ids_list)
+
+                        # create new current application from this application if not exists
+                        if not new_current_application:
+                            new_current_application = application.copy_application_purposes_for_status(
+                                remaining_current_purpose_ids, ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT)
+                        # else, if new current application exists, link the target LicencePurpose IDs to it
+                        else:
+                            # Link the target LicencePurpose IDs to the application
+                            for licence_purpose_id in remaining_current_purpose_ids:
+                                new_current_application.licence_purposes.add(licence_purpose_id)
+                                # Copy ApplicationFormDataRecord rows from old application,
+                                # licence_activity and licence_purpose
+                                for data_row in ApplicationFormDataRecord.objects.filter(
+                                        application_id=application,
+                                        licence_activity_id=licence_activity_id,
+                                        licence_purpose_id=licence_purpose_id):
+                                    data_row.id = None
+                                    data_row.application_id = new_current_application.id
+                                    data_row.save()
+
+                        # create new cancelled application from this application if not exists
+                        if not new_cancelled_application:
+                            new_cancelled_application = application.copy_application_purposes_for_status(
+                                common_cancelled_purpose_ids, ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED)
+                        # else, if new cancelled application exists, link the target LicencePurpose IDs to it
+                        else:
+                            # Link the target LicencePurpose IDs to the application
+                            for licence_purpose_id in common_cancelled_purpose_ids:
+                                new_cancelled_application.licence_purposes.add(licence_purpose_id)
+                                # Copy ApplicationFormDataRecord rows from old application,
+                                # licence_activity and licence_purpose
+                                for data_row in ApplicationFormDataRecord.objects.filter(
+                                        application_id=application,
+                                        licence_activity_id=licence_activity_id,
+                                        licence_purpose_id=licence_purpose_id):
+                                    data_row.id = None
+                                    data_row.application_id = new_cancelled_application.id
+                                    data_row.save()
+
+                # Set original activities to REPLACED except for any that were CANCELLED completely
+                original_activities = ApplicationSelectedActivity.objects.\
+                    filter(application__id__in=original_application_ids).\
+                    exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED)
+                for activity in original_activities:
+                    activity.mark_as_replaced(request)
 
     def generate_doc(self):
         from wildlifecompliance.components.licences.pdf import create_licence_doc
