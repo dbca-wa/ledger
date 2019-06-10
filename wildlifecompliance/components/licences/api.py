@@ -313,25 +313,24 @@ class LicenceViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST', ])
-    def cancel_activity(self, request, pk=None, *args, **kwargs):
-        # TODO: change this to cancel selected purpose ids
+    def cancel_purposes(self, request, pk=None, *args, **kwargs):
         try:
-            activity_id = request.GET.get('activity_id', None)
-            if activity_id and pk:
+            licence_activity_id = request.data.get('licence_activity_id', None)
+            purpose_ids_list = request.data.get('purpose_ids_list', None)
+            if not type(purpose_ids_list) == list:
+                raise serializers.ValidationError(
+                    'Purpose IDs must be a list')
+            if not request.user.has_perm('wildlifecompliance.issuing_officer'):
+                raise serializers.ValidationError(
+                    'You are not authorised to cancel licenced activities')
+            if licence_activity_id and purpose_ids_list and pk:
                 instance = self.get_object()
-                instance = instance.latest_activities.get(id=activity_id)
-                if not instance.can_cancel:
-                    raise serializers.ValidationError(
-                        'This licenced activity cannot be cancelled')
-                if not request.user.has_perm('wildlifecompliance.issuing_officer'):
-                    raise serializers.ValidationError(
-                        'You are not authorised to cancel licenced activities')
-                instance.cancel(request)
-                serializer = ExternalApplicationSelectedActivitySerializer(instance)
+                instance.cancel_purposes(request)
+                serializer = DTExternalWildlifeLicenceSerializer(instance, context={'request': request})
                 return Response(serializer.data)
             else:
                 raise serializers.ValidationError(
-                    'Licence ID and Activity ID must be specified')
+                    'Licence ID, Licence Activity ID and Purpose IDs list must be specified')
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

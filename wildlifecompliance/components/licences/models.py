@@ -1,15 +1,17 @@
 from __future__ import unicode_literals
 
-from django.db import models
+from django.db import models, transaction
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.db.models import Max
 from ledger.accounts.models import EmailUser
 from ledger.licence.models import LicenceType
-from wildlifecompliance.components.organisations.models import Organisation
-from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
-    UserAction, Document
+from wildlifecompliance.components.main.models import (
+    CommunicationsLogEntry,
+    UserAction,
+    Document
+)
 
 
 def update_licence_doc_filename(instance, filename):
@@ -188,6 +190,38 @@ class WildlifeLicence(models.Model):
             'licence_activity_id', '-issue_date'
         )
 
+    def get_latest_activities_for_licence_activity_and_action(self, licence_activity_id=None, action=None):
+        '''
+        Return a list of ApplicationSelectedActivity records for the licence
+        Filter by licence_activity_id (optional) and/or specified action (optional)
+        '''
+        # for a given licence_activity_id and action, return relevant applications
+        activities = self.latest_activities
+        if licence_activity_id:
+            activities = activities.filter(licence_activity_id=licence_activity_id)
+        # get the list of can_<action> ApplicationSelectedActivity records
+        if action:
+            can_action_asa_ids = []
+            if action == 'cancel':
+                can_action_asa_ids = [asa.id for asa in activities if asa.can_cancel]
+            elif action == 'suspend':
+                can_action_asa_ids = [asa.id for asa in activities if asa.can_suspend]
+            elif action == 'surrender':
+                can_action_asa_ids = [asa.id for asa in activities if asa.can_surrender]
+            activities = activities.filter(id__in=can_action_asa_ids)
+        return activities
+
+    def get_latest_purposes_for_licence_activity_and_action(self, licence_activity_id=None, action=None):
+        '''
+        Return a list of LicencePurpose records for the licence
+        Filter by licence_activity_id (optional) and/or specified action (optional)
+        '''
+        can_action_purpose_list = []
+        for activity in self.get_latest_activities_for_licence_activity_and_action(licence_activity_id, action):
+            for purpose in activity.purposes:
+                can_action_purpose_list.append(purpose.id)
+        return LicencePurpose.objects.filter(id__in=can_action_purpose_list).distinct()
+
     @property
     def latest_activities(self):
         from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
@@ -215,6 +249,30 @@ class WildlifeLicence(models.Model):
     @property
     def is_issued(self):
         return self.licence_number is not None and len(self.licence_number) > 0
+
+    def cancel_purposes(self, request):
+        '''
+        Cancel's a licence's purposes for a selected licence_activity_id and purposes list
+        '''
+        licence_activity_id = request.data.get('licence_activity_id', None)
+        purpose_ids_list = request.data.get('purpose_ids_list', None)
+        purpose_ids_list.sort()
+        can_cancel_purposes = self.get_latest_purposes_for_licence_activity_and_action(licence_activity_id, 'cancel')
+        # if all purposes were selected by the user for cancel, cancel all current ApplicationSelectedActivity records
+        if purpose_ids_list == [purpose.id for purpose in can_cancel_purposes.order_by('id')]:
+            activities_to_cancel = self.get_latest_activities_for_licence_activity_and_action(
+                licence_activity_id, 'cancel')
+            with transaction.atomic():
+                # cancel target activities
+                for activity in activities_to_cancel:
+                    activity.cancel(request)
+        # if not all purposes were selected by the user for cancel:
+        #  - create new Application and ApplicationSelectedActivity for the purposes to remain current
+        #  - create new Application and ApplicationSelectedActivity for the purposes to be cancelled
+        #  - mark all previously current ApplicationSelectedActivity records as REPLACED
+        # else:
+        #     activities_to_set_replace = self.get_latest_activities_for_licence_activity_and_action(
+        #         licence_activity_id, 'cancel')
 
     def generate_doc(self):
         from wildlifecompliance.components.licences.pdf import create_licence_doc
