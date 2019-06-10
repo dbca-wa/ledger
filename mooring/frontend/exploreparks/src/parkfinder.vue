@@ -2105,8 +2105,8 @@ export default {
             }),
             interactions: ol.interaction.defaults({}).extend([
                   new ol.interaction.PinchZoom({
-                  constrainResolution: true
-            })
+                      constrainResolution: true
+                   })
             ]),
             layers: [
                 this.streets,
@@ -2442,6 +2442,11 @@ export default {
                 altShiftDragRotate: false,
                 pinchRotate: false,
             }),
+            interactions: ol.interaction.defaults({}).extend([
+                  new ol.interaction.PinchZoom({
+                      constrainResolution: true
+                   })
+            ]),
             layers: [
                 this.streets,
                 this.satellite,
