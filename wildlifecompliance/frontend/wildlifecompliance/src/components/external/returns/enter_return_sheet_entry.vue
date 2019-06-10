@@ -82,7 +82,6 @@ export default {
       },
     },
     data:function () {
-      let vm = this;
       return {
         isModalOpen:false,
         form:null,
@@ -144,53 +143,58 @@ export default {
     },
     methods:{
       update:function () {
-        if (this.isAddEntry) {
+        const self = this;
+        if (self.isAddEntry) {
           let _currentDateTime = new Date();
-          this.entryDateTime = Date.parse(new Date());
-          let newRowId = (this.row_of_data.data().count()) + '';
+          self.entryDateTime = Date.parse(new Date());
+          let newRowId = (self.row_of_data.data().count()) + '';
           let _data = { rowId: newRowId,
-                        date: this.entryDateTime,
-                        activity: this.entryActivity,
-                        qty: this.entryQty,
-                        total: this.entryTotal,
-                        comment: this.entryComment,
-                        licence: this.entryLicence
+                        date: self.entryDateTime,
+                        activity: self.entryActivity,
+                        qty: self.entryQty,
+                        total: self.entryTotal,
+                        comment: self.entryComment,
+                        licence: self.entryLicence
                       };
-          if (this.isLicenceRequired) { // licence only required for stock transfer.
-            _data['transfer'] = ''
-            this.checkTransfer(_data)
-          };
-          this.row_of_data.row.add(_data).node().id = newRowId;
-          this.row_of_data.draw();
-          this.species_cache[this.returns.sheet_species] = this.row_of_data.ajax.json();
-          this.species_cache[this.returns.sheet_species].push(this.row_of_data.context[0].aoData[newRowId]._aData);
-        };
 
-        if (this.isChangeEntry) {
-          this.row_of_data.data().activity = this.entryActivity;
-          this.row_of_data.data().qty = this.entryQty;
-          this.row_of_data.data().total = this.entryTotal;
-          this.row_of_data.data().licence = this.entryLicence;
-          this.row_of_data.data().comment = this.entryComment;
-
-          if (this.isLicenceRequired) { // licence only required for stock transfer.
-            let _data = this.row_of_data.data()
-            _data['transfer'] = ''
-            this.checkTransfer(_data)
+          if (self.isLicenceRequired) { // licence only required for stock transfers.
+            _data['transfer'] = self.returns.sheet_species
+            self.checkTransfer(_data)
           };
 
-          this.row_of_data.invalidate().draw()
+          self.row_of_data.row.add(_data).node().id = newRowId;
+          self.row_of_data.draw();
+          self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
+          self.species_cache[self.returns.sheet_species].push(self.row_of_data.context[0].aoData[newRowId]._aData);
         };
 
-        this.close();
+        if (self.isChangeEntry) {
+          self.row_of_data.data().activity = self.entryActivity;
+          self.row_of_data.data().qty = self.entryQty;
+          self.row_of_data.data().total = self.entryTotal;
+          self.row_of_data.data().licence = self.entryLicence;
+          self.row_of_data.data().comment = self.entryComment;
+
+          if (self.isLicenceRequired) { // licence only required for stock transfers.
+            let _data = self.row_of_data.data()
+            _data['transfer'] = self.returns.sheet_species
+            self.checkTransfer(_data)
+          };
+
+          self.row_of_data.invalidate().draw()
+          self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
+        };
+
+        self.close();
       },
       pay: function() {
-        this.form=document.forms.external_returns_form;
-        var data = new FormData(this.form);
+        const self = this;
+        self.form=document.forms.external_returns_form;
+        var data = new FormData(self.form);
 
         //  data.append(speciesID, speciesJSON)
 
-        this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/pay'),data,{
+        self.$http.post(helpers.add_endpoint_json(api_endpoints.returns,self.returns.id+'/pay'),data,{
                       emulateJSON:true,
                     }).then((response)=>{
                        //let species_id = this.returns.sheet_species;
@@ -205,44 +209,45 @@ export default {
         });
       },
       isValidLicence: function(licence) {
-        this.form=document.forms.external_returns_form;
-        this.errors = true;
-        var data = new FormData(this.form);
-
-        //  data.append(speciesID, speciesJSON)
-
-        this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/sheet_check_transfer'),data,{
+        const self = this;
+        self.form=document.forms.external_returns_form;
+        self.errors = true;
+        var data = new FormData(self.form);
+        data.append('licence', self.entryLicence)
+        self.$http.post(helpers.add_endpoint_json(api_endpoints.returns,self.returns.id+'/sheet_check_transfer'),data,{
                       emulateJSON:true,
                     }).then((response)=>{
-                       //let species_id = this.returns.sheet_species;
-                       //this.setReturns(response.body);
-                       //this.returns.sheet_species = species_id;
-                        this.errors = false;
-                        return true
+                        self.errors = false;
+                        return true;
                     },(error)=>{
                         console.log(error)
-                        this.errorString = helpers.apiVueResourceError('Licence is not Valid.');
-                        this.close;
+                        self.errorString = helpers.apiVueResourceError('Licence is not Valid.');
+                        self.close;
 
         });
-
       },
       checkTransfer: function(row_data) {
-        this.form=document.forms.external_returns_form;
-        this.isValidLicence(row_data['licence']);
-        let transfer = {}
-        transfer[this.returns.sheet_species] = row_data
-        this.species_transfer['transfer'] = transfer;
+        const self = this;
+        self.form=document.forms.external_returns_form;
+        self.isValidLicence(row_data['licence']);
+        let transfer = {}  //{speciesID: {this.entryDateTime: row_data},}
+        if (self.returns.sheet_species in self.species_transfer){
+          transfer = self.species_transfer[self.returns.sheet_species]
+        } 
+        transfer[self.entryDateTime] = row_data;
+        self.species_transfer[self.returns.sheet_species] = transfer
       },
       cancel: function() {
-        this.errors = false;
-        this.close()
+        const self = this;
+        self.errors = false;
+        self.close()
       },
       close: function() {
-        if (!this.errors) {
-          this.isChangeEntry = false;
-          this.isAddEntry = false;
-          this.isModalOpen = false;
+        const self = this;
+        if (!self.errors) {
+          self.isChangeEntry = false;
+          self.isAddEntry = false;
+          self.isModalOpen = false;
         }
       },
     },

@@ -748,6 +748,7 @@ class ReturnSheet(object):
                 self._return.save_return_table(species, table_rows, request)
             except AttributeError:
                 continue
+        self.add_transfer_activity(request)
 
     def set_activity(self, _species, _data):
         """
@@ -825,7 +826,7 @@ class ReturnSheet(object):
             '''
 
     @staticmethod
-    def set_licence_species(self):
+    def set_licence_species():
         """
         Sets the species from the licence for the current Running Sheet.
         :return:
@@ -836,28 +837,80 @@ class ReturnSheet(object):
         #    self.set_activity(_species, _data)
         pass
 
-    def notify_transfer(self, request):
+    def add_transfer_activity(self, request):
         """
-        Validates a receiving transfer licence and sends out email notification for the movement of stock.
+        Add transfer activity to a validated receiving licence return.
         :param request:
         :return:
         """
-        _licence_no = self._return.application.licence
-        if self.is_valid_licence(_licence_no):
-            send_sheet_transfer_email_notification(request, self._return, self._return)
-            # TODO: add transfer row to licence holder.
+        # TODO : get return id from licence, set activity id.
+        if not request.data.get('transfer'):
+            return False
+        _data = request.data.get('transfer').encode('utf-8')
+        _transfers = ast.literal_eval(_data)
+        if isinstance(_transfers, tuple):
+            for transfer in _transfers:
+                try:
+                    species_id = transfer['transfer']
+                    table_rows = {'comment': transfer['comment'],
+                                  'rowId': '0',
+                                  'qty': transfer['qty'],
+                                  'licence': self._return.application.licence,
+                                  'activity': self.activity_list[transfer['activity']]['outward'],
+                                  'date': transfer['date'],
+                                  'total': '0'}
+                    self.store_transfer_activity(species_id, self._return, table_rows, request)
+                    send_sheet_transfer_email_notification(request, self._return, self._return)
+                except AttributeError:
+                    continue
         else:
-            raise ValidationError('Invalid Licence')
+            species_id = _transfers['transfer']
+            table_rows = {'comment': _transfers['comment'],
+                          'rowId': '0',
+                          'qty': _transfers['qty'],
+                          'licence': self._return.application.licence,
+                          'activity': self.activity_list[_transfers['activity']]['outward'],
+                          'date': _transfers['date'],
+                          'total': '0'}
 
-    def add_transfer_activity(self, request, to_return):
-        for species in self.species_list:
-            try:
-                _data = request.data.get(species).encode('utf-8')
-                _data = tuple(ast.literal_eval(_data))
-                table_rows = to_return._get_table_rows(_data)
-                to_return.save_return_table(species, table_rows, request)
-            except AttributeError:
-                continue
+            self.store_transfer_activity(species_id, self._return, table_rows, request)
+            send_sheet_transfer_email_notification(request, self._return, self._return)
+
+    @transaction.atomic
+    def store_transfer_activity(self, species_id, a_return, activity, request):
+        """
+        Saves the Transfer Activity under the Receiving Licence return for species.
+        :param species_id:
+        :param a_return:
+        :param activity:
+        :param request:
+        :return:
+        """
+        try:
+            return_table = ReturnTable.objects.get_or_create(
+                name=species_id, ret=a_return)[0]
+            _rows = ReturnRow.objects.select_for_update().filter(return_table=return_table)
+            table_rows = []
+            row_exists = False
+            for row in _rows:
+                if row.data['date'] == activity['date']:
+                    row_exists = True
+                    row.data['qty'] = activity['qty']
+                    row.data['comment'] = activity['comment']
+                table_rows.append(row.data)
+            if not row_exists:
+                table_rows.append(activity)
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in table_rows]
+            ReturnRow.objects.bulk_create(return_rows)
+            # log transaction
+            self._return.log_user_action(ReturnUserAction.ACTION_TRANSFER_REQUEST.format(self), request)
+        except BaseException:
+            raise
 
     def pay_transfer(self, request):
         """
@@ -869,19 +922,8 @@ class ReturnSheet(object):
 
         # TODO: Call to payment process either from here or api.
 
-    def send_transfer_date(self):
-        pass
-
     def send_transfer_sender(self):
         return self._return.submitter
-
-    def send_transfer_notification(self, request):
-        """
-        send email notification for transfer of stock to receiving license holder.
-        :param request:
-        :return: boolean
-        """
-        send_sheet_transfer_email_notification(request, self._return, self._return)
 
     def set_species(self, _species):
         """
@@ -905,20 +947,23 @@ class ReturnSheet(object):
         :param request:
         :return:
         """
-        if not self.is_valid_licence(request):
-            raise ValidationError({'error': 'not a valid licence'})
+        is_valid = self.is_valid_licence(request)
 
-        return True
+        return is_valid
 
-    def is_valid_licence(self, _licence_no):
+    def is_valid_licence(self, request):
         """
         Method to check if licence is current.
-        :param _licence_no:
+        :param request:
         :return: boolean
         """
-        # TODO: check current licence.
-        # TODO: check for Return Running Sheet for valid licence
-        return False
+        if not request.data.get('transfer'):
+            return False
+        _data = request.data.get('transfer').encode('utf-8')
+        _transfers = ast.literal_eval(_data)
+        _licence = _transfers['licence']
+
+        return Return.objects.filter(licence=_licence).exists()  # TODO: More params required for validation.
 
     def get_licensee_contact(self, _license_no):
         """
@@ -955,6 +1000,7 @@ class ReturnUserAction(UserAction):
     ACTION_SUBMIT_REQUEST = "Submit Return {}"
     ACTION_ACCEPT_REQUEST = "Accept Return {}"
     ACTION_SAVE_REQUEST = "Save Return {}"
+    ACTION_TRANSFER_REQUEST = "Request for Stock transfer for Return {}"
     ACTION_ASSIGN_TO = "Assign to {}"
     ACTION_UNASSIGN = "Unassign"
     ACTION_DECLINE_REQUEST = "Decline request"

@@ -47,9 +47,8 @@ from '@/utils/hooks'
 export default {
   name: 'externalReturn',
   data() {
-    let vm = this;
     return {
-      pdBody: 'pdBody' + vm._uid,
+      pdBody: 'pdBody' + self._uid,
     }
   },
   components: {
@@ -76,23 +75,33 @@ export default {
         'setReturnsExternal',
     ]),
     save: function(e) {
-      this.form=document.forms.external_returns_form;
-      var data = new FormData(this.form);
-
+      const self = this;
+      self.form=document.forms.external_returns_form;
+      var data = new FormData(self.form);
       // cache only used in Returns sheets
-      for (const speciesID in this.species_cache) {
+      for (const speciesID in self.species_cache) { // Running Sheet Cache
         let speciesJSON = []
-        for (let i=0;i<this.species_cache[speciesID].length;i++){
-          speciesJSON[i] = JSON.stringify(this.species_cache[speciesID][i])
+        for (let i=0;i<self.species_cache[speciesID].length;i++){
+          speciesJSON[i] = JSON.stringify(self.species_cache[speciesID][i])
         }
         data.append(speciesID, speciesJSON)
       };
-      this.$http.post(helpers.add_endpoint_json(api_endpoints.returns,this.returns.id+'/save'),data,{
+      var speciesJSON = []
+      for (const speciesID in self.species_transfer) { // Running Sheet Transfers
+        let cnt = 0;
+        Object.keys(self.species_transfer[speciesID]).forEach(function(key) {
+          speciesJSON[cnt] = JSON.stringify(self.species_transfer[speciesID][key])
+          cnt++;
+        });
+        data.append('transfer', speciesJSON)
+      }
+      console.log(data)
+      self.$http.post(helpers.add_endpoint_json(api_endpoints.returns,self.returns.id+'/save'),data,{
                       emulateJSON:true,
                     }).then((response)=>{
-                       let species_id = this.returns.sheet_species;
-                       this.setReturns(response.body);
-                       this.returns.sheet_species = species_id;
+                       let species_id = self.returns.sheet_species;
+                       self.setReturns(response.body);
+                       self.returns.sheet_species = species_id;
                        swal('Save',
                             'Return Details Saved',
                             'success'
@@ -104,8 +113,9 @@ export default {
     },
 
     submit: function(e) {  // TODO:
-      this.form=document.forms.external_returns_form;
-      var data = new FormData(this.form);
+      const self = this;
+      self.form=document.forms.external_returns_form;
+      var data = new FormData(self.form);
     }
   },
   beforeRouteEnter: function(to, from, next) {

@@ -69,7 +69,7 @@ export default {
      }
   },
   data() {
-    let vm = this;
+    var vm = this; // keep and use created ViewModel context with table.
     return {
         pdBody: 'pdBody' + vm._uid,
         datatable_id: 'return-datatable',
@@ -123,21 +123,17 @@ export default {
                 mRender: function(data, type, full) {
                    if (full.activity && vm.is_external
                                 && !vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])) {
-                      var column = `<a class="edit-row" data-rowid=\"__ROWID__\">Edit</a><br/>`
-                      column = column.replace(/__ROWID__/g, full.rowId)
-                      return column
+                      var column = `<a class="edit-row" data-rowid=\"__ROWID__\">Edit</a><br/>`;
+                      column = column.replace(/__ROWID__/g, full.rowId);
+                      return column;
                    }
                    if (full.activity && vm.is_external
                                 && vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])) {
-                      var column = `<a class="accept-row" data-rowid=\"__ROWID__\">Accept</a><br/>`
-                      column = column.replace(/__ROWID__/g, full.rowId)
-                      return column
-                   }
-                   if (full.activity && vm.is_external
-                                && vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])) {
-                      var column = `<a class="decline-row" data-rowid=\"__ROWID__\">Decline</a><br/>`
-                      column = column.replace(/__ROWID__/g, full.rowId)
-                      return column
+                      var accept = `<a class="accept-row" data-rowid=\"__ROWID__\">Accept</a> or `;
+                      accept = accept.replace(/__ROWID__/g, full.rowId);
+                      var decline = `<a class="decline-row" data-rowid=\"__ROWID__\">Decline</a><br/>`;
+                      decline = decline.replace(/__ROWID__/g, full.rowId);
+                      return accept + decline;
                    } else {
                       return "";
                    }
@@ -191,43 +187,41 @@ export default {
     },
   },
   methods: {
-    ...mapActions({
-      load: 'loadReturns',
-    }),
     ...mapActions([
         'setReturns',
         'setReturnsSpecies',
         'setSpeciesCache',
     ]),
     isTrue: function(_value) {
-      return (_value === 'true')
+      return (_value === 'true');
     },
     addSheetRow: function () {
-      let rows = this.$refs.return_datatable.vmDataTable
-      let last = rows.data().count() - 1 + ''
-      this.$refs.sheet_entry.isAddEntry = true;
-      this.$refs.sheet_entry.row_of_data = rows;
-      this.$refs.sheet_entry.activityList = this.returns.sheet_activity_list;
-      this.$refs.sheet_entry.speciesType = this.returns.sheet_species
-      this.$refs.sheet_entry.entrySpecies = this.sheetTitle;
-      this.$refs.sheet_entry.entryActivity = Object.keys(this.returns.sheet_activity_list)[0];
-      this.$refs.sheet_entry.entryQty = '';
-      this.$refs.sheet_entry.entryTotal = rows.context[0].aoData[last]._aData['total'];
-      this.$refs.sheet_entry.currentStock = rows.context[0].aoData[last]._aData['total'];
-      this.$refs.sheet_entry.entryComment = '';
-      this.$refs.sheet_entry.entryLicence = '';
-      this.$refs.sheet_entry.entryDateTime = '';
-      this.$refs.sheet_entry.isSubmitable = true;
-      this.$refs.sheet_entry.isModalOpen = true;
+      const self = this;
+      var rows = self.$refs.return_datatable.vmDataTable
+      var last = rows.data().count() - 1 + ''
+      self.$refs.sheet_entry.isAddEntry = true;
+      self.$refs.sheet_entry.row_of_data = rows;
+      self.$refs.sheet_entry.activityList = self.returns.sheet_activity_list;
+      self.$refs.sheet_entry.speciesType = self.returns.sheet_species
+      self.$refs.sheet_entry.entrySpecies = self.sheetTitle;
+      self.$refs.sheet_entry.entryActivity = Object.keys(self.returns.sheet_activity_list)[0];
+      self.$refs.sheet_entry.entryQty = '';
+      self.$refs.sheet_entry.entryTotal = rows.context[0].aoData[last]._aData['total'];
+      self.$refs.sheet_entry.currentStock = rows.context[0].aoData[last]._aData['total'];
+      self.$refs.sheet_entry.entryComment = '';
+      self.$refs.sheet_entry.entryLicence = '';
+      self.$refs.sheet_entry.entryDateTime = '';
+      self.$refs.sheet_entry.isSubmitable = true;
+      self.$refs.sheet_entry.isModalOpen = true;
     }
   },
   created: function(){
      this.form = document.forms.enter_return_sheet;
      this.readonly = !this.is_external;
-     this.select_species_list = this.species_list
+     this.select_species_list = this.species_list;
   },
   mounted: function(){
-     var vm = this;
+     var vm = this; // preserve created ViewModel context when mounted for function calls.
      vm.$refs.return_datatable.vmDataTable.on('click','.edit-row', function(e) {
         e.preventDefault();
         vm.$refs.sheet_entry.isChangeEntry = true;
@@ -235,6 +229,7 @@ export default {
         vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
         vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
         vm.$refs.sheet_entry.entrySpecies = vm.sheetTitle;
+        vm.$refs.sheet_entry.entryDateTime = vm.$refs.sheet_entry.row_of_data.data().date;
         vm.$refs.sheet_entry.entryActivity = vm.$refs.sheet_entry.row_of_data.data().activity;
         vm.$refs.sheet_entry.entryQty = vm.$refs.sheet_entry.row_of_data.data().qty;
         vm.$refs.sheet_entry.entryTotal = vm.$refs.sheet_entry.row_of_data.data().total;
@@ -283,14 +278,14 @@ export default {
         vm.returns.sheet_species = selected_id;
         if (vm.species_cache[selected_id] != null) {
             // species json previously loaded from ajax
-            vm.$refs.return_datatable.vmDataTable.clear().draw()
-            vm.$refs.return_datatable.vmDataTable.rows.add(vm.species_cache[selected_id])
-            vm.$refs.return_datatable.vmDataTable.draw()
+            vm.$refs.return_datatable.vmDataTable.clear().draw();
+            vm.$refs.return_datatable.vmDataTable.rows.add(vm.species_cache[selected_id]);
+            vm.$refs.return_datatable.vmDataTable.draw();
         } else {
             // load species json from ajax
-            vm.$refs.return_datatable.vmDataTable.clear().draw()
+            vm.$refs.return_datatable.vmDataTable.clear().draw();
             vm.$refs.return_datatable.vmDataTable.ajax.url = helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
-            vm.$refs.return_datatable.vmDataTable.ajax.reload()
+            vm.$refs.return_datatable.vmDataTable.ajax.reload();
         };
      });
   },
