@@ -15,7 +15,10 @@ from wildlifecompliance.components.call_email.models import (
     MapLayer,
     ComplianceWorkflowLogEntry,)
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
-from wildlifecompliance.components.users.serializers import ComplianceUserDetailsOptimisedSerializer
+from wildlifecompliance.components.users.serializers import (
+    ComplianceUserDetailsOptimisedSerializer,
+    CompliancePermissionGroupMembersSerializer
+)
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from wildlifecompliance.components.main.fields import CustomChoiceField
@@ -330,7 +333,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
     # assigned_to = ComplianceUserDetailsOptimisedSerializer(read_only=True)
     # allocated_to = serializers.ListField(
     #     required=False, read_only=True, allow_empty=True)
-    allocated_to = ComplianceUserDetailsOptimisedSerializer(many=True)
+    # allocated_group = ComplianceUserDetailsOptimisedSerializer(many=True)
+    allocated_group = CompliancePermissionGroupMembersSerializer()
     # assigned_to_id = serializers.IntegerField(
     #     required=False, read_only=True, allow_null=True)
 
@@ -341,7 +345,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'status',
             # 'status_display',
             'assigned_to_id',
-            'allocated_to',
+            'allocated_group',
             'allocated_group_id',
             'location',
             'location_id',

@@ -585,6 +585,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def add_workflow_log(self, request, *args, **kwargs):
+        print(request.data)
         try:
             with transaction.atomic():
                 instance = self.get_object()
@@ -603,8 +604,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 for document in workflow_entry.documents.all():
                     attachments.append(document)
 
-                # user = EmailUser.objects.filter(email='brendan.blackford@dbca.wa.gov.au')
-                
                 email_group = []
                 if request.data.get('assigned_to'):
                     try:
@@ -615,14 +614,14 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     except Exception as e:
                             print(traceback.print_exc())
                             raise
-                elif request.data.get('allocated_to_group'):
-                    users = request.data.get('allocated_to_group').split(",")
+                elif request.data.get('allocated_group'):
+                    users = request.data.get('allocated_group').split(",")
                     for user_id in users:
                         try:
                             user_id_int = int(user_id)
                             email_group.append(EmailUser.objects.get(id=user_id_int))
                             # update CallEmail
-                            instance.allocated_to.add(EmailUser.objects.get(id=user_id_int))
+                            # instance.allocated_group.add(EmailUser.objects.get(id=user_id_int))
                         except Exception as e:
                             print(traceback.print_exc())
                             raise
@@ -630,7 +629,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     email_group = request.user
 
                 # Set CallEmail status depending on workflow type
-                workflow_type = request.data.get('region_id')
+                workflow_type = request.data.get('workflow_type')
                 if workflow_type in ('forward_to_regions', 'forward_to_wildlife_protection_branch'):
                     instance.status = 'open'
                 elif workflow_type in ('allocate_for_follow_up'):
@@ -650,7 +649,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 send_call_email_forward_email(
                 email_group, 
                 instance,
-                workflow_entry.documents,
+                # workflow_entry.documents,
+                workflow_entry,
                 request)
 
                 return Response(serializer.data)

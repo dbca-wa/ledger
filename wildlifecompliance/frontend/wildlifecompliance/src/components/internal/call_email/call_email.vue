@@ -24,7 +24,7 @@
                             </div>
                         </div>
 
-                        <div v-if="call_email.allocated_to && call_email.allocated_to.length > 0" class="form-group">
+                        <div v-if="call_email.allocated_group && call_email.allocated_group.length > 0" class="form-group">
                           <div class="row">
                             <div class="col-sm-12 top-buffer-s">
                               <strong>Currently assigned to</strong><br/>
@@ -33,7 +33,7 @@
                           <div class="row">
                             <div class="col-sm-12">
                               <select class="form-control" v-model="call_email.assigned_to_id" >
-                                <option  v-for="option in call_email.allocated_to" :value="option.id" v-bind:key="option.id">
+                                <option  v-for="option in call_email.allocated_group" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
                               </select>
@@ -295,8 +295,8 @@ export default {
       classification_types: [],
       report_types: [],
       referrers: [],
-      compliance_permission_groups: [],
-      officers: [],
+      // compliance_permission_groups: [],
+      // officers: [],
       allocated_group: [],
       current_schema: [],
       sectionLabel: "Details",
@@ -481,25 +481,25 @@ export default {
         name: "",
       });
 
-    // CompliancePermissionGroups
-    let returned_compliance_permission_groups = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Members', '/api/compliancepermissiongroup/get_detailed_list/');
-    Object.assign(this.compliance_permission_groups, returned_compliance_permission_groups);
-    // blank entry allows user to clear selection
-    // this.compliance_permission_groups.splice(0, 0, 
+    // // CompliancePermissionGroups
+    // let returned_compliance_permission_groups = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Members', '/api/compliancepermissiongroup/get_detailed_list/');
+    // Object.assign(this.compliance_permission_groups, returned_compliance_permission_groups);
+    // // blank entry allows user to clear selection
+    // // this.compliance_permission_groups.splice(0, 0, 
+    // //   {
+    // //     id: "", 
+    // //     name: "",
+    // //   });
+
+    // // CompliancePermissionGroups - officers
+    // let returned_officers = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Officers', '/api/compliancepermissiongroup/get_officers/');
+    // Object.assign(this.officers, returned_officers);
+    // // blank entry allows user to clear selection
+    // this.officers.splice(0, 0, 
     //   {
     //     id: "", 
-    //     name: "",
+    //     full_name: "",
     //   });
-
-    // CompliancePermissionGroups - officers
-    let returned_officers = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Officers', '/api/compliancepermissiongroup/get_officers/');
-    Object.assign(this.officers, returned_officers);
-    // blank entry allows user to clear selection
-    this.officers.splice(0, 0, 
-      {
-        id: "", 
-        full_name: "",
-      });
 
     // // Allocated group
     // let returned_allocated_group = await Vue.http.post('/api/compliancepermissiongroup/get_users/', { 'user_list': this.call_email.allocated_to });

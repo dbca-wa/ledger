@@ -39,7 +39,7 @@
                             </div>
                             <div class="col-sm-9">
                               <select class="form-control" v-model="call_email.assigned_to_id" >
-                                <option  v-for="option in call_email.allocated_to" :value="option.id" v-bind:key="option.id">
+                                <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
                               </select>
@@ -220,7 +220,7 @@ export default {
     //   }
     // },
     allocateToVisibility: function() {
-      if (this.workflow_type.includes('allocate')) {
+      if (this.workflow_type.includes('allocate') && this.call_email.allocated_group) {
         return true;
       } else {
         return false;
@@ -382,14 +382,18 @@ export default {
         if (this.call_email.district_id) {
           payload.append('district_id', this.call_email.district_id);
         }
-        if (this.call_email.allocated_to) {
-          payload.append('allocated_to_group', this.call_email.allocated_to);
+        if (this.call_email.allocated_group && this.call_email.allocated_group.members.length > 0) {
+          let user_id_list = [];
+          for (let user of this.call_email.allocated_group.members) {
+            user_id_list.push(user.id);
+          }
+          payload.append('allocated_group', user_id_list);
         }
-        if (this.call_email.allocated_group_id) {
-          payload.append('allocated_group_id', this.call_email.allocated_group_id);
-        }
+        // if (this.call_email.allocated_group_id) {
+        //   payload.append('allocated_group_id', this.call_email.allocated_group_id);
+        // }
         if (this.call_email.assigned_to) {
-          payload.append('assigned_to', this.call_email.assigned_to);
+          payload.append('assigned_to_id', this.call_email.assigned_to_id);
         }
         
         payload.append('details', this.workflowDetails);
@@ -398,7 +402,7 @@ export default {
         let res = await this.$http.post(post_url, payload);
         console.log(this);
         if (res.ok) {
-          // this.$parent.save();
+          await this.$parent.save();
           this.$router.push({ name: 'internal-call-email-dash' });
 
         }

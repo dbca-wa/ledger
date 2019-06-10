@@ -32,6 +32,9 @@ export const callemailStore = {
             report_type: {
                 id: null,
             },
+            allocated_group: {
+                members: [],
+            },
         },
         classification_types: [],
         report_types: [],
@@ -147,21 +150,21 @@ export const callemailStore = {
                 state.report_types = [];
             }
         },
-        updateAllocatedTo(state, member_ids) {
-            console.log("updateAllocatedTo");
-            if (member_ids) {
-                state.call_email.allocated_to = [];
-                for (let member_id of member_ids) {
-                    state.call_email.allocated_to.push(member_id);
-                }
-            }
-        },
-        updateAllocatedGroup(state, id) {
-            console.log("updateAllocatedGroup");
-            if (id) {
-                Vue.set(state.call_email, 'allocated_group_id', id);
-            }
-        },
+        // updateAllocatedTo(state, member_ids) {
+        //     console.log("updateAllocatedTo");
+        //     if (member_ids) {
+        //         state.call_email.allocated_to = [];
+        //         for (let member_id of member_ids) {
+        //             state.call_email.allocated_to.push(member_id);
+        //         }
+        //     }
+        // },
+        // updateAllocatedGroup(state, id) {
+        //     console.log("updateAllocatedGroup");
+        //     if (id) {
+        //         Vue.set(state.call_email, 'allocated_group_id', id);
+        //     }
+        // },
         updateClassification(state, classification) {
             if (classification) {
                 Vue.set(state.call_email, 'classification', classification);
@@ -218,8 +221,14 @@ export const callemailStore = {
         updateLocationDetailsFieldEmpty(state) {
             state.call_email.location.properties.details = "";
         },
-        updateAllocatedGroupList(state, data) {
-            Vue.set(state.call_email, 'allocated_group', data);
+        updateAllocatedGroupList(state, members) {
+            // for (let member of members) {
+            //     state.allocated_group.members.push(member);
+            // }
+            Vue.set(state.call_email, 'allocated_group', {});
+            Vue.set(state.call_email.allocated_group, 'members', members);
+            // state.call_email.allocated_group.members = [];
+            // Object.assign(state.call_email.allocated_group.members, members);
         },
         updateAllocatedGroupId(state, id) {
             state.call_email.allocated_group_id = id;

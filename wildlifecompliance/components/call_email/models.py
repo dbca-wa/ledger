@@ -205,11 +205,11 @@ class CallEmail(RevisionedMixin):
         related_name='callemail_district', 
         null=True
     )
-    allocated_to = models.ManyToManyField(
-        EmailUser, 
-        related_name='callemail_allocated_to',
-        blank=True
-    )
+    # allocated_group = models.ManyToManyField(
+    #     EmailUser, 
+    #     related_name='callemail_allocated_to',
+    #     blank=True
+    # )
     allocated_group = models.ForeignKey(
         CompliancePermissionGroup,
         related_name='callemail_allocated_group', 
