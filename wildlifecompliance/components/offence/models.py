@@ -3,10 +3,12 @@ from ledger.accounts.models import RevisionedMixin, EmailUser
 from wildlifecompliance.components.call_email.models import Location, CallEmail
 
 
-class SectionRegulation(models.Model):
+class SectionRegulation(RevisionedMixin):
     act = models.CharField(max_length=100, blank=True)
     name = models.CharField(max_length=50, blank=True)
     offence_text = models.CharField(max_length=200, blank=True)
+    amount =  models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -16,23 +18,6 @@ class SectionRegulation(models.Model):
 
     def __str__(self):
         return '{}:{}:{}'.format(self.act, self.name, self.offence_text)
-
-
-class Penalty(RevisionedMixin):
-    amount =  models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
-    section_regulation = models.ForeignKey(
-        SectionRegulation,
-        null=True,
-        related_name='penalty_section_regulation',
-    )
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-        verbose_name = 'CM_Penalty'
-        verbose_name_plural = 'CM_Penalties'
-
-    def __str__(self):
-        return 'Penalty: ${} '.format(self.amount,)
 
 
 class Offence(RevisionedMixin):
@@ -73,6 +58,7 @@ class Offence(RevisionedMixin):
         SectionRegulation,
         blank=True,
     )
+    description = models.TextField(blank=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -81,24 +67,6 @@ class Offence(RevisionedMixin):
 
     def __str__(self):
         return 'ID: {}, Status: {}, Identifier: {}'.format(self.id, self.status, self.identifier)
-
-
-# class AllegedOffence(models.Model):
-#     section_regulation = models.ForeignKey(
-#         SectionRegulation,
-#         null=True,
-#         related_name='alleged_offence_section_regulation',
-#     )
-#     offence = models.ForeignKey(
-#         Offence,
-#         null=True,
-#         related_name='alleged_offence_offence',
-#     )
-#
-#     class Meta:
-#         app_label = 'wildlifecompliance'
-#         verbose_name = 'CM_Alleged_Offence'
-#         verbose_name_plural = 'CM_Alleged_Offences'
 
 
 class Offender(models.Model):
@@ -127,5 +95,3 @@ class Offender(models.Model):
 
     def __str__(self):
         return 'First name: {}, Last name: {}'.format(self.person.first_name, self.person.last_name)
-
-

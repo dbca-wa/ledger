@@ -18,6 +18,7 @@ from wildlifecompliance.components.licences import api as licence_api
 from wildlifecompliance.components.returns import api as return_api
 from wildlifecompliance.management.permissions_manager import CollectorManager
 from wildlifecompliance.components.call_email import api as call_email_api
+from wildlifecompliance.components.offence import api as offence_api
 
 from wildlifecompliance.utils import are_migrations_running
 
@@ -69,6 +70,7 @@ router.register(r'search_user', call_email_api.EmailUserViewSet)
 router.register(r'map_layers', call_email_api.MapLayerViewSet)
 router.register(r'compliancepermissiongroup', users_api.CompliancePermissionGroupViewSet)
 router.register(r'region_district', users_api.RegionDistrictViewSet)
+router.register(r'offences', offence_api.OffenceViewSet)
 
 api_patterns = [url(r'^api/my_user_details/$',
                     users_api.GetMyUserDetails.as_view(),
