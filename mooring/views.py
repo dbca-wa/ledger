@@ -231,7 +231,7 @@ class CancelBookingView(TemplateView):
                   return HttpResponseRedirect(reverse('home'))
 
         booking_cancellation_fees = utils.calculate_price_booking_cancellation(booking)
-        booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking.admission_payment, booking_cancellation_fees)
+        booking_cancellation_fees = utils.calculate_price_admissions_cancel(booking.admission_payment, booking_cancellation_fees)
         booking_total = Decimal('{0:.2f}'.format(booking_total + Decimal(sum(Decimal(i['amount']) for i in booking_cancellation_fees))))
         basket = {}
         print ("CANCELLATION FEES")
@@ -265,7 +265,7 @@ class CancelBookingView(TemplateView):
         booking_cancellation_fees = utils.calculate_price_booking_cancellation(booking)
         if booking.admission_payment:
             booking_admission = AdmissionsBooking.objects.get(pk=booking.admission_payment_id)
-            booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking.admission_payment, booking_cancellation_fees)
+            booking_cancellation_fees = utils.calculate_price_admissions_cancel(booking.admission_payment, booking_cancellation_fees)
         booking_total = Decimal('{0:.2f}'.format(booking_total + Decimal(sum(Decimal(i['amount']) for i in booking_cancellation_fees))))
 
 #        booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
@@ -401,7 +401,7 @@ class CancelAdmissionsBookingView(TemplateView):
                   print ("ADMISSIONS BOOKING HAS BEEN CANCELLED")
                   return HttpResponseRedirect(reverse('home'))
 
-        booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking, [])
+        booking_cancellation_fees = utils.calculate_price_admissions_cancel(booking, [])
         booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
         basket = {}
         return render(request, self.template_name, {'booking': booking,'basket': basket, 'booking_fees': booking_cancellation_fees, 'booking_total': booking_total, 'booking_total_positive': booking_total - booking_total - booking_total })
@@ -423,7 +423,7 @@ class CancelAdmissionsBookingView(TemplateView):
                   return HttpResponseRedirect(reverse('home'))
         
         bpoint_id = self.get_booking_info(self, request, *args, **kwargs)
-        booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking, [])
+        booking_cancellation_fees = utils.calculate_price_admissions_cancel(booking, [])
         booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
 #        booking_total =  Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total)))
 
@@ -575,7 +575,7 @@ class RefundPaymentView(TemplateView):
              new_invoice = Invoice.objects.get(order_number=new_order.number)
 #             book_inv, created = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference)
 
-             BookingInvoice.objects.create(booking=booking, invoice_reference=new_invoice.reference)
+             BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference)
              if refund:
                  invoice.voided = True
                  invoice.save()
@@ -728,7 +728,7 @@ class MakeBookingsView(TemplateView):
             if booking.old_booking:
                 booking_change_fees = utils.calculate_price_booking_change(booking.old_booking, booking)
                 if booking.old_booking.admission_payment:
-                    booking_change_fees = utils.calculate_price_admissions_changecancel(booking.old_booking.admission_payment, booking_change_fees)
+                    booking_change_fees = utils.calculate_price_admissions_change(booking.old_booking.admission_payment, booking_change_fees)
                 booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_change_fees)
             # Sort the list by date from.
             # new_lines = sorted(lines, key=lambda line: line['from'])
@@ -887,7 +887,8 @@ class MakeBookingsView(TemplateView):
                 else:
                     form_context['phone'] = request.user.phone_number
                 if  Address.objects.filter(user=request.user).count() > 0:
-                    address = Address.objects.get(user=request.user)
+                    address = Address.objects.filter(user=request.user)[0]
+                        
                     form_context['postcode'] = address.postcode
                     form_context['country'] = address.country
                 form = MakeBookingsForm(form_context)
@@ -1047,7 +1048,7 @@ class MakeBookingsView(TemplateView):
         if booking.old_booking is not None:
            booking_change_fees = utils.calculate_price_booking_change(booking.old_booking, booking)
            if booking.old_booking.admission_payment:
-               booking_change_fees = utils.calculate_price_admissions_changecancel(booking.old_booking.admission_payment, booking_change_fees)
+               booking_change_fees = utils.calculate_price_admissions_change(booking.old_booking.admission_payment, booking_change_fees)
            lines = utils.price_or_lineitems_extras(request,booking,booking_change_fees,lines) 
         if 'non_online_booking' in booking.details:
             if booking.details['non_online_booking'] is True:
@@ -2455,7 +2456,7 @@ class BookingSuccessView(TemplateView):
                               ad_booking.created_by = request.user
                          ad_booking.booking_type=1
                          ad_booking.save()
-                         ad_invoice = AdmissionsBookingInvoice.objects.create(admissions_booking=ad_booking, invoice_reference=invoice_ref)
+                         ad_invoice = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=ad_booking, invoice_reference=invoice_ref)
                         # booking.admission_payment = ad_booking
                     booking.save()
                     #if not request.user.is_staff:
@@ -2523,8 +2524,8 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
                 overnight = adl[0].overnightStay
             invoice_reference = ''
             bk_invoices = []
-            if AdmissionsBookingInvoice.objects.filter(admissions_booking=ad).count() > 0:
-                 for i in AdmissionsBookingInvoice.objects.filter(admissions_booking=ad):
+            if AdmissionsBookingInvoice.objects.filter(admissions_booking=ad,system_invoice=False).count() > 0:
+                 for i in AdmissionsBookingInvoice.objects.filter(admissions_booking=ad,system_invoice=False):
                       bk_invoices.append(i.invoice_reference)
  
             to_add = [ad, arrival, overnight, bk_invoices]
@@ -2533,7 +2534,7 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
         ad_past = []
         for ad in ad_pasts:
             bk_invoices = []
-            for i in AdmissionsBookingInvoice.objects.filter(admissions_booking=ad):
+            for i in AdmissionsBookingInvoice.objects.filter(admissions_booking=ad, system_invoice=False):
                  bk_invoices.append(i.invoice_reference)
             to_add = [ad, bk_invoices]
             ad_past.append(to_add)
@@ -2543,7 +2544,7 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
         
         for bk in bk_currents:
             bk_invoices = []
-            for i in BookingInvoice.objects.filter(booking=bk):
+            for i in BookingInvoice.objects.filter(booking=bk, system_invoice=False):
                 bk_invoices.append(i.invoice_reference)    
             to_add = [bk, bk_invoices]
             bk_current.append(to_add)
@@ -2551,7 +2552,7 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
         bk_past = []
         for bk in bk_pasts:
             bk_invoices = []
-            for i in BookingInvoice.objects.filter(booking=bk):
+            for i in BookingInvoice.objects.filter(booking=bk, system_invoice=False):
                 bk_invoices.append(i.invoice_reference)
             to_add = [bk, bk_invoices]  
             bk_past.append(to_add)

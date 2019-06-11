@@ -522,13 +522,13 @@ export default {
                     mRender: function(data, type, full) {
                         var id = full.id;
                         if (full.active) {
-                            var column ="<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
+                            var column ="<td ><a href='__ID__' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
                             if ( full.campground_open ){
                                 column += "<a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >Close</a></td>";
                             }
                         }
                         else {
-                            var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
+                            var column = "<td ><a href='__ID__' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
                             if ( full.campground_open ){
                                 column += "<a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" data-current_closure='"+ full.current_closure +"'>Open</a></td>";
                             }

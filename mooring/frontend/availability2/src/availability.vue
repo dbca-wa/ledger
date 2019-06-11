@@ -70,7 +70,7 @@
                         </div>
                 </div>
                 <div class="columns small-4 medium-3 large-2">
-                        <div v-if="vesselRego.length < 1 || vesselRego == ' ' || vesselSize < 1 || vesselDraft < 1 ">
+                        <div v-if="vesselRego.length < 0.1 || vesselRego == ' ' || vesselSize < 0.1 || vesselDraft < 0.1 ">
                             
                             <button title="Please enter vessel details" style="border-radius: 4px; border: 1px solid #2e6da4" class="button small-12 medium-12 large-12" @click="validateVessel()">Proceed to Check Out</button>
                         </div>
@@ -191,9 +191,9 @@
             <div class="small-6 medium-6 large-2 columns" >
                 <label>
                     Guests 
-                    <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
+                    <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown" id='guests-button' />
                 </label>
-                <div style='position: relative;'>
+                <div style='iiiiposition: relative;'>
                 <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
                     <div class="row">
                         <div class="small-6 columns">
@@ -994,7 +994,7 @@ export default {
                   allowOutsideClick: false
                 });
             }
-            if (vm.vesselSize < 1){
+            if (vm.vesselSize < 0.1){
                 swal({
                   title: 'Invalid Vessel Size',
                   text: "Please enter a valid vessel size",
@@ -1005,7 +1005,7 @@ export default {
                   allowOutsideClick: false
                 });
             }
-            if (vm.vesselDraft < 1){
+            if (vm.vesselDraft < 0.1){
                 swal({
                   title: 'Invalid Vessel Draft',
                   text: "Please enter a valid vessel draft",
@@ -1016,7 +1016,7 @@ export default {
                   allowOutsideClick: false
                 });
             }
-            if (vm.vesselBeam < 1){
+            if (vm.vesselBeam < 0.1){
                 swal({
                   title: 'Invalid Vessel Beam',
                   text: "Please enter a valid vessel beam",
@@ -1027,7 +1027,7 @@ export default {
                   allowOutsideClick: false
                 });
             }
-            if (vm.vesselWeight < 1){
+            if (vm.vesselWeight < 0.1){
                 swal({
                   title: 'Invalid Vessel Weight',
                   text: "Please enter a valid vessel weight",
@@ -1346,6 +1346,12 @@ export default {
 //                    window.location = loc.protocol + '//' + loc.host + loc.pathname;
                }
             }, 1000);
+        // Fix white space which appears on the right of the availablity screen START
+        $('#guests-button').click();
+        $('#guests-button').click();
+        // Fix white space which appears on the right of the availablity screen END
+
+
 
     }
 }

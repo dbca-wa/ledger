@@ -200,7 +200,7 @@ def send_admissions_booking_confirmation(admissionsBooking, request, context_pro
     #bcc = [default_rottnest_email]
 #    rottnest_email = default_rottnest_email
     #rottnest_email = default_from_email
-    my_bookings_url = request.build_absolute_uri('/mybookings/')
+    my_bookings_url = context_processor['PUBLIC_URL']+'/mybookings/'
 
     context = {
         'booking': admissionsBooking,
@@ -235,7 +235,7 @@ def send_booking_confirmation(booking,request,context_processor):
     if campground_email != default_campground_email:
         cc = [campground_email]
 
-    my_bookings_url = request.build_absolute_uri('/mybookings/')
+    my_bookings_url = context_processor['PUBLIC_URL']+'/mybookings/'
     booking_availability = request.build_absolute_uri('/availability/?site_id={}'.format(booking.mooringarea.id))
     unpaid_vehicle = False
     mobile_number = booking.customer.mobile_number

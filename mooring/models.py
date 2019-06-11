@@ -1597,7 +1597,8 @@ class OutstandingBookingRecipient(models.Model):
 class BookingInvoice(models.Model):
     booking = models.ForeignKey(Booking, related_name='invoices')
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
-
+    system_invoice = models.BooleanField(default=False)
+ 
     def __str__(self):
         return 'Booking {} : Invoice #{}'.format(self.id,self.invoice_reference)
 
@@ -1876,6 +1877,7 @@ class AdmissionsOracleCode(models.Model):
 class AdmissionsBookingInvoice(models.Model):
     admissions_booking = models.ForeignKey(AdmissionsBooking, related_name='invoices')
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+    system_invoice = models.BooleanField(default=False)
 
     def __str__(self):
         return 'Fee Payment {} : Invoice #{}'.format(self.id,self.invoice_reference)

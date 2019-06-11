@@ -1017,21 +1017,28 @@ def calculate_price_booking_change(old_booking, new_booking):
 
     return change_fees
 
-def calculate_price_admissions_changecancel(adBooking, change_fees):
+def calculate_price_admissions_cancel(adBooking, change_fees):
     ad_lines = AdmissionsLine.objects.filter(admissionsBooking=adBooking)
     for line in ad_lines:
         if line.arrivalDate > date.today():
+
             description = "Admission ({}) for {} guest(s)".format(datetime.strftime(line.arrivalDate, '%d/%m/%Y'), adBooking.total_admissions)
             oracle_code = AdmissionsOracleCode.objects.filter(mooring_group=line.location.mooring_group)[0]
-            if not change_fees == []:
-#                change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code), 'mooring_group': line.location.mooring_group.id})
-                change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code.oracle_code), 'mooring_group': line.location.mooring_group.id, 'line_status': 3 })
-            else:
-#                change_fees.append({'additional_fees': 'true', 'description': 'Refund - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code), 'mooring_group': line.location.mooring_group.id})
-                change_fees.append({'additional_fees': 'true', 'description': 'Refund - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code.oracle_code), 'mooring_group': line.location.mooring_group.id, 'line_status': 3})
-        else:
-            # 0 line
-            pass
+    
+            change_fees.append({'additional_fees': 'true', 'description': 'Refund - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code.oracle_code), 'mooring_group': line.location.mooring_group.id, 'line_status': 3})
+    return change_fees
+
+
+def calculate_price_admissions_change(adBooking, change_fees):
+    ad_lines = AdmissionsLine.objects.filter(admissionsBooking=adBooking)
+    for line in ad_lines:
+        description = "Admission ({}) for {} guest(s)".format(datetime.strftime(line.arrivalDate, '%d/%m/%Y'), adBooking.total_admissions)
+        oracle_code = AdmissionsOracleCode.objects.filter(mooring_group=line.location.mooring_group)[0]
+
+        # Fees
+        change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code.oracle_code), 'mooring_group': line.location.mooring_group.id, 'line_status': 3 })
+
+
     return change_fees
 
 def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None):
@@ -1730,14 +1737,14 @@ def allocate_failedrefund_to_unallocated(request, booking, lines, invoice_text=N
         order  = ci.create_invoice_and_order(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=user, status='Submitted', invoice_text='Refund Allocation Pool', )
         #basket.status = 'Submitted'
         #basket.save()
-        new_order = Order.objects.get(basket=basket)
-        new_invoice = Invoice.objects.get(order_number=new_order.number)
+        #new_order = Order.objects.get(basket=basket)
+        new_invoice = Invoice.objects.get(order_number=order.number)
         update_payments(new_invoice.reference)
         if booking.__class__.__name__ == 'AdmissionsBooking':
             print ("AdmissionsBooking")
-            book_inv, created = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=booking, invoice_reference=new_invoice.reference)
+            book_inv, created = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=booking, invoice_reference=new_invoice.reference, system_invoice=True)
         else:
-            book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference)
+            book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference, system_invoice=True)
 
         return order
 
@@ -1751,7 +1758,7 @@ def old_internal_create_booking_invoice(booking, checkout_response):
         Invoice.objects.get(reference=reference)
     except Invoice.DoesNotExist:
         raise Exception("There was a problem attaching an invoice for this booking")
-    book_inv = BookingInvoice.objects.create(booking=booking,invoice_reference=reference)
+    book_inv = BookingInvoice.objects.get_or_create(booking=booking,invoice_reference=reference)
     return book_inv
 
 def internal_create_booking_invoice(booking, reference):
@@ -1759,7 +1766,7 @@ def internal_create_booking_invoice(booking, reference):
         Invoice.objects.get(reference=reference)
     except Invoice.DoesNotExist:
         raise Exception("There was a problem attaching an invoice for this booking")
-    book_inv = BookingInvoice.objects.create(booking=booking,invoice_reference=reference)
+    book_inv = BookingInvoice.objects.get_or_create(booking=booking,invoice_reference=reference)
     return book_inv
 
 
