@@ -11,7 +11,7 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry, Us
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
-    UserAction, Document
+    UserAction, Document, get_related_items
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 
 logger = logging.getLogger(__name__)
@@ -205,11 +205,6 @@ class CallEmail(RevisionedMixin):
         related_name='callemail_district', 
         null=True
     )
-    # allocated_group = models.ManyToManyField(
-    #     EmailUser, 
-    #     related_name='callemail_allocated_to',
-    #     blank=True
-    # )
     allocated_group = models.ForeignKey(
         CompliancePermissionGroup,
         related_name='callemail_allocated_group', 
@@ -247,6 +242,10 @@ class CallEmail(RevisionedMixin):
     
     def log_user_action(self, action, request):
         return ComplianceUserAction.log_action(self, action, request.user)
+
+    @property
+    def related_items(self):
+        return get_related_items(self)
 
 
 @python_2_unicode_compatible

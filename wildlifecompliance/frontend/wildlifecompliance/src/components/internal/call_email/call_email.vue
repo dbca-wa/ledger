@@ -457,7 +457,7 @@ export default {
     // blank entry allows user to clear selection
     this.classification_types.splice(0, 0, 
       {
-        id: "", 
+        id: null, 
         name: "",
       });
     //report_types
