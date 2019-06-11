@@ -231,7 +231,7 @@ class CancelBookingView(TemplateView):
                   return HttpResponseRedirect(reverse('home'))
 
         booking_cancellation_fees = utils.calculate_price_booking_cancellation(booking)
-        booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking.admission_payment, booking_cancellation_fees)
+        booking_cancellation_fees = utils.calculate_price_admissions_cancel(booking.admission_payment, booking_cancellation_fees)
         booking_total = Decimal('{0:.2f}'.format(booking_total + Decimal(sum(Decimal(i['amount']) for i in booking_cancellation_fees))))
         basket = {}
         print ("CANCELLATION FEES")
@@ -265,7 +265,7 @@ class CancelBookingView(TemplateView):
         booking_cancellation_fees = utils.calculate_price_booking_cancellation(booking)
         if booking.admission_payment:
             booking_admission = AdmissionsBooking.objects.get(pk=booking.admission_payment_id)
-            booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking.admission_payment, booking_cancellation_fees)
+            booking_cancellation_fees = utils.calculate_price_admissions_cancel(booking.admission_payment, booking_cancellation_fees)
         booking_total = Decimal('{0:.2f}'.format(booking_total + Decimal(sum(Decimal(i['amount']) for i in booking_cancellation_fees))))
 
 #        booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
@@ -401,7 +401,7 @@ class CancelAdmissionsBookingView(TemplateView):
                   print ("ADMISSIONS BOOKING HAS BEEN CANCELLED")
                   return HttpResponseRedirect(reverse('home'))
 
-        booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking, [])
+        booking_cancellation_fees = utils.calculate_price_admissions_cancel(booking, [])
         booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
         basket = {}
         return render(request, self.template_name, {'booking': booking,'basket': basket, 'booking_fees': booking_cancellation_fees, 'booking_total': booking_total, 'booking_total_positive': booking_total - booking_total - booking_total })
@@ -423,7 +423,7 @@ class CancelAdmissionsBookingView(TemplateView):
                   return HttpResponseRedirect(reverse('home'))
         
         bpoint_id = self.get_booking_info(self, request, *args, **kwargs)
-        booking_cancellation_fees = utils.calculate_price_admissions_changecancel(booking, [])
+        booking_cancellation_fees = utils.calculate_price_admissions_cancel(booking, [])
         booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
 #        booking_total =  Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total)))
 
@@ -728,7 +728,7 @@ class MakeBookingsView(TemplateView):
             if booking.old_booking:
                 booking_change_fees = utils.calculate_price_booking_change(booking.old_booking, booking)
                 if booking.old_booking.admission_payment:
-                    booking_change_fees = utils.calculate_price_admissions_changecancel(booking.old_booking.admission_payment, booking_change_fees)
+                    booking_change_fees = utils.calculate_price_admissions_change(booking.old_booking.admission_payment, booking_change_fees)
                 booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_change_fees)
             # Sort the list by date from.
             # new_lines = sorted(lines, key=lambda line: line['from'])
@@ -1048,7 +1048,7 @@ class MakeBookingsView(TemplateView):
         if booking.old_booking is not None:
            booking_change_fees = utils.calculate_price_booking_change(booking.old_booking, booking)
            if booking.old_booking.admission_payment:
-               booking_change_fees = utils.calculate_price_admissions_changecancel(booking.old_booking.admission_payment, booking_change_fees)
+               booking_change_fees = utils.calculate_price_admissions_change(booking.old_booking.admission_payment, booking_change_fees)
            lines = utils.price_or_lineitems_extras(request,booking,booking_change_fees,lines) 
         if 'non_online_booking' in booking.details:
             if booking.details['non_online_booking'] is True:
