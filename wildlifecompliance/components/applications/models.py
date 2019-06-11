@@ -238,11 +238,13 @@ class Application(RevisionedMixin):
     APPLICATION_TYPE_ACTIVITY = 'new_activity'
     APPLICATION_TYPE_AMENDMENT = 'amend_activity'
     APPLICATION_TYPE_RENEWAL = 'renew_activity'
+    APPLICATION_TYPE_SYSTEM_GENERATED = 'system_generated'
     APPLICATION_TYPE_CHOICES = (
         (APPLICATION_TYPE_NEW_LICENCE, 'New'),
         (APPLICATION_TYPE_ACTIVITY, 'New Activity'),
         (APPLICATION_TYPE_AMENDMENT, 'Amendment'),
         (APPLICATION_TYPE_RENEWAL, 'Renewal'),
+        (APPLICATION_TYPE_SYSTEM_GENERATED, 'System Generated'),
     )
 
     application_type = models.CharField(
@@ -589,9 +591,29 @@ class Application(RevisionedMixin):
         selected_activity = self.get_selected_activity(activity_id)
         selected_activity.processing_status = processing_status
         selected_activity.save()
-        logger.info("Application: %s Activity ID: %s changed processing to: %s" % (self.id, activity_id, processing_status))
+        logger.info("Application: %s Activity ID: %s changed processing status to: %s" % (self.id, activity_id, processing_status))
+
+    def set_activity_activity_status(self, activity_id, activity_status):
+        if not activity_id:
+            logger.error("Application: %s cannot update activity status (%s) for an empty activity_id!" %
+                         (self.id, activity_status))
+            return
+        if activity_status not in dict(ApplicationSelectedActivity.ACTIVITY_STATUS_CHOICES):
+            logger.error("Application: %s cannot update activity status (%s) for invalid activity status!" %
+                         (self.id, activity_status))
+            return
+        selected_activity = self.get_selected_activity(activity_id)
+        selected_activity.activity_status = activity_status
+        selected_activity.save()
+        logger.info("Application: %s Activity ID: %s changed activity status to: %s" % (self.id, activity_id, activity_status))
 
     def get_selected_activity(self, activity_id):
+        '''
+        :param activity_id: LicenceActivity ID, used to filter ApplicationSelectedActivity (ASA)
+        :return: first ApplicationSelectedActivity record filtered by application id and ASA id
+
+        If ASA not found, create one and set application and ASA id fields
+        '''
         if activity_id is None:
             return ApplicationSelectedActivity.objects.none()
 
@@ -760,6 +782,103 @@ class Application(RevisionedMixin):
             for field, value in field_data.items():
                 setattr(selected_activity, field, value)
                 selected_activity.save()
+
+    def copy_application_purposes_for_status(self, purpose_ids_list, new_activity_status):
+        '''
+        Creates a copy of the Application and associated records
+        for the specified purposes and activity status.
+        '''
+
+        # Get the ID of the original application
+        original_app_id = self.id
+
+        # Validate purpose_ids_list against LicencePurpose records for the application
+        if purpose_ids_list:
+            try:
+                for licence_purpose_id in purpose_ids_list:
+                    LicencePurpose.objects.get(id=licence_purpose_id, application__id=original_app_id)
+            except BaseException:
+                raise ValidationError('One or more IDs in the purpose list are not valid')
+        else:
+            raise ValidationError('Purpose list is empty')
+
+        # Confirm all purposes are of the same LicenceActivity type and then set licence_activity_id
+        if LicencePurpose.objects.filter(id__in=purpose_ids_list) \
+                .values_list('licence_activity_id', flat=True).distinct().count() > 1:
+            raise ValidationError('Purpose list contains purposes of different licence activities')
+        else:
+            licence_activity_id = LicencePurpose.objects.filter(id__in=purpose_ids_list).first().licence_activity_id
+
+        # Only continue if valid and current licence exists and original application is part of the chain
+        try:
+            parent_licence, created = self.get_parent_licence(auto_create=False)
+            application_chain = parent_licence.current_application.get_application_children()
+            if self in application_chain:
+                pass
+            else:
+                raise ValidationError('Application you are trying to copy'
+                                      ' is not associated with a valid current licence')
+        except BaseException:
+            raise ValidationError('Application you are trying to copy'
+                                  ' is not associated with a valid current licence')
+
+        with transaction.atomic():
+
+            # Create new application as a clone of the original application
+            new_app = Application.objects.get(id=original_app_id)
+            new_app.id = None
+            new_app.application_type = Application.APPLICATION_TYPE_SYSTEM_GENERATED
+            new_app.lodgement_number = ''
+            new_app.application_fee = Decimal('0.00')
+            # Use parent_licence.current_application to always retrieve the latest application in the chain
+            new_app.previous_application = parent_licence.current_application
+            new_app.save()
+
+            # Set the associated licence's current_application to the new application
+            parent_licence.current_application = new_app
+            parent_licence.save()
+
+            # Create ApplicationSelectedActivity record for the new application
+            selected_activity = Application.objects.get(id=original_app_id)\
+                .selected_activities.get(licence_activity_id=licence_activity_id)
+            selected_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
+            selected_activity.save()
+            new_activity = selected_activity
+            new_activity.id = None
+            new_activity.licence_fee = Decimal('0.00')
+            new_activity.application = new_app
+            new_activity.activity_status = new_activity_status
+            new_activity.save()
+
+            # Link the target LicencePurpose IDs to the new application
+            # Copy ApplicationFormDataRecord rows from old application, licence_activity and licence_purpose
+            for licence_purpose_id in purpose_ids_list:
+                self.copy_application_purpose_to_target_application(new_app, licence_purpose_id)
+
+        return new_app
+
+    def copy_application_purpose_to_target_application(self, target_application=None, licence_purpose_id=None):
+        if not target_application or not licence_purpose_id:
+            raise ValidationError('Target application and licence_purpose_id must be specified')
+        try:
+            LicencePurpose.objects.get(id=licence_purpose_id, application=self)
+        except BaseException:
+            raise ValidationError('The licence purpose ID is not valid for this application')
+
+        with transaction.atomic():
+            # Link the target LicencePurpose ID to the target_application
+            target_application.licence_purposes.add(licence_purpose_id)
+
+            # Copy ApplicationFormDataRecord rows from application (self) for selected
+            # licence_activity and licence_purpose to target_application
+            licence_activity_id = LicencePurpose.objects.get(id=licence_purpose_id).licence_activity_id
+            for data_row in ApplicationFormDataRecord.objects.filter(
+                    application_id=self,
+                    licence_activity_id=licence_activity_id,
+                    licence_purpose_id=licence_purpose_id):
+                data_row.id = None
+                data_row.application_id = target_application.id
+                data_row.save()
 
     def submit(self, request):
         from wildlifecompliance.components.licences.models import LicenceActivity
@@ -1169,6 +1288,12 @@ class Application(RevisionedMixin):
             **activity_filters
         ) if self.previous_application and self.previous_application != self else activity_chain
 
+    def get_application_children(self):
+        application_self_queryset = Application.objects.filter(id=self.id)
+        return application_self_queryset | self.previous_application.get_application_children()\
+            if self.previous_application and self.previous_application != self\
+            else application_self_queryset
+
     def get_latest_current_activity(self, activity_id):
         return self.get_activity_chain(
             licence_activity_id=activity_id,
@@ -1362,16 +1487,20 @@ class Application(RevisionedMixin):
             except BaseException:
                 raise
 
-    def get_parent_licence(self):
+    def get_parent_licence(self, auto_create=True):
         from wildlifecompliance.components.licences.models import WildlifeLicence
         current_date = timezone.now().date()
         try:
             existing_licence = WildlifeLicence.objects.filter(
                 Q(licence_category=self.get_licence_category()),
                 Q(current_application__org_applicant_id=self.org_applicant_id) if self.org_applicant_id else (
-                    Q(current_application__submitter_id=self.proxy_applicant_id
-                      ) | Q(current_application__proxy_applicant_id=self.proxy_applicant_id)
-                ) if self.proxy_applicant_id else Q(current_application__submitter_id=self.submitter_id)
+                    Q(current_application__submitter_id=self.proxy_applicant_id,
+                      current_application__org_applicant_id=None
+                      ) | Q(current_application__proxy_applicant_id=self.proxy_applicant_id,
+                            current_application__org_applicant_id=None)
+                ) if self.proxy_applicant_id else Q(current_application__submitter_id=self.submitter_id,
+                                                    current_application__org_applicant_id=None,
+                                                    current_application__proxy_applicant_id=None)
             ).order_by('-id').distinct().first()
 
             if existing_licence:
@@ -1385,10 +1514,13 @@ class Application(RevisionedMixin):
                 raise WildlifeLicence.DoesNotExist
             return existing_licence, False
         except WildlifeLicence.DoesNotExist:
-            return WildlifeLicence.objects.create(
-                current_application=self,
-                licence_category=self.get_licence_category()
-            ), True
+            if auto_create:
+                return WildlifeLicence.objects.create(
+                    current_application=self,
+                    licence_category=self.get_licence_category()
+                ), True
+            else:
+                return WildlifeLicence.objects.none(), False
 
     def issue_activity(self, request, selected_activity, parent_licence=None, generate_licence=False):
 
@@ -1396,7 +1528,7 @@ class Application(RevisionedMixin):
             raise Exception("Cannot issue activity: licence fee has not been paid!")
 
         if parent_licence is None:
-            parent_licence, created = self.get_parent_licence()
+            parent_licence, created = self.get_parent_licence(auto_create=True)
 
         if not parent_licence:
             raise Exception("Cannot issue activity: licence not found!")
@@ -1440,7 +1572,7 @@ class Application(RevisionedMixin):
 
         with transaction.atomic():
             try:
-                parent_licence, created = self.get_parent_licence()
+                parent_licence, created = self.get_parent_licence(auto_create=True)
                 issued_activities = []
                 declined_activities = []
                 for item in request.data.get('activity'):
@@ -2044,27 +2176,6 @@ class ApplicationSelectedActivity(models.Model):
         ).distinct()
 
     @property
-    def current_purposes(self):
-        '''
-        need to clarify why ASA.purposes uses activity chain, should this be renamed to "current_purposes"?
-        should there be a separate function that just returns the purposes for the individual ASA?
-        after checking usage of .purposes, it seems maybe this was replaced by the creation of "current_activities"
-        may not need this if current_activities is correct, then purposes for an ASA should always
-        just show its own purposes, not full chain list
-        '''
-
-        from wildlifecompliance.components.licences.models import LicencePurpose
-        activity_chain = self.application.get_activity_chain(
-            licence_activity_id=self.licence_activity_id,
-            activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
-        )
-        application_ids = set([activity.application_id for activity in activity_chain] + [self.application_id])
-        return LicencePurpose.objects.filter(
-            application__id__in=application_ids,
-            licence_activity_id=self.licence_activity_id
-        ).distinct()
-
-    @property
     def can_amend(self):
         # Returns true if the activity can be included in a Amendment Application
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
@@ -2261,6 +2372,12 @@ class ApplicationSelectedActivity(models.Model):
     def reinstate(self, request):
         with transaction.atomic():
             self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+            self.updated_by = request.user
+            self.save()
+
+    def mark_as_replaced(self, request):
+        with transaction.atomic():
+            self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
             self.updated_by = request.user
             self.save()
 

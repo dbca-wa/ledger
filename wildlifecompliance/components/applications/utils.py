@@ -461,14 +461,6 @@ def get_activity_schema(activity_ids):
 
             condition = {}
 
-    print('\n\nschema_group')
-    print(schema_group)
-    print('schema_group\n\n')
-
     iterate_children(schema_group)
-
-    print('\n\nschema_group')
-    print(schema_group)
-    print('schema_group\n\n')
 
     return schema_group

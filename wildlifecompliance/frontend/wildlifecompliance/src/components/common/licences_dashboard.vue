@@ -67,10 +67,12 @@
                 </div>
             </div>
         </div>
+        <CancelLicencePurposes ref="cancel_licence_purposes" :licence_activity_purposes="cancel_purpose_list" :licence_id="selected_licence_id" @refreshFromResponse="refreshFromResponse"></CancelLicencePurposes>
     </div>
 </template>
 <script>
 import datatable from '@/utils/vue/datatable.vue'
+import CancelLicencePurposes from './licence_cancel_purposes.vue'
 import {
     api_endpoints,
     helpers
@@ -101,6 +103,8 @@ export default {
             filterLicenceIssuedFrom: '',
             filterLicenceIssuedTo: '',
             filterLicenceHolder: 'All',
+            cancel_purpose_list: [],
+            selected_licence_id: null,
             dateFormat: 'DD/MM/YYYY',
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -237,7 +241,8 @@ export default {
         }
     },
     components:{
-        datatable
+        datatable,
+        CancelLicencePurposes
     },
     watch:{
         filterLicenceType: function(){
@@ -312,10 +317,10 @@ export default {
                     if (result.value) {
                         var licence_select = 'new_activity';
                         var licence_category_id = $(this).attr('licence-category-id');
-                        var activity_id = null;
+                        var licence_activity_id = null;
                         var proxy_id = $(this).attr('proxy-id');
                         var org_id = $(this).attr('org-id');
-                        vm.routeApplyLicence(licence_select, licence_category_id, activity_id, proxy_id, org_id);
+                        vm.routeApplyLicence(licence_select, licence_category_id, licence_activity_id, proxy_id, org_id);
                     }
                 },(error) => {
                 });
@@ -333,10 +338,10 @@ export default {
                     if (result.value) {
                         var licence_select = 'amend_activity';
                         var licence_category_id = $(this).attr('licence-category-id');
-                        var activity_id = $(this).attr('amend-activity');
+                        var licence_activity_id = $(this).attr('amend-activity');
                         var proxy_id = $(this).attr('proxy-id');
                         var org_id = $(this).attr('org-id');
-                        vm.routeApplyLicence(licence_select, licence_category_id, activity_id, proxy_id, org_id);
+                        vm.routeApplyLicence(licence_select, licence_category_id, licence_activity_id, proxy_id, org_id);
                     }
                 },(error) => {
                 });
@@ -354,10 +359,10 @@ export default {
                     if (result.value) {
                         var licence_select = 'renew_activity';
                         var licence_category_id = $(this).attr('licence-category-id');
-                        var activity_id = $(this).attr('renew-activity');
+                        var licence_activity_id = $(this).attr('renew-activity');
                         var proxy_id = $(this).attr('proxy-id');
                         var org_id = $(this).attr('org-id');
-                        vm.routeApplyLicence(licence_select, licence_category_id, activity_id, proxy_id, org_id);
+                        vm.routeApplyLicence(licence_select, licence_category_id, licence_activity_id, proxy_id, org_id);
                     }
                 },(error) => {
                 });
@@ -424,33 +429,35 @@ export default {
                 },(error) => {
                 });
             });
-            // Cancel activity listener
-            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[cancel-activity]', function(e) {
+            // Cancel purposes listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[cancel-purposes]', function(e) {
                 e.preventDefault();
                 swal({
-                    title: "Cancel Activity",
-                    text: "Are you sure you want to cancel this activity?",
+                    title: "Cancel Purposes",
+                    text: "Are you sure you want to cancel purposes for this activity?",
                     type: "question",
                     showCancelButton: true,
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var activity_id = $(this).attr('cancel-activity');
+                        var licence_activity_id = $(this).attr('cancel-purposes');
                         var licence_id = $(this).attr('lic-id');
-                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/cancel_activity/?activity_id=' + activity_id)).then(res=>{
-                            swal({
-                                title: "Cancel Activity",
-                                text: "The activity has been cancelled",
-                                type: "info"
-                            })
-                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
-                        },err=>{
-                            swal(
-                                'Submit Error',
-                                helpers.apiVueResourceError(err),
-                                'error'
-                            )
-                        });
+                        vm.selected_licence_id = licence_id;
+                        vm.$http.get(helpers.add_endpoint_join(
+                            api_endpoints.licences,licence_id+
+                            '/get_latest_purposes_for_licence_activity_and_action/?licence_activity_id='+
+                            licence_activity_id+'&action=cancel')).then(res=>{
+                                if (res.body) {
+                                    vm.cancel_purpose_list = res.body;
+                                    vm.$refs.cancel_licence_purposes.isModalOpen = true;
+                                }
+                            }, (error) => {
+                                swal(
+                                    'Cancel Error',
+                                    helpers.apiVueResourceError(error),
+                                    'error'
+                                )
+                            });
                     }
                 },(error) => {
                 });
@@ -547,7 +554,6 @@ export default {
                 var licence_id = vm.$refs.licence_datatable.vmDataTable.row(tr).data().id;
                 var current_application = vm.$refs.licence_datatable.vmDataTable.row(tr).data().current_application
                 var proxy_id = current_application.proxy_applicant ? current_application.proxy_applicant.id : "";
-                console.log(proxy_id);
                 var org_id = current_application.org_applicant ? current_application.org_applicant.id : "";
                 var row = vm.$refs.licence_datatable.vmDataTable.row(tr);
 
@@ -561,46 +567,45 @@ export default {
                     var child_row = ''
                     // Generate rows for each activity
                     var activity_rows = ''
-                    row.data()['latest_activities'].forEach(function(activity) {
+                    row.data()['latest_activities_merged'].forEach(function(activity) {
                         activity_rows += `
                             <tr>
                                 <td>${activity['activity_name_str']}</td>
-                                <td>${activity['activity_purpose_names'].
+                                <td>${activity['activity_purpose_names_and_status'].
                                     replace(/(?:\r\n|\r|\n|,)/g, '<br>')}</td>
-                                <td>${activity['activity_status']['name']}</td>
                                 <td>${activity['expiry_date']}</td>
                                 <td>`;
                                     if (activity['can_amend']) {
                                         activity_rows +=
-                                            `<a amend-activity='${activity["id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Amend</a></br>`;
+                                            `<a amend-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Amend</a></br>`;
                                     }
                                     if (activity['can_renew']) {
                                         activity_rows +=
-                                            `<a renew-activity='${activity["id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Renew</a></br>`;
+                                            `<a renew-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Renew</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reactivate_renew']) {
                                         activity_rows +=
-                                            `<a reactivate-renew-activity='${activity["id"]}' lic-id='${licence_id}'>Reactivate Renew</a></br>`;
+                                            `<a reactivate-renew-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Reactivate Renew</a></br>`;
                                     }
                                     if (activity['can_surrender']) {
                                         activity_rows +=
-                                            `<a surrender-activity='${activity["id"]}' lic-id='${licence_id}'>Surrender</a></br>`;
+                                            `<a surrender-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Surrender</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_cancel']) {
                                         activity_rows +=
-                                            `<a cancel-activity='${activity["id"]}' lic-id='${licence_id}'>Cancel</a></br>`;
+                                            `<a cancel-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Cancel</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_suspend']) {
                                         activity_rows +=
-                                            `<a suspend-activity='${activity["id"]}' lic-id='${licence_id}'>Suspend</a></br>`;
+                                            `<a suspend-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Suspend</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reissue']) {
                                         activity_rows +=
-                                            `<a reissue-activity='${activity["id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Reissue</a></br>`;
+                                            `<a reissue-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Reissue</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reinstate']) {
                                         activity_rows +=
-                                            `<a reinstate-activity='${activity["id"]}' lic-id='${licence_id}'>Reinstate</a></br>`;
+                                            `<a reinstate-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Reinstate</a></br>`;
                                     }
                         activity_rows += `</td>
                             </tr>`;
@@ -611,7 +616,6 @@ export default {
                             <tr>
                                 <th>Activity</th>
                                 <th class="width_55pc">Purposes</th>
-                                <th class="width_20pc">Status</th>
                                 <th class="width_20pc">Expiry Date</th>
                                 <th class="width_20pc">Action</th>
                             </tr>
@@ -625,6 +629,9 @@ export default {
                 }
             });
 
+        },
+        refreshFromResponse:function(response){
+            this.$refs.licence_datatable.vmDataTable.ajax.reload();
         },
         initialiseSearch:function(){
             this.dateSearch();
@@ -679,27 +686,18 @@ export default {
         getColumnIndex: function(column_name) {
             return this.licence_headers.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
         },
-        routeApplyLicence:function (licence_select, licence_category_id, activity_id, proxy_id, org_id) {
+        routeApplyLicence:function (licence_select, licence_category_id, licence_activity_id, proxy_id, org_id) {
             return this.$router.push({
                 name: "apply_application_licence",
                 params: {
                     licence_select: licence_select,
                     licence_category: licence_category_id,
-                    activity_id: activity_id,
+                    licence_activity: licence_activity_id,
                     org_select: org_id,
                     proxy_select: proxy_id
                 }
             });
         },
-//        filterByColumn: function(column, filterAttribute) {
-//            const column_idx = this.getColumnIndex(column);
-//            const filterValue = typeof(filterAttribute) == 'string' ? filterAttribute : filterAttribute.name;
-//            if (filterValue!= 'All') {
-//                this.$refs.licence_datatable.vmDataTable.columns(column_idx).search('^' + filterValue +'$', true, false).draw();
-//            } else {
-//                this.$refs.licence_datatable.vmDataTable.columns(column_idx).search('').draw();
-//            }
-//        },
     },
     mounted: function(){
         let vm = this;
