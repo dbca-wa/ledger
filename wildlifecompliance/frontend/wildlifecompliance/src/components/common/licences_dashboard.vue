@@ -593,7 +593,7 @@ export default {
                                     }
                                     if (!vm.is_external && activity['can_cancel']) {
                                         activity_rows +=
-                                            `<a cancel-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}' purposes='${activity["activity_purpose_ids"]}'>Cancel</a></br>`;
+                                            `<a cancel-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Cancel</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_suspend']) {
                                         activity_rows +=
