@@ -1025,7 +1025,6 @@ def calculate_price_admissions_cancel(adBooking, change_fees):
             description = "Admission ({}) for {} guest(s)".format(datetime.strftime(line.arrivalDate, '%d/%m/%Y'), adBooking.total_admissions)
             oracle_code = AdmissionsOracleCode.objects.filter(mooring_group=line.location.mooring_group)[0]
     
-            change_fees.append({'additional_fees': 'true', 'description': 'Refund - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code), 'mooring_group': line.location.mooring_group.id, 'line_status': 2})
             change_fees.append({'additional_fees': 'true', 'description': 'Refund - ' +  description,'amount': str(line.cost - line.cost - line.cost), 'oracle_code': str(oracle_code.oracle_code), 'mooring_group': line.location.mooring_group.id, 'line_status': 3})
     return change_fees
 
