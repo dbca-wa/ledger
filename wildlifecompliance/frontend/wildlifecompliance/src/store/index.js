@@ -19,6 +19,9 @@ import {
 import {
 	callemailStore
 } from './modules/call_email';
+import {
+	offenceStore
+} from './modules/offence';
 
 Vue.use(Vuex);
 
@@ -33,6 +36,6 @@ export default new Vuex.Store({
 		returnsStore: returnsStore,
 		returnsRendererStore: returnsRendererStore,
 		callemailStore: callemailStore,
-
+		offenceStore: offenceStore,
 	}
 });

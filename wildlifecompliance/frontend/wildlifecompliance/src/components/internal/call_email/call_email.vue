@@ -57,10 +57,10 @@
                                 </a>
                           </div>
                         </div>
-                        <div class="row">
+                        <!-- <div class="row">
                           <div class="col-sm-12"/>
-                        </div>
-                        <div v-if="statusId ==='draft'" class="row">
+                        </div> -->
+                        <div v-if="statusId ==='draft'" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="forwardToRegions" @click="addWorkflow('forward_to_regions')" class=" btn btn-primary">
                                   Forward to Regions
@@ -68,48 +68,58 @@
                           </div>
                         </div>
 
-                        <div v-if="statusId ==='open'" class="row">
+                        <div v-if="statusId ==='open'" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="save" @click="save()" class=" btn btn-primary">
                                   Save
                                 </a>
                           </div>
                         </div>
-                        <div class="row">
+                        <!-- <div class="row">
                           <div class="col-sm-12"/>
+                        </div> -->
+                        <div class="row action-button">
+                          <div class="col-sm-12">
+                                <a @click="offence()" class=" btn btn-primary">
+                                  Offence
+                                </a>
+                          </div>
                         </div>
-                        <div v-if="statusId ==='open'" class="row">
+                        <!-- <div class="row">
+                          <div class="col-sm-12"/>
+                        </div> -->
+                        <div v-if="statusId ==='open'" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="allocateForFollowUp" @click="addWorkflow('allocate_for_follow_up')" class=" btn btn-primary">
                                   Allocate for Follow Up
                                 </a>
                           </div>
                         </div>
-                        <div class="row">
+                        <!-- <div class="row">
                           <div class="col-sm-12"/>
-                        </div>
-                        <div v-if="statusId ==='open'" class="row">
+                        </div> -->
+                        <div v-if="statusId ==='open'" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="allocateForInspection" @click="addWorkflow('allocate_for_inspection')" class=" btn btn-primary">
                                   Allocate for Inspection
                                 </a>
                           </div>
                         </div>
-                        <div class="row">
+                        <!-- <div class="row">
                           <div class="col-sm-12"/>
-                        </div>
+                        </div> -->
 
-                        <div v-if="statusId ==='open'" class="row">
+                        <div v-if="statusId ==='open'" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="allocateForCase" @click="addWorkflow('allocate_for_case')" class=" btn btn-primary">
                                   Allocate for Case
                                 </a>
                           </div>
                         </div>
-                        <div class="row">
+                        <!-- <div class="row">
                           <div class="col-sm-12"/>
-                        </div>
-                        <div v-if="statusId ==='open'" class="row">
+                        </div> -->
+                        <div v-if="statusId ==='open'" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="close" @click="addWorkflow('close')" class=" btn btn-primary">
                                   Close
@@ -267,6 +277,7 @@
                         </div>
         </div>          
         <CallWorkflow ref="add_workflow" :workflow_type="workflow_type" />
+        <Offence ref="offence" />
     </div>
 </template>
 <script>
@@ -282,6 +293,7 @@ import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import Datepicker from 'vuejs-datepicker';
 import moment from 'moment';
 import CallWorkflow from './call_email_workflow';
+import Offence from '../offence/offence';
 
 export default {
   name: "ViewCallEmail",
@@ -326,6 +338,7 @@ export default {
     SearchPerson,
     Datepicker,
     CallWorkflow,
+    Offence,
   },
   computed: {
     ...mapGetters('callemailStore', {
@@ -396,6 +409,9 @@ export default {
     addWorkflow(workflow_type) {
       this.workflow_type = workflow_type;
       this.$refs.add_workflow.isModalOpen = true;
+    },
+    offence(){
+      this.$refs.offence.isModalOpen = true;
     },
     save: async function() {
       if (this.call_email.id) {
@@ -525,4 +541,7 @@ export default {
 </script>
 
 <style lang="css">
+.action-button {
+    margin-top: 5px;
+}
 </style>
