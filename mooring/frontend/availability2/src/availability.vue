@@ -70,7 +70,7 @@
                         </div>
                 </div>
                 <div class="columns small-4 medium-3 large-2">
-                        <div v-if="vesselRego.length < 1 || vesselRego == ' ' || vesselSize < 1 || vesselDraft < 1 ">
+                        <div v-if="vesselRego.length < 0.1 || vesselRego == ' ' || vesselSize < 0.1 || vesselDraft < 0.1 ">
                             
                             <button title="Please enter vessel details" style="border-radius: 4px; border: 1px solid #2e6da4" class="button small-12 medium-12 large-12" @click="validateVessel()">Proceed to Check Out</button>
                         </div>
@@ -994,7 +994,7 @@ export default {
                   allowOutsideClick: false
                 });
             }
-            if (vm.vesselSize < 1){
+            if (vm.vesselSize < 0.1){
                 swal({
                   title: 'Invalid Vessel Size',
                   text: "Please enter a valid vessel size",
@@ -1005,7 +1005,7 @@ export default {
                   allowOutsideClick: false
                 });
             }
-            if (vm.vesselDraft < 1){
+            if (vm.vesselDraft < 0.1){
                 swal({
                   title: 'Invalid Vessel Draft',
                   text: "Please enter a valid vessel draft",
@@ -1016,7 +1016,7 @@ export default {
                   allowOutsideClick: false
                 });
             }
-            if (vm.vesselBeam < 1){
+            if (vm.vesselBeam < 0.1){
                 swal({
                   title: 'Invalid Vessel Beam',
                   text: "Please enter a valid vessel beam",
@@ -1027,7 +1027,7 @@ export default {
                   allowOutsideClick: false
                 });
             }
-            if (vm.vesselWeight < 1){
+            if (vm.vesselWeight < 0.1){
                 swal({
                   title: 'Invalid Vessel Weight',
                   text: "Please enter a valid vessel weight",
