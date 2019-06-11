@@ -316,10 +316,10 @@ export default {
                     if (result.value) {
                         var licence_select = 'new_activity';
                         var licence_category_id = $(this).attr('licence-category-id');
-                        var activity_id = null;
+                        var licence_activity_id = null;
                         var proxy_id = $(this).attr('proxy-id');
                         var org_id = $(this).attr('org-id');
-                        vm.routeApplyLicence(licence_select, licence_category_id, activity_id, proxy_id, org_id);
+                        vm.routeApplyLicence(licence_select, licence_category_id, licence_activity_id, proxy_id, org_id);
                     }
                 },(error) => {
                 });
@@ -337,10 +337,10 @@ export default {
                     if (result.value) {
                         var licence_select = 'amend_activity';
                         var licence_category_id = $(this).attr('licence-category-id');
-                        var activity_id = $(this).attr('amend-activity');
+                        var licence_activity_id = $(this).attr('amend-activity');
                         var proxy_id = $(this).attr('proxy-id');
                         var org_id = $(this).attr('org-id');
-                        vm.routeApplyLicence(licence_select, licence_category_id, activity_id, proxy_id, org_id);
+                        vm.routeApplyLicence(licence_select, licence_category_id, licence_activity_id, proxy_id, org_id);
                     }
                 },(error) => {
                 });
@@ -358,10 +358,10 @@ export default {
                     if (result.value) {
                         var licence_select = 'renew_activity';
                         var licence_category_id = $(this).attr('licence-category-id');
-                        var activity_id = $(this).attr('renew-activity');
+                        var licence_activity_id = $(this).attr('renew-activity');
                         var proxy_id = $(this).attr('proxy-id');
                         var org_id = $(this).attr('org-id');
-                        vm.routeApplyLicence(licence_select, licence_category_id, activity_id, proxy_id, org_id);
+                        vm.routeApplyLicence(licence_select, licence_category_id, licence_activity_id, proxy_id, org_id);
                     }
                 },(error) => {
                 });
@@ -576,35 +576,35 @@ export default {
                                 <td>`;
                                     if (activity['can_amend']) {
                                         activity_rows +=
-                                            `<a amend-activity='${activity["id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Amend</a></br>`;
+                                            `<a amend-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Amend</a></br>`;
                                     }
                                     if (activity['can_renew']) {
                                         activity_rows +=
-                                            `<a renew-activity='${activity["id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Renew</a></br>`;
+                                            `<a renew-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Renew</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reactivate_renew']) {
                                         activity_rows +=
-                                            `<a reactivate-renew-activity='${activity["id"]}' lic-id='${licence_id}'>Reactivate Renew</a></br>`;
+                                            `<a reactivate-renew-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Reactivate Renew</a></br>`;
                                     }
                                     if (activity['can_surrender']) {
                                         activity_rows +=
-                                            `<a surrender-activity='${activity["id"]}' lic-id='${licence_id}'>Surrender</a></br>`;
+                                            `<a surrender-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Surrender</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_cancel']) {
                                         activity_rows +=
-                                            `<a cancel-purposes='${activity["id"]}' lic-id='${licence_id}' purposes='${activity["activity_purpose_ids"]}'>Cancel</a></br>`;
+                                            `<a cancel-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}' purposes='${activity["activity_purpose_ids"]}'>Cancel</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_suspend']) {
                                         activity_rows +=
-                                            `<a suspend-activity='${activity["id"]}' lic-id='${licence_id}'>Suspend</a></br>`;
+                                            `<a suspend-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Suspend</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reissue']) {
                                         activity_rows +=
-                                            `<a reissue-activity='${activity["id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Reissue</a></br>`;
+                                            `<a reissue-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Reissue</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reinstate']) {
                                         activity_rows +=
-                                            `<a reinstate-activity='${activity["id"]}' lic-id='${licence_id}'>Reinstate</a></br>`;
+                                            `<a reinstate-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Reinstate</a></br>`;
                                     }
                         activity_rows += `</td>
                             </tr>`;
@@ -684,13 +684,13 @@ export default {
         getColumnIndex: function(column_name) {
             return this.licence_headers.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
         },
-        routeApplyLicence:function (licence_select, licence_category_id, activity_id, proxy_id, org_id) {
+        routeApplyLicence:function (licence_select, licence_category_id, licence_activity_id, proxy_id, org_id) {
             return this.$router.push({
                 name: "apply_application_licence",
                 params: {
                     licence_select: licence_select,
                     licence_category: licence_category_id,
-                    activity_id: activity_id,
+                    licence_activity: licence_activity_id,
                     org_select: org_id,
                     proxy_select: proxy_id
                 }

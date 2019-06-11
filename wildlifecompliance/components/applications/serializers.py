@@ -171,6 +171,7 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
 
 
 class ExternalApplicationSelectedActivityMergedSerializer(serializers.Serializer):
+    licence_activity_id = serializers.IntegerField(read_only=True)
     activity_name_str = serializers.CharField(read_only=True)
     issue_date = serializers.SerializerMethodField(read_only=True)
     start_date = serializers.SerializerMethodField(read_only=True)
@@ -186,6 +187,7 @@ class ExternalApplicationSelectedActivityMergedSerializer(serializers.Serializer
 
     class Meta:
         fields = (
+            'licence_activity_id',
             'activity_name_str',
             'issue_date',
             'start_date',

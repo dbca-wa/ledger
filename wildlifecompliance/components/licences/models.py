@@ -237,6 +237,7 @@ class WildlifeLicence(models.Model):
             # Check if a record for the licence_activity_id already exists, if not, add
             if not merged_activities.get(activity.licence_activity_id):
                 merged_activities[activity.licence_activity_id] = {
+                    'licence_activity_id': activity.licence_activity_id,
                     'activity_name_str': activity.licence_activity.name,
                     'issue_date': activity.issue_date,
                     'start_date': activity.start_date,
