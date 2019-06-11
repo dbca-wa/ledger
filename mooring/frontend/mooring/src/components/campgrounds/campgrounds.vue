@@ -174,7 +174,7 @@ module.exports = {
                         if(full.noinvent){
                             column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >View</a><br/>";
                         } else {
-                            column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit</a><br/>";
+                            column = "<td ><a href='__ID__' class='detailRoute' data-campground=\"__ID__\" >Edit</a><br/>";
                             if (full.active) {
                                 column += "<a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a><br/>";
                             } else {
