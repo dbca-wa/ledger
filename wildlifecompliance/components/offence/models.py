@@ -69,6 +69,10 @@ class Offence(RevisionedMixin):
     occurrence_time_from = models.TimeField(null=True)
     occurrence_date_to = models.DateField(null=True)
     occurrence_time_to = models.TimeField(null=True)
+    alleged_offences = models.ManyToManyField(
+        SectionRegulation,
+        through='AllegedOffence',
+    )
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -77,6 +81,24 @@ class Offence(RevisionedMixin):
 
     def __str__(self):
         return 'ID: {}, Status: {}, Identifier: {}'.format(self.id, self.status, self.identifier)
+
+
+class AllegedOffence(models.Model):
+    section_regulation = models.ForeignKey(
+        SectionRegulation,
+        null=True,
+        related_name='alleged_offence_section_regulation',
+    )
+    offence = models.ForeignKey(
+        Offence,
+        null=True,
+        related_name='alleged_offence_offence',
+    )
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_Alleged_Offence'
+        verbose_name_plural = 'CM_Alleged_Offences'
 
 
 class Offender(models.Model):
