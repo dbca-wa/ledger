@@ -3,6 +3,8 @@ from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.call_email import models
 from reversion.admin import VersionAdmin
 
+from wildlifecompliance.components.offence.models import Offence, Penalty, SectionRegulation
+
 
 @admin.register(models.Location)
 class LocationAdmin(admin.ModelAdmin):

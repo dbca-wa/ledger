@@ -4,8 +4,8 @@ from wildlifecompliance.components.call_email.models import Location, CallEmail
 
 
 class SectionRegulation(models.Model):
-    name = models.CharField(max_length=50, blank=True)
     act = models.CharField(max_length=100, blank=True)
+    name = models.CharField(max_length=50, blank=True)
     offence_text = models.CharField(max_length=200, blank=True)
 
     class Meta:
@@ -65,13 +65,13 @@ class Offence(RevisionedMixin):
         related_name='offence_call_eamil',
     )
     occurrence_from_to = models.BooleanField(default=False)
-    occurrence_date_from = models.DateField(null=True)
-    occurrence_time_from = models.TimeField(null=True)
-    occurrence_date_to = models.DateField(null=True)
-    occurrence_time_to = models.TimeField(null=True)
+    occurrence_date_from = models.DateField(null=True, blank=True)
+    occurrence_time_from = models.TimeField(null=True, blank=True)
+    occurrence_date_to = models.DateField(null=True, blank=True)
+    occurrence_time_to = models.TimeField(null=True, blank=True)
     alleged_offences = models.ManyToManyField(
         SectionRegulation,
-        through='AllegedOffence',
+        blank=True,
     )
 
     class Meta:
@@ -83,22 +83,22 @@ class Offence(RevisionedMixin):
         return 'ID: {}, Status: {}, Identifier: {}'.format(self.id, self.status, self.identifier)
 
 
-class AllegedOffence(models.Model):
-    section_regulation = models.ForeignKey(
-        SectionRegulation,
-        null=True,
-        related_name='alleged_offence_section_regulation',
-    )
-    offence = models.ForeignKey(
-        Offence,
-        null=True,
-        related_name='alleged_offence_offence',
-    )
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-        verbose_name = 'CM_Alleged_Offence'
-        verbose_name_plural = 'CM_Alleged_Offences'
+# class AllegedOffence(models.Model):
+#     section_regulation = models.ForeignKey(
+#         SectionRegulation,
+#         null=True,
+#         related_name='alleged_offence_section_regulation',
+#     )
+#     offence = models.ForeignKey(
+#         Offence,
+#         null=True,
+#         related_name='alleged_offence_offence',
+#     )
+#
+#     class Meta:
+#         app_label = 'wildlifecompliance'
+#         verbose_name = 'CM_Alleged_Offence'
+#         verbose_name_plural = 'CM_Alleged_Offences'
 
 
 class Offender(models.Model):
