@@ -67,7 +67,7 @@
                 </div>
             </div>
         </div>
-        <CancelLicencePurposes ref="cancel_licence_purposes" :activity_purpose_ids="cancel_purpose_list" @refreshFromResponse="refreshFromResponse"></CancelLicencePurposes>
+        <CancelLicencePurposes ref="cancel_licence_purposes" :licence_activity_purposes="cancel_purpose_list" :licence_id="selected_licence_id" @refreshFromResponse="refreshFromResponse"></CancelLicencePurposes>
     </div>
 </template>
 <script>
@@ -104,6 +104,7 @@ export default {
             filterLicenceIssuedTo: '',
             filterLicenceHolder: 'All',
             cancel_purpose_list: [],
+            selected_licence_id: null,
             dateFormat: 'DD/MM/YYYY',
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -439,24 +440,24 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var activity_id = $(this).attr('cancel-purposes');
+                        var licence_activity_id = $(this).attr('cancel-purposes');
                         var licence_id = $(this).attr('lic-id');
-                        var purposes_list = $(this).attr('purposes');
-                        vm.cancel_purpose_list = purposes_list.split(',').map(Number);
-//                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/cancel_activity/?activity_id=' + activity_id)).then(res=>{
-//                            swal({
-//                                title: "Cancel Activity",
-//                                text: "The activity has been cancelled",
-//                                type: "info"
-//                            })
-//                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
-//                        },err=>{
-//                            swal(
-//                                'Submit Error',
-//                                helpers.apiVueResourceError(err),
-//                                'error'
-//                            )
-//                        });
+                        vm.selected_licence_id = licence_id;
+                        vm.$http.get(helpers.add_endpoint_join(
+                            api_endpoints.licences,licence_id+
+                            '/get_latest_purposes_for_licence_activity_and_action/?licence_activity_id='+
+                            licence_activity_id+'&action=cancel')).then(res=>{
+                                if (res.body) {
+                                    vm.cancel_purpose_list = res.body;
+                                    vm.$refs.cancel_licence_purposes.isModalOpen = true;
+                                }
+                            }, (error) => {
+                                swal(
+                                    'Cancel Error',
+                                    helpers.apiVueResourceError(error),
+                                    'error'
+                                )
+                            });
                     }
                 },(error) => {
                 });
@@ -630,6 +631,7 @@ export default {
 
         },
         refreshFromResponse:function(response){
+            this.$refs.licence_datatable.vmDataTable.ajax.reload();
         },
         initialiseSearch:function(){
             this.dateSearch();

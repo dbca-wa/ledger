@@ -97,7 +97,19 @@ class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
         return obj.latest_activities.first().issue_date if obj.latest_activities else ''
 
 
-class DefaultPurposeSerializer(serializers.ModelSerializer):
+class BasePurposeSerializer(serializers.ModelSerializer):
+    name = serializers.CharField()
+
+    class Meta:
+        model = LicencePurpose
+        fields = (
+            'id',
+            'name',
+            'short_name',
+        )
+
+
+class DefaultPurposeSerializer(BasePurposeSerializer):
     name = serializers.CharField()
 
     class Meta:
@@ -127,7 +139,7 @@ class DefaultActivitySerializer(serializers.ModelSerializer):
         )
 
 
-class PurposeSerializer(serializers.ModelSerializer):
+class PurposeSerializer(BasePurposeSerializer):
     name = serializers.CharField()
 
     class Meta:
