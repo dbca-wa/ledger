@@ -411,7 +411,7 @@ export default {
                             }
 
                             full.has_history ? column += "<a href='/view-booking/"+full.id+"' class='text-primary' data-history = '"+booking+"' > View History</a><br/>" : '';
-                            $.each(full.active_invoices,(i,v) =>{
+                            $.each(full.invoices,(i,v) =>{
                                 invoices += "<a href='/mooring/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
                             });
                             invoices += " <a class='text-primary' href='/booking-history/"+full.id+"'>View History</a>";
