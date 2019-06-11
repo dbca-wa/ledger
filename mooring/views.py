@@ -2524,8 +2524,8 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
                 overnight = adl[0].overnightStay
             invoice_reference = ''
             bk_invoices = []
-            if AdmissionsBookingInvoice.objects.filter(admissions_booking=ad).count() > 0:
-                 for i in AdmissionsBookingInvoice.objects.filter(admissions_booking=ad):
+            if AdmissionsBookingInvoice.objects.filter(admissions_booking=ad,system_invoice=False).count() > 0:
+                 for i in AdmissionsBookingInvoice.objects.filter(admissions_booking=ad,system_invoice=False):
                       bk_invoices.append(i.invoice_reference)
  
             to_add = [ad, arrival, overnight, bk_invoices]
@@ -2534,7 +2534,7 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
         ad_past = []
         for ad in ad_pasts:
             bk_invoices = []
-            for i in AdmissionsBookingInvoice.objects.filter(admissions_booking=ad):
+            for i in AdmissionsBookingInvoice.objects.filter(admissions_booking=ad, system_invoice=False):
                  bk_invoices.append(i.invoice_reference)
             to_add = [ad, bk_invoices]
             ad_past.append(to_add)
@@ -2544,7 +2544,7 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
         
         for bk in bk_currents:
             bk_invoices = []
-            for i in BookingInvoice.objects.filter(booking=bk):
+            for i in BookingInvoice.objects.filter(booking=bk, system_invoice=False):
                 bk_invoices.append(i.invoice_reference)    
             to_add = [bk, bk_invoices]
             bk_current.append(to_add)
@@ -2552,7 +2552,7 @@ class MyBookingsView(LoginRequiredMixin, TemplateView):
         bk_past = []
         for bk in bk_pasts:
             bk_invoices = []
-            for i in BookingInvoice.objects.filter(booking=bk):
+            for i in BookingInvoice.objects.filter(booking=bk, system_invoice=False):
                 bk_invoices.append(i.invoice_reference)
             to_add = [bk, bk_invoices]  
             bk_past.append(to_add)

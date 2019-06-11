@@ -1742,9 +1742,9 @@ def allocate_failedrefund_to_unallocated(request, booking, lines, invoice_text=N
         update_payments(new_invoice.reference)
         if booking.__class__.__name__ == 'AdmissionsBooking':
             print ("AdmissionsBooking")
-            book_inv, created = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=booking, invoice_reference=new_invoice.reference)
+            book_inv, created = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=booking, invoice_reference=new_invoice.reference, system_invoice=True)
         else:
-            book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference)
+            book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference, system_invoice=True)
 
         return order
 
