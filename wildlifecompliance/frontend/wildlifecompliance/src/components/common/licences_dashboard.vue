@@ -566,13 +566,12 @@ export default {
                     var child_row = ''
                     // Generate rows for each activity
                     var activity_rows = ''
-                    row.data()['latest_activities'].forEach(function(activity) {
+                    row.data()['latest_activities_merged'].forEach(function(activity) {
                         activity_rows += `
                             <tr>
                                 <td>${activity['activity_name_str']}</td>
-                                <td>${activity['activity_purpose_names'].
+                                <td>${activity['activity_purpose_names_and_status'].
                                     replace(/(?:\r\n|\r|\n|,)/g, '<br>')}</td>
-                                <td>${activity['activity_status']['name']}</td>
                                 <td>${activity['expiry_date']}</td>
                                 <td>`;
                                     if (activity['can_amend']) {
@@ -616,7 +615,6 @@ export default {
                             <tr>
                                 <th>Activity</th>
                                 <th class="width_55pc">Purposes</th>
-                                <th class="width_20pc">Status</th>
                                 <th class="width_20pc">Expiry Date</th>
                                 <th class="width_20pc">Action</th>
                             </tr>

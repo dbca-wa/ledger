@@ -223,6 +223,54 @@ class WildlifeLicence(models.Model):
         return LicencePurpose.objects.filter(id__in=can_action_purpose_list).distinct()
 
     @property
+    def latest_activities_merged(self):
+        from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
+        latest_activities = self.get_activities_by_processing_status(ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED) \
+            .exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED)
+        # licence_activity_ids = latest_activities.values_list('licence_activity_id', flat=True).distinct()
+        merged_activities = {}
+        # for licence_activity_id in licence_activity_ids:
+        #     # Check if a record for the licence_activity_id already exists, if not, add
+        #     if not merged_activities.get(licence_activity_id):
+        #         activities = latest_activities.filter(licence_activity_id=licence_activity_id)
+        for activity in latest_activities:
+            # Check if a record for the licence_activity_id already exists, if not, add
+            if not merged_activities.get(activity.licence_activity_id):
+                merged_activities[activity.licence_activity_id] = {
+                    'activity_name_str': activity.licence_activity.name,
+                    'issue_date': activity.issue_date,
+                    'start_date': activity.start_date,
+                    'expiry_date': activity.expiry_date,
+                    'activity_purpose_names_and_status': '\n'.join(['{} ({})'.format(
+                        p.short_name, activity.get_activity_status_display())
+                        for p in activity.purposes]),
+                    'can_renew': activity.can_renew,
+                    'can_amend': activity.can_amend,
+                    'can_surrender': activity.can_surrender,
+                    'can_cancel': activity.can_cancel,
+                    'can_suspend': activity.can_suspend,
+                    'can_reissue': activity.can_reissue,
+                    'can_reinstate': activity.can_reinstate,
+                }
+            else:
+                activity_key = merged_activities[activity.licence_activity_id]
+                activity_key['activity_purpose_names_and_status'] +=  \
+                    '\n' + '\n'.join(['{} ({})'.format(
+                        p.short_name, activity.get_activity_status_display())
+                        for p in activity.purposes])
+                activity_key['can_renew'] = activity_key['can_renew'] or activity.can_renew
+                activity_key['can_amend'] = activity_key['can_amend'] or activity.can_amend
+                activity_key['can_surrender'] = activity_key['can_surrender'] or activity.can_surrender
+                activity_key['can_cancel'] = activity_key['can_cancel'] or activity.can_cancel
+                activity_key['can_suspend'] = activity_key['can_suspend'] or activity.can_suspend
+                activity_key['can_reissue'] = activity_key['can_reissue'] or activity.can_reissue
+                activity_key['can_reinstate'] = activity_key['can_reinstate'] or activity.can_reinstate
+
+        merged_activities_list = merged_activities.values()
+
+        return merged_activities_list
+
+    @property
     def latest_activities(self):
         from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
         return self.get_activities_by_processing_status(ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED)\
