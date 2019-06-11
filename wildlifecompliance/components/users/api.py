@@ -593,12 +593,15 @@ class RegionDistrictViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     def get_group_id_by_region_district(self, request, *args, **kwargs):
+        print("get_group_id_by_region_district")
+        print(request.data)
         try:
             instance = self.get_object()
             group_permission = request.data.get('group_permission')
             compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
             permission = Permission.objects.filter(codename=group_permission).filter(content_type_id=compliance_content_type.id).first()
             group = CompliancePermissionGroup.objects.filter(region_district=instance).filter(permissions=permission).first()
+            print(group)
 
             serializer = ComplianceUserDetailsOptimisedSerializer(group.members, many=True)
             return Response(data={'allocated_group': serializer.data, 'group_id': group.id})

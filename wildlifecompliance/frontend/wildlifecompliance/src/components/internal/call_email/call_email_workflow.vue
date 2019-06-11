@@ -10,7 +10,7 @@
                               <label>Region</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control col-sm-9" @change.prevent="updateDistricts(group_permission)" v-model="call_email.region_id">
+                              <select class="form-control col-sm-9" @change.prevent="updateDistricts()" v-model="call_email.region_id">
                                 <option  v-for="option in regions" :value="option.id" v-bind:key="option.id">
                                   {{ option.display_name }} 
                                 </option>
@@ -170,7 +170,7 @@ export default {
       // forwardToRegions: false,
       // workflowType: '',
       officers: [],
-      allocatedGroup: [],
+      // allocatedGroup: [],
       isModalOpen: false,
       processingDetails: false,
       form: null,
@@ -268,14 +268,13 @@ export default {
     ...mapActions({
       loadCurrentUser: "loadCurrentUser",
     }),
-    updateDistricts: function(group_permission) {
+    updateDistricts: function() {
       // this.call_email.district_id = null;
       this.availableDistricts = [];
       for (let record of this.regionDistricts) {
         if (this.call_email.region_id === (record.id)) {
         // if (record.districts.includes(this.call_email.district_id)) {
           for (let district of record.districts) {
-          console.log(district)
             for (let district_record of this.regionDistricts) {
               if (district_record.id === district) {
                 this.availableDistricts.push(district_record)
@@ -295,57 +294,40 @@ export default {
 
     },
 
-    // updateAllocatedGroup: function(group_permission) {
-    //   for (let group of this.compliance_permission_groups) {
-    //     if (group.region_district.length > 0 && 
-    //     this.call_email.region_id &&
-    //     this.call_email.district_id &&
-    //     group.region_district[0].region === this.call_email.region_id &&
-    //     group.region_district[0].id === this.call_email.district_id &&
-    //     // filter by group permission
-    //     group.permissions_list &&
-    //     group.permissions_list.includes(group_permission)
-    //     ) {
-    //         this.setAllocatedGroup(group.id);
-    //     }
-    //     }
-
-    //   this.allocatedGroup = [];
-    //   let member_ids = [];
-    //   for (let group of this.compliance_permission_groups) {
-    //     if (group.region_district.length > 0 && 
-    //     group.members.length > 0 && 
-    //     this.call_email.region_id &&
-    //     // parent or child Region/District
-    //     (group.region_district[0].region == this.call_email.region_id ||
-    //     group.region_district[0].id == this.call_email.region_id) &&
-    //     // filter by group permission
-    //     group.permissions_list &&
-    //     group.permissions_list.includes(group_permission)
-    //     ) {
-    //       for (let member of group.members) {
-    //         this.allocatedGroup.push(member);
-    //         member_ids.push(member.id);  
-    //       }
-    //     }
-    //   }
-    //   this.setAllocatedTo(member_ids);
-    //   // blank entry allows user to clear selection
-    //   this.allocatedGroup.splice(0, 0, 
-    //   {
-    //     id: "", 
-    //     full_name: "",
-    //   });
-    // },
+    updateGroupPermission: function() {
+      if (this.workflow_type === 'forward_to_regions') {
+        this.group_permission = 'triage_call_email';
+      } else if (this.workflow_type === 'forward_to_wildlife_protection_branch') {
+        this.group_permission = 'triage_call_email';
+      } else if (this.workflow_type === 'allocate_for_follow_up') {
+        this.group_permission = 'officer';
+      } else if (this.workflow_type === 'allocate_for_inspection') {
+        this.group_permission = 'officer';
+      } else if (this.workflow_type === 'allocate_for_case') {
+        this.group_permission = 'officer';
+      } 
+    },
     updateAllocatedGroup: async function() {
+      console.log("this.workflow_type");
+      console.log(this.workflow_type);
+      console.log("updateAllocatedGroup");
+      console.log(this.call_email.district_id);
+      console.log(this.group_permission);
+      let region_district_id = this.call_email.district_id ? this.call_email.district_id : this.call_email.region_id;
+      if (this.workflow_type === 'forward_to_wildlife_protection_branch') {
+        for (let record of this.regionDistricts) {
+          if (record.district = 'KENSINGTON') {
+            region_district_id = record.id;
+            console.log("region_district_id");
+            console.log(region_district_id);
+          }
+        }
+      }
+      
       await this.loadAllocatedGroup({
-        'region_district_id': this.call_email.district_id, 
+        'region_district_id': region_district_id, 
         'group_permission': this.group_permission,
         });
-      // this.$nextTick(async function() {
-      //     await this.loadComplianceAllocatedGroup(this.call_email.allocated_group_id);
-      //   });
-      
 
     },
 
@@ -470,10 +452,16 @@ export default {
     //     id: "", 
     //     full_name: "",
     //   });
-    this.updateDistricts(this.group_permission);
+    await this.updateDistricts();
+    this.updateGroupPermission();
+    // if (this.call_email.district_id || this.call_email.region_id) {
+    //   await this.updateAllocatedGroup();
+    // }
+    await this.updateAllocatedGroup();
   },
   mounted: function() {
     this.form = document.forms.forwardForm;
+    
   }
 };
 </script>

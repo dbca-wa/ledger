@@ -131,6 +131,7 @@ def get_related_items(self, **kwargs):
     return_list = []
     for f in self._meta.get_fields():
         # Get foreign key related fields
+        # TODO add approved related models list and compare to f.name
         if f.is_relation and f.many_to_one:
             field_value = f.value_from_object(self)
             if field_value:

@@ -24,7 +24,7 @@
                             </div>
                         </div>
 
-                        <div v-if="call_email.allocated_group && call_email.allocated_group.length > 0" class="form-group">
+                        <div v-if="allocateToVisibility" class="form-group">
                           <div class="row">
                             <div class="col-sm-12 top-buffer-s">
                               <strong>Currently assigned to</strong><br/>
@@ -33,7 +33,7 @@
                           <div class="row">
                             <div class="col-sm-12">
                               <select class="form-control" v-model="call_email.assigned_to_id" >
-                                <option  v-for="option in call_email.allocated_group" :value="option.id" v-bind:key="option.id">
+                                <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
                               </select>
@@ -68,7 +68,7 @@
                           </div>
                         </div>
 
-                        <div v-if="statusId ==='open'" class="row">
+                        <div v-if="statusId !=='draft'" class="row">
                           <div class="col-sm-12">
                                 <a ref="save" @click="save()" class=" btn btn-primary">
                                   Save
@@ -109,7 +109,29 @@
                         <div class="row">
                           <div class="col-sm-12"/>
                         </div>
-                        <div v-if="statusId ==='open'" class="row">
+                        <div v-if="statusId ==='open_followup'" class="row">
+                          <div class="col-sm-12">
+                                <a ref="createOffence" @click="addWorkflow('create_offence')" class=" btn btn-primary">
+                                  Offence
+                                </a>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-sm-12"/>
+                        </div>
+
+                        <div v-if="statusId ==='open_followup'" class="row">
+                          <div class="col-sm-12">
+                                <a ref="sanctionOutcome" @click="addWorkflow('sanction_outcome')" class=" btn btn-primary">
+                                  Sanction Outcome
+                                </a>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-sm-12"/>
+                        </div>
+
+                        <div v-if="statusId !=='draft'" class="row">
                           <div class="col-sm-12">
                                 <a ref="close" @click="addWorkflow('close')" class=" btn btn-primary">
                                   Close
@@ -266,7 +288,9 @@
                             </div>
                         </div>
         </div>          
-        <CallWorkflow ref="add_workflow" :workflow_type="workflow_type" />
+        <div v-if="workflow_type">
+          <CallWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflow_type" />
+        </div>
     </div>
 </template>
 <script>
@@ -334,7 +358,7 @@ export default {
     ...mapGetters({
       renderer_form_data: 'renderer_form_data',
       current_user: 'current_user',
-      compliance_allocated_group: 'compliance_allocated_group',
+      // compliance_allocated_group: 'compliance_allocated_group',
     }),
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
@@ -373,6 +397,13 @@ export default {
     statusId: function() {
       return this.call_email.status ? this.call_email.status.id : '';
     },
+    allocateToVisibility: function() {
+      if (this.workflow_type.includes('allocate') && this.call_email.allocated_group) {
+        return true;
+      } else {
+        return false;
+      }
+    },
 
     // assignedToVisibility: function() {
     //   if (call_email.allocated_to.length > 0 || call_email.assigned_to
@@ -388,18 +419,21 @@ export default {
       loadCallEmail: "loadCallEmail",
       saveCallEmail: 'saveCallEmail',
       // setAllocatedTo: "setAllocatedTo",
-      setAllocatedGroup: "setAllocatedGroup",
+      // setAllocatedGroup: "setAllocatedGroup",
     }),
     ...mapActions({
       saveFormData: "saveFormData",
     }),
     ...mapActions({
       loadCurrentUser: "loadCurrentUser",
-      loadComplianceAllocatedGroup: "loadComplianceAllocatedGroup",
+      // loadAllocatedGroup: "loadAllocatedGroup",
     }),
     addWorkflow(workflow_type) {
       this.workflow_type = workflow_type;
-      this.$refs.add_workflow.isModalOpen = true;
+      this.$nextTick(() => {
+        this.$refs.add_workflow.isModalOpen = true;
+      });
+      // this.$refs.add_workflow.isModalOpen = true;
     },
     save: async function() {
       if (this.call_email.id) {
@@ -449,7 +483,7 @@ export default {
     if (this.$route.params.call_email_id) {
       await this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
     }
-    await this.loadComplianceAllocatedGroup(this.call_email.allocated_group_id);
+    // await this.loadComplianceAllocatedGroup(this.call_email.allocated_group_id);
     // load drop-down select lists
     // classification_types
     let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
