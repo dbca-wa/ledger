@@ -4,5 +4,10 @@
  
         <p>A Proposal <strong>{{proposal.lodgement_number}}</strong> has been approved</p>
    
-   
+       {% if num_requirement_docs == 1 %}
+           <p><span>Requirement Documents: Please note, there is {{ num_requirement_docs }} requirement document also attached.</span></p>
+       {% elif num_requirement_docs > 1 %}
+           <p><span>Requirement Documents: Please note, there are {{ num_requirement_docs }} requirement documents also attached.</span></p>
+       {% endif %}
+
 {%  endblock %}

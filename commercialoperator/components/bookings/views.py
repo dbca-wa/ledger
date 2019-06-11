@@ -21,7 +21,8 @@ from commercialoperator.components.bookings.confirmation_pdf import create_confi
 from commercialoperator.components.bookings.email import (
     send_invoice_tclass_email_notification,
     send_confirmation_tclass_email_notification,
-    send_application_fee_tclass_email_notification
+    send_application_fee_invoice_tclass_email_notification,
+    send_application_fee_confirmation_tclass_email_notification,
 )
 from commercialoperator.components.bookings.utils import (
     create_booking,
@@ -157,7 +158,8 @@ class ApplicationFeeSuccessView(TemplateView):
             except:
                 recipient = proposal.submitter.email
                 submitter = proposal.submitter
-            send_application_fee_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+            send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+            send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
 
             context.update({
                 'proposal': proposal,
@@ -194,7 +196,8 @@ class ApplicationFeeSuccessView(TemplateView):
             recipient = proposal.submitter.email
             submitter = proposal.submitter
         #import ipdb; ipdb.set_trace()
-        send_application_fee_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+        send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+        send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
 
         #delete_session_booking(request.session)
 
