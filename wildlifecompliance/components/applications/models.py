@@ -838,10 +838,6 @@ class Application(RevisionedMixin):
             parent_licence.current_application = new_app
             parent_licence.save()
 
-            # Link the target LicencePurpose IDs to the new application
-            for licence_purpose_id in purpose_ids_list:
-                new_app.licence_purposes.add(licence_purpose_id)  # e.g. new_app.licence_purposes.add(3)
-
             # Create ApplicationSelectedActivity record for the new application
             selected_activity = Application.objects.get(id=original_app_id)\
                 .selected_activities.get(licence_activity_id=licence_activity_id)
@@ -854,16 +850,35 @@ class Application(RevisionedMixin):
             new_activity.activity_status = new_activity_status
             new_activity.save()
 
+            # Link the target LicencePurpose IDs to the new application
             # Copy ApplicationFormDataRecord rows from old application, licence_activity and licence_purpose
             for licence_purpose_id in purpose_ids_list:
-                for data_row in ApplicationFormDataRecord.objects.filter(application_id=original_app_id,
-                                                                         licence_activity_id=licence_activity_id,
-                                                                         licence_purpose_id=licence_purpose_id):
-                    data_row.id = None
-                    data_row.application_id = new_app.id
-                    data_row.save()
+                self.copy_application_purpose_to_target_application(new_app, licence_purpose_id)
 
         return new_app
+
+    def copy_application_purpose_to_target_application(self, target_application=None, licence_purpose_id=None):
+        if not target_application or not licence_purpose_id:
+            raise ValidationError('Target application and licence_purpose_id must be specified')
+        try:
+            LicencePurpose.objects.get(id=licence_purpose_id, application=self)
+        except BaseException:
+            raise ValidationError('The licence purpose ID is not valid for this application')
+
+        with transaction.atomic():
+            # Link the target LicencePurpose ID to the target_application
+            target_application.licence_purposes.add(licence_purpose_id)
+
+            # Copy ApplicationFormDataRecord rows from application (self) for selected
+            # licence_activity and licence_purpose to target_application
+            licence_activity_id = LicencePurpose.objects.get(id=licence_purpose_id).licence_activity_id
+            for data_row in ApplicationFormDataRecord.objects.filter(
+                    application_id=self,
+                    licence_activity_id=licence_activity_id,
+                    licence_purpose_id=licence_purpose_id):
+                data_row.id = None
+                data_row.application_id = target_application.id
+                data_row.save()
 
     def submit(self, request):
         from wildlifecompliance.components.licences.models import LicenceActivity
