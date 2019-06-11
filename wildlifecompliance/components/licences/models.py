@@ -243,7 +243,7 @@ class WildlifeLicence(models.Model):
                     'start_date': activity.start_date,
                     'expiry_date': activity.expiry_date,
                     'activity_purpose_names_and_status': '\n'.join(['{} ({})'.format(
-                        p.short_name, activity.get_activity_status_display())
+                        p.name, activity.get_activity_status_display())
                         for p in activity.purposes]),
                     'can_renew': activity.can_renew,
                     'can_amend': activity.can_amend,
@@ -257,7 +257,7 @@ class WildlifeLicence(models.Model):
                 activity_key = merged_activities[activity.licence_activity_id]
                 activity_key['activity_purpose_names_and_status'] +=  \
                     '\n' + '\n'.join(['{} ({})'.format(
-                        p.short_name, activity.get_activity_status_display())
+                        p.name, activity.get_activity_status_display())
                         for p in activity.purposes])
                 activity_key['can_renew'] = activity_key['can_renew'] or activity.can_renew
                 activity_key['can_amend'] = activity_key['can_amend'] or activity.can_amend

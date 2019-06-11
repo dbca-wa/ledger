@@ -74,7 +74,7 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
         return PurposeSerializer(obj.purposes, many=True).data
 
     def get_activity_purpose_names(self, obj):
-        return ','.join([p.short_name for p in obj.purposes])
+        return ','.join([p.name for p in obj.purposes])
 
     def get_can_reissue(self, obj):
         try:
@@ -151,7 +151,7 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
         return obj.expiry_date.strftime('%d/%m/%Y') if obj.expiry_date else ''
 
     def get_activity_purpose_names(self, obj):
-        return ','.join([p.short_name for p in obj.purposes])
+        return ','.join([p.name for p in obj.purposes])
 
     def get_can_reissue(self, obj):
         try:
