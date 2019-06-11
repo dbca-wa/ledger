@@ -575,7 +575,7 @@ class RefundPaymentView(TemplateView):
              new_invoice = Invoice.objects.get(order_number=new_order.number)
 #             book_inv, created = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference)
 
-             BookingInvoice.objects.create(booking=booking, invoice_reference=new_invoice.reference)
+             BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference)
              if refund:
                  invoice.voided = True
                  invoice.save()
@@ -2456,7 +2456,7 @@ class BookingSuccessView(TemplateView):
                               ad_booking.created_by = request.user
                          ad_booking.booking_type=1
                          ad_booking.save()
-                         ad_invoice = AdmissionsBookingInvoice.objects.create(admissions_booking=ad_booking, invoice_reference=invoice_ref)
+                         ad_invoice = AdmissionsBookingInvoice.objects.get_or_create(admissions_booking=ad_booking, invoice_reference=invoice_ref)
                         # booking.admission_payment = ad_booking
                     booking.save()
                     #if not request.user.is_staff:

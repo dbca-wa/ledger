@@ -1737,8 +1737,8 @@ def allocate_failedrefund_to_unallocated(request, booking, lines, invoice_text=N
         order  = ci.create_invoice_and_order(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=user, status='Submitted', invoice_text='Refund Allocation Pool', )
         #basket.status = 'Submitted'
         #basket.save()
-        new_order = Order.objects.get(basket=basket)
-        new_invoice = Invoice.objects.get(order_number=new_order.number)
+        #new_order = Order.objects.get(basket=basket)
+        new_invoice = Invoice.objects.get(order_number=order.number)
         update_payments(new_invoice.reference)
         if booking.__class__.__name__ == 'AdmissionsBooking':
             print ("AdmissionsBooking")
@@ -1758,7 +1758,7 @@ def old_internal_create_booking_invoice(booking, checkout_response):
         Invoice.objects.get(reference=reference)
     except Invoice.DoesNotExist:
         raise Exception("There was a problem attaching an invoice for this booking")
-    book_inv = BookingInvoice.objects.create(booking=booking,invoice_reference=reference)
+    book_inv = BookingInvoice.objects.get_or_create(booking=booking,invoice_reference=reference)
     return book_inv
 
 def internal_create_booking_invoice(booking, reference):
@@ -1766,7 +1766,7 @@ def internal_create_booking_invoice(booking, reference):
         Invoice.objects.get(reference=reference)
     except Invoice.DoesNotExist:
         raise Exception("There was a problem attaching an invoice for this booking")
-    book_inv = BookingInvoice.objects.create(booking=booking,invoice_reference=reference)
+    book_inv = BookingInvoice.objects.get_or_create(booking=booking,invoice_reference=reference)
     return book_inv
 
 
