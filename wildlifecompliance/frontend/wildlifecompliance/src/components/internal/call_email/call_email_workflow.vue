@@ -264,6 +264,7 @@ export default {
     ...mapActions('callemailStore', {
       setAllocatedTo: "setAllocatedTo",
       loadAllocatedGroup: "loadAllocatedGroup",
+      setRegionId: "setRegionId",
     }),
     ...mapActions({
       loadCurrentUser: "loadCurrentUser",
@@ -308,18 +309,12 @@ export default {
       } 
     },
     updateAllocatedGroup: async function() {
-      console.log("this.workflow_type");
-      console.log(this.workflow_type);
-      console.log("updateAllocatedGroup");
-      console.log(this.call_email.district_id);
-      console.log(this.group_permission);
       let region_district_id = this.call_email.district_id ? this.call_email.district_id : this.call_email.region_id;
       if (this.workflow_type === 'forward_to_wildlife_protection_branch') {
         for (let record of this.regionDistricts) {
           if (record.district = 'KENSINGTON') {
             region_district_id = record.id;
-            console.log("region_district_id");
-            console.log(region_district_id);
+            await this.setRegionId(record.id);
           }
         }
       }

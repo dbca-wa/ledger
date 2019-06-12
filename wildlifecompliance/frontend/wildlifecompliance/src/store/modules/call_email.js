@@ -233,6 +233,9 @@ export const callemailStore = {
         updateAllocatedGroupId(state, id) {
             state.call_email.allocated_group_id = id;
         },
+        updateRegionId(state, id) {
+            state.call_email.region_id = id;
+        },
     },
     actions: {
         async loadCallEmail({ dispatch, }, { call_email_id }) {
@@ -342,6 +345,10 @@ export const callemailStore = {
             console.log("setAllocatedGroupList");
             commit('updateAllocatedGroupList', data);
         },
+        setRegionId({ commit }, id) {
+            commit('updateRegionId', id);
+        },
+        
         async loadAllocatedGroup({ dispatch }, { region_district_id, group_permission } ) {
             console.log(region_district_id);
             console.log(group_permission);
