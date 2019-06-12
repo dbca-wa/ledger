@@ -961,8 +961,8 @@ export default {
               err => { 
                         console.log(err);
                   }); 
-            vm.fetchRegions(); 
-            vm.fetchTrails();
+            //vm.fetchRegions(); 
+            //vm.fetchTrails();
             //vm.fetchRequiredDocumentList();
 
             for (var i = 0; i < vm.proposal.land_parks.length; i++) {
@@ -998,6 +998,7 @@ export default {
             vm.selected_parks=park_list
             
             this.$nextTick(() => {
+              let vm=this;
               //vm.eventListeners();
             });
             //vm.eventListeners();
@@ -1033,7 +1034,20 @@ export default {
             //   console.log(this);
             //   $('.glyphicon', this).toggleClass('glyphicon-chevron-up').toggleClass('glyphicon-chevron-down');
             // })
-        }
+        },
+        updated: function(){
+          let vm=this;
+          if(vm.api_regions){ //check if Regions, Parks and districts are loaded in DOM
+                vm.createParkEvent(vm.selected_parks);           
+          }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+        },
+        created: function(){
+          let vm=this;
+          vm.fetchRegions(); 
+          vm.fetchTrails();
+        },
+
     }
 </script>
 
