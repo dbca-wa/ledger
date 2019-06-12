@@ -999,7 +999,7 @@ export default {
             }
 
             if (isValid){
-                console.log("Page has found to be valid up until form checks")
+                // console.log("Page has found to be valid up until form checks")
                 $('form').each(function(){
                     if (!$(this).valid()){
                         isValid = false;
@@ -1066,8 +1066,8 @@ export default {
                         console.log("There was an error sending data.");
                         console.log(resp);
                         var message = {
-                            title: "Failure",
-                            text: "Mooring not updated, there was an error.\nPlease check all mandatory fields are complete.",
+                            title: "Failure: There was and error updating the mooring",
+                            text: resp.responseText,
                             type: "error"
                         }
                         vm.swalMessage(message);

@@ -32,7 +32,7 @@ from collections import OrderedDict
 from django.core.cache import cache
 from ledger.accounts.models import EmailUser,Address
 from ledger.address.models import Country
-from ledger.payments.models import Invoice
+from ledger.payments.models import Invoice, OracleAccountCode
 from django.db.models import Count
 from mooring import utils
 from mooring.helpers import can_view_campground, is_inventory, is_admin, is_payment_officer
@@ -901,7 +901,11 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                            if instance.id == b.id:
                               i.moorings.remove(b)
 
-                 
+                
+            if "oracle_code" in request.data:
+                  oracle_code = request.data.pop("oracle_code")
+                  if OracleAccountCode.objects.filter(active_receivables_activities=oracle_code).count() == 0:
+                      raise serializers.ValidationError("Oracle Code does not exist") 
             if "images" in request.data:
                 images_data = request.data.pop("images")
             serializer = self.get_serializer(instance,data=request.data,partial=True)
