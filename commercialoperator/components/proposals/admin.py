@@ -122,8 +122,8 @@ class ApplicationTypeAdmin(admin.ModelAdmin):
 @admin.register(Park)
 class ParkAdmin(admin.ModelAdmin):
     list_display = ['name', 'district']
-    filter_horizontal = ('allowed_activities',)
-    #filter_horizontal = ('allowed_activities', 'allowed_access')
+    #filter_horizontal = ('allowed_activities',)
+    filter_horizontal = ('allowed_activities', 'allowed_access')
     ordering = ('name',)
 
 @admin.register(Trail)
