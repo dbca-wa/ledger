@@ -262,7 +262,6 @@ class ChecklistQuestionSerializer(serializers.ModelSerializer):
         #fields = '__all__'
         fields=('id',
                 'text',
-                'correct_answer',
                 )
 class ProposalAssessmentAnswerSerializer(serializers.ModelSerializer):
     question=ChecklistQuestionSerializer(read_only=True)
@@ -702,6 +701,9 @@ class InternalProposalSerializer(BaseProposalSerializer):
     assessor_assessment=ProposalAssessmentSerializer(read_only=True)
     referral_assessments=ProposalAssessmentSerializer(read_only=True, many=True)
     fee_invoice_url = serializers.SerializerMethodField()
+    selected_trails_activities=serializers.SerializerMethodField()
+    selected_parks_activities=serializers.SerializerMethodField()
+    marine_parks_activities=serializers.SerializerMethodField()
 
     class Meta:
         model = Proposal
@@ -764,6 +766,10 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'trails',
                 'training_completed',
                 'can_edit_activities',
+                #Following 3 are variable to store selected parks and activities at frontend
+                'selected_parks_activities',
+                'selected_trails_activities',
+                'marine_parks_activities',
                 'reversion_ids',
                 'assessor_assessment',
                 'referral_assessments',
@@ -813,6 +819,16 @@ class InternalProposalSerializer(BaseProposalSerializer):
 
     def get_fee_invoice_url(self,obj):
         return '/cols/payments/invoice-pdf/{}'.format(obj.fee_invoice_reference) if obj.fee_paid else None
+
+    def get_selected_parks_activities(self,obj):
+        return []
+
+    def get_selected_trails_activities(self,obj):
+        return []
+
+    def get_marine_parks_activities(self,obj):
+        return []
+
 
 class ReferralProposalSerializer(InternalProposalSerializer):
     def get_assessor_mode(self,obj):

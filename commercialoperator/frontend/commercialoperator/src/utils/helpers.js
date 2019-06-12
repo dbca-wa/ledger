@@ -87,6 +87,10 @@ module.exports = {
     var res = string.split( ".json" )
     return res[ 0 ] + '/' + addition + '.json';
   },
+  add_endpoint_join: function ( api_string, addition ) {
+    // assumes api_string has trailing forward slash "/" character required for POST
+    return api_string + addition;
+  },
     dtPopover: function(value,truncate_length=30,trigger='hover'){
         var ellipsis = '...',
         truncated = _.truncate(value, {

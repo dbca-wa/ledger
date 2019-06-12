@@ -237,15 +237,35 @@
                             </div>
                             <div class="col-sm-3">
                                 <label>
-                                    <input type="radio" value="true" v-model="proposal.other_details.credit_fees" :disabled="proposal.readonly"/>Yes
+                                    <input type="radio" value="true" v-model="proposal.other_details.credit_fees" :disabled="proposal.readonly" @change="handleSelectionChange" ref="credit_fees_yes"/>Yes
                                 </label>
                             </div>
                             <div class="col-sm-3">
                                 <label>
-                                    <input type="radio" value="false" v-model="proposal.other_details.credit_fees" :disabled="proposal.readonly"/>No
+                                    <input type="radio" value="false" v-model="proposal.other_details.credit_fees" :disabled="proposal.readonly" @change="handleSelectionChange"/>No
                                 </label>
                             </div>
+                            <div id="show_credit_link" class="hidden">
+                                <div class="col-sm-6" >
+                                    
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class=""><a :href="credit_facility_link" target="_blank">Link</a></label>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- <div >
+                            <div id="show_credit_link" class="hidden">
+                            <div class="col-sm-6" >
+                                
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="control-label"><a :href="credit_facility_link" target="_blank">Link</a></label>
+                            </div>
+                            </div>
+                        </div> -->
+
                         <div class="row">
                             <div class="col-sm-6">
                                     <label class="control-label pull-left"  for="Name">Do you require Cash / Credit Payment Docket books?</label>
@@ -291,7 +311,8 @@
                         <div class="form-group">
                            <div class="row">
                                 <div class="col-sm-12">
-                                    <label>Print the deed poll, sign it, have it witnessed and attach it to this application</label>
+                                    <label v-if="deed_poll_url">Print the <a :href="deed_poll_url" target="_blank">deed poll</a>, sign it, have it witnessed and attach it to this application</label>
+                                    <label v-else>Print the deed poll, sign it, have it witnessed and attach it to this application</label>
                                 </div>   
                             </div>
                             <div class="row">
@@ -342,6 +363,7 @@ export default {
                 selected_accreditations:[],
                 licence_period_choices:[],
                 mooring: [''],
+                global_settings:[],
                 //mooring:[{'value':''}],
                 datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -357,7 +379,28 @@ export default {
           Accreditation
         },
         computed: {
-            
+            deed_poll_url: function(){
+                let vm=this;
+                if(vm.global_settings){
+                    for(var i=0; i<vm.global_settings.length; i++){
+                        if(vm.global_settings[i].key=='deed_poll'){
+                            return vm.global_settings[i].value;
+                        }
+                    }
+                }
+                return '';
+            },
+            credit_facility_link: function(){
+                let vm=this;
+                if(vm.global_settings){
+                    for(var i=0; i<vm.global_settings.length; i++){
+                        if(vm.global_settings[i].key=='credit_facility_link'){
+                            return vm.global_settings[i].value;
+                        }
+                    }
+                }
+                return '';
+            }
         },
         watch:{
             
@@ -376,10 +419,40 @@ export default {
                     }
                 
             },
+            handleSelectionChange: function(e){
+                    if(e.target.value=="true"){
+                        console.log(e.target.value);
+                        $('#show_credit_link').removeClass('hidden')
+                    }
+                    else{
+                        $('#show_credit_link').addClass('hidden')
+                    }
+                
+            },
             showDockteNumber: function(){
                 let vm=this;
                 if(vm.proposal && vm.proposal.other_details.credit_docket_books){
                     var input = this.$refs.docket_books_yes;
+                    var e = document.createEvent('HTMLEvents');
+                    e.initEvent('change', true, true);
+                    var disabledStatus = input.disabled;
+                    try {
+                        /* Firefox will not fire events for disabled widgets, so (temporarily) enabling them */
+                        if(disabledStatus) {
+                            input.disabled = false;
+                        }
+                        input.dispatchEvent(e);
+                    } finally {
+                        if(disabledStatus) {
+                            input.disabled = true;
+                        }
+                    }
+                }
+            },
+            showCreditFacilityLink: function(){
+                let vm=this;
+                if(vm.proposal && vm.proposal.other_details.credit_fees){
+                    var input = this.$refs.credit_fees_yes;
                     var e = document.createEvent('HTMLEvents');
                     e.initEvent('change', true, true);
                     var disabledStatus = input.disabled;
@@ -425,6 +498,15 @@ export default {
                 let vm = this;
                 vm.$http.get('/api/licence_period_choices.json').then((response) => {
                     vm.licence_period_choices = response.body;
+                    
+                },(error) => {
+                    console.log(error);
+                } );
+            },
+            fetchGlobalSettings: function(){
+                let vm = this;
+                vm.$http.get('/api/global_settings.json').then((response) => {
+                    vm.global_settings = response.body;
                     
                 },(error) => {
                     console.log(error);
@@ -543,8 +625,10 @@ export default {
             let vm = this;
             vm.fetchAccreditationChoices();
             vm.fetchLicencePeriodChoices();
+            vm.fetchGlobalSettings();
             vm.checkProposalAccreditation();
             vm.showDockteNumber();
+            vm.showCreditFacilityLink();
             this.$nextTick(()=>{
                 vm.eventListeners();
             });

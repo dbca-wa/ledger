@@ -693,9 +693,9 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
                 select_trails_activities=json.loads(request.data.get('selected_trails_activities'))
                 marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
             except:
-                select_parks_activities=json.loads(request.POST.get('selected_parks_activities'))
-                select_trails_activities=json.loads(request.POST.get('selected_trails_activities'))
-                marine_parks_activities=json.loads(request.POST.get('marine_parks_activities'))
+                select_parks_activities=json.loads(request.POST.get('selected_parks_activities', None))
+                select_trails_activities=json.loads(request.POST.get('selected_trails_activities', None))
+                marine_parks_activities=json.loads(request.POST.get('marine_parks_activities', None))
 
             other_details=ProposalOtherDetails.objects.update_or_create(proposal=instance)
             # instance.save()
@@ -743,14 +743,15 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
 def save_assessor_data(instance,request,viewset):
     with transaction.atomic():
         try:
-            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
-            extracted_fields,special_fields,assessor_data,comment_data = create_data_from_form(
-                instance.schema, request.POST, request.FILES,special_fields=lookable_fields,assessor_data=True)
-            data = {
-                'data': extracted_fields,
-                'assessor_data': assessor_data,
-                'comment_data': comment_data,
-            }
+            # lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
+            # extracted_fields,special_fields,assessor_data,comment_data = create_data_from_form(
+            #     instance.schema, request.POST, request.FILES,special_fields=lookable_fields,assessor_data=True)
+            # data = {
+            #     'data': extracted_fields,
+            #     'assessor_data': assessor_data,
+            #     'comment_data': comment_data,
+            # }
+            data={}
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
@@ -769,9 +770,15 @@ def save_assessor_data(instance,request,viewset):
                 select_trails_activities=json.loads(request.data.get('selected_trails_activities'))
                 marine_parks_activities=json.loads(request.data.get('marine_parks_activities'))
             except:
-                select_parks_activities=json.loads(request.POST.get('selected_parks_activities'))
-                select_trails_activities=json.loads(request.POST.get('selected_trails_activities'))
-                marine_parks_activities=json.loads(request.POST.get('marine_parks_activities'))
+                select_parks_activities=request.POST.get('selected_parks_activities', None)
+                if select_parks_activities:
+                    select_parks_activities=json.loads(select_parks_activities)
+                select_trails_activities=request.POST.get('selected_trails_activities', None)
+                if select_trails_activities:
+                    select_trails_activities=json.loads(select_trails_activities)
+                marine_parks_activities=request.POST.get('marine_parks_activities', None)
+                if marine_parks_activities:
+                    marine_parks_activities=json.loads(marine_parks_activities)
             #print select_parks_activities, selected_trails_activities
             if select_parks_activities:
                 try:

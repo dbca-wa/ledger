@@ -35,7 +35,11 @@ from commercialoperator.components.users.serializers import   (
                                                 UserAddressSerializer,
                                                 PersonalSerializer,
                                                 ContactSerializer,
+                                                EmailUserActionSerializer,
                                             )
+from commercialoperator.components.organisations.serializers import (
+    OrganisationRequestDTSerializer,
+)
 from commercialoperator.components.main.utils import retrieve_department_users
 
 class DepartmentUserList(views.APIView):
@@ -144,6 +148,43 @@ class UserViewSet(viewsets.ModelViewSet):
                 instance.log_user_action(EmailUserAction.ACTION_ID_UPDATE.format(
                 '{} {} ({})'.format(instance.first_name, instance.last_name, instance.email)), request)
             serializer = UserSerializer(instance, partial=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET', ])
+    def pending_org_requests(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = OrganisationRequestDTSerializer(
+                instance.organisationrequest_set.filter(
+                    status='with_assessor'),
+                many=True,
+                context={'request': request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET', ])
+    def action_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.action_logs.all()
+            serializer = EmailUserActionSerializer(qs, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())

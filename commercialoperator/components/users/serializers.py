@@ -1,5 +1,5 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address, Profile,EmailIdentity,Document
+from ledger.accounts.models import EmailUser,Address, Profile,EmailIdentity,Document, EmailUserAction
 from commercialoperator.components.organisations.models import (   
                                     Organisation,
                                 )
@@ -148,3 +148,10 @@ class ContactSerializer(serializers.ModelSerializer):
         if not obj.get('phone_number') and not obj.get('mobile_number'):
             raise serializers.ValidationError('You must provide a mobile/phone number')
         return obj
+
+class EmailUserActionSerializer(serializers.ModelSerializer):
+    who = serializers.CharField(source='who.get_full_name')
+
+    class Meta:
+        model = EmailUserAction
+        fields = '__all__'

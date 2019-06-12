@@ -41,12 +41,6 @@
                                                 <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="proposal.submitter.last_name">
                                             </div>
                                           </div>
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label" >Date of Birth</label>
-                                            <div class="col-sm-6">
-                                                <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="proposal.submitter.dob">
-                                            </div>
-                                          </div>
                                       </form>
                                 </div>
                             </div>

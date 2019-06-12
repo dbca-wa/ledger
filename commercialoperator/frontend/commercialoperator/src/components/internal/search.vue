@@ -38,6 +38,41 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
+                    <h3 class="panel-title">Search User
+                        <a :href="'#'+uBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="uBody">
+                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body collapse in" :id="uBody">
+                    <div class="row">
+                        <form name="searchUserForm">
+                          <div class="">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="control-label" for="User">Search User</label>
+                                    
+                                    <TextFilteredField :url="filtered_url" name="User" label="User" id="id_holder"/>
+                                </div>
+                            </div>
+                            <div class="">
+                              <div class="col-md-12 text-center">
+                                <div >
+                                  <input type="button" @click.prevent="viewUserDetails" class="btn btn-primary" style="margin-bottom: 5px" value="View User Details"/>
+                                </div>
+                              </div> 
+                            </div>
+                          </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
                     <h3 class="panel-title">Search Keywords
                         <a :href="'#'+kBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="kBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
@@ -137,6 +172,7 @@
 <script>
 import $ from 'jquery'
 import datatable from '@/utils/vue/datatable.vue'
+import TextFilteredField from '@/components/forms/text-filtered.vue'
 import {
   api_endpoints,
   helpers
@@ -153,8 +189,11 @@ export default {
     return {
       rBody: 'rBody' + vm._uid,
       oBody: 'oBody' + vm._uid,
+      uBody: 'uBody' + vm._uid,
       kBody: 'kBody' + vm._uid,
       loading: [],
+      filtered_url: api_endpoints.filtered_users + '?search=',
+      user_id:null,
       searchKeywords: [],
       searchProposal: true,
       searchApproval: false,
@@ -221,6 +260,7 @@ export default {
     },
     components: {
         datatable,
+        TextFilteredField,
     },
     beforeRouteEnter:function(to,from,next){
         utils.fetchOrganisations().then((response)=>{
@@ -255,6 +295,28 @@ export default {
                 var selected = $(e.currentTarget);
                 vm.selected_organisation = selected.val();
             });
+        },
+        viewUserDetails: function(){
+          let vm=this;
+          let form=document.forms.searchUserForm
+          var user_selected=form.elements['User-selected']
+          if(user_selected!=undefined || user_selected!=null){
+            var user_id= user_selected.value;
+            vm.$router.push({
+              name:"internal-user-detail",
+              params:{user_id:user_id}
+            });
+          }
+          else{
+            swal({
+                    title: 'User not selected',
+                    html: 'Please select the user to view the details',
+                    type: 'error'
+                }).then(() => {
+                    
+                });
+                return;
+          }
         },
 
         add: function() {

@@ -2666,7 +2666,7 @@ class ChecklistQuestion(RevisionedMixin):
     text = models.TextField()
     list_type = models.CharField('Checklist type', max_length=30, choices=TYPE_CHOICES,
                                          default=TYPE_CHOICES[0][0])
-    correct_answer= models.BooleanField(default=False)
+    #correct_answer= models.BooleanField(default=False)
     obsolete = models.BooleanField(default=False)
 
     def __str__(self):
@@ -3076,7 +3076,6 @@ class HelpPage(models.Model):
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('application_type', 'help_type', 'version')
-
 
 
 import reversion

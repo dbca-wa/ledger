@@ -3,6 +3,7 @@ import Search from '../search.vue'
 import OrgAccessTable from '../organisations/dashboard.vue'
 import OrgAccess from '../organisations/access.vue'
 import Organisation from '../organisations/manage.vue'
+import User from '../users/manage.vue'
 import Proposal from '../proposals/proposal.vue'
 import Referral from '../referrals/referral.vue'
 import ApprovalDash from '../approvals/dashboard.vue'
@@ -89,6 +90,22 @@ export default
                     name:"internal-org-detail"
                 },
 
+            ]
+        },
+        {
+            path: 'users',
+            component: {
+                render(c)
+                {
+                    return c('router-view')
+                }
+            },
+            children: [
+                {
+                    path: ':user_id',
+                    component: User,
+                    name:"internal-user-detail"
+                },
             ]
         },
         {

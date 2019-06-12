@@ -76,10 +76,10 @@
                   </div>
               </div>
               <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">
-                <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand" :canEditActivities="canEditActivities"></ActivitiesLand>
+                <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand" :canEditActivities="canEditActivities" ref="activities_land"></ActivitiesLand>
               </div>
               <div class="tab-pane fade" id="pills-activities-marine" role="tabpanel" aria-labelledby="pills-activities-marine-tab">
-                <ActivitiesMarine :proposal="proposal" id="proposalStartActivitiesMarine" :canEditActivities="canEditActivities"></ActivitiesMarine>
+                <ActivitiesMarine :proposal="proposal" id="proposalStartActivitiesMarine" :canEditActivities="canEditActivities" ref="activities_marine"></ActivitiesMarine>
               </div>
               <div class="tab-pane fade" id="pills-other-details" role="tabpanel" aria-labelledby="pills-other-details-tab">
                 <OtherDetails :proposal="proposal" id="proposalStartOtherDetails"></OtherDetails>
@@ -188,13 +188,23 @@
                 /* Confirmation tab - Always Disabled */
                 $('#pills-confirm-tab').attr('style', 'background-color:#E5E8E8 !important; color: #99A3A4;');
                 $('#li-confirm').attr('class', 'nav-item disabled');
-            }
+            },
+            eventListener: function(){
+              let vm=this;
+              $('a[href="#pills-activities-land"]').on('shown.bs.tab', function (e) {
+                vm.$refs.activities_land.$refs.vehicles_table.$refs.vehicle_datatable.vmDataTable.columns.adjust().responsive.recalc();
+              });
+              $('a[href="#pills-activities-marine"]').on('shown.bs.tab', function (e) {
+                vm.$refs.activities_marine.$refs.vessel_table.$refs.vessel_datatable.vmDataTable.columns.adjust().responsive.recalc();
+              });
+            },
 
         },
         mounted: function() {
             let vm = this;
             vm.set_tabs();
             vm.form = document.forms.new_proposal;
+            vm.eventListener();
             //window.addEventListener('beforeunload', vm.leaving);
             //indow.addEventListener('onblur', vm.leaving);
 
