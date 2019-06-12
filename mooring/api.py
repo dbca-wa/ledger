@@ -837,6 +837,11 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                     for image_serializer in image_serializers:
                         image_serializer.save()
 
+            if "oracle_code" in request.data:
+                  oracle_code = request.data.pop("oracle_code")
+                  if OracleAccountCode.objects.filter(active_receivables_activities=oracle_code).count() == 0:
+                      raise serializers.ValidationError("Oracle Code does not exist")
+
             if "mooring_group" in request.data:
                 mooring_group = request.data.pop("mooring_group")
                 mg = MooringAreaGroup.objects.all()
