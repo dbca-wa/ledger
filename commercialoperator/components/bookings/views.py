@@ -21,7 +21,8 @@ from commercialoperator.components.bookings.confirmation_pdf import create_confi
 from commercialoperator.components.bookings.email import (
     send_invoice_tclass_email_notification,
     send_confirmation_tclass_email_notification,
-    send_application_fee_tclass_email_notification
+    send_application_fee_invoice_tclass_email_notification,
+    send_application_fee_confirmation_tclass_email_notification,
 )
 from commercialoperator.components.bookings.utils import (
     create_booking,
@@ -50,6 +51,7 @@ from oscar.apps.order.models import Order
 
 import logging
 logger = logging.getLogger('payment_checkout')
+
 
 class ApplicationFeeView(TemplateView):
     template_name = 'commercialoperator/booking/success.html'
@@ -85,7 +87,6 @@ class ApplicationFeeView(TemplateView):
             if booking:
                 booking.delete()
             raise
-
 
 
 class MakePaymentView(TemplateView):
@@ -157,7 +158,8 @@ class ApplicationFeeSuccessView(TemplateView):
             except:
                 recipient = proposal.submitter.email
                 submitter = proposal.submitter
-            send_application_fee_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+            send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+            send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
 
             context.update({
                 'proposal': proposal,
@@ -194,7 +196,8 @@ class ApplicationFeeSuccessView(TemplateView):
             recipient = proposal.submitter.email
             submitter = proposal.submitter
         #import ipdb; ipdb.set_trace()
-        send_application_fee_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+        send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+        send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
 
         #delete_session_booking(request.session)
 
@@ -253,18 +256,6 @@ class InvoicePDFView(InvoiceOwnerMixin,View):
     def get(self, request, *args, **kwargs):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         response = HttpResponse(content_type='application/pdf')
-        response.write(create_invoice_pdf_bytes('application_fee.pdf',invoice))
-        return response
-
-    def get_object(self):
-        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
-        return invoice
-
-
-class InvoicePDFView(InvoiceOwnerMixin,View):
-    def get(self, request, *args, **kwargs):
-        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
-        response = HttpResponse(content_type='application/pdf')
         response.write(create_invoice_pdf_bytes('invoice.pdf',invoice))
         return response
 
@@ -276,7 +267,7 @@ class InvoicePDFView(InvoiceOwnerMixin,View):
 class ConfirmationPDFView(InvoiceOwnerMixin,View):
     def get(self, request, *args, **kwargs):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
-        bi=BookingInvoice.objects.get(invoice_reference=invoice.reference)
+        bi=BookingInvoice.objects.filter(invoice_reference=invoice.reference).last()
 
         response = HttpResponse(content_type='application/pdf')
         response.write(create_confirmation_pdf_bytes('confirmation.pdf',invoice, bi.booking))

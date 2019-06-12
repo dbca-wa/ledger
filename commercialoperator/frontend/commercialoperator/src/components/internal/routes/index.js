@@ -56,6 +56,7 @@ export default
         {
             path: 'payment',
             component: PaymentDash,
+            props: { level: 'internal' }
             //component: PaymentOrder,
         },
         {

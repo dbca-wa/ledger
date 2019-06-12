@@ -48,7 +48,7 @@ export default {
         return {
             panelBody: "proposal-requirements-"+vm._uid,
             requirements: [],
-            requirement_headers:["Requirement","Due Date","Recurrence","Action","Order"],
+            requirement_headers:["Requirement","Due Date","Recurrence","Action","Order","Documents"],
             requirement_options:{
                 autoWidth: false,
                 language: {
@@ -168,7 +168,18 @@ export default {
                             return links;
                         },
                         orderable: false
-                    }
+                    },
+                    {
+                        data: 'requirement_documents',
+                        mRender:function (data,type,full) {
+                            let links = '';
+                            _.forEach(data, function (doc) {
+                                links += '<a href="' + doc._file + '" target="_blank"><p>' + doc.name+ '</p></a><br>';
+                            });
+                            return links;
+                        }
+                    },
+
                 ],
                 processing: true,
                 drawCallback: function (settings) {
@@ -248,8 +259,9 @@ export default {
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposal_requirements,_id)).then((response) => {
                 this.$refs.requirement_detail.requirement = response.body;
                 this.$refs.requirement_detail.requirement.due_date =  response.body.due_date != null && response.body.due_date != undefined ? moment(response.body.due_date).format('DD/MM/YYYY'): '';
-                response.body.standard ? $(this.$refs.requirement_detail.$refs.standard_req).val(response.body.standard_requirement).trigger('change'): '';
                 this.$refs.requirement_detail.requirement.referral_group=response.body.referral_group;
+                this.$refs.requirement_detail.requirement.requirement_documents=response.body.requirement_documents;
+                response.body.standard ? $(this.$refs.requirement_detail.$refs.standard_req).val(response.body.standard_requirement).trigger('change'): '';
                 this.addRequirement();
             },(error) => {
                 console.log(error);

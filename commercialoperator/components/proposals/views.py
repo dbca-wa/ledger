@@ -31,39 +31,39 @@ class ProposalView(TemplateView):
             return JsonResponse({error:"something went wrong"},safe=False,status=400)
 
 
-class ProposaliSubmitView(TemplateView):
-    template_name = 'commercialoperator/proposal.html'
-
-    def post(self, request, *args, **kwargs):
-        extracted_fields = []
-        #import ipdb; ipdb.set_trace()
-        try:
-            instance = self.get_object()
-#            instance.submit(request,self)
-#            instance.tenure = search_tenure(instance)
-#            instance.save()
-            #serializer = InternalProposalSerializer(instance,context={'request':request})
-            #serializer = self.get_serializer(instance)
-#            serializer = ProposalSerializer(instance,context={'request':request})
-            #return Response(serializer.data)
-            return redirect(reverse('external'))
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            if hasattr(e,'error_dict'):
-                raise serializers.ValidationError(repr(e.error_dict))
-            else:
-                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-
-
-        except:
-            traceback.print_exc
-            return JsonResponse({error:"something went wrong"},safe=False,status=400)
+#class ProposaliSubmitView(TemplateView):
+#    template_name = 'commercialoperator/proposal.html'
+#
+#    def post(self, request, *args, **kwargs):
+#        extracted_fields = []
+#        #import ipdb; ipdb.set_trace()
+#        try:
+#            instance = self.get_object()
+##            instance.submit(request,self)
+##            instance.tenure = search_tenure(instance)
+##            instance.save()
+#            #serializer = InternalProposalSerializer(instance,context={'request':request})
+#            #serializer = self.get_serializer(instance)
+##            serializer = ProposalSerializer(instance,context={'request':request})
+#            #return Response(serializer.data)
+#            return redirect(reverse('external'))
+#        except serializers.ValidationError:
+#            print(traceback.print_exc())
+#            raise
+#        except ValidationError as e:
+#            if hasattr(e,'error_dict'):
+#                raise serializers.ValidationError(repr(e.error_dict))
+#            else:
+#                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+#        except Exception as e:
+#            print(traceback.print_exc())
+#            raise serializers.ValidationError(str(e))
+#
+#
+#
+#        except:
+#            traceback.print_exc
+#            return JsonResponse({error:"something went wrong"},safe=False,status=400)
 
 
 

@@ -45,6 +45,10 @@ class ZoneSerializer(serializers.ModelSerializer):
         model = Zone
         fields = ('id', 'name', 'visible', 'allowed_activities')
 
+class ParkFilterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Park
+        fields=('id', 'name', 'park_type')
 
 class ParkSerializer(serializers.ModelSerializer):
     zones=ZoneSerializer(many=True)

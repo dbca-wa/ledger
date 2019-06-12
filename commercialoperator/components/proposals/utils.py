@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrail, ProposalTrailSectionActivity, ProposalTrailSection, ProposalParkZone, ProposalParkZoneActivity, ProposalOtherDetails, ProposalAccreditation, ProposalUserAction, ProposalAssessment, ProposalAssessmentAnswer, ChecklistQuestion
+from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification
 from commercialoperator.components.proposals.serializers import SaveProposalSerializer, SaveProposalParkSerializer, SaveProposalTrailSerializer, ProposalAccreditationSerializer, ProposalOtherDetailsSerializer
 from commercialoperator.components.main.models import Activity, Park, AccessType, Trail, Section, Zone
@@ -906,3 +907,93 @@ def proposal_submit(proposal,request):
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
 
+def duplicate_object(self):
+    """
+    Duplicate a model instance, making copies of all foreign keys pointing to it.
+    There are 3 steps that need to occur in order:
+
+        1.  Enumerate the related child objects and m2m relations, saving in lists/dicts
+        2.  Copy the parent object per django docs (doesn't copy relations)
+        3a. Copy the child objects, relating to the copied parent object
+        3b. Re-create the m2m relations on the copied parent object
+
+    """
+    related_objects_to_copy = []
+    relations_to_set = {}
+    # Iterate through all the fields in the parent object looking for related fields
+    for field in self._meta.get_fields():
+        if field.name in ['proposal', 'proposalrequest']:
+            print 'Continuing ...'
+            pass
+        elif field.one_to_many:
+            # One to many fields are backward relationships where many child objects are related to the
+            # parent (i.e. SelectedPhrases). Enumerate them and save a list so we can copy them after
+            # duplicating our parent object.
+            print('Found a one-to-many field: {}'.format(field.name))
+
+            # 'field' is a ManyToOneRel which is not iterable, we need to get the object attribute itself
+            related_object_manager = getattr(self, field.name)
+            related_objects = list(related_object_manager.all())
+            if related_objects:
+                print(' - {len(related_objects)} related objects to copy')
+                related_objects_to_copy += related_objects
+
+        elif field.many_to_one:
+            # In testing so far, these relationships are preserved when the parent object is copied,
+            # so they don't need to be copied separately.
+            print('Found a many-to-one field: {}'.format(field.name))
+
+        elif field.many_to_many:
+            # Many to many fields are relationships where many parent objects can be related to many
+            # child objects. Because of this the child objects don't need to be copied when we copy
+            # the parent, we just need to re-create the relationship to them on the copied parent.
+            print('Found a many-to-many field: {}'.format(field.name))
+            related_object_manager = getattr(self, field.name)
+            relations = list(related_object_manager.all())
+            if relations:
+                print(' - {} relations to set'.format(len(relations)))
+                relations_to_set[field.name] = relations
+
+    # Duplicate the parent object
+    self.pk = None
+    self.lodgement_number = ''
+    self.save()
+    print('Copied parent object {}'.format(str(self)))
+
+    # Copy the one-to-many child objects and relate them to the copied parent
+    for related_object in related_objects_to_copy:
+        # Iterate through the fields in the related object to find the one that relates to the
+        # parent model (I feel like there might be an easier way to get at this).
+        for related_object_field in related_object._meta.fields:
+            if related_object_field.related_model == self.__class__:
+                # If the related_model on this field matches the parent object's class, perform the
+                # copy of the child object and set this field to the parent object, creating the
+                # new child -> parent relationship.
+                related_object.pk = None
+                #if related_object_field.name=='approvals':
+                #    related_object.lodgement_number = None
+                if isinstance(related_object, Approval):
+                    related_object.lodgement_number = ''
+
+                setattr(related_object, related_object_field.name, self)
+                print related_object_field
+                try:
+                    related_object.save()
+                except:
+                    import ipdb; ipdb.set_trace()
+
+                text = str(related_object)
+                text = (text[:40] + '..') if len(text) > 40 else text
+                print('|- Copied child object {}'.format(text))
+
+    # Set the many-to-many relations on the copied parent
+    for field_name, relations in relations_to_set.items():
+        # Get the field by name and set the relations, creating the new relationships
+        field = getattr(self, field_name)
+        field.set(relations)
+        text_relations = []
+        for relation in relations:
+            text_relations.append(str(relation))
+        print('|- Set {} many-to-many relations on {} {}'.format(len(relations), field_name, text_relations))
+
+    return self

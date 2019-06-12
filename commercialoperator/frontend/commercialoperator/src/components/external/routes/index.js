@@ -45,6 +45,7 @@ export default
         {
             path: 'payment',
             component: PaymentDash,
+            props: { level: 'external' }
         },
         {
             path: 'payment_order',

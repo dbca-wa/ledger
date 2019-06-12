@@ -13,10 +13,16 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_NAME = settings.SYSTEM_NAME_SHORT + ' Automated Message'
 
-class ApplicationFeeTClassSendNotificationEmail(TemplateEmailBase):
+class ApplicationFeeInvoiceTClassSendNotificationEmail(TemplateEmailBase):
     subject = 'Your application fee invoice.'
     html_template = 'commercialoperator/emails/bookings/tclass/send_application_fee_notification.html'
     txt_template = 'commercialoperator/emails/bookings/tclass/send_application_fee_notification.txt'
+
+class ApplicationFeeConfirmationTClassSendNotificationEmail(TemplateEmailBase):
+    subject = 'Your application fee confirmation.'
+    html_template = 'commercialoperator/emails/bookings/tclass/send_application_fee_confirmation_notification.html'
+    txt_template = 'commercialoperator/emails/bookings/tclass/send_application_fee_confirmation_notification.txt'
+
 
 class InvoiceTClassSendNotificationEmail(TemplateEmailBase):
     subject = 'Your booking invoice.'
@@ -28,8 +34,8 @@ class ConfirmationTClassSendNotificationEmail(TemplateEmailBase):
     html_template = 'commercialoperator/emails/bookings/tclass/send_confirmation_notification.html'
     txt_template = 'commercialoperator/emails/bookings/tclass/send_confirmation_notification.txt'
 
-def send_application_fee_tclass_email_notification(request, proposal, invoice, recipients):
-    email = ApplicationFeeTClassSendNotificationEmail()
+def send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients):
+    email = ApplicationFeeInvoiceTClassSendNotificationEmail()
     #url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
 
     context = {
@@ -49,6 +55,22 @@ def send_application_fee_tclass_email_notification(request, proposal, invoice, r
 #    except:
 #        _log_org_email(msg, proposal.submitter, proposal.submitter, sender=sender)
 
+def send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients):
+    email = ApplicationFeeConfirmationTClassSendNotificationEmail()
+    #url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+
+    context = {
+        'lodgement_number': proposal.lodgement_number,
+        #'url': url,
+    }
+
+    filename = 'confirmation.pdf'
+    doc = create_invoice_pdf_bytes(filename, invoice)
+    attachment = (filename, doc, 'application/pdf')
+
+    msg = email.send(recipients, attachments=[attachment], context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, proposal, sender=sender)
 
 def send_invoice_tclass_email_notification(request, booking, invoice, recipients):
     email = InvoiceTClassSendNotificationEmail()
