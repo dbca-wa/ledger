@@ -1701,6 +1701,7 @@ class Application(RevisionedMixin):
             self.customer_status = Application.CUSTOMER_STATUS_ACCEPTED
         elif declined_activity_count == total_activity_count:
             self.customer_status = Application.CUSTOMER_STATUS_DECLINED
+        self.save()
 
     def generate_returns(self, licence, selected_activity, request):
         from wildlifecompliance.components.returns.models import Return
