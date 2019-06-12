@@ -16,7 +16,8 @@ from commercialoperator.components.main.models import (
     Section,
     Zone,
     RequiredDocument,
-    Question
+    Question,
+    GlobalSettings
 )
 #from commercialoperator.components.main.models import Activity, SubActivityLevel1, SubActivityLevel2, SubCategory
 from reversion.admin import VersionAdmin
@@ -103,7 +104,7 @@ class HelpPageAdmin(admin.ModelAdmin):
 
 @admin.register(models.ChecklistQuestion)
 class ChecklistQuestionAdmin(admin.ModelAdmin):
-    list_display = ['text', 'correct_answer', 'list_type', 'obsolete',]
+    list_display = ['text', 'list_type', 'obsolete',]
     ordering = ('list_type',)
 
 @admin.register(SystemMaintenance)
@@ -121,8 +122,8 @@ class ApplicationTypeAdmin(admin.ModelAdmin):
 @admin.register(Park)
 class ParkAdmin(admin.ModelAdmin):
     list_display = ['name', 'district']
-    filter_horizontal = ('allowed_activities',)
-    #filter_horizontal = ('allowed_activities', 'allowed_access')
+    #filter_horizontal = ('allowed_activities',)
+    filter_horizontal = ('allowed_activities', 'allowed_access')
     ordering = ('name',)
 
 @admin.register(Trail)
@@ -133,7 +134,7 @@ class TrailAdmin(admin.ModelAdmin):
 
 @admin.register(Section)
 class SectionAdmin(admin.ModelAdmin):
-    list_display = ['name', 'visible', 'trail']
+    list_display = ['name', 'visible', 'trail', 'doc_url']
     ordering = ('name',)
 
 @admin.register(Zone)
@@ -172,6 +173,11 @@ class Activity(admin.ModelAdmin):
 class VehicleAdmin(admin.ModelAdmin):
     list_display = ['id','name','visible']
     ordering = ('id',)
+
+@admin.register(GlobalSettings)
+class GlobalSettingsAdmin(admin.ModelAdmin):
+    list_display = ['key', 'value']
+    ordering = ('key',)
 
 @admin.register(models.ReferralRecipientGroup)
 class ReferralRecipientGroupAdmin(admin.ModelAdmin):

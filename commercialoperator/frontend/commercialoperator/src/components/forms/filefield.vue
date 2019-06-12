@@ -93,7 +93,7 @@ export default {
             showingComment: false,
             show_spinner: false,
             documents:[],
-            filename:null,
+   filename:null,
         }
     },
 
@@ -113,8 +113,9 @@ export default {
     },
 
     methods:{
-        
-
+//        reset_files(){
+//            this.files = [{'file': null, 'name': ''}];
+//        },
         toggleComment(){
             this.showingComment = ! this.showingComment;
         },
@@ -143,13 +144,13 @@ export default {
                 vm.files = [];
             }
             vm.files.push(e.target.files[0]);
+            //vm.files.push( {name: e.target.files[0].name, file: e.target.files[0]} );
 
             if (e.target.files.length > 0) {
                 vm.save_document(e);
             }
 
         },
-
         get_documents: function() {
             let vm = this;
             vm.show_spinner = true;
@@ -200,6 +201,7 @@ export default {
                 _file = e.target.files[0];
             }
             return _file
+
         },
 
         save_document: function(e) {

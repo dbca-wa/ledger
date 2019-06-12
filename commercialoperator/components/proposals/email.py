@@ -279,33 +279,39 @@ def send_proposal_approver_sendback_email_notification(request, proposal):
         _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
 
 
-
 def send_proposal_approval_email_notification(proposal,request):
     email = ProposalApprovalSendNotificationEmail()
 
-    context = {
-        'proposal': proposal,
-
-    }
     cc_list = proposal.proposed_issuance_approval['cc_email']
     all_ccs = []
     if cc_list:
         all_ccs = cc_list.split(',')
 
+    attachments = []
     licence_document= proposal.approval.licence_document._file
     if licence_document is not None:
         file_name = proposal.approval.licence_document.name
         attachment = (file_name, licence_document.file.read(), 'application/pdf')
-        attachment = [attachment]
-    else:
-        attachment = []
+        attachments.append(attachment)
+        
+        # add requirement documents
+        for requirement in proposal.requirements.all():
+            for doc in requirement.requirement_documents.all():
+                file_name = doc._file.name
+                #attachment = (file_name, doc._file.file.read(), 'image/*')
+                attachment = (file_name, doc._file.file.read())
+                attachments.append(attachment)
 
-    msg = email.send(proposal.submitter.email, bcc= all_ccs, attachments=attachment, context=context)
+    context = {
+        'proposal': proposal,
+        'num_requirement_docs': len(attachments) - 1,
+    }
+
+    msg = email.send(proposal.submitter.email, bcc= all_ccs, attachments=attachments, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
     if proposal.org_applicant:
         _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
-
 
 
 def _log_proposal_referral_email(email_message, referral, sender=None):

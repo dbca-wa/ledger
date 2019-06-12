@@ -28,7 +28,6 @@
 
 import OrderTable from './order_table.vue'
 import Select from '@/components/forms/select.vue'
-import PaymentCalc from './payment_calc.vue'
 import {
     api_endpoints,
     helpers
@@ -39,7 +38,6 @@ from '@/utils/hooks'
         components:{
             OrderTable,
             Select,
-            PaymentCalc,
         },
         props:{
             proposal:{

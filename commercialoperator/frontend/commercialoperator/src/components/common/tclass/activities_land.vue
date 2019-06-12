@@ -76,23 +76,26 @@
               <div class="list-group list-group-root well">
               <div class="" v-for="r in api_regions">
                 <div class="form-check col-sm-12 list-group-item" style="">
-                  <input @click="clickRegion($event, r)" :inderminate.prop="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" :disabled="!canEditActivities" data-parsley-required />
+                  <input @click="clickRegion($event, r)" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" :disabled="!canEditActivities" data-parsley-required />
                   {{ r.name }}
                   <a data-toggle="collapse" :href="'#'+'r'+r.id" role="button" aria-expanded="true" aria controls="r.id" ><span class="glyphicon glyphicon-chevron-up pull-right "></span></a>
                 </div>
-                <div class="col-sm-12 list-group collapse" v-for="d in r.districts" :id="'r'+r.id">
-                  <div class="form-check list-group-item" style="padding-left: 30px;">
-                    <input @click="clickDistrict($event, d)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" :disabled="!canEditActivities" data-parsley-required />
+                <div class="col-sm-12 list-group collapse" :id="'r'+r.id">
+                  <div v-for="d in r.districts">
+                  <div  style="padding-left: 30px;" class="form-check list-group-item col-sm-12">
+                    <input @click="clickDistrict($event, d, r)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" :disabled="!canEditActivities" data-parsley-required />
                     {{ d.name }}
                    <a data-toggle="collapse" :href="'#'+'d'+d.id" role="button" aria-expanded="true" aria controls="d.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> 
                   </div>
-                  <div class="list-group collapse" v-for="p in d.land_parks" :id="'d'+d.id">
-                    <div class="form-check col-sm-12 list-group-item" style="padding-left: 45px;">
-                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" :id="'park'+p.id" :disabled="!canEditActivities" data-parsley-required />
+                  <div class="list-group collapse"  :id="'d'+d.id">
+                    <div class="form-check col-sm-12 list-group-item" style="padding-left: 45px;" v-for="p in d.land_parks">
+                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" :ref="'park'+p.id" type="checkbox" :id="'park'+p.id" :disabled="!canEditActivities" data-parsley-required @click="clickPark($event, p, d)"/>
                     {{ p.name }}
                       <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit access and activities</a></span>
                     </div>
                   </div>
+                <!--</div>  -->
+                </div>
                 </div>
               </div>
             </div>
@@ -113,7 +116,7 @@
           </div>
           <div class="borderDecoration col-sm-12">
             <label class="control-label">Provide details of every vehicle you plan to use when accessing the parks</label>
-              <VehicleTable :url="vehicles_url" :proposal="proposal"></VehicleTable>
+              <VehicleTable :url="vehicles_url" :proposal="proposal" ref="vehicles_table"></VehicleTable>
           </div>
         </div>
       </div>
@@ -668,6 +671,11 @@ export default {
               vm.selected_districts=new_district;
               vm.selected_parks=new_parks;
             }
+          if(!checked){
+            vm.selected_regions=[];
+            vm.selected_districts=[];
+            vm.selected_parks=[];
+          }
           },
           clickRegion: function(e, r){
             var checked=e.target.checked;
@@ -708,8 +716,9 @@ export default {
               }
             }
           },
-          clickDistrict: function(e, d){
+          clickDistrict: function(e, d, r){
             let vm=this;
+            var original_region=r;
             var checked=e.target.checked;
             if(checked){
               for(var i=0; i<d.land_parks.length; i++){
@@ -724,6 +733,7 @@ export default {
               }
             }
             else{
+              if(e.target.indeterminate==false){
               for(var i=0; i<d.land_parks.length; i++){
                 var index=this.selected_parks.indexOf(d.land_parks[i].id);
                 if(index!=-1){
@@ -734,6 +744,131 @@ export default {
                 }
               }
             }
+            }
+            this.handleDistrictChange(e,d,original_region);
+          },
+
+          handleDistrictChange: function(e,d, r){
+            //console.log('here')
+            var inder_state=false;
+            var checked_state=false;
+            var checked_all=true;
+            var unchecked_all=true;
+            var elem=$("#region"+r.id)[0]
+            inder_state=elem.indeterminate
+            checked_state=elem.checked
+            if(e.target.checked){
+              if(!checked_state){
+                for(var i=0; i<r.districts.length; i++){
+                  var district = $("#district"+r.districts[i].id)[0]
+                  if(district.checked==false){
+                    checked_all=false;
+                  }
+                }
+                if(checked_all){
+                  elem.indeterminate=false;
+                  elem.checked=true;
+                  var index=this.selected_regions.indexOf(r.id);
+                  if(index==-1){
+                    this.selected_regions.push(r.id)
+                  }
+                }
+                else{
+                  elem.indeterminate=true;
+                  elem.checked=false;
+                }
+              }              
+            }
+            else{//if unselected
+              if(e.target.indeterminate==false){
+              for(var i=0; i<r.districts.length; i++){
+                  var district = $("#district"+r.districts[i].id)[0]
+                  if(district.checked==true){
+                    unchecked_all=false;
+                  }
+                }
+                if(unchecked_all){
+                  elem.indeterminate=false;
+                  elem.checked=false;
+                  var index=this.selected_regions.indexOf(r.id);
+                  if(index>-1){
+                    this.selected_regions.splice(index,1)
+                  }
+                }
+                else{
+                  var index=this.selected_regions.indexOf(r.id);
+                  if(index>-1){
+                    this.selected_regions.splice(index,1)
+                  }
+                  elem.indeterminate=true;
+                  elem.checked=false;
+                }
+              }
+              else{
+                elem.indeterminate=true;
+                  elem.checked=false;
+              }
+            }
+          },
+          
+
+          clickPark: function(e,p,d){
+            var inder_state=false;
+            var checked_state=false;
+            var checked_all=true;
+            var unchecked_all=true;
+            var elem=$("#district"+d.id)[0]
+            inder_state=elem.indeterminate
+            checked_state=elem.checked
+            if(e.target.checked){
+              if(!checked_state){
+                for(var i=0; i<d.land_parks.length; i++){
+                  var park = $("#park"+d.land_parks[i].id)[0]
+                  if(park.checked==false){
+                    checked_all=false;
+                  }
+                }
+                if(checked_all){
+                  elem.indeterminate=false;
+                  elem.checked=true;
+                  var index=this.selected_districts.indexOf(d.id);
+                  if(index==-1){
+                    this.selected_districts.push(d.id)
+                  }
+                }
+                else{
+                  elem.indeterminate=true;
+                  elem.checked=false;
+                }
+              }              
+            }
+            else{//if unselected
+              for(var i=0; i<d.land_parks.length; i++){
+                  var park = $("#park"+d.land_parks[i].id)[0]
+                  if(park.checked==true){
+                    unchecked_all=false;
+                  }
+                }
+                if(unchecked_all){
+                  elem.indeterminate=false;
+                  elem.checked=false;
+                  var index=this.selected_districts.indexOf(d.id);
+                  if(index>-1){
+                    this.selected_districts.splice(index,1)
+                  }
+                }
+                else{
+                  var index=this.selected_districts.indexOf(d.id);
+                  if(index>-1){
+                    this.selected_districts.splice(index,1)
+                  }
+                  elem.indeterminate=true;
+                  elem.checked=false;
+                }
+            }
+            var event = document.createEvent('HTMLEvents');
+            event.initEvent('click', true, true);
+            elem.dispatchEvent(event);
           },
           
           find_recurring: function(array){
@@ -793,6 +928,18 @@ export default {
           //console.log(trail_list)
           vm.trail_activities = vm.find_recurring(all_activities)
         },
+        createParkEvent: function(selected_parks){
+          let vm= this;
+          for(var i=0;i<selected_parks.length; i++){
+            var elem=$("#park"+selected_parks[i])[0];
+            var event = document.createEvent('HTMLEvents');
+            event.initEvent('click', true, true);
+            elem.dispatchEvent(event);
+          }
+        },
+        eventListeners: function(){
+            
+        },
     },
 
         mounted: function() {
@@ -814,8 +961,8 @@ export default {
               err => { 
                         console.log(err);
                   }); 
-            vm.fetchRegions(); 
-            vm.fetchTrails();
+            //vm.fetchRegions(); 
+            //vm.fetchTrails();
             //vm.fetchRequiredDocumentList();
 
             for (var i = 0; i < vm.proposal.land_parks.length; i++) {
@@ -849,6 +996,12 @@ export default {
             vm.selected_activities = vm.find_recurring(activity_list)
             vm.selected_access=vm.find_recurring(access_list)
             vm.selected_parks=park_list
+            
+            this.$nextTick(() => {
+              let vm=this;
+              //vm.eventListeners();
+            });
+            //vm.eventListeners();
 
             vm.store_trails(vm.proposal.trails);
 
@@ -881,7 +1034,20 @@ export default {
             //   console.log(this);
             //   $('.glyphicon', this).toggleClass('glyphicon-chevron-up').toggleClass('glyphicon-chevron-down');
             // })
-        }
+        },
+        updated: function(){
+          let vm=this;
+          if(vm.api_regions){ //check if Regions, Parks and districts are loaded in DOM
+                vm.createParkEvent(vm.selected_parks);           
+          }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+        },
+        created: function(){
+          let vm=this;
+          vm.fetchRegions(); 
+          vm.fetchTrails();
+        },
+
     }
 </script>
 

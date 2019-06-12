@@ -44,6 +44,16 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-9">
+                                        <div class="input-group date" ref="add_attachments" style="width: 70%;">
+                                            <FileField2 ref="filefield" :uploaded_documents="requirement.requirement_documents" :delete_url="delete_url" :proposal_id="proposal_id" isRepeatable="true" name="requirements_file" @refreshFromResponse="refreshFromResponse"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <template v-if="validDate">
                                 <div class="form-group">
                                     <div class="row">
@@ -104,12 +114,15 @@
 
 <script>
 //import $ from 'jquery'
+//import FileField from '@/components/forms/file.vue'
+import FileField2 from '@/components/forms/filefield2.vue'
 import modal from '@vue-utils/bootstrap-modal.vue'
 import alert from '@vue-utils/alert.vue'
 import {helpers,api_endpoints} from "@/utils/hooks.js"
 export default {
     name:'Requirement-Detail',
     components:{
+        FileField2,
         modal,
         alert
     },
@@ -137,12 +150,16 @@ export default {
             isModalOpen:false,
             form:null,
             requirement: {
+                id: '',
                 due_date: '',
                 standard: true,
                 recurrence: false,
                 recurrence_pattern: '1',
                 proposal: vm.proposal_id,
-                referral_group:vm.referral_group
+                referral_group: vm.referral_group,
+                num_files: 0,
+                input_name: 'requirement_doc',
+                requirement_documents: [],
             },
             addingRequirement: false,
             updatingRequirement: false,
@@ -159,7 +176,7 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            validDate: false
+            validDate: false,
         }
     },
     computed: {
@@ -177,7 +194,11 @@ export default {
                     return this.requirement.due_date;
                 }
             }
+        },
+        delete_url: function() {
+            return (this.requirement.id) ? '/api/proposal_requirements/'+this.requirement.id+'/delete_document/' : '';
         }
+
     },
     watch: {
         due_date: function(){
@@ -185,6 +206,9 @@ export default {
         },
     },
     methods:{
+        refreshFromResponse: function(updated_docs){
+            this.requirement.requirement_documents = updated_docs;
+        },
         initialiseRequirement: function(){
             this.requirement = {
                 due_date: '',
@@ -199,10 +223,12 @@ export default {
             let vm =this;
             if($(vm.form).valid()){
                 vm.sendData();
+                vm.$refs.filefield.reset_files();
             }
         },
         cancel:function () {
             this.close()
+            this.$refs.filefield.reset_files();
         },
         close:function () {
             this.isModalOpen = false;
@@ -214,6 +240,8 @@ export default {
                 recurrence_pattern: '1',
                 proposal: this.proposal_id
             };
+            //this.$refs.filefield.files = [{file:null, name:''}];
+            this.$refs.filefield.reset_files();
             this.errors = false;
             $('.has-error').removeClass('has-error');
             $(this.$refs.due_date).data('DateTimePicker').clear();
@@ -245,9 +273,28 @@ export default {
                 delete requirement.recurrence_pattern;
                 requirement.recurrence_schedule ? delete requirement.recurrence_schedule : '';
             }
+
+            let formData = new FormData()
+            //formData.append('files', vm.$refs.filefield.files, 'my_filenames');
+
+            // Add files to formData
+            var files = vm.$refs.filefield.files;
+            $.each(files, function (idx, v) {
+                var file = v['file'];
+                var filename = v['name'];
+                var name = 'file-' + idx;
+                formData.append(name, file, filename);
+            });
+            requirement.num_files = files.length;
+            requirement.input_name = 'requirement_doc';
+            requirement.proposal = vm.proposal_id;
+
             if (vm.requirement.id){
                 vm.updatingRequirement = true;
-                vm.$http.put(helpers.add_endpoint_json(api_endpoints.proposal_requirements,requirement.id),JSON.stringify(requirement),{
+                //vm.$http.put(helpers.add_endpoint_json(api_endpoints.proposal_requirements,requirement.id),JSON.stringify(requirement),{
+                requirement.update = true;
+                formData.append('data', JSON.stringify(requirement));
+                vm.$http.put(helpers.add_endpoint_json(api_endpoints.proposal_requirements,requirement.id), formData,{
                         emulateJSON:true,
                     }).then((response)=>{
                         vm.updatingRequirement = false;
@@ -260,7 +307,10 @@ export default {
                     });
             } else {
                 vm.addingRequirement = true;
-                vm.$http.post(api_endpoints.proposal_requirements,JSON.stringify(requirement),{
+                //vm.$http.post(api_endpoints.proposal_requirements,JSON.stringify(requirement),{
+                requirement.update = false;
+                formData.append('data', JSON.stringify(requirement));
+                vm.$http.post(api_endpoints.proposal_requirements, formData,{
                         emulateJSON:true,
                     }).then((response)=>{
                         vm.addingRequirement = false;
@@ -271,7 +321,6 @@ export default {
                         vm.addingRequirement = false;
                         vm.errorString = helpers.apiVueResourceError(error);
                     });
-                
             }
         },
         addFormValidations: function() {
@@ -354,6 +403,12 @@ export default {
                 var selected = $(e.currentTarget);
                 vm.requirement.standard_requirement = selected.val();
             });
+
+            //vm.$refs.filefield.on('click', '.delete_document', function(e) {
+            //    e.preventDefault();
+            //    vm.requirement.requirement_documents = vm.$refs.filefield.uploaded_documents;
+            //});
+
        }
    },
    mounted:function () {
@@ -363,6 +418,7 @@ export default {
         this.$nextTick(()=>{
             vm.eventListeners();
         });
+        vm.requirement.requirement_documents = vm.$refs.filefield.uploaded_documents;
    }
 }
 </script>

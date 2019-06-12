@@ -133,4 +133,10 @@ export default {
     input {
         box-shadow:none;
     }
+
+    .v-select {
+        color: #147688;
+        background-color: white;
+        border-color: #91ddec;
+    }
 </style>

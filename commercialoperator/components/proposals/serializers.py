@@ -30,6 +30,7 @@ from commercialoperator.components.proposals.models import (
                                     ChecklistQuestion,
                                     ProposalAssessmentAnswer,
                                     ProposalAssessment,
+                                    RequirementDocument,
                                 )
 from commercialoperator.components.organisations.models import (
                                 Organisation
@@ -261,7 +262,6 @@ class ChecklistQuestionSerializer(serializers.ModelSerializer):
         #fields = '__all__'
         fields=('id',
                 'text',
-                'correct_answer',
                 )
 class ProposalAssessmentAnswerSerializer(serializers.ModelSerializer):
     question=ChecklistQuestionSerializer(read_only=True)
@@ -490,6 +490,7 @@ class ListProposalSerializer(BaseProposalSerializer):
                 'can_officer_process',
                 'assessor_process',
                 'allowed_assessors',
+                'fee_invoice_url',
                 'fee_invoice_reference',
                 'fee_paid',
                 )
@@ -700,6 +701,9 @@ class InternalProposalSerializer(BaseProposalSerializer):
     assessor_assessment=ProposalAssessmentSerializer(read_only=True)
     referral_assessments=ProposalAssessmentSerializer(read_only=True, many=True)
     fee_invoice_url = serializers.SerializerMethodField()
+    selected_trails_activities=serializers.SerializerMethodField()
+    selected_parks_activities=serializers.SerializerMethodField()
+    marine_parks_activities=serializers.SerializerMethodField()
 
     class Meta:
         model = Proposal
@@ -762,6 +766,10 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'trails',
                 'training_completed',
                 'can_edit_activities',
+                #Following 3 are variable to store selected parks and activities at frontend
+                'selected_parks_activities',
+                'selected_trails_activities',
+                'marine_parks_activities',
                 'reversion_ids',
                 'assessor_assessment',
                 'referral_assessments',
@@ -807,10 +815,20 @@ class InternalProposalSerializer(BaseProposalSerializer):
         return obj.assessor_data
 
     def get_reversion_ids(self,obj):
-        return obj.reversion_ids
+        return obj.reversion_ids[:5]
 
     def get_fee_invoice_url(self,obj):
         return '/cols/payments/invoice-pdf/{}'.format(obj.fee_invoice_reference) if obj.fee_paid else None
+
+    def get_selected_parks_activities(self,obj):
+        return []
+
+    def get_selected_trails_activities(self,obj):
+        return []
+
+    def get_marine_parks_activities(self,obj):
+        return []
+
 
 class ReferralProposalSerializer(InternalProposalSerializer):
     def get_assessor_mode(self,obj):
@@ -910,12 +928,35 @@ class DTReferralSerializer(serializers.ModelSerializer):
         docs =  [[d.name,d._file.url] for d in obj.referral_documents.all()]
         return docs[0] if docs else None
 
+class RequirementDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RequirementDocument
+        fields = ('id', 'name', '_file')
+        #fields = '__all__'
+
 class ProposalRequirementSerializer(serializers.ModelSerializer):
     due_date = serializers.DateField(input_formats=['%d/%m/%Y'],required=False,allow_null=True)
     can_referral_edit=serializers.SerializerMethodField()
+    requirement_documents = RequirementDocumentSerializer(many=True, read_only=True)
     class Meta:
         model = ProposalRequirement
-        fields = ('id','due_date','free_requirement','standard_requirement','standard','order','proposal','recurrence','recurrence_schedule','recurrence_pattern','requirement','is_deleted','copied_from', 'referral_group', 'can_referral_edit')
+        fields = (
+            'id',
+            'due_date',
+            'free_requirement',
+            'standard_requirement',
+            'standard','order',
+            'proposal',
+            'recurrence',
+            'recurrence_schedule',
+            'recurrence_pattern',
+            'requirement',
+            'is_deleted',
+            'copied_from',
+            'referral_group',
+            'can_referral_edit',
+            'requirement_documents'
+        )
         read_only_fields = ('order','requirement', 'copied_from')
 
     def get_can_referral_edit(self,obj):

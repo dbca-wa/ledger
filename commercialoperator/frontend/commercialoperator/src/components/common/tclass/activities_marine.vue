@@ -60,7 +60,7 @@
                         </div>
                         <div class="form-horizontal col-sm-12 borderDecoration">
                             <label class="control-label">You have selected vessel access for one or more parks. Provide details of each vessel you plan to use.</label>
-                            <VesselTable :url="vessels_url" :proposal="proposal"></VesselTable>
+                            <VesselTable :url="vessels_url" :proposal="proposal" ref="vessel_table"></VesselTable>
                         </div>
                         <div class="form-horizontal col-sm-12">
                         
@@ -436,6 +436,9 @@ from '@/utils/hooks'
           //console.log(park_list)
           vm.selected_activities = vm.find_recurring(all_activities)
         },
+        eventListeners: function(){
+            
+        },
         },
         mounted: function(){
             let vm = this;
@@ -449,6 +452,7 @@ from '@/utils/hooks'
             vm.fetchParks();
             vm.fetchRequiredDocumentList();
             vm.store_parks(vm.proposal.marine_parks);
+            //vm.eventListeners();
         }
     }
 </script>

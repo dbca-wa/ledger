@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, Activity, ActivityCategory, Section, Zone, RequiredDocument, Question #, ParkPrice
+from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, Activity, ActivityCategory, Section, Zone, RequiredDocument, Question, GlobalSettings #, ParkPrice
 from ledger.accounts.models import EmailUser
 #from commercialoperator.components.proposals.serializers import ProposalTypeSerializer
 
@@ -31,7 +31,7 @@ class CommunicationLogEntrySerializer(serializers.ModelSerializer):
 class SectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Section
-        fields = ('id', 'name', 'visible')
+        fields = ('id', 'name', 'visible', 'doc_url')
 
 class ActivitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -45,6 +45,10 @@ class ZoneSerializer(serializers.ModelSerializer):
         model = Zone
         fields = ('id', 'name', 'visible', 'allowed_activities')
 
+class ParkFilterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Park
+        fields=('id', 'name', 'park_type')
 
 class ParkSerializer(serializers.ModelSerializer):
     zones=ZoneSerializer(many=True)
@@ -99,6 +103,10 @@ class ApplicationTypeSerializer(serializers.ModelSerializer):
         fields = '__all__'
         #extra_fields = ['pizzas']
 
+class GlobalSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GlobalSettings
+        fields = ('key', 'value')
 
 class AccessTypeSerializer(serializers.ModelSerializer):
     class Meta:

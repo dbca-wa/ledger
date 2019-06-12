@@ -14,6 +14,7 @@ from commercialoperator.components.proposals import api as proposal_api
 from commercialoperator.components.approvals import api as approval_api
 from commercialoperator.components.compliances import api as compliances_api
 from commercialoperator.components.main import api as main_api
+from commercialoperator.components.bookings import api as booking_api
 
 from ledger.urls import urlpatterns as ledger_patterns
 
@@ -24,9 +25,12 @@ router.register(r'proposal',proposal_api.ProposalViewSet)
 router.register(r'proposal_submit',proposal_api.ProposalSubmitViewSet)
 router.register(r'proposal_paginated',proposal_api.ProposalPaginatedViewSet)
 router.register(r'approval_paginated',approval_api.ApprovalPaginatedViewSet)
+router.register(r'booking_paginated',booking_api.BookingPaginatedViewSet)
 router.register(r'compliance_paginated',compliances_api.CompliancePaginatedViewSet)
 router.register(r'referrals',proposal_api.ReferralViewSet)
 router.register(r'approvals',approval_api.ApprovalViewSet)
+router.register(r'bookings',booking_api.BookingViewSet)
+router.register(r'park_bookings',booking_api.ParkBookingViewSet)
 router.register(r'compliances',compliances_api.ComplianceViewSet)
 router.register(r'proposal_requirements',proposal_api.ProposalRequirementViewSet)
 router.register(r'proposal_standard_requirements',proposal_api.ProposalStandardRequirementViewSet)
@@ -39,6 +43,7 @@ router.register(r'users',users_api.UserViewSet)
 router.register(r'amendment_request',proposal_api.AmendmentRequestViewSet)
 router.register(r'compliance_amendment_request',compliances_api.ComplianceAmendmentRequestViewSet)
 router.register(r'regions', main_api.RegionViewSet)
+router.register(r'global_settings', main_api.GlobalSettingsViewSet)
 router.register(r'activity_matrix', main_api.ActivityMatrixViewSet)
 #router.register(r'tenure', main_api.TenureViewSet)
 router.register(r'application_types', main_api.ApplicationTypeViewSet)

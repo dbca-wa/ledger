@@ -35,22 +35,21 @@
                   4. Other Details
                 </a>
               </li>
-              <li class="nav-item" id="li-training">
+              <li v-if="is_external" class="nav-item" id="li-training">
                 <a class="nav-link" id="pills-online-training-tab" data-toggle="pill" href="#pills-online-training" role="tab" aria-controls="pills-online-training" aria-selected="false">
                   5. Online Training
                 </a>
               </li>
-              <li class="nav-item" id="li-payment">
+              <li v-if="is_external" class="nav-item" id="li-payment">
                 <a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="" role="tab" aria-controls="pills-payment" aria-selected="false">
                   6. Payment
                 </a>
               </li>
-              <li class="nav-item" id="li-confirm">
+              <li v-if="is_external" class="nav-item" id="li-confirm">
                 <a class="nav-link disabled" id="pills-confirm-tab" data-toggle="pill" href="" role="tab" aria-controls="pills-confirm" aria-selected="false">
                     7. Confirmation
                 </a>
               </li>
-
             </ul>
             <div class="tab-content" id="pills-tabContent">
               <!-- <div class="tab-pane fade show active" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">  -->
@@ -76,10 +75,10 @@
                   </div>
               </div>
               <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">
-                <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand" :canEditActivities="canEditActivities"></ActivitiesLand>
+                <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand" :canEditActivities="canEditActivities" ref="activities_land"></ActivitiesLand>
               </div>
               <div class="tab-pane fade" id="pills-activities-marine" role="tabpanel" aria-labelledby="pills-activities-marine-tab">
-                <ActivitiesMarine :proposal="proposal" id="proposalStartActivitiesMarine" :canEditActivities="canEditActivities"></ActivitiesMarine>
+                <ActivitiesMarine :proposal="proposal" id="proposalStartActivitiesMarine" :canEditActivities="canEditActivities" ref="activities_marine"></ActivitiesMarine>
               </div>
               <div class="tab-pane fade" id="pills-other-details" role="tabpanel" aria-labelledby="pills-other-details-tab">
                 <OtherDetails :proposal="proposal" id="proposalStartOtherDetails"></OtherDetails>
@@ -183,18 +182,28 @@
                     /* Payment tab */
                     $('#pills-payment-tab').attr('style', 'background-color:#E5E8E8 !important; color: #99A3A4;');
                     $('#li-payment').attr('class', 'nav-item disabled');
-
-                    /* Confirmation tab */
-                    $('#pills-confirm-tab').attr('style', 'background-color:#E5E8E8 !important; color: #99A3A4;');
-                    $('#li-confirm').attr('class', 'nav-item disabled');
                 }
-            }
+
+                /* Confirmation tab - Always Disabled */
+                $('#pills-confirm-tab').attr('style', 'background-color:#E5E8E8 !important; color: #99A3A4;');
+                $('#li-confirm').attr('class', 'nav-item disabled');
+            },
+            eventListener: function(){
+              let vm=this;
+              $('a[href="#pills-activities-land"]').on('shown.bs.tab', function (e) {
+                vm.$refs.activities_land.$refs.vehicles_table.$refs.vehicle_datatable.vmDataTable.columns.adjust().responsive.recalc();
+              });
+              $('a[href="#pills-activities-marine"]').on('shown.bs.tab', function (e) {
+                vm.$refs.activities_marine.$refs.vessel_table.$refs.vessel_datatable.vmDataTable.columns.adjust().responsive.recalc();
+              });
+            },
 
         },
         mounted: function() {
             let vm = this;
             vm.set_tabs();
             vm.form = document.forms.new_proposal;
+            vm.eventListener();
             //window.addEventListener('beforeunload', vm.leaving);
             //indow.addEventListener('onblur', vm.leaving);
 
