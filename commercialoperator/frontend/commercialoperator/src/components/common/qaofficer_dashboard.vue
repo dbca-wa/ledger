@@ -331,18 +331,18 @@ export default {
         discardProposal:function (proposal_id) {
             let vm = this;
             swal({
-                title: "Discard Proposal",
-                text: "Are you sure you want to discard this proposal?",
+                title: "Discard Application",
+                text: "Are you sure you want to discard this application?",
                 type: "warning",
                 showCancelButton: true,
-                confirmButtonText: 'Discard Proposal',
+                confirmButtonText: 'Discard Application',
                 confirmButtonColor:'#d9534f'
             }).then(() => {
                 vm.$http.delete(api_endpoints.discard_proposal(proposal_id))
                 .then((response) => {
                     swal(
                         'Discarded',
-                        'Your proposal has been discarded',
+                        'Your application has been discarded',
                         'success'
                     )
                     vm.$refs.proposal_datatable.vmDataTable.ajax.reload();

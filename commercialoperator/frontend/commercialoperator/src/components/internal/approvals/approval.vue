@@ -1,7 +1,7 @@
 <template>
 <div class="container" id="internalApproval">
     <div class="row">
-        <h3>Approval {{ approval.lodgement_number }} ({{approval.application_type}})</h3>
+        <h3>Licence {{ approval.lodgement_number }} ({{approval.application_type}})</h3>
         <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
             <div class="row">
@@ -130,7 +130,7 @@
                 
                 <div class="panel panel-default">
                   <div class="panel-heading">
-                    <h3 class="panel-title">Approval Details 
+                    <h3 class="panel-title">Licence Details 
                         <a class="panelClicker" :href="'#'+oBody" data-toggle="collapse" expanded="true"  data-parent="#userInfo" :aria-controls="oBody">
                             <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>

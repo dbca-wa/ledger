@@ -187,7 +187,7 @@ export default {
                         //vm.$parent.loading.splice('processing contact',1);
                         swal(
                              'Sent',
-                             'An email has been sent to applicant with the request to amend this Proposal',
+                             'An email has been sent to applicant with the request to amend this Application',
                              'success'
                         );
                         vm.amendingProposal = true;

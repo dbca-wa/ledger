@@ -2,12 +2,12 @@
     <div>
         <template v-if="isFinalised">
             <div class="col-md-12 alert alert-success" v-if="proposal.processing_status == 'Approved'">
-                <p>The approval has been issued and has been emailed to {{proposal.applicant.name}}</p>
+                <p>The licence has been issued and has been emailed to {{proposal.applicant.name}}</p>
                 <p>Expiry date: {{proposal.proposed_issuance_approval.expiry_date}}
                 <p>Permit: <a target="_blank" :href="proposal.permit">licence.pdf</a></p>
             </div>
             <div v-else class="col-md-12 alert alert-warning">
-                <p>The proposal was declined. The decision was emailed to {{proposal.applicant}}</p>
+                <p>The application was declined. The decision was emailed to {{proposal.applicant}}</p>
             </div>    
         </template>
         <!--
@@ -15,7 +15,7 @@
             <div class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Level of Approval
+                        <h3 class="panel-title">Level of Licence
                             <a class="panelClicker" :href="'#'+proposedLevel" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="proposedLevel">
                                 <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                             </a>
@@ -25,7 +25,7 @@
                         <div class="row">
                             <div class="col-sm-12">
                                     <template v-if="!isFinalised">
-                                        <p><strong>Level of approval: {{proposal.approval_level}}</strong></p>
+                                        <p><strong>Level of licence: {{proposal.approval_level}}</strong></p>
                                     <div v-if="isApprovalLevel">    
                                         <p v-if="proposal.approval_level_document"><strong>Attach documents: <a :href="proposal.approval_level_document[1]" target="_blank">{{proposal.approval_level_document[0]}}</a>
                                         <span>
@@ -45,7 +45,7 @@
                                     </template> 
 
                                     <template v-if="isFinalised">
-                                        <p><strong>Level of approval: {{proposal.approval_level}}</strong></p>
+                                        <p><strong>Level of licence: {{proposal.approval_level}}</strong></p>
                                     <div v-if="isApprovalLevel">    
                                         <p v-if="proposal.approval_level_document"><strong>Attach documents: <a :href="proposal.approval_level_document[1]" target="_blank">{{proposal.approval_level_document[0]}}</a>
                                         </p>

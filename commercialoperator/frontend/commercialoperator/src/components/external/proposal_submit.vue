@@ -4,11 +4,11 @@
             <div class="col-sm-12">
                 <div class="row">
                     <div v-if="isProposal" class="col-sm-offset-3 col-sm-6 borderDecoration">
-                        <strong>Your proposal has been successfully submitted.</strong>
+                        <strong>Your application has been successfully submitted.</strong>
                         <br/>
                         <table>
                             <tr>
-                                <td><strong>Proposal:</strong></td>
+                                <td><strong>Application:</strong></td>
                                 <td><strong>{{proposal.lodgement_number}}</strong></td>
                             </tr>
                             <tr>
@@ -21,7 +21,7 @@
                         <router-link :to="{name:'external-proposals-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
                     </div>
                     <div v-else class="col-sm-offset-3 col-sm-6 borderDecoration">
-                        <strong>Sorry it looks like there isn't any proposal currently in your session.</strong>
+                        <strong>Sorry it looks like there isn't any application currently in your session.</strong>
                         <br /><router-link :to="{name:'external-proposals-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
                     </div>
                 </div>
