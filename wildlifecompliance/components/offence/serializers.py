@@ -18,7 +18,7 @@ class OffenceSerializer(serializers.ModelSerializer):
             'occurrence_date_to',
             'occurrence_time_to',
             'alleged_offences',
-            'description',
+            'details',
         )
         read_only_fields = (
 

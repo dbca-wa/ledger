@@ -58,7 +58,7 @@ class Offence(RevisionedMixin):
         SectionRegulation,
         blank=True,
     )
-    description = models.TextField(blank=True)
+    details = models.TextField(blank=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
