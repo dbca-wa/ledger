@@ -40,7 +40,10 @@ from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 
-from wildlifecompliance.components.users.serializers import UserAddressSerializer
+from wildlifecompliance.components.users.serializers import (
+    UserAddressSerializer,
+    ComplianceUserDetailsSerializer,
+)
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.call_email.models import (
     CallEmail,
@@ -72,9 +75,10 @@ from wildlifecompliance.components.call_email.serializers import (
     ComplianceWorkflowLogEntrySerializer,
     CallEmailDatatableSerializer,
     SaveUserAddressSerializer)
-from wildlifecompliance.components.users.serializers import (
-    ComplianceUserDetailsSerializer,
+from wildlifecompliance.components.users.models import (
+    CompliancePermissionGroup,    
 )
+from django.contrib.auth.models import Permission, ContentType
 from utils import SchemaParser
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
@@ -90,6 +94,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     serializer_class = CallEmailSerializer
 
     def get_queryset(self):
+        # import ipdb; ipdb.set_trace()
         user = self.request.user
         if is_internal(self.request):
             return CallEmail.objects.all()
@@ -315,6 +320,13 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 
                 if request_data.get('report_type'):
                     request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
+
+                # Initial allocated_group_id must be volunteers
+                compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
+                permission = Permission.objects.filter(codename='volunteer').filter(content_type_id=compliance_content_type.id).first()
+                group = CompliancePermissionGroup.objects.filter(permissions=permission).first()
+                print(group)
+                request_data.update({'allocated_group_id': group.id})
                 
                 serializer = CreateCallEmailSerializer(data=request_data, partial=True)
                 serializer.is_valid(raise_exception=True)

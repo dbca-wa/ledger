@@ -300,6 +300,7 @@ import FormSection from "@/components/forms/section_toggle.vue";
 import CommsLogs from "@common-components/comms_logs.vue";
 import MapLocation from "./map_location.vue";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
+import bbtest from "@/utils/bbtest";
 import SearchPerson from "./search_person.vue";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
@@ -319,6 +320,7 @@ export default {
       classification_types: [],
       report_types: [],
       referrers: [],
+      // regionDistricts: [],
       // compliance_permission_groups: [],
       // officers: [],
       allocated_group: [],
@@ -539,7 +541,7 @@ export default {
     // let returned_allocated_group = await Vue.http.post('/api/compliancepermissiongroup/get_users/', { 'user_list': this.call_email.allocated_to });
     // console.log(returned_allocated_group)
     // Object.assign(this.allocated_group, returned_allocated_group.body);
-    // // blank entry allows user to clear selection
+    // // blank entry allows user to clear selectionmyMethod
     // this.allocated_group.splice(0, 0, 
     //   {
     //     id: "", 
@@ -553,6 +555,12 @@ export default {
     if (this.call_email.report_type_id) {
       await this.loadSchema();
     }
+    // bbtest.myMethod();
+
+    // const returned_region_districts = await Vue.http.get('/api/region_district/');
+    // // const returned_region_districts = await Vue.http.get(api_endpoints.region_district);
+    // console.log(returned_region_districts);
+    // Object.assign(this.regionDistricts, returned_region_districts);
 
   },
   mounted: function() {

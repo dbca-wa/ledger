@@ -262,7 +262,7 @@ export default {
   },
   methods: {
     ...mapActions('callemailStore', {
-      setAllocatedTo: "setAllocatedTo",
+      // setAllocatedTo: "setAllocatedTo",
       loadAllocatedGroup: "loadAllocatedGroup",
       setRegionId: "setRegionId",
     }),
@@ -309,16 +309,16 @@ export default {
       } 
     },
     updateAllocatedGroup: async function() {
-      let region_district_id = this.call_email.district_id ? this.call_email.district_id : this.call_email.region_id;
+      
       if (this.workflow_type === 'forward_to_wildlife_protection_branch') {
         for (let record of this.regionDistricts) {
           if (record.district = 'KENSINGTON') {
-            region_district_id = record.id;
             await this.setRegionId(record.id);
           }
         }
       }
-      
+      let region_district_id = this.call_email.district_id ? this.call_email.district_id : this.call_email.region_id;
+      console.log(region_district_id);
       await this.loadAllocatedGroup({
         'region_district_id': region_district_id, 
         'group_permission': this.group_permission,
@@ -431,7 +431,12 @@ export default {
         region: null,
       });
     // regionDistricts
-    let returned_region_districts = await cache_helper.getSetCacheList('CallEmail_RegionDistricts', '/api/region_district/');
+    let returned_region_districts = await cache_helper.getSetCacheList(
+      'CallEmail_RegionDistricts', 
+      // '/api/region_district/'
+      api_endpoints.region_district
+      );
+    console.log(returned_region_districts);
     Object.assign(this.regionDistricts, returned_region_districts);
 
     // // CompliancePermissionGroups

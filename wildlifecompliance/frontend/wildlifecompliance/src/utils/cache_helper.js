@@ -1,3 +1,4 @@
+// import 'es6-promise/auto';
 import localforage from "localforage";
 import Vue from 'vue';
 
@@ -14,6 +15,12 @@ import Vue from 'vue';
 let dbName = 'WildlifeCompliance';
 const timeNow = Date.now();
 let expiryDiff = 86400000;  // 1 day = 86400000 milliseconds;
+// const returnedFromUrl_test = async function() {
+//     const returnedVal = await Vue.http.get('/api/region_districts/');
+//     return returnedVal;
+// }
+// console.log(returnedFromUrl_test);
+
 
 module.exports = {
     getSetCache: async (store_name, key, url, expiry) => {
@@ -95,17 +102,22 @@ module.exports = {
                     }
                 } else {
                     for (let store_key of store_keys) {
+                        console.log(store_key);
                         let this_val = await storeInstance.getItem(store_key);
+                        console.log(this_val);
                         if (this_val) {
                             returned_list.push(this_val[1]);
                         }
                     }
                 }
             } 
-            store_keys = await storeInstance.keys();
-            if ((store_keys.length == 0)) {
-                // empty store - get data from url
+            // store_keys = await storeInstance.keys();
+            // if ((store_keys.length === 0)) {
+            else {    
+            // empty store - get data from url
                 const returnedFromUrl = await Vue.http.get(url);
+                console.log(url);
+                console.log(returnedFromUrl);
                 // ensure store is empty
                 await storeInstance.clear();
                 // populate store - switch accounts for DRF method using @renderer_classes((JSONRenderer,))
@@ -127,15 +139,16 @@ module.exports = {
                 }
                 }
             }
+            console.log(returned_list);
             return returned_list;
 
         } catch(err) {
             // on cache failure, request data from backend directly
-            const returnedFromUrl = await Vue.http.get(url);
-            if (returnedFromUrl.body.results) {
-                return returnedFromUrl.body.results;
+            const returnedFromDb = await Vue.http.get(url);
+            if (returnedFromDb.body.results) {
+                return returnedFromDb.body.results;
             } else {
-                return returnedFromUrl.body;
+                return returnedFromDb.body;
             }
         }
     }

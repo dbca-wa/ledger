@@ -126,13 +126,17 @@ queryset_methods = {
 for method_name, method in queryset_methods.items():
     setattr(QuerySet, method_name, method)
 
+# list of approved related item models
+#
+# (Call_email, 'C'), (Offence, 'O'), Email_User, Inspection, ...
+
 def get_related_items(self, **kwargs):
 
     return_list = []
     for f in self._meta.get_fields():
         # Get foreign key related fields
         # TODO add approved related models list and compare to f.name
-        if f.is_relation and f.many_to_one:
+        if f.is_relation and (f.one_to_many or f.many_to_one): # include related item models
             field_value = f.value_from_object(self)
             if field_value:
                 field_object = f.related_model.objects.get(id=field_value)

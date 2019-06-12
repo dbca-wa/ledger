@@ -485,52 +485,6 @@ class CompliancePermissionGroupViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['GET', ])
-    def get_allocated_group(self, request, *args, **kwargs):
-        try:
-            print(request.data)
-            instance = self.get_object()
-            # group_id = request.data.get('group_id')
-            # group = CompliancePermissionGroup.objects.get(id=group_id)
-            print("instance")
-            print(instance)
-            serializer = ComplianceUserDetailsOptimisedSerializer(instance.members, many=True)
-            # serializer.is_valid(raise_exception=True)
-            print(serializer.data)
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @list_route(methods=['GET', ])
-    def get_allocated_group_id(self, request, *args, **kwargs):
-        try:
-            print(request.data)
-            instance = self.get_object()
-            # group_id = request.data.get('group_id')
-            # group = CompliancePermissionGroup.objects.get(id=group_id)
-            print("instance")
-            print(instance)
-            serializer = ComplianceUserDetailsOptimisedSerializer(instance.members, many=True)
-            # serializer.is_valid(raise_exception=True)
-            print(serializer.data)
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-    
     @list_route(methods=['GET', ])
     def get_detailed_list(self, request, *args, **kwargs):
         try:
@@ -555,6 +509,34 @@ class RegionDistrictViewSet(viewsets.ModelViewSet):
     serializer_class = RegionDistrictSerializer
     renderer_classes = [JSONRenderer, ]
 
+    def get_queryset(self):
+        # import ipdb; ipdb.set_trace()
+        user = self.request.user
+        if is_internal(self.request):
+            return RegionDistrict.objects.all()
+        elif is_customer(self.request):
+            return RegionDistrict.objects.none()
+        return RegionDistrict.objects.none()
+    
+    # @list_route(methods=['GET', ])
+    # def list_region_districts(self, request, *args, **kwargs):
+    #     try:
+    #         serializer = RegionDistrictSerializer(
+    #             RegionDistrict.objects.all(), 
+    #             many=True
+    #             )
+    #         print(serializer.data)
+    #         return Response(serializer.data)
+    #     except serializers.ValidationError:
+    #         print(traceback.print_exc())
+    #         raise
+    #     except ValidationError as e:
+    #         print(traceback.print_exc())
+    #         raise serializers.ValidationError(repr(e.error_dict))
+    #     except Exception as e:
+    #         print(traceback.print_exc())
+    #         raise serializers.ValidationError(str(e))
+    
     @list_route(methods=['GET', ])
     def get_regions(self, request, *args, **kwargs):
         try:
