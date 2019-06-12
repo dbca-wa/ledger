@@ -48,7 +48,7 @@ export default {
         return {
             panelBody: "proposal-requirements-"+vm._uid,
             requirements: [],
-            requirement_headers:["Requirement","Due Date","Recurrence","Action","Order"],
+            requirement_headers:["Requirement","Due Date","Recurrence","Action","Order","Documents"],
             requirement_options:{
                 autoWidth: false,
                 language: {
@@ -168,7 +168,18 @@ export default {
                             return links;
                         },
                         orderable: false
-                    }
+                    },
+                    {
+                        data: 'requirement_documents',
+                        mRender:function (data,type,full) {
+                            let links = '';
+                            _.forEach(data, function (doc) {
+                                links += '<a href="' + doc._file + '" target="_blank"><p>' + doc.name+ '</p></a><br>';
+                            });
+                            return links;
+                        }
+                    },
+
                 ],
                 processing: true,
                 drawCallback: function (settings) {

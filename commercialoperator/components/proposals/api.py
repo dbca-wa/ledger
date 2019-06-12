@@ -385,22 +385,6 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
 
 
 class VersionableModelViewSetMixin(viewsets.ModelViewSet):
-    #@detail_route()
-    #def history(self, request, pk=None):
-    @detail_route(methods=['GET',])
-    def _history(self, request, *args, **kwargs):
-        _object = self.get_object()
-        _versions = reversion.get_for_object(_object)
-
-        _context = {
-            'request': request
-        }
-
-        _version_serializer = VersionSerializer(_versions, many=True, context=_context)
-        # TODO
-        # check pagination
-        return Response(_version_serializer.data)
-
     @detail_route(methods=['GET',])
     def history(self, request, *args, **kwargs):
         #import ipdb; ipdb.set_trace()

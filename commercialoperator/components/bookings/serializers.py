@@ -79,22 +79,31 @@ class ParkBookingSerializer(serializers.ModelSerializer):
         )
 
     def get_park(self,obj):
-        #import ipdb; ipdb.set_trace()
         return obj.park.name
 
     def get_approval_number(self,obj):
-        #import ipdb; ipdb.set_trace()
-        return obj.booking.proposal.approval.lodgement_number if obj.booking else ''
+        try:
+            return obj.booking.proposal.approval.lodgement_number
+        except:
+            return ''
 
     def get_applicant(self,obj):
-        #import ipdb; ipdb.set_trace()
-        return obj.booking.proposal.approval.applicant if obj.booking else ''
+        try:
+            return obj.booking.proposal.approval.applicant
+        except:
+            return ''
 
     def get_org_applicant(self,obj):
-        return obj.booking.proposal.approval.org_applicant.name if obj.booking else ''
+        try:
+            return obj.booking.proposal.approval.org_applicant.name
+        except:
+            return ''
 
     def get_proxy_applicant(self,obj):
-        return obj.booking.proposal.approval.proxy_applicant if obj.booking else ''
+        try:
+            return obj.booking.proposal.approval.proxy_applicant
+        except:
+            return ''
 
     def get_invoice_reference(self,obj):
         #import ipdb; ipdb.set_trace()

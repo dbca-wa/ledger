@@ -35,22 +35,21 @@
                   4. Other Details
                 </a>
               </li>
-              <li class="nav-item" id="li-training">
+              <li v-if="is_external" class="nav-item" id="li-training">
                 <a class="nav-link" id="pills-online-training-tab" data-toggle="pill" href="#pills-online-training" role="tab" aria-controls="pills-online-training" aria-selected="false">
                   5. Online Training
                 </a>
               </li>
-              <li class="nav-item" id="li-payment">
+              <li v-if="is_external" class="nav-item" id="li-payment">
                 <a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="" role="tab" aria-controls="pills-payment" aria-selected="false">
                   6. Payment
                 </a>
               </li>
-              <li class="nav-item" id="li-confirm">
+              <li v-if="is_external" class="nav-item" id="li-confirm">
                 <a class="nav-link disabled" id="pills-confirm-tab" data-toggle="pill" href="" role="tab" aria-controls="pills-confirm" aria-selected="false">
                     7. Confirmation
                 </a>
               </li>
-
             </ul>
             <div class="tab-content" id="pills-tabContent">
               <!-- <div class="tab-pane fade show active" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">  -->
