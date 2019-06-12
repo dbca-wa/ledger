@@ -587,6 +587,11 @@ class RefundPaymentView(TemplateView):
                  update_payments(new_invoice.reference)
 
 
+             # Send booking confirmation and invoice
+             emails.send_booking_invoice(booking,request,context_processor)
+             emails.send_booking_confirmation(booking,request, context_processor)
+
+
              if failed_refund is True:
                  # Refund Failed Assign Refund amount to allocation pool.
                  lines = [{'ledger_description':'Refund assigned to unallocated pool',"quantity":1,"price_incl_tax":abs(info['amount']),"oracle_code":settings.UNALLOCATED_ORACLE_CODE, 'line_status': 1}]
@@ -625,7 +630,7 @@ class ZeroBookingView(TemplateView):
             return HttpResponseRedirect(reverse('home'))
 
     def post(self, request, *args, **kwargs):
-
+         context_processor = template_context(request)
          booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
          if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(pk=booking.id).count() == 1:
 
@@ -646,6 +651,10 @@ class ZeroBookingView(TemplateView):
              order_response = place_order_submission(request)
              new_order = Order.objects.get(basket=basket)
              new_invoice = Invoice.objects.get(order_number=new_order.number)
+
+             # Send booking confirmation and invoice
+             emails.send_booking_invoice(booking,request,context_processor)
+             #emails.send_booking_confirmation(booking,request, context_processor)
 
              return HttpResponseRedirect('/success/')
          else:
