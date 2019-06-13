@@ -4,6 +4,7 @@ from wildlifecompliance.components.call_email import models
 from reversion.admin import VersionAdmin
 
 
+
 @admin.register(models.Location)
 class LocationAdmin(admin.ModelAdmin):
     pass

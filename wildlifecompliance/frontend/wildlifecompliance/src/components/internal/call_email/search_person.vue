@@ -2,8 +2,10 @@
     <div class="col-sm-12 form-group">
         <div class="row" v-if="isEditable">
             <label class="col-sm-3 control-label">Search Person</label>
-            <div class="col-sm-9">
+            <div class="col-sm-6">
                 <input :readonly="!isEditable" class="col-sm-5 form-control" id="search-person" />
+            </div>
+            <div class="col-sm-3">
                 <input :readonly="!isEditable" type="button" class="pull-right btn btn-primary" value="Create New Person"@click.prevent="createNewPerson()" />
             </div>
         </div>
@@ -163,10 +165,10 @@
                                             </div>
                                         </div>
                                         <div class="form-group">
-                                        <!-- <div class="col-sm-12">
+                                        <div class="col-sm-12">
                                             <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="updateContact()">Update</button>
                                             <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
-                                        </div> -->
+                                        </div>
                                         </div>
                                     </form>
                                 </div>
@@ -181,9 +183,15 @@
                     </div>
                 </div>
                 <div :id="oTab" class="tab-pane fade">
-                    <!-- <ApplicationDashTable ref="applications_table" level='internal' :url='applications_url'/>
-                    <LicenceDashTable ref="licences_table" level='internal' :url='licences_url'/>
-                    <ReturnDashTable ref="returns_table" level='internal' :url='returns_url'/> -->
+                    <div v-if="call_email.email_user">
+                        <ApplicationDashTable ref="applications_table" level='internal' :url='applications_url' v-bind:key="call_email.email_user.id"/>
+                    </div>
+                    <div v-if="call_email.email_user">
+                        <LicenceDashTable ref="licences_table" level='internal' :url='licences_url' v-bind:key="call_email.email_user.id"/>
+                    </div>
+                    <div v-if="call_email.email_user">
+                        <ReturnDashTable ref="returns_table" level='internal' :url='returns_url' v-bind:key="call_email.email_user.id"/>
+                    </div>
                 </div>
             </div>
         </div>
@@ -194,6 +202,10 @@
 import Awesomplete from 'awesomplete';
 import { api_endpoints, helpers } from '@/utils/hooks'
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
+import datatable from '@vue-utils/datatable.vue'
+import ApplicationDashTable from '@common-components/applications_dashboard.vue'
+import LicenceDashTable from '@common-components/licences_dashboard.vue'
+import ReturnDashTable from '@common-components/returns_dashboard.vue'
 import 'bootstrap/dist/css/bootstrap.css';
 import 'awesomplete/awesomplete.css';
 import utils from '../utils'
@@ -232,6 +244,13 @@ export default {
             forDemo: false,
         }
     },
+    components: {
+        datatable,
+        ApplicationDashTable,
+        LicenceDashTable,
+        ReturnDashTable,
+        //CommsLogs
+    },
     computed: {
         ...mapGetters('callemailStore', {
             call_email: "call_email",
@@ -257,6 +276,30 @@ export default {
             } else {
                 return false;
             }
+        },
+        applications_url: function(){
+            if (this.call_email.email_user && this.call_email.email_user.id){
+                console.log('applications_url2: ' + this.call_email.email_user.id);
+                return api_endpoints.applications_paginated+'internal_datatable_list?user_id=' + this.call_email.email_user.id;
+            }
+            console.log('applications_url');
+            return api_endpoints.applications_paginated+'internal_datatable_list?user_id=-1';
+        },
+        licences_url: function(){
+            console.log('licences_url');
+            if (this.call_email.email_user && this.call_email.email_user.id){
+                console.log('licences_url2: ' + this.call_email.email_user.id);
+                return api_endpoints.licences_paginated+'internal_datatable_list?user_id=' + this.call_email.email_user.id;
+            }
+            return api_endpoints.licences_paginated+'internal_datatable_list?user_id=-1';
+        },
+        returns_url: function(){
+            console.log('returns_url');
+            if (this.call_email.email_user && this.call_email.email_user.id){
+                console.log('returns_url2: ' + this.call_email.email_user.id);
+                return api_endpoints.returns+'?user_id=' + this.call_email.email_user.id;
+            }
+            return api_endpoints.returns+'?user_id=-1';
         }
     },
     mounted: function(){
@@ -529,5 +572,8 @@ export default {
 #search-person {
     z-index: 1000;
     /* width: 400px; */
+}
+.awesomplete {
+    display: inherit !important;
 }
 </style>
