@@ -124,7 +124,7 @@ if len(GIT_COMMIT_HASH) == 0:
        print ("ERROR: No git hash provided")
 VERSION_NO = '2.03'
 os.environ['UPDATE_PAYMENT_ALLOCATION'] = 'True'
-UNALLOCATED_ORACLE_CODE = 'UN2019 GST' 
+UNALLOCATED_ORACLE_CODE = 'NNP449 GST' 
 
  
 #os.environ.setdefault("UPDATE_PAYMENT_ALLOCATION", True)
