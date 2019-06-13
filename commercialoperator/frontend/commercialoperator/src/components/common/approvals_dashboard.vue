@@ -66,7 +66,6 @@
                             <div class="form-group">
                                 <label/>
                             <div>
-                                <!-- <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_proposal' }">New Proposal</router-link> -->
                                 <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="disabled" @click.prevent="createEClassLicence()">New E-Class licence</button>
                             </div>
                             </div>
@@ -150,9 +149,7 @@ export default {
             approval_status:[],
             proposal_submitters: [],
             proposal_headers:[
-                "Number","Licence Type","Holder","Status","Start Date","Expiry Date","Approval","Action",
-                //"Number","Licence Type","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action",
-                //"LodgementNo","CanReissue","CanAction","CanReinstate","SetToCancel","SetToSuspend","SetToSurrender","CurrentProposal","RenewalDoc","RenewalSent","CanAmend","CanRenew"
+                "Number","Licence Type","Holder","Status","Start Date","Expiry Date","Licence","Action",
             ],
             proposal_options:{
                 language: {
@@ -189,13 +186,13 @@ export default {
                             if(full.can_reissue){
                                 if(!full.can_action){
                                     if(full.set_to_cancel){
-                                        message = 'This Approval is marked for cancellation to future date';
+                                        message = 'This Licence is marked for cancellation to future date';
                                     }
                                     if(full.set_to_suspend){
-                                        message = 'This Approval is marked for suspension to future date';
+                                        message = 'This Licence is marked for suspension to future date';
                                     }
                                     if(full.set_to_surrender){
-                                        message = 'This Approval is marked for surrendering to future date';
+                                        message = 'This Licence is marked for surrendering to future date';
                                     }
                                     popTemplate = _.template('<a href="#" ' +
                                             'role="button" ' +
@@ -547,13 +544,13 @@ export default {
             let status= 'with_approver'
             let data = {'status': status}
             swal({
-                title: "Reissue Approval",
-                text: "Are you sure you want to reissue this approval?",
+                title: "Reissue Licence",
+                text: "Are you sure you want to reissue this licence?",
                 type: "warning",
-                confirmButtonText: 'Reissue approval',
+                confirmButtonText: 'Reissue licence',
                 //confirmButtonColor:'#d9534f'
             }).then(() => {
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/reissue')),JSON.stringify(data),{
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/reissue_approval')),JSON.stringify(data),{
                 emulateJSON:true,
                 })
                 .then((response) => {
@@ -564,7 +561,7 @@ export default {
                 }, (error) => {
                     console.log(error);
                     swal({
-                    title: "Reissue Approval",
+                    title: "Reissue Licence",
                     text: error.body,
                     type: "error",
                     })
@@ -579,14 +576,14 @@ export default {
             let status= 'with_approver'
             let data = {'status': status}
             swal({
-                title: "Renew Approval",
-                //text: "Are you sure you want to extend this approval?",
+                title: "Renew Licence",
+                //text: "Are you sure you want to extend this licence?",
                 //type: "warning",
                 text: "<input type='email' class='form-control' name='email' id='email'/>",
                 type: "input",
                 showCancelButton: true,
                 showCancelButton: true,
-                confirmButtonText: 'Extend approval',
+                confirmButtonText: 'Extend licence',
             }).then(() => {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.approvals,(approval_id+'/approval_extend')),JSON.stringify(data),{
                 emulateJSON:true,
@@ -599,7 +596,7 @@ export default {
                 }, (error) => {
                     console.log(error);
                     swal({
-                    title: "Extend Approval",
+                    title: "Extend Licence",
                     text: error.body,
                     type: "error",
                     })
@@ -619,11 +616,11 @@ export default {
             let status= 'with_approver'
             //let data = {'status': status}
             swal({
-                title: "Reinstate Approval",
-                text: "Are you sure you want to reinstate this approval?",
+                title: "Reinstate Licence",
+                text: "Are you sure you want to reinstate this licence?",
                 type: "warning",
                 showCancelButton: true,
-                confirmButtonText: 'Reinstate approval',
+                confirmButtonText: 'Reinstate licence',
                 //confirmButtonColor:'#d9534f'
             }).then(() => {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.approvals,(approval_id+'/approval_reinstate')),{
@@ -631,14 +628,14 @@ export default {
                 .then((response) => {
                     swal(
                         'Reinstate',
-                        'Your approval has been reinstated',
+                        'Your licence has been reinstated',
                         'success'
                     )
                     vm.$refs.proposal_datatable.vmDataTable.ajax.reload();
                 }, (error) => {
                     console.log(error);
                     swal({
-                    title: "Reinstate Approval",
+                    title: "Reinstate Licence",
                     text: error.body,
                     type: "error",
                     })
@@ -653,11 +650,11 @@ export default {
             let status= 'with_approver'
             //let data = {'status': status}
             swal({
-                title: "Renew Approval",
-                text: "Are you sure you want to renew this approval?",
+                title: "Renew Licence",
+                text: "Are you sure you want to renew this licence?",
                 type: "warning",
                 showCancelButton: true,
-                confirmButtonText: 'Renew approval',
+                confirmButtonText: 'Renew licence',
                 //confirmButtonColor:'#d9534f'
             }).then(() => {
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/renew_approval')),{
@@ -674,7 +671,7 @@ export default {
                 }, (error) => {
                     console.log(error);
                     swal({
-                    title: "Renew Approval",
+                    title: "Renew Licence",
                     text: error.body,
                     type: "error",                   
                     })
@@ -687,11 +684,11 @@ export default {
         amendApproval:function (proposal_id) {
             let vm = this;
             swal({
-                title: "Amend Approval",
-                text: "Are you sure you want to amend this approval?",
+                title: "Amend Licence",
+                text: "Are you sure you want to amend this licence?",
                 type: "warning",
                 showCancelButton: true,
-                confirmButtonText: 'Amend approval',
+                confirmButtonText: 'Amend licence',
                 //confirmButtonColor:'#d9534f'
             }).then(() => {
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/amend_approval')),{
@@ -708,7 +705,7 @@ export default {
                 }, (error) => {
                     console.log(error);
                     swal({
-                    title: "Amend Approval",
+                    title: "Amend Licence",
                     text: error.body,
                     type: "error",                   
                     })

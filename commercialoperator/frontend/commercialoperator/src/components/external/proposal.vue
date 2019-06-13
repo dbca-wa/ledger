@@ -172,7 +172,7 @@ export default {
       vm.$http.post(vm.proposal_form_url,formData).then(res=>{
           swal(
             'Saved',
-            'Your proposal has been saved',
+            'Your application has been saved',
             'success'
           );
       },err=>{
@@ -424,7 +424,7 @@ export default {
         vm.submitting = true;
 
         swal({
-            title: "Submit Proposal",
+            title: "Submit Application",
             text: "Are you sure you want to submit this proposal?",
             type: "question",
             showCancelButton: true,

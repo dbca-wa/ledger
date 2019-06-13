@@ -147,7 +147,7 @@ export default {
             return vm.startDateError;
         },
         title: function(){
-            return this.processing_status == 'With Approver' ? 'Issue Approval' : 'Propose to issue approval';
+            return this.processing_status == 'With Approver' ? 'Issue Licence' : 'Propose to issue licence';
         },
         is_amendment: function(){
             return this.proposal_type == 'Amendment' ? true : false;

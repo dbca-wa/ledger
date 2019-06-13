@@ -86,12 +86,12 @@
                               <label for="" class="control-label col-lg-12">Filter</label>
                               <div class="form-check form-check-inline col-md-3">
                                   <input  class="form-check-input" ref="searchProposal" id="searchProposal" name="searchProposal" type="checkbox" v-model="searchProposal" /> 
-                                  <label class="form-check-label" for="searchProposal">Proposal</label>
+                                  <label class="form-check-label" for="searchProposal">Application</label>
                                   
                               </div> 
                               <div class="form-check form-check-inline col-md-3">
                                   <input  class="form-check-input" ref="searchApproval" id="searchApproval" name="searchApproval" type="checkbox" v-model="searchApproval" /> 
-                                  <label class="form-check-label" for="searchApproval">Approval</label>
+                                  <label class="form-check-label" for="searchApproval">Licence</label>
                               </div> 
                               <div class="form-check form-check-inline col-md-3">
                                   <input  class="form-check-input" ref="searchCompliance" id="searchCompliance" name="searchCompliance" type="checkbox" v-model="searchCompliance" /> 
@@ -237,13 +237,13 @@ export default {
                 data: "id",
                   mRender:function (data,type,full) {
                         let links = '';
-                        if(full.type == 'Proposal'){
+                        if(full.type == 'Proposal' || full.type == 'Application'){
                           links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
                         }
                         if(full.type == 'Compliance'){
                           links +=  `<a href='/internal/compliance/${full.id}'>View</a><br/>`;
                         }
-                        if(full.type == 'Approval'){
+                        if(full.type == 'Approval' || full.type == 'Licence'){
                           links +=  `<a href='/internal/approval/${full.id}'>View</a><br/>`;
                         }
                         return links;

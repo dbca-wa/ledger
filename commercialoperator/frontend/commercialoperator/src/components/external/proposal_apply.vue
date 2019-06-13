@@ -186,12 +186,6 @@
 									</div>
 								</div>
                             </div>
-                            <!-- For Testing
-                            <div v-if="approval_level">
-                                <label>Approval level required: </label>  {{ approval_level }}
-                            </div>
-                            -->
-
 
                         </div>
                     </div>

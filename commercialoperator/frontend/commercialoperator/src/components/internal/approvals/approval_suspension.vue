@@ -111,7 +111,7 @@ export default {
             return vm.errors;
         },
         title: function(){
-            return 'Suspend Approval';
+            return 'Suspend Licence';
         }
     },
     methods:{
@@ -158,7 +158,7 @@ export default {
                         vm.close();
                         swal(
                              'Suspend',
-                             'An email has been sent to applicant about suspension of this approval',
+                             'An email has been sent to applicant about suspension of this licence',
                              'success'
                         );
                         vm.$emit('refreshFromResponse',response);

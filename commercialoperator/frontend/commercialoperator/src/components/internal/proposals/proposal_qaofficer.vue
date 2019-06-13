@@ -1,6 +1,6 @@
 <template lang="html">
     <div id="internal-proposal-onhold">
-        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Proposal With QA Officer" large>
+        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Application With QA Officer" large>
             <div class="container-fluid">
                 <div class="row">
                     <form class="form-horizontal" name="withqaForm">
@@ -105,14 +105,14 @@ export default {
             }).then(res=>{
                 if(!is_with_qaofficer){
                     swal(
-                        'Send Proposal to QA Officer',
-                        'Send Proposal to QA Officer',
+                        'Send Application to QA Officer',
+                        'Send Application to QA Officer',
                         'success'
                     );
                 } else {
                     swal(
-                        'Proposal QA Officer Assessment Completed',
-                        'Proposal QA Officer Assessment Completed',
+                        'Application QA Officer Assessment Completed',
+                        'Application QA Officer Assessment Completed',
                         'success'
                     );
                 }

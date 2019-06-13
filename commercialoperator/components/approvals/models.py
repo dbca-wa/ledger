@@ -176,13 +176,13 @@ class Approval(RevisionedMixin):
     @property
     def next_id(self):
         #ids = map(int,[(i.lodgement_number.split('A')[1]) for i in Approval.objects.all()])
-        ids = map(int,[i.split('A')[1] for i in Approval.objects.all().values_list('lodgement_number', flat=True) if i])
+        ids = map(int,[i.split('L')[1] for i in Approval.objects.all().values_list('lodgement_number', flat=True) if i])
         return max(ids) + 1 if ids else 1
 
     def save(self, *args, **kwargs):
         super(Approval, self).save(*args,**kwargs)
         if self.lodgement_number == '':
-            self.lodgement_number = 'A{0:06d}'.format(self.next_id)
+            self.lodgement_number = 'L{0:06d}'.format(self.next_id)
             self.save()
 
     def __str__(self):
@@ -190,7 +190,7 @@ class Approval(RevisionedMixin):
 
     @property
     def reference(self):
-        return 'A{}'.format(self.id)
+        return 'L{}'.format(self.id)
 
     @property
     def can_reissue(self):

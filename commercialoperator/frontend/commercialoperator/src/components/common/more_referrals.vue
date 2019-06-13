@@ -155,7 +155,7 @@ export default {
             },
             error => {
                 swal(
-                    'Proposal Error',
+                    'Application Error',
                     helpers.apiVueResourceError(error),
                     'error'
                 )
@@ -174,7 +174,7 @@ export default {
             },
             error => {
                 swal(
-                    'Proposal Error',
+                    'Application Error',
                     helpers.apiVueResourceError(error),
                     'error'
                 )
@@ -194,7 +194,7 @@ export default {
             },
             error => {
                 swal(
-                    'Proposal Error',
+                    'Application Error',
                     helpers.apiVueResourceError(error),
                     'error'
                 )

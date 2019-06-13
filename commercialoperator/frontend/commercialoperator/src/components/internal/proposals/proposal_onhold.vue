@@ -1,6 +1,6 @@
 <template lang="html">
     <div id="internal-proposal-onhold">
-        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Put Proposal On-hold" large>
+        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Put Application On-hold" large>
             <div class="container-fluid">
                 <div class="row">
                     <form class="form-horizontal" name="onholdForm">
@@ -105,14 +105,14 @@ export default {
             }).then(res=>{
                 if(!is_onhold){
                     swal(
-                        'Put Proposal On-hold',
-                        'Proposal On-hold',
+                        'Put Application On-hold',
+                        'Application On-hold',
                         'success'
                     );
                 } else {
                     swal(
-                        'Proposal On-hold Remove',
-                        'Proposal On-hold Removed',
+                        'Application On-hold Remove',
+                        'Application On-hold Removed',
                         'success'
                     );
                 }
