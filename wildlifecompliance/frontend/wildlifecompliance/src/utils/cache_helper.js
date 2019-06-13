@@ -96,9 +96,7 @@ module.exports = {
                     }
                 } else {
                     for (let store_key of store_keys) {
-                        console.log(store_key);
                         let this_val = await storeInstance.getItem(store_key);
-                        console.log(this_val);
                         if (this_val) {
                             returned_list.push(this_val[1]);
                         }
