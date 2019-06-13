@@ -312,7 +312,7 @@ export default {
       
       if (this.workflow_type === 'forward_to_wildlife_protection_branch') {
         for (let record of this.regionDistricts) {
-          if (record.district = 'KENSINGTON') {
+          if (record.district === 'KENSINGTON') {
             await this.setRegionId(record.id);
           }
         }
@@ -431,6 +431,8 @@ export default {
         region: null,
       });
     // regionDistricts
+    console.log("this.regionDistricts");
+    console.log(this.regionDistricts);
     let returned_region_districts = await cache_helper.getSetCacheList(
       'CallEmail_RegionDistricts', 
       // '/api/region_district/'
