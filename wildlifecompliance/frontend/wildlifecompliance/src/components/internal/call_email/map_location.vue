@@ -183,7 +183,7 @@ export default {
                             duration: 1.5
                         });
                         // this.refreshMarkerLocation();
-                        this.reverseGeocoding(lnglat);
+                        vm.reverseGeocoding(lnglat);
                     }
                 }
             }
@@ -305,7 +305,7 @@ export default {
                             duration: 1.5
                         });
 
-                        if (!vm.isReadonly){
+                        if (!self.isReadonly){
                             if (!self.feature_marker){
                                 self.addMarker([latlng.lat, latlng.lng]);
                             }

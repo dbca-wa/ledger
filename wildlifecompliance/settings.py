@@ -17,6 +17,7 @@ INSTALLED_APPS += [
     'wildlifecompliance.components.users',
     'wildlifecompliance.components.returns',
     'wildlifecompliance.components.call_email',
+    'wildlifecompliance.components.offence',
     'taggit',
     'rest_framework',
     'rest_framework_gis',

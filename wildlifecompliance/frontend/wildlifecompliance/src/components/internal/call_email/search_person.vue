@@ -2,8 +2,10 @@
     <div class="col-sm-12 form-group">
         <div class="row" v-if="isEditable">
             <label class="col-sm-3 control-label">Search Person</label>
-            <div class="col-sm-9">
+            <div class="col-sm-6">
                 <input :readonly="!isEditable" class="col-sm-5 form-control" id="search-person" />
+            </div>
+            <div class="col-sm-3">
                 <input :readonly="!isEditable" type="button" class="pull-right btn btn-primary" value="Create New Person"@click.prevent="createNewPerson()" />
             </div>
         </div>
@@ -181,9 +183,15 @@
                     </div>
                 </div>
                 <div :id="oTab" class="tab-pane fade">
-                    <ApplicationDashTable ref="applications_table" level='internal' :url='applications_url'/>
-                    <LicenceDashTable ref="licences_table" level='internal' :url='licences_url'/>
-                    <ReturnDashTable ref="returns_table" level='internal' :url='returns_url'/>
+                    <div v-if="call_email.email_user">
+                        <ApplicationDashTable ref="applications_table" level='internal' :url='applications_url' v-bind:key="call_email.email_user.id"/>
+                    </div>
+                    <div v-if="call_email.email_user">
+                        <LicenceDashTable ref="licences_table" level='internal' :url='licences_url' v-bind:key="call_email.email_user.id"/>
+                    </div>
+                    <div v-if="call_email.email_user">
+                        <ReturnDashTable ref="returns_table" level='internal' :url='returns_url' v-bind:key="call_email.email_user.id"/>
+                    </div>
                 </div>
             </div>
         </div>
@@ -233,10 +241,6 @@ export default {
             errorDob: false,
             objectAlert: false,
 
-            //applications_url: api_endpoints.applications_paginated+'internal_datatable_list?user_id='+vm.$route.params.user_id,
-            //licences_url: api_endpoints.licences_paginated+'internal_datatable_list?user_id='+vm.$route.params.user_id,
-            //returns_url: api_endpoints.returns+'?user_id='+vm.$route.params.user_id,
-
             forDemo: false,
         }
     },
@@ -275,21 +279,27 @@ export default {
         },
         applications_url: function(){
             if (this.call_email.email_user && this.call_email.email_user.id){
+                console.log('applications_url2: ' + this.call_email.email_user.id);
                 return api_endpoints.applications_paginated+'internal_datatable_list?user_id=' + this.call_email.email_user.id;
             }
-            return api_endpoints.applications_paginated+'internal_datatable_list?user_id=1000000';
+            console.log('applications_url');
+            return api_endpoints.applications_paginated+'internal_datatable_list?user_id=-1';
         },
         licences_url: function(){
+            console.log('licences_url');
             if (this.call_email.email_user && this.call_email.email_user.id){
+                console.log('licences_url2: ' + this.call_email.email_user.id);
                 return api_endpoints.licences_paginated+'internal_datatable_list?user_id=' + this.call_email.email_user.id;
             }
-            return api_endpoints.licences_paginated+'internal_datatable_list?user_id=1000000';
+            return api_endpoints.licences_paginated+'internal_datatable_list?user_id=-1';
         },
         returns_url: function(){
+            console.log('returns_url');
             if (this.call_email.email_user && this.call_email.email_user.id){
+                console.log('returns_url2: ' + this.call_email.email_user.id);
                 return api_endpoints.returns+'?user_id=' + this.call_email.email_user.id;
             }
-            return api_endpoints.returns+'?user_id=100000';
+            return api_endpoints.returns+'?user_id=-1';
         }
     },
     mounted: function(){
@@ -562,5 +572,8 @@ export default {
 #search-person {
     z-index: 1000;
     /* width: 400px; */
+}
+.awesomplete {
+    display: inherit !important;
 }
 </style>
