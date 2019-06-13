@@ -72,6 +72,9 @@ router.register(r'map_layers', call_email_api.MapLayerViewSet)
 router.register(r'compliancepermissiongroup', users_api.CompliancePermissionGroupViewSet)
 router.register(r'region_district', users_api.RegionDistrictViewSet)
 router.register(r'offences', offence_api.OffenceViewSet)
+router.register(r'case_priorities', call_email_api.CasePriorityViewSet)
+router.register(r'inspection_types', call_email_api.InspectionTypeViewSet)
+router.register(r'external_organisations', call_email_api.ExternalOrganisationViewSet)
 
 api_patterns = [url(r'^api/my_user_details/$',
                     users_api.GetMyUserDetails.as_view(),

@@ -46,62 +46,51 @@
                             </div>
                           </div>
                         </div>
-                        <!--
 
-                        <div v-if="assignedToVisibility" class="form-group">
-                          <div class="row">
-                            <div class="col-sm-3">
-                              <label>Assign to</label>
-                            </div>
-                            <div class="col-sm-9">
-                              <select class="form-control" v-model="call_email.assigned_to">
-                                <option  v-for="option in allocatedGroup" :value="option.id" v-bind:key="option.id">
-                                  {{ option.full_name }}
-                                </option>
-                              </select>
-                            </div>
-                          </div>
-                        </div>
                         <div v-if="workflow_type === 'allocate_for_inspection'" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Inspection Type</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" v-model="call_email.district_id">
-                                <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
+                              <select class="form-control" v-model="call_email.inspection_type_id" >
+                                <option  v-for="option in inspectionTypes" :value="option.id" v-bind:key="option.id">
+                                  {{ option.description }} 
                                 </option>
                               </select>
                             </div>
                           </div>
                         </div>
+
                         <div v-if="workflow_type === 'allocate_for_case'" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Priority</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" v-model="call_email.district_id">
-                                <option v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
+                              <select class="form-control" v-model="call_email.case_priority_id" >
+                                <option  v-for="option in casePriorities" :value="option.id" v-bind:key="option.id">
+                                  {{ option.description }} 
                                 </option>
                               </select>
                             </div>
                           </div>
                         </div>
+
                         <div v-if="workflow_type === 'close'" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
-                              <label>Complaint forwarded to external party for follow-up</label>
+                              <label>Forward to External Organisation</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" v-model="call_email.district_id">
-                                <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
+                              <select class="form-control" v-model="call_email.external_organisation_id" >
+                                <option  v-for="option in externalOrganisations" :value="option.id" v-bind:key="option.id">
+                                  {{ option.name }} 
                                 </option>
                               </select>
                             </div>
                           </div>
                         </div>
-                        -->
 
                         <div class="form-group">
                           <div class="row">
@@ -177,6 +166,9 @@ export default {
       regions: [],
       regionDistricts: [],
       availableDistricts: [],
+      casePriorities: [],
+      inspectionTypes: [],
+      externalOrganisations: [],
       // compliance_permission_groups: [],
       group_permission: '',
       // call_email.region: null,
@@ -318,12 +310,12 @@ export default {
         }
       }
       let region_district_id = this.call_email.district_id ? this.call_email.district_id : this.call_email.region_id;
-      console.log(region_district_id);
-      await this.loadAllocatedGroup({
+      if (this.group_permission) {
+        await this.loadAllocatedGroup({
         'region_district_id': region_district_id, 
         'group_permission': this.group_permission,
         });
-
+      }
     },
 
     ok: async function () {
@@ -345,8 +337,6 @@ export default {
             });
         }
         this.attachAnother();
-        // this.call_email.region = null;
-        // this.call_email.district_id = null;
         this.workflowDetails = '';
     },
     sendData: async function(){        
@@ -431,35 +421,55 @@ export default {
         region: null,
       });
     // regionDistricts
-    console.log("this.regionDistricts");
-    console.log(this.regionDistricts);
     let returned_region_districts = await cache_helper.getSetCacheList(
       'CallEmail_RegionDistricts', 
       // '/api/region_district/'
       api_endpoints.region_district
       );
-    console.log(returned_region_districts);
     Object.assign(this.regionDistricts, returned_region_districts);
 
-    // // CompliancePermissionGroups
-    // let returned_compliance_permission_groups = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Members', '/api/compliancepermissiongroup/get_detailed_list/');
-    // Object.assign(this.compliance_permission_groups, returned_compliance_permission_groups);
-
-    // // CompliancePermissionGroups - officers
-    // let returned_officers = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Officers', '/api/compliancepermissiongroup/get_officers/');
-    // Object.assign(this.officers, returned_officers);
-    // // blank entry allows user to clear selection
-    // this.officers.splice(0, 0, 
-    //   {
-    //     id: "", 
-    //     full_name: "",
-    //   });
     await this.updateDistricts();
     this.updateGroupPermission();
-    // if (this.call_email.district_id || this.call_email.region_id) {
-    //   await this.updateAllocatedGroup();
-    // }
     await this.updateAllocatedGroup();
+
+    // case_priorities
+    let returned_case_priorities = await cache_helper.getSetCacheList(
+      'CallEmail_CasePriorities', 
+      api_endpoints.case_priorities
+      );
+    Object.assign(this.casePriorities, returned_case_priorities);
+    // blank entry allows user to clear selection
+    this.casePriorities.splice(0, 0, 
+      {
+        id: "", 
+        description: "",
+      });
+
+    // inspection_types
+    let returned_inspection_types = await cache_helper.getSetCacheList(
+      'CallEmail_InspectionTypes', 
+      api_endpoints.inspection_types
+      );
+    Object.assign(this.inspectionTypes, returned_inspection_types);
+    // blank entry allows user to clear selection
+    this.inspectionTypes.splice(0, 0, 
+      {
+        id: "", 
+        description: "",
+      });
+
+    // external orgs
+    let returned_external_organisations = await cache_helper.getSetCacheList(
+      'CallEmail_ExternalOrganisations', 
+      api_endpoints.external_organisations
+      );
+    Object.assign(this.externalOrganisations, returned_external_organisations);
+    // blank entry allows user to clear selection
+    this.externalOrganisations.splice(0, 0, 
+      {
+        id: "", 
+        name: "",
+      });
   },
   mounted: function() {
     this.form = document.forms.forwardForm;

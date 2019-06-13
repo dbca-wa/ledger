@@ -24,7 +24,7 @@
                             </div>
                         </div>
 
-                        <div v-if="allocateToVisibility" class="form-group">
+                        <div v-if="call_email.allocated_group" class="form-group">
                           <div class="row">
                             <div class="col-sm-12 top-buffer-s">
                               <strong>Currently assigned to</strong><br/>
@@ -78,10 +78,18 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div class="row action-button">
+                        <div v-if="statusId ==='open_followup'" class="row action-button">
                           <div class="col-sm-12">
                                 <a @click="offence()" class=" btn btn-primary">
                                   Offence
+                                </a>
+                          </div>
+                        </div>
+
+                        <div v-if="statusId ==='open_followup'" class="row action-button">
+                          <div class="col-sm-12">
+                                <a class=" btn btn-primary">
+                                  Sanction Outcome
                                 </a>
                           </div>
                         </div>
@@ -119,7 +127,7 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div v-if="statusId ==='open'" class="row action-button">
+                        <div class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="close" @click="addWorkflow('close')" class=" btn btn-primary">
                                   Close

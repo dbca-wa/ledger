@@ -63,6 +63,18 @@ class Referrer(models.Model):
         return self.name
 
 
+class ExternalOrganisation(models.Model):
+    name = models.CharField(max_length=50, blank=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_ExternalOrganisation'
+        verbose_name_plural = 'CM_ExternalOrganisations'
+
+    def __str__(self):
+        return self.name
+
+
 class ReportType(models.Model):
 
     report_type = models.CharField(max_length=50)
@@ -138,6 +150,30 @@ class MapLayer(models.Model):
         return '{0}, {1}'.format(self.display_name, self.layer_name)
 
 
+class CasePriority(models.Model):
+    description = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_CasePriority'
+        verbose_name_plural = 'CM_CasePriorities'
+
+    def __str__(self):
+        return self.description
+
+
+class InspectionType(models.Model):
+    description = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_InspectionType'
+        verbose_name_plural = 'CM_InspectionTypes'
+
+    def __str__(self):
+        return self.description
+
+
 class CallEmail(RevisionedMixin):
     STATUS_CHOICES = (
         ('draft', 'Draft'),
@@ -208,6 +244,21 @@ class CallEmail(RevisionedMixin):
     allocated_group = models.ForeignKey(
         CompliancePermissionGroup,
         related_name='callemail_allocated_group', 
+        null=True
+    )
+    case_priority = models.ForeignKey(
+        CasePriority,
+        related_name='callemail_case_priority', 
+        null=True
+    )
+    inspection_type = models.ForeignKey(
+        InspectionType,
+        related_name='callemail_inspection_type', 
+        null=True
+    )
+    external_organisation = models.ForeignKey(
+        ExternalOrganisation,
+        related_name='callemail_external_organisation', 
         null=True
     )
 

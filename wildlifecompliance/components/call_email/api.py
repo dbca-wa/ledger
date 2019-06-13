@@ -53,7 +53,11 @@ from wildlifecompliance.components.call_email.models import (
     ReportType,
     Referrer,
     ComplianceUserAction,
-    MapLayer)
+    MapLayer,
+    CasePriority,
+    InspectionType,
+    ExternalOrganisation,
+    )
 from wildlifecompliance.components.call_email.serializers import (
     CallEmailSerializer,
     ClassificationSerializer,
@@ -74,7 +78,11 @@ from wildlifecompliance.components.call_email.serializers import (
     MapLayerSerializer,
     ComplianceWorkflowLogEntrySerializer,
     CallEmailDatatableSerializer,
-    SaveUserAddressSerializer)
+    SaveUserAddressSerializer,
+    InspectionTypeSerializer,
+    CasePrioritySerializer,
+    ExternalOrganisationSerializer,
+    )
 from wildlifecompliance.components.users.models import (
     CompliancePermissionGroup,    
 )
@@ -697,6 +705,39 @@ class ReferrerViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return Referrer.objects.all()
         return Referrer.objects.none()
+
+
+class CasePriorityViewSet(viewsets.ModelViewSet):
+    queryset = CasePriority.objects.all()
+    serializer_class = CasePrioritySerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return CasePriority.objects.all()
+        return CasePriority.objects.none()
+
+
+class InspectionTypeViewSet(viewsets.ModelViewSet):
+    queryset = InspectionType.objects.all()
+    serializer_class = InspectionTypeSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return InspectionType.objects.all()
+        return InspectionType.objects.none()
+
+
+class ExternalOrganisationViewSet(viewsets.ModelViewSet):
+    queryset = ExternalOrganisation.objects.all()
+    serializer_class = ExternalOrganisationSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return ExternalOrganisation.objects.all()
+        return ExternalOrganisation.objects.none()
 
 
 class ReportTypeViewSet(viewsets.ModelViewSet):
