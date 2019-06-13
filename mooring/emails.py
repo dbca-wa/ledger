@@ -128,7 +128,8 @@ def send_admissions_booking_invoice(admissionsBooking, request, context_processo
 
     context = {
         'booking': admissionsBooking,
-        'arrivalDate': admissionsLine.arrivalDate
+        'arrivalDate': admissionsLine.arrivalDate,
+        'context_processor': context_processor
     }
     filename = 'invoice-{}({}).pdf'.format(admissionsLine.arrivalDate, admissionsBooking.customer.get_full_name())
     references = [b.invoice_reference for b in admissionsBooking.invoices.all()]
@@ -150,7 +151,7 @@ def send_booking_invoice(booking,request, context_processor):
     cc = None
     bcc = None
     from_email = None
-    context= {'booking': booking}
+    context= {'booking': booking, 'context_processor': context_processor}
     to = booking.customer.email
 
     filename = 'invoice-{}({}-{}).pdf'.format(booking.mooringarea.name,booking.arrival,booking.departure)
@@ -170,7 +171,8 @@ def send_booking_invoice_old(booking, request, context_processor):
     email = booking.customer.email
 
     context = {
-        'booking': booking
+        'booking': booking,
+        'context_processor': context_processor
     }
     filename = 'invoice-{}({}-{}).pdf'.format(booking.mooringarea.name,booking.arrival,booking.departure)
     references = [b.invoice_reference for b in booking.invoices.all()]
@@ -204,7 +206,8 @@ def send_admissions_booking_confirmation(admissionsBooking, request, context_pro
 
     context = {
         'booking': admissionsBooking,
-        'my_bookings': my_bookings_url
+        'my_bookings': my_bookings_url,
+        'context_processor': context_processor
     }
     att = BytesIO()
     pdf.create_admissions_confirmation(att, admissionsBooking, context_processor)
@@ -279,6 +282,7 @@ def send_booking_confirmation(booking,request,context_processor):
         'unpaid_vehicle': unpaid_vehicle,
         'additional_info': additional_info,
         'contact_list': contact_list,
+        'context_processor': context_processor
     }
 
     att = BytesIO()
@@ -368,7 +372,7 @@ def send_refund_failure_email_admissions(booking, context_processor):
     cc = None
     bcc = None
     from_email = None
-    context= {'booking': booking}
+    context= {'booking': booking, 'context_processor': context_processor}
     template_group = context_processor['TEMPLATE_GROUP']
     if not settings.PRODUCTION_EMAIL:
        to = settings.NON_PROD_EMAIL
@@ -385,7 +389,7 @@ def send_refund_completed_email_customer_admissions(booking, context_processor):
     cc = None
     bcc = None
     from_email = None
-    context= {'booking': booking}
+    context= {'booking': booking, 'context_processor': context_processor}
     to = booking.customer.email
     template_group = context_processor['TEMPLATE_GROUP']
     sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
@@ -397,7 +401,7 @@ def send_refund_failure_email_customer_admissions(booking, context_processor):
     cc = None
     bcc = None
     from_email = None
-    context= {'booking': booking}
+    context= {'booking': booking, 'context_processor': context_processor}
     to = booking.customer.email
     template_group = context_processor['TEMPLATE_GROUP']
     sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
@@ -410,7 +414,7 @@ def send_refund_failure_email(booking, context_processor):
     cc = None
     bcc = None
     from_email = None
-    context= {'booking': booking}
+    context= {'booking': booking, 'context_processor': context_processor}
     template_group = context_processor['TEMPLATE_GROUP']
     if not settings.PRODUCTION_EMAIL:
        to = settings.NON_PROD_EMAIL
@@ -427,7 +431,7 @@ def send_refund_completed_email_customer(booking, context_processor):
     cc = None
     bcc = None
     from_email = None
-    context= {'booking': booking}
+    context= {'booking': booking, 'context_processor': context_processor}
     to = booking.customer.email
     template_group = context_processor['TEMPLATE_GROUP']
     sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
@@ -439,7 +443,7 @@ def send_refund_failure_email_customer(booking, context_processor):
     cc = None
     bcc = None
     from_email = None
-    context= {'booking': booking}
+    context= {'booking': booking, 'context_processor': context_processor}
     to = booking.customer.email
     template_group = context_processor['TEMPLATE_GROUP']
     sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
@@ -451,7 +455,7 @@ def send_booking_cancellation_email_customer(booking, context_processor):
     cc = None
     bcc = None
     from_email = None
-    context= {'booking': booking}
+    context= {'booking': booking, 'context_processor': context_processor}
     to = booking.customer.email
     template_group = context_processor['TEMPLATE_GROUP']
     sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
