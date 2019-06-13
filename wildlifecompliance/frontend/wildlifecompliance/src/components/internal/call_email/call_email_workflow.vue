@@ -38,7 +38,7 @@
                               <label>Allocate to</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" v-model="call_email.assigned_to_id" >
+                              <select class="form-control" @change.prevent="updateVuex('assigned_to_id', $event)" >
                                 <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
@@ -254,13 +254,19 @@ export default {
   },
   methods: {
     ...mapActions('callemailStore', {
-      // setAllocatedTo: "setAllocatedTo",
       loadAllocatedGroup: "loadAllocatedGroup",
       setRegionId: "setRegionId",
+      setGenericAttribute: "setGenericAttribute",
     }),
     ...mapActions({
       loadCurrentUser: "loadCurrentUser",
     }),
+    updateVuex: function(attribute, event) {
+        this.setGenericAttribute({ 
+          'attribute': attribute, 
+          'data': event.target.value,
+        });
+    },
     updateDistricts: function() {
       // this.call_email.district_id = null;
       this.availableDistricts = [];
@@ -352,7 +358,9 @@ export default {
         if (this.call_email.allocated_group && this.call_email.allocated_group.members.length > 0) {
           let user_id_list = [];
           for (let user of this.call_email.allocated_group.members) {
-            user_id_list.push(user.id);
+            if (user.id) {
+              user_id_list.push(user.id);
+            }
           }
           payload.append('allocated_group', user_id_list);
         }

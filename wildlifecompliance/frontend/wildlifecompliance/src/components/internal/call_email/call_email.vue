@@ -32,7 +32,9 @@
                           </div>
                           <div class="row">
                             <div class="col-sm-12">
-                              <select class="form-control" v-model="call_email.assigned_to_id" >
+                              
+                              <select class="form-control" @change.prevent="updateVuex('assigned_to_id', $event)" >
+                                <option ""/>  
                                 <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
@@ -148,7 +150,7 @@
                 
                 <div class="row"><div class="col-sm-8 form-group">
                   <label class="col-sm-12">Caller name</label>
-                  <input :readonly="isReadonly" class="form-control" v-model="call_email.caller"/>
+                  <input :readonly="isReadonly" class="form-control" @change="updateVuex('caller', $event)"/>
                 </div></div>
                 <div class="col-sm-4 form-group"><div class="row">
                   <label class="col-sm-12">Caller contact number</label>
@@ -304,6 +306,7 @@ import Datepicker from 'vuejs-datepicker';
 import moment from 'moment';
 import CallWorkflow from './call_email_workflow';
 import Offence from '../offence/offence';
+import 'bootstrap/dist/css/bootstrap.css';
 
 export default {
   name: "ViewCallEmail",
@@ -312,16 +315,13 @@ export default {
       disabledDates: {
         from: new Date(),
       },
-      // isReadonly: true,
       workflow_type: '',
       classification_types: [],
       report_types: [],
       referrers: [],
-      // regionDistricts: [],
-      // compliance_permission_groups: [],
-      // officers: [],
       allocated_group: [],
       current_schema: [],
+      regionDistricts: [],
       sectionLabel: "Details",
       sectionIndex: 1,
       pBody: "pBody" + this._uid,
@@ -404,10 +404,6 @@ export default {
         return false;
       }
     },
-
-    // assignedToVisibility: function() {
-    //   if (call_email.allocated_to.length > 0 || call_email.assigned_to
-    // },
   },
   filters: {
     formatDate: function(data) {
@@ -418,16 +414,22 @@ export default {
     ...mapActions('callemailStore', {
       loadCallEmail: "loadCallEmail",
       saveCallEmail: 'saveCallEmail',
-      // setAllocatedTo: "setAllocatedTo",
-      // setAllocatedGroup: "setAllocatedGroup",
+      setGenericAttribute: 'setGenericAttribute',
+      loadAllocatedGroup: "loadAllocatedGroup",
+      setRegionId: "setRegionId",
     }),
     ...mapActions({
       saveFormData: "saveFormData",
     }),
     ...mapActions({
       loadCurrentUser: "loadCurrentUser",
-      // loadAllocatedGroup: "loadAllocatedGroup",
     }),
+    updateVuex: function(attribute, event) {
+        this.setGenericAttribute({ 
+          'attribute': attribute, 
+          'data': event.target.value,
+        });
+    },
     addWorkflow(workflow_type) {
       this.workflow_type = workflow_type;
       this.$nextTick(() => {
@@ -518,51 +520,32 @@ export default {
         name: "",
       });
 
-    // // CompliancePermissionGroups
-    // let returned_compliance_permission_groups = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Members', '/api/compliancepermissiongroup/get_detailed_list/');
-    // Object.assign(this.compliance_permission_groups, returned_compliance_permission_groups);
-    // // blank entry allows user to clear selection
-    // // this.compliance_permission_groups.splice(0, 0, 
-    // //   {
-    // //     id: "", 
-    // //     name: "",
-    // //   });
-
-    // // CompliancePermissionGroups - officers
-    // let returned_officers = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Officers', '/api/compliancepermissiongroup/get_officers/');
-    // Object.assign(this.officers, returned_officers);
-    // // blank entry allows user to clear selection
-    // this.officers.splice(0, 0, 
-    //   {
-    //     id: "", 
-    //     full_name: "",
-    //   });
-
-    // // Allocated group
-    // let returned_allocated_group = await Vue.http.post('/api/compliancepermissiongroup/get_users/', { 'user_list': this.call_email.allocated_to });
-    // console.log(returned_allocated_group)
-    // Object.assign(this.allocated_group, returned_allocated_group.body);
-    // // blank entry allows user to clear selectionmyMethod
-    // this.allocated_group.splice(0, 0, 
-    //   {
-    //     id: "", 
-    //     full_name: "",
-    //   });
-
-    // set Vuex allocated group
-
-
     // load current CallEmail renderer schema
     if (this.call_email.report_type_id) {
       await this.loadSchema();
     }
-    // bbtest.myMethod();
 
-    // const returned_region_districts = await Vue.http.get('/api/region_district/');
-    // // const returned_region_districts = await Vue.http.get(api_endpoints.region_district);
-    // console.log(returned_region_districts);
-    // Object.assign(this.regionDistricts, returned_region_districts);
+    // regionDistricts
+    let returned_region_districts = await cache_helper.getSetCacheList(
+      'CallEmail_RegionDistricts', 
+      // '/api/region_district/'
+      api_endpoints.region_district
+      );
+    Object.assign(this.regionDistricts, returned_region_districts);
 
+    // // load volunteer group list
+    // if (this.statusId === 'draft') {
+    //     for (let record of this.regionDistricts) {
+    //       if (record.district === 'KENSINGTON') {
+    //         await this.setRegionId(record.id);
+    //       }
+    //     }
+    //     let region_district_id = this.call_email.district_id ? this.call_email.district_id : this.call_email.region_id;
+    //     await this.loadAllocatedGroup({
+    //         'region_district_id': "", 
+    //         'group_permission': 'volunteer',
+    //         });
+    // }
   },
   mounted: function() {
         console.log(this);

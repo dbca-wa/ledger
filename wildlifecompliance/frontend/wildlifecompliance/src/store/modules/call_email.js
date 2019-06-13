@@ -150,21 +150,6 @@ export const callemailStore = {
                 state.report_types = [];
             }
         },
-        // updateAllocatedTo(state, member_ids) {
-        //     console.log("updateAllocatedTo");
-        //     if (member_ids) {
-        //         state.call_email.allocated_to = [];
-        //         for (let member_id of member_ids) {
-        //             state.call_email.allocated_to.push(member_id);
-        //         }
-        //     }
-        // },
-        // updateAllocatedGroup(state, id) {
-        //     console.log("updateAllocatedGroup");
-        //     if (id) {
-        //         Vue.set(state.call_email, 'allocated_group_id', id);
-        //     }
-        // },
         updateClassification(state, classification) {
             if (classification) {
                 Vue.set(state.call_email, 'classification', classification);
@@ -222,13 +207,19 @@ export const callemailStore = {
             state.call_email.location.properties.details = "";
         },
         updateAllocatedGroupList(state, members) {
-            // for (let member of members) {
-            //     state.allocated_group.members.push(member);
-            // }
             Vue.set(state.call_email, 'allocated_group', {});
-            Vue.set(state.call_email.allocated_group, 'members', members);
-            // state.call_email.allocated_group.members = [];
-            // Object.assign(state.call_email.allocated_group.members, members);
+            let blankable_members = [];
+            Object.assign(blankable_members, members);
+            blankable_members.splice(0, 0, 
+                {
+                  id: null, 
+                  email: "",
+                  first_name: "",
+                  last_name: "",
+                  full_name: "",
+                  title: "",
+                });
+            Vue.set(state.call_email.allocated_group, 'members', blankable_members);
         },
         updateAllocatedGroupId(state, id) {
             state.call_email.allocated_group_id = id;
@@ -236,6 +227,9 @@ export const callemailStore = {
         updateRegionId(state, id) {
             state.call_email.region_id = id;
         },
+        updateGenericAttribute(state, { attribute, data }) {
+            Vue.set(state.call_email, attribute, data);
+        }
     },
     actions: {
         async loadCallEmail({ dispatch, }, { call_email_id }) {
@@ -424,5 +418,11 @@ export const callemailStore = {
         setClassification({ commit, }, classification) {
             commit("updateClassification", classification)
         },
+        setGenericAttribute({ commit }, { attribute, data } ) {
+            console.log(attribute);
+            console.log(data);
+            commit("updateGenericAttribute", { attribute, data });
+        },
+
     },
 };

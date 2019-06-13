@@ -362,7 +362,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
     referrer = ReferrerSerializer(read_only=True)
     data = ComplianceFormDataRecordSerializer(many=True)
     email_user = EmailUserSerializer(read_only=True)
-    allocated_group = CompliancePermissionGroupMembersSerializer()
+    # allocated_group = CompliancePermissionGroupMembersSerializer()
 
     class Meta:
         model = CallEmail
@@ -371,7 +371,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'status',
             # 'status_display',
             'assigned_to_id',
-            'allocated_group',
+            # 'allocated_group',
             'allocated_group_id',
             'location',
             'location_id',

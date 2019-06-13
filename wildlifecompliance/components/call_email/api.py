@@ -637,14 +637,15 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 elif request.data.get('allocated_group'):
                     users = request.data.get('allocated_group').split(",")
                     for user_id in users:
-                        try:
-                            user_id_int = int(user_id)
-                            email_group.append(EmailUser.objects.get(id=user_id_int))
-                            # update CallEmail
-                            # instance.allocated_group.add(EmailUser.objects.get(id=user_id_int))
-                        except Exception as e:
-                            print(traceback.print_exc())
-                            raise
+                        if user_id:
+                            try:
+                                user_id_int = int(user_id)
+                                email_group.append(EmailUser.objects.get(id=user_id_int))
+                                # update CallEmail
+                                # instance.allocated_group.add(EmailUser.objects.get(id=user_id_int))
+                            except Exception as e:
+                                print(traceback.print_exc())
+                                raise
                 else:
                     email_group = request.user
 
