@@ -550,7 +550,7 @@ export default {
                 confirmButtonText: 'Reissue licence',
                 //confirmButtonColor:'#d9534f'
             }).then(() => {
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/reissue')),JSON.stringify(data),{
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/reissue_approval')),JSON.stringify(data),{
                 emulateJSON:true,
                 })
                 .then((response) => {

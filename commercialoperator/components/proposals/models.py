@@ -83,7 +83,6 @@ class ProposalType(models.Model):
         app_label = 'commercialoperator'
         unique_together = ('name', 'version')
 
-
 class TaggedProposalAssessorGroupRegions(TaggedItemBase):
     content_object = models.ForeignKey("ProposalAssessorGroup")
 
@@ -104,6 +103,8 @@ class ProposalAssessorGroup(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
+        verbose_name = "Application Assessor Group"
+        verbose_name_plural = "Application Assessor Group"
 
     def __str__(self):
         return self.name
@@ -161,6 +162,8 @@ class ProposalApproverGroup(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
+        verbose_name = "Application Approver Group"
+        verbose_name_plural = "Application Approver Group"
 
     def __str__(self):
         return self.name
@@ -222,6 +225,7 @@ class ProposalDocument(Document):
 
     class Meta:
         app_label = 'commercialoperator'
+        verbose_name = "Application Document"
 
 class OnHoldDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='onhold_documents')
@@ -304,6 +308,8 @@ class ProposalActivitiesLand(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
+        verbose_name = "Application Activity (Land)"
+        verbose_name_plural = "Application Activities (Land)"
 
 
 class ProposalActivitiesMarine(models.Model):
@@ -311,6 +317,8 @@ class ProposalActivitiesMarine(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
+        verbose_name = "Application Activity (Marine)"
+        verbose_name_plural = "Application Activities (Marine)"
 
 
 @python_2_unicode_compatible
@@ -326,6 +334,8 @@ class ParkEntry(models.Model):
     class Meta:
         ordering = ['park__name']
         app_label = 'commercialoperator'
+        verbose_name = "Park Entry"
+        verbose_name_plural = "Park Entries"
         #unique_together = ('id', 'proposal',)
 
     def __str__(self):
@@ -541,6 +551,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
     class Meta:
         app_label = 'commercialoperator'
+        verbose_name = "Application"
+        verbose_name_plural = "Applications"
 
     def __str__(self):
         return str(self.id)
@@ -554,7 +566,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             self.save(version_comment='processing_status: {}'.format(self.processing_status))
 
         if self.lodgement_number == '' and self.application_type.name != 'E Class':
-            new_lodgment_id = 'P{0:06d}'.format(self.pk)
+            new_lodgment_id = 'A{0:06d}'.format(self.pk)
             self.lodgement_number = new_lodgment_id
             self.save(version_comment='processing_status: {}'.format(self.processing_status))
 
@@ -1180,12 +1192,13 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             raise ValidationError('You cannot change the current status at this time')
         elif self.approval and self.approval.can_reissue:
             if self.__approver_group() in request.user.proposalapprovergroup_set.all():
+                import ipdb; ipdb.set_trace()
                 self.processing_status = status
                 self.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_REISSUE_APPROVAL.format(self.id),request)
             else:
-                raise ValidationError('Cannot reissue Approval')
+                raise ValidationError('Cannot reissue Approval. User not permitted.')
         else:
             raise ValidationError('Cannot reissue Approval')
 
@@ -2033,8 +2046,8 @@ class AmendmentReason(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
-        verbose_name = "Proposal Amendment Reason" # display name in Admin
-        verbose_name_plural = "Proposal Amendment Reasons"
+        verbose_name = "Application Amendment Reason" # display name in Admin
+        verbose_name_plural = "Application Amendment Reasons"
 
     def __str__(self):
         return self.reason
@@ -2139,6 +2152,8 @@ class ProposalStandardRequirement(RevisionedMixin):
 
     class Meta:
         app_label = 'commercialoperator'
+        verbose_name = "Application Standard Requirement"
+        verbose_name_plural = "Application Standard Requirements"
 
 
 class ProposalUserAction(UserAction):
@@ -2261,7 +2276,8 @@ class ReferralRecipientGroup(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
-        verbose_name_plural = "Referral recipient group"
+        verbose_name = "Referral group"
+        verbose_name_plural = "Referral groups"
 
 class QAOfficerGroup(models.Model):
     #site = models.OneToOneField(Site, default='1')
@@ -2290,7 +2306,8 @@ class QAOfficerGroup(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
-        verbose_name_plural = "QA Officer group"
+        verbose_name = "QA group"
+        verbose_name_plural = "QA group"
 
 
     def _clean(self):
@@ -2695,7 +2712,6 @@ class ProposalAssessment(RevisionedMixin):
         return self.answers.all()
 
 
-
 class ProposalAssessmentAnswer(RevisionedMixin):
     question=models.ForeignKey(ChecklistQuestion, related_name='answers')
     answer = models.NullBooleanField()
@@ -2706,8 +2722,8 @@ class ProposalAssessmentAnswer(RevisionedMixin):
 
     class Meta:
         app_label = 'commercialoperator'
-
-
+        verbose_name = "Assessment answer"
+        verbose_name_plural = "Assessment answers"
 
 
 class QAOfficerReferral(RevisionedMixin):

@@ -65,6 +65,7 @@ class ApplicationFeeView(TemplateView):
         #proposal = Proposal.objects.get(id=proposal_id)
 
         proposal = self.get_object()
+        import ipdb; ipdb.set_trace()
 
         try:
             with transaction.atomic():
@@ -94,7 +95,7 @@ class MakePaymentView(TemplateView):
     template_name = 'commercialoperator/booking/success.html'
 
     def post(self, request, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
+        import ipdb; ipdb.set_trace()
 
         proposal_id = int(kwargs['proposal_pk'])
         proposal = Proposal.objects.get(id=proposal_id)
@@ -145,67 +146,74 @@ class ApplicationFeeSuccessView(TemplateView):
 
     def get(self, request, *args, **kwargs):
 
+        import ipdb; ipdb.set_trace()
         context = template_context(self.request)
         basket = None
+        invoice = None
         proposal = get_session_application_invoice(request.session)
-
-        if proposal.fee_paid:
-            #TODO must remove this ''if-block' - temp hack, the method is executing twice - need to FIX
-            invoice = Invoice.objects.get(reference=proposal.fee_invoice_reference)
-            try:
-                recipient = proposal.applicant.email
-                submitter = proposal.applicant
-            except:
-                recipient = proposal.submitter.email
-                submitter = proposal.submitter
-            send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
-            send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
-
-            context.update({
-                'proposal': proposal,
-                'submitter': submitter,
-                'fee_invoice': invoice
-            })
-            return render(request, self.template_name, context)
-
-        print (" APPLICATION FEE SUCCESS ")
-        if self.request.user.is_authenticated():
-            basket = Basket.objects.filter(status='Submitted', owner=request.user).order_by('-id')[:1]
-        else:
-            basket = Basket.objects.filter(status='Submitted', owner=booking.proposal.submitter).order_by('-id')[:1]
-
-        order = Order.objects.get(basket=basket[0])
-        invoice = Invoice.objects.get(order_number=order.number)
-        invoice_ref = invoice.reference
-        #book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
-
-        #import ipdb; ipdb.set_trace()
-        proposal = proposal_submit(proposal, request)
-        if proposal and (invoice.payment_status == 'paid' or invoice.payment_status == 'over_paid'):
-            proposal.fee_invoice_reference = invoice_ref
-            proposal.save()
-        else:
-            logger.error('Invoice payment status is {}'.format(invoice.payment_status))
-            raise
-
-        print ("APPLICATION FEE")
         try:
             recipient = proposal.applicant.email
             submitter = proposal.applicant
         except:
             recipient = proposal.submitter.email
             submitter = proposal.submitter
-        #import ipdb; ipdb.set_trace()
-        send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
-        send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+
+        if proposal.fee_paid:
+            #TODO must remove this ''if-block' - temp hack, the method is executing twice - need to FIX
+#            invoice = Invoice.objects.get(reference=proposal.fee_invoice_reference)
+#            send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+#            send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+#
+#            context.update({
+#                'proposal': proposal,
+#                'submitter': submitter,
+#                'fee_invoice': invoice
+#            })
+#            return render(request, self.template_name, context)
+
+            print (" APPLICATION FEE SUCCESS ")
+            import ipdb; ipdb.set_trace()
+            if self.request.user.is_authenticated():
+                basket = Basket.objects.filter(status='Submitted', owner=request.user).order_by('-id')[:1]
+            else:
+                basket = Basket.objects.filter(status='Submitted', owner=booking.proposal.submitter).order_by('-id')[:1]
+
+            order = Order.objects.get(basket=basket[0])
+            invoice = Invoice.objects.get(order_number=order.number)
+            invoice_ref = invoice.reference
+            #book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
+
+            #import ipdb; ipdb.set_trace()
+            proposal = proposal_submit(proposal, request)
+            if proposal and (invoice.payment_status == 'paid' or invoice.payment_status == 'over_paid'):
+                proposal.fee_invoice_reference = invoice_ref
+                proposal.save()
+            else:
+                logger.error('Invoice payment status is {}'.format(invoice.payment_status))
+                raise
+
+            print ("APPLICATION FEE")
+#            try:
+#                recipient = proposal.applicant.email
+#                submitter = proposal.applicant
+#            except:
+#                recipient = proposal.submitter.email
+#                submitter = proposal.submitter
+            #import ipdb; ipdb.set_trace()
+            send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+            send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+        else:
+            proposal.fee_paid = True
+            proposal.save()
+
 
         #delete_session_booking(request.session)
-
         context.update({
             'proposal': proposal,
             'submitter': submitter,
             'fee_invoice': invoice
         })
+        #request.session.items()
         return render(request, self.template_name, context)
 
 
