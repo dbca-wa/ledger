@@ -2,8 +2,10 @@
     <div class="col-sm-12 form-group">
         <div class="row" v-if="isEditable">
             <label class="col-sm-3 control-label">Search Person</label>
-            <div class="col-sm-9">
+            <div class="col-sm-6">
                 <input :readonly="!isEditable" class="col-sm-5 form-control" id="search-person" />
+            </div>
+            <div class="col-sm-3">
                 <input :readonly="!isEditable" type="button" class="pull-right btn btn-primary" value="Create New Person"@click.prevent="createNewPerson()" />
             </div>
         </div>
@@ -570,5 +572,8 @@ export default {
 #search-person {
     z-index: 1000;
     /* width: 400px; */
+}
+.awesomplete {
+    display: inherit !important;
 }
 </style>

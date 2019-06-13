@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from wildlifecompliance.components.offence.models import Offence
+from wildlifecompliance.components.offence.models import Offence, SectionRegulation
 
 
 class OffenceSerializer(serializers.ModelSerializer):
@@ -19,6 +19,21 @@ class OffenceSerializer(serializers.ModelSerializer):
             'occurrence_time_to',
             'alleged_offences',
             'details',
+        )
+        read_only_fields = (
+
+        )
+
+
+class SectionRegulationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SectionRegulation
+        fields = (
+            'id',
+            'act',
+            'name',
+            'offence_text',
         )
         read_only_fields = (
 
