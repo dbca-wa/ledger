@@ -141,7 +141,7 @@ export default {
             proposal_submitters: [],
             proposal_parks: [],
             proposal_headers:[
-                "Number","Approval Number","Holder","Status","Arrival","Park","Invoice/Confirmation","Action",
+                "Number","Licence","Holder","Status","Arrival","Park","Invoice/Confirmation","Action",
             ],
             proposal_options:{
                 language: {

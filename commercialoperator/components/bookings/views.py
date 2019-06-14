@@ -65,6 +65,7 @@ class ApplicationFeeView(TemplateView):
         #proposal = Proposal.objects.get(id=proposal_id)
 
         proposal = self.get_object()
+        #import ipdb; ipdb.set_trace()
 
         try:
             with transaction.atomic():
@@ -138,7 +139,6 @@ class MakePaymentView(TemplateView):
                 booking.delete()
             raise
 
-
 from commercialoperator.components.proposals.utils import proposal_submit
 class ApplicationFeeSuccessView(TemplateView):
     template_name = 'commercialoperator/booking/success_fee.html'
@@ -149,6 +149,7 @@ class ApplicationFeeSuccessView(TemplateView):
         basket = None
         proposal = get_session_application_invoice(request.session)
 
+        #import ipdb; ipdb.set_trace()
         if proposal.fee_paid:
             #TODO must remove this ''if-block' - temp hack, the method is executing twice - need to FIX
             invoice = Invoice.objects.get(reference=proposal.fee_invoice_reference)
