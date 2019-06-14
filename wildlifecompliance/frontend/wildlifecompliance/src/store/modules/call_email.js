@@ -363,6 +363,7 @@ export const callemailStore = {
             console.log(returned.body);
             if (returned.body.group_id) {
                 await dispatch('setAllocatedGroupId', returned.body.group_id);
+                await dispatch('setAllocatedGroupList', null);
             }
             if (returned.body.allocated_group) {
                 await dispatch('setAllocatedGroupList', returned.body.allocated_group);
