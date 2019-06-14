@@ -786,6 +786,22 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         qs =AmendmentRequest.objects.filter(proposal = self)
         return qs
 
+    @property
+    def search_data(self):
+        search_data={}
+        parks=[]
+        trails=[]
+        for p in self.parks.all():
+            parks.append(p.park.name)
+        for t in self.trails.all():
+            trails.append(t.trail.name)
+        search_data.update({'parks': parks})
+        search_data.update({'trails': trails})
+        search_data.update({'mooring': self.other_details.mooring})
+        search_data.update({'other_details': self.other_details.other_comments})
+        return search_data
+    
+
     def __assessor_group(self):
         # TODO get list of assessor groups based on region and activity
         if self.region and self.activity:
