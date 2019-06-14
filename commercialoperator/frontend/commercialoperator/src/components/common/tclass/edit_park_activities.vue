@@ -1,5 +1,5 @@
 <template lang="html">
-    <div id="editVehicle">
+    <div id="editParkActivities">
         <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="title" large>
             <div class="container-fluid">
                 <div class="row">
@@ -49,7 +49,7 @@ import modal from '@vue-utils/bootstrap-modal.vue'
 import alert from '@vue-utils/alert.vue'
 import {helpers,api_endpoints} from "@/utils/hooks.js"
 export default {
-    name:'Edit-Vehicle',
+    name:'Edit-Park-Activities',
     components:{
         modal,
         alert

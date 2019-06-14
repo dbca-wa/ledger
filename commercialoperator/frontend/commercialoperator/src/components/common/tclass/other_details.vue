@@ -73,7 +73,7 @@
                                 <div class="col-sm-3">
                                     <label class="control-label pull-left"  for="Name">Preferred licence period</label>
                                 </div>
-                                <div class="col-sm-9" style="margin-bottom: 5px">
+                                <div class="col-sm-9" style="margin-bottom: 5px; width:53% !important">
                                     <select class="form-control" v-model="proposal.other_details.preferred_licence_period" ref="preferred_licence_period" :disabled="proposal.readonly">
                                         <option v-for="l in licence_period_choices" :value="l.key">{{l.value}}</option>
                                     </select>
@@ -534,7 +534,7 @@ export default {
                     if(found==false){
                     var data={
                         'accreditation_type': accreditation_type.key,
-                        'accreditation_expiry':'',
+                        'accreditation_expiry':null,
                         'comments':'',
                         'proposal_other_details': vm.proposal.other_details.id,
                         'is_deleted': false,
