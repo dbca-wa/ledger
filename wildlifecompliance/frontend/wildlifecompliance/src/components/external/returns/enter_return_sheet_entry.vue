@@ -3,6 +3,7 @@
         <modal transition="modal fade" :title="title" large>
             <div class="container-fluid">
                 <div class="row">
+                <form class="form-horizontal" name="sheetEntryForm">
                     <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
                         <div class="row">
@@ -28,15 +29,15 @@
                         </div>
                         <div class="row">
                             <div class="col-md-3">
-                                <label class="control-label pull-left"  for="Name">Total Number:</label>
+                                <label class="control-label pull-left" >Total Number:</label>
                             </div>
                             <div class="col-md-3">
-                                <input type='text' v-model='computeTotal' disabled='true' >
+                                <input type='text' v-model='entryTotal' disabled='true' >
                             </div>
                         </div>
                         <div class="row" v-if="isLicenceRequired">
                             <div class="col-md-3">
-                                <label class="control-label pull-left"  for="Name">Receiving licence:</label>
+                                <label class="control-label pull-left" >Receiving licence:</label>
                             </div>
                             <div class="col-md-3">
                                 <input type='text' v-model='entryLicence' >
@@ -51,6 +52,7 @@
                             </div>
                         </div>
                     </div>
+                </form>
                 </div>
             </div>
             <div slot="footer">
@@ -87,6 +89,7 @@ export default {
         form:null,
         errors: false,
         errorString: '',
+        validation_form: null,
         successString: '',
         success:false,
         entrySpecies: '',
@@ -96,13 +99,21 @@ export default {
         entryTotal: 0,
         entryLicence: '',
         entryComment: '',
-        currentStock: '0',
+        currentStock: 0,
         speciesType: '',
         row_of_data: null,
         table: null,
         isAddEntry: false,
         isChangeEntry: false,
         activityList: {'0': {'label': null, 'licence': false, 'pay': false}},
+      }
+    },
+    watch: {
+      entryQty: function(value) {
+        this.addToStock(value)
+      },
+      entryActivity: function(value) {
+        this.addToStock(this.entryQty);
       }
     },
     computed: {
@@ -112,21 +123,12 @@ export default {
         'species_transfer',
       ]),
       showError: function() {
+        console.log('showErrors')
+        console.log(this.errors)
         return this.errors;
       },
       title: function(){
-        return this.entrySpecies + '   Current stock: ' + this.computeTotal;
-      },
-      computeTotal: function() {
-        if (this.isInStock) {
-            this.entryTotal = parseInt(this.entryTotal) + (this.entryQty !== '' ? parseInt(this.entryQty) : 0)
-        } else {
-            this.entryTotal = parseInt(this.entryTotal) - (this.entryQty !== '' ? parseInt(this.entryQty) : 0)
-        };
-        if (this.isLicenceRequired) { // notify required before total update.
-            this.entryTotal = parseInt(this.currentStock)
-        };
-        return this.entryTotal;
+        return this.entrySpecies + '   Current stock: ' + this.entryTotal;
       },
       isOutStock: function() {
         return 'outward' in this.returns.sheet_activity_list[this.entryActivity] ? true : false
@@ -142,13 +144,28 @@ export default {
       },
     },
     methods:{
+      addToStock: function(value) {
+        this.entryTotal = this.currentStock !== '' ? parseInt(this.currentStock) : 0
+        if (this.isInStock) {
+            this.entryTotal = parseInt(this.entryTotal) + parseInt(value)
+        };
+        if (this.isOutStock) {
+            this.entryTotal = parseInt(this.entryTotal) - parseInt(value)
+        };
+        if (this.isLicenceRequired || this.entryActivity === '0') { // notify required before total update.
+            this.entryTotal = parseInt(this.currentStock)
+        };
+      },
       update:function () {
         const self = this;
+
         if (self.isAddEntry) {
+
           let _currentDateTime = new Date();
           self.entryDateTime = Date.parse(new Date());
           let newRowId = (self.row_of_data.data().count()) + '';
-          let _data = { rowId: newRowId,
+
+          var _data = { rowId: newRowId,
                         date: self.entryDateTime,
                         activity: self.entryActivity,
                         qty: self.entryQty,
@@ -157,35 +174,62 @@ export default {
                         licence: self.entryLicence
                       };
 
-          if (self.isLicenceRequired) { // licence only required for stock transfers.
-            _data['transfer'] = self.returns.sheet_species
-            self.checkTransfer(_data)
-          };
+          if (!self.isLicenceRequired) {
 
-          self.row_of_data.row.add(_data).node().id = newRowId;
-          self.row_of_data.draw();
-          self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
-          self.species_cache[self.returns.sheet_species].push(self.row_of_data.context[0].aoData[newRowId]._aData);
+            self.row_of_data.row.add(_data).node().id = newRowId;
+            self.row_of_data.draw();
+            self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
+            self.species_cache[self.returns.sheet_species].push(self.row_of_data.context[0].aoData[newRowId]._aData);
+            self.close()
+          }
+
+          if (self.isLicenceRequired && self.isValidTransfer(_data)) { // licence only required for stock transfers.
+
+            let _currentDateTime = new Date();
+            self.entryDateTime = Date.parse(new Date());
+            let newRowId = (self.row_of_data.data().count()) + '';
+            _data['transfer'] = self.returns.sheet_species;
+
+            self.row_of_data.row.add(_data).node().id = newRowId;
+            self.row_of_data.draw();
+            self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
+            self.species_cache[self.returns.sheet_species].push(self.row_of_data.context[0].aoData[newRowId]._aData);
+            self.close()
+          }
+
         };
 
         if (self.isChangeEntry) {
-          self.row_of_data.data().activity = self.entryActivity;
-          self.row_of_data.data().qty = self.entryQty;
-          self.row_of_data.data().total = self.entryTotal;
-          self.row_of_data.data().licence = self.entryLicence;
-          self.row_of_data.data().comment = self.entryComment;
 
-          if (self.isLicenceRequired) { // licence only required for stock transfers.
-            let _data = self.row_of_data.data()
+          var _data = self.row_of_data.data()
+
+          if (!self.isLicenceRequired) { // licence only required for stock transfers.
+            self.row_of_data.data().activity = self.entryActivity;
+            self.row_of_data.data().qty = self.entryQty;
+            self.row_of_data.data().total = self.entryTotal;
+            self.row_of_data.data().licence = self.entryLicence;
+            self.row_of_data.data().comment = self.entryComment;
+
+            self.row_of_data.invalidate().draw()
+            self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
+            self.close()
+          }
+
+          if (self.isLicenceRequired && self.isValidTransfer(_data)) {
+            self.row_of_data.data().activity = self.entryActivity;
+            self.row_of_data.data().qty = self.entryQty;
+            self.row_of_data.data().total = self.entryTotal;
+            self.row_of_data.data().licence = self.entryLicence;
+            self.row_of_data.data().comment = self.entryComment;
+
             _data['transfer'] = self.returns.sheet_species
-            self.checkTransfer(_data)
-          };
+            self.row_of_data.invalidate().draw()
+            self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
+            self.close()
+          }
 
-          self.row_of_data.invalidate().draw()
-          self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
         };
 
-        self.close();
       },
       pay: function() {
         const self = this;
@@ -208,32 +252,36 @@ export default {
                         console.log(error);
         });
       },
-      isValidLicence: function(licence) {
+      isValidLicence: function(row_data) {
         const self = this;
         self.form=document.forms.external_returns_form;
-        self.errors = true;
+        self.errors = false;
         var data = new FormData(self.form);
-        data.append('licence', self.entryLicence)
+        data.append('transfer', JSON.stringify(row_data))
         self.$http.post(helpers.add_endpoint_json(api_endpoints.returns,self.returns.id+'/sheet_check_transfer'),data,{
                       emulateJSON:true,
                     }).then((response)=>{
-                        self.errors = false;
                         return true;
                     },(error)=>{
                         console.log(error)
-                        self.errorString = helpers.apiVueResourceError('Licence is not Valid.');
-                        self.close;
-
+                        self.errors = true;
+                        //self.errorString = helpers.apiVueResourceError('Licence is not Valid.');
+                        self.errorString = 'Error with Validation'
+                        self.row_of_data.rows.add(self.species_cache[self.returns.sheet_species]);
         });
+        return false;
       },
-      checkTransfer: function(row_data) {
+      isValidTransfer: function(row_data) { // for valid transfers cache & process separately.
         const self = this;
+        if (!self.isLicenceRequired) {
+          return true;
+        }
         self.form=document.forms.external_returns_form;
-        self.isValidLicence(row_data['licence']);
+        self.isValidLicence(row_data);
         let transfer = {}  //{speciesID: {this.entryDateTime: row_data},}
         if (self.returns.sheet_species in self.species_transfer){
           transfer = self.species_transfer[self.returns.sheet_species]
-        } 
+        }
         transfer[self.entryDateTime] = row_data;
         self.species_transfer[self.returns.sheet_species] = transfer
       },
@@ -250,6 +298,42 @@ export default {
           self.isModalOpen = false;
         }
       },
+      addFormValidations: function() {
+        let vm = this;
+        vm.validation_form = $(vm.form).validate({
+                rules: {
+                    reason: "required"
+
+                },
+                messages: {
+                    reason: "field is required",
+
+                },
+                showErrors: function(errorMap, errorList) {
+                    $.each(this.validElements(), function(index, element) {
+                        var $element = $(element);
+                        $element.attr("data-original-title", "").parents('.form-group').removeClass('has-error');
+                    });
+                    // destroy tooltips on valid elements
+                    $("." + this.settings.validClass).tooltip("destroy");
+                    // add or update tooltips
+                    for (var i = 0; i < errorList.length; i++) {
+                        var error = errorList[i];
+                        $(error.element)
+                            .tooltip({
+                                trigger: "focus"
+                            })
+                            .attr("data-original-title", error.message)
+                            .parents('.form-group').addClass('has-error');
+                    }
+                }
+            });
+       },
     },
+    mounted: function() {
+      let vm = this;
+      vm.form = document.forms.sheetEntryForm;
+      vm.addFormValidations();
+    }
 }
 </script>

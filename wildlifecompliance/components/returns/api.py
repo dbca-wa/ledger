@@ -120,8 +120,8 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         try:
             instance = self.get_object()
 
-            if instance.has_sheet:
-                instance.sheet.is_valid_transfer(request)
+            if not instance.sheet.is_valid_transfer(request):
+                raise ValidationError({'err': 'Transfer not valid.'})
 
             serializer = self.get_serializer(instance)
             return Response(serializer.data)

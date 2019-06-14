@@ -77,7 +77,6 @@ export default {
         readonly: false,
         isModalOpen: false,
         sheetTitle: null,
-        sheet_running_total: 0,
         sheet_activity_type: [],
         sheet_headers:["Date","Activity","Qty","Total","Comments","Action"],
         sheet_options:{
@@ -108,16 +107,7 @@ export default {
                 }
               },
               { data: "qty" },
-              { data: "total",
-                mRender: function(data, type, full) {
-                   if ('inward' in vm.returns.sheet_activity_list[full.activity]) { // Tansfer-Ins
-                      vm.sheet_running_total += parseInt(full.qty)
-                   } else {
-                      vm.sheet_running_total -= parseInt(full.qty)
-                   }
-                   return vm.sheet_running_total
-                }
-              },
+              { data: "total" },
               { data: "comment" },
               { data: "editable",
                 mRender: function(data, type, full) {
@@ -128,7 +118,8 @@ export default {
                       return column;
                    }
                    if (full.activity && vm.is_external
-                                && vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])) {
+                                && (vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])
+                                && full.transfer === 'sent')) {
                       var accept = `<a class="accept-row" data-rowid=\"__ROWID__\">Accept</a> or `;
                       accept = accept.replace(/__ROWID__/g, full.rowId);
                       var decline = `<a class="decline-row" data-rowid=\"__ROWID__\">Decline</a><br/>`;
@@ -142,7 +133,6 @@ export default {
             ],
             order: [0, 'desc'],
             drawCallback: function() {
-              vm.sheet_running_total = 0
               vm.sheetTitle = vm.species_list[vm.returns.sheet_species]
             },
             processing: true,
@@ -151,8 +141,10 @@ export default {
               return _data.rowId
             },
             initComplete: function () {
-              // Cache the initial table load.
-              vm.species_cache[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.ajax.json()
+              if (vm.$refs.return_datatable.vmDataTable.ajax.json().length > 0) {
+                // cache initial load.
+                vm.species_cache[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.ajax.json()
+              }
               // Populate activity list from the data in the table
               var activityColumn = vm.$refs.return_datatable.vmDataTable.columns(1);
               activityColumn.data().unique().sort().each( function ( d, j ) {
@@ -178,10 +170,8 @@ export default {
         'species_list',
         'species_cache',
         'is_external',
+        'species_transfer',
     ]),
-    sheetURL: function(){
-      return helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
-    },
     csrf_token: function() {
       return helpers.getCookie('csrftoken')
     },
@@ -195,6 +185,12 @@ export default {
     isTrue: function(_value) {
       return (_value === 'true');
     },
+    intVal: function(_value) {
+      return typeof _value === 'string' ?
+          _value.replace(/[\$,]/g, '')*1 :
+          typeof _value === 'number' ?
+          _value : 0;
+    },
     addSheetRow: function () {
       const self = this;
       var rows = self.$refs.return_datatable.vmDataTable
@@ -206,8 +202,10 @@ export default {
       self.$refs.sheet_entry.entrySpecies = self.sheetTitle;
       self.$refs.sheet_entry.entryActivity = Object.keys(self.returns.sheet_activity_list)[0];
       self.$refs.sheet_entry.entryQty = '';
-      self.$refs.sheet_entry.entryTotal = rows.context[0].aoData[last]._aData['total'];
-      self.$refs.sheet_entry.currentStock = rows.context[0].aoData[last]._aData['total'];
+      if (last>-1){ // sets the current total
+        self.$refs.sheet_entry.entryTotal = rows.context[0].aoData[last]._aData['total'];
+        self.$refs.sheet_entry.currentStock = rows.context[0].aoData[last]._aData['total'];
+      }
       self.$refs.sheet_entry.entryComment = '';
       self.$refs.sheet_entry.entryLicence = '';
       self.$refs.sheet_entry.entryDateTime = '';
@@ -238,24 +236,43 @@ export default {
         vm.$refs.sheet_entry.entryLicence = vm.$refs.sheet_entry.row_of_data.data().licence;
         vm.$refs.sheet_entry.isSubmitable = true;
         vm.$refs.sheet_entry.isModalOpen = true;
+        vm.$refs.sheet_entry.errors = false;
      });
 
      vm.$refs.return_datatable.vmDataTable.on('click','.accept-row', function(e) {
         e.preventDefault();
-        vm.$refs.sheet_entry.isChangeEntry = true;
-        vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
-        vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
-        vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
-        vm.$refs.sheet_entry.isModalOpen = false;
+        var selected = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
+        var rows = vm.$refs.return_datatable.vmDataTable.data();
+        for (let i=0; i<rows.length; i++) {
+          if (vm.intVal(rows[i].date)>=vm.intVal(selected.data().date)){ //activity is after accepted
+            rows[i].total = vm.intVal(rows[i].total) + vm.intVal(selected.data().qty)
+          }
+          if (vm.intVal(rows[i].date)==vm.intVal(selected.data().date)) {
+            rows[i].transfer = 'accept'
+            //vm.species_transfer[vm.returns.sheet_species] = rows[i]
+          }
+        }
+        vm.species_cache[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.data();
+        vm.$refs.return_datatable.vmDataTable.clear().draw();
+        vm.$refs.return_datatable.vmDataTable.rows.add(vm.species_cache[vm.returns.sheet_species]);
+        vm.$refs.return_datatable.vmDataTable.draw();
+
      });
 
      vm.$refs.return_datatable.vmDataTable.on('click','.decline-row', function(e) {
         e.preventDefault();
-        vm.$refs.sheet_entry.isChangeEntry = true;
-        vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
-        vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
-        vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
-        vm.$refs.sheet_entry.isModalOpen = false;
+        var selected = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
+        var rows = vm.$refs.return_datatable.vmDataTable.data();
+        for (let i=0; i<rows.length; i++) {
+          if (vm.intVal(rows[i].date)==vm.intVal(selected.data().date)) {
+            rows[i].transfer = 'decline'
+            //vm.species_transfer[vm.returns.sheet_species] = rows[i]
+          }
+        }
+        vm.species_cache[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.data();
+        vm.$refs.return_datatable.vmDataTable.clear().draw();
+        vm.$refs.return_datatable.vmDataTable.rows.add(vm.species_cache[vm.returns.sheet_species]);
+        vm.$refs.return_datatable.vmDataTable.draw();
      });
 
      vm.$refs.return_datatable.vmDataTable.on('click','.pay-transfer', function(e) {
@@ -271,7 +288,8 @@ export default {
      $('form').on('click', '.change-species', function(e) {
         e.preventDefault();
         let selected_id = $(this).attr('species_id');
-        if (vm.species_cache[vm.returns.sheet_species] == null) {
+        if (vm.species_cache[vm.returns.sheet_species]==null
+                        && vm.$refs.return_datatable.vmDataTable.ajax.json().length>0) {
             // cache currently displayed species json
             vm.species_cache[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.ajax.json()
         }
@@ -284,7 +302,8 @@ export default {
         } else {
             // load species json from ajax
             vm.$refs.return_datatable.vmDataTable.clear().draw();
-            vm.$refs.return_datatable.vmDataTable.ajax.url = helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
+            vm.$refs.return_datatable.vmDataTable
+                    .ajax.url = helpers.add_endpoint_json(api_endpoints.returns,'sheet_details');
             vm.$refs.return_datatable.vmDataTable.ajax.reload();
         };
      });

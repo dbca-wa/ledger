@@ -18,7 +18,7 @@
                             <p class="pull-right" style="margin-top:5px;">
                                 <button style="width:150px;" class="btn btn-primary btn-md" name="save_exit">Save and Exit</button>
                                 <button style="width:150px;" class="btn btn-primary btn-md" @click.prevent="save()" name="save_continue">Save and Continue</button>
-                                <button style="width:150px;" class="btn btn-primary btn-md" name="draft">Submit</button>
+                                <button style="width:150px;" class="btn btn-primary btn-md" v-if="isSubmittable" name="draft">Submit</button>
                             </p>
                         </div>
                     </div>
@@ -65,6 +65,9 @@ export default {
         'species_cache',
         'species_transfer',
     ]),
+    isSubmittable() {
+      return this.returns.format !== 'sheet' && this.returns.lodgement_date == null
+    }
   },
   methods: {
     ...mapActions({
@@ -95,7 +98,6 @@ export default {
         });
         data.append('transfer', speciesJSON)
       }
-      console.log(data)
       self.$http.post(helpers.add_endpoint_json(api_endpoints.returns,self.returns.id+'/save'),data,{
                       emulateJSON:true,
                     }).then((response)=>{
