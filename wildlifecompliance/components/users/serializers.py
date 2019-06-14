@@ -405,6 +405,16 @@ class CompliancePermissionGroupSerializer(serializers.ModelSerializer):
             )
 
 
+class CompliancePermissionGroupMembersSerializer(serializers.ModelSerializer):
+    members = ComplianceUserDetailsOptimisedSerializer(many=True)
+
+    class Meta:
+        model = CompliancePermissionGroup
+        fields = (
+            'members',
+            )
+
+
 class PermissionSerializer(serializers.ModelSerializer):
 
     class Meta:

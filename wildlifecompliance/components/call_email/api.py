@@ -40,7 +40,10 @@ from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 
-from wildlifecompliance.components.users.serializers import UserAddressSerializer
+from wildlifecompliance.components.users.serializers import (
+    UserAddressSerializer,
+    ComplianceUserDetailsSerializer,
+)
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.call_email.models import (
     CallEmail,
@@ -50,7 +53,11 @@ from wildlifecompliance.components.call_email.models import (
     ReportType,
     Referrer,
     ComplianceUserAction,
-    MapLayer)
+    MapLayer,
+    CasePriority,
+    InspectionType,
+    # ExternalOrganisation,
+    )
 from wildlifecompliance.components.call_email.serializers import (
     CallEmailSerializer,
     ClassificationSerializer,
@@ -71,10 +78,16 @@ from wildlifecompliance.components.call_email.serializers import (
     MapLayerSerializer,
     ComplianceWorkflowLogEntrySerializer,
     CallEmailDatatableSerializer,
-    SaveUserAddressSerializer)
-from wildlifecompliance.components.users.serializers import (
-    ComplianceUserDetailsSerializer,
+    SaveUserAddressSerializer,
+    InspectionTypeSerializer,
+    CasePrioritySerializer,
+    # ExternalOrganisationSerializer,
+    CallEmailAllocatedGroupSerializer,
+    )
+from wildlifecompliance.components.users.models import (
+    CompliancePermissionGroup,    
 )
+from django.contrib.auth.models import Permission, ContentType
 from utils import SchemaParser
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
@@ -90,6 +103,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     serializer_class = CallEmailSerializer
 
     def get_queryset(self):
+        # import ipdb; ipdb.set_trace()
         user = self.request.user
         if is_internal(self.request):
             return CallEmail.objects.all()
@@ -122,7 +136,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
         serializer = CallEmailOptimisedSerializer(queryset, many=True)
         return Response(serializer.data)
-
+    
     @list_route(methods=['GET', ])
     def datatable_list(self, request, *args, **kwargs):
         try:
@@ -147,6 +161,26 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             res_obj.append({'id': choice[0], 'display': choice[1]});
         res_json = json.dumps(res_obj)
         return HttpResponse(res_json, content_type='application/json')
+
+    @detail_route(methods=['GET', ])
+    @renderer_classes((JSONRenderer,))
+    def get_allocated_group(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = CallEmailAllocatedGroupSerializer(instance)
+
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
 
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
@@ -315,6 +349,13 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 
                 if request_data.get('report_type'):
                     request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
+
+                # Initial allocated_group_id must be volunteers
+                compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
+                permission = Permission.objects.filter(codename='volunteer').filter(content_type_id=compliance_content_type.id).first()
+                group = CompliancePermissionGroup.objects.filter(permissions=permission).first()
+                print(group)
+                request_data.update({'allocated_group_id': group.id})
                 
                 serializer = CreateCallEmailSerializer(data=request_data, partial=True)
                 serializer.is_valid(raise_exception=True)
@@ -585,6 +626,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def add_workflow_log(self, request, *args, **kwargs):
+        print(request.data)
         try:
             with transaction.atomic():
                 instance = self.get_object()
@@ -603,9 +645,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 for document in workflow_entry.documents.all():
                     attachments.append(document)
 
-                # user = EmailUser.objects.filter(email='brendan.blackford@dbca.wa.gov.au')
-                print("request.data.get('allocated_to_group')")
-                print(request.data.get('allocated_to_group'))
                 email_group = []
                 if request.data.get('assigned_to'):
                     try:
@@ -616,31 +655,42 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     except Exception as e:
                             print(traceback.print_exc())
                             raise
-                elif request.data.get('allocated_to_group'):
-                    users = request.data.get('allocated_to_group').split(",")
+                elif request.data.get('allocated_group'):
+                    users = request.data.get('allocated_group').split(",")
                     for user_id in users:
-                        try:
-                            user_id_int = int(user_id)
-                            email_group.append(EmailUser.objects.get(id=user_id_int))
-                            # update CallEmail
-                            instance.allocated_to.add(EmailUser.objects.get(id=user_id_int))
-                        except Exception as e:
-                            print(traceback.print_exc())
-                            raise
+                        if user_id:
+                            try:
+                                user_id_int = int(user_id)
+                                email_group.append(EmailUser.objects.get(id=user_id_int))
+                            except Exception as e:
+                                print(traceback.print_exc())
+                                raise
                 else:
-                    email_group = request.user
+                    email_group.append(request.user)
 
-                # Set CallEmail status to open
-                instance.status = 'open'
+                # Set CallEmail status depending on workflow type
+                workflow_type = request.data.get('workflow_type')
+                if workflow_type in ('forward_to_regions', 'forward_to_wildlife_protection_branch'):
+                    instance.status = 'open'
+                elif workflow_type in ('allocate_for_follow_up'):
+                    instance.status = 'open_followup'
+                elif workflow_type in ('allocate_for_inspection'):
+                    instance.status = 'open_inspection'
+                elif workflow_type in ('allocate_for_case'):
+                    instance.status = 'open_case'
+                elif workflow_type in ('close'):
+                    instance.status = 'closed'
                 instance.region_id = request.data.get('region_id')
                 instance.district_id = request.data.get('district_id')
+                instance.allocated_group_id = request.data.get('allocated_group_id')
                 instance.save()
 
                 # send email
                 send_call_email_forward_email(
                 email_group, 
                 instance,
-                workflow_entry.documents,
+                # workflow_entry.documents,
+                workflow_entry,
                 request)
 
                 return Response(serializer.data)
@@ -675,6 +725,39 @@ class ReferrerViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return Referrer.objects.all()
         return Referrer.objects.none()
+
+
+class CasePriorityViewSet(viewsets.ModelViewSet):
+    queryset = CasePriority.objects.all()
+    serializer_class = CasePrioritySerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return CasePriority.objects.all()
+        return CasePriority.objects.none()
+
+
+class InspectionTypeViewSet(viewsets.ModelViewSet):
+    queryset = InspectionType.objects.all()
+    serializer_class = InspectionTypeSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return InspectionType.objects.all()
+        return InspectionType.objects.none()
+
+
+# class ExternalOrganisationViewSet(viewsets.ModelViewSet):
+#     queryset = ExternalOrganisation.objects.all()
+#     serializer_class = ExternalOrganisationSerializer
+
+#     def get_queryset(self):
+#         user = self.request.user
+#         if is_internal(self.request):
+#             return ExternalOrganisation.objects.all()
+#         return ExternalOrganisation.objects.none()
 
 
 class ReportTypeViewSet(viewsets.ModelViewSet):

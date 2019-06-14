@@ -1,5 +1,10 @@
 import Vue from 'vue';
 import {
+    api_endpoints,
+    helpers
+}
+from '@/utils/hooks';
+import {
     UPDATE_SELECTED_TAB_ID,
     UPDATE_SELECTED_TAB_NAME,
     UPDATE_CURRENT_USER,
@@ -10,9 +15,11 @@ export const userStore = {
         selected_activity_tab_id: 0,
         selected_activity_tab_name: '',
         current_user: {},
+        
     },
     getters: {
         current_user: state => state.current_user,
+        compliance_allocated_group: state => state.compliance_allocated_group,
         selected_activity_tab_id: state => state.selected_activity_tab_id,
         selected_activity_tab_name: state => state.selected_activity_tab_name,
         hasRole: (state, getters, rootState, rootGetters) => (role, activity_id) => {
@@ -51,13 +58,15 @@ export const userStore = {
         [UPDATE_CURRENT_USER] (state, user) {
             Vue.set(state, 'current_user', {...user});
         },
+
     },
     actions: {
         setActivityTab({ commit }, { id, name }) {
             commit(UPDATE_SELECTED_TAB_ID, id);
             commit(UPDATE_SELECTED_TAB_NAME, name);
         },
-        loadCurrentUser({ dispatch, commit }, { url }) {
+        loadCurrentUser({ dispatch }, { url }) {
+            console.log(url);
             return new Promise((resolve, reject) => {
                 Vue.http.get(url).then(res => {
                     dispatch('setCurrentUser', res.body);
@@ -69,6 +78,7 @@ export const userStore = {
                 });
             })
         },
+        
         setCurrentUser({ dispatch, commit }, user) {
             commit(UPDATE_CURRENT_USER, user);
         },

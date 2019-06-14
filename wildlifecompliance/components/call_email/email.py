@@ -30,28 +30,26 @@ def prepare_attachments(attachments):
         )
     return returned_attachments
 
-def send_call_email_forward_email(select_group, call_email, attachments, request=None):
+def send_call_email_forward_email(select_group, call_email, workflow_entry, request=None):
     email = CallEmailForwardNotificationEmail()
     url = request.build_absolute_uri(
         reverse(
             'internal-call-email-detail',
             kwargs={
-                'call_email_id': call_email.id}))
+                'call_email_id': call_email.id
+                }))
     context = {
         'url': url,
         'call_email': call_email,
+        'workflow_entry_details': workflow_entry.details,
     }
     email_group = [item.email for item in select_group]
-    for document in attachments.all():
-        print(document._file.name)
-    # email_group = 'main@localhost.com'
     msg = email.send(email_group, 
         context=context,
         attachments= 
-        prepare_attachments(attachments)
+        prepare_attachments(workflow_entry.documents)
         )
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
-    # sender = 'main@localhost.com'
     _log_call_email_comms(msg, call_email, sender=sender)
 
 def _log_call_email_comms(email_message, call_email, sender=None):

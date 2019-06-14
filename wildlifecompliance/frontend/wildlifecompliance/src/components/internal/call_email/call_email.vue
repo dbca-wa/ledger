@@ -24,7 +24,7 @@
                             </div>
                         </div>
 
-                        <div v-if="call_email.allocated_to && call_email.allocated_to.length > 0" class="form-group">
+                        <div v-if="call_email.allocated_group" class="form-group">
                           <div class="row">
                             <div class="col-sm-12 top-buffer-s">
                               <strong>Currently assigned to</strong><br/>
@@ -32,8 +32,10 @@
                           </div>
                           <div class="row">
                             <div class="col-sm-12">
-                              <select class="form-control" v-model="call_email.assigned_to_id" >
-                                <option  v-for="option in triage_group" :value="option.id" v-bind:key="option.id">
+                              
+                              <select class="form-control" @change="updateVuex('assigned_to_id', $event)" >
+                                <option ""/>  
+                                <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
                               </select>
@@ -78,10 +80,18 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div class="row action-button">
+                        <div v-if="statusId ==='open_followup'" class="row action-button">
                           <div class="col-sm-12">
                                 <a @click="offence()" class=" btn btn-primary">
                                   Offence
+                                </a>
+                          </div>
+                        </div>
+
+                        <div v-if="statusId ==='open_followup'" class="row action-button">
+                          <div class="col-sm-12">
+                                <a class=" btn btn-primary">
+                                  Sanction Outcome
                                 </a>
                           </div>
                         </div>
@@ -119,7 +129,7 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div v-if="statusId ==='open'" class="row action-button">
+                        <div class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="close" @click="addWorkflow('close')" class=" btn btn-primary">
                                   Close
@@ -140,26 +150,26 @@
                 
                 <div class="row"><div class="col-sm-8 form-group">
                   <label class="col-sm-12">Caller name</label>
-                  <input :readonly="isReadonly" class="form-control" v-model="call_email.caller"/>
+                  <input :readonly="isReadonly" class="form-control" @change.prevent="updateVuex('caller', $event)" :value="call_email.caller"/>
                 </div></div>
                 <div class="col-sm-4 form-group"><div class="row">
                   <label class="col-sm-12">Caller contact number</label>
-                <input :readonly="isReadonly" class="form-control" v-model="call_email.caller_phone_number"/>
+                <input :readonly="isReadonly" class="form-control" @change.prevent="updateVuex('caller_phone_number', $event)" :value="call_email.caller_phone_number"/>
                 </div></div>
                 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Anonymous call?</label>
-                    <input :disabled="isReadonly" class="col-sm-1" id="yes" type="radio" v-model="call_email.anonymous_call" v-bind:value="true">
+                    <input :disabled="isReadonly" class="col-sm-1" id="yes" type="radio" @change.prevent="updateVuex('anonymous_call', $event)" :value="call_email.anonymous_call" v-bind:value="true">
                     <label class="col-sm-1" for="yes">Yes</label>
-                    <input :disabled="isReadonly" class="col-sm-1" id="no" type="radio" v-model="call_email.anonymous_call" v-bind:value="false">
+                    <input :disabled="isReadonly" class="col-sm-1" id="no" type="radio" @change.prevent="updateVuex('anonymous_call', $event)" :value="call_email.anonymous_call" v-bind:value="false">
                     <label class="col-sm-1" for="no">No</label>
                 </div></div>
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Caller wishes to remain anonymous?</label>
-                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" @change.prevent="updateVuex('caller_wishes_to_remain_anonymous', $event)" :value="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
                     <label class="col-sm-1">Yes</label>
-                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" @change.prevent="updateVuex('caller_wishes_to_remain_anonymous', $event)" :value="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
                     <label class="col-sm-1">No</label>
                 </div></div>
 
@@ -276,7 +286,9 @@
                             </div>
                         </div>
         </div>          
-        <CallWorkflow ref="add_workflow" :workflow_type="workflow_type" />
+        <div v-if="workflow_type">
+          <CallWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflow_type" />
+        </div>
         <Offence ref="offence" />
     </div>
 </template>
@@ -294,6 +306,7 @@ import Datepicker from 'vuejs-datepicker';
 import moment from 'moment';
 import CallWorkflow from './call_email_workflow';
 import Offence from '../offence/offence';
+import 'bootstrap/dist/css/bootstrap.css';
 
 export default {
   name: "ViewCallEmail",
@@ -302,15 +315,13 @@ export default {
       disabledDates: {
         from: new Date(),
       },
-      // isReadonly: true,
       workflow_type: '',
       classification_types: [],
       report_types: [],
       referrers: [],
-      compliance_permission_groups: [],
-      officers: [],
-      triage_group: [],
+      allocated_group: [],
       current_schema: [],
+      regionDistricts: [],
       sectionLabel: "Details",
       sectionIndex: 1,
       pBody: "pBody" + this._uid,
@@ -347,6 +358,7 @@ export default {
     ...mapGetters({
       renderer_form_data: 'renderer_form_data',
       current_user: 'current_user',
+      // compliance_allocated_group: 'compliance_allocated_group',
     }),
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
@@ -385,10 +397,13 @@ export default {
     statusId: function() {
       return this.call_email.status ? this.call_email.status.id : '';
     },
-
-    // assignedToVisibility: function() {
-    //   if (call_email.allocated_to.length > 0 || call_email.assigned_to
-    // },
+    allocateToVisibility: function() {
+      if (this.workflow_type.includes('allocate') && this.call_email.allocated_group) {
+        return true;
+      } else {
+        return false;
+      }
+    },
   },
   filters: {
     formatDate: function(data) {
@@ -399,6 +414,10 @@ export default {
     ...mapActions('callemailStore', {
       loadCallEmail: "loadCallEmail",
       saveCallEmail: 'saveCallEmail',
+      setGenericAttribute: 'setGenericAttribute',
+      loadAllocatedGroup: "loadAllocatedGroup",
+      setRegionId: "setRegionId",
+      setAllocatedGroupList: "setAllocatedGroupList",
     }),
     ...mapActions({
       saveFormData: "saveFormData",
@@ -406,9 +425,18 @@ export default {
     ...mapActions({
       loadCurrentUser: "loadCurrentUser",
     }),
+    updateVuex: function(attribute, event) {
+        this.setGenericAttribute({ 
+          'attribute': attribute, 
+          'data': event.target.value,
+        });
+    },
     addWorkflow(workflow_type) {
       this.workflow_type = workflow_type;
-      this.$refs.add_workflow.isModalOpen = true;
+      this.$nextTick(() => {
+        this.$refs.add_workflow.isModalOpen = true;
+      });
+      // this.$refs.add_workflow.isModalOpen = true;
     },
     offence(){
       this.$refs.offence.isModalOpen = true;
@@ -453,6 +481,7 @@ export default {
   beforeRouteEnter: function(to, from, next) {
             next(async (vm) => {
                 await vm.loadCurrentUser({ url: `/api/my_compliance_user_details` });
+                
             });
   },
   created: async function() {
@@ -460,6 +489,7 @@ export default {
     if (this.$route.params.call_email_id) {
       await this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
     }
+    // await this.loadComplianceAllocatedGroup(this.call_email.allocated_group_id);
     // load drop-down select lists
     // classification_types
     let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
@@ -467,7 +497,7 @@ export default {
     // blank entry allows user to clear selection
     this.classification_types.splice(0, 0, 
       {
-        id: "", 
+        id: null, 
         name: "",
       });
     //report_types
@@ -491,42 +521,25 @@ export default {
         name: "",
       });
 
-    // CompliancePermissionGroups
-    let returned_compliance_permission_groups = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Members', '/api/compliancepermissiongroup/get_detailed_list/');
-    Object.assign(this.compliance_permission_groups, returned_compliance_permission_groups);
-    // blank entry allows user to clear selection
-    // this.compliance_permission_groups.splice(0, 0, 
-    //   {
-    //     id: "", 
-    //     name: "",
-    //   });
-
-    // CompliancePermissionGroups - officers
-    let returned_officers = await cache_helper.getSetCacheList('CallEmail_CompliancePermissionGroup_Officers', '/api/compliancepermissiongroup/get_officers/');
-    Object.assign(this.officers, returned_officers);
-    // blank entry allows user to clear selection
-    this.officers.splice(0, 0, 
-      {
-        id: "", 
-        full_name: "",
-      });
-
-    // Triage group
-    let returned_triage_group = await Vue.http.post('/api/compliancepermissiongroup/get_users/', { 'user_list': this.call_email.allocated_to });
-    console.log(returned_triage_group)
-    Object.assign(this.triage_group, returned_triage_group.body);
-    // blank entry allows user to clear selection
-    this.triage_group.splice(0, 0, 
-      {
-        id: "", 
-        full_name: "",
-      });
-
     // load current CallEmail renderer schema
     if (this.call_email.report_type_id) {
       await this.loadSchema();
     }
 
+    // regionDistricts
+    let returned_region_districts = await cache_helper.getSetCacheList(
+      'CallEmail_RegionDistricts', 
+      api_endpoints.region_district
+      );
+    Object.assign(this.regionDistricts, returned_region_districts);
+
+    // load volunteer group list
+    let url = helpers.add_endpoint_join(
+                api_endpoints.call_email, 
+                this.call_email.id + '/get_allocated_group/'
+                );
+    let returned_volunteer_list = await Vue.http.get(url);
+    this.setAllocatedGroupList(returned_volunteer_list.body.allocated_group);
   },
   mounted: function() {
         console.log(this);

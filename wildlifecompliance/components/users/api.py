@@ -7,7 +7,7 @@ from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from ledger.accounts.models import EmailUser, Address, Profile, EmailIdentity, EmailUserAction
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Permission, ContentType
 from datetime import datetime
 from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.applications.email import send_id_updated_notification
@@ -484,7 +484,7 @@ class CompliancePermissionGroupViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-    
+
     @list_route(methods=['GET', ])
     def get_detailed_list(self, request, *args, **kwargs):
         try:
@@ -509,6 +509,34 @@ class RegionDistrictViewSet(viewsets.ModelViewSet):
     serializer_class = RegionDistrictSerializer
     renderer_classes = [JSONRenderer, ]
 
+    def get_queryset(self):
+        # import ipdb; ipdb.set_trace()
+        user = self.request.user
+        if is_internal(self.request):
+            return RegionDistrict.objects.all()
+        elif is_customer(self.request):
+            return RegionDistrict.objects.none()
+        return RegionDistrict.objects.none()
+    
+    # @list_route(methods=['GET', ])
+    # def list_region_districts(self, request, *args, **kwargs):
+    #     try:
+    #         serializer = RegionDistrictSerializer(
+    #             RegionDistrict.objects.all(), 
+    #             many=True
+    #             )
+    #         print(serializer.data)
+    #         return Response(serializer.data)
+    #     except serializers.ValidationError:
+    #         print(traceback.print_exc())
+    #         raise
+    #     except ValidationError as e:
+    #         print(traceback.print_exc())
+    #         raise serializers.ValidationError(repr(e.error_dict))
+    #     except Exception as e:
+    #         print(traceback.print_exc())
+    #         raise serializers.ValidationError(str(e))
+    
     @list_route(methods=['GET', ])
     def get_regions(self, request, *args, **kwargs):
         try:
@@ -544,3 +572,28 @@ class RegionDistrictViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    def get_group_id_by_region_district(self, request, *args, **kwargs):
+        print("get_group_id_by_region_district")
+        print(request.data)
+        try:
+            instance = self.get_object()
+            group_permission = request.data.get('group_permission')
+            compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
+            permission = Permission.objects.filter(codename=group_permission).filter(content_type_id=compliance_content_type.id).first()
+            group = CompliancePermissionGroup.objects.filter(region_district=instance).filter(permissions=permission).first()
+            print(group)
+
+            serializer = ComplianceUserDetailsOptimisedSerializer(group.members, many=True)
+            return Response(data={'allocated_group': serializer.data, 'group_id': group.id})
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+

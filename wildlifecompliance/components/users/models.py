@@ -35,6 +35,7 @@ class RegionDistrict(models.Model):
     DISTRICT_WHEATBELT_REGION = 'WBR'
     DISTRICT_AVIATION = 'AV'
     DISTRICT_OTHER = 'OTH'
+    DISTRICT_KENSINGTON = 'KENSINGTON'
     
     DISTRICT_CHOICES = (
         (DISTRICT_SWAN_REGION, "Swan Region"),
@@ -64,7 +65,8 @@ class RegionDistrict(models.Model):
         (DISTRICT_CENTRAL_WHEATBELT, "Central Wheatbelt"),
         (DISTRICT_SOUTHERN_WHEATBELT, "Southern Wheatbelt"),
         (DISTRICT_AVIATION, "Aviation"),
-        (DISTRICT_OTHER, "Other")
+        (DISTRICT_OTHER, "Other"),
+        (DISTRICT_KENSINGTON, "Kensington"),
     )
 
     district = models.CharField(max_length=32, 

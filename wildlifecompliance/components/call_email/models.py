@@ -11,8 +11,8 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry, Us
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
-    UserAction, Document
-from wildlifecompliance.components.users.models import RegionDistrict
+    UserAction, Document, get_related_items
+from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +58,18 @@ class Referrer(models.Model):
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_Referrer'
         verbose_name_plural = 'CM_Referrers'
+
+    def __str__(self):
+        return self.name
+
+
+class ExternalOrganisation(models.Model):
+    name = models.CharField(max_length=50, blank=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_ExternalOrganisation'
+        verbose_name_plural = 'CM_ExternalOrganisations'
 
     def __str__(self):
         return self.name
@@ -138,6 +150,30 @@ class MapLayer(models.Model):
         return '{0}, {1}'.format(self.display_name, self.layer_name)
 
 
+class CasePriority(models.Model):
+    description = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_CasePriority'
+        verbose_name_plural = 'CM_CasePriorities'
+
+    def __str__(self):
+        return self.description
+
+
+class InspectionType(models.Model):
+    description = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_InspectionType'
+        verbose_name_plural = 'CM_InspectionTypes'
+
+    def __str__(self):
+        return self.description
+
+
 class CallEmail(RevisionedMixin):
     STATUS_CHOICES = (
         ('draft', 'Draft'),
@@ -205,10 +241,25 @@ class CallEmail(RevisionedMixin):
         related_name='callemail_district', 
         null=True
     )
-    allocated_to = models.ManyToManyField(
-        EmailUser, 
-        related_name='callemail_allocated_to',
-        blank=True
+    allocated_group = models.ForeignKey(
+        CompliancePermissionGroup,
+        related_name='callemail_allocated_group', 
+        null=True
+    )
+    case_priority = models.ForeignKey(
+        CasePriority,
+        related_name='callemail_case_priority', 
+        null=True
+    )
+    inspection_type = models.ForeignKey(
+        InspectionType,
+        related_name='callemail_inspection_type', 
+        null=True
+    )
+    external_organisation = models.ForeignKey(
+        ExternalOrganisation,
+        related_name='callemail_external_organisation', 
+        null=True
     )
 
     class Meta:
@@ -242,6 +293,10 @@ class CallEmail(RevisionedMixin):
     
     def log_user_action(self, action, request):
         return ComplianceUserAction.log_action(self, action, request.user)
+
+    @property
+    def related_items(self):
+        return get_related_items(self)
 
 
 @python_2_unicode_compatible
