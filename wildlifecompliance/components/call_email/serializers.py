@@ -17,7 +17,7 @@ from wildlifecompliance.components.call_email.models import (
     ComplianceWorkflowLogEntry,
     CasePriority,
     InspectionType,
-    ExternalOrganisation,
+    # ExternalOrganisation,
     )
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from wildlifecompliance.components.users.serializers import (
@@ -166,15 +166,15 @@ class ReferrerSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'name', )
 
 
-class ExternalOrganisationSerializer(serializers.ModelSerializer):
+# class ExternalOrganisationSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = ExternalOrganisation
-        fields = (
-            'id',
-            'name',
-        )
-        read_only_fields = ('id', 'name', )
+#     class Meta:
+#         model = ExternalOrganisation
+#         fields = (
+#             'id',
+#             'name',
+#         )
+#         read_only_fields = ('id', 'name', )
 
 
 class LocationSerializerOptimized(GeoFeatureModelSerializer):
@@ -451,6 +451,16 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
         if 'officer' in compliance_permissions:
             return True
 
+
+class CallEmailAllocatedGroupSerializer(serializers.ModelSerializer):
+    allocated_group = CompliancePermissionGroupMembersSerializer()
+
+    class Meta:
+        model = CallEmail
+        fields = (
+            'allocated_group',
+        )
+        
 
 class CreateCallEmailSerializer(serializers.ModelSerializer):
     # status_display = serializers.CharField(source='get_status_display')

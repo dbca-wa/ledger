@@ -56,7 +56,7 @@ from wildlifecompliance.components.call_email.models import (
     MapLayer,
     CasePriority,
     InspectionType,
-    ExternalOrganisation,
+    # ExternalOrganisation,
     )
 from wildlifecompliance.components.call_email.serializers import (
     CallEmailSerializer,
@@ -81,7 +81,8 @@ from wildlifecompliance.components.call_email.serializers import (
     SaveUserAddressSerializer,
     InspectionTypeSerializer,
     CasePrioritySerializer,
-    ExternalOrganisationSerializer,
+    # ExternalOrganisationSerializer,
+    CallEmailAllocatedGroupSerializer,
     )
 from wildlifecompliance.components.users.models import (
     CompliancePermissionGroup,    
@@ -135,7 +136,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
         serializer = CallEmailOptimisedSerializer(queryset, many=True)
         return Response(serializer.data)
-
+    
     @list_route(methods=['GET', ])
     def datatable_list(self, request, *args, **kwargs):
         try:
@@ -160,6 +161,26 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             res_obj.append({'id': choice[0], 'display': choice[1]});
         res_json = json.dumps(res_obj)
         return HttpResponse(res_json, content_type='application/json')
+
+    @detail_route(methods=['GET', ])
+    @renderer_classes((JSONRenderer,))
+    def get_allocated_group(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = CallEmailAllocatedGroupSerializer(instance)
+
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
 
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
@@ -641,13 +662,11 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                             try:
                                 user_id_int = int(user_id)
                                 email_group.append(EmailUser.objects.get(id=user_id_int))
-                                # update CallEmail
-                                # instance.allocated_group.add(EmailUser.objects.get(id=user_id_int))
                             except Exception as e:
                                 print(traceback.print_exc())
                                 raise
                 else:
-                    email_group = request.user
+                    email_group.append(request.user)
 
                 # Set CallEmail status depending on workflow type
                 workflow_type = request.data.get('workflow_type')
@@ -730,15 +749,15 @@ class InspectionTypeViewSet(viewsets.ModelViewSet):
         return InspectionType.objects.none()
 
 
-class ExternalOrganisationViewSet(viewsets.ModelViewSet):
-    queryset = ExternalOrganisation.objects.all()
-    serializer_class = ExternalOrganisationSerializer
+# class ExternalOrganisationViewSet(viewsets.ModelViewSet):
+#     queryset = ExternalOrganisation.objects.all()
+#     serializer_class = ExternalOrganisationSerializer
 
-    def get_queryset(self):
-        user = self.request.user
-        if is_internal(self.request):
-            return ExternalOrganisation.objects.all()
-        return ExternalOrganisation.objects.none()
+#     def get_queryset(self):
+#         user = self.request.user
+#         if is_internal(self.request):
+#             return ExternalOrganisation.objects.all()
+#         return ExternalOrganisation.objects.none()
 
 
 class ReportTypeViewSet(viewsets.ModelViewSet):

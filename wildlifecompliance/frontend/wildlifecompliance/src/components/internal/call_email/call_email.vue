@@ -33,7 +33,7 @@
                           <div class="row">
                             <div class="col-sm-12">
                               
-                              <select class="form-control" @change.prevent="updateVuex('assigned_to_id', $event)" >
+                              <select class="form-control" @change="updateVuex('assigned_to_id', $event)" >
                                 <option ""/>  
                                 <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
@@ -150,26 +150,26 @@
                 
                 <div class="row"><div class="col-sm-8 form-group">
                   <label class="col-sm-12">Caller name</label>
-                  <input :readonly="isReadonly" class="form-control" @change="updateVuex('caller', $event)"/>
+                  <input :readonly="isReadonly" class="form-control" @change.prevent="updateVuex('caller', $event)" :value="call_email.caller"/>
                 </div></div>
                 <div class="col-sm-4 form-group"><div class="row">
                   <label class="col-sm-12">Caller contact number</label>
-                <input :readonly="isReadonly" class="form-control" v-model="call_email.caller_phone_number"/>
+                <input :readonly="isReadonly" class="form-control" @change.prevent="updateVuex('caller_phone_number', $event)" :value="call_email.caller_phone_number"/>
                 </div></div>
                 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Anonymous call?</label>
-                    <input :disabled="isReadonly" class="col-sm-1" id="yes" type="radio" v-model="call_email.anonymous_call" v-bind:value="true">
+                    <input :disabled="isReadonly" class="col-sm-1" id="yes" type="radio" @change.prevent="updateVuex('anonymous_call', $event)" :value="call_email.anonymous_call" v-bind:value="true">
                     <label class="col-sm-1" for="yes">Yes</label>
-                    <input :disabled="isReadonly" class="col-sm-1" id="no" type="radio" v-model="call_email.anonymous_call" v-bind:value="false">
+                    <input :disabled="isReadonly" class="col-sm-1" id="no" type="radio" @change.prevent="updateVuex('anonymous_call', $event)" :value="call_email.anonymous_call" v-bind:value="false">
                     <label class="col-sm-1" for="no">No</label>
                 </div></div>
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Caller wishes to remain anonymous?</label>
-                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" @change.prevent="updateVuex('caller_wishes_to_remain_anonymous', $event)" :value="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
                     <label class="col-sm-1">Yes</label>
-                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" @change.prevent="updateVuex('caller_wishes_to_remain_anonymous', $event)" :value="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
                     <label class="col-sm-1">No</label>
                 </div></div>
 
@@ -417,6 +417,7 @@ export default {
       setGenericAttribute: 'setGenericAttribute',
       loadAllocatedGroup: "loadAllocatedGroup",
       setRegionId: "setRegionId",
+      setAllocatedGroupList: "setAllocatedGroupList",
     }),
     ...mapActions({
       saveFormData: "saveFormData",
@@ -528,24 +529,17 @@ export default {
     // regionDistricts
     let returned_region_districts = await cache_helper.getSetCacheList(
       'CallEmail_RegionDistricts', 
-      // '/api/region_district/'
       api_endpoints.region_district
       );
     Object.assign(this.regionDistricts, returned_region_districts);
 
-    // // load volunteer group list
-    // if (this.statusId === 'draft') {
-    //     for (let record of this.regionDistricts) {
-    //       if (record.district === 'KENSINGTON') {
-    //         await this.setRegionId(record.id);
-    //       }
-    //     }
-    //     let region_district_id = this.call_email.district_id ? this.call_email.district_id : this.call_email.region_id;
-    //     await this.loadAllocatedGroup({
-    //         'region_district_id': "", 
-    //         'group_permission': 'volunteer',
-    //         });
-    // }
+    // load volunteer group list
+    let url = helpers.add_endpoint_join(
+                api_endpoints.call_email, 
+                this.call_email.id + '/get_allocated_group/'
+                );
+    let returned_volunteer_list = await Vue.http.get(url);
+    this.setAllocatedGroupList(returned_volunteer_list.body.allocated_group);
   },
   mounted: function() {
         console.log(this);

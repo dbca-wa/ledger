@@ -207,18 +207,21 @@ export const callemailStore = {
             state.call_email.location.properties.details = "";
         },
         updateAllocatedGroupList(state, members) {
+            console.log(members);
             Vue.set(state.call_email, 'allocated_group', {});
             let blankable_members = [];
-            Object.assign(blankable_members, members);
-            blankable_members.splice(0, 0, 
-                {
-                  id: null, 
-                  email: "",
-                  first_name: "",
-                  last_name: "",
-                  full_name: "",
-                  title: "",
-                });
+            Object.assign(blankable_members, members.members);
+            if (blankable_members) {
+                blankable_members.splice(0, 0, 
+                    {
+                    id: null, 
+                    email: "",
+                    first_name: "",
+                    last_name: "",
+                    full_name: "",
+                    title: "",
+                    });
+            }
             Vue.set(state.call_email.allocated_group, 'members', blankable_members);
         },
         updateAllocatedGroupId(state, id) {
@@ -337,6 +340,7 @@ export const callemailStore = {
         },
         setAllocatedGroupList({ commit }, data) {
             console.log("setAllocatedGroupList");
+            console.log(data);
             commit('updateAllocatedGroupList', data);
         },
         setRegionId({ commit }, id) {

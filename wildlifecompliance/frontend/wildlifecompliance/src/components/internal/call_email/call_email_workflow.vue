@@ -10,7 +10,7 @@
                               <label>Region</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control col-sm-9" @change.prevent="updateDistricts()" v-model="call_email.region_id">
+                              <select class="form-control col-sm-9" @change.prevent="updateDistricts()" @change="updateVuex('region_id', $event)">
                                 <option  v-for="option in regions" :value="option.id" v-bind:key="option.id">
                                   {{ option.display_name }} 
                                 </option>
@@ -24,7 +24,7 @@
                               <label>District</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" v-model="call_email.district_id" @change.prevent="updateAllocatedGroup(group_permission)">
+                              <select class="form-control" @change="updateVuex('district_id', $event)" @change.prevent="updateAllocatedGroup(group_permission)">
                                 <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
                                   {{ option.display_name }} 
                                 </option>
@@ -53,7 +53,7 @@
                               <label>Inspection Type</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" v-model="call_email.inspection_type_id" >
+                              <select class="form-control" @change="updateVuex('inspection_type_id', $event)" >
                                 <option  v-for="option in inspectionTypes" :value="option.id" v-bind:key="option.id">
                                   {{ option.description }} 
                                 </option>
@@ -68,7 +68,7 @@
                               <label>Priority</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" v-model="call_email.case_priority_id" >
+                              <select class="form-control" @change="updateVuex('case_priority_id', $event)" >
                                 <option  v-for="option in casePriorities" :value="option.id" v-bind:key="option.id">
                                   {{ option.description }} 
                                 </option>
@@ -80,11 +80,11 @@
                         <div v-if="workflow_type === 'close'" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
-                              <label>Forward to External Organisation</label>
+                              <label>Referred To</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" v-model="call_email.external_organisation_id" >
-                                <option  v-for="option in externalOrganisations" :value="option.id" v-bind:key="option.id">
+                              <select class="form-control" @change="updateVuex('referrer_id', $event)" >
+                                <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
                                   {{ option.name }} 
                                 </option>
                               </select>
@@ -169,6 +169,7 @@ export default {
       casePriorities: [],
       inspectionTypes: [],
       externalOrganisations: [],
+      referrers: [],
       // compliance_permission_groups: [],
       group_permission: '',
       // call_email.region: null,
@@ -474,6 +475,16 @@ export default {
     Object.assign(this.externalOrganisations, returned_external_organisations);
     // blank entry allows user to clear selection
     this.externalOrganisations.splice(0, 0, 
+      {
+        id: "", 
+        name: "",
+      });
+
+    // referrers
+    let returned_referrers = await cache_helper.getSetCacheList('CallEmail_Referrers', '/api/referrers.json');
+    Object.assign(this.referrers, returned_referrers);
+    // blank entry allows user to clear selection
+    this.referrers.splice(0, 0, 
       {
         id: "", 
         name: "",
