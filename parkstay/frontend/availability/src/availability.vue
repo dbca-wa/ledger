@@ -355,13 +355,17 @@ export default {
         arrivalDateString: {
             cache: false,
             get: function() {
-                return this.arrivalEl[0].value ? moment.utc(this.arrivalData.getDate()).format('YYYY/MM/DD') : null;
+                var test = this.arrivalData.getDate();
+                test = test ? moment.utc({year: test.getFullYear(), month: test.getMonth(), day: test.getDate()}).format('YYYY/MM/DD') : null;
+                return test;
             }
         },
         departureDateString: {
             cache: false,
             get: function() {
-                return this.departureEl[0].value ? moment.utc(this.departureData.getDate()).format('YYYY/MM/DD') : null;
+                var test = this.departureData.getDate();
+                test = test ? moment.utc({year: test.getFullYear(), month: test.getMonth(), day: test.getDate()}).format('YYYY/MM/DD') : null;
+                return test;
             }
         },
     },
