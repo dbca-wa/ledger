@@ -95,7 +95,7 @@ if DEV_STATIC and not DEV_STATIC_URL:
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 # Department details
-SYSTEM_NAME = env('SYSTEM_NAME', 'Commercial Operator Licensing System')
+SYSTEM_NAME = env('SYSTEM_NAME', 'Commercial Operator Licensing')
 SYSTEM_NAME_SHORT = env('SYSTEM_NAME_SHORT', 'COLS')
 SITE_PREFIX = env('SITE_PREFIX')
 SITE_DOMAIN = env('SITE_DOMAIN')

@@ -68,7 +68,7 @@ export default {
             return vm.errors;
         },
         title: function(){
-            return 'Extend Approval';
+            return 'Extend Licence';
         }
     },
     methods:{
@@ -102,7 +102,7 @@ export default {
                         vm.close();
                         swal(
                              'Extended',
-                             'Approval has been extended',
+                             'Licence has been extended',
                              'success'
                         );
                         vm.$emit('refreshFromResponse',response);

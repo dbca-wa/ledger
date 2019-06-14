@@ -153,7 +153,7 @@ export default {
             return vm.errors;
         },
         title: function(){
-            return this.processing_status == 'With Approver' ? 'Issue Comms' : 'Propose to issue approval';
+            return this.processing_status == 'With Approver' ? 'Issue Comms' : 'Propose to issue licence';
         }
     },
     methods:{

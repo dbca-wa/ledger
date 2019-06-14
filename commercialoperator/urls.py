@@ -81,6 +81,7 @@ api_patterns = [
 
 # URL Patterns
 urlpatterns = [
+    #url(r'^admin/', include(commercialoperator_admin_site.urls)),
     url(r'^admin/', commercialoperator_admin_site.urls),
     url(r'', include(api_patterns)),
     url(r'^$', views.CommercialOperatorRoutingView.as_view(), name='ds_home'),

@@ -27,7 +27,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from commercialoperator.utils import create_helppage_object
 # Register your models here.
 
-@admin.register(models.ProposalType)
+# Commented since COLS does not use schema - so will not require direct editing by user in Admin (although a ProposalType is still required for ApplicationType)
+#@admin.register(models.ProposalType)
 class ProposalTypeAdmin(admin.ModelAdmin):
     list_display = ['name','description', 'version']
     ordering = ('name', '-version')
@@ -54,10 +55,22 @@ class ProposalAssessorGroupAdmin(admin.ModelAdmin):
     readonly_fields = ['default']
     #readonly_fields = ['regions', 'activities']
 
+    def get_actions(self, request):
+        actions =  super(ProposalAssessorGroupAdmin, self).get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
     def has_delete_permission(self, request, obj=None):
-        if obj and obj.default:
+        if self.model.objects.count() == 1:
             return False
         return super(ProposalAssessorGroupAdmin, self).has_delete_permission(request, obj)
+
+    def has_add_permission(self, request):
+        if self.model.objects.count() > 0:
+            return False
+        return super(ProposalAssessorGroupAdmin, self).has_add_permission(request)
+
 
 @admin.register(models.ProposalApproverGroup)
 class ProposalApproverGroupAdmin(admin.ModelAdmin):
@@ -67,17 +80,29 @@ class ProposalApproverGroupAdmin(admin.ModelAdmin):
     readonly_fields = ['default']
     #readonly_fields = ['default', 'regions', 'activities']
 
+    def get_actions(self, request):
+        actions =  super(ProposalApproverGroupAdmin, self).get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
     def has_delete_permission(self, request, obj=None):
-        if obj and obj.default:
+        #import ipdb; ipdb.set_trace()
+        if self.model.objects.count() == 1:
             return False
         return super(ProposalApproverGroupAdmin, self).has_delete_permission(request, obj)
+
+    def has_add_permission(self, request):
+        #import ipdb; ipdb.set_trace()
+        if self.model.objects.count() > 0:
+            return False
+        return super(ProposalApproverGroupAdmin, self).has_add_permission(request)
 
 @admin.register(models.ProposalStandardRequirement)
 class ProposalStandardRequirementAdmin(admin.ModelAdmin):
     list_display = ['code','text','obsolete']
 
-
-@admin.register(models.HelpPage)
+#@admin.register(models.HelpPage)
 class HelpPageAdmin(admin.ModelAdmin):
     list_display = ['application_type','help_type', 'description', 'version']
     form = forms.CommercialOperatorHelpPageAdminForm
@@ -205,7 +230,7 @@ class QAOfficerGroupAdmin(admin.ModelAdmin):
         return super(QAOfficerGroupAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
     #list_display = ['id','name', 'visible']
-    list_display = ['id','name']
+    list_display = ['name']
     ordering = ('id',)
 
 

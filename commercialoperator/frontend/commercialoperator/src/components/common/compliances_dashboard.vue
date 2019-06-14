@@ -125,8 +125,7 @@ export default {
                 
             ],
             proposal_submitters: [],
-            proposal_headers:["Number","Approval","Holder","Status","Due Date","Assigned To", "CustomerStatus", "Reference","Action"],
-            //proposal_headers:["Number","Region/District","Activity","Title","Approval","Holder","Status","Due Date","Assigned To", "CustomerStatus", "Reference","Action"],
+            proposal_headers:["Number","Licence","Holder","Status","Due Date","Assigned To", "CustomerStatus", "Reference","Action"],
             proposal_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"

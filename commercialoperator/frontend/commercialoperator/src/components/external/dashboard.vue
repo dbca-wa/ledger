@@ -4,7 +4,7 @@
         <div class="col-sm-12">
             <div class="well well-sm">
                 <p>
-                    Welcome to the {{system_name}} online system dashboard.<br/><br/> Here you can access your existing approvals, view any proposals in progress, lodge new<br/> proposals or submit information required to comply with requirements listed on your approval
+                    Welcome to the {{system_name}} online system dashboard.<br/><br/> Here you can access your existing licences, view any proposals in progress, lodge new<br/> proposals or submit information required to comply with requirements listed on your licence
                 </p>
             </div>
         </div>

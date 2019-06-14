@@ -1,7 +1,7 @@
 <template lang="html">
     <div v-if="proposal" class="container" id="internalReferral">
             <div class="row">
-        <h3>Proposal: {{ proposal.lodgement_number }}</h3>
+        <h3>Application: {{ proposal.lodgement_number }}</h3>
         <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" comms_add_url="test"/>
             <div class="row">
@@ -109,9 +109,9 @@
                                 <div class="separator"></div>
                             </div>
                             <div class="col-sm-12">
-                                    <strong>Proposal</strong><br/>
-                                    <a class="actionBtn" v-if="!showingProposal" @click.prevent="toggleProposal()">Show Proposal</a>
-                                    <a class="actionBtn" v-else @click.prevent="toggleProposal()">Hide Proposal</a>
+                                    <strong>Application</strong><br/>
+                                    <a class="actionBtn" v-if="!showingProposal" @click.prevent="toggleProposal()">Show Application</a>
+                                    <a class="actionBtn" v-else @click.prevent="toggleProposal()">Hide Application</a>
                             </div>
                             <div class="col-sm-12">
                                 <div class="separator"></div>
@@ -248,17 +248,11 @@
                 <div class="col-md-12" v-if="showingProposal">
                     <div class="row">
                         <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
-                            <!-- <Proposal form_width="inherit" :withSectionsSelector="false" v-if            ="proposal" :proposal="proposal"> -->
                                 
                                 <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="false" :is_external="false" :is_referral="true" :referral="referral" :hasReferralMode="hasReferralMode"></ProposalTClass>
                                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                 <input type='hidden' name="proposal_id" :value="1" />
-                                <!--<div v-if="!proposal.can_user_edit" class="row" style="margin-bottom:20px;">
-                                  <div class="col-lg-12 pull-right" v-if="!isFinalised">
-                                    <button class="btn btn-primary pull-right" @click.prevent="save()">Save Changes</button>
-                                  </div> 
-                                </div>-->
                                 <div class="navbar navbar-fixed-bottom" v-if="!proposal.can_user_edit && !isFinalised" style="background-color: #f5f5f5 ">
                                         <div class="navbar-inner">
                                             <div v-if="!isFinalised" class="container">
@@ -268,8 +262,6 @@
                                             </div>                   
                                         </div>
                                 </div>      
-
-                            <!-- </Proposal> -->
                         </form>
                     </div>
                 </div>
@@ -461,7 +453,7 @@ export default {
           vm.$http.post(vm.proposal_form_url,formData).then(res=>{
               swal(
                 'Saved',
-                'Your proposal has been saved',
+                'Your application has been saved',
                 'success'
               )
           },err=>{
@@ -492,13 +484,13 @@ export default {
         },
         fetchProposalGroupMembers: function(){
             let vm = this;
-            vm.loading.push('Loading Proposal Group Members');
+            vm.loading.push('Loading Application Group Members');
             vm.$http.get(api_endpoints.organisation_access_group_members).then((response) => {
                 vm.members = response.body
-                vm.loading.splice('Loading Proposal Group Members',1);
+                vm.loading.splice('Loading Application Group Members',1);
             },(error) => {
                 console.log(error);
-                vm.loading.splice('Loading Proposal Group Members',1);
+                vm.loading.splice('Loading Application Group Members',1);
             })
         },
         fetchDeparmentUsers: function(){
@@ -642,7 +634,7 @@ export default {
             },
             error => {
                 swal(
-                    'Proposal Error',
+                    'Application Error',
                     helpers.apiVueResourceError(error),
                     'error'
                 )
@@ -664,7 +656,7 @@ export default {
             },
             error => {
                 swal(
-                    'Proposal Error',
+                    'Application Error',
                     helpers.apiVueResourceError(error),
                     'error'
                 )
@@ -686,7 +678,7 @@ export default {
             },
             error => {
                 swal(
-                    'Proposal Error',
+                    'Application Error',
                     helpers.apiVueResourceError(error),
                     'error'
                 )

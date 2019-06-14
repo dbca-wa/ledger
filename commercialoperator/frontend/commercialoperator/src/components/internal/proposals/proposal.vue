@@ -1,8 +1,8 @@
 <template lang="html">
     <div v-if="proposal" class="container" id="internalProposal">
       <div class="row" style="padding-bottom: 50px;">
-        <h3>Proposal: {{ proposal.lodgement_number }}</h3>
-        <h4>Proposal Type: {{proposal.proposal_type }}</h4>
+        <h3>Application: {{ proposal.lodgement_number }}</h3>
+        <h4>Application Type: {{proposal.proposal_type }}</h4>
         <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
             <div class="row" v-if="canSeeSubmission">
@@ -167,9 +167,9 @@
                             </div>
                             <template v-if="proposal.processing_status == 'With Assessor (Requirements)' || proposal.processing_status == 'With Approver' || isFinalised">
                                 <div class="col-sm-12">
-                                    <strong>Proposal</strong><br/>
-                                    <a class="actionBtn" v-if="!showingProposal" @click.prevent="toggleProposal()">Show Proposal</a>
-                                    <a class="actionBtn" v-else @click.prevent="toggleProposal()">Hide Proposal</a>
+                                    <strong>Application</strong><br/>
+                                    <a class="actionBtn" v-if="!showingProposal" @click.prevent="toggleProposal()">Show Application</a>
+                                    <a class="actionBtn" v-else @click.prevent="toggleProposal()">Hide Application</a>
                                 </div>
                                 <div class="col-sm-12">
                                     <div class="separator"></div>
@@ -696,7 +696,7 @@ export default {
           vm.$http.post(vm.proposal_form_url,formData).then(res=>{
               swal(
                 'Saved',
-                'Your proposal has been saved',
+                'Your application has been saved',
                 'success'
               )
           },err=>{
@@ -745,7 +745,7 @@ export default {
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 vm.updateAssignedOfficerSelect();
                 swal(
-                    'Proposal Error',
+                    'Application Error',
                     helpers.apiVueResourceError(error),
                     'error'
                 )
@@ -786,7 +786,7 @@ export default {
                     vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                     vm.updateAssignedOfficerSelect();
                     swal(
-                        'Proposal Error',
+                        'Application Error',
                         helpers.apiVueResourceError(error),
                         'error'
                     )
@@ -804,7 +804,7 @@ export default {
                     vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                     vm.updateAssignedOfficerSelect();
                     swal(
-                        'Proposal Error',
+                        'Application Error',
                         helpers.apiVueResourceError(error),
                         'error'
                     )
@@ -840,7 +840,7 @@ export default {
                 vm.proposal = helpers.copyObject(vm.original_proposal)
                 vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 swal(
-                    'Proposal Error',
+                    'Application Error',
                     helpers.apiVueResourceError(error),
                     'error'
                 )
@@ -870,7 +870,7 @@ export default {
                 vm.proposal = helpers.copyObject(vm.original_proposal)
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 swal(
-                    'Proposal Error',
+                    'Application Error',
                     helpers.apiVueResourceError(error),
                     'error'
                 )
@@ -898,7 +898,7 @@ export default {
                 vm.proposal = helpers.copyObject(vm.original_proposal)
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 swal(
-                    'Proposal Error',
+                    'Application Error',
                     helpers.apiVueResourceError(error),
                     'error'
                 )
@@ -1046,7 +1046,7 @@ export default {
             },
             error => {
                 swal(
-                    'Proposal Error',
+                    'Application Error',
                     helpers.apiVueResourceError(error),
                     'error'
                 )
@@ -1067,7 +1067,7 @@ export default {
             },
             error => {
                 swal(
-                    'Proposal Error',
+                    'Application Error',
                     helpers.apiVueResourceError(error),
                     'error'
                 )
@@ -1088,7 +1088,7 @@ export default {
             },
             error => {
                 swal(
-                    'Proposal Error',
+                    'Application Error',
                     helpers.apiVueResourceError(error),
                     'error'
                 )
