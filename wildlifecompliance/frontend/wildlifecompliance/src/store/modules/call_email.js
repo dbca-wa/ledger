@@ -210,7 +210,7 @@ export const callemailStore = {
             console.log(members);
             Vue.set(state.call_email, 'allocated_group', {});
             let blankable_members = [];
-            Object.assign(blankable_members, members.members);
+            Object.assign(blankable_members, members);
             if (blankable_members) {
                 blankable_members.splice(0, 0, 
                     {
@@ -222,6 +222,7 @@ export const callemailStore = {
                     title: "",
                     });
             }
+            console.log(blankable_members);
             Vue.set(state.call_email.allocated_group, 'members', blankable_members);
         },
         updateAllocatedGroupId(state, id) {
@@ -424,7 +425,7 @@ export const callemailStore = {
         },
         setGenericAttribute({ commit }, { attribute, data } ) {
             console.log(attribute);
-            console.log(data);
+            console.log(typeof(data));
             commit("updateGenericAttribute", { attribute, data });
         },
 

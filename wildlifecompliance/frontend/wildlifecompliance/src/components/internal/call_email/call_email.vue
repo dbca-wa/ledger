@@ -33,7 +33,8 @@
                           <div class="row">
                             <div class="col-sm-12">
                               
-                              <select class="form-control" @change="updateVuex('assigned_to_id', $event)" >
+                              <select class="form-control" @change="updateVuex('assigned_to_id', $event, 'integer')"
+                              :value="call_email.assigned_to_id" >
                                 <option ""/>  
                                 <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
@@ -159,17 +160,17 @@
                 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Anonymous call?</label>
-                    <input :disabled="isReadonly" class="col-sm-1" id="yes" type="radio" @change.prevent="updateVuex('anonymous_call', $event)" :value="call_email.anonymous_call" v-bind:value="true">
+                    <input :disabled="isReadonly" class="col-sm-1" id="yes" type="radio" @change.prevent="updateVuex('anonymous_call', $event, 'bool')" :value="call_email.anonymous_call" v-bind:value="true">
                     <label class="col-sm-1" for="yes">Yes</label>
-                    <input :disabled="isReadonly" class="col-sm-1" id="no" type="radio" @change.prevent="updateVuex('anonymous_call', $event)" :value="call_email.anonymous_call" v-bind:value="false">
+                    <input :disabled="isReadonly" class="col-sm-1" id="no" type="radio" @change.prevent="updateVuex('anonymous_call', $event, 'bool')" :value="call_email.anonymous_call" v-bind:value="false">
                     <label class="col-sm-1" for="no">No</label>
                 </div></div>
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Caller wishes to remain anonymous?</label>
-                    <input :disabled="isReadonly" class="col-sm-1" type="radio" @change.prevent="updateVuex('caller_wishes_to_remain_anonymous', $event)" :value="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" @change.prevent="updateVuex('caller_wishes_to_remain_anonymous', $event, 'bool')" :value="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
                     <label class="col-sm-1">Yes</label>
-                    <input :disabled="isReadonly" class="col-sm-1" type="radio" @change.prevent="updateVuex('caller_wishes_to_remain_anonymous', $event)" :value="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" @change.prevent="updateVuex('caller_wishes_to_remain_anonymous', $event, 'bool')" :value="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
                     <label class="col-sm-1">No</label>
                 </div></div>
 
@@ -425,10 +426,25 @@ export default {
     ...mapActions({
       loadCurrentUser: "loadCurrentUser",
     }),
-    updateVuex: function(attribute, event) {
-        this.setGenericAttribute({ 
+    parseDatatype: function(datatype) {
+          if (datatype === 'integer') {
+            return parseInt(event.target.value);
+          } else if (datatype === 'integer') {
+            if (event.target.value === 'true') {
+                return true;
+              } else {
+                return false;
+              }
+          } else {
+            return event.target.value;
+          }
+    },
+    updateVuex: async function(attribute, event, datatype) {
+        let field_value = this.parseDatatype(datatype);
+        console.log(field_value);
+        await this.setGenericAttribute({ 
           'attribute': attribute, 
-          'data': event.target.value,
+          'data': field_value,
         });
     },
     addWorkflow(workflow_type) {
@@ -539,7 +555,9 @@ export default {
                 this.call_email.id + '/get_allocated_group/'
                 );
     let returned_volunteer_list = await Vue.http.get(url);
-    this.setAllocatedGroupList(returned_volunteer_list.body.allocated_group);
+    if (returned_volunteer_list.body.allocated_group) {
+      this.setAllocatedGroupList(returned_volunteer_list.body.allocated_group.members);
+    }
   },
   mounted: function() {
         console.log(this);
