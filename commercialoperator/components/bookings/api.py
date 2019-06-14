@@ -38,29 +38,31 @@ from commercialoperator.components.bookings.models import (
 from commercialoperator.components.bookings.serializers import (
     BookingSerializer,
     ParkBookingSerializer,
+#    BookingSerializer2,
+#    ParkBookingSerializer2,
 )
 from commercialoperator.helpers import is_customer, is_internal
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from commercialoperator.components.proposals.api import ProposalFilterBackend, ProposalRenderer
+
 
 class BookingPaginatedViewSet(viewsets.ModelViewSet):
     filter_backends = (ProposalFilterBackend,)
     pagination_class = DatatablesPageNumberPagination
     renderer_classes = (ProposalRenderer,)
     page_size = 10
-    queryset = ParkBooking.objects.none()
-    serializer_class = ParkBookingSerializer
+    queryset = Booking.objects.none()
+    serializer_class = BookingSerializer
 
     def get_queryset(self):
         #import ipdb; ipdb.set_trace()
         user = self.request.user
         if is_internal(self.request):
-            return ParkBooking.objects.all()
+            return Booking.objects.all()
         elif is_customer(self.request):
             user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
-            return  ParkBooking.objects.filter( Q(booking__proposal__org_applicant_id__in = user_orgs) | Q(booking__proposal__submitter = user) )
-        return ParkBooking.objects.none()
-
+            return  Booking.objects.filter( Q(proposal__org_applicant_id__in = user_orgs) | Q(proposal__submitter = user) )
+        return Booking.objects.none()
 
     @list_route(methods=['GET',])
     def bookings_external(self, request, *args, **kwargs):
@@ -77,8 +79,47 @@ class BookingPaginatedViewSet(viewsets.ModelViewSet):
 
         self.paginator.page_size = qs.count()
         result_page = self.paginator.paginate_queryset(qs, request)
-        serializer = ParkBookingSerializer(result_page, context={'request':request}, many=True)
+        serializer = BookingSerializer(result_page, context={'request':request}, many=True)
         return self.paginator.get_paginated_response(serializer.data)
+
+
+#class ParkBookingPaginatedViewSet(viewsets.ModelViewSet):
+#    filter_backends = (ProposalFilterBackend,)
+#    pagination_class = DatatablesPageNumberPagination
+#    renderer_classes = (ProposalRenderer,)
+#    page_size = 10
+#    queryset = ParkBooking.objects.none()
+#    serializer_class = ParkBookingSerializer2
+#
+#    def get_queryset(self):
+#        #import ipdb; ipdb.set_trace()
+#        user = self.request.user
+#        if is_internal(self.request):
+#            return ParkBooking.objects.all()
+#        elif is_customer(self.request):
+#            user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
+#            return  ParkBooking.objects.filter( Q(booking__proposal__org_applicant_id__in = user_orgs) | Q(booking__proposal__submitter = user) )
+#        return ParkBooking.objects.none()
+#
+#
+#    @list_route(methods=['GET',])
+#    def parkbookings_external(self, request, *args, **kwargs):
+#        """
+#        Paginated serializer for datatables - used by the internal and external dashboard (filtered by the get_queryset method)
+#
+#        To test:
+#            http://localhost:8000/api/parkbooking_paginated/parkbookings_external/?format=datatables&draw=1&length=2
+#        """
+#
+#        #import ipdb; ipdb.set_trace()
+#        qs = self.get_queryset()
+#        qs = self.filter_queryset(qs)
+#
+#        self.paginator.page_size = qs.count()
+#        result_page = self.paginator.paginate_queryset(qs, request)
+#        serializer = ParkBookingSerializer2(result_page, context={'request':request}, many=True)
+#        return self.paginator.get_paginated_response(serializer.data)
+
 
 
 class BookingViewSet(viewsets.ModelViewSet):

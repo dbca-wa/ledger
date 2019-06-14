@@ -2,7 +2,7 @@
     <div>
         <div class="container">
             <div class="row"><div class="col-sm-12">
-                <form action="/payment/46/" method="post" name="new_payment" @submit.prevent="submit()" novalidate>
+                <form method="post" name="new_payment" @submit.prevent="submit()" novalidate>
                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
 
                     <div id="error" v-if="errors.length > 0" style="margin: 10px; padding: 5px; color: red; border:1px solid red;">
@@ -68,8 +68,13 @@ from '@/utils/hooks'
             }
         },
         computed: {
+            _payment_url: function(){
+                //return `/api/payment/${to.params.proposal_id}.json`;
+                //return `/payment/${to.params.proposal_id}`;
+                return `/payment/${this.proposal.id}`;
+            },
             payment_url: function(){
-                return `/api/payment/${to.params.proposal_id}.json`;
+                return '/payment/' + this.proposal.id + '/';
             },
             csrf_token: function() {
                 return helpers.getCookie('csrftoken')
@@ -185,6 +190,7 @@ from '@/utils/hooks'
                 vm.errors = vm.check_form_valid();
 
                 var form = document.forms.new_payment;
+                form.action = '/payment/' + vm.selected_licence.value  + '/';
                 if (vm.errors.length == 0) {
                     form.submit();
                 } else {

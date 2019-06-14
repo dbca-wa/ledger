@@ -141,7 +141,7 @@ export default {
             proposal_submitters: [],
             proposal_parks: [],
             proposal_headers:[
-                "Number","Licence","Holder","Status","Arrival","Park","Invoice/Confirmation","Action",
+                " Number","Licence","Holder","Status","Arrival","Park","Invoice/Confirmation","Action",
             ],
             proposal_options:{
                 language: {
@@ -153,7 +153,7 @@ export default {
                 ajax: {
                     //"url": vm.url,
                     //"url": '/api/booking_paginated/bookings_external/?format=datatables',
-                    "url": api_endpoints.payments_paginated_internal,
+                    "url": api_endpoints.booking_paginated_internal,
                     "dataSrc": 'data',
 
                     // adding extra GET params for Custom filtering
@@ -169,16 +169,15 @@ export default {
                 'excel', 'csv', ],
                 columns: [
                     {
-                        data: "id",
-                        name: "id"
+                        data: "admission_number",
                     },
                     {
                         data: "approval_number",
-                        name: "booking__proposal__approval__lodgement_number"
+                        name: "proposal__approval__lodgement_number"
                     },
                     {
                         data: "applicant",
-                        name: "booking__proposal__approval__org_applicant__organisation__name, booking__proposal__approval__proxy_applicant__email"
+                        name: "proposal__approval__org_applicant__organisation__name, proposal__approval__proxy_applicant__email"
                     },
                     {
                         data: "payment_status",
@@ -187,17 +186,31 @@ export default {
                         orderable: false
                     },
                     {
-                        data: "arrival",
+                        data: "park_bookings",
                         mRender:function (data,type,full) {
-                            return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
+                            let arrival_dates = '';
+                            _.forEach(data, function (park) {
+                                arrival_dates += (park.arrival != '' && park.arrival != null ? moment(park.arrival).format(vm.dateFormat): '') + '<br>';
+                                //arrival_dates += arrival_dates + '<br>'
+                            });
+                            return arrival_dates;
                         },
                         searchable: false,
                         orderable: true
                     },
                     {
-                        data: "park",
-                        name: "park__id, park__name"
+                        data: "park_bookings",
+                        mRender:function (data,type,full) {
+                            let parks = '';
+                            _.forEach(data, function (item) {
+                                parks += item.park + '<br>';
+                            });
+                            return parks;
+                        }
+                        //name: "park__id, park__name"
+
                     },
+
                     {
                         data: '',
                         mRender:function (data,type,full) {
