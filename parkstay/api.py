@@ -4,7 +4,7 @@ import geojson
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
-from django.db import transaction
+from django.db import transaction, connection
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
@@ -14,25 +14,24 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from rest_framework import viewsets, serializers, status, generics, views
-from rest_framework.decorators import detail_route, list_route,renderer_classes,authentication_classes,permission_classes
+from rest_framework.decorators import detail_route, list_route, renderer_classes
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
-from rest_framework.pagination import PageNumberPagination
-from datetime import datetime, timedelta
+from rest_framework.permissions import IsAuthenticated
+from datetime import datetime, timedelta, date
 from collections import OrderedDict
 from django.core.cache import cache
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser, Address
 from ledger.address.models import Country
 from ledger.payments.models import Invoice
 from parkstay import utils
 from parkstay.helpers import can_view_campground
-from datetime import datetime,timedelta, date
 from parkstay.models import (Campground,
                                 District,
                                 Contact,
                                 CampsiteBooking,
                                 Campsite,
+                                CampsiteClass,
                                 CampsiteRate,
                                 Booking,
                                 CampgroundBookingRange,
@@ -43,9 +42,6 @@ from parkstay.models import (Campground,
                                 Park,
                                 Feature,
                                 Region,
-                                CampsiteClass,
-                                Booking,
-                                CampsiteRate,
                                 Rate,
                                 CampgroundPriceHistory,
                                 CampsiteClassPriceHistory,
@@ -54,7 +50,6 @@ from parkstay.models import (Campground,
                                 MaximumStayReason,
                                 DiscountReason,
                                 ParkEntryRate,
-                                BookingVehicleRego
                                 )
 
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
@@ -91,7 +86,6 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     DiscountReasonSerializer,
                                     BulkPricingSerializer,
                                     UsersSerializer,
-                                    AccountsAddressSerializer,
                                     ParkEntryRateSerializer,
                                     ReportSerializer,
                                     BookingSettlementReportSerializer,
@@ -104,12 +98,11 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     OracleSerializer,
                                     BookingHistorySerializer
                                     )
-from parkstay.helpers import is_officer, is_customer
-from parkstay import reports 
+from parkstay.helpers import is_officer
+from parkstay import reports
 from parkstay import pdf
 from parkstay.perms import PaymentCallbackPermission
 from parkstay import emails
-from parkstay import exceptions
 
 
 # API Views
@@ -221,7 +214,6 @@ class CampsiteViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 print(traceback.print_exc())
                 raise serializers.ValidationError(str(e[0]))
-
 
     @detail_route(methods=['get'])
     def status_history(self, request, format='json', pk=None):
@@ -398,10 +390,10 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
         if scrubbed['arrival'] and scrubbed['departure'] and (scrubbed['arrival'] < scrubbed['departure']):
             sites = Campsite.objects.filter(**context)
             ground_ids = utils.get_open_campgrounds(sites, scrubbed['arrival'], scrubbed['departure'])
-           
+
         else: # show all of the campgrounds with campsites
             ground_ids = set((x[0] for x in Campsite.objects.filter(**context).values_list('campground')))
-            
+
             # we need to be tricky here. for the default search (all, no timestamps),
             # we want to include all of the "campgrounds" that don't have any campsites in the model! (e.g. third party)
             if scrubbed['gear_type'] == 'all':
@@ -432,7 +424,7 @@ class CampgroundMapFilterViewSet(viewsets.ReadOnlyModelViewSet):
                 max_days = min([x.max_days for x in stay_history])
             else:
                 max_days = settings.PS_MAX_BOOKING_LENGTH
-            if (end_date - start_date).days <= max_days:            
+            if (end_date - start_date).days <= max_days:
                 queryset.append(q)
 
         serializer = self.get_serializer(queryset, many=True)
@@ -841,7 +833,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
         try:
             start_date = self.try_parsing_date(request.GET.get('arrival')).date()
             end_date = self.try_parsing_date(request.GET.get('departure')).date()
-            booking_id = request.GET.get('booking',None) 
+            booking_id = request.GET.get('booking',None)
             if not booking_id:
                 raise serializers.ValidationError('Booking has not been defined')
             try:
@@ -875,7 +867,7 @@ class CampgroundViewSet(viewsets.ModelViewSet):
                 for c_id, stat in v.items():
                     counts[stat] += 1
                 s['status'] = ', '.join(['{} {}'.format(stat, type) for type, stat in counts.items() if stat])
-                available_serializers.append(s)            
+                available_serializers.append(s)
             available_serializers.sort(key=lambda x: x['name'])
             data = available_serializers
 
@@ -944,7 +936,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
         # fetch availability map
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
-       
+
         # create our result object, which will be returned as JSON
         result = {
             'id': ground.id,
@@ -985,11 +977,11 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
 
 
             # make an entry under sites for each campsite class
-            for c in classes:                
+            for c in classes:
                 rate = rates_map[c[1]]
                 site = {
                     'name': c[2],
-                    'id': None, 
+                    'id': None,
                     'type': c[1],
                     'price': '${}'.format(sum(rate.values())) if not show_all else False,
                     'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], None, [0, 0, 0]] for i in range(length)],
@@ -998,8 +990,8 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                         'tent': c[3],
                         'campervan': c[4],
                         'caravan': c[5]
-                    }                   
-                }           
+                    }
+                }
                 result['sites'].append(site)
                 classes_map[c[1]] = site
 
@@ -1038,14 +1030,14 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                         classes_map[key]['availability'][offset][4][book_offset] += 1
                         # if the number of booked entries equals the size of the class, it's fully booked
                         if classes_map[key]['availability'][offset][4][0] == class_sizes[key]:
-                            classes_map[key]['availability'][offset][1] = 'Booked' 
+                            classes_map[key]['availability'][offset][1] = 'Booked'
                         # if the number of closed entries equals the size of the class, it's closed (admin) or unavailable (user)
                         elif classes_map[key]['availability'][offset][4][1] == class_sizes[key]:
                             classes_map[key]['availability'][offset][1] = 'Closed' if show_all else 'Unavailable'
                             classes_map[key]['availability'][offset][3] = closure_reason if show_all else None
                         elif classes_map[key]['availability'][offset][4][2] == class_sizes[key]:
                             classes_map[key]['availability'][offset][1] = 'Closures/Bookings' if show_all else 'Unavailable'
-                            classes_map[key]['availability'][offset][3] = closure_reason if show_all else None 
+                            classes_map[key]['availability'][offset][3] = closure_reason if show_all else None
                         # if all of the entries are closed, it's unavailable (user)
                         elif not show_all and (classes_map[key]['availability'][offset][4][0] + classes_map[key]['availability'][offset][4][1] == class_sizes[key]):
                             classes_map[key]['availability'][offset][1] = 'Unavailable'
@@ -1107,7 +1099,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             # from our campsite queryset, generate a digest for each site
             sites_map = OrderedDict([(s.name, (s.pk, s.campsite_class, rates[s.pk], s.tent, s.campervan, s.caravan)) for s in sites_qs])
             bookings_map = {}
-        
+
             # make an entry under sites for each site
             for k, v in sites_map.items():
                 site = {
@@ -1128,7 +1120,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                 if v[1].pk not in result['classes']:
                     result['classes'][v[1].pk] = v[1].name
 
-        
+
             # update results based on availability map
             for s in sites_qs:
                 # if there's not a free run of slots
@@ -1141,7 +1133,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                             bookings_map[s.name]['availability'][offset][3] = closure_reason if show_all else None
                         elif stat == 'closed & booked':
                             bookings_map[s.name]['availability'][offset][1] = 'Closed & Booked' if show_all else 'Unavailable'
-                            bookings_map[s.name]['availability'][offset][3] = closure_reason if show_all else None                           
+                            bookings_map[s.name]['availability'][offset][3] = closure_reason if show_all else None
                         elif stat == 'booked':
                             bookings_map[s.name]['availability'][offset][1] = 'Booked' if show_all else 'Unavailable'
                         else:
@@ -1257,7 +1249,7 @@ def get_confirmation(request, *args, **kwargs):
     booking_id = kwargs.get('booking_id', None)
     if (booking_id is None):
         return HttpResponse('Booking ID not specified', status=400)
-    
+
     try:
         booking = Booking.objects.get(id=booking_id)
     except Booking.DoesNotExist:
@@ -1508,34 +1500,33 @@ class CampsiteClassViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
 
     def list(self, request, *args, **kwargs):
-        from django.db import connection, transaction
         try:
             search = request.GET.get('search[value]')
-            draw = request.GET.get('draw') if request.GET.get('draw') else 1
-            start = request.GET.get('start') if request.GET.get('draw') else 1
+            start = request.GET.get('start') if request.GET.get('draw') else 0
             length = request.GET.get('length') if request.GET.get('draw') else 'all'
-            arrival = str(datetime.strptime(request.GET.get('arrival'),'%d/%m/%Y')) if request.GET.get('arrival') else ''
-            departure = str(datetime.strptime(request.GET.get('departure'),'%d/%m/%Y')) if request.GET.get('departure') else ''
+            arrival = str(datetime.strptime(request.GET.get('arrival'), '%d/%m/%Y')) if request.GET.get('arrival') else ''
+            departure = str(datetime.strptime(request.GET.get('departure'), '%d/%m/%Y')) if request.GET.get('departure') else ''
             campground = request.GET.get('campground')
             region = request.GET.get('region')
-            canceled = request.GET.get('canceled',None)
-            refund_status = request.GET.get('refund_status',None)
-            if canceled:
-                canceled = True if canceled.lower() in ['yes','true','t','1'] else False
-
-            canceled = 't' if canceled else 'f'
+            canceled = request.GET.get('canceled', None)
+            if canceled and canceled.lower() in ['yes', 'true', 't', '1']:
+                cancelled = 't'
+            else:
+                cancelled = 'f'
+            refund_status = request.GET.get('refund_status', None)
 
             sql = ''
-            http_status = status.HTTP_200_OK
-            sqlSelect = 'select distinct parkstay_booking.id as id,parkstay_booking.created,parkstay_booking.customer_id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
+            sqlSelect = 'select distinct parkstay_booking.id as id,parkstay_booking.created,parkstay_booking.customer_id,\
+                parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
                 parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
-                parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,coalesce(accounts_emailuser.first_name || \' \' || accounts_emailuser.last_name) as full_name'
-            sqlCount = 'select count(distinct parkstay_booking.id)'
+                parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,\
+                coalesce(accounts_emailuser.first_name || \' \' || accounts_emailuser.last_name) as full_name'
 
             sqlFrom = ' from parkstay_booking\
                 join parkstay_campground on parkstay_campground.id = parkstay_booking.campground_id\
@@ -1546,46 +1537,36 @@ class BookingViewSet(viewsets.ModelViewSet):
                 left outer join parkstay_campgroundgroup_campgrounds cg on cg.campground_id = parkstay_booking.campground_id\
                 full outer join parkstay_campgroundgroup_members cm on cm.campgroundgroup_id = cg.campgroundgroup_id'
 
-            #sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
-            #sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
-
             sql = sqlSelect + sqlFrom + " where "
-            sqlCount = sqlCount + sqlFrom + " where "
             sqlParams = {}
 
             # Filter the camgrounds that the current user is allowed to view
             sqlFilterUser = ' cm.emailuser_id = %(user)s'
             sql += sqlFilterUser
-            sqlCount += sqlFilterUser
             sqlParams['user'] = request.user.id
 
-            if campground :
+            if campground:
                 sqlCampground = ' parkstay_campground.id = %(campground)s'
-                sql = sql + " and "+ sqlCampground
-                sqlCount = sqlCount + " and " +sqlCampground
+                sql = sql + " and " + sqlCampground
                 sqlParams['campground'] = campground
             if region:
                 sqlRegion = " parkstay_region.id = %(region)s"
-                sql = sql+" and "+ sqlRegion
-                sqlCount = sqlCount +" and "+ sqlRegion
+                sql = sql + " and " + sqlRegion
                 sqlParams['region'] = region
             if arrival:
-                sqlArrival= ' parkstay_booking.departure > %(arrival)s'
-                sqlCount = sqlCount + " and "+ sqlArrival
-                sql = sql + " and "+ sqlArrival
+                sqlArrival = ' parkstay_booking.departure > %(arrival)s'
+                sql = sql + " and " + sqlArrival
                 sqlParams['arrival'] = arrival
-            if departure: 
+            if departure:
                 sqlDeparture = ' parkstay_booking.arrival <= %(departure)s'
-                sqlCount =  sqlCount + ' and ' + sqlDeparture
                 sql = sql + ' and ' + sqlDeparture
                 sqlParams['departure'] = departure
             # Search for cancelled bookings
             sql += ' and parkstay_booking.is_canceled = %(canceled)s'
-            sqlCount += ' and parkstay_booking.is_canceled = %(canceled)s'
             sqlParams['canceled'] = canceled
             # Remove temporary bookings
             sql += ' and parkstay_booking.booking_type <> 3'
-            sqlCount += ' and parkstay_booking.booking_type <> 3'
+
             if search:
                 sqlsearch = ' lower(parkstay_campground.name) LIKE lower(%(wildSearch)s)\
                 or lower(parkstay_region.name) LIKE lower(%(wildSearch)s)\
@@ -1598,28 +1579,24 @@ class BookingViewSet(viewsets.ModelViewSet):
                     sqlsearch += ' or CAST (parkstay_booking.id as TEXT) like %(upperSearch)s'
                     sqlParams['upperSearch'] = '{}%'.format(search)
 
-                sql += " and ( "+ sqlsearch +" )"
-                sqlCount +=  " and  ( "+ sqlsearch +" )"
+                sql += " and ( " + sqlsearch + " )"
 
             sql += ' ORDER BY parkstay_booking.arrival DESC'
-
-            if length != 'all':
-                sql = sql + ' limit %(length)s offset %(start)s'
-                sqlParams['length'] = length
-                sqlParams['start'] = start
 
             if length == 'all':
                 sql = sql + ' limit %(length)s offset %(start)s'
                 sqlParams['length'] = 2000
                 sqlParams['start'] = start
+            else:
+                sql = sql + ' limit %(length)s offset %(start)s'
+                sqlParams['length'] = length
+                sqlParams['start'] = start
 
             sql += ';'
 
             cursor = connection.cursor()
-            cursor.execute("Select count(*) from parkstay_booking ");
+            cursor.execute("select count(*) from parkstay_booking")
             recordsTotal = cursor.fetchone()[0]
-            cursor.execute(sqlCount, sqlParams);
-            recordsFiltered = cursor.fetchone()[0]
 
             cursor.execute(sql, sqlParams)
             columns = [col[0] for col in cursor.description]
@@ -1630,10 +1607,10 @@ class BookingViewSet(viewsets.ModelViewSet):
             bookings_qs = Booking.objects.filter(id__in=[b['id'] for b in data]).prefetch_related('campground', 'campsites', 'campsites__campsite', 'customer', 'regos', 'history', 'invoices', 'canceled_by')
             booking_map = {b.id: b for b in bookings_qs}
             clean_data = []
+
             for bk in data:
                 cg = None
                 booking = booking_map[bk['id']]
-                cg = booking.campground
                 bk['editable'] = booking.editable
                 bk['status'] = booking.status
                 bk['booking_type'] = booking.booking_type
@@ -1647,14 +1624,14 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['canceled_by'] = booking.canceled_by.get_full_name() if booking.canceled_by else ''
                 bk['cancelation_time'] = booking.cancelation_time if booking.cancelation_time else ''
                 bk['paid'] = booking.paid
-                bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
-                bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
+                bk['invoices'] = [i.invoice_reference for i in booking.invoices.all()]
+                bk['active_invoices'] = [i.invoice_reference for i in booking.invoices.all() if i.active]
                 bk['guests'] = booking.guests
                 bk['campsite_names'] = booking.campsite_name_list
                 bk['regos'] = [{r.type: r.rego} for r in booking.regos.all()]
-                bk['firstname'] = booking.details.get('first_name','')
-                bk['lastname'] = booking.details.get('last_name','')
-                if  booking.override_reason:                        
+                bk['firstname'] = booking.details.get('first_name', '')
+                bk['lastname'] = booking.details.get('last_name', '')
+                if booking.override_reason:
                     bk['override_reason'] = booking.override_reason.text
                 if booking.override_reason_info:
                     bk['override_reason_info'] = booking.override_reason_info
@@ -1671,37 +1648,37 @@ class BookingViewSet(viewsets.ModelViewSet):
                     elif booking.customer.mobile_number:
                         bk['phone'] = booking.customer.mobile_number
                     else:
-                        bk['phone'] = '' 
+                        bk['phone'] = ''
                     if booking.is_canceled:
                         bk['campground_site_type'] = ""
                     else:
-                        first_campsite_list = booking.first_campsite_list    
-                        campground_site_type = []              
+                        first_campsite_list = booking.first_campsite_list
+                        campground_site_type = []
                         for item in first_campsite_list:
-                            campground_site_type.append ({
+                            campground_site_type.append({
                                 "name": '{}'.format(item.name if item else ""),
                                 "type": '{}'.format(item.type if item.type else ""),
                                 "campground_type": item.campground.site_type,
-                                })
+                            })
                         bk['campground_site_type'] = campground_site_type
                 else:
                     bk['campground_site_type'] = ""
                 if refund_status and canceled == 't':
-                    refund_statuses = ['All','Partially Refunded','Not Refunded','Refunded']
+                    refund_statuses = ['All', 'Partially Refunded', 'Not Refunded', 'Refunded']
                     if refund_status in refund_statuses:
                         if refund_status == 'All':
                             clean_data.append(bk)
-                        else:       
+                        else:
                             if refund_status == booking.refund_status:
                                 clean_data.append(bk)
                 else:
                     clean_data.append(bk)
-            
+
             return Response(OrderedDict([
                 ('recordsTotal', recordsTotal),
-                ('recordsFiltered',recordsFiltered),
-                ('results',clean_data)
-            ]),status=status.HTTP_200_OK)
+                ('recordsFiltered', len(data)),
+                ('results', clean_data)
+            ]), status=status.HTTP_200_OK)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -1710,7 +1687,6 @@ class BookingViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     def create(self, request, format=None):
-        from datetime import datetime
         userCreated = False
         try:
             if 'ps_booking' in request.session:
@@ -1844,7 +1820,6 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     @detail_route(permission_classes=[PaymentCallbackPermission],methods=['GET','POST'])
     def payment_callback(self, request, *args, **kwargs):
-        from django.utils import timezone
         http_status = status.HTTP_200_OK
         try:
             response = {
@@ -1855,7 +1830,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 response = {'status': 'accessible'}
             elif request.method == 'POST':
                 instance = self.get_object()
-                
+
                 invoice_ref = request.data.get('invoice',None)
                 if invoice_ref:
                     try:
@@ -1871,13 +1846,13 @@ class BookingViewSet(viewsets.ModelViewSet):
                                 reponse['error'] = 'Booking is not fully paid or the transaction was not done in the last 10 secs'
                         else:
                             reponse['error'] = 'Invoice is not fully paid'
-                    
+
                     except Invoice.DoesNotExist:
                         response['error'] = 'Invoice was not found'
                 else:
                     response['error'] = 'Invoice was not found'
-                    
-            
+
+
                 response['status'] = 'approved'
             return Response(response,status=status.HTTP_200_OK)
         except serializers.ValidationError:
@@ -1891,7 +1866,6 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     @detail_route(permission_classes=[],methods=['GET'])
     def booking_checkout_status(self, request, *args, **kwargs):
-        from django.utils import timezone
         http_status = status.HTTP_200_OK
         try:
             instance = self.get_object()
@@ -1907,7 +1881,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             if instance.expiry_time <= timezone.now():
                 response['error'] = 'This booking has expired'
                 return Response(response,status=status.HTTP_200_OK)
-            #if all is well    
+            #if all is well
             response['status'] = 'approved'
             return Response(response,status=status.HTTP_200_OK)
         except serializers.ValidationError:
@@ -1921,7 +1895,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['GET'])
     def history(self, request, *args, **kwargs):
-        http_status = status.HTTP_200_OK              
+        http_status = status.HTTP_200_OK
         try:
             history = self.get_object().history.all()
             data = BookingHistorySerializer(history,many=True).data
@@ -2078,6 +2052,7 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CountrySerializer
     permission_classes = [IsAuthenticated]
 
+
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = EmailUser.objects.all()
     serializer_class = UsersSerializer
@@ -2144,7 +2119,7 @@ class UsersViewSet(viewsets.ModelViewSet):
                 state = serializer.validated_data['state'],
                 country = serializer.validated_data['country'],
                 postcode = serializer.validated_data['postcode'],
-                user = instance 
+                user = instance
             )
             instance.residential_address = address
             instance.save()
@@ -2303,7 +2278,7 @@ class GetProfile(views.APIView):
 class UpdateProfilePersonal(views.APIView):
     renderer_classes = [JSONRenderer,]
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request, *args, **kwargs):
         try:
             instance = request.user
@@ -2324,8 +2299,8 @@ class UpdateProfilePersonal(views.APIView):
 
 class UpdateProfileContact(views.APIView):
     renderer_classes = [JSONRenderer,]
-    permission_classes = [IsAuthenticated] 
-    
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, *args, **kwargs):
         try:
             instance = request.user
@@ -2346,8 +2321,8 @@ class UpdateProfileContact(views.APIView):
 
 class UpdateProfileAddress(views.APIView):
     renderer_classes = [JSONRenderer,]
-    permission_classes = [IsAuthenticated] 
-    
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, *args, **kwargs):
         try:
             instance = request.user
