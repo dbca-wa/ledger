@@ -40,11 +40,45 @@ export const offenceStore = {
     },
     getters: {
         offence: state => state.offence,
+        offence_latitude(state) {
+            if (state.offence.location) {
+                if (state.offence.location.geometry) {
+                    if (state.offence.location.geometry.coordinates.length > 0) {
+                        return state.offence.location.geometry.coordinates[1];
+                    } else {return "";}
+                } else {return "";}
+            } else {return "";}
+        },
+        offence_longitude(state) {
+            if (state.offence.location) {
+                if (state.offence.location.geometry) {
+                    if (state.offence.location.geometry.coordinates.length > 0) {
+                        return state.offence.location.geometry.coordinates[0];
+                    } else {return "";}
+                } else {return "";}
+            } else {return "";}
+        },
     },
     mutations: {
         updateOffence(state, offence) {
             Vue.set(state, 'offence', offence);
         },
+        updateLocationPoint(state, point) {
+            state.offence.location.geometry.coordinates = point;
+        },
+        updateLocationAddress(state, location_properties) {
+            state.offence.location.properties = location_properties;
+        },
+        updateLocationAddressEmpty(state) {
+            state.offence.location.properties.town_suburb = "";
+            state.offence.location.properties.street = "";
+            state.offence.location.properties.state = "";
+            state.offence.location.properties.postcode = "";
+            state.offence.location.properties.country = "";
+        },
+        updateLocationDetailsFieldEmpty(state) {
+            state.offence.location.properties.details = "";
+        }
     },
     actions: {
         async loadOffence({ dispatch, }, { offence_id }) {
@@ -64,6 +98,18 @@ export const offenceStore = {
         },
         setOffence({ commit, }, offence) {
             commit("updateOffence", offence);
+        },
+        setLocationPoint({ commit, }, point) {
+            commit("updateLocationPoint", point);
+        },
+        setLocationAddress({ commit, }, location_properties) {
+            commit("updateLocationAddress", location_properties);
+        },
+        setLocationAddressEmpty({ commit, }) {
+            commit("updateLocationAddressEmpty");
+        },
+        setLocationDetailsFieldEmpty({ commit, }) {
+            commit("updateLocationDetailsFieldEmpty");
         },
     },
 };
