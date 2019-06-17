@@ -261,6 +261,8 @@
               <div class="col-sm-12 form-group"><div class="row">
               <h3></h3>
               </div></div>
+
+              <Offence ref="offence" />
             
             </div>          
           </div>
@@ -277,7 +279,6 @@
                         </div>
         </div>          
         <CallWorkflow ref="add_workflow" :workflow_type="workflow_type" />
-        <Offence ref="offence" />
     </div>
 </template>
 <script>

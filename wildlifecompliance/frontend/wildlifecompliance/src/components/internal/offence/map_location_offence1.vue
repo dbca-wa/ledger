@@ -470,10 +470,10 @@ export default {
       });
       measureControl.addTo(this.mapOffence);
       Leaf.control.locate().addTo(this.mapOffence);
-      this.mapOffence.flyTo({lat: 30, lng: 135}, 12,{
-          animate: true,
-          duration: 1.5
-      });
+      // this.mapOffence.flyTo({lat: 30, lng: 135}, 12,{
+      //     animate: true,
+      //     duration: 1.5
+      // });
     },
     /* this function stores the coordinates into the vuex, then call refresh marker function */
     relocateMarker: function(latlng) {
