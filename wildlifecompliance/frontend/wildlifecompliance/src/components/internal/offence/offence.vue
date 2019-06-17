@@ -2,16 +2,13 @@
     <div>
         <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="modalTitle" large>
             <div class="container-fluid">
-
                 <ul class="nav nav-tabs">
                     <li class="active"><a data-toggle="tab" :href="'#'+oTab">Offence</a></li>
                     <li><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
                     <li><a data-toggle="tab" :href="'#'+pTab">Offender(s)</a></li>
                     <li><a data-toggle="tab" :href="'#'+lTab">Location</a></li>
                 </ul>
-
                 <div class="tab-content">
-
                     <div :id="oTab" class="tab-pane fade in active">
                         <div class="row">
 
@@ -121,14 +118,13 @@
 
                     <div :id="lTab" class="tab-pane fade in">
                         <div class="row">
-                            <div class="col-sm-12">
-                                <div class="form-group">
-
+                            <div class="col-sm-12 form-group">
+                                <div v-if="offence.location">
+                                    <MapLocationOffence v-bind:key="offence.location.id"/>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
             <div slot="footer">
@@ -137,6 +133,9 @@
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
         </modal>
+                                <!-- <div v-if="offence.location">
+                                    <MapLocationOffence v-bind:key="offence.location.id"/>
+                                </div> -->
     </div>
 </template>
 
@@ -146,6 +145,7 @@ import Vue from "vue";
 import modal from '@vue-utils/bootstrap-modal.vue';
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
+import MapLocationOffence from "./map_location_offence1"
 import utils from '../utils'
 import 'bootstrap/dist/css/bootstrap.css';
 import 'awesomplete/awesomplete.css';
@@ -162,6 +162,7 @@ export default {
       officers: [],
       isModalOpen: false,
       processingDetails: false,
+      offender_type: 'indivisual',
 
       oTab: 'oTab'+vm._uid,
       dTab: 'dTab'+vm._uid,
@@ -171,6 +172,7 @@ export default {
   },
   components: {
     modal,
+    MapLocationOffence,
   },
   computed: {
     ...mapGetters('callemailStore', {
@@ -222,10 +224,8 @@ export default {
           this.isModalOpen = false;
       },
       sendData: async function(){
-
-      },
-      loadOffence: function(){
-
+          // TODO
+          console.log('Send data to save');
       },
       addEventListeners: function () {
           let vm = this;
@@ -363,8 +363,7 @@ export default {
   },
   created: async function() {
       this.$nextTick(function() {
-          this.initAwesomplete();
-          this.loadOffence();
+        //   this.initAwesomplete();
       });
   },
   mounted: function() {

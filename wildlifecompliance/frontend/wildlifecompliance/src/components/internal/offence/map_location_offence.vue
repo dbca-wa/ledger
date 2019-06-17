@@ -21,44 +21,44 @@
 
         <div class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Latitude:</label>
-            <div v-if="call_email.location">
-                <input :readonly="isReadonly" type="number" min="-90" max="90" class="form-control" v-model.number="call_email.location.geometry.coordinates[1]" />
+            <div v-if="offence.location">
+                <input type="number" min="-90" max="90" class="form-control" v-model.number="offence.location.geometry.coordinates[1]" />
             </div>
         </div></div>
         <div class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Longitude:</label>
-            <div v-if="call_email.location">
-                <input :readonly="isReadonly" type="number" min="-180" max="180" class="form-control" v-model.number="call_email.location.geometry.coordinates[0]" />
+            <div v-if="offence.location">
+                <input type="number" min="-180" max="180" class="form-control" v-model.number="offence.location.geometry.coordinates[0]" />
             </div>
         </div></div>
 
         <div :id="idLocationFieldsAddress">
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Street</label>
-                <input :readonly="isReadonly" class="form-control" v-model="call_email.location.properties.street" readonly />
+                <input class="form-control" v-model="offence.location.properties.street" readonly />
             </div></div>
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Town/Suburb</label>
-                <input :readonly="isReadonly" class="form-control" v-model="call_email.location.properties.town_suburb" readonly />
+                <input class="form-control" v-model="offence.location.properties.town_suburb" readonly />
             </div></div>
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">State</label>
-                <input :readonly="isReadonly" class="form-control" v-model="call_email.location.properties.state" readonly />
+                <input class="form-control" v-model="offence.location.properties.state" readonly />
             </div></div>
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Postcode</label>
-                <input :readonly="isReadonly" class="form-control" v-model="call_email.location.properties.postcode" readonly />
+                <input class="form-control" v-model="offence.location.properties.postcode" readonly />
             </div></div>
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Country</label>
-                <input :readonly="isReadonly" class="form-control" v-model="call_email.location.properties.country" readonly />
+                <input class="form-control" v-model="offence.location.properties.country" readonly />
             </div></div>
         </div>
 
         <div :id="idLocationFieldsDetails">
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Details</label>
-                <textarea class="form-control location_address_field" v-model="call_email.location.properties.details" />
+                <textarea class="form-control location_address_field" v-model="offence.location.properties.details" />
             </div></div>
         </div>
     
@@ -66,7 +66,7 @@
 </template>
 
 <script>
-import L from 'leaflet';
+import Leaf from 'leaflet';
 import 'leaflet-measure';  /* This should be imported after leaflet */
 import 'leaflet.locatecontrol';
 import Awesomplete from 'awesomplete';
@@ -85,10 +85,10 @@ export default {
 
         let vm = this;
         let baseDic = { shadowUrl: require('leaflet/dist/images/marker-shadow.png'), shadowSize: [41, 41], shadowAnchor: [12, 41], iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -20]};
-        vm.icon_default = L.icon({iconUrl: require('../../../assets/marker-gray-locked.svg'), ...baseDic });
-        vm.icon_enquiery = L.icon({iconUrl: require('../../../assets/marker-green-locked.svg'), ...baseDic });
-        vm.icon_complaint = L.icon({iconUrl: require('../../../assets/marker-red-locked.svg'), ...baseDic});
-        vm.icon_incident = L.icon({iconUrl: require('../../../assets/marker-yellow-locked.svg'), ...baseDic});
+        vm.icon_default = Leaf.icon({iconUrl: require('../../../assets/marker-gray-locked.svg'), ...baseDic });
+        vm.icon_enquiery = Leaf.icon({iconUrl: require('../../../assets/marker-green-locked.svg'), ...baseDic });
+        vm.icon_complaint = Leaf.icon({iconUrl: require('../../../assets/marker-red-locked.svg'), ...baseDic});
+        vm.icon_incident = Leaf.icon({iconUrl: require('../../../assets/marker-yellow-locked.svg'), ...baseDic});
         vm.guid = guid();
 
         return {
@@ -113,16 +113,12 @@ export default {
     computed: {
         ...mapGetters('callemailStore', {
             call_email: 'call_email',
-            call_latitude: 'call_latitude',
-            call_longitude: 'call_longitude',
         }),
-        isReadonly: function() {
-            if (this.call_email.status && this.call_email.status.id === 'draft') {
-                return false;
-            } else {
-                return true;
-            }
-        },
+        ...mapGetters('offenceStore', {
+            offence: 'offence',
+            offence_latitude: 'offence_latitude',
+            offence_longitude: 'offence_longitude',
+        }),
     },
     watch: {
         call_email: {
@@ -131,12 +127,12 @@ export default {
             },
             deep: true
         },
-        call_latitude: {
+        offence_latitude: {
             handler: function(){
                 this.setMarkerLocation();
             }
         },
-        call_longitude: {
+        offence_longitude: {
             handler: function(){
                 this.setMarkerLocation();
             }
@@ -149,20 +145,20 @@ export default {
             this.setBaseLayer('osm');
             this.initAwesomplete();
             // if (this.call_latitude){
-            if (this.call_email.location && this.call_email.location && 
-                this.call_email.location.geometry && this.call_email.location.geometry.coordinates &&
-                this.call_email.location.geometry.coordinates.length > 0){
+            if (this.offence.location && this.offence.location && 
+                this.offence.location.geometry && this.offence.location.geometry.coordinates &&
+                this.offence.location.geometry.coordinates.length > 0){
                 /* If there is a location loaded, add a marker to the map */
                 // this.addMarker([this.call_latitude, this.call_longitude]);
-                this.addMarker([this.call_email.location.geometry.coordinates[1], this.call_email.location.geometry.coordinates[0]]);
+                this.addMarker([this.offence.location.geometry.coordinates[1], this.offence.location.geometry.coordinates[0]]);
                 this.refreshMarkerLocation();
-            }        
+            }
             this.showHideAddressDetailsFields(false, false);
             console.debug('End loading map');
         });
     },
     methods: {
-        ...mapActions('callemailStore', {
+        ...mapActions('offenceStore', {
             // saveLocation: 'saveLocation',
             setLocationPoint: 'setLocationPoint',
             setLocationAddress: 'setLocationAddress',
@@ -171,49 +167,38 @@ export default {
         }),
         setMarkerCentre: function(){
             let vm = this;
-            let lat = vm.call_email.location.geometry.coordinates[1];
-            let lng = vm.call_email.location.geometry.coordinates[0];
+            let lat = vm.offence.location.geometry.coordinates[1];
+            let lng = vm.offence.location.geometry.coordinates[0];
+            console.log(vm.offence.location.geometry.coordinates);
             vm.map.flyTo({lat: lat, lng: lng}, 12, { animate: true, duration: 1.5 });
         },
         setMarkerLocation: function(){
+            console.log('setMarkerLocation');
             let vm = this;
-            if (!vm.isReadonly){
-                let lat = vm.call_email.location.geometry.coordinates[1];
-                let lng = vm.call_email.location.geometry.coordinates[0];
-                if (-90 < lat && lat < 90){
-                    if(-180 < lng < 180){
-                        console.log(lat + ', ' + lng);
-                        let lnglat = [lng, lat];
-                        this.feature_marker.setLatLng({lat: lat, lng: lng });
-                        vm.map.flyTo({lat: lat, lng: lng}, 12,{
-                            animate: true,
-                            duration: 1.5
-                        });
-                        // this.refreshMarkerLocation();
-                        vm.reverseGeocoding(lnglat);
-                    }
+            let lat = vm.offence.location.geometry.coordinates[1];
+            let lng = vm.offence.location.geometry.coordinates[0];
+            if (-90 < lat && lat < 90){
+                if(-180 < lng < 180){
+                    console.log(lat + ', ' + lng);
+                    let lnglat = [lng, lat];
+                    vm.feature_marker.setLatLng({lat: lat, lng: lng });
+                    vm.map.flyTo({lat: lat, lng: lng}, 12,{
+                        animate: true,
+                        duration: 1.5
+                    });
+                    vm.reverseGeocoding(lnglat);
                 }
             }
         },
         setMarkerIcon: function(){
             let vm = this;
             if (vm.feature_marker){
-                if (vm.call_email.classification_id){
-                    if (vm.call_email.classification_id == 1){
-                        vm.feature_marker.setIcon(vm.icon_incident);
-                    } else if (vm.call_email.classification_id == 2){
-                        vm.feature_marker.setIcon(vm.icon_enquiery);
-                    } else if (vm.call_email.classification_id == 3){
-                        vm.feature_marker.setIcon(vm.icon_complaint);
-                    }
-                } else {
                     vm.feature_marker.setIcon(vm.icon_default);
-                }
             }
         },
         addMarker(latLngArr){
             let vm = this;
-            vm.feature_marker = L.marker({lon: latLngArr[1], lat: latLngArr[0]}, {icon: vm.icon_default}).on('click', function(ev){
+            vm.feature_marker = Leaf.marker({lon: latLngArr[1], lat: latLngArr[0]}, {icon: vm.icon_default}).on('click', function(ev){
                 //ev.preventDefault();
                 vm.feature_marker.setIcon(myIcon);
             });
@@ -223,9 +208,10 @@ export default {
         },
         // saveInstanceLocation: async function() {
         //     await this.$nextTick();
-        //     // this.saveLocation();
+        //     this.saveLocation();
         // },
         reverseGeocoding: function(coordinates_4326){
+            console.log('reverseGeocoding');
             var self = this;
 
             $.ajax({
@@ -312,21 +298,19 @@ export default {
                             duration: 1.5
                         });
 
-                        if (!self.isReadonly){
-                            if (!self.feature_marker){
-                                self.addMarker([latlng.lat, latlng.lng]);
-                            }
+                        if (!self.feature_marker){
+                            self.addMarker([latlng.lat, latlng.lng]);
+                        }
 
-                            self.relocateMarker(latlng);
-                            if(self.suggest_list[i].feature.place_type.includes('address')){
-                                /* Selection has address ==> Update address fields */
-                                self.showHideAddressDetailsFields(true, false);
-                                self.updateAddressFields(self.suggest_list[i].feature);
-                                self.setLocationDetailsFieldEmpty();
-                            } else {
-                                self.showHideAddressDetailsFields(false, true);
-                                self.setLocationAddressEmpty();
-                            }
+                        self.relocateMarker(latlng);
+                        if(self.suggest_list[i].feature.place_type.includes('address')){
+                            /* Selection has address ==> Update address fields */
+                            self.showHideAddressDetailsFields(true, false);
+                            self.updateAddressFields(self.suggest_list[i].feature);
+                            self.setLocationDetailsFieldEmpty();
+                        } else {
+                            self.showHideAddressDetailsFields(false, true);
+                            self.setLocationAddressEmpty();
                         }
                     }
                 }
@@ -334,39 +318,37 @@ export default {
             });
         },
         updateAddressFields(feature){
-            if(!this.isReadonly){
-                console.log('updateAddressField');
-                let properties_for_update = new Object();
-                let state_abbr_list = {
-                        "New South Wales": "NSW",
-                        "Queensland": "QLD",
-                        "South Australia": "SA",
-                        "Tasmania": "TAS",
-                        "Victoria": "VIC",
-                        "Western Australia": "WA",
-                        "Northern Territory": "NT",
-                        "Australian Capital Territory": "ACT",
-                };
-                let address_arr = feature.place_name.split(',');
-                /* street */
-                properties_for_update.street = address_arr[0];
-                /*
-                * Split the string into suburb, state and postcode
-                */
-                let reg = /^([a-zA-Z0-9\s]*)\s(New South Wales|Queensland|South Australia|Tasmania|Victoria|Western Australia|Northern Territory|Australian Capital Territory){1}\s+(\d{4})$/gi;
-                let result = reg.exec(address_arr[1]);
-                /* suburb */
-                properties_for_update.town_suburb = result[1].trim();
-                /* state */
-                let state_abbr = state_abbr_list[result[2].trim()]
-                properties_for_update.state = state_abbr;
-                /* postcode */
-                properties_for_update.postcode = result[3].trim();
-                /* country */
-                properties_for_update.country = 'Australia';
-                /* update Vuex */
-                this.setLocationAddress(properties_for_update);
-            }
+            console.log('updateAddressField');
+            let properties_for_update = new Object();
+            let state_abbr_list = {
+                    "New South Wales": "NSW",
+                    "Queensland": "QLD",
+                    "South Australia": "SA",
+                    "Tasmania": "TAS",
+                    "Victoria": "VIC",
+                    "Western Australia": "WA",
+                    "Northern Territory": "NT",
+                    "Australian Capital Territory": "ACT",
+            };
+            let address_arr = feature.place_name.split(',');
+            /* street */
+            properties_for_update.street = address_arr[0];
+            /*
+            * Split the string into suburb, state and postcode
+            */
+            let reg = /^([a-zA-Z0-9\s]*)\s(New South Wales|Queensland|South Australia|Tasmania|Victoria|Western Australia|Northern Territory|Australian Capital Territory){1}\s+(\d{4})$/gi;
+            let result = reg.exec(address_arr[1]);
+            /* suburb */
+            properties_for_update.town_suburb = result[1].trim();
+            /* state */
+            let state_abbr = state_abbr_list[result[2].trim()]
+            properties_for_update.state = state_abbr;
+            /* postcode */
+            properties_for_update.postcode = result[3].trim();
+            /* country */
+            properties_for_update.country = 'Australia';
+            /* update Vuex */
+            this.setLocationAddress(properties_for_update);
         },
         setBaseLayer: function(selected_layer_name){
             if (selected_layer_name == 'sat') {
@@ -396,26 +378,25 @@ export default {
         },
         /* this function retrieve the coordinates from vuex and applys it to the marker */
         refreshMarkerLocation: function(){
-            if (!this.isReadonly){
-                if (this.call_email.location.geometry) {
-                    // this.feature_marker.setLatLng({lat: this.call_latitude, lng: this.call_longitude });
-                    this.feature_marker.setLatLng({lat: this.call_email.location.geometry.coordinates[1], lng: this.call_email.location.geometry.coordinates[0] });
-                    if (this.call_email.location.geometry) {
-                        this.reverseGeocoding(this.call_email.location.geometry.coordinates);
-                    }
-                } 
-            }
+            console.log('refreshMarkerLocation');
+            if (this.offence.location.geometry) {
+                // this.feature_marker.setLatLng({lat: this.call_latitude, lng: this.call_longitude });
+                this.feature_marker.setLatLng({lat: this.offence.location.geometry.coordinates[1], lng: this.offence.location.geometry.coordinates[0] });
+                if (this.offence.location.geometry) {
+                    this.reverseGeocoding(this.offence.location.geometry.coordinates);
+                }
+            } 
         },
         initMap: function(){
-            this.map = L.map(this.idMap).setView([-31.9505, 115.8605], 4);
-            this.tileLayer = L.tileLayer(
+            this.map = Leaf.map(this.idMap).setView([-31.9505, 115.8605], 4);
+            this.tileLayer = Leaf.tileLayer(
                 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 {
                     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, contributiors',
                 }
             );
 
-            this.tileLayerSat = L.tileLayer.wmts(
+            this.tileLayerSat = Leaf.tileLayer.wmts(
                 'https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts',
                 {
                     layer: 'public:mapbox-satellite',
@@ -426,23 +407,25 @@ export default {
 
             this.map.on('click', this.onClick).on('mousemove', this.onMouseMove).on('mouseout', this.onMouseOut);
             this.setBaseLayer('osm');
-            let measureControl = new L.Control.Measure({ 
+            let measureControl = new Leaf.Control.Measure({ 
                 position: 'topleft',
                 primaryLengthUnit: 'meters',
                 activeColor: '#ff7f50',
                 completedColor: '#228b22'
             });
             measureControl.addTo(this.map);
-            L.control.locate().addTo(this.map);
+            Leaf.control.locate().addTo(this.map);
+            // this.map.flyTo({lat: 30, lng: 135}, 12,{
+            //     animate: true,
+            //     duration: 1.5
+            // });
         },
         /* this function stores the coordinates into the vuex, then call refresh marker function */
         relocateMarker: function(latlng){ 
-            if(!this.isReadonly){
-                let lnglat = [latlng.lng, latlng.lat];
-                this.setLocationPoint(lnglat);
-                this.refreshMarkerLocation();
-                this.reverseGeocoding(lnglat);
-            }
+            let lnglat = [latlng.lng, latlng.lat];
+            this.setLocationPoint(lnglat);
+            this.refreshMarkerLocation();
+            this.reverseGeocoding(lnglat);
         },
         onMouseMove: function(e){
             let vm = this;
@@ -452,19 +435,18 @@ export default {
             this.cursor_location = null;
         },
         onClick: function(e){
+            console.log("onClick offence");
             let self = this;
-            if(!self.isReadonly){
-                let latlng = this.map.mouseEventToLatLng(e.originalEvent);
-                console.log(latlng);
-                if(!self.feature_marker){
-                    self.addMarker([latlng.lat, latlng.lng]);
-                }
-                
-                /* User clicked on a map, not on any feature */
-                this.relocateMarker(latlng);
+            let latlng = this.map.mouseEventToLatLng(e.originalEvent);
+            console.log(latlng);
+            if(!self.feature_marker){
+                self.addMarker([latlng.lat, latlng.lng]);
             }
+                
+            /* User clicked on a map, not on any feature */
+            this.relocateMarker(latlng);
         }
-    },
+    }
 }
 </script>
 
