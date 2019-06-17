@@ -1686,6 +1686,23 @@ class Application(RevisionedMixin):
                 ", ".join([activity.licence_activity.name for activity in failed_payment_activities])
             ))
 
+        self.update_customer_approval_status()
+
+    def update_customer_approval_status(self):
+        # Update application customer approval status depending on count of approved/declined activities
+        total_activity_count = self.selected_activities.count()
+        approved_activity_count = self.selected_activities.filter(
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED).count()
+        declined_activity_count = self.selected_activities.filter(
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED).count()
+        if 0 < approved_activity_count < total_activity_count:
+            self.customer_status = Application.CUSTOMER_STATUS_PARTIALLY_APPROVED
+        elif approved_activity_count == total_activity_count:
+            self.customer_status = Application.CUSTOMER_STATUS_ACCEPTED
+        elif declined_activity_count == total_activity_count:
+            self.customer_status = Application.CUSTOMER_STATUS_DECLINED
+        self.save()
+
     def generate_returns(self, licence, selected_activity, request):
         from wildlifecompliance.components.returns.models import Return
         licence_expiry = selected_activity.expiry_date
