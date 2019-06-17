@@ -278,7 +278,6 @@ class LicenceViewSet(viewsets.ModelViewSet):
                 licence_activity_id = LicencePurpose.objects.filter(id__in=purpose_ids_list).\
                                         first().licence_activity_id
                 instance = self.get_object()
-                purpose_ids_list = list(set(purpose_ids_list))
                 can_reactivate_renew_purposes = instance.get_latest_purposes_for_licence_activity_and_action(
                     licence_activity_id, 'reactivate_renew')
                 can_reactivate_renew_purposes_ids_list = [purpose.id for purpose in can_reactivate_renew_purposes.order_by('id')]
@@ -317,7 +316,6 @@ class LicenceViewSet(viewsets.ModelViewSet):
                 licence_activity_id = LicencePurpose.objects.filter(id__in=purpose_ids_list).\
                                         first().licence_activity_id
                 instance = self.get_object()
-                purpose_ids_list = list(set(purpose_ids_list))
                 can_surrender_purposes = instance.get_latest_purposes_for_licence_activity_and_action(
                     licence_activity_id, 'surrender')
                 can_surrender_purposes_ids_list = [purpose.id for purpose in can_surrender_purposes.order_by('id')]
@@ -359,7 +357,6 @@ class LicenceViewSet(viewsets.ModelViewSet):
                 licence_activity_id = LicencePurpose.objects.filter(id__in=purpose_ids_list).\
                                         first().licence_activity_id
                 instance = self.get_object()
-                purpose_ids_list = list(set(purpose_ids_list))
                 can_cancel_purposes = instance.get_latest_purposes_for_licence_activity_and_action(
                     licence_activity_id, 'cancel')
                 can_cancel_purposes_ids_list = [purpose.id for purpose in can_cancel_purposes.order_by('id')]
@@ -401,7 +398,6 @@ class LicenceViewSet(viewsets.ModelViewSet):
                 licence_activity_id = LicencePurpose.objects.filter(id__in=purpose_ids_list).\
                                         first().licence_activity_id
                 instance = self.get_object()
-                purpose_ids_list = list(set(purpose_ids_list))
                 can_suspend_purposes = instance.get_latest_purposes_for_licence_activity_and_action(
                     licence_activity_id, 'suspend')
                 can_suspend_purposes_ids_list = [purpose.id for purpose in can_suspend_purposes.order_by('id')]
@@ -443,7 +439,6 @@ class LicenceViewSet(viewsets.ModelViewSet):
                 licence_activity_id = LicencePurpose.objects.filter(id__in=purpose_ids_list).\
                                         first().licence_activity_id
                 instance = self.get_object()
-                purpose_ids_list = list(set(purpose_ids_list))
                 can_reinstate_purposes = instance.get_latest_purposes_for_licence_activity_and_action(
                     licence_activity_id, 'reinstate')
                 can_reinstate_purposes_ids_list = [purpose.id for purpose in can_reinstate_purposes.order_by('id')]

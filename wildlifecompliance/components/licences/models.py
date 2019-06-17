@@ -208,6 +208,10 @@ class WildlifeLicence(models.Model):
                 can_action_asa_ids = [asa.id for asa in activities if asa.can_suspend]
             elif action == 'surrender':
                 can_action_asa_ids = [asa.id for asa in activities if asa.can_surrender]
+            elif action == 'reactivate_renew':
+                can_action_asa_ids = [asa.id for asa in activities if asa.can_reactivate_renew]
+            elif action == 'reinstate':
+                can_action_asa_ids = [asa.id for asa in activities if asa.can_reinstate]
             activities = activities.filter(id__in=can_action_asa_ids)
         return activities
 
