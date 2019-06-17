@@ -791,14 +791,44 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         search_data={}
         parks=[]
         trails=[]
+        activities=[]
+        vehicles=[]
+        vessels=[]
+        accreditations=[]
         for p in self.parks.all():
             parks.append(p.park.name)
+            if p.park.park_type=='land':
+                for a in p.activities.all():
+                    activities.append(a.activity_name)
+            if p.park.park_type=='marine':
+                for z in p.zones.all():
+                    for a in z.park_activities.all():
+                        activities.append(a.activity_name)
         for t in self.trails.all():
             trails.append(t.trail.name)
+            for s in t.sections.all():
+                for ts in s.trail_activities.all():
+                  activities.append(ts.activity_name)
+        for v in self.vehicles.all():
+            vehicles.append(v.rego)
+        for vs in self.vessels.all():
+            vessels.append(vs.spv_no)
         search_data.update({'parks': parks})
         search_data.update({'trails': trails})
-        search_data.update({'mooring': self.other_details.mooring})
-        search_data.update({'other_details': self.other_details.other_comments})
+        search_data.update({'vehicles': vehicles})
+        search_data.update({'vessels': vessels})
+        
+        try:
+            other_details=ProposalOtherDetails.objects.get(proposal=self)
+            search_data.update({'other_details': other_details.other_comments})
+            search_data.update({'mooring': other_details.mooring})
+            for acr in other_details.accreditations.all():
+                accreditations.append(acr.get_accreditation_type_display())
+            search_data.update({'accreditations': accreditations})
+        except ProposalOtherDetails.DoesNotExist:        
+            search_data.update({'other_details': []})
+            search_data.update({'mooring': []})
+            search_data.update({'accreditations':[]})
         return search_data
     
 
@@ -1908,6 +1938,11 @@ class ProposalParkActivity(models.Model):
         app_label = 'commercialoperator'
         unique_together = ('proposal_park', 'activity')
 
+    @property
+    def activity_name(self):
+        return self.activity.name
+    
+
 #To store Park access_types related to Proposal T class land parks
 class ProposalParkAccess(models.Model):
     proposal_park = models.ForeignKey(ProposalPark, blank=True, null=True, related_name='access_types')
@@ -1944,6 +1979,10 @@ class ProposalParkZoneActivity(models.Model):
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('park_zone', 'activity')
+
+    @property
+    def activity_name(self):
+        return self.activity.name
 
 
 class ProposalTrail(models.Model):
@@ -1997,6 +2036,9 @@ class ProposalTrailSectionActivity(models.Model):
         app_label = 'commercialoperator'
         unique_together = ('trail_section', 'activity')
 
+    @property
+    def activity_name(self):
+        return self.activity.name
 
 @python_2_unicode_compatible
 class Vehicle(models.Model):
@@ -3027,9 +3069,11 @@ def searchKeyWords(searchWords, searchProposal, searchApproval, searchCompliance
     if searchWords:
         if searchProposal:
             for p in proposal_list:
-                if p.data:
+                #if p.data:
+                if p.search_data:
                     try:
-                        results = search(p.data[0], searchWords)
+                        #results = search(p.data[0], searchWords)
+                        results = search(p.search_data, searchWords)
                         final_results = {}
                         if results:
                             for r in results:
@@ -3039,7 +3083,7 @@ def searchKeyWords(searchWords, searchProposal, searchApproval, searchCompliance
                                 'number': p.lodgement_number,
                                 'id': p.id,
                                 'type': 'Proposal',
-                                'applicant': p.applicant.name,
+                                'applicant': p.applicant,
                                 'text': final_results,
                                 }
                             qs.append(res)

@@ -131,7 +131,11 @@
                         </div>
                       </div> 
                     </div>
-
+                    <div class="row">
+                    <div class="col-lg-12">
+                        <alert :show.sync="showMessage" type="danger"><strong><p v-html="messageString"></p></strong></alert>
+                    </div>
+                    </div>
 
                     <div class="row">
                     <div class="col-lg-12">
@@ -205,6 +209,8 @@ export default {
       results: [],
       errors: false,
       errorString: '',
+      messages: false,
+      messageString:'',
       datatable_id: 'proposal-datatable-'+vm._uid,
       proposal_headers:["Number","Type","Proponent","Text found","Action"],
       proposal_options:{
@@ -250,7 +256,7 @@ export default {
                   }
               }
           ],
-          processing: true
+          processing: true,
       }
     }
     
@@ -276,6 +282,10 @@ export default {
         showError: function() {
             var vm = this;
             return vm.errors;
+        },
+        showMessage: function() {
+            var vm = this;
+            return vm.messages;
         }
     },
     methods: {
@@ -344,6 +354,8 @@ export default {
           vm.searchCompliance = false; */
           vm.keyWord = null; 
           vm.results = [];
+          vm.messages=false;
+          vm.messageString='';
           vm.$refs.proposal_datatable.vmDataTable.clear()
           vm.$refs.proposal_datatable.vmDataTable.draw();      
         },
@@ -351,7 +363,8 @@ export default {
         search: function() {
           let vm = this;
           if(this.searchKeywords.length > 0)
-          {
+          { vm.messages=true;
+            vm.messageString="Searching <i class='fa fa-2x fa-spinner fa-spin'></i>";
             vm.$http.post('/api/search_keywords.json',{
               searchKeywords: vm.searchKeywords,
               searchProposal: vm.searchProposal,
@@ -363,6 +376,8 @@ export default {
               vm.$refs.proposal_datatable.vmDataTable.clear()
               vm.$refs.proposal_datatable.vmDataTable.rows.add(vm.results);
               vm.$refs.proposal_datatable.vmDataTable.draw();
+              vm.message=false;
+              vm.messageString='';
             },
             err => {
               console.log(err);
@@ -397,6 +412,7 @@ export default {
     mounted: function () {
         let vm = this;
         vm.proposal_options.data = vm.results;
+        //vm.proposal_options.processing=true;
         vm.$refs.proposal_datatable.vmDataTable.draw();
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];
