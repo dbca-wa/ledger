@@ -2,12 +2,13 @@
 <form method="POST" name="external_returns_form" enctype="multipart/form-data">
 <div class="container" id="externalReturn">
     <Returns v-if="isReturnsLoaded" >
-        <div class='col-md-1'/>
-        <div class='col-md-8' >
+        <div class='col-md-3'/>
+        <div class='col-md-9' >
 
-            <ReturnSheet v-if="returns.format==='sheet'"></ReturnSheet>
-            <ReturnQuestion v-if="returns.format==='question'"></ReturnQuestion>
-            <ReturnData v-if="returns.format==='data'"></ReturnData>
+            <ReturnSheet v-if="returns.lodgement_date==null && returns.format==='sheet'"></ReturnSheet>
+            <ReturnQuestion v-if="returns.lodgement_date==null && returns.format==='question'"></ReturnQuestion>
+            <ReturnData v-if="returns.lodgement_date==null && returns.format==='data'"></ReturnData>
+            <ReturnSubmit v-if="returns.lodgement_date!=null"></ReturnSubmit>
 
             <!-- End template for Return Tab -->
 
@@ -18,7 +19,7 @@
                             <p class="pull-right" style="margin-top:5px;">
                                 <button style="width:150px;" class="btn btn-primary btn-md" name="save_exit">Save and Exit</button>
                                 <button style="width:150px;" class="btn btn-primary btn-md" @click.prevent="save()" name="save_continue">Save and Continue</button>
-                                <button style="width:150px;" class="btn btn-primary btn-md" v-if="isSubmittable" name="draft">Submit</button>
+                                <button style="width:150px;" class="btn btn-primary btn-md" v-if="isSubmittable" @click.prevent="submit()" name="submit">Submit</button>
                             </p>
                         </div>
                     </div>
@@ -37,6 +38,7 @@ import Returns from '../../returns_form.vue'
 import ReturnSheet from './enter_return_sheet.vue'
 import ReturnQuestion from './enter_return_question.vue'
 import ReturnData from './enter_return.vue'
+import ReturnSubmit from './return_submit.vue'
 import { mapActions, mapGetters } from 'vuex'
 import CommsLogs from '@common-components/comms_logs.vue'
 import {
@@ -56,6 +58,7 @@ export default {
     ReturnSheet,
     ReturnQuestion,
     ReturnData,
+    ReturnSubmit,
   },
   computed: {
     ...mapGetters([
@@ -67,7 +70,7 @@ export default {
     ]),
     isSubmittable() {
       return this.returns.format !== 'sheet' && this.returns.lodgement_date == null
-    }
+    },
   },
   methods: {
     ...mapActions({
@@ -113,11 +116,23 @@ export default {
       });
 
     },
-
-    submit: function(e) {  // TODO:
+    submit: function(e) {
       const self = this;
       self.form=document.forms.external_returns_form;
-      var data = new FormData(self.form);
+      self.$http.post(helpers.add_endpoint_json(api_endpoints.returns,self.returns.id+'/submit'),{
+                      emulateJSON:true,
+                    }).then((response)=>{
+                       let species_id = self.returns.sheet_species;
+                       self.setReturns(response.body);
+                       self.returns.sheet_species = species_id;
+                       swal('Save',
+                            'Return Submitted',
+                            'success'
+                       );
+                    },(error)=>{
+                        console.log(error);
+      });
+
     }
   },
   beforeRouteEnter: function(to, from, next) {

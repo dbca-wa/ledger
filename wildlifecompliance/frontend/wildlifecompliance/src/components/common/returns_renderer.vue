@@ -1,7 +1,7 @@
 <template lang="html">
     <div>
         <div class="col-md-3">
-            <h3>Return: {{ returns.lodgement_number }}</h3>
+            <h3>{{ displayable_number }}</h3>
             <div v-if="!is_external">
                 <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
                 <div class="row">
@@ -68,9 +68,8 @@
         </div>
 
         <!-- Tabs Layout -->
-        <div class="col-md-1">&nbsp;</div>
-        <div :class="`${form_width ? form_width : 'col-md-9'}`">
-            <div id="tabs" >
+        <div class="col-md-9" >
+            <div id="tabs" v-show="displayable_tabs">
                 <ul class="nav nav-tabs" id="tabs-section" data-tabs="tabs" >
                     <li class="active"><a id="0">1. Return</a></li>
                     <li v-if="returns.has_payment" ><a id="1">2. Confirmation</a></li>
@@ -145,6 +144,21 @@ export default {
       'species_list',
       'is_external',
     ]),
+    is_submitted: function() {
+      return this.returns.lodgement_date != null ? true : false;
+    },
+    displayable_number: function() {
+      if (this.is_external && this.returns.lodgement_date != null) {
+          return '\u00A0'
+      }
+      return 'Return: ' + this.returns.lodgement_number
+    },
+    displayable_tabs: function() {
+      if (this.is_external && this.returns.lodgement_date != null) {
+          return false
+      }
+      return true
+    }
   },
   methods: {
     ...mapActions([
