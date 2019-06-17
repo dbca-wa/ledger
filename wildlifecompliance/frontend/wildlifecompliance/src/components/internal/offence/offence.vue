@@ -6,7 +6,7 @@
                     <li class="active"><a data-toggle="tab" :href="'#'+oTab">Offence</a></li>
                     <li><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
                     <li><a data-toggle="tab" :href="'#'+pTab">Offender(s)</a></li>
-                    <li><a data-toggle="tab" :href="'#'+lTab">Location</a></li>
+                    <li><a data-toggle="tab" :href="'#'+lTab" @click="mapOffenceClicked">Location</a></li>
                 </ul>
                 <div class="tab-content">
                     <div :id="oTab" class="tab-pane fade in active">
@@ -120,7 +120,7 @@
                         <div class="row">
                             <div class="col-sm-12 form-group">
                                 <div v-if="offence.location">
-                                    <MapLocationOffence v-bind:key="offence.location.id"/>
+                                    <MapLocationOffence v-bind:key="lTab" :id="lTab" ref="mapOffenceComponent"/>
                                 </div>
                             </div>
                         </div>
@@ -133,9 +133,6 @@
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
         </modal>
-                                <!-- <div v-if="offence.location">
-                                    <MapLocationOffence v-bind:key="offence.location.id"/>
-                                </div> -->
     </div>
 </template>
 
@@ -222,6 +219,9 @@ export default {
       close: function () {
           let vm = this;
           this.isModalOpen = false;
+      },
+      mapOffenceClicked: function(){
+          this.$refs.mapOffenceComponent.mapTabClicked();
       },
       sendData: async function(){
           // TODO
@@ -363,7 +363,7 @@ export default {
   },
   created: async function() {
       this.$nextTick(function() {
-          this.initAwesomplete();
+        this.initAwesomplete();
       });
   },
   mounted: function() {

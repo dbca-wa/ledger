@@ -1,7 +1,6 @@
 <template lang="html">
     <div>
-        <!-- <div class="map-wrapper"> -->
-        <div class="aho">
+        <div class="map-wrapper">
             <div class="search-box">
                 <input :id="idSearchInput" class="search-input" />
             </div>
@@ -159,19 +158,21 @@ export default {
     }
   },
   mounted: function() {
-    this.$nextTick(function() {
+    let vm = this;
+
+    vm.$nextTick(function() {
       console.debug("Start loading map");
-      this.initMap();
-      this.setBaseLayer("osm");
-      this.initAwesomplete();
-      if (this.offence.location && this.offence.location &&
-          this.offence.location.geometry && this.offence.location.geometry.coordinates &&
-          this.offence.location.geometry.coordinates.length > 0){
+      vm.initMap();
+      vm.setBaseLayer("osm");
+      vm.initAwesomplete();
+      if (vm.offence.location && vm.offence.location &&
+          vm.offence.location.geometry && vm.offence.location.geometry.coordinates &&
+          vm.offence.location.geometry.coordinates.length > 0){
           /* If there is a location loaded, add a marker to the map */
-          this.addMarker([this.offence.location.geometry.coordinates[1], this.offence.location.geometry.coordinates[0]]);
-          this.refreshMarkerLocation();
+          vm.addMarker([vm.offence.location.geometry.coordinates[1], vm.offence.location.geometry.coordinates[0]]);
+          vm.refreshMarkerLocation();
       }
-      this.showHideAddressDetailsFields(false, false);
+      vm.showHideAddressDetailsFields(false, false);
       console.debug('End loading map');
     });
   },
@@ -192,6 +193,17 @@ export default {
         animate: true,
         duration: 1.5
       });
+    },
+    mapTabClicked: function(){
+      let vm = this;
+      setTimeout(function(){
+         /*
+          * Map size is changed somehow after the mapInit().  
+          * Therefore you need to call this method, otherwise you will get errors once you click on the map
+          * Ref: https://gis.stackexchange.com/questions/157128/leaflet-map-isnt-loading-in-the-correct-location
+          */
+         vm.mapOffence.invalidateSize();
+      }, 500);
     },
     setMarkerLocation: function() {
       console.log("setMarkerLocation");
