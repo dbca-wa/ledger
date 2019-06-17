@@ -1,6 +1,7 @@
 <template lang="html">
     <div>
-        <div class="map-wrapper">
+        <!-- <div class="map-wrapper"> -->
+        <div class="aho">
             <div class="search-box">
                 <input :id="idSearchInput" class="search-input" />
             </div>
@@ -162,16 +163,16 @@ export default {
       console.debug("Start loading map");
       this.initMap();
       this.setBaseLayer("osm");
-      // this.initAwesomplete();
-      // if (this.offence.location && this.offence.location &&
-      //     this.offence.location.geometry && this.offence.location.geometry.coordinates &&
-      //     this.offence.location.geometry.coordinates.length > 0){
-      //     /* If there is a location loaded, add a marker to the map */
-      //     this.addMarker([this.offence.location.geometry.coordinates[1], this.offence.location.geometry.coordinates[0]]);
-      //     this.refreshMarkerLocation();
-      // }
-      // this.showHideAddressDetailsFields(false, false);
-      // console.debug('End loading map');
+      this.initAwesomplete();
+      if (this.offence.location && this.offence.location &&
+          this.offence.location.geometry && this.offence.location.geometry.coordinates &&
+          this.offence.location.geometry.coordinates.length > 0){
+          /* If there is a location loaded, add a marker to the map */
+          this.addMarker([this.offence.location.geometry.coordinates[1], this.offence.location.geometry.coordinates[0]]);
+          this.refreshMarkerLocation();
+      }
+      this.showHideAddressDetailsFields(false, false);
+      console.debug('End loading map');
     });
   },
   methods: {
@@ -469,10 +470,10 @@ export default {
       });
       measureControl.addTo(this.mapOffence);
       Leaf.control.locate().addTo(this.mapOffence);
-      // this.mapOffence.flyTo({lat: 30, lng: 135}, 12,{
-      //     animate: true,
-      //     duration: 1.5
-      // });
+      this.mapOffence.flyTo({lat: 30, lng: 135}, 12,{
+          animate: true,
+          duration: 1.5
+      });
     },
     /* this function stores the coordinates into the vuex, then call refresh marker function */
     relocateMarker: function(latlng) {
