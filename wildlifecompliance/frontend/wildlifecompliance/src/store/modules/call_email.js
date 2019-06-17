@@ -424,7 +424,7 @@ export const callemailStore = {
         setClassification({ commit, }, classification) {
             commit("updateClassification", classification)
         },
-        async setGenericAttribute({ commit }, { attribute, event, datatype } ) {
+        setGenericAttribute({ commit }, { attribute, event, datatype } ) {
             let field_value = null;
             if (datatype === 'integer') {
                 field_value = parseInt(event.target.value);
