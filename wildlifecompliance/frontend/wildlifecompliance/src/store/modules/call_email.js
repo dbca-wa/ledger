@@ -423,10 +423,20 @@ export const callemailStore = {
         setClassification({ commit, }, classification) {
             commit("updateClassification", classification)
         },
-        setGenericAttribute({ commit }, { attribute, data } ) {
-            console.log(attribute);
-            console.log(typeof(data));
-            commit("updateGenericAttribute", { attribute, data });
+        async setGenericAttribute({ commit }, { attribute, event, datatype } ) {
+            let field_value = null;
+            if (datatype === 'integer') {
+                field_value = parseInt(event.target.value);
+              } else if (datatype === 'integer') {
+                if (event.target.value === 'true') {
+                    field_value = true;
+                  } else {
+                    field_value = false;
+                  }
+              } else {
+                field_value = event.target.value;
+              }
+            commit("updateGenericAttribute", { 'attribute': attribute, 'data': field_value });
         },
 
     },

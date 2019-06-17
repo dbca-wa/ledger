@@ -17,7 +17,6 @@ from wildlifecompliance.components.call_email.models import (
     ComplianceWorkflowLogEntry,
     CasePriority,
     InspectionType,
-    # ExternalOrganisation,
     )
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from wildlifecompliance.components.users.serializers import (
@@ -166,17 +165,6 @@ class ReferrerSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'name', )
 
 
-# class ExternalOrganisationSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = ExternalOrganisation
-#         fields = (
-#             'id',
-#             'name',
-#         )
-#         read_only_fields = ('id', 'name', )
-
-
 class LocationSerializerOptimized(GeoFeatureModelSerializer):
     class Meta:
         model = Location
@@ -256,8 +244,6 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)
     district_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
-    # allocated_to = serializers.ListField(
-    #     required=False, write_only=True, allow_empty=True)
     assigned_to_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
     allocated_group_id = serializers.IntegerField(
@@ -265,8 +251,6 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
     case_priority_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
     inspection_type_id = serializers.IntegerField(
-        required=False, write_only=True, allow_null=True)
-    external_organisation_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
 
     class Meta:
@@ -306,7 +290,6 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             'district_id',
             'case_priority_id',
             'inspection_type_id',
-            'external_organisation_id',
         )
         read_only_fields = (
             'id', 
@@ -362,7 +345,6 @@ class CallEmailSerializer(serializers.ModelSerializer):
     referrer = ReferrerSerializer(read_only=True)
     data = ComplianceFormDataRecordSerializer(many=True)
     email_user = EmailUserSerializer(read_only=True)
-    # allocated_group = CompliancePermissionGroupMembersSerializer()
 
     class Meta:
         model = CallEmail
@@ -402,19 +384,11 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'district_id',
             'case_priority_id',
             'inspection_type_id',
-            'external_organisation_id',
         )
         read_only_fields = (
             'id', 
-            # 'status_display',
             )
         
-    # def get_allocated_to(self, obj):
-    #     allocated_group = []
-    #     for allocated_user in obj.allocated_to.all():
-    #         allocated_group.append(allocated_user.id)
-    #     return allocated_group
-
 
 class CallEmailDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
@@ -439,7 +413,6 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
         )
         read_only_fields = (
             'id', 
-            # 'status_display',
             )
 
     def get_user_is_officer(self, obj):
@@ -491,8 +464,6 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)
     inspection_type_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
-    external_organisation_id = serializers.IntegerField(
-        required=False, write_only=True, allow_null=True)
 
     class Meta:
         model = CallEmail
@@ -523,11 +494,9 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
             'district_id',
             'case_priority_id',
             'inspection_type_id',
-            'external_organisation_id',
         )
         read_only_fields = (
             'id', 
-            # 'status_display',
             )
 
 

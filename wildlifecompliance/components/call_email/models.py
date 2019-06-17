@@ -63,18 +63,6 @@ class Referrer(models.Model):
         return self.name
 
 
-class ExternalOrganisation(models.Model):
-    name = models.CharField(max_length=50, blank=True)
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-        verbose_name = 'CM_ExternalOrganisation'
-        verbose_name_plural = 'CM_ExternalOrganisations'
-
-    def __str__(self):
-        return self.name
-
-
 class ReportType(models.Model):
 
     report_type = models.CharField(max_length=50)
@@ -256,12 +244,7 @@ class CallEmail(RevisionedMixin):
         related_name='callemail_inspection_type', 
         null=True
     )
-    external_organisation = models.ForeignKey(
-        ExternalOrganisation,
-        related_name='callemail_external_organisation', 
-        null=True
-    )
-
+    
     class Meta:
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_Call/Email'
