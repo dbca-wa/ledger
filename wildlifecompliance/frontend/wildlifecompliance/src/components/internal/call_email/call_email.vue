@@ -416,7 +416,7 @@ export default {
       loadCallEmail: "loadCallEmail",
       saveCallEmail: 'saveCallEmail',
       setGenericAttribute: 'setGenericAttribute',
-      loadAllocatedGroup: "loadAllocatedGroup",
+      // loadAllocatedGroup: "loadAllocatedGroup",
       setRegionId: "setRegionId",
       setAllocatedGroupList: "setAllocatedGroupList",
     }),
