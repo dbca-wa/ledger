@@ -33,9 +33,8 @@
                           <div class="row">
                             <div class="col-sm-12">
                               
-                              <select class="form-control" @change="setGenericAttribute('assigned_to_id', $event, 'integer')"
+                              <select class="form-control" @change="setGenericAttribute({'attribute': 'assigned_to_id', 'event': $event, 'datatype': 'integer'})"
                               :value="call_email.assigned_to_id" >
-                                <option ""/>  
                                 <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
@@ -151,26 +150,26 @@
                 
                 <div class="row"><div class="col-sm-8 form-group">
                   <label class="col-sm-12">Caller name</label>
-                  <input :readonly="isReadonly" class="form-control" @change.prevent="setGenericAttribute('caller', $event)" :value="call_email.caller"/>
+                  <input :readonly="isReadonly" class="form-control" @change.prevent="setGenericAttribute({'attribute': 'caller', 'event': $event})" :value="call_email.caller"/>
                 </div></div>
                 <div class="col-sm-4 form-group"><div class="row">
                   <label class="col-sm-12">Caller contact number</label>
-                <input :readonly="isReadonly" class="form-control" @change.prevent="setGenericAttribute('caller_phone_number', $event)" :value="call_email.caller_phone_number"/>
+                <input :readonly="isReadonly" class="form-control" @change.prevent="setGenericAttribute({'attribute': 'caller_phone_number', 'event': $event})" :value="call_email.caller_phone_number"/>
                 </div></div>
                 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Anonymous call?</label>
-                    <input :disabled="isReadonly" class="col-sm-1" id="yes" type="radio" @change.prevent="setGenericAttribute('anonymous_call', $event, 'bool')" :value="call_email.anonymous_call" v-bind:value="true">
+                    <input :disabled="isReadonly" class="col-sm-1" id="yes" type="radio" @change.prevent="setGenericAttribute({'attribute': 'anonymous_call', 'event': $event, 'datatype': 'bool'})" :value="call_email.anonymous_call" v-bind:value="true">
                     <label class="col-sm-1" for="yes">Yes</label>
-                    <input :disabled="isReadonly" class="col-sm-1" id="no" type="radio" @change.prevent="setGenericAttribute('anonymous_call', $event, 'bool')" :value="call_email.anonymous_call" v-bind:value="false">
+                    <input :disabled="isReadonly" class="col-sm-1" id="no" type="radio" @change.prevent="setGenericAttribute({'attribute': 'anonymous_call', 'event': $event, 'datatype': 'bool'})" :value="call_email.anonymous_call" v-bind:value="false">
                     <label class="col-sm-1" for="no">No</label>
                 </div></div>
 
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Caller wishes to remain anonymous?</label>
-                    <input :disabled="isReadonly" class="col-sm-1" type="radio" @change.prevent="setGenericAttribute('caller_wishes_to_remain_anonymous', $event, 'bool')" :value="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" @change.prevent="setGenericAttribute({'attribute': 'caller_wishes_to_remain_anonymous', 'event': $event, 'datatype': 'bool'})" :value="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
                     <label class="col-sm-1">Yes</label>
-                    <input :disabled="isReadonly" class="col-sm-1" type="radio" @change.prevent="setGenericAttribute('caller_wishes_to_remain_anonymous', $event, 'bool')" :value="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" @change.prevent="setGenericAttribute({'attribute': 'caller_wishes_to_remain_anonymous', 'event': $event, 'datatype': 'bool'})" :value="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
                     <label class="col-sm-1">No</label>
                 </div></div>
 
@@ -249,7 +248,7 @@
 
               <FormSection :formCollapse="true" label="Outcome" Index="3">
                 <div class="col-sm-12 form-group"><div class="row">
-                  <label class="col-sm-4">Referrer</label>
+                  <label class="col-sm-4">Referred To</label>
                   <select :disabled="isReadonly" class="form-control" v-model="call_email.referrer_id">
                           <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
                             {{ option.name }} 

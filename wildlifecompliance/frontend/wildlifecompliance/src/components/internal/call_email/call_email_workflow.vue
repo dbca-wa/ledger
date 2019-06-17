@@ -38,7 +38,7 @@
                               <label>Allocate to</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" @change="setGenericAttribute('assigned_to_id', $event, 'integer')" :value="call_email.assigned_to_id">
+                              <select class="form-control" @change="setGenericAttribute({'attribute': 'assigned_to_id', 'event': $event, 'datatype': 'integer'})" :value="call_email.assigned_to_id">
                                 <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
@@ -53,7 +53,7 @@
                               <label>Inspection Type</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" @change="setGenericAttribute('inspection_type_id', $event, 'integer')" :value="call_email.inspection_type_id">
+                              <select class="form-control" @change="setGenericAttribute({'attribute': 'inspection_type_id', 'event': $event, 'datatype': 'integer'})" :value="call_email.inspection_type_id">
                                 <option  v-for="option in inspectionTypes" :value="option.id" v-bind:key="option.id">
                                   {{ option.description }} 
                                 </option>
@@ -68,7 +68,7 @@
                               <label>Priority</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" @change="setGenericAttribute('case_priority_id', $event, 'integer')" :value="call_email.case_priority_id">
+                              <select class="form-control" @change="setGenericAttribute({'attribute': 'case_priority_id', 'event': $event, 'datatype': 'integer'})" :value="call_email.case_priority_id">
                                 <option  v-for="option in casePriorities" :value="option.id" v-bind:key="option.id">
                                   {{ option.description }} 
                                 </option>
@@ -83,7 +83,7 @@
                               <label>Referred To</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" @change="setGenericAttribute('referrer_id', $event, 'integer')" :value="call_email.referrer_id">
+                              <select class="form-control" @change="setGenericAttribute({'attribute': 'referrer_id', 'event': $event, 'datatype': 'integer'})" :value="call_email.referrer_id">
                                 <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
                                   {{ option.name }} 
                                 </option>
