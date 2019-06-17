@@ -137,130 +137,136 @@ export default {
             let vm = this;
             vm.errors = false;
             vm.actioningPurposes = true;
-            if (vm.action_licence.purpose_ids_list.length > 0 && vm.action == 'cancel'){
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.licences,vm.licence_id+'/cancel_purposes'),JSON.stringify(vm.action_licence),{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        swal(
-                                'Cancel Purposes',
-                                'The selected licenced purposes have been Cancelled.',
-                                'success'
-                        )
-                        vm.actioningPurposes = false;
-                        vm.close();
-                        vm.$emit('refreshFromResponse',response);
-                    },(error)=>{
-                        vm.errors = true;
-                        vm.actioningPurposes = false;
-                        vm.errorString = helpers.apiVueResourceError(error);
-                    });
-            } else {
-                vm.actioningPurposes = false;
-                swal(
-                     'Cancel Purpose',
-                     'Please select at least once licenced purpose to Cancel.',
-                     'error'
-                )
-            }
-            if (vm.action_licence.purpose_ids_list.length > 0 && vm.action == 'suspend'){
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.licences,vm.licence_id+'/suspend_purposes'),JSON.stringify(vm.action_licence),{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        swal(
-                                'Suspend Purposes',
-                                'The selected licenced purposes have been Suspended.',
-                                'success'
-                        )
-                        vm.actioningPurposes = false;
-                        vm.close();
-                        vm.$emit('refreshFromResponse',response);
-                    },(error)=>{
-                        vm.errors = true;
-                        vm.actioningPurposes = false;
-                        vm.errorString = helpers.apiVueResourceError(error);
-                    });
-            } else {
-                vm.actioningPurposes = false;
-                swal(
-                     'Suspend Purpose',
-                     'Please select at least once licenced purpose to Suspend.',
-                     'error'
-                )
-            }
-            if (vm.action_licence.purpose_ids_list.length > 0 && vm.action == 'surrender'){
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.licences,vm.licence_id+'/surrender_purposes'),JSON.stringify(vm.action_licence),{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        swal(
-                                'Surrender Purposes',
-                                'The selected licenced purposes have been Surrendered.',
-                                'success'
-                        )
-                        vm.actioningPurposes = false;
-                        vm.close();
-                        vm.$emit('refreshFromResponse',response);
-                    },(error)=>{
-                        vm.errors = true;
-                        vm.actioningPurposes = false;
-                        vm.errorString = helpers.apiVueResourceError(error);
-                    });
-            } else {
-                vm.actioningPurposes = false;
-                swal(
-                     'Surrender Purpose',
-                     'Please select at least once licenced purpose to Surrender.',
-                     'error'
-                )
-            }
-            if (vm.action_licence.purpose_ids_list.length > 0 && vm.action == 'reactivate-renew'){
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.licences,vm.licence_id+'/reactivat_renew_purposes'),JSON.stringify(vm.action_licence),{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        swal(
-                                'Reactivate Renew Purposes',
-                                'Renew for the selected licenced purposes has been Reactivated.',
-                                'success'
-                        )
-                        vm.actioningPurposes = false;
-                        vm.close();
-                        vm.$emit('refreshFromResponse',response);
-                    },(error)=>{
-                        vm.errors = true;
-                        vm.actioningPurposes = false;
-                        vm.errorString = helpers.apiVueResourceError(error);
-                    });
-            } else {
-                vm.actioningPurposes = false;
-                swal(
-                     'Reactivate Renew Purpose',
-                     'Please select at least once licenced purpose to Reactivate Renew.',
-                     'error'
-                )
-            }
-            if (vm.action_licence.purpose_ids_list.length > 0 && vm.action == 'reinstate'){
-                vm.$http.post(helpers.add_endpoint_json(api_endpoints.licences,vm.licence_id+'/reinstate_purposes'),JSON.stringify(vm.action_licence),{
-                        emulateJSON:true,
-                    }).then((response)=>{
-                        swal(
-                                'Reinstate Purposes',
-                                'The selected licenced purposes have been Reinstated.',
-                                'success'
-                        )
-                        vm.actioningPurposes = false;
-                        vm.close();
-                        vm.$emit('refreshFromResponse',response);
-                    },(error)=>{
-                        vm.errors = true;
-                        vm.actioningPurposes = false;
-                        vm.errorString = helpers.apiVueResourceError(error);
-                    });
-            } else {
-                vm.actioningPurposes = false;
-                swal(
-                     'Reinstate Purpose',
-                     'Please select at least once licenced purpose to Reinstate.',
-                     'error'
-                )
+            if (vm.action == 'cancel'){
+                if (vm.action_licence.purpose_ids_list.length > 0){
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.licences,vm.licence_id+'/cancel_purposes'),JSON.stringify(vm.action_licence),{
+                            emulateJSON:true,
+                        }).then((response)=>{
+                            swal(
+                                    'Cancel Purposes',
+                                    'The selected licenced purposes have been Cancelled.',
+                                    'success'
+                            )
+                            vm.actioningPurposes = false;
+                            vm.close();
+                            vm.$emit('refreshFromResponse',response);
+                        },(error)=>{
+                            vm.errors = true;
+                            vm.actioningPurposes = false;
+                            vm.errorString = helpers.apiVueResourceError(error);
+                        });
+                } else {
+                    vm.actioningPurposes = false;
+                    swal(
+                         'Cancel Purpose',
+                         'Please select at least once licenced purpose to Cancel.',
+                         'error'
+                    )
+                }
+            } else if (vm.action == 'suspend'){
+                if (vm.action_licence.purpose_ids_list.length > 0){
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.licences,vm.licence_id+'/suspend_purposes'),JSON.stringify(vm.action_licence),{
+                            emulateJSON:true,
+                        }).then((response)=>{
+                            swal(
+                                    'Suspend Purposes',
+                                    'The selected licenced purposes have been Suspended.',
+                                    'success'
+                            )
+                            vm.actioningPurposes = false;
+                            vm.close();
+                            vm.$emit('refreshFromResponse',response);
+                        },(error)=>{
+                            vm.errors = true;
+                            vm.actioningPurposes = false;
+                            vm.errorString = helpers.apiVueResourceError(error);
+                        });
+                } else {
+                    vm.actioningPurposes = false;
+                    swal(
+                         'Suspend Purpose',
+                         'Please select at least once licenced purpose to Suspend.',
+                         'error'
+                    )
+                }
+            } else if (vm.action == 'surrender'){
+                if (vm.action_licence.purpose_ids_list.length > 0){
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.licences,vm.licence_id+'/surrender_purposes'),JSON.stringify(vm.action_licence),{
+                            emulateJSON:true,
+                        }).then((response)=>{
+                            swal(
+                                    'Surrender Purposes',
+                                    'The selected licenced purposes have been Surrendered.',
+                                    'success'
+                            )
+                            vm.actioningPurposes = false;
+                            vm.close();
+                            vm.$emit('refreshFromResponse',response);
+                        },(error)=>{
+                            vm.errors = true;
+                            vm.actioningPurposes = false;
+                            vm.errorString = helpers.apiVueResourceError(error);
+                        });
+                } else {
+                    vm.actioningPurposes = false;
+                    swal(
+                         'Surrender Purpose',
+                         'Please select at least once licenced purpose to Surrender.',
+                         'error'
+                    )
+                }
+            } else if (vm.action == 'reactivate-renew'){
+                if (vm.action_licence.purpose_ids_list.length > 0){
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.licences,vm.licence_id+'/reactivat_renew_purposes'),JSON.stringify(vm.action_licence),{
+                            emulateJSON:true,
+                        }).then((response)=>{
+                            swal(
+                                    'Reactivate Renew Purposes',
+                                    'Renew for the selected licenced purposes has been Reactivated.',
+                                    'success'
+                            )
+                            vm.actioningPurposes = false;
+                            vm.close();
+                            vm.$emit('refreshFromResponse',response);
+                        },(error)=>{
+                            vm.errors = true;
+                            vm.actioningPurposes = false;
+                            vm.errorString = helpers.apiVueResourceError(error);
+                        });
+                } else {
+                    vm.actioningPurposes = false;
+                    swal(
+                         'Reactivate Renew Purpose',
+                         'Please select at least once licenced purpose to Reactivate Renew.',
+                         'error'
+                    )
+                }
+            } else if (vm.action == 'reinstate'){
+                if (vm.action_licence.purpose_ids_list.length > 0){
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.licences,vm.licence_id+'/reinstate_purposes'),JSON.stringify(vm.action_licence),{
+                            emulateJSON:true,
+                        }).then((response)=>{
+                            swal(
+                                    'Reinstate Purposes',
+                                    'The selected licenced purposes have been Reinstated.',
+                                    'success'
+                            )
+                            vm.actioningPurposes = false;
+                            vm.close();
+                            vm.$emit('refreshFromResponse',response);
+                        },(error)=>{
+                            vm.errors = true;
+                            vm.actioningPurposes = false;
+                            vm.errorString = helpers.apiVueResourceError(error);
+                        });
+                } else {
+                    vm.actioningPurposes = false;
+                    swal(
+                         'Reinstate Purpose',
+                         'Please select at least once licenced purpose to Reinstate.',
+                         'error'
+                    )
+                }
             }
         },
         addFormValidations: function() {
