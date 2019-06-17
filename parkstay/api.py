@@ -4,7 +4,7 @@ import geojson
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
-from django.db import transaction, connection
+from django.db import transaction
 from django.http import HttpResponse
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
@@ -50,6 +50,7 @@ from parkstay.models import (Campground,
                                 MaximumStayReason,
                                 DiscountReason,
                                 ParkEntryRate,
+                                BookingVehicleRego
                                 )
 
 from parkstay.serialisers import (  CampsiteBookingSerialiser,
@@ -86,6 +87,7 @@ from parkstay.serialisers import (  CampsiteBookingSerialiser,
                                     DiscountReasonSerializer,
                                     BulkPricingSerializer,
                                     UsersSerializer,
+                                    AccountsAddressSerializer,
                                     ParkEntryRateSerializer,
                                     ReportSerializer,
                                     BookingSettlementReportSerializer,
@@ -214,6 +216,7 @@ class CampsiteViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 print(traceback.print_exc())
                 raise serializers.ValidationError(str(e[0]))
+
 
     @detail_route(methods=['get'])
     def status_history(self, request, format='json', pk=None):
@@ -1506,27 +1509,29 @@ class BookingViewSet(viewsets.ModelViewSet):
     serializer_class = BookingSerializer
 
     def list(self, request, *args, **kwargs):
+        from django.db import connection, transaction
         try:
             search = request.GET.get('search[value]')
+            draw = request.GET.get('draw') if request.GET.get('draw') else 1
             start = request.GET.get('start') if request.GET.get('draw') else 0
             length = request.GET.get('length') if request.GET.get('draw') else 'all'
-            arrival = str(datetime.strptime(request.GET.get('arrival'), '%d/%m/%Y')) if request.GET.get('arrival') else ''
-            departure = str(datetime.strptime(request.GET.get('departure'), '%d/%m/%Y')) if request.GET.get('departure') else ''
+            arrival = str(datetime.strptime(request.GET.get('arrival'),'%d/%m/%Y')) if request.GET.get('arrival') else ''
+            departure = str(datetime.strptime(request.GET.get('departure'),'%d/%m/%Y')) if request.GET.get('departure') else ''
             campground = request.GET.get('campground')
             region = request.GET.get('region')
-            canceled = request.GET.get('canceled', None)
-            if canceled and canceled.lower() in ['yes', 'true', 't', '1']:
-                cancelled = 't'
-            else:
-                cancelled = 'f'
-            refund_status = request.GET.get('refund_status', None)
+            canceled = request.GET.get('canceled',None)
+            refund_status = request.GET.get('refund_status',None)
+            if canceled:
+                canceled = True if canceled.lower() in ['yes','true','t','1'] else False
+
+            canceled = 't' if canceled else 'f'
 
             sql = ''
-            sqlSelect = 'select distinct parkstay_booking.id as id,parkstay_booking.created,parkstay_booking.customer_id,\
-                parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
+            http_status = status.HTTP_200_OK
+            sqlSelect = 'select distinct parkstay_booking.id as id,parkstay_booking.created,parkstay_booking.customer_id, parkstay_campground.name as campground_name,parkstay_region.name as campground_region,parkstay_booking.legacy_name,\
                 parkstay_booking.legacy_id,parkstay_campground.site_type as campground_site_type,\
-                parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,\
-                coalesce(accounts_emailuser.first_name || \' \' || accounts_emailuser.last_name) as full_name'
+                parkstay_booking.arrival as arrival, parkstay_booking.departure as departure,parkstay_campground.id as campground_id,coalesce(accounts_emailuser.first_name || \' \' || accounts_emailuser.last_name) as full_name'
+            sqlCount = 'select count(distinct parkstay_booking.id)'
 
             sqlFrom = ' from parkstay_booking\
                 join parkstay_campground on parkstay_campground.id = parkstay_booking.campground_id\
@@ -1537,36 +1542,46 @@ class BookingViewSet(viewsets.ModelViewSet):
                 left outer join parkstay_campgroundgroup_campgrounds cg on cg.campground_id = parkstay_booking.campground_id\
                 full outer join parkstay_campgroundgroup_members cm on cm.campgroundgroup_id = cg.campgroundgroup_id'
 
+            #sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
+            #sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
+
             sql = sqlSelect + sqlFrom + " where "
+            sqlCount = sqlCount + sqlFrom + " where "
             sqlParams = {}
 
             # Filter the camgrounds that the current user is allowed to view
             sqlFilterUser = ' cm.emailuser_id = %(user)s'
             sql += sqlFilterUser
+            sqlCount += sqlFilterUser
             sqlParams['user'] = request.user.id
 
-            if campground:
+            if campground :
                 sqlCampground = ' parkstay_campground.id = %(campground)s'
-                sql = sql + " and " + sqlCampground
+                sql = sql + " and "+ sqlCampground
+                sqlCount = sqlCount + " and " +sqlCampground
                 sqlParams['campground'] = campground
             if region:
                 sqlRegion = " parkstay_region.id = %(region)s"
-                sql = sql + " and " + sqlRegion
+                sql = sql+" and "+ sqlRegion
+                sqlCount = sqlCount +" and "+ sqlRegion
                 sqlParams['region'] = region
             if arrival:
-                sqlArrival = ' parkstay_booking.departure > %(arrival)s'
-                sql = sql + " and " + sqlArrival
+                sqlArrival= ' parkstay_booking.departure > %(arrival)s'
+                sqlCount = sqlCount + " and "+ sqlArrival
+                sql = sql + " and "+ sqlArrival
                 sqlParams['arrival'] = arrival
             if departure:
                 sqlDeparture = ' parkstay_booking.arrival <= %(departure)s'
+                sqlCount =  sqlCount + ' and ' + sqlDeparture
                 sql = sql + ' and ' + sqlDeparture
                 sqlParams['departure'] = departure
             # Search for cancelled bookings
             sql += ' and parkstay_booking.is_canceled = %(canceled)s'
+            sqlCount += ' and parkstay_booking.is_canceled = %(canceled)s'
             sqlParams['canceled'] = canceled
             # Remove temporary bookings
             sql += ' and parkstay_booking.booking_type <> 3'
-
+            sqlCount += ' and parkstay_booking.booking_type <> 3'
             if search:
                 sqlsearch = ' lower(parkstay_campground.name) LIKE lower(%(wildSearch)s)\
                 or lower(parkstay_region.name) LIKE lower(%(wildSearch)s)\
@@ -1579,24 +1594,28 @@ class BookingViewSet(viewsets.ModelViewSet):
                     sqlsearch += ' or CAST (parkstay_booking.id as TEXT) like %(upperSearch)s'
                     sqlParams['upperSearch'] = '{}%'.format(search)
 
-                sql += " and ( " + sqlsearch + " )"
+                sql += " and ( "+ sqlsearch +" )"
+                sqlCount +=  " and  ( "+ sqlsearch +" )"
 
             sql += ' ORDER BY parkstay_booking.arrival DESC'
+
+            if length != 'all':
+                sql = sql + ' limit %(length)s offset %(start)s'
+                sqlParams['length'] = length
+                sqlParams['start'] = start
 
             if length == 'all':
                 sql = sql + ' limit %(length)s offset %(start)s'
                 sqlParams['length'] = 2000
                 sqlParams['start'] = start
-            else:
-                sql = sql + ' limit %(length)s offset %(start)s'
-                sqlParams['length'] = length
-                sqlParams['start'] = start
 
             sql += ';'
 
             cursor = connection.cursor()
-            cursor.execute("select count(*) from parkstay_booking")
+            cursor.execute("Select count(*) from parkstay_booking ");
             recordsTotal = cursor.fetchone()[0]
+            cursor.execute(sqlCount, sqlParams);
+            recordsFiltered = cursor.fetchone()[0]
 
             cursor.execute(sql, sqlParams)
             columns = [col[0] for col in cursor.description]
@@ -1607,10 +1626,10 @@ class BookingViewSet(viewsets.ModelViewSet):
             bookings_qs = Booking.objects.filter(id__in=[b['id'] for b in data]).prefetch_related('campground', 'campsites', 'campsites__campsite', 'customer', 'regos', 'history', 'invoices', 'canceled_by')
             booking_map = {b.id: b for b in bookings_qs}
             clean_data = []
-
             for bk in data:
                 cg = None
                 booking = booking_map[bk['id']]
+                cg = booking.campground
                 bk['editable'] = booking.editable
                 bk['status'] = booking.status
                 bk['booking_type'] = booking.booking_type
@@ -1624,14 +1643,14 @@ class BookingViewSet(viewsets.ModelViewSet):
                 bk['canceled_by'] = booking.canceled_by.get_full_name() if booking.canceled_by else ''
                 bk['cancelation_time'] = booking.cancelation_time if booking.cancelation_time else ''
                 bk['paid'] = booking.paid
-                bk['invoices'] = [i.invoice_reference for i in booking.invoices.all()]
-                bk['active_invoices'] = [i.invoice_reference for i in booking.invoices.all() if i.active]
+                bk['invoices'] = [ i.invoice_reference for i in booking.invoices.all()]
+                bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
                 bk['guests'] = booking.guests
                 bk['campsite_names'] = booking.campsite_name_list
                 bk['regos'] = [{r.type: r.rego} for r in booking.regos.all()]
-                bk['firstname'] = booking.details.get('first_name', '')
-                bk['lastname'] = booking.details.get('last_name', '')
-                if booking.override_reason:
+                bk['firstname'] = booking.details.get('first_name','')
+                bk['lastname'] = booking.details.get('last_name','')
+                if  booking.override_reason:
                     bk['override_reason'] = booking.override_reason.text
                 if booking.override_reason_info:
                     bk['override_reason_info'] = booking.override_reason_info
@@ -1655,16 +1674,16 @@ class BookingViewSet(viewsets.ModelViewSet):
                         first_campsite_list = booking.first_campsite_list
                         campground_site_type = []
                         for item in first_campsite_list:
-                            campground_site_type.append({
+                            campground_site_type.append ({
                                 "name": '{}'.format(item.name if item else ""),
                                 "type": '{}'.format(item.type if item.type else ""),
                                 "campground_type": item.campground.site_type,
-                            })
+                                })
                         bk['campground_site_type'] = campground_site_type
                 else:
                     bk['campground_site_type'] = ""
                 if refund_status and canceled == 't':
-                    refund_statuses = ['All', 'Partially Refunded', 'Not Refunded', 'Refunded']
+                    refund_statuses = ['All','Partially Refunded','Not Refunded','Refunded']
                     if refund_status in refund_statuses:
                         if refund_status == 'All':
                             clean_data.append(bk)
@@ -1676,9 +1695,9 @@ class BookingViewSet(viewsets.ModelViewSet):
 
             return Response(OrderedDict([
                 ('recordsTotal', recordsTotal),
-                ('recordsFiltered', len(data)),
-                ('results', clean_data)
-            ]), status=status.HTTP_200_OK)
+                ('recordsFiltered',recordsFiltered),
+                ('results',clean_data)
+            ]),status=status.HTTP_200_OK)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -1687,6 +1706,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     def create(self, request, format=None):
+        from datetime import datetime
         userCreated = False
         try:
             if 'ps_booking' in request.session:
@@ -1866,6 +1886,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     @detail_route(permission_classes=[],methods=['GET'])
     def booking_checkout_status(self, request, *args, **kwargs):
+        from django.utils import timezone
         http_status = status.HTTP_200_OK
         try:
             instance = self.get_object()
@@ -2051,7 +2072,6 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Country.objects.order_by('-display_order', 'printable_name')
     serializer_class = CountrySerializer
     permission_classes = [IsAuthenticated]
-
 
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = EmailUser.objects.all()

@@ -66,17 +66,10 @@ CRON_CLASSES = [
 ]
 
 # Additional logging for parkstay
-LOGGING['handlers']['booking_checkout'] = {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'parkstay_booking_checkout.log'),
-            'formatter': 'verbose',
-            'maxBytes': 5242880
-        }
 LOGGING['loggers']['booking_checkout'] = {
-            'handlers': ['booking_checkout'],
-            'level': 'INFO'
-        }
+    'handlers': ['console'],
+    'level': 'INFO'
+}
 
 SYSTEM_NAME = env('SYSTEM_NAME', 'Parkstay WA')
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
