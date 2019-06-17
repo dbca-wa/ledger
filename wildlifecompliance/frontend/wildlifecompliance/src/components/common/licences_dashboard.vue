@@ -369,7 +369,7 @@ export default {
                 });
             });
             // Reactivate Renew activity listener
-            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reactivate-renew-activity]', function(e) {
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reactivate-renew-purposes]', function(e) {
                 e.preventDefault();
                 swal({
                     title: "Reactivate Renew for Activity",
@@ -379,7 +379,7 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var licence_activity_id = $(this).attr('reactivate-renew-activity');
+                        var licence_activity_id = $(this).attr('reactivate-renew-purposes');
                         var licence_id = $(this).attr('lic-id');
                         vm.licence_action = 'reactivate-renew';
                         vm.selected_licence_id = licence_id;
@@ -403,7 +403,7 @@ export default {
                 });
             });
             // Surrender activity listener
-            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[surrender-activity]', function(e) {
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[surrender-purposes]', function(e) {
                 e.preventDefault();
                 swal({
                     title: "Surrender Activity",
@@ -413,7 +413,7 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var licence_activity_id = $(this).attr('surrender-activity');
+                        var licence_activity_id = $(this).attr('surrender-purposes');
                         var licence_id = $(this).attr('lic-id');
                         vm.licence_action = 'surrender';
                         vm.selected_licence_id = licence_id;
@@ -471,7 +471,7 @@ export default {
                 });
             });
             // Suspend activity listener
-            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[suspend-activity]', function(e) {
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[suspend-purposes]', function(e) {
                 e.preventDefault();
                 swal({
                     title: "Suspend Activity",
@@ -481,7 +481,7 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var licence_activity_id = $(this).attr('suspend-activity');
+                        var licence_activity_id = $(this).attr('suspend-purposes');
                         var licence_id = $(this).attr('lic-id');
                         vm.licence_action = 'suspend';
                         vm.selected_licence_id = licence_id;
@@ -523,7 +523,7 @@ export default {
                 });
             });
             // Reinstate activity listener
-            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reinstate-activity]', function(e) {
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reinstate-purposes]', function(e) {
                 e.preventDefault();
                 swal({
                     title: "Reinstate Activity",
@@ -533,7 +533,7 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var licence_activity_id = $(this).attr('reinstate-activity');
+                        var licence_activity_id = $(this).attr('reinstate-purposes');
                         var licence_id = $(this).attr('lic-id');
                         vm.licence_action = 'reinstate';
                         vm.selected_licence_id = licence_id;
@@ -599,11 +599,11 @@ export default {
                                     }
                                     if (!vm.is_external && activity['can_reactivate_renew']) {
                                         activity_rows +=
-                                            `<a reactivate-renew-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Reactivate Renew</a></br>`;
+                                            `<a reactivate-renew-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Reactivate Renew</a></br>`;
                                     }
                                     if (activity['can_surrender']) {
                                         activity_rows +=
-                                            `<a surrender-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Surrender</a></br>`;
+                                            `<a surrender-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Surrender</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_cancel']) {
                                         activity_rows +=
@@ -611,7 +611,7 @@ export default {
                                     }
                                     if (!vm.is_external && activity['can_suspend']) {
                                         activity_rows +=
-                                            `<a suspend-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Suspend</a></br>`;
+                                            `<a suspend-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Suspend</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reissue']) {
                                         activity_rows +=
@@ -619,7 +619,7 @@ export default {
                                     }
                                     if (!vm.is_external && activity['can_reinstate']) {
                                         activity_rows +=
-                                            `<a reinstate-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Reinstate</a></br>`;
+                                            `<a reinstate-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Reinstate</a></br>`;
                                     }
                         activity_rows += `</td>
                             </tr>`;
