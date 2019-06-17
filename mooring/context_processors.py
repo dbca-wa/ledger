@@ -6,8 +6,8 @@ def mooring_url(request):
     web_url = request.META['HTTP_HOST']
     if web_url in settings.ROTTNEST_ISLAND_URL:
        template_group = 'rottnest'
-       TERMS  = "https://www.rottnestisland.com/boating/moorings/Rental%20Moorings%20and%20Jetty%20Pens"
-       PUBLIC_URL='https://mooring-ria.dbca.wa.gov.au'
+       TERMS  = "https://www.rottnestisland.com/~/media/Files/boating-documents/marine-hire-facilities-tcs.pdf?la=en"
+       PUBLIC_URL='https://mooring-ria.dbca.wa.gov.au/'
     else:
        template_group = 'pvs'
        TERMS = "/know/online-mooring-site-booking-terms-and-conditions"

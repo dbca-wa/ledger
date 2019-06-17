@@ -587,6 +587,11 @@ class RefundPaymentView(TemplateView):
                  update_payments(new_invoice.reference)
 
 
+             ## Send booking confirmation and invoice
+             #emails.send_booking_invoice(booking,request,context_processor)
+             #emails.send_booking_confirmation(booking,request, context_processor)
+
+
              if failed_refund is True:
                  # Refund Failed Assign Refund amount to allocation pool.
                  lines = [{'ledger_description':'Refund assigned to unallocated pool',"quantity":1,"price_incl_tax":abs(info['amount']),"oracle_code":settings.UNALLOCATED_ORACLE_CODE, 'line_status': 1}]
@@ -625,7 +630,7 @@ class ZeroBookingView(TemplateView):
             return HttpResponseRedirect(reverse('home'))
 
     def post(self, request, *args, **kwargs):
-
+         context_processor = template_context(request)
          booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
          if request.user.is_staff or request.user.is_superuser or Booking.objects.filter(pk=booking.id).count() == 1:
 
@@ -646,6 +651,10 @@ class ZeroBookingView(TemplateView):
              order_response = place_order_submission(request)
              new_order = Order.objects.get(basket=basket)
              new_invoice = Invoice.objects.get(order_number=new_order.number)
+
+             # Send booking confirmation and invoice
+             #emails.send_booking_invoice(booking,request,context_processor)
+             #emails.send_booking_confirmation(booking,request, context_processor)
 
              return HttpResponseRedirect('/success/')
          else:
@@ -2464,11 +2473,11 @@ class BookingSuccessView(TemplateView):
                     request.session['ps_last_booking'] = booking.id
                     utils.delete_session_booking(request.session)
                     # send out the invoice before the confirmation is sent if total is greater than zero
-                    if booking.cost_total > 0: 
-                        emails.send_booking_invoice(booking,request,context_processor)
+                    #if booking.cost_total > 0: 
+                    emails.send_booking_invoice(booking,request,context_processor)
                     # for fully paid bookings, fire off confirmation emaili
-                    if booking.invoice_status == 'paid':
-                        emails.send_booking_confirmation(booking,request, context_processor)
+                    #if booking.invoice_status == 'paid':
+                    emails.send_booking_confirmation(booking,request, context_processor)
                     refund_failed = None
                     if RefundFailed.objects.filter(booking=booking).count() > 0:
                         refund_failed = RefundFailed.objects.filter(booking=booking)
@@ -2651,85 +2660,42 @@ class ChangeBookingView(LoginRequiredMixin, TemplateView):
              booking = Booking.objects.get(pk=booking_id)
              if booking.booking_type == 4:
                   print ("BOOKING HAS BEEN CANCELLED")
+                  messages.error(self.request, 'Sorry this booking is not longer a current active booking.')
                   return HttpResponseRedirect(reverse('home'))
+
+             if booking.booking_type == 1:
                  
-             booking_temp = Booking.objects.create(mooringarea=booking.mooringarea,
-                                                   booking_type=3,
-                                                   expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
-                                                   details=booking.details,
-                                                   arrival=booking.arrival,
-                                                   departure=booking.departure, 
-                                                   old_booking=booking, 
-                                                   customer=booking.customer)
-       
-	     #request.session['ps_booking'] = booking_temp.id
-             #request.session.modified = True
-             booking_items = MooringsiteBooking.objects.filter(booking=booking)
-             for bi in booking_items:
-                  cb =  MooringsiteBooking.objects.create(
-                         campsite=bi.campsite,
-                         booking_type=3,
-                         date=bi.date,
-                         from_dt=bi.from_dt,
-                         to_dt=bi.to_dt,
-                         booking=booking_temp,
-                         amount=bi.amount,
-                         booking_period_option=bi.booking_period_option
-                       )
-                  campsite_id= bi.campsite_id
-             request.session['ps_booking'] = booking_temp.id
-             #request.session['ps_booking_old'] =  booking.id
-             request.session.modified = True
-             return HttpResponseRedirect(reverse('mooring_availaiblity2_selector')+'?site_id='+str(booking.mooringarea_id)+'&arrival='+str(booking.arrival)+'&departure='+str(booking.departure)+'&vessel_size='+str(booking.details['vessel_size'])+'&vessel_draft='+str(booking.details['vessel_draft'])+'&vessel_beam='+str(booking.details['vessel_beam'])+'&vessel_weight='+str(booking.details['vessel_weight'])+'&vessel_rego='+str(booking.details['vessel_rego'])+'&num_adult='+str(booking.details['num_adults'])+'&num_children='+str(booking.details['num_children'])+'&num_infants='+str(booking.details['num_infants']) )
- 
-#        ad_currents = admissions.filter(arrivalDate__gte=today).order_by('arrivalDate')
-#        ad_current = []
-#        for ad in ad_currents:
-#            to_add = [ad, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
-#            ad_current.append(to_add)
-#        ad_pasts = admissions.filter(arrivalDate__lt=today).order_by('-arrivalDate')
-#        ad_past = []
-#        for ad in ad_pasts:
-#            to_add = [ad, AdmissionsBookingInvoice.objects.get(admissions_booking=ad).invoice_reference]
-#            ad_past.append(to_add)
-#
-#        bk_currents = bookings.filter(departure__gte=today).order_by('arrival')
-#        bk_current = []
-#        for bk in bk_currents:
-#            to_add = [bk, BookingInvoice.objects.get(booking=bk).invoice_reference]
-#            bk_current.append(to_add)
-#        bk_pasts = bookings.filter(departure__lt=today).order_by('-arrival')
-#        bk_past = []
-#        for bk in bk_pasts:
-#            to_add = [bk, BookingInvoice.objects.get(booking=bk).invoice_reference]
-#            bk_past.append(to_add)
- #       context = {
-#           'booking_id': booking_id,    
-#           'booking': booking
- #           'past_bookings': bk_past,
- #           'current_admissions': ad_current,
- #           'past_admissions': ad_past,
-            # 'admissions_invoice': AdmissionsBookingInvoice.objects.filter(admissions_booking__in=admissions)
-#        }
-#        return render(request, self.template_name, context)
-
-
-
-#        cb =    MooringsiteBooking.objects.create(
-#                  campsite=mooringsite,
-#                  booking_type=3,
-#                  date=booking_date,
-#                  from_dt=start_booking_date+' '+str(booking_period.start_time),
-#                  to_dt=finish_booking_date+' '+str(booking_period.finish_time),
-#                  booking=booking,
-#                  amount=amount,
-#                  booking_period_option=booking_period
-#                  )
-
-#        response_data['result'] = 'success'
-#        response_data['message'] = ''
-
-
+                 booking_temp = Booking.objects.create(mooringarea=booking.mooringarea,
+                                                       booking_type=3,
+                                                       expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),
+                                                       details=booking.details,
+                                                       arrival=booking.arrival,
+                                                       departure=booking.departure, 
+                                                       old_booking=booking, 
+                                                       customer=booking.customer)
+           
+    	     #request.session['ps_booking'] = booking_temp.id
+                 #request.session.modified = True
+                 booking_items = MooringsiteBooking.objects.filter(booking=booking)
+                 for bi in booking_items:
+                      cb =  MooringsiteBooking.objects.create(
+                             campsite=bi.campsite,
+                             booking_type=3,
+                             date=bi.date,
+                             from_dt=bi.from_dt,
+                             to_dt=bi.to_dt,
+                             booking=booking_temp,
+                             amount=bi.amount,
+                             booking_period_option=bi.booking_period_option
+                           )
+                      campsite_id= bi.campsite_id
+                 request.session['ps_booking'] = booking_temp.id
+                 #request.session['ps_booking_old'] =  booking.id
+                 request.session.modified = True
+                 return HttpResponseRedirect(reverse('mooring_availaiblity2_selector')+'?site_id='+str(booking.mooringarea_id)+'&arrival='+str(booking.arrival)+'&departure='+str(booking.departure)+'&vessel_size='+str(booking.details['vessel_size'])+'&vessel_draft='+str(booking.details['vessel_draft'])+'&vessel_beam='+str(booking.details['vessel_beam'])+'&vessel_weight='+str(booking.details['vessel_weight'])+'&vessel_rego='+str(booking.details['vessel_rego'])+'&num_adult='+str(booking.details['num_adults'])+'&num_children='+str(booking.details['num_children'])+'&num_infants='+str(booking.details['num_infants'])+'&distance_radius='+str(booking.mooringarea.park.distance_radius)  )
+             else:
+                  print ("BOOKING NOT ACTIVE")
+                  messages.error(self.request, 'Sorry this booking is not longer a current active booking.')
         return HttpResponseRedirect(reverse('home'))
 
 

@@ -137,8 +137,8 @@ def booking_refunds(start,end):
 def booking_bpoint_settlement_report(_date):
     try:
         bpoint, cash = [], []
-        bpoint.extend([x for x in BpointTransaction.objects.filter(created__date=_date,response_code=0,crn1__startswith='0019').exclude(crn1__endswith='_test')])
-        cash = CashTransaction.objects.filter(created__date=_date,invoice__reference__startswith='0019').exclude(type__in=['move_out','move_in'])
+        bpoint.extend([x for x in BpointTransaction.objects.filter(created__date=_date,response_code=0,crn1__startswith='0516').exclude(crn1__endswith='_test')])
+        cash = CashTransaction.objects.filter(created__date=_date,invoice__reference__startswith='0516').exclude(type__in=['move_out','move_in'])
 
         strIO = StringIO()
         fieldnames = ['Payment Date','Settlement Date','Confirmation Number','Name','Type','Amount','Invoice']
