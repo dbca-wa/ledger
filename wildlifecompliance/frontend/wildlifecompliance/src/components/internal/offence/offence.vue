@@ -363,7 +363,7 @@ export default {
   },
   created: async function() {
       this.$nextTick(function() {
-        //   this.initAwesomplete();
+          this.initAwesomplete();
       });
   },
   mounted: function() {
