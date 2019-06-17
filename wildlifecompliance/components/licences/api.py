@@ -282,7 +282,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
                 can_reactivate_renew_purposes = instance.get_latest_purposes_for_licence_activity_and_action(
                     licence_activity_id, 'reactivate_renew')
                 can_reactivate_renew_purposes_ids_list = [purpose.id for purpose in can_reactivate_renew_purposes.order_by('id')]
-                if not set(purpose_ids_list) & set(can_reactivate_renew_purposes_ids_list):
+                if not set(purpose_ids_list).issubset(can_reactivate_renew_purposes_ids_list):
                     raise serializers.ValidationError(
                         'Renew for selected purposes cannot be reactivated')
                 instance.reactivate_renew_purposes(request)
@@ -321,7 +321,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
                 can_surrender_purposes = instance.get_latest_purposes_for_licence_activity_and_action(
                     licence_activity_id, 'surrender')
                 can_surrender_purposes_ids_list = [purpose.id for purpose in can_surrender_purposes.order_by('id')]
-                if not set(purpose_ids_list) & set(can_surrender_purposes_ids_list):
+                if not set(purpose_ids_list).issubset(can_surrender_purposes_ids_list):
                     raise serializers.ValidationError(
                         'Selected purposes cannot be surrendered')
                 instance.surrender_purposes(request)
@@ -363,7 +363,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
                 can_cancel_purposes = instance.get_latest_purposes_for_licence_activity_and_action(
                     licence_activity_id, 'cancel')
                 can_cancel_purposes_ids_list = [purpose.id for purpose in can_cancel_purposes.order_by('id')]
-                if not set(purpose_ids_list) & set(can_cancel_purposes_ids_list):
+                if not set(purpose_ids_list).issubset(can_cancel_purposes_ids_list):
                     raise serializers.ValidationError(
                         'Selected purposes cannot be cancelled')
                 instance.cancel_purposes(request)
@@ -405,7 +405,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
                 can_suspend_purposes = instance.get_latest_purposes_for_licence_activity_and_action(
                     licence_activity_id, 'suspend')
                 can_suspend_purposes_ids_list = [purpose.id for purpose in can_suspend_purposes.order_by('id')]
-                if not set(purpose_ids_list) & set(can_suspend_purposes_ids_list):
+                if not set(purpose_ids_list).issubset(can_suspend_purposes_ids_list):
                     raise serializers.ValidationError(
                         'Selected purposes cannot be suspended')
                 instance.suspend_purposes(request)
@@ -447,7 +447,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
                 can_reinstate_purposes = instance.get_latest_purposes_for_licence_activity_and_action(
                     licence_activity_id, 'reinstate')
                 can_reinstate_purposes_ids_list = [purpose.id for purpose in can_reinstate_purposes.order_by('id')]
-                if not set(purpose_ids_list) & set(can_reinstate_purposes_ids_list):
+                if not set(purpose_ids_list).issubset(can_reinstate_purposes_ids_list):
                     raise serializers.ValidationError(
                         'Selected purposes cannot be reinstated')
                 instance.reinstate_purposes(request)
