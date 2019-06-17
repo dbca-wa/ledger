@@ -25,10 +25,6 @@ class ReportTypeAdmin(admin.ModelAdmin):
 class ReferrerAdmin(admin.ModelAdmin):
     pass
 
-@admin.register(models.ExternalOrganisation)
-class ExternalOrganisationAdmin(admin.ModelAdmin):
-    pass
-
 @admin.register(models.CallEmail)
 class CallEmailAdmin(admin.ModelAdmin):
     pass
@@ -42,7 +38,3 @@ class CasePriorityAdmin(admin.ModelAdmin):
 @admin.register(models.InspectionType)
 class InspectionTypeAdmin(admin.ModelAdmin):
     pass
-
-# @admin.register(models.CallEmailSchema)
-# class CallEmailSchema(admin.ModelAdmin):
-#     pass

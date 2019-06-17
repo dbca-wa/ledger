@@ -210,7 +210,7 @@ export const callemailStore = {
             console.log(members);
             Vue.set(state.call_email, 'allocated_group', {});
             let blankable_members = [];
-            Object.assign(blankable_members, members.members);
+            Object.assign(blankable_members, members);
             if (blankable_members) {
                 blankable_members.splice(0, 0, 
                     {
@@ -222,6 +222,7 @@ export const callemailStore = {
                     title: "",
                     });
             }
+            console.log(blankable_members);
             Vue.set(state.call_email.allocated_group, 'members', blankable_members);
         },
         updateAllocatedGroupId(state, id) {
@@ -362,6 +363,7 @@ export const callemailStore = {
             console.log(returned.body);
             if (returned.body.group_id) {
                 await dispatch('setAllocatedGroupId', returned.body.group_id);
+                await dispatch('setAllocatedGroupList', null);
             }
             if (returned.body.allocated_group) {
                 await dispatch('setAllocatedGroupList', returned.body.allocated_group);
@@ -422,10 +424,20 @@ export const callemailStore = {
         setClassification({ commit, }, classification) {
             commit("updateClassification", classification)
         },
-        setGenericAttribute({ commit }, { attribute, data } ) {
-            console.log(attribute);
-            console.log(data);
-            commit("updateGenericAttribute", { attribute, data });
+        async setGenericAttribute({ commit }, { attribute, event, datatype } ) {
+            let field_value = null;
+            if (datatype === 'integer') {
+                field_value = parseInt(event.target.value);
+              } else if (datatype === 'integer') {
+                if (event.target.value === 'true') {
+                    field_value = true;
+                  } else {
+                    field_value = false;
+                  }
+              } else {
+                field_value = event.target.value;
+              }
+            commit("updateGenericAttribute", { 'attribute': attribute, 'data': field_value });
         },
 
     },

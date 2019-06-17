@@ -749,17 +749,6 @@ class InspectionTypeViewSet(viewsets.ModelViewSet):
         return InspectionType.objects.none()
 
 
-# class ExternalOrganisationViewSet(viewsets.ModelViewSet):
-#     queryset = ExternalOrganisation.objects.all()
-#     serializer_class = ExternalOrganisationSerializer
-
-#     def get_queryset(self):
-#         user = self.request.user
-#         if is_internal(self.request):
-#             return ExternalOrganisation.objects.all()
-#         return ExternalOrganisation.objects.none()
-
-
 class ReportTypeViewSet(viewsets.ModelViewSet):
     queryset = ReportType.objects.all()
     serializer_class = ReportTypeSerializer

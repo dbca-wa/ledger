@@ -10,7 +10,7 @@
                               <label>Region</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control col-sm-9" @change.prevent="updateDistricts()" @change="updateVuex('region_id', $event)">
+                              <select class="form-control col-sm-9" @change="updateVuex('region_id', $event, 'integer')" :value="call_email.region_id">
                                 <option  v-for="option in regions" :value="option.id" v-bind:key="option.id">
                                   {{ option.display_name }} 
                                 </option>
@@ -24,7 +24,7 @@
                               <label>District</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" @change="updateVuex('district_id', $event)" @change.prevent="updateAllocatedGroup(group_permission)">
+                              <select class="form-control" @change="updateVuex('district_id', $event, 'integer')"  :value="call_email.district_id">
                                 <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
                                   {{ option.display_name }} 
                                 </option>
@@ -38,7 +38,7 @@
                               <label>Allocate to</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" @change.prevent="updateVuex('assigned_to_id', $event)" >
+                              <select class="form-control" @change="setGenericAttribute('assigned_to_id', $event, 'integer')" :value="call_email.assigned_to_id">
                                 <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
@@ -53,7 +53,7 @@
                               <label>Inspection Type</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" @change="updateVuex('inspection_type_id', $event)" >
+                              <select class="form-control" @change="setGenericAttribute('inspection_type_id', $event, 'integer')" :value="call_email.inspection_type_id">
                                 <option  v-for="option in inspectionTypes" :value="option.id" v-bind:key="option.id">
                                   {{ option.description }} 
                                 </option>
@@ -68,7 +68,7 @@
                               <label>Priority</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" @change="updateVuex('case_priority_id', $event)" >
+                              <select class="form-control" @change="setGenericAttribute('case_priority_id', $event, 'integer')" :value="call_email.case_priority_id">
                                 <option  v-for="option in casePriorities" :value="option.id" v-bind:key="option.id">
                                   {{ option.description }} 
                                 </option>
@@ -83,7 +83,7 @@
                               <label>Referred To</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" @change="updateVuex('referrer_id', $event)" >
+                              <select class="form-control" @change="setGenericAttribute('referrer_id', $event, 'integer')" :value="call_email.referrer_id">
                                 <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
                                   {{ option.name }} 
                                 </option>
@@ -205,13 +205,6 @@ export default {
         return false;
       }
     },
-    // assignedToVisibility: function() {
-    //   if (this.workflow_type.includes('allocate')) {
-    //     return true;
-    //   } else {
-    //     return false;
-    //   }
-    // },
     allocateToVisibility: function() {
       if (this.workflow_type.includes('allocate') && this.call_email.allocated_group) {
         return true;
@@ -219,13 +212,6 @@ export default {
         return false;
       }
     },
-    
-    // region: function() {
-    //   return this.call_email.region ? this.call_email.region.id : '';
-    // }, 
-    // district: function() {
-    //   return this.call_email.district_id ? this.call_email.district_id : '';
-    // },
     modalTitle: function() {
       if (this.workflow_type === 'forward_to_regions') {
         this.group_permission = 'triage_call_email';
@@ -262,18 +248,18 @@ export default {
     ...mapActions({
       loadCurrentUser: "loadCurrentUser",
     }),
-    updateVuex: function(attribute, event) {
-        this.setGenericAttribute({ 
-          'attribute': attribute, 
-          'data': event.target.value,
-        });
+    updateVuex: async function(attribute, event, datatype) {
+      await this.setGenericAttribute({'attribute': attribute, 'event': event, 'datatype': datatype});
+      if (attribute === 'region_id') {
+        this.updateDistricts();
+      }
+      await this.updateAllocatedGroup(this.group_permission)
     },
+
     updateDistricts: function() {
-      // this.call_email.district_id = null;
       this.availableDistricts = [];
       for (let record of this.regionDistricts) {
         if (this.call_email.region_id === (record.id)) {
-        // if (record.districts.includes(this.call_email.district_id)) {
           for (let district of record.districts) {
             for (let district_record of this.regionDistricts) {
               if (district_record.id === district) {
@@ -317,7 +303,7 @@ export default {
         }
       }
       let region_district_id = this.call_email.district_id ? this.call_email.district_id : this.call_email.region_id;
-      if (this.group_permission) {
+      if (this.group_permission && region_district_id) {
         await this.loadAllocatedGroup({
         'region_district_id': region_district_id, 
         'group_permission': this.group_permission,
@@ -465,19 +451,6 @@ export default {
       {
         id: "", 
         description: "",
-      });
-
-    // external orgs
-    let returned_external_organisations = await cache_helper.getSetCacheList(
-      'CallEmail_ExternalOrganisations', 
-      api_endpoints.external_organisations
-      );
-    Object.assign(this.externalOrganisations, returned_external_organisations);
-    // blank entry allows user to clear selection
-    this.externalOrganisations.splice(0, 0, 
-      {
-        id: "", 
-        name: "",
       });
 
     // referrers
