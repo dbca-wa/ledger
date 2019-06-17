@@ -42,6 +42,7 @@ required environment variables at run time. Example content:
     PRODUCTION_EMAIL=False (Send system emails to NON_PROD_EMAIL if False)
     EMAIL_INSTANCE='UAT' (DEV/TEST/UAT/PROD)
     NON_PROD_EMAIL='comma@separated.email,listfor@nonproduction.emails'
+    LOG_CONSOLE_LEVEL='INFO'
 
 # Docker image builds
 
@@ -52,6 +53,12 @@ build a new image for an application (e.g. Parkstay Bookings):
    parkstay/frontend/parkstay && npm run build`)
 2. Copy the relevant Dockerfile to the root of the project (e.g. `cp parkstay/Dockerfile .`)
 3. Build the Docker image as normal (e.g. `docker image build -t dbcawa/parkstay .`)
+
+# Parkstay Bookings
+
+To set the API endpoint URL for frontend JS apps, set the following env var:
+
+    PARKSTAY_URL="http://hostname:port"
 
 # Wildlife Licensing
 
