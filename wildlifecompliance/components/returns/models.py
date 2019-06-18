@@ -4,14 +4,14 @@ from django.db.models.signals import post_save
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.dispatch import receiver
 from django.utils import timezone
-from django.core.exceptions import FieldError
+from django.core.exceptions import FieldError, ValidationError
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from wildlifecompliance.components.returns.utils_schema import Schema
 from wildlifecompliance.components.applications.models import ApplicationCondition, Application
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction
 from wildlifecompliance.components.returns.email import send_external_submit_email_notification, \
-                                                        send_return_accept_email_notification
-
+                                                        send_return_accept_email_notification, \
+                                                        send_sheet_transfer_email_notification
 import ast
 
 
@@ -413,7 +413,8 @@ class ReturnData(object):
                     "label": f.data['label'],
                     "name": f.data['name'],
                     "required": f.required,
-                    "type": f.type.name
+                    "type": f.type.name,
+                    "readonly": False,
                 }
                 if f.is_species:
                     header["species"] = f.species_type
@@ -465,6 +466,40 @@ class ReturnData(object):
                 else:
                     raise FieldError('Enter data in correct format.')
 
+    def build_table(self, rows):
+        """
+        Method to create and validate rows of data to the table schema without persisting. Used for
+        Loading data from spreadsheets.
+        :param rows: data to be formatted.
+        :return: Array of tables.
+        """
+        tables = []
+        for resource in self._return.return_type.resources:
+            resource_name = resource.get('name')
+            schema = Schema(resource.get('schema'))
+            table = {
+                'name': resource_name,
+                'label': resource.get('title', resource.get('name')),
+                'type': None,
+                'headers': None,
+                'data': None
+            }
+            try:
+                validated_rows = schema.rows_validator(rows)
+                table['data'] = validated_rows
+            except AttributeError:
+                result = {}
+                results = []
+                for field_name in schema.fields:
+                    result[field_name.name] = {
+                            'value': None
+                    }
+                results.append(result)
+                table['data'] = results
+            tables.append(table)
+
+        return tables
+
     def _is_post_data_valid(self, tables_info, post_data):
         """
         Validates table data against the schema,
@@ -512,39 +547,6 @@ class ReturnData(object):
                 rows.append(row_data)
         return rows
 
-    def build_table(self, rows):
-        """
-        Method to create and validate rows of data to the table schema without persisting.
-        :param rows: data to be formatted.
-        :return: Array of tables.
-        """
-        tables = []
-        for resource in self._return.return_type.resources:
-            resource_name = resource.get('name')
-            schema = Schema(resource.get('schema'))
-            table = {
-                'name': resource_name,
-                'label': resource.get('title', resource.get('name')),
-                'type': None,
-                'headers': None,
-                'data': None
-            }
-            try:
-                validated_rows = schema.rows_validator(rows)
-                table['data'] = validated_rows
-            except AttributeError:
-                result = {}
-                results = []
-                for field_name in schema.fields:
-                    result[field_name.name] = {
-                            'value': None
-                    }
-                results.append(result)
-                table['data'] = results
-            tables.append(table)
-
-        return tables
-
     def __str__(self):
         return self._return.lodgement_number
 
@@ -573,6 +575,7 @@ class ReturnQuestion(object):
                     "name": f.data['name'],
                     "required": f.required,
                     "type": f.type.name,
+                    "readonly": False,
                 }
                 if f.is_species:
                     header["species"] = f.species_type
@@ -639,20 +642,20 @@ class ReturnSheet(object):
                      "activity", "type": "string", "constraints": {"required": True}}, {"name": "qty", "type":
                      "number", "constraints": {"required": True}}, {"name": "total", "type": "number",
                      "constraints": {"required": True}}, {"name": "licence", "type": "string"}, {"name": "comment",
-                     "type": "string"}, {"name": "transfer", "type": "boolean"}]}}]}
+                     "type": "string"}, {"name": "transfer", "type": "string"}]}}]}
 
     _NO_ACTIVITY = {"echo": 1, "totalRecords": "0", "totalDisplayRecords": "0", "data": []}
 
     _ACTIVITY_TYPES = {
-        "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false"},
-        "SA02": {"label": "In through import", "auto": "false", "licence": "false", "pay": "false"},
-        "SA03": {"label": "In through birth", "auto": "false", "licence": "false", "pay": "false"},
-        "SA04": {"label": "In through transfer", "auto": "true", "licence": "false", "pay": "false"},
-        "SA05": {"label": "Out through export", "auto": "false", "licence": "false", "pay": "false"},
-        "SA06": {"label": "Out through death", "auto": "false", "licence": "false", "pay": "false"},
-        "SA07": {"label": "Out through transfer other", "auto": "false", "licence": "true", "pay": "true"},
-        "SA08": {"label": "Out through transfer dealer", "auto": "false", "licence": "true", "pay": "false"},
-        "": {"label": "", "auto": "false", "licence": "false", "pay": "false"}}
+        "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false", "initial": ""},
+        "SA02": {"label": "In through import", "auto": "false", "licence": "false", "pay": "false", "inward": ""},
+        "SA03": {"label": "In through birth", "auto": "false", "licence": "false", "pay": "false", "inward": ""},
+        "SA04": {"label": "In through transfer", "auto": "true", "licence": "false", "pay": "false", "inward": ""},
+        "SA05": {"label": "Out through export", "auto": "false", "licence": "false", "pay": "false", "outward": ""},
+        "SA06": {"label": "Out through death", "auto": "false", "licence": "false", "pay": "false", "outward": ""},
+        "SA07": {"label": "Out through transfer other", "auto": "false", "licence": "true", "pay": "true", "outward": "SA04"},
+        "SA08": {"label": "Out through transfer dealer", "auto": "false", "licence": "true", "pay": "false", "outward": "SA04"},
+        "0": {"label": "", "auto": "false", "licence": "false", "pay": "false", "initial": ""}}
 
     def __init__(self, a_return):
         self._return = a_return
@@ -665,13 +668,33 @@ class ReturnSheet(object):
             self._species_list.append(_species.name)
             self._species = _species.name
 
+    @staticmethod
+    def set_licence_species(the_return):
+        """
+        Sets the species from the licence for the current Running Sheet.
+        :return:
+        """
+        _data = []
+        # TODO: create default entries for each species on the licence.
+        '''
+        new_sheet = the_return.sheet
+        for species in the_return.licence.species_list:
+            try:
+                _data = {''}
+                table_rows = new_sheet._get_table_rows(_data)
+                self._return.save_return_table(species, table_rows, request)
+            except AttributeError:
+                continue
+        '''
+        pass
+
     @property
     def table(self):
         """
         Running Sheet Table of data for Species. Defaults to a Species on the Return if exists.
         :return: formatted data.
         """
-        return self.get_activity(self._species)['data']
+        return self._get_activity(self._species)['data']
 
     @property
     def species(self):
@@ -693,11 +716,77 @@ class ReturnSheet(object):
     def activity_list(self):
         """
         List of stock movement activities applicable for Running Sheet.
+        Format: "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false", "outward": "SA04"}
+        Label: Activity Description.
+        Auto: Flag indicating automated activity.
+        Licence: Flag indicating licence required for activity.
+        Pay: Flag indicating payment required for activity.
+        Inward/Outward: Transfer type with Activity Type code for outward transfer.
         :return: List of Activities applicable for Running Sheet.
         """
         return self._ACTIVITY_TYPES
 
-    def get_activity(self, _species_id):
+    def store(self, request):
+        """
+        Save the current state of this Return Sheet.
+        :param request:
+        :return:
+        """
+        for species in self.species_list:
+            try:
+                _data = request.data.get(species).encode('utf-8')
+                _data = tuple(ast.literal_eval(_data))
+                table_rows = self._get_table_rows(_data)
+                self._return.save_return_table(species, table_rows, request)
+            except AttributeError:
+                continue
+        self._add_transfer_activity(request)
+
+    def pay_transfer(self, request):
+        """
+        Payment associated with the movement of stock.
+        :param request:
+        :return:
+        """
+        # TODO: Call to payment process either from here or api.
+
+    def send_transfer_sender(self):
+        return self._return.submitter
+
+    def set_species(self, _species):
+        """
+        Sets the species for the current Running Sheet.
+        :param _species:
+        :return:
+        """
+        self._species = _species
+        #self._species_list.add(_species)
+
+    def get_species(self):
+        """
+        Gets the species for the current Running Sheet.
+        :return:
+        """
+        return self._species
+
+    def is_valid_transfer(self, request):
+        """
+        Validate transfer request details.
+        :param request:
+        :return:
+        """
+        is_valid = True
+        if not request.data.get('transfer'):
+            return False
+        _data = request.data.get('transfer').encode('utf-8')
+        _transfers = ast.literal_eval(_data)
+        _licence = _transfers['licence']
+        is_valid = False if not is_valid else self._is_valid_transfer_licence(_licence)
+        #is_valid = False if not is_valid else self._is_valid_transfer_quantity(request)
+
+        return is_valid
+
+    def _get_activity(self, _species_id):
         """
         Get Running Sheet activity for the movement of Species stock.
         :return: formatted data {'name': 'speciesId', 'data': [{'date': '2019/01/23', 'activity': 'SA01', ..., }]}
@@ -721,31 +810,6 @@ class ReturnSheet(object):
 
         return self._table
 
-    def store(self, request):
-        """
-        Save the current state of this Return Sheet.
-        :param request:
-        :return:
-        """
-        for species in self.species_list:
-            try:
-                _data = request.data.get(species).encode('utf-8')
-                _data = tuple(ast.literal_eval(_data))
-                table_rows = self._get_table_rows(_data)
-                self._return.save_return_table(species, table_rows, request)
-            except AttributeError:
-                continue
-
-    def set_activity(self, _species, _data):
-        """
-        Sets Running Sheet Activity for the movement of Species stock.
-        :param _species:
-        :param _data:
-        :return:
-        """
-        table_rows = self._get_table_rows(_data)
-        # self._return.save_return_table(_species, table_rows) FIXME: this function is redundant.
-        self.set_species(_species)
 
     def _get_table_rows(self, _data):
         """
@@ -788,9 +852,9 @@ class ReturnSheet(object):
 
         return rows
 
-    def set_activity_from_previous(self):
+    def _set_activity_from_previous(self):
         """
-        Sets Running Sheet Activity for the movement of Species stock from previous Licence Running Sheet.
+        Sets Running Sheet Species stock total from previous Licence Running Sheet.
         :return:
         """
         previous_licence = self._return.application.previous_application.licence
@@ -811,60 +875,274 @@ class ReturnSheet(object):
                 self._create_return_data(self._return, _species_id, _table)
             '''
 
-    @staticmethod
-    def set_licence_species(self):
+    def _get_licence_return(self, licence_no):
         """
-        Sets the species from the licence for the current Running Sheet.
+        Method to retrieve Return with Running Sheet from a Licence No.
+        :param licence_no:
+        :return: a Return object.
+        """
+        try:
+            return Return.objects.filter(licence__licence_number=licence_no,
+                                         return_type__data_format=ReturnType.RETURN_TYPE_SHEET
+                                         ).first()
+        except Return.DoesNotExist:
+            raise ValidationError({'error': 'Error exception.'})
+
+    def _add_transfer_activity(self, request):
+        """
+        Add transfer activity to a validated receiving licence return.
+        :param request:
         :return:
         """
-        _data = []
-        # TODO: create default entries for each species on the licence.
-        # for _species in self._return.licence:
-        #    self.set_activity(_species, _data)
-        pass
+        if not request.data.get('transfer'):
+            return False
+        _data = request.data.get('transfer').encode('utf-8')
+        _transfers = ast.literal_eval(_data)
+        if isinstance(_transfers, tuple):
+            for transfer in _transfers:
+                a_transfer = ReturnActivity.factory(transfer)
+                a_transfer.store_transfer_activity(transfer['species_id'], request, self._return)
+        else:
+            a_transfer = ReturnActivity.factory(_transfers)
+            a_transfer.store_transfer_activity(_transfers['species_id'], request, self._return)
 
-    def set_species(self, _species):
-        """
-        Sets the species for the current Running Sheet.
-        :param _species:
-        :return:
-        """
-        self._species = _species
-        #self._species_list.add(_species)
-
-    def get_species(self):
-        """
-        Gets the species for the current Running Sheet.
-        :return:
-        """
-        return self._species
-
-    def is_valid_licence(self, _licence_no):
+    def _is_valid_transfer_licence(self, _licence):
         """
         Method to check if licence is current.
-        :param _licence_no:
         :return: boolean
         """
-        return False
+        return True if self._get_licence_return(_licence) else False
 
-    def send_transfer_notification(self, _license_no):
+    def _is_valid_transfer_quantity(self, request):
         """
-        send email notification for transfer of stock to receiving license holder.
-        :param _license_no:
+        Method to check transfer transfer quantity does not exceed total.
+        :param request:
         :return: boolean
         """
-        return False
-
-    def get_licensee_contact(self, _license_no):
-        """
-        Gets a valid License holder contact details.
-        :param _license_no:
-        :return:
-        """
-        return None
+        if not request.data.get('transfer'):
+            return False
+        data = request.data.get('transfer').encode('utf-8')
+        transfers = ast.literal_eval(data)
+        quantity = transfers['qty']
+        species_id = transfers['transfer']
+        '''
+        return_table = ReturnTable.objects.get(
+            name=species, ret=to_return)[0]
+        rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
+        table_rows = []
+        row_exists = False
+        total = 0
+        for row in rows:  # update total and status for accepted activity.
+            if row.data[self._ACTIVITY_DATE] == self.date:
+                row_exists = True
+                row.data[self._TRANSFER] = ReturnActivity._TRANSFER_STATUS_ACCEPT
+                row.data[self._TOTAL] = int(row.data[self._TOTAL]) - int(self.qty)
+                table_rows.append(row.data)
+                break
+        for row in rows:  # update totals for subsequent activities.
+            if row_exists and int(row.data[self._ACTIVITY_DATE]) > int(self.date):
+                row.data[self._TOTAL] = int(row.data[self._TOTAL]) - int(self.qty)
+            table_rows.append(row.data)
+        '''
 
     def __str__(self):
         return self._return.lodgement_number
+
+
+class ReturnActivity(object):
+    """
+    An Activity relating to the Transfer of Stock.
+    """
+
+    _TRANSFER_STATUS_NONE = ''
+    _TRANSFER_STATUS_NOTIFY = 'notify'
+    _TRANSFER_STATUS_ACCEPT = 'accept'
+    _TRANSFER_STATUS_DECLINE = 'decline'
+
+    # Activity properties.
+    _ACTIVITY_DATE = 'date'
+    _COMMENT = 'comment'
+    _TRANSFER = 'transfer'
+    _QUANTITY = 'qty'
+    _LICENCE = 'licence'
+    _ACTIVITY = 'activity'
+    _TOTAL = 'total'
+
+    def __init__(self, transfer):
+        self.date = transfer[self._ACTIVITY_DATE]
+        self.comment = transfer[self._COMMENT]
+        self.transfer = transfer[self._TRANSFER]
+        self.qty = transfer[self._QUANTITY]
+        self.licence = transfer[self._LICENCE]
+        self.total = ''
+        self.rowId = '0'
+        self.activity = transfer[self._ACTIVITY]
+
+    def get_licence_return(self):
+        """
+        Method to retrieve Return with Running Sheet from a Licence No.
+        :return: a Return object.
+        """
+        try:
+            return Return.objects.filter(licence__licence_number=self.licence,
+                                         return_type__data_format=ReturnType.RETURN_TYPE_SHEET
+                                         ).first()
+        except Return.DoesNotExist:
+            raise ValidationError({'error': 'Error exception.'})
+
+    @staticmethod
+    def factory(transfer):
+        if transfer[ReturnActivity._TRANSFER] == ReturnActivity._TRANSFER_STATUS_NOTIFY:
+            return NotifyTransfer(transfer)
+        if transfer[ReturnActivity._TRANSFER] == ReturnActivity._TRANSFER_STATUS_ACCEPT:
+            return AcceptTransfer(transfer)
+        if transfer[ReturnActivity._TRANSFER] == ReturnActivity._TRANSFER_STATUS_DECLINE:
+            return DeclineTransfer(transfer)
+
+        return None
+
+
+class NotifyTransfer(ReturnActivity):
+    """
+    Notification of a Transfer Activity.
+    """
+
+    def __init__(self, transfer):
+        super(NotifyTransfer, self).__init__(transfer)
+        self.activity = ReturnSheet._ACTIVITY_TYPES[transfer[self._ACTIVITY]]['outward']
+
+    @transaction.atomic
+    def store_transfer_activity(self, species, request, from_return):
+        """
+        Saves the Transfer Activity under the Receiving Licence return for species.
+        :return: _new_transfer boolean.
+        """
+        to_return = self.get_licence_return()
+        self.licence = from_return.licence.licence_number
+
+        try:
+            return_table = ReturnTable.objects.get(name=species, ret=to_return)
+            rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
+            table_rows = []
+            row_exists = False
+            total = 0
+            for row in rows:
+                if row.data[self._ACTIVITY_DATE] == self.date:  # update to record
+                    row_exists = True
+                    row.data[self._QUANTITY] = self.qty
+                    row.data[self._COMMENT] = self.comment
+                    row.data[self._TRANSFER] = self.transfer
+                total = row.data[self._TOTAL]
+                table_rows.append(row.data)
+            if not row_exists:
+                self.total = total
+                table_rows.append(self.__dict__)
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in table_rows]
+            ReturnRow.objects.bulk_create(return_rows)
+            # log transaction
+            from_return.log_user_action(ReturnUserAction.ACTION_SUBMIT_TRANSFER.format(from_return), request)
+
+            if not row_exists:
+                send_sheet_transfer_email_notification(request, to_return, from_return)
+
+            return row_exists
+        except BaseException:
+            raise
+
+
+class AcceptTransfer(ReturnActivity):
+    """
+    A ReturnActivity that is an Accepted Transfer.
+    """
+
+    def __init__(self, transfer):
+        super(AcceptTransfer, self).__init__(transfer)
+
+    @transaction.atomic
+    def store_transfer_activity(self, species, request, from_return):
+        """
+        Saves the Transfer Activity under the Receiving Licence return for species.
+        :return: _new_transfer boolean.
+        """
+        to_return = self.get_licence_return()
+
+        try:
+            return_table = ReturnTable.objects.get(name=species, ret=to_return)
+            rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
+            table_rows = []
+            row_exists = False
+            total = 0
+            for row in rows:  # update total and status for accepted activity.
+                if row.data[self._ACTIVITY_DATE] == self.date:
+                    row_exists = True
+                    row.data[self._TRANSFER] = ReturnActivity._TRANSFER_STATUS_ACCEPT
+                    row.data[self._TOTAL] = int(row.data[self._TOTAL]) - int(self.qty)
+                    table_rows.append(row.data)
+                    break
+            for row in rows:  # update totals for subsequent activities.
+                if row_exists and int(row.data[self._ACTIVITY_DATE]) > int(self.date):
+                    row.data[self._TOTAL] = int(row.data[self._TOTAL]) - int(self.qty)
+                table_rows.append(row.data)
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in table_rows]
+            ReturnRow.objects.bulk_create(return_rows)
+            # log transaction
+            from_return.log_user_action(ReturnUserAction.ACTION_ACCEPT_TRANSFER.format(from_return), request)
+
+            return row_exists
+        except BaseException:
+            raise
+
+
+class DeclineTransfer(ReturnActivity):
+    """
+    A ReturnActivity that is an Declined Transfer.
+    """
+
+    def __init__(self, transfer):
+        super(DeclineTransfer, self).__init__(transfer)
+
+    @transaction.atomic
+    def store_transfer_activity(self, species, request, from_return):
+        """
+        Saves the Transfer Activity under the Receiving Licence return for species.
+        :return: _new_transfer boolean.
+        """
+        to_return = self.get_licence_return()
+
+        try:
+            return_table = ReturnTable.objects.get(name=species, ret=to_return)
+            rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
+            table_rows = []
+            row_exists = False
+            for row in rows:  # update status for selected activity.
+                if row.data[self._ACTIVITY_DATE] == self.date:
+                    row_exists = True
+                    row.data[self._TRANSFER] = ReturnActivity._TRANSFER_STATUS_DECLINE
+                table_rows.append(row.data)
+
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in table_rows]
+            ReturnRow.objects.bulk_create(return_rows)
+            # log transaction
+            from_return.log_user_action(ReturnUserAction.ACTION_DECLINE_TRANSFER.format(from_return), request)
+
+            return row_exists
+        except BaseException:
+            raise
 
 
 class ReturnTable(RevisionedMixin):
@@ -890,6 +1168,9 @@ class ReturnUserAction(UserAction):
     ACTION_SUBMIT_REQUEST = "Submit Return {}"
     ACTION_ACCEPT_REQUEST = "Accept Return {}"
     ACTION_SAVE_REQUEST = "Save Return {}"
+    ACTION_SUBMIT_TRANSFER = "Request for transfer of species stock from Return {}"
+    ACTION_ACCEPT_TRANSFER = "Accepted the transfer of species stock to Return {}"
+    ACTION_DECLINE_TRANSFER = "Declined the transfer of species stock to Return {}"
     ACTION_ASSIGN_TO = "Assign to {}"
     ACTION_UNASSIGN = "Unassign"
     ACTION_DECLINE_REQUEST = "Decline request"

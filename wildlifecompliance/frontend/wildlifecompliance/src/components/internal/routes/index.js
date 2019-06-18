@@ -42,8 +42,7 @@ export default
         },
         {
             path: 'return/:return_id',
-            component: Returns,
-            name:'access_return'
+            component: Returns
         },
         {
             path: 'users',
