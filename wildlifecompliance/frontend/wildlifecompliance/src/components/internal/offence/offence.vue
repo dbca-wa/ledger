@@ -146,9 +146,9 @@
 </template>
 
 <script>
-import Awesomplete from 'awesomplete';
-import Vue from "vue";
-import modal from '@vue-utils/bootstrap-modal.vue';
+import Awesomplete from 'awesomplete'
+//import Vue from 'vue'
+import modal from '@vue-utils/bootstrap-modal.vue'
 import datatable from '@vue-utils/datatable.vue'
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
@@ -162,9 +162,10 @@ export default {
   data: function() {
     let vm = this;
 
-    vm.max_items = 10;
+    vm.max_items = 20;
     vm.ajax_for_alleged_offence = null;
     vm.suggest_list = []; // This stores a list of alleged offences displayed after search.
+    vm.awe = null;
 
     return {
         officers: [],
@@ -177,7 +178,7 @@ export default {
             SectionRegulation: '',
             AllegedOffence: '',
         },
-  
+
         oTab: 'oTab'+vm._uid,
         dTab: 'dTab'+vm._uid,
         pTab: 'pTab'+vm._uid,
@@ -259,14 +260,18 @@ export default {
             let vm = this;
 
             if(vm.current_alleged_offence.id){
-                vm.$refs.alleged_offence_table.vmDataTable.row.add(
-                    {
-                        'id': vm.current_alleged_offence.id,
-                        'Act': vm.current_alleged_offence.Act,
-                        'Section/Regulation': vm.current_alleged_offence.SectionRegulation,
-                        'Alleged Offence': vm.current_alleged_offence.AllegedOffence,
-                    }
-                ).draw();
+                let already_exists = vm.$refs.alleged_offence_table.vmDataTable.columns(0).data()[0].includes(vm.current_alleged_offence.id);
+
+                if (!already_exists){
+                    vm.$refs.alleged_offence_table.vmDataTable.row.add(
+                        {
+                            'id': vm.current_alleged_offence.id,
+                            'Act': vm.current_alleged_offence.Act,
+                            'Section/Regulation': vm.current_alleged_offence.SectionRegulation,
+                            'Alleged Offence': vm.current_alleged_offence.AllegedOffence,
+                        }
+                    ).draw();
+                }
 
                 vm.setCurrentOffenceEmpty();
             }
@@ -334,6 +339,7 @@ export default {
             });
         },
         search: function(searchTerm){
+            console.log('searchTerm');
             var vm = this;
             vm.suggest_list = [];
             vm.suggest_list.length = 0;
@@ -440,6 +446,8 @@ export default {
             vm.current_alleged_offence.Act = '';
             vm.current_alleged_offence.SectionRegulation = '';
             vm.current_alleged_offence.AllegedOffence = '';
+
+            $('#alleged-offence').val('');
         },
     },
     created: async function() {
