@@ -34,7 +34,8 @@ def checkout(
         lines=[],
         invoice_text=None,
         vouchers=[],
-        internal=False):
+        internal=False,
+        add_checkout_params={}):
     basket_params = {
         'products': lines,
         'vouchers': vouchers,
@@ -42,6 +43,7 @@ def checkout(
         'custom_basket': True,
     }
     basket, basket_hash = create_basket_session(request, basket_params)
+    request.basket = basket
 
     checkout_params = {
         'system': settings.WC_PAYMENT_SYSTEM_ID,
@@ -52,6 +54,7 @@ def checkout(
         'force_redirect': True,
         'proxy': True if internal else False,
         'invoice_text': invoice_text}
+    checkout_params.update(add_checkout_params)
     print(' -------- main utils > checkout > checkout_params ---------- ')
     print(checkout_params)
     create_checkout_session(request, checkout_params)
@@ -109,6 +112,48 @@ def delete_session_application(session):
     if 'wc_application' in session:
         del session['wc_application']
         session.modified = True
+
+
+def flush_checkout_session(session):
+    keys = [
+        'checkout_data',
+        'checkout_invoice',
+        'checkout_order_id',
+        'checkout_return_url',
+        'checkout_data',
+    ]
+    for key in keys:
+        try:
+            del session[key]
+        except KeyError:
+            continue
+
+
+def set_session_activity(session, activity):
+    session['wc_activity'] = activity.id
+    session.modified = True
+
+
+def get_session_activity(session):
+    from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
+    try:
+        activity_id = session['wc_activity']
+    except KeyError:
+        raise Exception('Session does not contain Activity ID')
+
+    try:
+        return ApplicationSelectedActivity.objects.get(id=activity_id)
+    except ApplicationSelectedActivity.DoesNotExist:
+        raise Exception(
+            'Activity ID not found: {}'.format(activity_id))
+
+
+def delete_session_activity(session):
+    try:
+        del session['wc_activity']
+        session.modified = True
+    except KeyError:
+        pass
 
 
 def bind_application_to_invoice(request, application, invoice_ref):

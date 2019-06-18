@@ -99,6 +99,7 @@ export default {
     return {
         licence_select : this.$route.params.licence_select,
         licence_category : this.$route.params.licence_category,
+        licence_activity : this.$route.params.licence_activity,
         behalf_of_org : this.$route.params.org_select,
         behalf_of_proxy : this.$route.params.proxy_select,
         application: null,
@@ -319,6 +320,7 @@ export default {
         utils.fetchLicenceAvailablePurposes({
             "application_type": this.licence_select,
             "licence_category": this.licence_category,
+            "licence_activity": this.licence_activity,
             "proxy_id": this.behalf_of_proxy,
             "organisation_id": this.behalf_of_org,
         }),

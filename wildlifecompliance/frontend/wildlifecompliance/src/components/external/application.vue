@@ -177,6 +177,7 @@ export default {
         application_id = this.application.id;
       }
       if (application_id) {
+        // TODO: this should probably use an external based serializer and api endpoint
         this.load({ url: `/api/application/${application_id}.json` }).then(() => {
             this.application_customer_status_onload = this.application.customer_status;
         });
