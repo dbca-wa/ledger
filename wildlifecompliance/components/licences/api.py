@@ -131,8 +131,13 @@ class LicencePaginatedViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        # Filter for WildlifeLicence objects that have a current application linked with an
+        # ApplicationSelectedActivity that has been ACCEPTED
+        asa_accepted = ApplicationSelectedActivity.objects.filter(
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED)
         if is_internal(self.request):
-            return WildlifeLicence.objects.all()
+            return WildlifeLicence.objects.filter(
+                current_application__in=asa_accepted.values_list('application_id', flat=True))
         elif is_customer(self.request):
             user_orgs = [
                 org.id for org in user.wildlifecompliance_organisations.all()]
@@ -140,7 +145,7 @@ class LicencePaginatedViewSet(viewsets.ModelViewSet):
                 Q(current_application__org_applicant_id__in=user_orgs) |
                 Q(current_application__proxy_applicant=user) |
                 Q(current_application__submitter=user)
-            )
+            ).filter(current_application__in=asa_accepted.values_list('application_id', flat=True))
         return WildlifeLicence.objects.none()
 
     @list_route(methods=['GET', ])
@@ -207,8 +212,13 @@ class LicenceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        # Filter for WildlifeLicence objects that have a current application linked with an
+        # ApplicationSelectedActivity that has been ACCEPTED
+        asa_accepted = ApplicationSelectedActivity.objects.filter(
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED)
         if is_internal(self.request):
-            return WildlifeLicence.objects.all()
+            return WildlifeLicence.objects.filter(
+                current_application__in=asa_accepted.values_list('application_id', flat=True))
         elif is_customer(self.request):
             user_orgs = [
                 org.id for org in user.wildlifecompliance_organisations.all()]
@@ -216,7 +226,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
                 Q(current_application__org_applicant_id__in=user_orgs) |
                 Q(current_application__proxy_applicant=user) |
                 Q(current_application__submitter=user)
-            )
+            ).filter(current_application__in=asa_accepted.values_list('application_id', flat=True))
         return WildlifeLicence.objects.none()
 
     def list(self, request, pk=None, *args, **kwargs):

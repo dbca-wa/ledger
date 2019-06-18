@@ -578,7 +578,6 @@ class WildlifeLicence(models.Model):
                 for activity in original_activities:
                     activity.mark_as_replaced(request)
 
-
     def generate_doc(self):
         from wildlifecompliance.components.licences.pdf import create_licence_doc
         self.licence_document = create_licence_doc(
