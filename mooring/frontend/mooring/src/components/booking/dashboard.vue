@@ -53,10 +53,10 @@
                         <div class="col-md-4">
                             <div class="form-group">
                             <label for="">Cancelled</label>
-                            <select class="form-control" v-model="filterCanceled" id="filterCanceled">
+                                <select class="form-control" v-model="filterCanceled" id="filterCanceled">
                                     <option value="True">Yes</option>
                                     <option value="False">No</option>
-                            </select>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -157,7 +157,6 @@
                             </select>
                             </div>
                         </div>
-
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
@@ -233,10 +232,10 @@ export default {
                             d.departure = vm.filterDateTo;
                         }
                         if (vm.filterCampground != "All") {
-                            d.campground = vm.filterCampground
+                            d.campground = vm.filterCampground;
                         }
                         if (vm.filterRegion != "All") {
-                            d.region = vm.filterRegion
+                            d.region = vm.filterRegion;
                         }
                         d.canceled = vm.filterCanceled;
                         d.refund_status = vm.filterRefundStatus;
@@ -263,7 +262,7 @@ export default {
                         data:"id",
                         orderable:false,
                         searchable:false,
-                        mRender:function(data,type,full){
+                        mRender:function(data,type,full) {
                             return full.status != 'Canceled' ? "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary'>PS"+data+"</a><br/>": "PS"+full.id;
                         }
                     },
@@ -611,7 +610,7 @@ export default {
         ]),
     },
     methods:{
-        showhidebookings: function(){
+        showhidebookings: function() {
             var content = $('#content_booking');
             var span = $('#collapse_bookings_span');
             if (content.css("display") !== "none"){
