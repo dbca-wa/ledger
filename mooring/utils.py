@@ -443,7 +443,10 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
             mooring_date_selected[date_rotate_forward] = 'notselected'
             mooring_rate = None
             if date_rotate_forward in mooring_rate_hash:
+                 print ("MOORING RATE ROTATE")
+                 print (mooring_rate_hash)
                  if site.pk in mooring_rate_hash[date_rotate_forward]:
+                    
                     mooring_rate =  mooring_rate_hash[date_rotate_forward][site.pk]
                     #print mooring_rate
                     #print ("BOOKING PERIOD")
@@ -537,28 +540,13 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
 
         for i in range(duration):
             date_rotate_forward = start_date+timedelta(days=i)
-            #if date_rotate_forward not in mooring_date_selected:
-            #         mooring_date_selected[date_rotate_forward] = 'notselected'
-#        mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite).order_by('-date_start')[0]
-#        if mooring_rate:
             mooring_rate = None
-
             if date_rotate_forward in mooring_rate_hash:
-                 if site.pk in mooring_rate_hash[date_rotate_forward]:
+                 if b.campsite.id  in mooring_rate_hash[date_rotate_forward]:
                     mooring_rate =  mooring_rate_hash[date_rotate_forward][b.campsite.id]
 
-
-#            if MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward ).count() > 0:
-#                mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end__gte=date_rotate_forward ).order_by('-date_start')[0]
-#            else:
-#                if MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end=None).count() > 0:
-#                     mooring_rate = MooringsiteRate.objects.filter(campsite=b.campsite,date_start__lte=date_rotate_forward, date_end=None).order_by('-date_start')[0]
-#
             if mooring_rate:
                for bp in mooring_rate.booking_period.booking_period.all():
-                #for i in range(duration):
-#                    date_rotate_forward = start_date+timedelta(days=i)
-                    #results[b.campsite.id][date_rotate_forward][1][bp.id] = 'open'
                     start_dt = datetime.strptime(str(date_rotate_forward)+' '+str(bp.start_time), '%Y-%m-%d %H:%M:%S')
                     finish_dt = datetime.strptime(str(date_rotate_forward)+' '+str(bp.finish_time), '%Y-%m-%d %H:%M:%S')
                     if start_dt > finish_dt:
@@ -569,10 +557,6 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                     if from_dt.strftime('%Y-%m-%d %H:%M:%S') >= start_dt.strftime('%Y-%m-%d %H:%M:%S'):
                         if from_dt.strftime('%Y-%m-%d %H:%M:%S') <= finish_dt.strftime('%Y-%m-%d %H:%M:%S'):
                             if date_rotate_forward in results[b.campsite.id]:
-                               #print ("REST BOOK ID")
-                               #print results[b.campsite.id][date_rotate_forward]
-                               #print results[b.campsite.id][date_rotate_forward][1]
-                               #if bp.id in results[b.campsite.id][date_rotate_forward][1]:
                                 if results[b.campsite.id][date_rotate_forward][1][bp.id] != 'selected':
                                     results[b.campsite.id][date_rotate_forward][1][bp.id] = 'closed'
                                 if b.booking.id == booking_id:
@@ -864,7 +848,7 @@ def override_lineitems(override_price, override_reason, total_price, oracle_code
     if oracle_code:
         if override_price and total_price and override_reason:
             discount = Decimal(override_price) - Decimal(override_price) - Decimal(override_price)
-            invoice_line.append({"ledger_description": '{} - {}'.format(override_reason.text, override_reason_info), "quantity": 1, 'price_incl_tax': discount, 'oracle_code': oracle_code})
+            invoice_line.append({"ledger_description": '{} - {}'.format(override_reason.text, override_reason_info), "quantity": 1, 'price_incl_tax': discount, 'oracle_code': oracle_code, 'line_status': 1})
     return invoice_line
 
 def nononline_booking_lineitems(oracle_code, request):
