@@ -81,7 +81,13 @@
                                     <input class="form-control" id="alleged-offence" />
                                 </div>
                                 <div class="col-sm-3">
-                                    <input type="button" class="btn btn-primary" value="Add" @click.prevent="addAllegedOffence()" />
+                                    <input type="button" class="btn btn-primary" value="Add" @click.prevent="addAllegedOffenceClicked()" />
+                                </div>
+                            </div></div>
+
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-12">
+                                    <datatable ref="alleged_offence_table" id="alleged-offence-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders" />
                                 </div>
                             </div></div>
                         </div>
@@ -110,7 +116,10 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <div class="form-group">
-
+                                    <input class="col-sm-1" id="offender_indivisual" type="radio" v-model="offender_type" value="indivisual">
+                                    <label class="col-sm-1 radio-button-label" for="offender_indivisual">Indivisual</label>
+                                    <input class="col-sm-1" id="offender_organisation" type="radio" v-model="offender_type" value="organisation">
+                                    <label class="col-sm-1 radio-button-label" for="offender_organisation">Organisation</label>
                                 </div>
                             </div>
                         </div>
@@ -140,6 +149,7 @@
 import Awesomplete from 'awesomplete';
 import Vue from "vue";
 import modal from '@vue-utils/bootstrap-modal.vue';
+import datatable from '@vue-utils/datatable.vue'
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import MapLocationOffence from "./map_location_offence1"
@@ -154,21 +164,61 @@ export default {
 
     vm.max_items = 10;
     vm.ajax_for_alleged_offence = null;
+    vm.suggest_list = []; // This stores a list of alleged offences displayed after search.
 
     return {
-      officers: [],
-      isModalOpen: false,
-      processingDetails: false,
-      offender_type: 'indivisual',
+        officers: [],
+        isModalOpen: false,
+        processingDetails: false,
+        offender_type: 'indivisual',
+        current_alleged_offence: {
+            id: null,
+            Act: '',
+            SectionRegulation: '',
+            AllegedOffence: '',
+        },
+  
+        oTab: 'oTab'+vm._uid,
+        dTab: 'dTab'+vm._uid,
+        pTab: 'pTab'+vm._uid,
+        lTab: 'lTab'+vm._uid,
 
-      oTab: 'oTab'+vm._uid,
-      dTab: 'dTab'+vm._uid,
-      pTab: 'pTab'+vm._uid,
-      lTab: 'lTab'+vm._uid,
+        dtHeaders: [
+            'id',
+            'Act',
+            'Section/Regulation',
+            'Alleged Offence',
+            'Action',
+        ],
+        dtOptions: {
+            columns: [
+                {
+                    data: 'id',
+                    visible: false
+                },
+                { 
+                    data: 'Act', 
+                },
+                { 
+                    data: 'Section/Regulation',
+                },
+                { 
+                    data: 'Alleged Offence', 
+                },
+                { 
+                    data: 'Action',
+                    mRender: function(data, type, row){
+                        console.log('BAKA');
+                        return '<a href="#">Remove</a>';
+                    }
+                },
+            ]
+        },
     }
   },
   components: {
     modal,
+    datatable,
     MapLocationOffence,
   },
   computed: {
@@ -202,176 +252,207 @@ export default {
     }
   },
   methods: {
-      ...mapActions('callemailStore', {
-        setAllocatedTo: "setAllocatedTo",
-      }),
-      addAllegedOffence: function() {
+        ...mapActions('callemailStore', {
+          setAllocatedTo: "setAllocatedTo",
+        }),
+        addAllegedOffenceClicked: function() {
+            let vm = this;
 
-      },
-      ok: async function () {
-          await this.sendData();
-          this.close();
-      },
-      cancel: function() {
-          this.isModalOpen = false;
-          this.close();
-      },
-      close: function () {
-          let vm = this;
-          this.isModalOpen = false;
-      },
-      mapOffenceClicked: function(){
-          this.$refs.mapOffenceComponent.mapTabClicked();
-      },
-      sendData: async function(){
-          // TODO
-          console.log('Send data to save');
-      },
-      addEventListeners: function () {
-          let vm = this;
-          let el_fr_date = $(vm.$refs.occurrenceDateFromPicker);
-          let el_fr_time = $(vm.$refs.occurrenceTimeFromPicker);
-          let el_to_date = $(vm.$refs.occurrenceDateToPicker);
-          let el_to_time = $(vm.$refs.occurrenceTimeToPicker);
+            if(vm.current_alleged_offence.id){
+                vm.$refs.alleged_offence_table.vmDataTable.row.add(
+                    {
+                        'id': vm.current_alleged_offence.id,
+                        'Act': vm.current_alleged_offence.Act,
+                        'Section/Regulation': vm.current_alleged_offence.SectionRegulation,
+                        'Alleged Offence': vm.current_alleged_offence.AllegedOffence,
+                    }
+                ).draw();
 
-          // "From" field
-          el_fr_date.datetimepicker({ format: 'DD/MM/YYYY', maxDate: 'now', showClear: true });
-          el_fr_date.on('dp.change', function (e) {
-              if (el_fr_date.data('DateTimePicker').date()) {
-                  vm.offence.occurrence_date_from = e.date.format('DD/MM/YYYY');
-              } else if (el_fr_date.data('date') === "") {
-                  vm.offence.occurrence_date_from = "";
-              }
-          });
-          el_fr_time.datetimepicker({ format: 'LT', showClear: true });
-          el_fr_time.on('dp.change', function (e) {
-              if (el_fr_time.data('DateTimePicker').date()) {
-                  vm.offence.occurrence_time_from = e.date.format('LT');
-              } else if (el_fr_time.data('date') === "") {
-                  vm.offence.occurrence_time_from = "";
-              }
-          });
-
-          // "To" field
-          el_to_date.datetimepicker({ format: 'DD/MM/YYYY', maxDate: 'now', showClear: true });
-          el_to_date.on('dp.change', function (e) {
-              if (el_to_date.data('DateTimePicker').date()) {
-                  vm.offence.occurrence_date_to = e.date.format('DD/MM/YYYY');
-              } else if (el_to_date.data('date') === "") {
-                  vm.offence.occurrence_date_to = "";
-              }
-          });
-          el_to_time.datetimepicker({ format: 'LT', showClear: true });
-          el_to_time.on('dp.change', function (e) {
-              if (el_to_time.data('DateTimePicker').date()) {
-                  vm.offence.occurrence_time_to = e.date.format('LT');
-              } else if (el_to_time.data('date') === "") {
-                  vm.offence.occurrence_time_to = "";
-              }
-          });
-      },
-      search: function(searchTerm){
-          var vm = this;
-          vm.suggest_list = [];
-          vm.suggest_list.length = 0;
-          vm.awe.list = [];
-
-          /* Cancel all the previous requests */
-          if (vm.ajax_for_alleged_offence != null){
-              vm.ajax_for_alleged_offence.abort();
-              vm.ajax_for_alleged_offence = null;
-          }
-
-          vm.ajax_for_alleged_offence = $.ajax({
-              type: 'GET',
-              url: '/api/search_alleged_offences/?search=' + searchTerm,
-              success: function(data){
-                  if (data && data.results) {
-                      let persons = data.results;
-                      let limit = Math.min(vm.max_items, persons.length);
-                      for (var i = 0; i < limit; i++){
-                          vm.suggest_list.push(persons[i])
-                      }
-                  }
-                  vm.awe.list = vm.suggest_list;
-                  vm.awe.evaluate();
-                  console.log(vm.suggest_list);
-              },
-              error: function (e){
-                  console.log(e);
-              }
-          });
-      },
-      initAwesomplete: function(){
-          var self = this;
-
-          var element_search = document.getElementById('alleged-offence');
-          self.awe = new Awesomplete(element_search, {
-              maxItems: self.max_items,
-              sort: false,
-              filter: ()=>{ return true; }, // Display all the items in the list without filtering.
-              data: function(item, input){
-                  let act = item.act?item.act:'';
-                  let name = item.name?item.name:'';
-                  let offence_text = item.offence_text?item.offence_text:'';
-
-                  let myLabel = ['<span class="full_name">' + act + ', ' + name + '</span>', offence_text].filter(Boolean).join('<br />');
-
-                  return {
-                      label: myLabel,   // Displayed in the list below the search box
-                      value: [act, name, offence_text].filter(Boolean).join(', '), // Inserted into the search box once selected
-                      id: item.id
-                  };
-              }
-          });
-          $(element_search).on('keyup', function(ev){
-              var keyCode = ev.keyCode || ev.which;
-              if ((48 <= keyCode && keyCode <= 90)||(96 <= keyCode && keyCode <= 105) || (keyCode == 8) || (keyCode == 46)){
+                vm.setCurrentOffenceEmpty();
+            }
+        },
+        ok: async function () {
+            await this.sendData();
+            this.close();
+        },
+        cancel: function() {
+            this.isModalOpen = false;
+            this.close();
+        },
+        close: function () {
+            let vm = this;
+            this.isModalOpen = false;
+        },
+        mapOffenceClicked: function(){
+            this.$refs.mapOffenceComponent.mapTabClicked();
+        },
+        sendData: async function(){
+            // TODO
+            console.log('Send data to save');
+        },
+        addEventListeners: function () {
+            let vm = this;
+            let el_fr_date = $(vm.$refs.occurrenceDateFromPicker);
+            let el_fr_time = $(vm.$refs.occurrenceTimeFromPicker);
+            let el_to_date = $(vm.$refs.occurrenceDateToPicker);
+            let el_to_time = $(vm.$refs.occurrenceTimeToPicker);
+  
+            // "From" field
+            el_fr_date.datetimepicker({ format: 'DD/MM/YYYY', maxDate: 'now', showClear: true });
+            el_fr_date.on('dp.change', function (e) {
+                if (el_fr_date.data('DateTimePicker').date()) {
+                    vm.offence.occurrence_date_from = e.date.format('DD/MM/YYYY');
+                } else if (el_fr_date.data('date') === "") {
+                    vm.offence.occurrence_date_from = "";
+                }
+            });
+            el_fr_time.datetimepicker({ format: 'LT', showClear: true });
+            el_fr_time.on('dp.change', function (e) {
+                if (el_fr_time.data('DateTimePicker').date()) {
+                    vm.offence.occurrence_time_from = e.date.format('LT');
+                } else if (el_fr_time.data('date') === "") {
+                    vm.offence.occurrence_time_from = "";
+                }
+            });
+  
+            // "To" field
+            el_to_date.datetimepicker({ format: 'DD/MM/YYYY', maxDate: 'now', showClear: true });
+            el_to_date.on('dp.change', function (e) {
+                if (el_to_date.data('DateTimePicker').date()) {
+                    vm.offence.occurrence_date_to = e.date.format('DD/MM/YYYY');
+                } else if (el_to_date.data('date') === "") {
+                    vm.offence.occurrence_date_to = "";
+                }
+            });
+            el_to_time.datetimepicker({ format: 'LT', showClear: true });
+            el_to_time.on('dp.change', function (e) {
+                if (el_to_time.data('DateTimePicker').date()) {
+                    vm.offence.occurrence_time_to = e.date.format('LT');
+                } else if (el_to_time.data('date') === "") {
+                    vm.offence.occurrence_time_to = "";
+                }
+            });
+        },
+        search: function(searchTerm){
+            var vm = this;
+            vm.suggest_list = [];
+            vm.suggest_list.length = 0;
+            vm.awe.list = [];
+  
+            /* Cancel all the previous requests */
+            if (vm.ajax_for_alleged_offence != null){
+                vm.ajax_for_alleged_offence.abort();
+                vm.ajax_for_alleged_offence = null;
+            }
+  
+            vm.ajax_for_alleged_offence = $.ajax({
+                type: 'GET',
+                url: '/api/search_alleged_offences/?search=' + searchTerm,
+                success: function(data){
+                    if (data && data.results) {
+                        let persons = data.results;
+                        let limit = Math.min(vm.max_items, persons.length);
+                        for (var i = 0; i < limit; i++){
+                            vm.suggest_list.push(persons[i])
+                        }
+                    }
+                    vm.awe.list = vm.suggest_list;
+                    vm.awe.evaluate();
+                    console.log(vm.suggest_list);
+                },
+                error: function (e){
+                    console.log(e);
+                }
+            });
+        },
+        initAwesomplete: function(){
+            var self = this;
+  
+            var element_search = document.getElementById('alleged-offence');
+            self.awe = new Awesomplete(element_search, {
+                maxItems: self.max_items,
+                sort: false,
+                filter: ()=>{ return true; }, // Display all the items in the list without filtering.
+                data: function(item, input){
+                    let act = item.act?item.act:'';
+                    let name = item.name?item.name:'';
+                    let offence_text = item.offence_text?item.offence_text:'';
+  
+                    let myLabel = ['<span class="full_name">' + act + ', ' + name + '</span>', offence_text].filter(Boolean).join('<br />');
+  
+                    return {
+                        label: myLabel,   // Displayed in the list below the search box
+                        value: [act, name, offence_text].filter(Boolean).join(', '), // Inserted into the search box once selected
+                        id: item.id
+                    };
+                }
+            });
+            $(element_search).on('keyup', function(ev){
+                var keyCode = ev.keyCode || ev.which;
+                if ((48 <= keyCode && keyCode <= 90)||(96 <= keyCode && keyCode <= 105) || (keyCode == 8) || (keyCode == 46)){
                   self.search(ev.target.value);
                   return false;
-              }
-          }).on('awesomplete-selectcomplete', function(ev){
-              ev.preventDefault();
-              ev.stopPropagation();
-              return false;
-          }).on('awesomplete-select', function(ev){
-              /* Retrieve element id of the selected item from the list
-               * By parsing it, we can get the order-number of the item in the list
-               */
-              console.log("origin");
-              console.log(ev.originalEvent.origin);
-              let origin = $(ev.originalEvent.origin)
-              let originTagName = origin[0].tagName;
-              if (originTagName == "SPAN"){
-                  origin = origin.parent();
-              }
-              let elem_id = origin[0].id;
-              let reg = /^.+(\d+)$/gi;
-              let result = reg.exec(elem_id)
-              if(result[1]){
-                  let idx = result[1];
-                  self.loadAllegedOffence(self.suggest_list[idx].id);
-              }else{
-                  console.log("result");
-                  console.log(result);
-              }
-          });
-      },
-      loadAllegedOffence: function(id){
-          console.log('AllegdOffence: ' + id + ' selected.');
-      }
-  },
-  created: async function() {
-      this.$nextTick(function() {
-        this.initAwesomplete();
-      });
-  },
-  mounted: function() {
+                }
+            }).on('awesomplete-selectcomplete', function(ev){
+                ev.preventDefault();
+                ev.stopPropagation();
+                return false;
+            }).on('awesomplete-select', function(ev){
+                /* Retrieve element id of the selected item from the list
+                 * By parsing it, we can get the order-number of the item in the list
+                 */
+                console.log('selected');
+                let origin = $(ev.originalEvent.origin)
+                let originTagName = origin[0].tagName;
+                if (originTagName == "SPAN"){
+                    origin = origin.parent();
+                }
+                let elem_id = origin[0].id;
+                let reg = /^.+(\d+)$/gi;
+                let result = reg.exec(elem_id)
+                if(result[1]){
+                    let idx = result[1];
+                    self.setCurrentOffenceSelected(self.suggest_list[idx]);
+                }else{
+                    console.log("result");
+                    console.log(result);
+                }
+            });
+        },
+        setCurrentOffenceSelected: function(offence){
+            console.log('setCurrentOffenceSelected');
+            let vm = this;
+
+            if(offence.id){
+                vm.current_alleged_offence.id = offence.id;
+                vm.current_alleged_offence.Act = offence.act;
+                vm.current_alleged_offence.SectionRegulation = offence.name;
+                vm.current_alleged_offence.AllegedOffence = offence.offence_text;
+            } else {
+                vm.setCurrentOffenceEmpty();
+            }
+        },
+        setCurrentOffenceEmpty: function(){
+            console.log('setCurrentOffenceEmpty');
+            let vm = this;
+
+            vm.current_alleged_offence.id = null;
+            vm.current_alleged_offence.Act = '';
+            vm.current_alleged_offence.SectionRegulation = '';
+            vm.current_alleged_offence.AllegedOffence = '';
+        },
+    },
+    created: async function() {
+        this.$nextTick(function() {
+            this.initAwesomplete();
+        });
+    },
+    mounted: function() {
         let vm = this;
         vm.$nextTick(() => {
             vm.addEventListeners();
         });
-  }
+    }
 };
 </script>
 

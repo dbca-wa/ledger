@@ -203,7 +203,7 @@ export default {
           * Ref: https://gis.stackexchange.com/questions/157128/leaflet-map-isnt-loading-in-the-correct-location
           */
          vm.mapOffence.invalidateSize();
-      }, 500);
+      }, 300);
     },
     setMarkerLocation: function() {
       console.log("setMarkerLocation");
