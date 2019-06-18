@@ -147,15 +147,14 @@
 
 <script>
 import Awesomplete from 'awesomplete'
-//import Vue from 'vue'
 import modal from '@vue-utils/bootstrap-modal.vue'
 import datatable from '@vue-utils/datatable.vue'
-import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
-import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
-import MapLocationOffence from "./map_location_offence1"
+import { mapGetters, mapActions } from 'vuex'
+import { api_endpoints, helpers, cache_helpew } from '@/utils/hooks'
+import MapLocationOffence from './map_location_offence1'
 import utils from '../utils'
-import 'bootstrap/dist/css/bootstrap.css';
-import 'awesomplete/awesomplete.css';
+import 'bootstrap/dist/css/bootstrap.css'
+import 'awesomplete/awesomplete.css'
 
 export default {
   name: "Offence",
@@ -209,8 +208,7 @@ export default {
                 { 
                     data: 'Action',
                     mRender: function(data, type, row){
-                        console.log('BAKA');
-                        return '<a href="#">Remove</a>';
+                        return '<a href="#" class="remove_button">Remove</a>';
                     }
                 },
             ]
@@ -256,6 +254,9 @@ export default {
         ...mapActions('callemailStore', {
           setAllocatedTo: "setAllocatedTo",
         }),
+        removeClicked: function(e){   
+            console.log(e);
+        },
         addAllegedOffenceClicked: function() {
             let vm = this;
 
@@ -271,6 +272,7 @@ export default {
                             'Alleged Offence': vm.current_alleged_offence.AllegedOffence,
                         }
                     ).draw();
+
                 }
 
                 vm.setCurrentOffenceEmpty();
@@ -337,6 +339,8 @@ export default {
                     vm.offence.occurrence_time_to = "";
                 }
             });
+
+            $('#alleged-offence-table').on('click', '.remove_button', vm.removeClicked);
         },
         search: function(searchTerm){
             console.log('searchTerm');
