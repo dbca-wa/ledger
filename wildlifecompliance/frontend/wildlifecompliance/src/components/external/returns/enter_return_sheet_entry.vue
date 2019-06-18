@@ -106,6 +106,7 @@ export default {
         isAddEntry: false,
         isChangeEntry: false,
         activityList: {'0': {'label': null, 'licence': false, 'pay': false}},
+        initialQty: 0,
       }
     },
     watch: {
@@ -123,8 +124,6 @@ export default {
         'species_transfer',
       ]),
       showError: function() {
-        console.log('showErrors')
-        console.log(this.errors)
         return this.errors;
       },
       title: function(){
@@ -148,6 +147,8 @@ export default {
         this.entryTotal = this.currentStock !== '' ? parseInt(this.currentStock) : 0
         if (this.isInStock) {
             this.entryTotal = parseInt(this.entryTotal) + parseInt(value)
+        } else {
+            this.entryTotal = parseInt(value)
         };
         if (this.isOutStock) {
             this.entryTotal = parseInt(this.entryTotal) - parseInt(value)
@@ -171,30 +172,21 @@ export default {
                         qty: self.entryQty,
                         total: self.entryTotal,
                         comment: self.entryComment,
-                        licence: self.entryLicence
+                        licence: self.entryLicence,
+                        transfer: self.entryTransfer,
                       };
 
-          if (!self.isLicenceRequired) {
+          if (self.isLicenceRequired) { // licence only required for transfers.
 
-            self.row_of_data.row.add(_data).node().id = newRowId;
-            self.row_of_data.draw();
-            self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
-            self.species_cache[self.returns.sheet_species].push(self.row_of_data.context[0].aoData[newRowId]._aData);
-            self.close()
-          }
+              self.validateTransfer(_data)
 
-          if (self.isLicenceRequired && self.isValidTransfer(_data)) { // licence only required for stock transfers.
+          } else {
 
-            let _currentDateTime = new Date();
-            self.entryDateTime = Date.parse(new Date());
-            let newRowId = (self.row_of_data.data().count()) + '';
-            _data['transfer'] = self.returns.sheet_species;
-
-            self.row_of_data.row.add(_data).node().id = newRowId;
-            self.row_of_data.draw();
-            self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
-            self.species_cache[self.returns.sheet_species].push(self.row_of_data.context[0].aoData[newRowId]._aData);
-            self.close()
+              self.row_of_data.row.add(_data).node().id = newRowId;
+              self.row_of_data.draw();
+              self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
+              self.species_cache[self.returns.sheet_species].push(self.row_of_data.context[0].aoData[newRowId]._aData);
+              self.close();
           }
 
         };
@@ -202,30 +194,24 @@ export default {
         if (self.isChangeEntry) {
 
           var _data = self.row_of_data.data()
+          _data.activity = self.entryActivity;
+          _data.qty = self.entryQty;
+          _data.total = self.entryTotal;
+          _data.licence = self.entryLicence;
+          _data.comment = self.entryComment;
+          _data.transfer = self.entryTransfer;
 
-          if (!self.isLicenceRequired) { // licence only required for stock transfers.
-            self.row_of_data.data().activity = self.entryActivity;
-            self.row_of_data.data().qty = self.entryQty;
-            self.row_of_data.data().total = self.entryTotal;
-            self.row_of_data.data().licence = self.entryLicence;
-            self.row_of_data.data().comment = self.entryComment;
+          if (self.isLicenceRequired) { // licence only required for transfers.
 
-            self.row_of_data.invalidate().draw()
-            self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
-            self.close()
-          }
+              self.validateTransfer(_data);
 
-          if (self.isLicenceRequired && self.isValidTransfer(_data)) {
-            self.row_of_data.data().activity = self.entryActivity;
-            self.row_of_data.data().qty = self.entryQty;
-            self.row_of_data.data().total = self.entryTotal;
-            self.row_of_data.data().licence = self.entryLicence;
-            self.row_of_data.data().comment = self.entryComment;
+          } else {
 
-            _data['transfer'] = self.returns.sheet_species
-            self.row_of_data.invalidate().draw()
-            self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
-            self.close()
+              self.updateTotals()
+              self.row_of_data.invalidate().draw()
+              self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
+              self.close()
+
           }
 
         };
@@ -252,43 +238,75 @@ export default {
                         console.log(error);
         });
       },
-      isValidLicence: function(row_data) {
+      validateTransfer: function(row_data) {
         const self = this;
         self.form=document.forms.external_returns_form;
         self.errors = false;
+        var is_valid = false;
         var data = new FormData(self.form);
+        row_data['species_id'] = self.returns.sheet_species;
+        row_data['transfer'] = 'notify';
         data.append('transfer', JSON.stringify(row_data))
         self.$http.post(helpers.add_endpoint_json(api_endpoints.returns,self.returns.id+'/sheet_check_transfer'),data,{
                       emulateJSON:true,
                     }).then((response)=>{
-                        return true;
+
+                        if (self.isAddEntry) {
+
+                            self.row_of_data.row.add(row_data).node().id = row_data.rowId;
+                            self.row_of_data.draw();
+                            self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
+                            self.species_cache[self.returns.sheet_species].push(self.row_of_data.context[0].aoData[row_data.rowId]._aData);
+
+                        } else {  // Changing records only
+
+                            self.adjustTotals(); // update totals affected
+                            self.row_of_data.data().activity = self.entryActivity;
+                            self.row_of_data.data().qty = self.entryQty;
+                            self.row_of_data.data().total = self.entryTotal;
+                            self.row_of_data.data().licence = self.entryLicence;
+                            self.row_of_data.data().comment = self.entryComment;
+                            self.row_of_data.data().transfer = self.entryTransfer;
+                            self.row_of_data.invalidate().draw()
+                            self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
+                        }
+
+                        let transfer = {}  //{speciesID: {this.entryDateTime: row_data},}
+                        if (self.returns.sheet_species in self.species_transfer){
+                            transfer = self.species_transfer[self.returns.sheet_species]
+                        }
+                        transfer[self.entryDateTime] = row_data;
+                        self.species_transfer[self.returns.sheet_species] = transfer
+                        self.close()
+
                     },(error)=>{
                         console.log(error)
                         self.errors = true;
                         //self.errorString = helpers.apiVueResourceError('Licence is not Valid.');
                         self.errorString = 'Error with Validation'
-                        self.row_of_data.rows.add(self.species_cache[self.returns.sheet_species]);
         });
-        return false;
-      },
-      isValidTransfer: function(row_data) { // for valid transfers cache & process separately.
-        const self = this;
-        if (!self.isLicenceRequired) {
-          return true;
-        }
-        self.form=document.forms.external_returns_form;
-        self.isValidLicence(row_data);
-        let transfer = {}  //{speciesID: {this.entryDateTime: row_data},}
-        if (self.returns.sheet_species in self.species_transfer){
-          transfer = self.species_transfer[self.returns.sheet_species]
-        }
-        transfer[self.entryDateTime] = row_data;
-        self.species_transfer[self.returns.sheet_species] = transfer
+        return true;
       },
       cancel: function() {
         const self = this;
         self.errors = false;
         self.close()
+      },
+      adjustTotals: function() {
+        const self = this;
+        if (parseInt(self.entryQty) === parseInt(self.initialQty)) {
+          return true;
+        }
+        var rows = self.species_cache[self.returns.sheet_species];
+        for (let i=0; i<rows.length; i++) {
+          if (parseInt(rows[i].date)>parseInt(self.entryDateTime)){ // activity is after accepted
+           rows[i].total = parseInt(rows[i].total + parseInt(self.entryQty))
+          }
+        }
+        self.species_cache[self.returns.sheet_species] = rows;
+        self.row_of_data.clear().draw();
+        self.row_of_data.rows.add(self.species_cache[self.returns.sheet_species]);
+        self.row_of_data.draw();
       },
       close: function() {
         const self = this;

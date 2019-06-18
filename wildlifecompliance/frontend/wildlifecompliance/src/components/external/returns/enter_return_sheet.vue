@@ -77,8 +77,9 @@ export default {
         readonly: false,
         isModalOpen: false,
         sheetTitle: null,
+        sheet_total: 0,
         sheet_activity_type: [],
-        sheet_headers:["Date","Activity","Qty","Total","Comments","Action"],
+        sheet_headers:["order","Date","Activity","Qty","Total","Comments","Action"],
         sheet_options:{
             language: {
                 processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -94,11 +95,15 @@ export default {
                   return _data;
                 },
             },
+            columnDefs: [
+              { visible: false, targets: 0 } // hide order column.
+            ],
             columns: [
+              { data: "date" },
               { data: "date",
-                mRender:function(data,type,full){
-                    let _date = new Date(parseInt(data));
-                    return _date.toLocaleString()
+                mRender: function(data, type, full) {
+                   let _date = new Date(parseInt(full.date));
+                   return _date.toLocaleString("en-GB")
                 }
               },
               { data: "activity",
@@ -112,14 +117,18 @@ export default {
               { data: "editable",
                 mRender: function(data, type, full) {
                    if (full.activity && vm.is_external
-                                && !vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])) {
+                                && !vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])
+                                && (full.transfer === 'notify' || full.transfer === '')) {
                       var column = `<a class="edit-row" data-rowid=\"__ROWID__\">Edit</a><br/>`;
                       column = column.replace(/__ROWID__/g, full.rowId);
                       return column;
                    }
+                   if (full.activity && (full.transfer === 'accept' || full.transfer === 'decline')) {
+                      return full.transfer;
+                   }
                    if (full.activity && vm.is_external
                                 && (vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])
-                                && full.transfer === 'sent')) {
+                                && full.transfer === 'notify')) {
                       var accept = `<a class="accept-row" data-rowid=\"__ROWID__\">Accept</a> or `;
                       accept = accept.replace(/__ROWID__/g, full.rowId);
                       var decline = `<a class="decline-row" data-rowid=\"__ROWID__\">Decline</a><br/>`;
@@ -134,6 +143,9 @@ export default {
             order: [0, 'desc'],
             drawCallback: function() {
               vm.sheetTitle = vm.species_list[vm.returns.sheet_species]
+            },
+            rowCallback: function(row, data) {
+              vm.sheet_total = parseInt(data.total) > vm.sheet_total ? parseInt(data.total) : vm.sheet_total;
             },
             processing: true,
             ordering: true,
@@ -172,9 +184,6 @@ export default {
         'is_external',
         'species_transfer',
     ]),
-    csrf_token: function() {
-      return helpers.getCookie('csrftoken')
-    },
   },
   methods: {
     ...mapActions([
@@ -194,18 +203,14 @@ export default {
     addSheetRow: function () {
       const self = this;
       var rows = self.$refs.return_datatable.vmDataTable
-      var last = rows.data().count() - 1 + ''
       self.$refs.sheet_entry.isAddEntry = true;
       self.$refs.sheet_entry.row_of_data = rows;
       self.$refs.sheet_entry.activityList = self.returns.sheet_activity_list;
       self.$refs.sheet_entry.speciesType = self.returns.sheet_species
       self.$refs.sheet_entry.entrySpecies = self.sheetTitle;
       self.$refs.sheet_entry.entryActivity = Object.keys(self.returns.sheet_activity_list)[0];
-      self.$refs.sheet_entry.entryQty = '';
-      if (last>-1){ // sets the current total
-        self.$refs.sheet_entry.entryTotal = rows.context[0].aoData[last]._aData['total'];
-        self.$refs.sheet_entry.currentStock = rows.context[0].aoData[last]._aData['total'];
-      }
+      self.$refs.sheet_entry.entryTotal = self.sheet_total;
+      self.$refs.sheet_entry.currentStock = self.sheet_total;
       self.$refs.sheet_entry.entryComment = '';
       self.$refs.sheet_entry.entryLicence = '';
       self.$refs.sheet_entry.entryDateTime = '';
@@ -230,10 +235,15 @@ export default {
         vm.$refs.sheet_entry.entryDateTime = vm.$refs.sheet_entry.row_of_data.data().date;
         vm.$refs.sheet_entry.entryActivity = vm.$refs.sheet_entry.row_of_data.data().activity;
         vm.$refs.sheet_entry.entryQty = vm.$refs.sheet_entry.row_of_data.data().qty;
+        vm.$refs.sheet_entry.initialQty = vm.$refs.sheet_entry.row_of_data.data().qty;
         vm.$refs.sheet_entry.entryTotal = vm.$refs.sheet_entry.row_of_data.data().total;
         vm.$refs.sheet_entry.currentStock = vm.$refs.sheet_entry.row_of_data.data().total;
         vm.$refs.sheet_entry.entryComment = vm.$refs.sheet_entry.row_of_data.data().comment;
         vm.$refs.sheet_entry.entryLicence = vm.$refs.sheet_entry.row_of_data.data().licence;
+        vm.$refs.sheet_entry.entryTransfer = vm.$refs.sheet_entry.row_of_data.data().transfer;
+
+        vm.species_cache[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.data();
+
         vm.$refs.sheet_entry.isSubmitable = true;
         vm.$refs.sheet_entry.isModalOpen = true;
         vm.$refs.sheet_entry.errors = false;
@@ -249,7 +259,15 @@ export default {
           }
           if (vm.intVal(rows[i].date)==vm.intVal(selected.data().date)) {
             rows[i].transfer = 'accept'
-            //vm.species_transfer[vm.returns.sheet_species] = rows[i]
+            rows[i].species_id = vm.returns.sheet_species
+
+            let transfer = {}  //{speciesID: {this.entryDateTime: row_data},}
+            if (vm.returns.sheet_species in vm.species_transfer){
+              transfer = vm.species_transfer[vm.returns.sheet_species]
+            }
+            rows[i].licence = '';
+            transfer[rows[i].date] = rows[i];
+            vm.species_transfer[vm.returns.sheet_species] = transfer
           }
         }
         vm.species_cache[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.data();
@@ -266,7 +284,14 @@ export default {
         for (let i=0; i<rows.length; i++) {
           if (vm.intVal(rows[i].date)==vm.intVal(selected.data().date)) {
             rows[i].transfer = 'decline'
-            //vm.species_transfer[vm.returns.sheet_species] = rows[i]
+            rows[i].species_id = vm.returns.sheet_species
+
+            let transfer = {}  //{speciesID: {this.entryDateTime: row_data},}
+            if (vm.returns.sheet_species in vm.species_transfer){
+              transfer = vm.species_transfer[vm.returns.sheet_species]
+            }
+            transfer[rows[i].date] = rows[i];
+            vm.species_transfer[vm.returns.sheet_species] = transfer
           }
         }
         vm.species_cache[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.data();
@@ -275,7 +300,7 @@ export default {
         vm.$refs.return_datatable.vmDataTable.draw();
      });
 
-     vm.$refs.return_datatable.vmDataTable.on('click','.pay-transfer', function(e) {
+     vm.$refs.return_datatable.vmDataTable.on('click','.pay-transfer', function(e) {  // TODO: payments
         e.preventDefault();
         vm.$refs.sheet_entry.isChangeEntry = true;
         vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;

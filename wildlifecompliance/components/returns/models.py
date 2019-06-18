@@ -12,7 +12,6 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry, Us
 from wildlifecompliance.components.returns.email import send_external_submit_email_notification, \
                                                         send_return_accept_email_notification, \
                                                         send_sheet_transfer_email_notification
-
 import ast
 
 
@@ -635,10 +634,6 @@ class ReturnSheet(object):
     Informational Running Sheet of Species requirements supporting licence condition.
     """
     _DEFAULT_SPECIES = '0000000'
-    _TRANSFER_STATUS_NONE = ''
-    _TRANSFER_STATUS_SENT = 'sent'
-    _TRANSFER_STATUS_ACCEPT = 'accept'
-    _TRANSFER_STATUS_DECLINE = 'decline'
 
     _SHEET_SCHEMA = {"name": "sheet", "title": "Running Sheet of Return Data", "resources": [{"name":
                      "SpecieID", "path": "", "title": "Return Data for Specie", "schema": {"fields": [{"name":
@@ -786,7 +781,7 @@ class ReturnSheet(object):
         _transfers = ast.literal_eval(_data)
         _licence = _transfers['licence']
         is_valid = False if not is_valid else self._is_valid_transfer_licence(_licence)
-        is_valid = False if not is_valid else self._is_valid_transfer_quantity(request)
+        #is_valid = False if not is_valid else self._is_valid_transfer_quantity(request)
 
         return is_valid
 
@@ -924,81 +919,15 @@ class ReturnSheet(object):
         _transfers = ast.literal_eval(_data)
         if isinstance(_transfers, tuple):
             for transfer in _transfers:
-                try:
-                    species_id = transfer['transfer']
-                    transfer_return = self._get_licence_return(transfer['licence'])
-                    if 'outward' in self.activity_list[transfer['activity']]:
-                        table_row = self._create_transfer_row(transfer, self._TRANSFER_STATUS_SENT)
-                        notified = self._store_transfer_activity(species_id, transfer_return, table_row, request)
-                        if not notified:
-                            send_sheet_transfer_email_notification(request, transfer_return, self._return)
-                except AttributeError:
-                    continue
+                a_transfer = ReturnActivity.factory(transfer)
+                a_transfer.store_transfer_activity(transfer['species_id'], request, self._return)
         else:
-            species_id = _transfers['transfer']
-            transfer_return = self._get_licence_return(_transfers['licence'])
-            if 'outward' in self.activity_list[_transfers['activity']]:
-                table_row = self._create_transfer_row(_transfers, self._TRANSFER_STATUS_SENT)
-                notified = self._store_transfer_activity(species_id, transfer_return, table_row, request)
-                if not notified:
-                    send_sheet_transfer_email_notification(request, transfer_return, self._return)
-
-    def _create_transfer_row(self, _transfer, _status):
-        table_row = {'comment': _transfer['comment'],
-                      'rowId': '0',
-                      'qty': _transfer['qty'],
-                      'licence': self._return.application.licence,
-                      'activity': self.activity_list[_transfer['activity']],
-                      'date': _transfer['date'],
-                      'total': '0',
-                      'transfer': _status}
-        return table_row
-
-    @transaction.atomic
-    def _store_transfer_activity(self, species_id, a_return, activity, request):
-        """
-        Saves the Transfer Activity under the Receiving Licence return for species.
-        :param species_id:
-        :param a_return:
-        :param activity:
-        :param request:
-        :return: _new_transfer boolean.
-        """
-        try:
-            return_table = ReturnTable.objects.get_or_create(
-                name=species_id, ret=a_return)[0]
-            rows = ReturnRow.objects.select_for_update().filter(return_table=return_table)
-            table_rows = []
-            row_exists = False
-            total = 0
-            for row in rows:
-                if row.data['date'] == activity['date']:
-                    row_exists = True
-                    row.data['qty'] = activity['qty']
-                    row.data['comment'] = activity['comment']
-                    row.data['transfer'] = activity['transfer']
-                total = row.data['total']
-                table_rows.append(row.data)
-            if not row_exists:
-                activity['total'] = total
-                table_rows.append(activity)
-            # delete any existing rows as they will all be recreated
-            return_table.returnrow_set.all().delete()
-            return_rows = [
-                ReturnRow(
-                    return_table=return_table,
-                    data=row) for row in table_rows]
-            ReturnRow.objects.bulk_create(return_rows)
-            # log transaction
-            self._return.log_user_action(ReturnUserAction.ACTION_TRANSFER_REQUEST.format(self), request)
-            return row_exists
-        except BaseException:
-            raise
+            a_transfer = ReturnActivity.factory(_transfers)
+            a_transfer.store_transfer_activity(_transfers['species_id'], request, self._return)
 
     def _is_valid_transfer_licence(self, _licence):
         """
         Method to check if licence is current.
-        :param request:
         :return: boolean
         """
         return True if self._get_licence_return(_licence) else False
@@ -1027,16 +956,199 @@ class ReturnSheet(object):
         if not row_exists:
             return False
 
-    def get_licensee_contact(self, _license_no):
-        """
-        Gets a valid License holder contact details.
-        :param _license_no:
-        :return:
-        """
-        return None
-
     def __str__(self):
         return self._return.lodgement_number
+
+
+class ReturnActivity(object):
+    """
+    An Activity relating to the Transfer of Stock.
+    """
+
+    _TRANSFER_STATUS_NONE = ''
+    _TRANSFER_STATUS_NOTIFY = 'notify'
+    _TRANSFER_STATUS_ACCEPT = 'accept'
+    _TRANSFER_STATUS_DECLINE = 'decline'
+
+    def __init__(self, transfer):
+        self.date = transfer['date']
+        self.comment = transfer['comment']
+        self.transfer = transfer['transfer']
+        self.qty = transfer['qty']
+        self.licence = transfer['licence']
+        self.total = ''
+        self.rowId = '0'
+        self.activity = transfer['activity']
+
+    def get_licence_return(self):
+        """
+        Method to retrieve Return with Running Sheet from a Licence No.
+        :return: a Return object.
+        """
+        try:
+            return Return.objects.filter(licence__licence_number=self.licence,
+                                         return_type__data_format=ReturnType.RETURN_TYPE_SHEET
+                                         ).first()
+        except Return.DoesNotExist:
+            raise ValidationError({'error': 'Error exception.'})
+
+    @staticmethod
+    def factory(transfer):
+        if transfer['transfer'] == ReturnActivity._TRANSFER_STATUS_NOTIFY:
+            return NotifyTransfer(transfer)
+        if transfer['transfer'] == ReturnActivity._TRANSFER_STATUS_ACCEPT:
+            return AcceptTransfer(transfer)
+        if transfer['transfer'] == ReturnActivity._TRANSFER_STATUS_DECLINE:
+            return DeclineTransfer(transfer)
+
+        return None
+
+
+class NotifyTransfer(ReturnActivity):
+    """
+    Notification of a Transfer Activity.
+    """
+
+    def __init__(self, transfer):
+        super(NotifyTransfer, self).__init__(transfer)
+        self.activity = ReturnSheet._ACTIVITY_TYPES[transfer['activity']]['outward']
+
+    @transaction.atomic
+    def store_transfer_activity(self, species, request, from_return):
+        """
+        Saves the Transfer Activity under the Receiving Licence return for species.
+        :return: _new_transfer boolean.
+        """
+        to_return = self.get_licence_return()
+        self.licence = from_return.licence.licence_number
+
+        try:
+            return_table = ReturnTable.objects.get_or_create(
+                name=species, ret=to_return)[0]
+            rows = ReturnRow.objects.filter(return_table=return_table) # optimistic load of rows.
+            table_rows = []
+            row_exists = False
+            total = 0
+            for row in rows:
+                if row.data['date'] == self.date:  # update to record
+                    row_exists = True
+                    row.data['qty'] = self.qty
+                    row.data['comment'] = self.comment
+                    row.data['transfer'] = self.transfer
+                total = row.data['total']
+                table_rows.append(row.data)
+            if not row_exists:
+                self.total = total
+                table_rows.append(self.__dict__)
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in table_rows]
+            ReturnRow.objects.bulk_create(return_rows)
+            # log transaction
+            from_return.log_user_action(ReturnUserAction.ACTION_SUBMIT_TRANSFER.format(from_return), request)
+
+            if not row_exists:
+                send_sheet_transfer_email_notification(request, to_return, from_return)
+
+            return row_exists
+        except BaseException:
+            raise
+
+
+class AcceptTransfer(ReturnActivity):
+    """
+    A ReturnActivity that is an Accepted Transfer.
+    """
+
+    def __init__(self, transfer):
+        super(AcceptTransfer, self).__init__(transfer)
+
+    @transaction.atomic
+    def store_transfer_activity(self, species, request, from_return):
+        """
+        Saves the Transfer Activity under the Receiving Licence return for species.
+        :return: _new_transfer boolean.
+        """
+        to_return = self.get_licence_return()
+
+        try:
+            return_table = ReturnTable.objects.get_or_create(
+                name=species, ret=to_return)[0]
+            rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
+            table_rows = []
+            row_exists = False
+            total = 0
+            for row in rows:
+                if row.data['date'] == self.date:
+                    row_exists = True
+                    row.data['transfer'] = ReturnActivity._TRANSFER_STATUS_ACCEPT
+                    row.data['total'] = int(row.data['total']) - int(self.qty)
+                    table_rows.append(row.data)
+                    break
+            for row in rows:
+                if row_exists and int(row.data['date']) > int(self.date):
+                    row.data['total'] = int(row.data['total']) - int(self.qty)
+                table_rows.append(row.data)
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in table_rows]
+            ReturnRow.objects.bulk_create(return_rows)
+            # log transaction
+            from_return.log_user_action(ReturnUserAction.ACTION_ACCEPT_TRANSFER.format(from_return), request)
+
+            return row_exists
+        except BaseException:
+            raise
+
+
+class DeclineTransfer(ReturnActivity):
+    """
+    A ReturnActivity that is an Declined Transfer.
+    """
+
+    def __init__(self, transfer):
+        super(DeclineTransfer, self).__init__(transfer)
+
+    @transaction.atomic
+    def store_transfer_activity(self, species, request, from_return):
+        """
+        Saves the Transfer Activity under the Receiving Licence return for species.
+        :return: _new_transfer boolean.
+        """
+        to_return = self.get_licence_return()
+
+        try:
+            return_table = ReturnTable.objects.get_or_create(
+                name=species, ret=to_return)[0]
+            rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
+            table_rows = []
+            row_exists = False
+            total = 0
+            for row in rows:
+                if row.data['date'] == self.date:
+                    row_exists = True
+                    row.data['transfer'] = ReturnActivity._TRANSFER_STATUS_DECLINE
+                    table_rows.append(row.data)
+                    break
+            # delete any existing rows as they will all be recreated
+            return_table.returnrow_set.all().delete()
+            return_rows = [
+                ReturnRow(
+                    return_table=return_table,
+                    data=row) for row in table_rows]
+            ReturnRow.objects.bulk_create(return_rows)
+            # log transaction
+            from_return.log_user_action(ReturnUserAction.ACTION_DECLINE_TRANSFER.format(from_return), request)
+
+            return row_exists
+        except BaseException:
+            raise
 
 
 class ReturnTable(RevisionedMixin):
@@ -1062,7 +1174,9 @@ class ReturnUserAction(UserAction):
     ACTION_SUBMIT_REQUEST = "Submit Return {}"
     ACTION_ACCEPT_REQUEST = "Accept Return {}"
     ACTION_SAVE_REQUEST = "Save Return {}"
-    ACTION_TRANSFER_REQUEST = "Request for Stock transfer for Return {}"
+    ACTION_SUBMIT_TRANSFER = "Request for transfer of species stock from Return {}"
+    ACTION_ACCEPT_TRANSFER = "Accepted the transfer of species stock to Return {}"
+    ACTION_DECLINE_TRANSFER = "Declined the transfer of species stock to Return {}"
     ACTION_ASSIGN_TO = "Assign to {}"
     ACTION_UNASSIGN = "Unassign"
     ACTION_DECLINE_REQUEST = "Decline request"

@@ -2,8 +2,8 @@
 <form method="POST" name="internal_returns_form" enctype="multipart/form-data">
 <div class="container" id="internalReturn">
     <Returns v-if="isReturnsLoaded">
-        <div class="col-md-1" />
-        <div class="col-md-8">
+        <div class="col-md-3" />
+        <div class="col-md-9">
 
         <template>
         <div class="panel panel-default">
