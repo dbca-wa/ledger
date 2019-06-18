@@ -8,7 +8,7 @@
                         <div class="col-sm-12">
                         <div class="row">
                             <div class="col-md-3">
-                                <label class="control-label pull-left"  for="Name">Activity:</label>
+                                <label class="control-label pull-left" >Activity:</label>
                             </div>
                             <div class="col-md-6" v-show="isAddEntry">
                                 <select class="form-control" v-model="entryActivity">
@@ -21,7 +21,7 @@
                         </div>
                         <div class="row">
                             <div class="col-md-3">
-                                <label class="control-label pull-left" for="Name">Quantity:</label>
+                                <label class="control-label pull-left" >Quantity:</label>
                             </div>
                             <div class="col-md-3">
                                 <input type='text' v-model='entryQty' >
@@ -45,7 +45,7 @@
                         </div>
                         <div class="row">
                             <div class="col-md-3">
-                                <label class="control-label pull-left"  for="Name">Comments:</label>
+                                <label class="control-label pull-left" >Comments:</label>
                             </div>
                             <div class="col-md-9">
                                 <textarea style="width: 95%;"class="form-control" name="entry_comments" v-model="entryComment"></textarea>
@@ -99,6 +99,7 @@ export default {
         entryTotal: 0,
         entryLicence: '',
         entryComment: '',
+        entryTransfer: '',
         currentStock: 0,
         speciesType: '',
         row_of_data: null,
@@ -207,7 +208,7 @@ export default {
 
           } else {
 
-              self.updateTotals()
+              self.adjustTotals()
               self.row_of_data.invalidate().draw()
               self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
               self.close()

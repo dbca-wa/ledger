@@ -468,7 +468,8 @@ class ReturnData(object):
 
     def build_table(self, rows):
         """
-        Method to create and validate rows of data to the table schema without persisting.
+        Method to create and validate rows of data to the table schema without persisting. Used for
+        Loading data from spreadsheets.
         :param rows: data to be formatted.
         :return: Array of tables.
         """
@@ -809,26 +810,6 @@ class ReturnSheet(object):
 
         return self._table
 
-    def _set_transfer_accepted(self, _table_rows):
-
-        if isinstance(_table_rows, tuple):
-            for _row in _table_rows:
-                if _row['transfer'] == 'accept':
-                    pass
-        else:
-            if _table_rows['transfer'] == 'accept':
-                pass
-
-    def _set_activity(self, _species, _data):
-        """
-        Sets Running Sheet Activity for the movement of Species stock.
-        :param _species:
-        :param _data:
-        :return:
-        """
-        table_rows = self._get_table_rows(_data)
-        # self._return.save_return_table(_species, table_rows) FIXME: this function is redundant.
-        self.set_species(_species)
 
     def _get_table_rows(self, _data):
         """
@@ -944,17 +925,25 @@ class ReturnSheet(object):
         transfers = ast.literal_eval(data)
         quantity = transfers['qty']
         species_id = transfers['transfer']
-
-        return_table = ReturnTable.objects.get_or_create(
-            name=species_id, ret=self._return)[0]
-        rows = ReturnRow.objects.filter(return_table=return_table)
+        '''
+        return_table = ReturnTable.objects.get(
+            name=species, ret=to_return)[0]
+        rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
+        table_rows = []
         row_exists = False
-        for row in rows:
-            row_exists = True
-            # TODO: check total for enough stock to transfer.
-
-        if not row_exists:
-            return False
+        total = 0
+        for row in rows:  # update total and status for accepted activity.
+            if row.data[self._ACTIVITY_DATE] == self.date:
+                row_exists = True
+                row.data[self._TRANSFER] = ReturnActivity._TRANSFER_STATUS_ACCEPT
+                row.data[self._TOTAL] = int(row.data[self._TOTAL]) - int(self.qty)
+                table_rows.append(row.data)
+                break
+        for row in rows:  # update totals for subsequent activities.
+            if row_exists and int(row.data[self._ACTIVITY_DATE]) > int(self.date):
+                row.data[self._TOTAL] = int(row.data[self._TOTAL]) - int(self.qty)
+            table_rows.append(row.data)
+        '''
 
     def __str__(self):
         return self._return.lodgement_number
@@ -970,15 +959,24 @@ class ReturnActivity(object):
     _TRANSFER_STATUS_ACCEPT = 'accept'
     _TRANSFER_STATUS_DECLINE = 'decline'
 
+    # Activity properties.
+    _ACTIVITY_DATE = 'date'
+    _COMMENT = 'comment'
+    _TRANSFER = 'transfer'
+    _QUANTITY = 'qty'
+    _LICENCE = 'licence'
+    _ACTIVITY = 'activity'
+    _TOTAL = 'total'
+
     def __init__(self, transfer):
-        self.date = transfer['date']
-        self.comment = transfer['comment']
-        self.transfer = transfer['transfer']
-        self.qty = transfer['qty']
-        self.licence = transfer['licence']
+        self.date = transfer[self._ACTIVITY_DATE]
+        self.comment = transfer[self._COMMENT]
+        self.transfer = transfer[self._TRANSFER]
+        self.qty = transfer[self._QUANTITY]
+        self.licence = transfer[self._LICENCE]
         self.total = ''
         self.rowId = '0'
-        self.activity = transfer['activity']
+        self.activity = transfer[self._ACTIVITY]
 
     def get_licence_return(self):
         """
@@ -994,11 +992,11 @@ class ReturnActivity(object):
 
     @staticmethod
     def factory(transfer):
-        if transfer['transfer'] == ReturnActivity._TRANSFER_STATUS_NOTIFY:
+        if transfer[ReturnActivity._TRANSFER] == ReturnActivity._TRANSFER_STATUS_NOTIFY:
             return NotifyTransfer(transfer)
-        if transfer['transfer'] == ReturnActivity._TRANSFER_STATUS_ACCEPT:
+        if transfer[ReturnActivity._TRANSFER] == ReturnActivity._TRANSFER_STATUS_ACCEPT:
             return AcceptTransfer(transfer)
-        if transfer['transfer'] == ReturnActivity._TRANSFER_STATUS_DECLINE:
+        if transfer[ReturnActivity._TRANSFER] == ReturnActivity._TRANSFER_STATUS_DECLINE:
             return DeclineTransfer(transfer)
 
         return None
@@ -1011,7 +1009,7 @@ class NotifyTransfer(ReturnActivity):
 
     def __init__(self, transfer):
         super(NotifyTransfer, self).__init__(transfer)
-        self.activity = ReturnSheet._ACTIVITY_TYPES[transfer['activity']]['outward']
+        self.activity = ReturnSheet._ACTIVITY_TYPES[transfer[self._ACTIVITY]]['outward']
 
     @transaction.atomic
     def store_transfer_activity(self, species, request, from_return):
@@ -1023,19 +1021,18 @@ class NotifyTransfer(ReturnActivity):
         self.licence = from_return.licence.licence_number
 
         try:
-            return_table = ReturnTable.objects.get_or_create(
-                name=species, ret=to_return)[0]
-            rows = ReturnRow.objects.filter(return_table=return_table) # optimistic load of rows.
+            return_table = ReturnTable.objects.get(name=species, ret=to_return)
+            rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
             table_rows = []
             row_exists = False
             total = 0
             for row in rows:
-                if row.data['date'] == self.date:  # update to record
+                if row.data[self._ACTIVITY_DATE] == self.date:  # update to record
                     row_exists = True
-                    row.data['qty'] = self.qty
-                    row.data['comment'] = self.comment
-                    row.data['transfer'] = self.transfer
-                total = row.data['total']
+                    row.data[self._QUANTITY] = self.qty
+                    row.data[self._COMMENT] = self.comment
+                    row.data[self._TRANSFER] = self.transfer
+                total = row.data[self._TOTAL]
                 table_rows.append(row.data)
             if not row_exists:
                 self.total = total
@@ -1075,22 +1072,21 @@ class AcceptTransfer(ReturnActivity):
         to_return = self.get_licence_return()
 
         try:
-            return_table = ReturnTable.objects.get_or_create(
-                name=species, ret=to_return)[0]
+            return_table = ReturnTable.objects.get(name=species, ret=to_return)
             rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
             table_rows = []
             row_exists = False
             total = 0
-            for row in rows:
-                if row.data['date'] == self.date:
+            for row in rows:  # update total and status for accepted activity.
+                if row.data[self._ACTIVITY_DATE] == self.date:
                     row_exists = True
-                    row.data['transfer'] = ReturnActivity._TRANSFER_STATUS_ACCEPT
-                    row.data['total'] = int(row.data['total']) - int(self.qty)
+                    row.data[self._TRANSFER] = ReturnActivity._TRANSFER_STATUS_ACCEPT
+                    row.data[self._TOTAL] = int(row.data[self._TOTAL]) - int(self.qty)
                     table_rows.append(row.data)
                     break
-            for row in rows:
-                if row_exists and int(row.data['date']) > int(self.date):
-                    row.data['total'] = int(row.data['total']) - int(self.qty)
+            for row in rows:  # update totals for subsequent activities.
+                if row_exists and int(row.data[self._ACTIVITY_DATE]) > int(self.date):
+                    row.data[self._TOTAL] = int(row.data[self._TOTAL]) - int(self.qty)
                 table_rows.append(row.data)
             # delete any existing rows as they will all be recreated
             return_table.returnrow_set.all().delete()
@@ -1124,18 +1120,16 @@ class DeclineTransfer(ReturnActivity):
         to_return = self.get_licence_return()
 
         try:
-            return_table = ReturnTable.objects.get_or_create(
-                name=species, ret=to_return)[0]
+            return_table = ReturnTable.objects.get(name=species, ret=to_return)
             rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
             table_rows = []
             row_exists = False
-            total = 0
-            for row in rows:
-                if row.data['date'] == self.date:
+            for row in rows:  # update status for selected activity.
+                if row.data[self._ACTIVITY_DATE] == self.date:
                     row_exists = True
-                    row.data['transfer'] = ReturnActivity._TRANSFER_STATUS_DECLINE
-                    table_rows.append(row.data)
-                    break
+                    row.data[self._TRANSFER] = ReturnActivity._TRANSFER_STATUS_DECLINE
+                table_rows.append(row.data)
+
             # delete any existing rows as they will all be recreated
             return_table.returnrow_set.all().delete()
             return_rows = [
