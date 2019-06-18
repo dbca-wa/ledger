@@ -151,6 +151,13 @@ class DefaultPurpose(models.Model):
 
 
 class WildlifeLicence(models.Model):
+
+    ACTIVITY_PURPOSE_ACTION_REACTIVATE_RENEW = 'reactivate_renew'
+    ACTIVITY_PURPOSE_ACTION_SURRENDER = 'surrender'
+    ACTIVITY_PURPOSE_ACTION_CANCEL = 'cancel'
+    ACTIVITY_PURPOSE_ACTION_SUSPEND = 'suspend'
+    ACTIVITY_PURPOSE_ACTION_REINSTATE = 'reinstate'
+
     licence_document = models.ForeignKey(
         LicenceDocument,
         blank=True,
@@ -202,15 +209,15 @@ class WildlifeLicence(models.Model):
         # get the list of can_<action> ApplicationSelectedActivity records
         if action:
             can_action_asa_ids = []
-            if action == 'cancel':
+            if action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_CANCEL:
                 can_action_asa_ids = [asa.id for asa in activities if asa.can_cancel]
-            elif action == 'suspend':
+            elif action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SUSPEND:
                 can_action_asa_ids = [asa.id for asa in activities if asa.can_suspend]
-            elif action == 'surrender':
+            elif action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SURRENDER:
                 can_action_asa_ids = [asa.id for asa in activities if asa.can_surrender]
-            elif action == 'reactivate_renew':
+            elif action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_REACTIVATE_RENEW:
                 can_action_asa_ids = [asa.id for asa in activities if asa.can_reactivate_renew]
-            elif action == 'reinstate':
+            elif action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_REINSTATE:
                 can_action_asa_ids = [asa.id for asa in activities if asa.can_reinstate]
             activities = activities.filter(id__in=can_action_asa_ids)
         return activities
@@ -303,6 +310,16 @@ class WildlifeLicence(models.Model):
     def is_issued(self):
         return self.licence_number is not None and len(self.licence_number) > 0
 
+    def surrender_licence(self, request):
+        '''
+        Cancels all surrenderable activities and purposes for a licence
+        '''
+        with transaction.atomic():
+            for activity_id in self.latest_activities.values_list('licence_activity_id', flat=True):
+                for activity in self.get_latest_activities_for_licence_activity_and_action(
+                        activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SURRENDER):
+                    activity.surrender(request)
+
     def surrender_purposes(self, request):
         '''
         Surrenders a licence's purposes for a selected licence_activity_id and purposes list
@@ -316,14 +333,14 @@ class WildlifeLicence(models.Model):
         licence_activity_id = LicencePurpose.objects.filter(id__in=purpose_ids_list). \
             first().licence_activity_id
         can_surrender_purposes = self.get_latest_purposes_for_licence_activity_and_action(
-            licence_activity_id, 'surrender')
+            licence_activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SURRENDER)
         can_surrender_purposes_ids_list = [purpose.id for purpose in can_surrender_purposes.order_by('id')]
 
         # if all purposes were selected by the user for surrender,
         # surrender all current ApplicationSelectedActivity records
         if purpose_ids_list == can_surrender_purposes_ids_list:
             activities_to_surrender = self.get_latest_activities_for_licence_activity_and_action(
-                licence_activity_id, 'surrender')
+                licence_activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SURRENDER)
             with transaction.atomic():
                 # surrender target activities
                 for activity in activities_to_surrender:
@@ -344,7 +361,7 @@ class WildlifeLicence(models.Model):
             new_surrendered_application = None
 
             licence_latest_activities = self.get_latest_activities_for_licence_activity_and_action(
-                licence_activity_id, 'surrender')
+                licence_activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SURRENDER)
             original_application_ids = licence_latest_activities.filter(
                 application__licence_purposes__in=purpose_ids_list).values_list('application_id', flat=True)
             original_applications = Application.objects.filter(id__in=original_application_ids)
@@ -396,6 +413,16 @@ class WildlifeLicence(models.Model):
                 for activity in original_activities:
                     activity.mark_as_replaced(request)
 
+    def suspend_licence(self, request):
+        '''
+        Cancels all suspendable activities and purposes for a licence
+        '''
+        with transaction.atomic():
+            for activity_id in self.latest_activities.values_list('licence_activity_id', flat=True):
+                for activity in self.get_latest_activities_for_licence_activity_and_action(
+                        activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SUSPEND):
+                    activity.suspend(request)
+
     def suspend_purposes(self, request):
         '''
         Suspends a licence's purposes for a selected licence_activity_id and purposes list
@@ -408,13 +435,14 @@ class WildlifeLicence(models.Model):
         purpose_ids_list.sort()
         licence_activity_id = LicencePurpose.objects.filter(id__in=purpose_ids_list). \
             first().licence_activity_id
-        can_suspend_purposes = self.get_latest_purposes_for_licence_activity_and_action(licence_activity_id, 'suspend')
+        can_suspend_purposes = self.get_latest_purposes_for_licence_activity_and_action(
+            licence_activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SUSPEND)
         can_suspend_purposes_ids_list = [purpose.id for purpose in can_suspend_purposes.order_by('id')]
 
         # if all purposes were selected by the user for suspend, suspend all current ApplicationSelectedActivity records
         if purpose_ids_list == can_suspend_purposes_ids_list:
             activities_to_suspend = self.get_latest_activities_for_licence_activity_and_action(
-                licence_activity_id, 'suspend')
+                licence_activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SUSPEND)
             with transaction.atomic():
                 # suspend target activities
                 for activity in activities_to_suspend:
@@ -435,7 +463,7 @@ class WildlifeLicence(models.Model):
             new_suspended_application = None
 
             licence_latest_activities = self.get_latest_activities_for_licence_activity_and_action(
-                licence_activity_id, 'suspend')
+                licence_activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SUSPEND)
             original_application_ids = licence_latest_activities.filter(
                 application__licence_purposes__in=purpose_ids_list).values_list('application_id', flat=True)
             original_applications = Application.objects.filter(id__in=original_application_ids)
@@ -487,6 +515,16 @@ class WildlifeLicence(models.Model):
                 for activity in original_activities:
                     activity.mark_as_replaced(request)
 
+    def cancel_licence(self, request):
+        '''
+        Cancels all cancellable activities and purposes for a licence
+        '''
+        with transaction.atomic():
+            for activity_id in self.latest_activities.values_list('licence_activity_id', flat=True):
+                for activity in self.get_latest_activities_for_licence_activity_and_action(
+                        activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_CANCEL):
+                    activity.cancel(request)
+
     def cancel_purposes(self, request):
         '''
         Cancels a licence's purposes for a selected licence_activity_id and purposes list
@@ -499,13 +537,14 @@ class WildlifeLicence(models.Model):
         purpose_ids_list.sort()
         licence_activity_id = LicencePurpose.objects.filter(id__in=purpose_ids_list). \
             first().licence_activity_id
-        can_cancel_purposes = self.get_latest_purposes_for_licence_activity_and_action(licence_activity_id, 'cancel')
+        can_cancel_purposes = self.get_latest_purposes_for_licence_activity_and_action(
+            licence_activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_CANCEL)
         can_cancel_purposes_ids_list = [purpose.id for purpose in can_cancel_purposes.order_by('id')]
 
         # if all purposes were selected by the user for cancel, cancel all current ApplicationSelectedActivity records
         if purpose_ids_list == can_cancel_purposes_ids_list:
             activities_to_cancel = self.get_latest_activities_for_licence_activity_and_action(
-                licence_activity_id, 'cancel')
+                licence_activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_CANCEL)
             with transaction.atomic():
                 # cancel target activities
                 for activity in activities_to_cancel:
@@ -526,7 +565,7 @@ class WildlifeLicence(models.Model):
             new_cancelled_application = None
 
             licence_latest_activities = self.get_latest_activities_for_licence_activity_and_action(
-                licence_activity_id, 'cancel')
+                licence_activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_CANCEL)
             original_application_ids = licence_latest_activities.filter(
                 application__licence_purposes__in=purpose_ids_list).values_list('application_id', flat=True)
             original_applications = Application.objects.filter(id__in=original_application_ids)
