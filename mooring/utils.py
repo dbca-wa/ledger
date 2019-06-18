@@ -864,7 +864,7 @@ def override_lineitems(override_price, override_reason, total_price, oracle_code
     if oracle_code:
         if override_price and total_price and override_reason:
             discount = Decimal(override_price) - Decimal(override_price) - Decimal(override_price)
-            invoice_line.append({"ledger_description": '{} - {}'.format(override_reason.text, override_reason_info), "quantity": 1, 'price_incl_tax': discount, 'oracle_code': oracle_code})
+            invoice_line.append({"ledger_description": '{} - {}'.format(override_reason.text, override_reason_info), "quantity": 1, 'price_incl_tax': discount, 'oracle_code': oracle_code, 'line_status': 1})
     return invoice_line
 
 def nononline_booking_lineitems(oracle_code, request):
