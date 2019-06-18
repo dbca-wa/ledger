@@ -67,12 +67,12 @@
                 </div>
             </div>
         </div>
-        <CancelLicencePurposes ref="cancel_licence_purposes" :licence_activity_purposes="cancel_purpose_list" :licence_id="selected_licence_id" @refreshFromResponse="refreshFromResponse"></CancelLicencePurposes>
+        <LicenceActionPurposes ref="licence_action_purposes" :licence_activity_purposes="action_purpose_list" :licence_id="selected_licence_id" :action="licence_action" @refreshFromResponse="refreshFromResponse"></LicenceActionPurposes>
     </div>
 </template>
 <script>
 import datatable from '@/utils/vue/datatable.vue'
-import CancelLicencePurposes from './licence_cancel_purposes.vue'
+import LicenceActionPurposes from './licence_action_purposes.vue'
 import {
     api_endpoints,
     helpers
@@ -103,8 +103,9 @@ export default {
             filterLicenceIssuedFrom: '',
             filterLicenceIssuedTo: '',
             filterLicenceHolder: 'All',
-            cancel_purpose_list: [],
+            action_purpose_list: [],
             selected_licence_id: null,
+            licence_action: '',
             dateFormat: 'DD/MM/YYYY',
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -184,14 +185,19 @@ export default {
                             let proxy_id = full.current_application.proxy_applicant ? full.current_application.proxy_applicant.id : '';
                             let licence_category_id = full.current_application.category_id ? full.current_application.category_id : '';
                             links += `<a add-activity-purpose='${full.id}' org-id='${org_id}' proxy-id='${proxy_id}' licence-category-id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
+                            // TODO: add can_renew, can_reactivate_renew, etc. to licence, same like activity, and apply to if statements below
                             links += `<a>Renew</a><br/>`
-                            links += `<a>Reactivate Renew</a><br/>`
-                            links += `<a>Surrender</a><br/>`
                             if (!vm.is_external) {
-                                links += `<a>Cancel</a><br/>`
+                                links += `<a>Reactivate Renew</a><br/>`
+                            }
+                            if (vm.is_external) {
+                                links += `<a surrender-licence='${full.id}'>Surrender</a><br/>`
                             }
                             if (!vm.is_external) {
-                                links += `<a>Suspend</a><br/>`
+                                links += `<a cancel-licence='${full.id}'>Cancel</a><br/>`
+                            }
+                            if (!vm.is_external) {
+                                links += `<a suspend-licence='${full.id}'>Suspend</a><br/>`
                             }
                             if (!vm.is_external) {
                                 links += `<a>Reinstate</a><br/>`
@@ -242,7 +248,7 @@ export default {
     },
     components:{
         datatable,
-        CancelLicencePurposes
+        LicenceActionPurposes
     },
     watch:{
         filterLicenceType: function(){
@@ -368,7 +374,7 @@ export default {
                 });
             });
             // Reactivate Renew activity listener
-            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reactivate-renew-activity]', function(e) {
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reactivate-renew-purposes]', function(e) {
                 e.preventDefault();
                 swal({
                     title: "Reactivate Renew for Activity",
@@ -378,28 +384,61 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var activity_id = $(this).attr('reactivate-renew-activity');
+                        var licence_activity_id = $(this).attr('reactivate-renew-purposes');
                         var licence_id = $(this).attr('lic-id');
-                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/reactivate_renew_activity/?activity_id=' + activity_id)).then(res=>{
-                            swal({
-                                title: "Reactivate Renew for Activity",
-                                text: "The renew option for this activity has been reactivated",
-                                type: "info"
-                            })
-                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
-                        },err=>{
-                            swal(
-                                'Submit Error',
-                                helpers.apiVueResourceError(err),
-                                'error'
-                            )
-                        });
+                        vm.licence_action = 'reactivate-renew';
+                        vm.selected_licence_id = licence_id;
+                        vm.$http.get(helpers.add_endpoint_join(
+                            api_endpoints.licences,licence_id+
+                            '/get_latest_purposes_for_licence_activity_and_action/?licence_activity_id='+
+                            licence_activity_id+'&action='+vm.licence_action)).then(res=>{
+                                if (res.body) {
+                                    vm.action_purpose_list = res.body;
+                                    vm.$refs.licence_action_purposes.isModalOpen = true;
+                                }
+                            }, (error) => {
+                                swal(
+                                    'Reactivate Renew Activity Error',
+                                    helpers.apiVueResourceError(error),
+                                    'error'
+                                )
+                            });
+                    }
+                },(error) => {
+                });
+            });
+            // Surrender licence listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[surrender-licence]', function(e) {
+                e.preventDefault();
+                swal({
+                    title: "Surrender Licence",
+                    text: "Are you sure you want to surrender all current activities and purposes for this licence?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        var licence_id = $(this).attr('surrender-licence');
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.licences,licence_id+'/surrender_licence')).then((response)=>{
+                                swal(
+                                        'Surrender Licence',
+                                        'The selected licence\'s current activities and purposes have been Surrendered.',
+                                        'success'
+                                )
+                                vm.refreshFromResponse(response)
+                            },(error)=>{
+                                swal(
+                                    'Surrender Licence Error',
+                                    helpers.apiVueResourceError(error),
+                                    'error'
+                                )
+                            });
                     }
                 },(error) => {
                 });
             });
             // Surrender activity listener
-            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[surrender-activity]', function(e) {
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[surrender-purposes]', function(e) {
                 e.preventDefault();
                 swal({
                     title: "Surrender Activity",
@@ -409,22 +448,55 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var activity_id = $(this).attr('surrender-activity');
+                        var licence_activity_id = $(this).attr('surrender-purposes');
                         var licence_id = $(this).attr('lic-id');
-                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/surrender_activity/?activity_id=' + activity_id)).then(res=>{
-                            swal({
-                                title: "Surrender Activity",
-                                text: "The activity has been surrendered",
-                                type: "info"
-                            })
-                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
-                        },err=>{
-                            swal(
-                                'Submit Error',
-                                helpers.apiVueResourceError(err),
-                                'error'
-                            )
-                        });
+                        vm.licence_action = 'surrender';
+                        vm.selected_licence_id = licence_id;
+                        vm.$http.get(helpers.add_endpoint_join(
+                            api_endpoints.licences,licence_id+
+                            '/get_latest_purposes_for_licence_activity_and_action/?licence_activity_id='+
+                            licence_activity_id+'&action='+vm.licence_action)).then(res=>{
+                                if (res.body) {
+                                    vm.action_purpose_list = res.body;
+                                    vm.$refs.licence_action_purposes.isModalOpen = true;
+                                }
+                            }, (error) => {
+                                swal(
+                                    'Surrender Activity Error',
+                                    helpers.apiVueResourceError(error),
+                                    'error'
+                                )
+                            });
+                    }
+                },(error) => {
+                });
+            });
+            // Cancel licence listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[cancel-licence]', function(e) {
+                e.preventDefault();
+                swal({
+                    title: "Cancel Licence",
+                    text: "Are you sure you want to cancel all current activities and purposes for this licence?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        var licence_id = $(this).attr('cancel-licence');
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.licences,licence_id+'/cancel_licence')).then((response)=>{
+                                swal(
+                                        'Cancel Licence',
+                                        'The selected licence\'s current activities and purposes have been Cancelled.',
+                                        'success'
+                                )
+                                vm.refreshFromResponse(response)
+                            },(error)=>{
+                                swal(
+                                    'Cancel Licence Error',
+                                    helpers.apiVueResourceError(error),
+                                    'error'
+                                )
+                            });
                     }
                 },(error) => {
                 });
@@ -442,18 +514,49 @@ export default {
                     if (result.value) {
                         var licence_activity_id = $(this).attr('cancel-purposes');
                         var licence_id = $(this).attr('lic-id');
+                        vm.licence_action = 'cancel';
                         vm.selected_licence_id = licence_id;
                         vm.$http.get(helpers.add_endpoint_join(
                             api_endpoints.licences,licence_id+
                             '/get_latest_purposes_for_licence_activity_and_action/?licence_activity_id='+
-                            licence_activity_id+'&action=cancel')).then(res=>{
+                            licence_activity_id+'&action='+vm.licence_action)).then(res=>{
                                 if (res.body) {
-                                    vm.cancel_purpose_list = res.body;
-                                    vm.$refs.cancel_licence_purposes.isModalOpen = true;
+                                    vm.action_purpose_list = res.body;
+                                    vm.$refs.licence_action_purposes.isModalOpen = true;
                                 }
                             }, (error) => {
                                 swal(
-                                    'Cancel Error',
+                                    'Cancel Activity Error',
+                                    helpers.apiVueResourceError(error),
+                                    'error'
+                                )
+                            });
+                    }
+                },(error) => {
+                });
+            });
+            // Suspend licence listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[suspend-licence]', function(e) {
+                e.preventDefault();
+                swal({
+                    title: "Suspend Licence",
+                    text: "Are you sure you want to suspend all current activities and purposes for this licence?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        var licence_id = $(this).attr('suspend-licence');
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.licences,licence_id+'/suspend_licence')).then((response)=>{
+                                swal(
+                                        'Suspend Licence',
+                                        'The selected licence\'s current activities and purposes have been Suspended.',
+                                        'success'
+                                )
+                                vm.refreshFromResponse(response)
+                            },(error)=>{
+                                swal(
+                                    'Suspend Licence Error',
                                     helpers.apiVueResourceError(error),
                                     'error'
                                 )
@@ -463,7 +566,7 @@ export default {
                 });
             });
             // Suspend activity listener
-            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[suspend-activity]', function(e) {
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[suspend-purposes]', function(e) {
                 e.preventDefault();
                 swal({
                     title: "Suspend Activity",
@@ -473,22 +576,25 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var activity_id = $(this).attr('suspend-activity');
+                        var licence_activity_id = $(this).attr('suspend-purposes');
                         var licence_id = $(this).attr('lic-id');
-                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/suspend_activity/?activity_id=' + activity_id)).then(res=>{
-                            swal({
-                                title: "Suspend Activity",
-                                text: "The activity has been suspended",
-                                type: "info"
-                            })
-                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
-                        },err=>{
-                            swal(
-                                'Submit Error',
-                                helpers.apiVueResourceError(err),
-                                'error'
-                            )
-                        });
+                        vm.licence_action = 'suspend';
+                        vm.selected_licence_id = licence_id;
+                        vm.$http.get(helpers.add_endpoint_join(
+                            api_endpoints.licences,licence_id+
+                            '/get_latest_purposes_for_licence_activity_and_action/?licence_activity_id='+
+                            licence_activity_id+'&action='+vm.licence_action)).then(res=>{
+                                if (res.body) {
+                                    vm.action_purpose_list = res.body;
+                                    vm.$refs.licence_action_purposes.isModalOpen = true;
+                                }
+                            }, (error) => {
+                                swal(
+                                    'Suspend Activity Error',
+                                    helpers.apiVueResourceError(error),
+                                    'error'
+                                )
+                            });
                     }
                 },(error) => {
                 });
@@ -504,7 +610,7 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var activity_id = $(this).attr('reissue-activity');
+                        var licence_activity_id = $(this).attr('reissue-activity');
                         var licence_id = $(this).attr('lic-id');
                         console.log('send user to create reissue application')
                     }
@@ -512,7 +618,7 @@ export default {
                 });
             });
             // Reinstate activity listener
-            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reinstate-activity]', function(e) {
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reinstate-purposes]', function(e) {
                 e.preventDefault();
                 swal({
                     title: "Reinstate Activity",
@@ -522,22 +628,25 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var activity_id = $(this).attr('reinstate-activity');
+                        var licence_activity_id = $(this).attr('reinstate-purposes');
                         var licence_id = $(this).attr('lic-id');
-                        vm.$http.post(helpers.add_endpoint_join(api_endpoints.licences,licence_id+'/reinstate_activity/?activity_id=' + activity_id)).then(res=>{
-                            swal({
-                                title: "Reinstate Activity",
-                                text: "The activity has been reinstated",
-                                type: "info"
-                            })
-                            vm.$refs.licence_datatable.vmDataTable.ajax.reload();
-                        },err=>{
-                            swal(
-                                'Submit Error',
-                                helpers.apiVueResourceError(err),
-                                'error'
-                            )
-                        });
+                        vm.licence_action = 'reinstate';
+                        vm.selected_licence_id = licence_id;
+                        vm.$http.get(helpers.add_endpoint_join(
+                            api_endpoints.licences,licence_id+
+                            '/get_latest_purposes_for_licence_activity_and_action/?licence_activity_id='+
+                            licence_activity_id+'&action='+vm.licence_action)).then(res=>{
+                                if (res.body) {
+                                    vm.action_purpose_list = res.body;
+                                    vm.$refs.licence_action_purposes.isModalOpen = true;
+                                }
+                            }, (error) => {
+                                swal(
+                                    'Reinstate Activity Error',
+                                    helpers.apiVueResourceError(error),
+                                    'error'
+                                )
+                            });
                     }
                 },(error) => {
                 });
@@ -585,11 +694,11 @@ export default {
                                     }
                                     if (!vm.is_external && activity['can_reactivate_renew']) {
                                         activity_rows +=
-                                            `<a reactivate-renew-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Reactivate Renew</a></br>`;
+                                            `<a reactivate-renew-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Reactivate Renew</a></br>`;
                                     }
                                     if (activity['can_surrender']) {
                                         activity_rows +=
-                                            `<a surrender-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Surrender</a></br>`;
+                                            `<a surrender-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Surrender</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_cancel']) {
                                         activity_rows +=
@@ -597,7 +706,7 @@ export default {
                                     }
                                     if (!vm.is_external && activity['can_suspend']) {
                                         activity_rows +=
-                                            `<a suspend-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Suspend</a></br>`;
+                                            `<a suspend-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Suspend</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_reissue']) {
                                         activity_rows +=
@@ -605,7 +714,7 @@ export default {
                                     }
                                     if (!vm.is_external && activity['can_reinstate']) {
                                         activity_rows +=
-                                            `<a reinstate-activity='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Reinstate</a></br>`;
+                                            `<a reinstate-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Reinstate</a></br>`;
                                     }
                         activity_rows += `</td>
                             </tr>`;
