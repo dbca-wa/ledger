@@ -18,7 +18,8 @@
                             <div class="row">
                                 <alert v-if="showError" type="danger" style="color: red"><strong>{{errorString}}</strong></alert>
                             </div>
-                            <label class="control-label">Text regarding online training including document</label>
+                            <label v-if="training_doc_url" class="control-label">Text regarding online training including <a :href="training_doc_url" target="_blank">document</a></label>
+                            <label v-else class="control-label">Text regarding online training including document</label>
                             <div class="row">
                                 <form>
                                 <ul class="list-unstyled col-sm-12" v-for="q in questions">
@@ -89,6 +90,7 @@
                 showResult:false,
                 showAnswer:false,
                 attempt:1,
+                global_settings:[],
                 answer_one: "answer_one",
                 answer_two:"answer_two",
                 answer_three: "answer_three",
@@ -98,6 +100,17 @@
             }
         },
         computed:{
+            training_doc_url: function(){
+                let vm=this;
+                if(vm.global_settings){
+                    for(var i=0; i<vm.global_settings.length; i++){
+                        if(vm.global_settings[i].key=='online_training_document'){
+                            return vm.global_settings[i].value;
+                        }
+                    }
+                }
+                return '';
+            },
             showError: function() {
                 var vm = this;
                 return vm.errors;
@@ -167,10 +180,20 @@
 
                 }
             },
+            fetchGlobalSettings: function(){
+                let vm = this;
+                vm.$http.get('/api/global_settings.json').then((response) => {
+                    vm.global_settings = response.body;
+                    
+                },(error) => {
+                    console.log(error);
+                } );
+            },
         },
         mounted: function(){
             let vm = this;
             vm.fetchQuestions();
+            vm.fetchGlobalSettings();
             // this.$nextTick(()=>{
             //     vm.eventListeners();
             // });
