@@ -632,13 +632,10 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def add_workflow_log(self, request, *args, **kwargs):
-        print(request.data)
         try:
             with transaction.atomic():
                 instance = self.get_object()
                 workflow_entry = self.add_comms_log(request, workflow=True)
-                print("workflow_entry")
-                print(workflow_entry)
                 #request.data['call_email'] = u'{}'.format(instance.id)
                 #print("request for complianceworkflow serializer")
                 #print(request.data)
@@ -687,14 +684,49 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 workflow_type = request.data.get('workflow_type')
                 if workflow_type in ('forward_to_regions', 'forward_to_wildlife_protection_branch'):
                     instance.status = 'open'
-                elif workflow_type in ('allocate_for_follow_up'):
+                    if workflow_type == 'forward_to_regions':
+                        instance.log_user_action(
+                            ComplianceUserAction.ACTION_FORWARD_TO_REGIONS.format(instance.number), 
+                            request)
+                    else:
+                        instance.log_user_action(
+                                ComplianceUserAction.ACTION_FORWARD_TO_WILDLIFE_PROTECTION_BRANCH.format(instance.number),
+                                request)
+
+                elif workflow_type == 'allocate_for_follow_up':
                     instance.status = 'open_followup'
-                elif workflow_type in ('allocate_for_inspection'):
+                    instance.log_user_action(
+                            ComplianceUserAction.ACTION_ALLOCATE_FOR_FOLLOWUP.format(instance.number), 
+                            request)
+
+                elif workflow_type == 'allocate_for_inspection':
                     instance.status = 'open_inspection'
-                elif workflow_type in ('allocate_for_case'):
+                    instance.log_user_action(
+                            ComplianceUserAction.ACTION_ALLOCATE_FOR_INSPECTION.format(instance.number), 
+                            request)
+
+                elif workflow_type == 'allocate_for_case':
                     instance.status = 'open_case'
-                elif workflow_type in ('close'):
+                    instance.log_user_action(
+                            ComplianceUserAction.ACTION_ALLOCATE_FOR_CASE.format(instance.number), 
+                            request)
+
+                elif workflow_type == 'close':
                     instance.status = 'closed'
+                    instance.log_user_action(
+                            ComplianceUserAction.ACTION_CLOSE.format(instance.number), 
+                            request)
+
+                elif workflow_type == 'offence':
+                    instance.log_user_action(
+                            ComplianceUserAction.ACTION_OFFENCE.format(instance.number), 
+                            request)
+                    
+                elif workflow_type == 'sanction_outcome':
+                    instance.log_user_action(
+                            ComplianceUserAction.ACTION_SANCTION_OUTCOME.format(instance.number), 
+                            request)
+
                 instance.region_id = request.data.get('region_id')
                 instance.district_id = request.data.get('district_id')
                 instance.allocated_group_id = request.data.get('allocated_group_id')
@@ -707,8 +739,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 # workflow_entry.documents,
                 workflow_entry,
                 request)
-                print("email_data")
-                print(email_data)
 
                 serializer = ComplianceLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
                 serializer.is_valid(raise_exception=True)

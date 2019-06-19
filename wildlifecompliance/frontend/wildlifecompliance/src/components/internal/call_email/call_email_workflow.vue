@@ -359,7 +359,11 @@ export default {
         }
         
 	if (this.workflow_type === 'close') {
-	    payload.append('details', this.call_email.advice_details);
+            payload.append('details', this.call_email.advice_details);
+            if (this.call_email.advice_details) {
+	        this.call_email.advice_given = true;
+	    }
+	    
 	} else {
 	    payload.append('details', this.workflowDetails);
 	}
