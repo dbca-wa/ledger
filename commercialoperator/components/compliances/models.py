@@ -163,6 +163,7 @@ class Compliance(RevisionedMixin):
 
     def assign_to(self, user,request):
         with transaction.atomic():
+            #import ipdb; ipdb.set_trace()
             self.assigned_to = user
             self.save()
             self.log_user_action(ComplianceUserAction.ACTION_ASSIGN_TO.format(user.get_full_name()),request)
@@ -333,7 +334,8 @@ class ComplianceAmendmentRequest(CompRequest):
             # Create a log entry for the proposal
             compliance.log_user_action(ComplianceUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
             # Create a log entry for the organisation
-            compliance.proposal.applicant.log_user_action(ComplianceUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+            applicant_field=getattr(compliance.proposal, compliance.proposal.applicant_field)
+            applicant_field.log_user_action(ComplianceUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
             send_amendment_email_notification(self,request, compliance)
 
 
