@@ -231,9 +231,6 @@ export const callemailStore = {
         updateRegionId(state, id) {
             state.call_email.region_id = id;
         },
-        updateGenericAttribute(state, { attribute, data }) {
-            Vue.set(state.call_email, attribute, data);
-        }
     },
     actions: {
         async loadCallEmail({ dispatch, }, { call_email_id }) {
@@ -423,21 +420,6 @@ export const callemailStore = {
         },
         setClassification({ commit, }, classification) {
             commit("updateClassification", classification)
-        },
-        setGenericAttribute({ commit }, { attribute, event, datatype } ) {
-            let field_value = null;
-            if (datatype === 'integer') {
-                field_value = parseInt(event.target.value);
-              } else if (datatype === 'integer') {
-                if (event.target.value === 'true') {
-                    field_value = true;
-                  } else {
-                    field_value = false;
-                  }
-              } else {
-                field_value = event.target.value;
-              }
-            commit("updateGenericAttribute", { 'attribute': attribute, 'data': field_value });
         },
 
     },
