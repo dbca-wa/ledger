@@ -345,7 +345,7 @@ def oracle_parser_on_invoice(date,system,system_name,override=False):
             #Build a list of invoices already in the oracle parse for parse date query
             for opi in op_invoices:
                oracle_parser_invoices.append(opi.reference)
-            invoices = Invoice.objects.filter(created__date=date, system=system)
+            invoices = Invoice.objects.filter(settlement_date=date, system=system)
 
             #Loop through invoices
             for invoice in invoices:
@@ -727,6 +727,13 @@ def update_payments_allocation(invoice_reference):
             deductions = D(0.0)
             oracle_code_totals = {}
 
+            invoice_settlement_date = None
+            if BpointTransaction.objects.filter(crn1=i.reference).count() > 0:
+                bp = BpointTransaction.objects.filter(crn1=i.reference)[0]
+                invoice_settlement_date = bp.settlement_date
+            else:
+                invoice_settlement_date = datetime.datetime.now().date() 
+
             # Get Order Information
             if i.order:
                 # total amount based on oracle code to get a negiative / positive value.
@@ -772,6 +779,9 @@ def update_payments_allocation(invoice_reference):
 
 
                     line.save()
+                if i.settlement_date is None:
+                   i.settlement_date = invoice_settlement_date
+                   i.save()
         except:
             print(traceback.print_exc())
             raise
