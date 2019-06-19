@@ -660,8 +660,17 @@ export default {
             if(checked){
               for(var i=0; i<vm.api_regions.length; i++){
                 new_regions.push(vm.api_regions[i].id);
+                //change the inderminate and checked states of region checkboxes
+                var region = $("#region"+vm.api_regions[i].id)[0]
+                region.checked=true;
+                region.indeterminate=false;
+
                 for (var j=0; j<vm.api_regions[i].districts.length; j++){
                   new_district.push(vm.api_regions[i].districts[j].id);
+                  //change the inderminate and checked states of district checkboxes
+                  var district = $("#district"+vm.api_regions[i].districts[j].id)[0]
+                    district.checked=true;
+                    district.indeterminate=false;
                   for (var k=0; k<vm.api_regions[i].districts[j].land_parks.length; k++){
                     new_parks.push(vm.api_regions[i].districts[j].land_parks[k].id);
                   }
@@ -672,6 +681,16 @@ export default {
               vm.selected_parks=new_parks;
             }
           if(!checked){
+            for(var i=0; i<vm.api_regions.length; i++){
+              var region = $("#region"+vm.api_regions[i].id)[0]
+                region.checked=false;
+                region.indeterminate=false;
+                for (var j=0; j<vm.api_regions[i].districts.length; j++){
+                    var district = $("#district"+vm.api_regions[i].districts[j].id)[0]
+                    district.checked=false;
+                    district.indeterminate=false;
+                }
+            }
             vm.selected_regions=[];
             vm.selected_districts=[];
             vm.selected_parks=[];
@@ -685,6 +704,9 @@ export default {
                 if(index==-1)
                 {
                   this.selected_districts.push(r.districts[i].id)
+                  var district = $("#district"+r.districts[i].id)[0]
+                  district.checked=true;
+                  district.indeterminate=false;
                   for(var j=0; j<r.districts[i].land_parks.length; j++){
                     var index_park=this.selected_parks.indexOf(r.districts[i].land_parks[j].id);
                     if(index_park==-1)
@@ -702,6 +724,9 @@ export default {
                 var index=this.selected_districts.indexOf(r.districts[i].id);
                 if(index!=-1){
                   this.selected_districts.splice(index,1)
+                  var district = $("#district"+r.districts[i].id)[0]
+                  district.checked=false;
+                  district.indeterminate=false;
                   for(var j=0; j<r.districts[i].land_parks.length; j++){
                     var index_park=this.selected_parks.indexOf(r.districts[i].land_parks[j].id);
                     if(index_park!=-1)

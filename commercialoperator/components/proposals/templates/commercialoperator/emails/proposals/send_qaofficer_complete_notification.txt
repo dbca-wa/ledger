@@ -1,7 +1,7 @@
 {%  extends 'commercialoperator/emails/base_email.txt' %}
 
 {%  block content %}
-        A QA for Proposal {{proposal.lodgement_number}} has been completed ({{completed_by}}): 
+        A QA for Application {{proposal.lodgement_number}} has been completed ({{completed_by}}): 
         QA Officer Comments: {{comments}}
 
     You can access this referral using the following link:

@@ -1,5 +1,5 @@
 {%  extends 'commercialoperator/emails/base_email.txt' %}
 
 {%  block content %}
-        Please find attached the invoice for the application fee, for Proposal <strong>{{ lodgement_number }}, for your own records.
+        Please find attached the invoice for the application fee, for Application <strong>{{ lodgement_number }}, for your own records.
 {%  endblock %}

@@ -329,6 +329,102 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
 
     return approval_buffer
 
+def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit, user):
+    site_url = settings.SITE_URL
+    every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
+                             PAGE_HEIGHT - 160, id='EveryPagesFrame')
+    every_page_template = PageTemplate(id='EveryPages', frames=[every_page_frame], onPage=_create_approval_header)
+
+    doc = BaseDocTemplate(approval_buffer, pageTemplates=[every_page_template], pagesize=A4)
+
+    # this is the only way to get data into the onPage callback function
+    doc.approval = approval
+    doc.site_url = site_url
+    
+    approval_table_style = TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])
+
+    elements = []
+
+    #Organization details
+
+    #import ipdb; ipdb.set_trace()
+    address = proposal.applicant_address
+    # address = proposal.applicant_address
+    if proposal.org_applicant:
+        email = proposal.org_applicant.organisation.organisation_set.all().first().contacts.all().first().email
+    else:
+        email= proposal.submitter.email    
+    #elements.append(Paragraph(email,styles['BoldLeft']))
+    elements.append(Paragraph('COMMERCIAL OPERATIONS LICENCE', styles['InfoTitleVeryLargeCenter']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    elements.append(Paragraph('The Director General of the Department of Biodiversity, Conservation and Attractions hereby grants a commercial operations licence to:', styles['BoldLeft']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    # delegation holds the Licence number and applicant name in table format.
+    delegation = []
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Table([[[Paragraph('Licensee:', styles['BoldLeft'])],
+                              [Paragraph(_format_name(approval.applicant),
+                                         styles['Left'])]]],
+                            colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
+                            style=approval_table_style))
+
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Table([[[Paragraph('Licence Number:', styles['BoldLeft'])],
+                              [Paragraph(approval.lodgement_number,
+                                         styles['Left'])]]],
+                            colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
+                            style=approval_table_style))
+
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    
+    elements.append(KeepTogether(delegation))
+
+    elements.append(Paragraph('Commencing on the date of execution of this licence and expiring on {}'.format(approval.expiry_date.strftime(DATE_FORMAT)),styles['BoldLeft']))
+    elements.append(Paragraph('to enter upon and use the land within parks/ reserves in order to conduct activites as contained in the schedule attached to this Commercial Operations Licence.',styles['BoldLeft']))
+
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph('CONDITIONS', styles['BoldLeft'])) 
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    list_of_bullets= []
+    list_of_bullets.append('This commercial Operations Licence is subject to the provisions of the Conservation and Land Management Act 1984 and all subsidiary legislation made under it.')
+    list_of_bullets.append('The Licensee must comply with and not contravene the conditions and restrictions set out in the Commercial Operator Handbook - Terrestrical and the Commercial Operator Handbook - Marine as varied from time to time by the Director General or his delegate.')
+    list_of_bullets.append('The Licensee must comply with the conditions contained in any schedule of conditions attached to this Commercial Operations Licence')
+
+    understandingList = ListFlowable(
+            [ListItem(Paragraph(a, styles['Left']), bulletColour='black', value='circle') for a in list_of_bullets],
+            bulletFontName=BOLD_FONTNAME, bulletFontSize=SMALL_FONTSIZE, bulletType='bullet')
+            #bulletFontName=BOLD_FONTNAME
+    elements.append(understandingList)
+
+    # proposal requirements
+    requirements = proposal.requirements.all().exclude(is_deleted=True)
+    if requirements.exists():
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        elements.append(Paragraph('The following requirements must be satisfied for the licence not to be withdrawn:', styles['BoldLeft']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+        conditionList = ListFlowable(
+            [Paragraph(a.requirement, styles['Left']) for a in requirements.order_by('order')],
+            bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
+        elements.append(conditionList)
+
+    elements += _layout_extracted_fields(approval.extracted_fields)
+
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    elements.append(Paragraph('{} {}'.format(user.first_name, user.last_name), styles['Left']))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph(approval.issue_date.strftime(DATE_FORMAT), styles['Left']))
+
+    doc.build(elements)
+
+    return approval_buffer
+
 def _format_name(applicant):
     #return org.name
     return applicant
@@ -423,7 +519,8 @@ def _layout_extracted_fields(extracted_fields):
 def create_approval_doc(approval,proposal, copied_to_permit, user):
     approval_buffer = BytesIO()
 
-    _create_approval(approval_buffer, approval, proposal, copied_to_permit, user)
+    #_create_approval(approval_buffer, approval, proposal, copied_to_permit, user)
+    _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit, user)
     filename = 'licence-{}.pdf'.format(approval.lodgement_number)
     document = ApprovalDocument.objects.create(approval=approval,name=filename)
     document._file.save(filename, File(approval_buffer), save=True)
@@ -472,8 +569,8 @@ def _create_renewal(renewal_buffer, approval, proposal):
     elements = []
 
 
-    title = approval.title.encode('UTF-8')
-
+    #title = approval.title.encode('UTF-8')
+    title=''
     # additional information
     '''if approval.additional_information:
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))

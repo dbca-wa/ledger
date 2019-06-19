@@ -32,6 +32,7 @@ class Booking(RevisionedMixin):
     created = models.DateTimeField(default=timezone.now)
     created_by = models.ForeignKey(EmailUser,on_delete=models.PROTECT, blank=True, null=True,related_name='created_by_booking')
     cost_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    admission_number = models.CharField(max_length=9, blank=True, default='')
 
 #    details = JSONField(null=True, blank=True)
 #    override_price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
@@ -44,10 +45,21 @@ class Booking(RevisionedMixin):
 #    old_booking = models.ForeignKey('Booking', null=True, blank=True)
 
     def __str__(self):
-        return 'Proposal {} : Invoice {}'.format(self.proposal, self.invoices.last())
+        return 'Application {} : Invoice {}'.format(self.proposal, self.invoices.last())
 
     class Meta:
         app_label = 'commercialoperator'
+
+    @property
+    def next_id(self):
+        ids = map(int,[i.split('AD')[1] for i in Booking.objects.all().values_list('admission_number', flat=True) if i])
+        return max(ids) + 1 if ids else 1
+
+    def save(self, *args, **kwargs):
+        super(Booking, self).save(*args,**kwargs)
+        if self.admission_number == '':
+            self.admission_number = 'AD{0:06d}'.format(self.next_id)
+            self.save()
 
     @property
     def booking_number(self):

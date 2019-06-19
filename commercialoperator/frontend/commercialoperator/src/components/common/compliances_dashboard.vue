@@ -125,7 +125,7 @@ export default {
                 
             ],
             proposal_submitters: [],
-            proposal_headers:["Number","Licence","Holder","Status","Due Date","Assigned To", "CustomerStatus", "Reference","Action"],
+            proposal_headers:["Number","Licence","Holder","Status","Due Date","Assigned To", "Status", "Reference","Action"],
             proposal_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -159,13 +159,13 @@ export default {
                     {
                         data: "approval_lodgement_number",
                         mRender:function (data,type,full) {
-                            return `A${data}`;
+                            return data;
                         },
                         name: "approval__lodgement_number"
                     },
                     {
                         data: "holder",
-                        name: "proposal__applicant__organisation__name"
+                        name: "approval__org_applicant__organisation__name, approval__proxy_applicant__email, approval__proxy_applicant__first_name, approval__proxy_applicant__last_name"
                     },
                     {data: "processing_status",
                         mRender:function(data,type,full){

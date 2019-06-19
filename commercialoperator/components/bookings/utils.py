@@ -99,7 +99,7 @@ def create_fee_lines(proposal, invoice_text=None, vouchers=[], internal=False):
     #import ipdb; ipdb.set_trace()
     now = datetime.now().strftime('%Y-%m-%d %H:%M')
     return [{
-            'ledger_description': 'Proposal Application Fee - {} - {}'.format(now, proposal.lodgement_number),
+            'ledger_description': 'Application Fee - {} - {}'.format(now, proposal.lodgement_number),
             'oracle_code': proposal.application_type.oracle_code,
             'price_incl_tax':  proposal.application_type.application_fee,
             'quantity': 1

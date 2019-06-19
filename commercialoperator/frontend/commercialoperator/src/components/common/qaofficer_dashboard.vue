@@ -146,9 +146,7 @@ export default {
             proposal_submitters: [],
             proposal_status: [],
             proposal_headers:[
-                "Number","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
-                //"Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
-                //"LodgementNo","CustomerStatus","AssessorProcess","CanUserEdit","CanUserView",
+                "Number","Submitter","Applicant","Status","Lodged on","Assigned Officer","Action",
             ],
             proposal_options:{
                 autoWidth: false,
@@ -192,7 +190,7 @@ export default {
                     },
                     {
                         data: "applicant",
-                        name: "applicant__organisation__name",
+                        name: "proposal__org_applicant__organisation__name, proposal__proxy_applicant__email, proposal__proxy_applicant__first_name, proposal__proxy_applicant__last_name"
                     },
                     {
                         data: "processing_status",

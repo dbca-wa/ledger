@@ -12,62 +12,62 @@ logger = logging.getLogger(__name__)
 SYSTEM_NAME = settings.SYSTEM_NAME_SHORT + ' Automated Message'
 
 class QAOfficerSendNotificationEmail(TemplateEmailBase):
-    subject = 'A proposal has been sent to you for QA.'
+    subject = 'An application has been sent to you for QA.'
     html_template = 'commercialoperator/emails/proposals/send_qaofficer_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_qaofficer_notification.txt'
 
 class QAOfficerCompleteNotificationEmail(TemplateEmailBase):
-    subject = 'A QA for a proposal has been completed.'
+    subject = 'A QA for an application has been completed.'
     html_template = 'commercialoperator/emails/proposals/send_qaofficer_complete_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_qaofficer_complete_notification.txt'
 
 class ReferralSendNotificationEmail(TemplateEmailBase):
-    subject = 'A referral for a proposal has been sent to you.'
+    subject = 'A referral for an application has been sent to you.'
     html_template = 'commercialoperator/emails/proposals/send_referral_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_referral_notification.txt'
 
 class ReferralCompleteNotificationEmail(TemplateEmailBase):
-    subject = 'A referral for a proposal has been completed.'
+    subject = 'A referral for an application has been completed.'
     html_template = 'commercialoperator/emails/proposals/send_referral_complete_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_referral_complete_notification.txt'
 
 class ProposalDeclineSendNotificationEmail(TemplateEmailBase):
-    subject = 'Your Proposal has been declined.'
+    subject = 'Your application has been declined.'
     html_template = 'commercialoperator/emails/proposals/send_decline_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_decline_notification.txt'
 
 class ProposalApprovalSendNotificationEmail(TemplateEmailBase):
-    subject = 'Your Proposal has been approved.'
+    subject = 'Your application has been approved.'
     html_template = 'commercialoperator/emails/proposals/send_approval_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_approval_notification.txt'
 
 class AmendmentRequestSendNotificationEmail(TemplateEmailBase):
-    subject = 'An amendment to your Proposal is required.'
+    subject = 'An amendment to your application is required.'
     html_template = 'commercialoperator/emails/proposals/send_amendment_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_amendment_notification.txt'
 
 class SubmitSendNotificationEmail(TemplateEmailBase):
-    subject = 'A new Proposal has been submitted.'
+    subject = 'A new application has been submitted.'
     html_template = 'commercialoperator/emails/proposals/send_submit_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_submit_notification.txt'
 
 class ExternalSubmitSendNotificationEmail(TemplateEmailBase):
-    subject = 'A new Proposal has been submitted.'
+    subject = 'A new application has been submitted.'
     html_template = 'commercialoperator/emails/proposals/send_external_submit_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_external_submit_notification.txt'
 
 class ApproverDeclineSendNotificationEmail(TemplateEmailBase):
-    subject = 'A Proposal has been recommended for decline.'
+    subject = 'An application has been recommended for decline.'
     html_template = 'commercialoperator/emails/proposals/send_approver_decline_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_approver_decline_notification.txt'
 
 class ApproverApproveSendNotificationEmail(TemplateEmailBase):
-    subject = 'A Proposal has been recommended for approval.'
+    subject = 'An application has been recommended for approval.'
     html_template = 'commercialoperator/emails/proposals/send_approver_approve_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_approver_approve_notification.txt'
 
 class ApproverSendBackNotificationEmail(TemplateEmailBase):
-    subject = 'A Proposal has been sent back by approver.'
+    subject = 'An application has been sent back by approver.'
     html_template = 'commercialoperator/emails/proposals/send_approver_sendback_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_approver_sendback_notification.txt'
 

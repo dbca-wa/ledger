@@ -29,8 +29,9 @@ class Command(BaseCommand):
             'renewal_sent': False,
             'replaced_by__isnull': True
         }
-
         logger.info('Running command {}'.format(__name__))
+        qs=Approval.objects.filter(**renewal_conditions)
+        print qs
         for a in Approval.objects.filter(**renewal_conditions):
             if a.status == 'current' or a.status == 'suspended':
                 try:

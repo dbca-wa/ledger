@@ -5,17 +5,17 @@
         <div class="well">
             <div class="row"><div class="col-sm-12">
                 <h2>Success!</h2>
-                <p>A confirmation email has been sent to {{ submitter }}. </p>
+                <strong>A confirmation email has been sent to {{ submitter }}. </strong>
             </div></div>
             <br/>
 
             {% if proposal and proposal.id %}
                 <div>
-                    <strong>Application fee payment was successful, Invoice Referece {{fee_invoice.reference}} and your Proposal, {{proposal.lodgement_number}} has been successfully submitted.</strong>
+                    <strong>Your application {{proposal.lodgement_number}} has been successfully submitted.</strong>
                     <br/><br/>
                     <table>
                         <tr>
-                            <td><strong>Proposal:</strong></td>
+                            <td><strong>Application:</strong></td>
                             <td><strong>{{proposal.lodgement_number}}</strong></td>
                         </tr>
                         <tr>

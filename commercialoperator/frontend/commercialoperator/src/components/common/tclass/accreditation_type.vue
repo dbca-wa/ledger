@@ -19,7 +19,7 @@
                         </div>
                         <div class="row">
                             <div class="col-sm-3">
-                                <label class="control-label pull-left"  for="Name">Accreditation certificates</label>
+                                <label class="control-label pull-right"  for="Name">Accreditation certificates</label>
                             </div>
                             <div class="col-sm-9">
                                 <FileField :proposal_id="proposal_id" isRepeatable="false" :name="'accreditation'+accreditation.accreditation_type+proposal_id" :id="'accreditation'+accreditation_type+proposal_id" :readonly="readonly"></FileField>
@@ -102,7 +102,7 @@ export default {
                         vm.accreditation.accreditation_expiry =  e.date.format('DD/MM/YYYY');
                     }
                     else if ($(vm.$refs.accreditation_expiry).data('date') === "") {
-                        vm.accreditation.accreditation_expiry = "";
+                        vm.accreditation.accreditation_expiry = null;
                     }
                  });
         },

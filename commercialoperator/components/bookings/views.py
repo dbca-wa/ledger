@@ -160,7 +160,6 @@ class ApplicationFeeSuccessView(TemplateView):
                 recipient = proposal.submitter.email
                 submitter = proposal.submitter
             send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
-            send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
 
             context.update({
                 'proposal': proposal,

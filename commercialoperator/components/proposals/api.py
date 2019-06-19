@@ -88,7 +88,7 @@ from commercialoperator.components.proposals.serializers import (
     ProposalAssessmentSerializer,
     ProposalAssessmentAnswerSerializer
 )
-from commercialoperator.components.bookings.models import ParkBooking, BookingInvoice
+from commercialoperator.components.bookings.models import Booking, ParkBooking, BookingInvoice
 from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.approvals.serializers import ApprovalSerializer
 from commercialoperator.components.compliances.models import Compliance
@@ -119,7 +119,7 @@ class GetProposalType(views.APIView):
             serializer = ProposalTypeSerializer(_type)
             return Response(serializer.data)
         else:
-            return Response({'error': 'There is currently no proposal type.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'There is currently no application type.'}, status=status.HTTP_404_NOT_FOUND)
 
 class GetEmptyList(views.APIView):
     renderer_classes = [JSONRenderer, ]
@@ -171,6 +171,14 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                 refs = [i.booking.invoices.last().invoice_reference  for i in ParkBooking.objects.all() if i.booking and i.booking.invoices.last()]
                 filtered_refs = [i.reference for i in Invoice.objects.filter(reference__in=refs) if i.payment_status==payment_status]
                 queryset = queryset.filter(booking__invoices__invoice_reference__in=filtered_refs).distinct('id')
+
+        park = request.GET.get('park')
+        if park:
+            if queryset.model is Booking:
+                #import ipdb; ipdb.set_trace()
+                queryset = queryset.filter(park_bookings__park__id__in=[park])
+
+
 
 
         date_from = request.GET.get('date_from')
