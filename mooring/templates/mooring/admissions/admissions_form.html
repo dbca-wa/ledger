@@ -82,6 +82,7 @@
 {% block vue-component %}
 
     <input id="location" name="location" type="hidden" value="{{loc}}"/>
+    <input id="terms" name="terms" type="hidden" value="{{ context_processor.EXPLORE_PARKS_TERMS}}"/>
     <div id='appdiv'></div>
     <div id="admissionsBooking">
       <alert :show="showAlert" :type="alertType" :data-alert="alertMessage" :duration="5000">
