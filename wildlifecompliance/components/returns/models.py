@@ -6,6 +6,9 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.core.exceptions import FieldError, ValidationError
 from ledger.accounts.models import EmailUser, RevisionedMixin
+from ledger.payments.invoice.models import Invoice
+from ledger.checkout.utils import calculate_excl_gst
+from wildlifecompliance.components.main.utils import checkout, flush_checkout_session
 from wildlifecompliance.components.returns.utils_schema import Schema
 from wildlifecompliance.components.applications.models import ApplicationCondition, Application
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction
@@ -13,6 +16,9 @@ from wildlifecompliance.components.returns.email import send_external_submit_ema
                                                         send_return_accept_email_notification, \
                                                         send_sheet_transfer_email_notification
 import ast
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def template_directory_path(instance, filename):
@@ -97,6 +103,7 @@ class Return(models.Model):
     RETURN_CUSTOMER_STATUS_FUTURE = 'future'
     RETURN_CUSTOMER_STATUS_UNDER_REVIEW = 'under_review'
     RETURN_CUSTOMER_STATUS_ACCEPTED = 'accepted'
+
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     application = models.ForeignKey(Application, related_name='returns')
     licence = models.ForeignKey(
@@ -130,6 +137,7 @@ class Return(models.Model):
     return_type = models.ForeignKey(ReturnType, null=True)
     nil_return = models.BooleanField(default=False)
     comments = models.TextField(blank=True, null=True)
+    return_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -261,14 +269,25 @@ class Return(models.Model):
         Property defining fee status for this Return.
         :return:
         """
-        # TODO: provide status for the Return payment fee.
-        # if self.return_fee == 0:
-        #   return 'payment_not_required'
-        # else:
-        #    if self.invoices.count() == 0:
-        #    return 'unpaid'
+        if self.return_fee == 0:
+            return Invoice.PAYMENT_STATUS_NOT_REQUIRED
+        else:
+            if self.invoices.count() == 0:
+                return Invoice.PAYMENT_STATUS_UNPAID
+            else:
+                try:
+                    latest_invoice = Invoice.objects.get(reference=self.invoices.latest('id').invoice_reference)
+                except Invoice.DoesNotExist:
+                    return Invoice.PAYMENT_STATUS_UNPAID
+                return latest_invoice.payment_status
 
-        return 'payment_not_required'
+    @property
+    def return_fee_paid(self):
+        return self.payment_status in [
+            Invoice.PAYMENT_STATUS_NOT_REQUIRED,
+            Invoice.PAYMENT_STATUS_PAID,
+            Invoice.PAYMENT_STATUS_OVERPAID,
+        ]
 
     @property
     def has_payment(self):
@@ -276,10 +295,7 @@ class Return(models.Model):
         Property defining if payment is required for this Return.
         :return:
         """
-        if self.payment_status == 'payment_not_required':
-            return False
-
-        return True
+        return True if self.payment_status != Invoice.PAYMENT_STATUS_NOT_REQUIRED else False
 
     @transaction.atomic
     def set_submitted(self, request):
@@ -637,7 +653,7 @@ class ReturnSheet(object):
     _DEFAULT_SPECIES = '0000000'
 
     _SHEET_SCHEMA = {"name": "sheet", "title": "Running Sheet of Return Data", "resources": [{"name":
-                     "SpecieID", "path": "", "title": "Return Data for Specie", "schema": {"fields": [{"name":
+                     "species_id", "path": "", "title": "Return Data for Specie", "schema": {"fields": [{"name":
                      "date", "type": "date", "format": "fmt:%d/%m/%Y", "constraints": {"required": True}}, {"name":
                      "activity", "type": "string", "constraints": {"required": True}}, {"name": "qty", "type":
                      "number", "constraints": {"required": True}}, {"name": "total", "type": "number",
@@ -726,6 +742,53 @@ class ReturnSheet(object):
         """
         return self._ACTIVITY_TYPES
 
+    @property
+    def process_transfer_fee_payment(self, request):
+        from ledger.payments.models import BpointToken
+        #if self.return_fee_paid:
+        #    return True
+
+        application = self.application
+        applicant = application.proxy_applicant if application.proxy_applicant else application.submitter
+        card_owner_id = applicant.id
+        card_token = BpointToken.objects.filter(user_id=card_owner_id).order_by('-id').first()
+        if not card_token:
+            logger.error("No card token found for user: %s" % card_owner_id)
+            return False
+
+        product_lines = []
+        return_submission = u'Transfer of stock for {} Return {}'.format(
+            u'{} {}'.format(applicant.first_name, applicant.last_name), application.lodgement_number)
+        product_lines.append({
+            'ledger_description': '{}'.format(self._return.id),
+            'quantity': 1,
+            'price_incl_tax': str(self._return.return_fee),
+            'price_excl_tax': str(calculate_excl_gst(self.licence_fee)),
+            'oracle_code': ''
+        })
+        checkout(
+            request, application, lines=product_lines,
+            invoice_text=return_submission,
+            internal=True,
+            add_checkout_params={
+                'basket_owner': request.user.id,
+                'payment_method': 'card',
+                'checkout_token': card_token.id,
+            }
+        )
+        try:
+            invoice_ref = request.session['checkout_invoice']
+        except KeyError:
+            logger.error("No invoice reference generated for Activity ID: %s" % self.licence_activity_id)
+            return False
+        ReturnInvoice.objects.get_or_create(
+            invoice_return=self,
+            invoice_reference=invoice_ref
+        )
+        flush_checkout_session(request.session)
+        #return self.licence_fee_paid and send_activity_invoice_email_notification(application, self, invoice_ref, request)
+        return self.licence_fee_paid
+
     def store(self, request):
         """
         Save the current state of this Return Sheet.
@@ -741,14 +804,6 @@ class ReturnSheet(object):
             except AttributeError:
                 continue
         self._add_transfer_activity(request)
-
-    def pay_transfer(self, request):
-        """
-        Payment associated with the movement of stock.
-        :param request:
-        :return:
-        """
-        # TODO: Call to payment process either from here or api.
 
     def send_transfer_sender(self):
         return self._return.submitter
@@ -809,7 +864,6 @@ class ReturnSheet(object):
                 self._table = self._NO_ACTIVITY
 
         return self._table
-
 
     def _get_table_rows(self, _data):
         """
@@ -967,6 +1021,7 @@ class ReturnActivity(object):
     _LICENCE = 'licence'
     _ACTIVITY = 'activity'
     _TOTAL = 'total'
+    _ROWID = 'rowId'
 
     def __init__(self, transfer):
         self.date = transfer[self._ACTIVITY_DATE]
@@ -1021,11 +1076,14 @@ class NotifyTransfer(ReturnActivity):
         self.licence = from_return.licence.licence_number
 
         try:
-            return_table = ReturnTable.objects.get(name=species, ret=to_return)
+            return_table = ReturnTable.objects.get_or_create(
+                name=species, ret=to_return)[0]
             rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
             table_rows = []
             row_exists = False
             total = 0
+            row_cnt = 0
+            self.rowId = str(row_cnt)
             for row in rows:
                 if row.data[self._ACTIVITY_DATE] == self.date:  # update to record
                     row_exists = True
@@ -1034,6 +1092,8 @@ class NotifyTransfer(ReturnActivity):
                     row.data[self._TRANSFER] = self.transfer
                 total = row.data[self._TOTAL]
                 table_rows.append(row.data)
+                row_cnt = row_cnt + 1
+                self.rowId = str(row_cnt)
             if not row_exists:
                 self.total = total
                 table_rows.append(self.__dict__)
@@ -1072,17 +1132,16 @@ class AcceptTransfer(ReturnActivity):
         to_return = self.get_licence_return()
 
         try:
-            return_table = ReturnTable.objects.get(name=species, ret=to_return)
+            return_table = ReturnTable.objects.get(
+                name=species, ret=to_return)
             rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
             table_rows = []
             row_exists = False
-            total = 0
             for row in rows:  # update total and status for accepted activity.
                 if row.data[self._ACTIVITY_DATE] == self.date:
                     row_exists = True
                     row.data[self._TRANSFER] = ReturnActivity._TRANSFER_STATUS_ACCEPT
                     row.data[self._TOTAL] = int(row.data[self._TOTAL]) - int(self.qty)
-                    table_rows.append(row.data)
                     break
             for row in rows:  # update totals for subsequent activities.
                 if row_exists and int(row.data[self._ACTIVITY_DATE]) > int(self.date):
@@ -1120,7 +1179,8 @@ class DeclineTransfer(ReturnActivity):
         to_return = self.get_licence_return()
 
         try:
-            return_table = ReturnTable.objects.get(name=species, ret=to_return)
+            return_table = ReturnTable.objects.get(
+                name=species, ret=to_return)
             rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
             table_rows = []
             row_exists = False
@@ -1204,3 +1264,27 @@ class ReturnLogEntry(CommunicationsLogEntry):
         if not self.reference:
             self.reference = self.return_obj.id
         super(ReturnLogEntry, self).save(**kwargs)
+
+
+class ReturnInvoice(models.Model):
+    invoice_return = models.ForeignKey(Return, related_name='invoices')
+    invoice_reference = models.CharField(
+        max_length=50, null=True, blank=True, default='')
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    def __str__(self):
+        return 'Return {} : Invoice #{}'.format(
+            self.invoice_return.id, self.invoice_reference)
+
+    # Properties
+    # ==================
+    @property
+    def active(self):
+        try:
+            invoice = Invoice.objects.get(reference=self.invoice_reference)
+            return False if invoice.voided else True
+        except Invoice.DoesNotExist:
+            pass
+        return False

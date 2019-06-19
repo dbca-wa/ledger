@@ -3,6 +3,7 @@ import traceback
 from django.db.models import Q
 from django.db import transaction
 from django.core.exceptions import ValidationError
+from ledger.checkout.utils import calculate_excl_gst
 from rest_framework import viewsets, serializers, status
 from rest_framework.decorators import detail_route, list_route, renderer_classes
 from rest_framework.response import Response
@@ -21,6 +22,9 @@ from wildlifecompliance.components.returns.serializers import (
     ReturnActionSerializer,
     ReturnLogEntrySerializer,
     ReturnTypeSerializer,
+)
+from wildlifecompliance.components.main.utils import (
+    checkout,
 )
 
 
@@ -151,6 +155,37 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def return_fee_checkout(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            product_lines = []
+            return_submission = u'Return submitted by {} confirmation {}'.format(
+                 u'{} {}'.format(instance.submitter.first_name, instance.submitter.last_name),
+                 instance.lodgement_number)
+            product_lines.append({
+                    'ledger_description': '{}'.format(instance.return_type.description),
+                    'quantity': 1,
+                    'price_incl_tax': str(instance.return_fee),
+                    'price_excl_tax': str(calculate_excl_gst(instance.return_fee)),
+                    'oracle_code': ''
+            })
+            checkout_result = checkout(request, instance, lines=product_lines,
+                                       invoice_text=return_submission)
+            return checkout_result
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     @detail_route(methods=['POST', ])
     def save(self, request, *args, **kwargs):
         try:
@@ -191,8 +226,10 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             print(traceback.print_exc())
             raise
         except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))

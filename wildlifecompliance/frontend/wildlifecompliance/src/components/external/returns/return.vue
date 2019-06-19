@@ -71,6 +71,11 @@ export default {
     isSubmittable() {
       return this.returns.format !== 'sheet' && this.returns.lodgement_date == null
     },
+    requiresCheckout: function() {
+      return this.returns.return_fee > 0 && [
+        'draft', 'awaiting_payment'
+      ]
+    },
   },
   methods: {
     ...mapActions({

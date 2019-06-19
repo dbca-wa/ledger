@@ -261,7 +261,6 @@ export default {
 
                         } else {  // Changing records only
 
-                            self.adjustTotals(); // update totals affected
                             self.row_of_data.data().activity = self.entryActivity;
                             self.row_of_data.data().qty = self.entryQty;
                             self.row_of_data.data().total = self.entryTotal;

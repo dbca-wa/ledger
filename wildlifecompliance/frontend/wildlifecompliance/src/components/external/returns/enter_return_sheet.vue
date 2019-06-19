@@ -265,7 +265,6 @@ export default {
             if (vm.returns.sheet_species in vm.species_transfer){
               transfer = vm.species_transfer[vm.returns.sheet_species]
             }
-            rows[i].licence = '';
             transfer[rows[i].date] = rows[i];
             vm.species_transfer[vm.returns.sheet_species] = transfer
           }
