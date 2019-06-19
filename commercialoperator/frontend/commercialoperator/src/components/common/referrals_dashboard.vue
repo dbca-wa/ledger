@@ -116,8 +116,7 @@ export default {
             },
             proposal_status:[],
             proposal_submitters: [],
-            proposal_headers:["Number","Submitter","Proponent","Status","Lodged on","Action"],
-            //proposal_headers:["Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"],
+            proposal_headers:["Number","Submitter","Applicant","Status","Lodged on","Action"],
             proposal_options:{
                 customProposalSearch: true,
                 tableID: 'proposal-datatable-'+vm._uid,
@@ -166,7 +165,7 @@ export default {
                     },
                     {
                         data: "applicant",
-                        name: "proposal__applicant__organisation__name",
+                        name: "proposal__org_applicant__organisation__name, proposal__proxy_applicant__email, proposal__proxy_applicant__first_name, proposal__proxy_applicant__last_name"
                     },
                     {
                         data: "processing_status",

@@ -152,9 +152,7 @@ export default {
             proposal_submitters: [],
             proposal_status: [],
             proposal_ex_headers:[
-                "Number","Application Type","Submitter","Proponent","Status","Lodged on","Action"
-                //"Number","Application Type","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"
-                //"LodgementNo","ProcessingStatus","AssessorProcess","CanUserEdit",
+                "Number","Application Type","Submitter","Applicant","Status","Lodged on","Action"
             ],
 
             proposal_ex_options:{
@@ -203,7 +201,7 @@ export default {
                     },
                     {
                         data: "applicant",
-                        name: "applicant__organisation__name",
+                        name: "org_applicant__organisation__name, proxy_applicant__email, proxy_applicant__first_name, proxy_applicant__last_name"
                     },
                     {
                         data: "customer_status",
@@ -284,9 +282,7 @@ export default {
                 */
             },
             proposal_headers:[
-                "Number","Application Type","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
-                //"Number","Application Type","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
-                //"LodgementNo","CustomerStatus","AssessorProcess","CanUserEdit","CanUserView",
+                "Number","Application Type","Submitter","Applicant","Status","Lodged on","Assigned Officer","Action",
             ],
             proposal_options:{
                 autoWidth: false,
@@ -320,7 +316,7 @@ export default {
                     },
                     {
 						data: "application_type",
-						name: "application_type"
+						name: "application_type__name"
 					},
                     {
                         data: "submitter",
@@ -334,7 +330,7 @@ export default {
                     },
                     {
                         data: "applicant",
-                        name: "applicant__organisation__name",
+                        name: "org_applicant__organisation__name, proxy_applicant__email, proxy_applicant__first_name, proxy_applicant__last_name"
                     },
                     {
                         data: "processing_status",

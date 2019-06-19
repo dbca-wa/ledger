@@ -158,6 +158,10 @@
                     }
                     if(all_correct==true){
                         vm.proposal.training_completed=true;
+
+                        /* Enable Payment tab (disabled by default in form_tclass.vue) */
+                        $('#pills-payment-tab').attr('style', '');
+                        $('#li-payment').attr('class', 'nav-item');
                     }
                     vm.attempt++;
                 }

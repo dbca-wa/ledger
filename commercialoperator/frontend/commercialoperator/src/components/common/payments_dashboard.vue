@@ -1,9 +1,10 @@
 <template id="proposal_dashboard">
+    <div class="container" id="paymentDash">
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Licences <small v-if="is_external">View existing licences and amend or renew them</small>
+                    <h3 class="panel-title">Admission Fees <small v-if="is_external">View existing admission bookings</small>
                         <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -11,17 +12,6 @@
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
                     <div class="row">
-                        <!--
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="">Region</label>
-                                <select class="form-control" v-model="filterProposalRegion">
-                                    <option value="All">All</option>
-                                    <option v-for="r in proposal_regions" :value="r">{{r}}</option>
-                                </select>
-                            </div>
-                        </div>
-                        -->
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Park</label>
@@ -40,7 +30,6 @@
                                 </select>
                             </div>
                         </div>
-                        <!--<div v-if="is_internal" class="col-md-3">-->
                         <div v-if="is_external" class="col-md-3">
                             <div class="form-group">
                                 <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'payment_order'  }">Make Payment</router-link>
@@ -82,6 +71,7 @@
         </div>
 
 
+    </div>
     </div>
 </template>
 <script>
@@ -158,6 +148,7 @@ export default {
 
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
+                        d.park = vm.filterProposalPark != 'All' && vm.filterProposalPark != null ? vm.filterProposalPark : '';
                         d.payment_status = vm.filterProposalStatus != 'All' && vm.filterProposalStatus != null ? vm.filterProposalStatus : '';
                         d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
@@ -170,6 +161,7 @@ export default {
                 columns: [
                     {
                         data: "admission_number",
+                        name: "admission_number"
                     },
                     {
                         data: "approval_number",
@@ -177,7 +169,7 @@ export default {
                     },
                     {
                         data: "applicant",
-                        name: "proposal__approval__org_applicant__organisation__name, proposal__approval__proxy_applicant__email"
+                        name: "proposal__approval__org_applicant__organisation__name, proposal__approval__proxy_applicant__email, proposal__approval__proxy_applicant__first_name, proposal__approval__proxy_applicant__last_name"
                     },
                     {
                         data: "payment_status",
@@ -206,8 +198,9 @@ export default {
                                 parks += item.park + '<br>';
                             });
                             return parks;
-                        }
+                        },
                         //name: "park__id, park__name"
+                        name: "park_bookings__park__name"
 
                     },
 
@@ -279,11 +272,7 @@ export default {
         },
         filterProposalPark: function() {
             let vm = this;
-            if (vm.filterProposalPark!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(5).search(vm.filterProposalPark).draw();
-            } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(5).search('').draw();
-            }
+            vm.$refs.proposal_datatable.vmDataTable.columns(5).search('').draw();
         },
 
         filterProposalLodgedFrom: function(){
