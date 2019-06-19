@@ -51,9 +51,9 @@
                         Action 
                     </div>
                     <div class="panel-body panel-collapse">
-                        <div v-if="statusId ==='draft'" class="row">
+                        <div v-if="statusId ==='draft'" class="row action-button">
                           <div class="col-sm-12">
-                                <a ref="forwardToWildlifeProtectionBranch" @click="addWorkflow('forward_to_wildlife_protection_branch')" class=" btn btn-primary">
+                                <a ref="forwardToWildlifeProtectionBranch" @click="addWorkflow('forward_to_wildlife_protection_branch')" class="btn btn-primary btn-block">
                                   Forward to Wildlife Protection Branch
                                 </a>
                           </div>
@@ -63,7 +63,7 @@
                         </div> -->
                         <div v-if="statusId ==='draft'" class="row action-button">
                           <div class="col-sm-12">
-                                <a ref="forwardToRegions" @click="addWorkflow('forward_to_regions')" class=" btn btn-primary">
+                                <a ref="forwardToRegions" @click="addWorkflow('forward_to_regions')" class="btn btn-primary btn-block">
                                   Forward to Regions
                                 </a>
                           </div>
@@ -71,7 +71,7 @@
 
                         <div v-if="statusId ==='open'" class="row action-button">
                           <div class="col-sm-12">
-                                <a ref="save" @click="save()" class=" btn btn-primary">
+                                <a ref="save" @click="save()" class="btn btn-primary btn-block">
                                   Save
                                 </a>
                           </div>
@@ -81,7 +81,7 @@
                         </div> -->
                         <div v-if="statusId ==='open_followup'" class="row action-button">
                           <div class="col-sm-12">
-                                <a @click="offence()" class=" btn btn-primary">
+                                <a @click="offence()" class="btn btn-primary btn-block">
                                   Offence
                                 </a>
                           </div>
@@ -89,7 +89,7 @@
 
                         <div v-if="statusId ==='open_followup'" class="row action-button">
                           <div class="col-sm-12">
-                                <a class=" btn btn-primary">
+                                <a class="btn btn-primary btn-block">
                                   Sanction Outcome
                                 </a>
                           </div>
@@ -99,7 +99,7 @@
                         </div> -->
                         <div v-if="statusId ==='open'" class="row action-button">
                           <div class="col-sm-12">
-                                <a ref="allocateForFollowUp" @click="addWorkflow('allocate_for_follow_up')" class=" btn btn-primary">
+                                <a ref="allocateForFollowUp" @click="addWorkflow('allocate_for_follow_up')" class="btn btn-primary btn-block" >
                                   Allocate for Follow Up
                                 </a>
                           </div>
@@ -109,7 +109,7 @@
                         </div> -->
                         <div v-if="statusId ==='open'" class="row action-button">
                           <div class="col-sm-12">
-                                <a ref="allocateForInspection" @click="addWorkflow('allocate_for_inspection')" class=" btn btn-primary">
+                                <a ref="allocateForInspection" @click="addWorkflow('allocate_for_inspection')" class="btn btn-primary btn-block" >
                                   Allocate for Inspection
                                 </a>
                           </div>
@@ -120,7 +120,7 @@
 
                         <div v-if="statusId ==='open'" class="row action-button">
                           <div class="col-sm-12">
-                                <a ref="allocateForCase" @click="addWorkflow('allocate_for_case')" class=" btn btn-primary">
+                                <a ref="allocateForCase" @click="addWorkflow('allocate_for_case')" class="btn btn-primary btn-block" >
                                   Allocate for Case
                                 </a>
                           </div>
@@ -130,7 +130,7 @@
                         </div> -->
                         <div class="row action-button">
                           <div class="col-sm-12">
-                                <a ref="close" @click="addWorkflow('close')" class=" btn btn-primary">
+                                <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
                                   Close
                                 </a>
                           </div>

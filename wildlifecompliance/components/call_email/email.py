@@ -41,7 +41,7 @@ def send_call_email_forward_email(select_group, call_email, workflow_entry, requ
     context = {
         'url': url,
         'call_email': call_email,
-        'workflow_entry_details': workflow_entry.details,
+        'workflow_entry_details': request.data.get('details'),
     }
     email_group = [item.email for item in select_group]
     msg = email.send(email_group, 
@@ -50,13 +50,12 @@ def send_call_email_forward_email(select_group, call_email, workflow_entry, requ
         prepare_attachments(workflow_entry.documents)
         )
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
-    _log_call_email_comms(msg, call_email, sender=sender)
+    email_data = _extract_email_headers(msg, call_email, sender=sender)
+    return email_data
 
-def _log_call_email_comms(email_message, call_email, sender=None):
-    from wildlifecompliance.components.call_email.models import ComplianceLogEntry
+def _extract_email_headers(email_message, call_email, sender=None):
+    # from wildlifecompliance.components.call_email.models import ComplianceLogEntry
     if isinstance(email_message, (EmailMultiAlternatives, EmailMessage,)):
-        print("call_email")
-        print(call_email)
         # TODO this will log the plain text body, should we log the html
         # instead
         text = email_message.body
@@ -84,15 +83,14 @@ def _log_call_email_comms(email_message, call_email, sender=None):
     #     fromm = smart_text(sender) if sender else SYSTEM_NAME
     #     all_ccs = ''
 
-    kwargs = {
+    email_data = {
         'subject': subject,
         'text': text,
-        'call_email': call_email,
+        #'call_email': call_email,
         'to': to,
         'fromm': fromm,
         'cc': all_ccs
     }
 
-    email_entry = ComplianceLogEntry.objects.create(**kwargs)
+    return email_data
 
-    return email_entry

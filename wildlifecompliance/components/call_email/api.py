@@ -302,11 +302,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
-    def add_comms_log(self, request, *args, **kwargs):
+    def add_comms_log(self, request, workflow=False, *args, **kwargs):
         try:
             with transaction.atomic():
                 instance = self.get_object()
                 request.data['call_email'] = u'{}'.format(instance.id)
+                print(request.data)
                 # request.data['staff'] = u'{}'.format(request.user.id)
                 serializer = ComplianceLogEntrySerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
@@ -314,12 +315,17 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 # Save the files
                 for f in request.FILES:
                     document = comms.documents.create()
+                    print("filename")
+                    print(str(request.FILES[f]))
                     document.name = str(request.FILES[f])
                     document._file = request.FILES[f]
                     document.save()
                 # End Save Documents
 
-                return Response(serializer.data)
+                if workflow:
+                    return comms
+                else:
+                    return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -626,24 +632,30 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def add_workflow_log(self, request, *args, **kwargs):
-        print(request.data)
         try:
             with transaction.atomic():
                 instance = self.get_object()
-                request.data['call_email'] = u'{}'.format(instance.id)
-                serializer = ComplianceWorkflowLogEntrySerializer(data=request.data, partial=True)
-                serializer.is_valid(raise_exception=True)
-                workflow_entry = serializer.save()
-                # Save the files
-                for f in request.FILES:
-                    document = workflow_entry.documents.create()
-                    document.name = str(request.FILES[f])
-                    document._file = request.FILES[f]
-                    document.save()
+                workflow_entry = self.add_comms_log(request, workflow=True)
+                #request.data['call_email'] = u'{}'.format(instance.id)
+                #print("request for complianceworkflow serializer")
+                #print(request.data)
+                #serializer = ComplianceWorkflowLogEntrySerializer(data=request.data)
+                #serializer.is_valid(raise_exception=True)
+                #workflow_entry = serializer.save()
+                ## Save the files
+                #for f in request.FILES:
+                #    print("the file")
+                #    print(f)
+                #    document = workflow_entry.documents.create()
+                #    print("filename")
+                #    print(str(request.FILES[f]))
+                #    document.name = str(request.FILES[f])
+                #    document._file = request.FILES[f]
+                #    document.save()
 
                 attachments = []
-                for document in workflow_entry.documents.all():
-                    attachments.append(document)
+                for doc in workflow_entry.documents.all():
+                    attachments.append(doc)
 
                 email_group = []
                 if request.data.get('assigned_to'):
@@ -672,28 +684,72 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 workflow_type = request.data.get('workflow_type')
                 if workflow_type in ('forward_to_regions', 'forward_to_wildlife_protection_branch'):
                     instance.status = 'open'
-                elif workflow_type in ('allocate_for_follow_up'):
+                    if workflow_type == 'forward_to_regions':
+                        instance.log_user_action(
+                            ComplianceUserAction.ACTION_FORWARD_TO_REGIONS.format(instance.number), 
+                            request)
+                    else:
+                        instance.log_user_action(
+                                ComplianceUserAction.ACTION_FORWARD_TO_WILDLIFE_PROTECTION_BRANCH.format(instance.number),
+                                request)
+
+                elif workflow_type == 'allocate_for_follow_up':
                     instance.status = 'open_followup'
-                elif workflow_type in ('allocate_for_inspection'):
+                    instance.log_user_action(
+                            ComplianceUserAction.ACTION_ALLOCATE_FOR_FOLLOWUP.format(instance.number), 
+                            request)
+
+                elif workflow_type == 'allocate_for_inspection':
                     instance.status = 'open_inspection'
-                elif workflow_type in ('allocate_for_case'):
+                    instance.log_user_action(
+                            ComplianceUserAction.ACTION_ALLOCATE_FOR_INSPECTION.format(instance.number), 
+                            request)
+
+                elif workflow_type == 'allocate_for_case':
                     instance.status = 'open_case'
-                elif workflow_type in ('close'):
+                    instance.log_user_action(
+                            ComplianceUserAction.ACTION_ALLOCATE_FOR_CASE.format(instance.number), 
+                            request)
+
+                elif workflow_type == 'close':
                     instance.status = 'closed'
+                    instance.log_user_action(
+                            ComplianceUserAction.ACTION_CLOSE.format(instance.number), 
+                            request)
+
+                elif workflow_type == 'offence':
+                    instance.log_user_action(
+                            ComplianceUserAction.ACTION_OFFENCE.format(instance.number), 
+                            request)
+                    
+                elif workflow_type == 'sanction_outcome':
+                    instance.log_user_action(
+                            ComplianceUserAction.ACTION_SANCTION_OUTCOME.format(instance.number), 
+                            request)
+
                 instance.region_id = request.data.get('region_id')
                 instance.district_id = request.data.get('district_id')
                 instance.allocated_group_id = request.data.get('allocated_group_id')
                 instance.save()
 
                 # send email
-                send_call_email_forward_email(
+                email_data = send_call_email_forward_email(
                 email_group, 
                 instance,
                 # workflow_entry.documents,
                 workflow_entry,
                 request)
 
-                return Response(serializer.data)
+                serializer = ComplianceLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    headers = self.get_success_headers(serializer.data)
+                    return Response(
+                            serializer.data, 
+                            status=status.HTTP_201_CREATED,
+                            headers=headers
+                            )
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
