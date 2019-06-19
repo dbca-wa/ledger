@@ -41,7 +41,7 @@
                                         </span>
                                     </div>
                                 </div>
-                                <div v-if="offence.occurrence_from_to">
+                                <div v-show="offence.occurrence_from_to">
                                     <div class="col-sm-3">
                                         <div class="input-group date" ref="occurrenceDateToPicker">
                                             <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="offence.occurrence_date_to" />
@@ -63,7 +63,7 @@
                                         </span>
                                     </div>
                                 </div>
-                                <div v-if="offence.occurrence_from_to">
+                                <div v-show="offence.occurrence_from_to">
                                     <div class="col-sm-3">
                                         <div class="input-group date" ref="occurrenceTimeToPicker">
                                             <input type="text" class="form-control" placeholder="HH:MM" v-model="offence.occurrence_time_to" />
@@ -684,5 +684,12 @@ export default {
 }
 .awesomplete {
     display: inherit !important;
+}
+.tab-content {
+    background: white;
+}
+#DataTable {
+    padding: 10px 5px;
+    border: 1px solid lightgray;
 }
 </style>
