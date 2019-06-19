@@ -213,7 +213,7 @@ class DefaultDocument(Document):
     def delete(self):
         if self.can_delete:
             return super(DefaultDocument, self).delete()
-        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+        logger.info('Cannot delete existing document object after Application has been submitted (including document submitted before Application pushback to status Draft): {}'.format(self.name))
 
 
 
@@ -249,7 +249,7 @@ class ProposalRequiredDocument(Document):
     def delete(self):
         if self.can_delete:
             return super(ProposalRequiredDocument, self).delete()
-        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+        logger.info('Cannot delete existing document object after Application has been submitted (including document submitted before Application pushback to status Draft): {}'.format(self.name))
 
     class Meta:
         app_label = 'commercialoperator'
@@ -264,7 +264,7 @@ class QAOfficerDocument(Document):
     def delete(self):
         if self.can_delete:
             return super(QAOfficerDocument, self).delete()
-        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+        logger.info('Cannot delete existing document object after Application has been submitted (including document submitted before Application pushback to status Draft): {}'.format(self.name))
 
     class Meta:
         app_label = 'commercialoperator'
@@ -279,7 +279,7 @@ class ReferralDocument(Document):
     def delete(self):
         if self.can_delete:
             return super(ProposalDocument, self).delete()
-        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+        logger.info('Cannot delete existing document object after Application has been submitted (including document submitted before Application pushback to status Draft): {}'.format(self.name))
 
     class Meta:
         app_label = 'commercialoperator'
@@ -453,13 +453,13 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 #    )
 
     APPLICATION_TYPE_CHOICES = (
-        ('new_proposal', 'New Proposal'),
+        ('new_proposal', 'New Application'),
         ('amendment', 'Amendment'),
         ('renewal', 'Renewal'),
         ('external', 'External'),
     )
 
-    proposal_type = models.CharField('Proposal Type', max_length=40, choices=APPLICATION_TYPE_CHOICES,
+    proposal_type = models.CharField('Application Status Type', max_length=40, choices=APPLICATION_TYPE_CHOICES,
                                         default=APPLICATION_TYPE_CHOICES[0][0])
     #proposal_state = models.PositiveSmallIntegerField('Proposal state', choices=PROPOSAL_STATE_CHOICES, default=1)
 
@@ -1714,7 +1714,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 #Log entry for approval
                 from commercialoperator.components.approvals.models import ApprovalUserAction
                 self.approval.log_user_action(ApprovalUserAction.ACTION_RENEW_APPROVAL.format(self.approval.id),request)
-                proposal.save(version_comment='New Amendment/Renewal Proposal created, from origin {}'.format(proposal.previous_application_id))
+                proposal.save(version_comment='New Amendment/Renewal Application created, from origin {}'.format(proposal.previous_application_id))
                 #proposal.save()
             return proposal
 
@@ -1758,7 +1758,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 #Log entry for approval
                 from commercialoperator.components.approvals.models import ApprovalUserAction
                 self.approval.log_user_action(ApprovalUserAction.ACTION_AMEND_APPROVAL.format(self.approval.id),request)
-                proposal.save(version_comment='New Amendment/Renewal Proposal created, from origin {}'.format(proposal.previous_application_id))
+                proposal.save(version_comment='New Amendment/Renewal Application created, from origin {}'.format(proposal.previous_application_id))
                 #proposal.save()
             return proposal
 
@@ -2159,11 +2159,11 @@ class ProposalStandardRequirement(RevisionedMixin):
 class ProposalUserAction(UserAction):
     ACTION_CREATE_CUSTOMER_ = "Create customer {}"
     ACTION_CREATE_PROFILE_ = "Create profile {}"
-    ACTION_LODGE_APPLICATION = "Lodge proposal {}"
-    ACTION_ASSIGN_TO_ASSESSOR = "Assign proposal {} to {} as the assessor"
-    ACTION_UNASSIGN_ASSESSOR = "Unassign assessor from proposal {}"
-    ACTION_ASSIGN_TO_APPROVER = "Assign proposal {} to {} as the approver"
-    ACTION_UNASSIGN_APPROVER = "Unassign approver from proposal {}"
+    ACTION_LODGE_APPLICATION = "Lodge application {}"
+    ACTION_ASSIGN_TO_ASSESSOR = "Assign application {} to {} as the assessor"
+    ACTION_UNASSIGN_ASSESSOR = "Unassign assessor from application {}"
+    ACTION_ASSIGN_TO_APPROVER = "Assign application {} to {} as the approver"
+    ACTION_UNASSIGN_APPROVER = "Unassign approver from application {}"
     ACTION_ACCEPT_ID = "Accept ID"
     ACTION_RESET_ID = "Reset ID"
     ACTION_ID_REQUEST_UPDATE = 'Request ID update'
@@ -2174,17 +2174,17 @@ class ProposalUserAction(UserAction):
     ACTION_ID_REQUEST_AMENDMENTS = "Request amendments"
     ACTION_SEND_FOR_ASSESSMENT_TO_ = "Send for assessment to {}"
     ACTION_SEND_ASSESSMENT_REMINDER_TO_ = "Send assessment reminder to {}"
-    ACTION_DECLINE = "Decline proposal {}"
+    ACTION_DECLINE = "Decline application {}"
     ACTION_ENTER_CONDITIONS = "Enter requirement"
     ACTION_CREATE_CONDITION_ = "Create requirement {}"
-    ACTION_ISSUE_APPROVAL_ = "Issue Approval for proposal {}"
-    ACTION_UPDATE_APPROVAL_ = "Update Approval for proposal {}"
+    ACTION_ISSUE_APPROVAL_ = "Issue Licence for application {}"
+    ACTION_UPDATE_APPROVAL_ = "Update Licence for application {}"
     ACTION_EXPIRED_APPROVAL_ = "Expire Approval for proposal {}"
-    ACTION_DISCARD_PROPOSAL = "Discard proposal {}"
+    ACTION_DISCARD_PROPOSAL = "Discard application {}"
     ACTION_APPROVAL_LEVEL_DOCUMENT = "Assign Approval level document {}"
     #T-Class licence
-    ACTION_LINK_PARK = "Link park {} to proposal {}"
-    ACTION_UNLINK_PARK = "Unlink park {} from proposal {}"
+    ACTION_LINK_PARK = "Link park {} to application {}"
+    ACTION_UNLINK_PARK = "Unlink park {} from application {}"
     ACTION_LINK_ACCESS = "Link access {} to park {}"
     ACTION_UNLINK_ACCESS = "Unlink access {} from park {}"
     ACTION_LINK_ACTIVITY = "Link activity {} to park {}"
@@ -2193,8 +2193,8 @@ class ProposalUserAction(UserAction):
     ACTION_UNLINK_ACTIVITY_SECTION = "Unlink activity {} from section {} of trail {}"
     ACTION_LINK_ACTIVITY_ZONE = "Link activity {} to zone {} of park {}"
     ACTION_UNLINK_ACTIVITY_ZONE = "Unlink activity {} from zone {} of park {}"
-    ACTION_LINK_TRAIL = "Link trail {} to proposal {}"
-    ACTION_UNLINK_TRAIL = "Unlink trail {} from proposal {}"
+    ACTION_LINK_TRAIL = "Link trail {} to application {}"
+    ACTION_UNLINK_TRAIL = "Unlink trail {} from application {}"
     ACTION_LINK_SECTION = "Link section {} to trail {}"
     ACTION_UNLINK_SECTION = "Unlink section {} from trail {}"
     ACTION_LINK_ZONE = "Link zone {} to park {}"
@@ -2202,35 +2202,35 @@ class ProposalUserAction(UserAction):
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"
-    ACTION_PROPOSED_APPROVAL = "Proposal {} has been proposed for approval"
-    ACTION_PROPOSED_DECLINE = "Proposal {} has been proposed for decline"
+    ACTION_PROPOSED_APPROVAL = "Application {} has been proposed for approval"
+    ACTION_PROPOSED_DECLINE = "Application {} has been proposed for decline"
     # Referrals
-    ACTION_SEND_REFERRAL_TO = "Send referral {} for proposal {} to {}"
-    ACTION_RESEND_REFERRAL_TO = "Resend referral {} for proposal {} to {}"
-    ACTION_REMIND_REFERRAL = "Send reminder for referral {} for proposal {} to {}"
-    ACTION_ENTER_REQUIREMENTS = "Enter Requirements for proposal {}"
-    ACTION_BACK_TO_PROCESSING = "Back to processing for proposal {}"
-    RECALL_REFERRAL = "Referral {} for proposal {} has been recalled"
-    CONCLUDE_REFERRAL = "{}: Referral {} for proposal {} has been concluded by group {}"
+    ACTION_SEND_REFERRAL_TO = "Send referral {} for application {} to {}"
+    ACTION_RESEND_REFERRAL_TO = "Resend referral {} for application {} to {}"
+    ACTION_REMIND_REFERRAL = "Send reminder for referral {} for application {} to {}"
+    ACTION_ENTER_REQUIREMENTS = "Enter Requirements for application {}"
+    ACTION_BACK_TO_PROCESSING = "Back to processing for application {}"
+    RECALL_REFERRAL = "Referral {} for application {} has been recalled"
+    CONCLUDE_REFERRAL = "{}: Referral {} for application {} has been concluded by group {}"
     ACTION_REFERRAL_DOCUMENT = "Assign Referral document {}"
     #Approval
-    ACTION_REISSUE_APPROVAL = "Reissue approval for proposal {}"
-    ACTION_CANCEL_APPROVAL = "Cancel approval for proposal {}"
-    ACTION_EXTEND_APPROVAL = "Extend approval"
-    ACTION_SUSPEND_APPROVAL = "Suspend approval for proposal {}"
-    ACTION_REINSTATE_APPROVAL = "Reinstate approval for proposal {}"
-    ACTION_SURRENDER_APPROVAL = "Surrender approval for proposal {}"
-    ACTION_RENEW_PROPOSAL = "Create Renewal proposal for proposal {}"
-    ACTION_AMEND_PROPOSAL = "Create Amendment proposal for proposal {}"
+    ACTION_REISSUE_APPROVAL = "Reissue licence for application {}"
+    ACTION_CANCEL_APPROVAL = "Cancel licence for application {}"
+    ACTION_EXTEND_APPROVAL = "Extend licence"
+    ACTION_SUSPEND_APPROVAL = "Suspend licence for application {}"
+    ACTION_REINSTATE_APPROVAL = "Reinstate licence for application {}"
+    ACTION_SURRENDER_APPROVAL = "Surrender licence for application {}"
+    ACTION_RENEW_PROPOSAL = "Create Renewal application for application {}"
+    ACTION_AMEND_PROPOSAL = "Create Amendment application for application {}"
     #Vehicle
     ACTION_CREATE_VEHICLE = "Create Vehicle {}"
     ACTION_EDIT_VEHICLE = "Edit Vehicle {}"
     #Vessel
     ACTION_CREATE_VESSEL = "Create Vessel {}"
     ACTION_EDIT_VESSEL= "Edit Vessel {}"
-    ACTION_PUT_ONHOLD = "Put Proposal On-hold {}"
-    ACTION_REMOVE_ONHOLD = "Remove Proposal On-hold {}"
-    ACTION_WITH_QA_OFFICER = "Send Proposal QA Officer {}"
+    ACTION_PUT_ONHOLD = "Put Application On-hold {}"
+    ACTION_REMOVE_ONHOLD = "Remove Application On-hold {}"
+    ACTION_WITH_QA_OFFICER = "Send Application QA Officer {}"
     ACTION_QA_OFFICER_COMPLETED = "QA Officer Assessment Completed {}"
 
 
@@ -2379,7 +2379,7 @@ class Referral(RevisionedMixin):
         ordering = ('-lodged_on',)
 
     def __str__(self):
-        return 'Proposal {} - Referral {}'.format(self.proposal.id,self.id)
+        return 'Application {} - Referral {}'.format(self.proposal.id,self.id)
 
     # Methods
     @property
@@ -2755,7 +2755,7 @@ class QAOfficerReferral(RevisionedMixin):
         ordering = ('-lodged_on',)
 
     def __str__(self):
-        return 'Proposal {} - QA Officer referral {}'.format(self.proposal.id,self.id)
+        return 'Application {} - QA Officer referral {}'.format(self.proposal.id,self.id)
 
     # Methods
     @property

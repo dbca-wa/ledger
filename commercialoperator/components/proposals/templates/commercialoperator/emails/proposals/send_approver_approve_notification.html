@@ -1,7 +1,7 @@
 {%  extends 'commercialoperator/emails/base_email.html' %}
 
 {%  block content %}
-	The Proposal {{ proposal.lodgement_number }} has been assessed and has been recommended for approval.
+	The Application {{ proposal.lodgement_number }} has been assessed and has been recommended for approval.
 
     {% comment %}
     {% if proposal.proposed_issuance_approval %}
@@ -15,9 +15,9 @@
     {% endcomment %}
 
     <p>
-    You can access this Proposal using the following link:
+    You can access this Application using the following link:
     </p>
-    <a href="{{url}}">Access Proposal</a>
+    <a href="{{url}}">Access Application</a>
 
 
 {%  endblock %}

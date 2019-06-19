@@ -119,7 +119,7 @@ class GetProposalType(views.APIView):
             serializer = ProposalTypeSerializer(_type)
             return Response(serializer.data)
         else:
-            return Response({'error': 'There is currently no proposal type.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'There is currently no application type.'}, status=status.HTTP_404_NOT_FOUND)
 
 class GetEmptyList(views.APIView):
     renderer_classes = [JSONRenderer, ]

@@ -2,13 +2,13 @@
 
 {%  block content %}
     {% if reminder %}
-        This is a reminder for QA for Proposal <strong>{{proposal.lodgement_number}}</strong> that has been sent to you
+        This is a reminder for QA for Application <strong>{{proposal.lodgement_number}}</strong> that has been sent to you
     {% else %}
-        A QA for Proposal P{{proposal.id}} has been sent to you: 
+        A QA for Application A{{proposal.id}} has been sent to you: 
         Comments: {{comments}}
     {% endif %}
 
-    You can access this Proposal using the following link:
+    You can access this Application using the following link:
 
     {{url}}
 

@@ -45,7 +45,7 @@ class ApprovalDocument(Document):
     def delete(self):
         if self.can_delete:
             return super(ApprovalDocument, self).delete()
-        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+        logger.info('Cannot delete existing document object after Application has been submitted (including document submitted before Application pushback to status Draft): {}'.format(self.name))
 
 
     class Meta:
@@ -482,16 +482,16 @@ class ApprovalLogDocument(Document):
         app_label = 'commercialoperator'
 
 class ApprovalUserAction(UserAction):
-    ACTION_CREATE_APPROVAL = "Create approval {}"
-    ACTION_UPDATE_APPROVAL = "Create approval {}"
-    ACTION_EXPIRE_APPROVAL = "Expire approval {}"
-    ACTION_CANCEL_APPROVAL = "Cancel approval {}"
-    ACTION_EXTEND_APPROVAL = "Extend approval {}"
-    ACTION_SUSPEND_APPROVAL = "Suspend approval {}"
-    ACTION_REINSTATE_APPROVAL = "Reinstate approval {}"
-    ACTION_SURRENDER_APPROVAL = "surrender approval {}"
-    ACTION_RENEW_APPROVAL = "Create renewal Proposal for approval {}"
-    ACTION_AMEND_APPROVAL = "Create amendment Proposal for approval {}"
+    ACTION_CREATE_APPROVAL = "Create licence {}"
+    ACTION_UPDATE_APPROVAL = "Create licence {}"
+    ACTION_EXPIRE_APPROVAL = "Expire licence {}"
+    ACTION_CANCEL_APPROVAL = "Cancel licence {}"
+    ACTION_EXTEND_APPROVAL = "Extend licence {}"
+    ACTION_SUSPEND_APPROVAL = "Suspend licence {}"
+    ACTION_REINSTATE_APPROVAL = "Reinstate licence {}"
+    ACTION_SURRENDER_APPROVAL = "surrender licence {}"
+    ACTION_RENEW_APPROVAL = "Create renewal Application for licence {}"
+    ACTION_AMEND_APPROVAL = "Create amendment Application for licence {}"
 
 
     class Meta:

@@ -1,7 +1,7 @@
 {%  extends 'commercialoperator/emails/base_email.html' %}
 
 {%  block content %}
-	Your Proposal {{ proposal.lodgement_number }} has been reviewed and requires an amendment before further assessment.
+	Your Application {{ proposal.lodgement_number }} has been reviewed and requires an amendment before further assessment.
 
     {% if reason %}
         <p>
@@ -13,9 +13,9 @@
         <p><span> Amendment details: <br> {{ amendment_request_text }}</span></p>
     {% endif %}
     <p>
-    You can access this Proposal using the following link:
+    You can access this Application using the following link:
     </p>
-    <a href="{{url}}">Access Proposal</a>
+    <a href="{{url}}">Access Application</a>
 
 
 {%  endblock %}

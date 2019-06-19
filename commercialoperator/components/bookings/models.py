@@ -45,7 +45,7 @@ class Booking(RevisionedMixin):
 #    old_booking = models.ForeignKey('Booking', null=True, blank=True)
 
     def __str__(self):
-        return 'Proposal {} : Invoice {}'.format(self.proposal, self.invoices.last())
+        return 'Application {} : Invoice {}'.format(self.proposal, self.invoices.last())
 
     class Meta:
         app_label = 'commercialoperator'
