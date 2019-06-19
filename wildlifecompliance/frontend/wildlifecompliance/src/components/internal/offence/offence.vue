@@ -87,7 +87,7 @@
 
                             <div class="col-sm-12 form-group"><div class="row">
                                 <div class="col-sm-12">
-                                    <datatable ref="alleged_offence_table" id="alleged-offence-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders" />
+                                    <datatable ref="alleged_offence_table" id="alleged-offence-table" :dtOptions="dtOptionsAllegedOffence" :dtHeaders="dtHeadersAllegedOffence" />
                                 </div>
                             </div></div>
                         </div>
@@ -114,14 +114,29 @@
 
                     <div :id="pTab" class="tab-pane fade in">
                         <div class="row">
-                            <div class="col-sm-12">
-                                <div class="form-group">
+                            <div class="col-sm-12 form-group"><div class="row">
                                     <input class="col-sm-1" id="offender_indivisual" type="radio" v-model="offender_type" value="indivisual">
                                     <label class="col-sm-1 radio-button-label" for="offender_indivisual">Indivisual</label>
                                     <input class="col-sm-1" id="offender_organisation" type="radio" v-model="offender_type" value="organisation">
                                     <label class="col-sm-1 radio-button-label" for="offender_organisation">Organisation</label>
                                 </div>
                             </div>
+
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <label class="col-sm-3">Offender</label>
+                                <div class="col-sm-6">
+                                    <input class="form-control" id="offender_input" />
+                                </div>
+                                <div class="col-sm-3">
+                                    <input type="button" class="btn btn-primary" value="Add" @click.prevent="addOffenderClicked()" />
+                                </div>
+                            </div></div>
+
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-12">
+                                    <datatable ref="offender_table" id="offender-table" :dtOptions="dtOptionsOffender" :dtHeaders="dtHeadersOffender" />
+                                </div>
+                            </div></div>
                         </div>
                     </div>
 
@@ -163,8 +178,11 @@ export default {
 
     vm.max_items = 20;
     vm.ajax_for_alleged_offence = null;
+    vm.ajax_for_offender = null;
     vm.suggest_list = []; // This stores a list of alleged offences displayed after search.
+    vm.suggest_list_offender = []; // This stores a list of alleged offences displayed after search.
     vm.awe = null;
+    vm.awe_offender = null;
 
     return {
         officers: [],
@@ -177,24 +195,45 @@ export default {
             SectionRegulation: '',
             AllegedOffence: '',
         },
+        current_offender: null,
 
         oTab: 'oTab'+vm._uid,
         dTab: 'dTab'+vm._uid,
         pTab: 'pTab'+vm._uid,
         lTab: 'lTab'+vm._uid,
 
-        dtHeaders: [
+        dtHeadersOffender: [
+            'id',
+            'Action',
+        ],
+        dtHeadersAllegedOffence: [
             'id',
             'Act',
             'Section/Regulation',
             'Alleged Offence',
             'Action',
         ],
-        dtOptions: {
+        dtOptionsOffender: {
             columns: [
                 {
                     data: 'id',
                     visible: true
+                },
+                {
+                    data: 'Action',
+                    mRender: function(data, type, row){
+                        console.log(data);
+                        console.log(row);
+                        return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
+                    }
+                },
+            ]
+        },
+        dtOptionsAllegedOffence: {
+            columns: [
+                {
+                    data: 'id',
+                    visible: false
                 },
                 { 
                     data: 'Act', 
@@ -256,18 +295,44 @@ export default {
         ...mapActions('callemailStore', {
           setAllocatedTo: "setAllocatedTo",
         }),
+        removeOffenderClicked: function(e){   
+            let vm = this;
+
+            let offenderId = parseInt(e.target.getAttribute("data-offender-id"));
+            vm.$refs.offender_table.vmDataTable.rows(function(idx, data, node){
+                if(data.id === offenderId){
+                    vm.$refs.offender_table.vmDataTable.row(idx).remove().draw();
+                }
+            });
+        },
         removeClicked: function(e){   
             let vm = this;
 
             let allegedOffenceId = parseInt(e.target.getAttribute("data-alleged-offence-id"));
             vm.$refs.alleged_offence_table.vmDataTable.rows(function(idx, data, node){
                 if(data.id === allegedOffenceId){
-                    console.log('rowId: ');
-                    console.log(idx);
                     vm.$refs.alleged_offence_table.vmDataTable.row(idx).remove().draw();
                 }
             });
 
+        },
+        addOffenderClicked: function() {
+            let vm = this;
+
+            if(vm.current_offender.id){
+                let already_exists = vm.$refs.offender_table.vmDataTable.columns(0).data()[0].includes(vm.current_offender.id);
+
+                if (!already_exists){
+                    vm.$refs.offender_table.vmDataTable.row.add(
+                        {
+                            'id': vm.current_offender.id,
+                        }
+                    ).draw();
+
+                }
+
+                vm.setCurrentOffenderEmpty();
+            }
         },
         addAllegedOffenceClicked: function() {
             let vm = this;
@@ -353,6 +418,39 @@ export default {
             });
 
             $('#alleged-offence-table').on('click', '.remove_button', vm.removeClicked);
+            $('#offender-table').on('click', '.remove_button', vm.removeOffenderClicked);
+        },
+        search_offender: function(searchTerm){
+            var vm = this;
+            vm.suggest_list_offender = [];
+            vm.suggest_list_offender.length = 0;
+            vm.awe_offender.list = [];
+
+            /* Cancel all the previous requests */
+            if (vm.ajax_for_offender != null){
+                vm.ajax_for_offender.abort();
+                vm.ajax_for_offender = null;
+            }
+
+            vm.ajax_for_offender = $.ajax({
+                type: 'GET',
+                url: '/api/search_user/?search=' + searchTerm,
+                success: function(data){
+                    if (data && data.results) {
+                        let persons = data.results;
+                        let limit = Math.min(vm.max_items, persons.length);
+                        for (var i = 0; i < limit; i++){
+                            vm.suggest_list_offender.push(persons[i])
+                        }
+                    }
+                    vm.awe_offender.list = vm.suggest_list_offender;
+                    vm.awe_offender.evaluate();
+                },
+                error: function (e){
+                    console.log(e);
+                }
+            });
+
         },
         search: function(searchTerm){
             console.log('searchTerm');
@@ -387,7 +485,65 @@ export default {
                 }
             });
         },
-        initAwesomplete: function(){
+        initAwesompleteOffender: function(){
+            let self = this;
+  
+            let element_search = document.getElementById('offender_input');
+            self.awe_offender = new Awesomplete(element_search, {
+                maxItems: self.max_items,
+                sort: false,
+                filter: ()=>{ return true; }, // Display all the items in the list without filtering.
+                data: function(item, input){
+                    let f_name = item.first_name?item.first_name:'';
+                    let l_name = item.last_name?item.last_name:'';
+
+                    let full_name = [f_name, l_name].filter(Boolean).join(' ');
+                    let email = item.email?'E:' + item.email:'';
+                    let p_number = item.phone_number?'P:' + item.phone_number:'';
+                    let m_number = item.mobile_number?'M:' + item.mobile_number:'';
+                    let dob = item.dob?'DOB:' + item.dob:'DOB: ---';
+                    let myLabel = ['<span class="full_name">' + full_name + '</span>', email, p_number, m_number, dob].filter(Boolean).join('<br />');
+
+                    return { 
+                        label: myLabel,   // Displayed in the list below the search box
+                        value: [full_name, dob].filter(Boolean).join(', '), // Inserted into the search box once selected
+                        id: item.id
+                    };
+                }
+            });
+            $(element_search).on('keyup', function(ev){
+                var keyCode = ev.keyCode || ev.which;
+                if ((48 <= keyCode && keyCode <= 90)||(96 <= keyCode && keyCode <= 105) || (keyCode == 8) || (keyCode == 46)){
+                  self.search_offender(ev.target.value);
+                  return false;
+                }
+            }).on('awesomplete-selectcomplete', function(ev){
+                ev.preventDefault();
+                ev.stopPropagation();
+                return false;
+            }).on('awesomplete-select', function(ev){
+                console.log('aho');
+                /* Retrieve element id of the selected item from the list
+                 * By parsing it, we can get the order-number of the item in the list
+                 */
+                let origin = $(ev.originalEvent.origin)
+                let originTagName = origin[0].tagName;
+                if (originTagName == "SPAN"){
+                    origin = origin.parent();
+                }
+                let elem_id = origin[0].id;
+                let reg = /^.+(\d+)$/gi;
+                let result = reg.exec(elem_id)
+                if(result[1]){
+                    let idx = result[1];
+                    self.setCurrentOffender(self.suggest_list_offender[idx].id);
+                }else{
+                    console.log("result");
+                    console.log(result);
+                }
+            });
+        },
+        initAwesompleteAllegedOffence: function(){
             var self = this;
   
             var element_search = document.getElementById('alleged-offence');
@@ -441,8 +597,19 @@ export default {
                 }
             });
         },
+        setCurrentOffender: function(id){
+            console.log('setCurrentOffender');
+            console.log(id);
+
+            let vm = this;
+            let initialisers = [
+                utils.fetchUser(id),
+            ]
+            Promise.all(initialisers).then(data => {
+                vm.current_offender = data[0];
+            });
+        },
         setCurrentOffenceSelected: function(offence){
-            console.log('setCurrentOffenceSelected');
             let vm = this;
 
             if(offence.id){
@@ -454,8 +621,14 @@ export default {
                 vm.setCurrentOffenceEmpty();
             }
         },
+        setCurrentOffenderEmpty: function(){
+            let vm = this;
+
+            vm.current_offender.id = null;
+
+            $('#offender_input').val('');
+        },
         setCurrentOffenceEmpty: function(){
-            console.log('setCurrentOffenceEmpty');
             let vm = this;
 
             vm.current_alleged_offence.id = null;
@@ -468,7 +641,8 @@ export default {
     },
     created: async function() {
         this.$nextTick(function() {
-            this.initAwesomplete();
+            this.initAwesompleteAllegedOffence();
+            this.initAwesompleteOffender();
         });
     },
     mounted: function() {
