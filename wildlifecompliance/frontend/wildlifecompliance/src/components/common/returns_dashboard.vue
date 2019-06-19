@@ -70,12 +70,6 @@ export default {
             // Filters for Applications
             filterReturnLicenceType: 'All',
             filterReturnStatus: 'All',
-            
-            // filterApplicationRegion: 'All',
-            // filterApplicationStatus: 'All',
-            // filterApplicationLodgedFrom: '',
-            // filterApplicationLodgedTo: '',
-            // filterApplicationSubmitter: 'All',
             dateFormat: 'DD/MM/YYYY',
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
@@ -128,36 +122,26 @@ export default {
                     {
                         data: "licence",
                         mRender:function (data,type,full) {
-                            return `A${data.name}`;
+                            return `A${full.licence}`;
                         }
                     },
                     {
                         mRender:function (data,type,full) {
-                            let vm=this;
                             let links = '';
 
-                            links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;
-                            if (full.format == 'sheet') {
-                              links +=  `<a href='/external/return/sheet/${full.id}'>Continue</a><br/>`;
-                            } else if (full.format == 'question') {
-                              links +=  `<a href='/external/return/question/${full.id}'>Continue</a><br/>`;
+                            if (!full.is_external) {
+                                 links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;
                             } else {
-                              links +=  `<a href='/external/return/${full.id}'>Continue</a><br/>`;
-                            }
-                            // if (!vm.is_external){
+                                 links +=  `<a href='/external/return/${full.id}'>Continue</a><br/>`;
+                            };
 
-                            //     links +=  `<a href='/internal/return/${full.id}'>View</a><br/>`;
-                            // }
-                            // else{
-                            //         links +=  `<a href='/external/return/${full.id}'>Continue</a><br/>`;
-                                    
                             //     // else if (full.can_user_view) {
                             //     //     links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
                             //     // }
                             // }
                             return links;
                         }
-                    }
+                    },
                 ],
                 processing: true,
                 initComplete: function () {

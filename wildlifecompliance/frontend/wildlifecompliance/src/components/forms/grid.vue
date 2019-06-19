@@ -10,113 +10,126 @@
           <div class="grid-container">
               <div>
                   <label v-if="headers" v-for="header in headers" >
-                      <input class="form-control" v-model="header.label" disabled="disabled" /> <br/>
-                      <div v-for ="field in field_data" >
-                          <div v-for="(title,key) in field" v-if="key == header.name"
-                              :name="`${name}::${header.name}`" v-model="title.value" v-bind:key="`f_${key}`" >
-                              <TextField v-if="header.type === 'date'"
-                                type="string"
-                                :label="title.label"
-                                :field_data="title"
-                                :name="name + '::' + header.name"
-                                :readonly="header.is_readonly"
-                                :help_text="help_text"
-                                :isRequired="header.isRequired"
-                                :help_text_url="help_text_url"
-                              />
-                              <TextField v-if="header.type === 'number'"
-                                type="string"
-                                :name="name + '::' + header.name"
-                                :field_data="title"
-                                :min="header.min"
-                                :max="header.max"
-                                :label="title.label"
-                                :help_text="help_text"
-                                :readonly="header.is_readonly"
-                                :isRequired="header.isRequired"
-                                :help_text_url="help_text_url"
-                              />
-                              <TextField v-if="header.type === 'string'"
-                                type="string"
-                                :name="name + '::' + header.name"
-                                :field_data="title"
-                                :label="title.label"
-                                :help_text="help_text"
-                                :readonly="header.is_readonly"
-                                :isRequired="header.isRequired"
-                                :help_text_url="help_text_url"
-                              />
+                      <input class="form-control" v-model="header.label" disabled="disabled" />
+                      <div class="grid-item" v-for ="(field, row_no) in field_data" >
+                          <div id="header.name" v-for="(title,key) in field" v-if="key == header.name"
+                              :name="`${name}::${header.name}`" :key="`f_${key}`" >
+
+                              <div v-if="header.type === 'date'" >
+                                  <input type="text"
+                                         :id="header.name + '::' + row_no"
+                                         :disabled="header.readonly"
+                                         :name="name + '::' + header.name"
+                                         class="form-control"
+                                         placeholder="DD/MM/YYYY"
+                                         :v-model="setDateValue(title.value, row_no, header.name)"
+                                         :required="isRequired"
+                                  />
+                              </div>
+
+                              <div v-if="header.type === 'string'">
+                                  <input :disabled="header.readonly"
+                                         type="text"
+                                         :id="header.name + '::' + row_no"
+                                         class="form-control"
+                                         :name="name + '::' + header.name"
+                                         v-model="title.value"
+                                         :required="isRequired"
+                                  />
+                              </div>
+
+                              <div v-if="header.type === 'number'" >
+                                  <input :disabled="header.readonly"
+                                         :id="header.name + '::' + row_no"
+                                         type="text"
+                                         class="form-control"
+                                         :name="name + '::' + header.name"
+                                         v-model="title.value"
+                                         :required="isRequired"
+                                  />
+                              </div>
+
                           </div>
                       </div>
                   </label>
               </div>
           </div>
-          <input type="button" class="btn btn-primary" @click.prevent="addRow()" >Add Row</button>
+          <div >
+             <button class="btn btn-link" @click.prevent="addRow()" >Add Row</button>
+          </div>
      </div>
 </template>
 <script>
+import datetimepicker from 'datetimepicker';
 import HelpText from './help_text.vue'
 import HelpTextUrl from './help_text_url.vue'
-import DateField from './date-field.vue'
-import TextField from './text.vue'
 const GridBlock = {
   /* Example schema config
+     Note: Each grid-item requires a unique name ie.'Table-Name::location'.
      {
       "type": "grid",
-      "headers": "{'label': 'LOCATION','type': 'string','required': 'true'}",
-      "name": "returns_data",
-      "label": "Returns Data"
+      "headers": "{'label': 'LOCATION','name': 'location', 'type': 'string','required': 'true'}",
+      "name": "table-name",
+      "label": "Grid format of Table Data"
+      "data" : "{'key': 'value'}"
      }
   */
-  props: ['field_data','headers','name', 'label', 'value', 'id', 'help_text', 'help_text_url', "readonly", "isRequired"],
-  components: {HelpText, HelpTextUrl, TextField, DateField},
+  props: ['field_data','headers','name', 'label', 'id', 'help_text', 'help_text_url', 'readonly', 'isRequired'],
+  components: {HelpText, HelpTextUrl},
   data: function() {
-    let vm = this;
-    if(vm.readonly) {
-      return { isClickable: "return false;" }
-    } else {
-      return { isClickable: "return true;" }
+    var grid_item = [{'id': 0, 'name': '', 'value': ''}];
+    return {
     }
   },
   methods: {
     addRow: function(e) {
-      var grid_data = this._props['field_data'];
-      let index = grid_data.length
-      let dataObj = Object.assign({}, grid_data[0]);
-
+      const self = this;
+      self.grid_item = self._props['field_data'];
+      let index = self.grid_item.length;
+      let fieldObj = Object.assign({}, self.grid_item[0]);
       // schema data type on each field is validated - error value required.
-      for(let key in dataObj) { dataObj[key] = {'value':'', 'error':''}};
-
-      grid_data.push(dataObj);
+      for(let key in fieldObj) {
+        fieldObj[key] = {'value':'', 'error':''};
+      };
+      self.grid_item.push(fieldObj);
     },
     addColumn: function(e) {
     },
     addArea: function(e) {
     },
-  },
-  computed: {
-    isChecked: function() {
-      return (this.value == 'on');
+    setDateValue: function(value, row, name) {
+      const self = this;
+      if (value !== '') {
+         self.field_data[row][name].value = value;
+         self.value = value;
+      }
+      return self.field_data[row][name].value;
     },
-    options: function() {
-      return JSON.stringify(this.conditions);
-    }
+    setDatePicker: function() {
+      const self = this;
+      for (let row=0; row<self.field_data.length; row++) {
+        Object.keys(self.field_data[row]).forEach(function(key) {
+          if (key.indexOf('date')>-1) {
+            let val = key + '::' + row;
+            let dateVal = self.field_data[row][key].value != null ? self.field_data[row][key].value : '';
+            let parts = dateVal.split('/');
+            var newDate = new Date(parts[2], parts[1] - 1, parts[0]); // format new Date(YYYY,MM,DD)
+            $(`[id='${val}']`).datetimepicker({
+              format: 'DD/MM/YYYY',
+              defaultDate: dateVal != '' ? newDate : null
+            }).off('dp.change').on('dp.change', (e) => {
+              self.value = $(e.target).data('DateTimePicker').date($(e.target)[0].value).format('DD/MM/YYYY');
+            });
+          }
+        });
+      }
+    } // end of function to set the DatePicker widget for each Grid Item date.
+  },
+  updated:function () {
+      this.setDatePicker();
   },
   mounted:function () {
-      let vm = this;
-      if (vm.isChecked) {
-          var input = this.$refs.Checkbox;
-          var e = document.createEvent('HTMLEvents');
-          e.initEvent('change', true, true);
-
-          /* replacing input.disabled with onclick because disabled checkbox does NOT get posted with form on submit */
-          if(vm.readonly) {
-              vm.isClickable = "return false;";
-          } else {
-              vm.isClickable = "return true;";
-		  }
-          input.dispatchEvent(e);
-      }
+      this.setDatePicker();
   }
 }
 
@@ -132,14 +145,19 @@ export default GridBlock;
         width: 100%;
         height: 300px;
         border: 1px solid #ffffff;
-        grid-template-columns: [labels] 2048px;
+        grid-template-columns: [labels] 5120px;
+        grid-template-rows: auto;
         overflow: scroll;
         background-color: #ffffff;
-        justify-content: start;
     }
     .grid-container > label {
         grid-column: labels;
         grid-row: auto;
+    }
+    .grid-item {
+        grid-column: 1 / 1;
+        grid-row: 1 / 1;
+        border: 1px solid #ffffff;
     }
 </style>
 

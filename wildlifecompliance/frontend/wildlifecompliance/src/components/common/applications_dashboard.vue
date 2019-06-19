@@ -283,10 +283,9 @@ export default {
                         }
                         else if (full.can_user_view) {
                             links +=  `<a href='/external/application/${full.id}'>View</a><br/>`;
-
-                            if (full.payment_status == 'unpaid'){
-                                links +=  `<a href='#${full.id}' data-pay-application-fee='${full.id}'>Pay Application Fee</a><br/>`;
-                            }
+                        }
+                        if (full.payment_status == 'unpaid'){
+                            links +=  `<a href='#${full.id}' data-pay-application-fee='${full.id}'>Pay Application Fee</a><br/>`;
                         }
                     }
                     return links;
@@ -514,10 +513,22 @@ export default {
             },(error) => {
             });
         },
-        payApplicationFee:function (application_id) {
-            let vm = this;
-            console.log('test')
-            vm.$http.post(helpers.add_endpoint_join(api_endpoints.applications,application_id+'/application_fee_checkout/'), application_id).then(res=>{
+        payLicenceFee: function(application_id, activity_id) {
+            this.$http.post(helpers.add_endpoint_join(api_endpoints.applications,application_id+'/licence_fee_checkout/'), {
+                application_id,
+                activity_id
+            }).then(res=>{
+                    window.location.href = "/ledger/checkout/checkout/payment-details/";
+                },err=>{
+                    swal(
+                        'Submit Error',
+                        helpers.apiVueResourceError(err),
+                        'error'
+                    )
+                });
+        },
+        payApplicationFee: function(application_id) {
+            this.$http.post(helpers.add_endpoint_join(api_endpoints.applications,application_id+'/application_fee_checkout/'), application_id).then(res=>{
                     window.location.href = "/ledger/checkout/checkout/payment-details/";
                 },err=>{
                     swal(
@@ -581,18 +592,20 @@ export default {
                     // Open this row (the format() function would return the data to be shown)
                     var child_row = ''
                     // Generate rows for each activity if internal
-                    if (!vm.is_external){
-                        var activity_rows = ''
-                        row.data()['activities'].forEach(function(activity) {
-                            activity_rows += `
-                                <tr>
-                                    <td>${activity['activity_name_str']}</td>
-                                    <td>${activity['activity_purpose_names'].
-                                        replace(/(?:\r\n|\r|\n|,)/g, '<br>')}</td>
-                                    <td>${activity['processing_status']['name']}</td>
-                                </tr>`;
-                        });
-                    }
+                    var activity_rows = ''
+                    row.data()['activities'].forEach(function(activity) {
+                        activity_rows += `
+                            <tr>
+                                <td>${activity['activity_name_str']}</td>
+                                <td>${activity['activity_purpose_names'].
+                                    replace(/(?:\r\n|\r|\n|,)/g, '<br>')}</td>
+                                ${vm.is_external ? '' : `<td>${activity['processing_status']['name']}</td>`}
+                                <td>
+                                    ${activity['can_pay_licence_fee'] ?
+                                    `<a pay-licence-fee-for='${activity['id']}' application-id='${row.data()['id']}'>Pay licence fee</a>` : ''}
+                                </td>
+                            </tr>`;
+                    });
                     // Generate html for child row
                     child_row += `
                         <table class="table table-striped table-bordered child-row-table">
@@ -614,23 +627,30 @@ export default {
                             </tr>`;
                     }
                     child_row += `</table>`
-                    if (!vm.is_external){
-                        child_row += `
-                            <table class="table table-striped table-bordered child-row-table">
-                                <tr>
-                                    <th>Activity</th>
-                                    <th class="width_55pc">Purposes</th>
-                                    <th class="width_20pc">Status</th>
-                                </tr>
-                                ${activity_rows}
-                            </table>`;
-                    }
+                    child_row += `
+                        <table class="table table-striped table-bordered child-row-table">
+                            <tr>
+                                <th>Activity</th>
+                                <th class="width_55pc">Purposes</th>
+                                ${vm.is_external ? '' : '<th class="width_20pc">Status</th>'}
+                                <th class="width_10pc">Action</th>
+                            </tr>
+                            ${activity_rows}
+                        </table>`;
                     // Show child row, dark-row className CSS applied from application.scss
                     row.child(
                         child_row
                         , 'dark-row').show();
                     tr.addClass('shown');
                 }
+
+                // Add listener for "Pay Licence Fee"
+                row.on('click', 'a[pay-licence-fee-for]', function(e) {
+                    e.preventDefault();
+                    const activity_id = $(this).attr('pay-licence-fee-for');
+                    const application_id = $(this).attr('application-id');
+                    vm.payLicenceFee(application_id, activity_id);
+                });
             });
             // Initialise select2 for submitter
             $(vm.$refs.submitter_select).select2({

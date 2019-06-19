@@ -5,6 +5,7 @@ import logging
 import six
 import re
 from decimal import Decimal
+from django.conf import settings
 from django.db import models, transaction
 from django.db.models import Q
 from django.db.models.signals import pre_delete
@@ -18,6 +19,12 @@ from django.utils.encoding import python_2_unicode_compatible
 
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.payments.invoice.models import Invoice
+from ledger.checkout.utils import calculate_excl_gst
+from wildlifecompliance.components.main.utils import (
+    checkout, set_session_application,
+    delete_session_application,
+    flush_checkout_session
+)
 
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.organisations.emails import send_org_id_update_request_notification
@@ -32,10 +39,11 @@ from wildlifecompliance.components.applications.email import (
     send_application_decline_notification,
     send_id_update_request_notification,
     send_application_return_to_officer_conditions_notification,
+    send_activity_invoice_email_notification,
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
-from wildlifecompliance.components.licences.models import LicenceCategory
+from wildlifecompliance.components.licences.models import LicenceCategory, LicenceActivity, LicencePurpose
 
 logger = logging.getLogger(__name__)
 
@@ -138,12 +146,14 @@ class Application(RevisionedMixin):
 
     CUSTOMER_STATUS_DRAFT = 'draft'
     CUSTOMER_STATUS_UNDER_REVIEW = 'under_review'
+    CUSTOMER_STATUS_AWAITING_PAYMENT = 'awaiting_payment'
     CUSTOMER_STATUS_AMENDMENT_REQUIRED = 'amendment_required'
     CUSTOMER_STATUS_ACCEPTED = 'accepted'
     CUSTOMER_STATUS_PARTIALLY_APPROVED = 'partially_approved'
     CUSTOMER_STATUS_DECLINED = 'declined'
     CUSTOMER_STATUS_CHOICES = (
         (CUSTOMER_STATUS_DRAFT, 'Draft'),
+        (CUSTOMER_STATUS_AWAITING_PAYMENT, 'Awaiting Payment'),
         (CUSTOMER_STATUS_UNDER_REVIEW, 'Under Review'),
         (CUSTOMER_STATUS_AMENDMENT_REQUIRED, 'Amendment Required'),
         (CUSTOMER_STATUS_ACCEPTED, 'Accepted'),
@@ -154,6 +164,7 @@ class Application(RevisionedMixin):
     # List of statuses from above that allow a customer to edit an application.
     CUSTOMER_EDITABLE_STATE = [
         CUSTOMER_STATUS_DRAFT,
+        CUSTOMER_STATUS_AWAITING_PAYMENT,
         CUSTOMER_STATUS_AMENDMENT_REQUIRED,
     ]
 
@@ -227,11 +238,13 @@ class Application(RevisionedMixin):
     APPLICATION_TYPE_ACTIVITY = 'new_activity'
     APPLICATION_TYPE_AMENDMENT = 'amend_activity'
     APPLICATION_TYPE_RENEWAL = 'renew_activity'
+    APPLICATION_TYPE_SYSTEM_GENERATED = 'system_generated'
     APPLICATION_TYPE_CHOICES = (
         (APPLICATION_TYPE_NEW_LICENCE, 'New'),
         (APPLICATION_TYPE_ACTIVITY, 'New Activity'),
         (APPLICATION_TYPE_AMENDMENT, 'Amendment'),
         (APPLICATION_TYPE_RENEWAL, 'Renewal'),
+        (APPLICATION_TYPE_SYSTEM_GENERATED, 'System Generated'),
     )
 
     application_type = models.CharField(
@@ -298,8 +311,6 @@ class Application(RevisionedMixin):
     previous_application = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
     application_fee = models.DecimalField(
-        max_digits=8, decimal_places=2, default='0')
-    licence_fee = models.DecimalField(
         max_digits=8, decimal_places=2, default='0')
 
     class Meta:
@@ -417,12 +428,14 @@ class Application(RevisionedMixin):
     def is_discardable(self):
         """
         An application can be discarded by a customer if:
-        1 - It is a draft
+        1 - It is a draft or a draft awaiting payment
         2- or if the application has been pushed back to the user
         TODO: need to confirm regarding (2) here related to ApplicationSelectedActivity
         """
-        return self.customer_status == Application.CUSTOMER_STATUS_DRAFT\
-            or self.processing_status == Application.PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE
+        return self.customer_status in [
+            Application.CUSTOMER_STATUS_DRAFT,
+            Application.CUSTOMER_STATUS_AWAITING_PAYMENT,
+        ] or self.processing_status == Application.PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE
 
     @property
     def is_deletable(self):
@@ -430,19 +443,33 @@ class Application(RevisionedMixin):
         An application can be deleted only if it is a draft and it hasn't been lodged yet
         :return:
         """
-        return self.customer_status == Application.CUSTOMER_STATUS_DRAFT and not self.lodgement_number
+        return self.customer_status in [
+            Application.CUSTOMER_STATUS_DRAFT,
+            Application.CUSTOMER_STATUS_AWAITING_PAYMENT,
+        ] and not self.lodgement_number
+
+    @property
+    def application_fee_paid(self):
+        return self.payment_status in [
+            Invoice.PAYMENT_STATUS_NOT_REQUIRED,
+            Invoice.PAYMENT_STATUS_PAID,
+            Invoice.PAYMENT_STATUS_OVERPAID,
+        ]
 
     @property
     def payment_status(self):
         # TODO: needs more work, underpaid/overpaid statuses to be added, refactor to key/name like processing_status
         if self.application_fee == 0:
-            return 'payment_not_required'
+            return Invoice.PAYMENT_STATUS_NOT_REQUIRED
         else:
             if self.invoices.count() == 0:
-                return 'unpaid'
+                return Invoice.PAYMENT_STATUS_UNPAID
             else:
-                latest_invoice = Invoice.objects.get(
-                    reference=self.invoices.latest('id').invoice_reference)
+                try:
+                    latest_invoice = Invoice.objects.get(
+                        reference=self.invoices.latest('id').invoice_reference)
+                except Invoice.DoesNotExist:
+                    return Invoice.PAYMENT_STATUS_UNPAID
                 return latest_invoice.payment_status
 
     @property
@@ -539,6 +566,13 @@ class Application(RevisionedMixin):
         )
 
     @property
+    def licence_category_id(self):
+        try:
+            return self.licence_purposes.first().licence_category.id
+        except AttributeError:
+            return ''
+
+    @property
     def licence_category(self):
         try:
             return self.licence_purposes.first().licence_category.display_name
@@ -557,9 +591,29 @@ class Application(RevisionedMixin):
         selected_activity = self.get_selected_activity(activity_id)
         selected_activity.processing_status = processing_status
         selected_activity.save()
-        logger.info("Application: %s Activity ID: %s changed processing to: %s" % (self.id, activity_id, processing_status))
+        logger.info("Application: %s Activity ID: %s changed processing status to: %s" % (self.id, activity_id, processing_status))
+
+    def set_activity_activity_status(self, activity_id, activity_status):
+        if not activity_id:
+            logger.error("Application: %s cannot update activity status (%s) for an empty activity_id!" %
+                         (self.id, activity_status))
+            return
+        if activity_status not in dict(ApplicationSelectedActivity.ACTIVITY_STATUS_CHOICES):
+            logger.error("Application: %s cannot update activity status (%s) for invalid activity status!" %
+                         (self.id, activity_status))
+            return
+        selected_activity = self.get_selected_activity(activity_id)
+        selected_activity.activity_status = activity_status
+        selected_activity.save()
+        logger.info("Application: %s Activity ID: %s changed activity status to: %s" % (self.id, activity_id, activity_status))
 
     def get_selected_activity(self, activity_id):
+        '''
+        :param activity_id: LicenceActivity ID, used to filter ApplicationSelectedActivity (ASA)
+        :return: first ApplicationSelectedActivity record filtered by application id and ASA id
+
+        If ASA not found, create one and set application and ASA id fields
+        '''
         if activity_id is None:
             return ApplicationSelectedActivity.objects.none()
 
@@ -638,7 +692,13 @@ class Application(RevisionedMixin):
                     return
 
             adjustments_performed = sum(key in component and increase_fee(
-                dynamic_attributes['fees'], field, component[key]
+                dynamic_attributes['fees'],
+                field,
+                component[key]
+            ) and increase_fee(
+                dynamic_attributes['activity_attributes'][activity]['fees'],
+                field,
+                component[key]
             ) for key, field in fee_modifier_keys.items())
 
             if adjustments_performed:
@@ -649,7 +709,8 @@ class Application(RevisionedMixin):
                 selected_activity.purposes.values_list('id', flat=True)
             )
             dynamic_attributes['activity_attributes'][selected_activity] = {
-                'is_inspection_required': False
+                'is_inspection_required': False,
+                'fees': selected_activity.base_fees,
             }
 
             # Adjust fees based on selected options (radios and checkboxes)
@@ -701,21 +762,132 @@ class Application(RevisionedMixin):
 
         # Update application and licence fees
         fees = dynamic_attributes['fees']
-        self.application_fee = fees['application']
-        self.licence_fee = fees['licence']
+
+        # Amendments are always free.
+        if self.application_type in [
+            Application.APPLICATION_TYPE_AMENDMENT,
+        ]:
+            self.application_fee = Decimal(0)
+        else:
+            self.application_fee = fees['application']
         self.save()
 
         # Save any parsed per-activity modifiers
         for selected_activity, field_data in dynamic_attributes['activity_attributes'].items():
+            fees = field_data.pop('fees', {})
+            if self.application_type == Application.APPLICATION_TYPE_AMENDMENT:
+                selected_activity.licence_fee = Decimal(0)
+            else:
+                selected_activity.licence_fee = fees['licence']
             for field, value in field_data.items():
                 setattr(selected_activity, field, value)
                 selected_activity.save()
 
-    def submit(self, request, viewset):
+    def copy_application_purposes_for_status(self, purpose_ids_list, new_activity_status):
+        '''
+        Creates a copy of the Application and associated records
+        for the specified purposes and activity status.
+        '''
+
+        # Get the ID of the original application
+        original_app_id = self.id
+
+        # Validate purpose_ids_list against LicencePurpose records for the application
+        if purpose_ids_list:
+            try:
+                for licence_purpose_id in purpose_ids_list:
+                    LicencePurpose.objects.get(id=licence_purpose_id, application__id=original_app_id)
+            except BaseException:
+                raise ValidationError('One or more IDs in the purpose list are not valid')
+        else:
+            raise ValidationError('Purpose list is empty')
+
+        # Confirm all purposes are of the same LicenceActivity type and then set licence_activity_id
+        if LicencePurpose.objects.filter(id__in=purpose_ids_list) \
+                .values_list('licence_activity_id', flat=True).distinct().count() > 1:
+            raise ValidationError('Purpose list contains purposes of different licence activities')
+        else:
+            licence_activity_id = LicencePurpose.objects.filter(id__in=purpose_ids_list).first().licence_activity_id
+
+        # Only continue if valid and current licence exists and original application is part of the chain
+        try:
+            parent_licence, created = self.get_parent_licence(auto_create=False)
+            application_chain = parent_licence.current_application.get_application_children()
+            if self in application_chain:
+                pass
+            else:
+                raise ValidationError('Application you are trying to copy'
+                                      ' is not associated with a valid current licence')
+        except BaseException:
+            raise ValidationError('Application you are trying to copy'
+                                  ' is not associated with a valid current licence')
+
+        with transaction.atomic():
+
+            # Create new application as a clone of the original application
+            new_app = Application.objects.get(id=original_app_id)
+            new_app.id = None
+            new_app.application_type = Application.APPLICATION_TYPE_SYSTEM_GENERATED
+            new_app.lodgement_number = ''
+            new_app.application_fee = Decimal('0.00')
+            # Use parent_licence.current_application to always retrieve the latest application in the chain
+            new_app.previous_application = parent_licence.current_application
+            new_app.save()
+
+            # Set the associated licence's current_application to the new application
+            parent_licence.current_application = new_app
+            parent_licence.save()
+
+            # Create ApplicationSelectedActivity record for the new application
+            selected_activity = Application.objects.get(id=original_app_id)\
+                .selected_activities.get(licence_activity_id=licence_activity_id)
+            selected_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
+            selected_activity.save()
+            new_activity = selected_activity
+            new_activity.id = None
+            new_activity.licence_fee = Decimal('0.00')
+            new_activity.application = new_app
+            new_activity.activity_status = new_activity_status
+            new_activity.save()
+
+            # Link the target LicencePurpose IDs to the new application
+            # Copy ApplicationFormDataRecord rows from old application, licence_activity and licence_purpose
+            for licence_purpose_id in purpose_ids_list:
+                self.copy_application_purpose_to_target_application(new_app, licence_purpose_id)
+
+        return new_app
+
+    def copy_application_purpose_to_target_application(self, target_application=None, licence_purpose_id=None):
+        if not target_application or not licence_purpose_id:
+            raise ValidationError('Target application and licence_purpose_id must be specified')
+        try:
+            LicencePurpose.objects.get(id=licence_purpose_id, application=self)
+        except BaseException:
+            raise ValidationError('The licence purpose ID is not valid for this application')
+
+        with transaction.atomic():
+            # Link the target LicencePurpose ID to the target_application
+            target_application.licence_purposes.add(licence_purpose_id)
+
+            # Copy ApplicationFormDataRecord rows from application (self) for selected
+            # licence_activity and licence_purpose to target_application
+            licence_activity_id = LicencePurpose.objects.get(id=licence_purpose_id).licence_activity_id
+            for data_row in ApplicationFormDataRecord.objects.filter(
+                    application_id=self,
+                    licence_activity_id=licence_activity_id,
+                    licence_purpose_id=licence_purpose_id):
+                data_row.id = None
+                data_row.application_id = target_application.id
+                data_row.save()
+
+    def submit(self, request):
         from wildlifecompliance.components.licences.models import LicenceActivity
         with transaction.atomic():
             if self.can_user_edit:
-                # self.processing_status = Application.PROCESSING_STATUS_UNDER_REVIEW
+                if not self.application_fee_paid:
+                    self.customer_status = Application.CUSTOMER_STATUS_AWAITING_PAYMENT
+                    self.save()
+                    return
                 self.customer_status = Application.CUSTOMER_STATUS_UNDER_REVIEW
                 self.submitter = request.user
                 self.lodgement_date = timezone.now()
@@ -1116,6 +1288,12 @@ class Application(RevisionedMixin):
             **activity_filters
         ) if self.previous_application and self.previous_application != self else activity_chain
 
+    def get_application_children(self):
+        application_self_queryset = Application.objects.filter(id=self.id)
+        return application_self_queryset | self.previous_application.get_application_children()\
+            if self.previous_application and self.previous_application != self\
+            else application_self_queryset
+
     def get_latest_current_activity(self, activity_id):
         return self.get_activity_chain(
             licence_activity_id=activity_id,
@@ -1136,7 +1314,7 @@ class Application(RevisionedMixin):
     def get_schema_fields(self, schema_json):
         fields = {}
 
-        def iterate_children(schema_group, fields, parent={}, parent_type='', condition={}):
+        def iterate_children(schema_group, fields, parent={}, parent_type='', condition={}, activity_id=None, purpose_id=None):
             children_keys = [
                 'children',
                 'header',
@@ -1148,10 +1326,21 @@ class Application(RevisionedMixin):
             } if isinstance(schema_group, list) else schema_group
 
             for key, item in container.items():
+
+                try:
+                    activity_id = item['id']
+                except BaseException:
+                    pass
+
+                try:
+                    purpose_id = item['purpose_id']
+                except BaseException:
+                    pass
+
                 if isinstance(item, list):
                     if parent_type == 'conditions':
                         condition[parent['name']] = key
-                    iterate_children(item, fields, parent, parent_type, condition)
+                    iterate_children(item, fields, parent, parent_type, condition, activity_id, purpose_id)
                     continue
 
                 name = item['name']
@@ -1159,14 +1348,17 @@ class Application(RevisionedMixin):
                 fields[name].update(item)
                 fields[name]['condition'] = {}
                 fields[name]['condition'].update(condition)
+                fields[name]['licence_activity_id'] = activity_id
+                fields[name]['licence_purpose_id'] = purpose_id
 
                 for children_key in children_keys:
                     if children_key in fields[name]:
                         del fields[name][children_key]
-                        iterate_children(item[children_key], fields, fields[name], children_key, condition)
+                        iterate_children(item[children_key], fields, fields[name], children_key, condition, activity_id, purpose_id)
                 condition = {}
 
         iterate_children(schema_json, fields)
+
         return fields
 
     def get_visible_form_data_tree(self, form_data_records=None):
@@ -1256,6 +1448,11 @@ class Application(RevisionedMixin):
                         activity.proposed_start_date = latest_activity.start_date
                         activity.proposed_end_date = latest_activity.expiry_date
                         activity.save()
+
+                        # Update the current (now old) activity
+                        latest_activity.updated_by = request.user
+                        latest_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
+                        latest_activity.save()
                 else:
                     ApplicationSelectedActivity.objects.filter(
                         application_id=self.id,
@@ -1290,26 +1487,92 @@ class Application(RevisionedMixin):
             except BaseException:
                 raise
 
-    def get_parent_licence(self):
+    def get_parent_licence(self, auto_create=True):
         from wildlifecompliance.components.licences.models import WildlifeLicence
+        current_date = timezone.now().date()
         try:
-            return WildlifeLicence.objects.get(
+            existing_licence = WildlifeLicence.objects.filter(
                 Q(licence_category=self.get_licence_category()),
                 Q(current_application__org_applicant_id=self.org_applicant_id) if self.org_applicant_id else (
-                    Q(current_application__submitter_id=self.proxy_applicant_id
-                      ) | Q(current_application__proxy_applicant_id=self.proxy_applicant_id)
-                ) if self.proxy_applicant_id else Q(current_application__submitter_id=self.submitter_id)
-            ), False
+                    Q(current_application__submitter_id=self.proxy_applicant_id,
+                      current_application__org_applicant_id=None
+                      ) | Q(current_application__proxy_applicant_id=self.proxy_applicant_id,
+                            current_application__org_applicant_id=None)
+                ) if self.proxy_applicant_id else Q(current_application__submitter_id=self.submitter_id,
+                                                    current_application__org_applicant_id=None,
+                                                    current_application__proxy_applicant_id=None)
+            ).order_by('-id').distinct().first()
+
+            if existing_licence:
+                # Only load licence if any associated activities are still current.
+                if not existing_licence.current_application.get_activity_chain(
+                    expiry_date__gte=current_date,
+                    activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+                ).first():
+                    raise WildlifeLicence.DoesNotExist
+            else:
+                raise WildlifeLicence.DoesNotExist
+            return existing_licence, False
         except WildlifeLicence.DoesNotExist:
-            return WildlifeLicence.objects.create(
-                current_application=self,
-                licence_category=self.get_licence_category()
-            ), True
+            if auto_create:
+                return WildlifeLicence.objects.create(
+                    current_application=self,
+                    licence_category=self.get_licence_category()
+                ), True
+            else:
+                return WildlifeLicence.objects.none(), False
+
+    def issue_activity(self, request, selected_activity, parent_licence=None, generate_licence=False):
+
+        if not selected_activity.licence_fee_paid:
+            raise Exception("Cannot issue activity: licence fee has not been paid!")
+
+        if parent_licence is None:
+            parent_licence, created = self.get_parent_licence(auto_create=True)
+
+        if not parent_licence:
+            raise Exception("Cannot issue activity: licence not found!")
+
+        selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
+        selected_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+
+        self.generate_returns(parent_licence, selected_activity, request)
+        # Log application action
+        self.log_user_action(
+            ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
+                selected_activity.licence_activity.name), request)
+        # Log entry for organisation
+        if self.org_applicant:
+            self.org_applicant.log_user_action(
+                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
+                    selected_activity.licence_activity.name), request)
+        elif self.proxy_applicant:
+            self.proxy_applicant.log_user_action(
+                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
+                    selected_activity.licence_activity.name), request)
+        else:
+            self.submitter.log_user_action(
+                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
+                    selected_activity.licence_activity.name), request)
+
+        selected_activity.save()
+        if generate_licence:
+            # Re-generate PDF document using all finalised activities
+            parent_licence.current_application = self
+            parent_licence.generate_doc()
+            send_application_issue_notification(
+                activities=[selected_activity],
+                application=self,
+                request=request,
+                licence=parent_licence
+            )
 
     def final_decision(self, request):
+        failed_payment_activities = []
+
         with transaction.atomic():
             try:
-                parent_licence, created = self.get_parent_licence()
+                parent_licence, created = self.get_parent_licence(auto_create=True)
                 issued_activities = []
                 declined_activities = []
                 for item in request.data.get('activity'):
@@ -1321,7 +1584,10 @@ class Application(RevisionedMixin):
                         raise Exception("Licence activity %s is missing from Application ID %s!" % (
                             licence_activity_id, self.id))
 
-                    if selected_activity.processing_status != ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION:
+                    if selected_activity.processing_status not in [
+                        ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION,
+                        ApplicationSelectedActivity.PROCESSING_STATUS_AWAITING_LICENCE_FEE_PAYMENT,
+                    ]:
                         raise Exception("Activity \"%s\" has an invalid processing status: %s" % (
                             selected_activity.licence_activity.name, selected_activity.processing_status))
 
@@ -1340,37 +1606,30 @@ class Application(RevisionedMixin):
                             start_date = latest_activity.start_date
                             expiry_date = latest_activity.expiry_date
 
-                        selected_activity.issue_date = timezone.now()
-                        selected_activity.updated_by = request.user
-                        selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
-                        selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
+                            # Set activity_status for latest_activity to REPLACED
+                            latest_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
+                            latest_activity.save()
+
+                        # If there is an outstanding licence fee payment - attempt to charge the stored card.
+                        payment_successful = selected_activity.process_licence_fee_payment(request, self)
+                        if not payment_successful:
+                            failed_payment_activities.append(selected_activity)
+                        else:
+                            issued_activities.append(selected_activity)
+                            self.issue_activity(request, selected_activity, parent_licence, generate_licence=False)
+
+                        # Populate fields below even if the token payment has failed.
+                        # They will be reused after a successful payment by the applicant.
                         selected_activity.original_issue_date = original_issue_date
+                        selected_activity.issue_date = timezone.now()
+                        selected_activity.decision_action = ApplicationSelectedActivity.DECISION_ACTION_ISSUED
+                        selected_activity.updated_by = request.user
                         selected_activity.start_date = start_date
                         selected_activity.expiry_date = expiry_date
                         selected_activity.cc_email = item['cc_email']
                         selected_activity.reason = item['reason']
-                        selected_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
                         selected_activity.save()
-                        issued_activities.append(selected_activity)
 
-                        self.generate_returns(parent_licence, selected_activity, request)
-                        # Log application action
-                        self.log_user_action(
-                            ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
-                                item['name']), request)
-                        # Log entry for organisation
-                        if self.org_applicant:
-                            self.org_applicant.log_user_action(
-                                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
-                                    item['name']), request)
-                        elif self.proxy_applicant:
-                            self.proxy_applicant.log_user_action(
-                                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
-                                    item['name']), request)
-                        else:
-                            self.submitter.log_user_action(
-                                ApplicationUserAction.ACTION_ISSUE_LICENCE_.format(
-                                    item['name']), request)
                     elif item['final_status'] == ApplicationSelectedActivity.DECISION_ACTION_DECLINED:
                         selected_activity.updated_by = request.user
                         selected_activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED
@@ -1397,11 +1656,13 @@ class Application(RevisionedMixin):
                                 ApplicationUserAction.ACTION_DECLINE_LICENCE_.format(
                                     item['name']), request)
 
+                if (issued_activities or failed_payment_activities) and not created:
+                    parent_licence.licence_sequence += 1
+                    parent_licence.save()
+
                 if issued_activities:
                     # Re-generate PDF document using all finalised activities
                     parent_licence.current_application = self
-                    if not created:
-                        parent_licence.licence_sequence += 1
                     parent_licence.generate_doc()
                     send_application_issue_notification(
                         activities=issued_activities,
@@ -1416,6 +1677,31 @@ class Application(RevisionedMixin):
 
             except BaseException:
                 raise
+
+        if failed_payment_activities:
+            for activity in failed_payment_activities:
+                activity.processing_status = ApplicationSelectedActivity.PROCESSING_STATUS_AWAITING_LICENCE_FEE_PAYMENT
+                activity.save()
+            raise Exception("Could not process licence fee payment for: {}".format(
+                ", ".join([activity.licence_activity.name for activity in failed_payment_activities])
+            ))
+
+        self.update_customer_approval_status()
+
+    def update_customer_approval_status(self):
+        # Update application customer approval status depending on count of approved/declined activities
+        total_activity_count = self.selected_activities.count()
+        approved_activity_count = self.selected_activities.filter(
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED).count()
+        declined_activity_count = self.selected_activities.filter(
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED).count()
+        if 0 < approved_activity_count < total_activity_count:
+            self.customer_status = Application.CUSTOMER_STATUS_PARTIALLY_APPROVED
+        elif approved_activity_count == total_activity_count:
+            self.customer_status = Application.CUSTOMER_STATUS_ACCEPTED
+        elif declined_activity_count == total_activity_count:
+            self.customer_status = Application.CUSTOMER_STATUS_DECLINED
+        self.save()
 
     def generate_returns(self, licence, selected_activity, request):
         from wildlifecompliance.components.returns.models import Return
@@ -1493,12 +1779,36 @@ class Application(RevisionedMixin):
         return base_fees
 
     @staticmethod
-    def get_active_licence_applications(request):
+    def get_activity_date_filter(for_application_type, prefix=''):
         current_date = timezone.now().date()
+        date_filter = {
+            '{}expiry_date__isnull'.format(prefix): False,
+            '{}expiry_date__gte'.format(prefix): current_date
+        }
+        if for_application_type == Application.APPLICATION_TYPE_RENEWAL:
+            expires_at = current_date + datetime.timedelta(days=settings.RENEWAL_PERIOD_DAYS)
+            date_filter = {
+                '{}expiry_date__isnull'.format(prefix): False,
+                '{}expiry_date__gte'.format(prefix): current_date,
+                '{}expiry_date__lte'.format(prefix): expires_at,
+            }
+        return date_filter
 
+    @staticmethod
+    def get_active_licence_activities(request, for_application_type=APPLICATION_TYPE_NEW_LICENCE):
+        applications = Application.get_active_licence_applications(request, for_application_type)
+        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+            for_application_type,
+            applications=applications
+        )
+
+    @staticmethod
+    def get_active_licence_applications(request, for_application_type=APPLICATION_TYPE_NEW_LICENCE):
+        date_filter = Application.get_activity_date_filter(
+            for_application_type, 'selected_activities__')
         return Application.get_request_user_applications(request).filter(
-            selected_activities__processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
-            selected_activities__expiry_date__gte=current_date,
+            selected_activities__activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT,
+            **date_filter
         ).distinct()
 
     @staticmethod
@@ -1506,7 +1816,6 @@ class Application(RevisionedMixin):
         proxy_details = request.user.get_wildlifecompliance_proxy_details(request)
         proxy_id = proxy_details.get('proxy_id')
         organisation_id = proxy_details.get('organisation_id')
-
         return Application.objects.filter(
             Q(org_applicant_id=organisation_id) if organisation_id
             else (
@@ -1792,13 +2101,15 @@ class ApplicationSelectedActivity(models.Model):
     ACTIVITY_STATUS_CANCELLED = 'cancelled'
     ACTIVITY_STATUS_SURRENDERED = 'surrendered'
     ACTIVITY_STATUS_SUSPENDED = 'suspended'
+    ACTIVITY_STATUS_REPLACED = 'replaced'
     ACTIVITY_STATUS_CHOICES = (
         (ACTIVITY_STATUS_DEFAULT, 'Default'),
         (ACTIVITY_STATUS_CURRENT, 'Current'),
         (ACTIVITY_STATUS_EXPIRED, 'Expired'),
         (ACTIVITY_STATUS_CANCELLED, 'Cancelled'),
         (ACTIVITY_STATUS_SURRENDERED, 'Surrendered'),
-        (ACTIVITY_STATUS_SUSPENDED, 'Suspended')
+        (ACTIVITY_STATUS_SUSPENDED, 'Suspended'),
+        (ACTIVITY_STATUS_REPLACED, 'Replaced')
     )
 
     PROCESSING_STATUS_DRAFT = 'draft'
@@ -1806,6 +2117,7 @@ class ApplicationSelectedActivity(models.Model):
     PROCESSING_STATUS_WITH_ASSESSOR = 'with_assessor'
     PROCESSING_STATUS_OFFICER_CONDITIONS = 'with_officer_conditions'
     PROCESSING_STATUS_OFFICER_FINALISATION = 'with_officer_finalisation'
+    PROCESSING_STATUS_AWAITING_LICENCE_FEE_PAYMENT = 'awaiting_licence_fee_payment'
     PROCESSING_STATUS_ACCEPTED = 'accepted'
     PROCESSING_STATUS_DECLINED = 'declined'
     PROCESSING_STATUS_DISCARDED = 'discarded'
@@ -1815,6 +2127,7 @@ class ApplicationSelectedActivity(models.Model):
         (PROCESSING_STATUS_WITH_ASSESSOR, 'With Assessor'),
         (PROCESSING_STATUS_OFFICER_CONDITIONS, 'With Officer-Conditions'),
         (PROCESSING_STATUS_OFFICER_FINALISATION, 'With Officer-Finalisation'),
+        (PROCESSING_STATUS_AWAITING_LICENCE_FEE_PAYMENT, 'Awaiting Licence Fee Payment'),
         (PROCESSING_STATUS_ACCEPTED, 'Accepted'),
         (PROCESSING_STATUS_DECLINED, 'Declined'),
         (PROCESSING_STATUS_DISCARDED, 'Discarded'),
@@ -1847,15 +2160,24 @@ class ApplicationSelectedActivity(models.Model):
         'wildlifecompliance.LicenceActivity', null=True)
     proposed_start_date = models.DateField(null=True, blank=True)
     proposed_end_date = models.DateField(null=True, blank=True)
-    is_activity_renewable = models.BooleanField(default=False)
     additional_info = models.TextField(blank=True, null=True)
     conditions = models.TextField(blank=True, null=True)
     original_issue_date = models.DateTimeField(blank=True, null=True)
     issue_date = models.DateTimeField(blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     expiry_date = models.DateField(blank=True, null=True)
-    renewal_sent = models.BooleanField(default=False)
     is_inspection_required = models.BooleanField(default=False)
+    licence_fee = models.DecimalField(
+        max_digits=8, decimal_places=2, default='0')
+
+    def __str__(self):
+        return "Application {id} Selected Activity: {activity_id}".format(
+            id=self.application_id,
+            activity_id=self.licence_activity_id
+        )
+
+    class Meta:
+        app_label = 'wildlifecompliance'
 
     @staticmethod
     def is_valid_status(status):
@@ -1868,16 +2190,239 @@ class ApplicationSelectedActivity(models.Model):
         return LicencePurpose.objects.filter(
             application__id=self.application_id,
             licence_activity_id=self.licence_activity_id
+        ).distinct()
+
+    @property
+    def can_amend(self):
+        # Returns true if the activity can be included in a Amendment Application
+        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+            Application.APPLICATION_TYPE_AMENDMENT,
+            activity_ids=[self.id]
+        ).count() > 0
+
+    @property
+    def can_renew(self):
+        # Returns true if the activity can be included in a Renewal Application
+        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+            Application.APPLICATION_TYPE_RENEWAL,
+            activity_ids=[self.id]
+        ).count() > 0
+
+    @property
+    def can_reactivate_renew(self):
+        # TODO: clarify business logic for when an activity renew is allowed to be reactivate.
+        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+            Application.APPLICATION_TYPE_NEW_LICENCE,
+            activity_ids=[self.id]
+        ).count() > 0
+
+    @property
+    def can_surrender(self):
+        # TODO: clarify business logic for when an activity is allowed to be surrendered.
+        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+            Application.APPLICATION_TYPE_NEW_LICENCE,
+            activity_ids=[self.id]
+        ).count() > 0
+
+    @property
+    def can_cancel(self):
+        # TODO: clarify business logic for when an activity is allowed to be cancelled.
+        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+            Application.APPLICATION_TYPE_NEW_LICENCE,
+            activity_ids=[self.id]
+        ).count() > 0
+
+    @property
+    def can_suspend(self):
+        # TODO: clarify business logic for when an activity is allowed to be suspended.
+        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+            Application.APPLICATION_TYPE_NEW_LICENCE,
+            activity_ids=[self.id]
+        ).count() > 0
+
+    @property
+    def can_reissue(self):
+        # Returns true if the activity has expired, excluding if it was surrendered or cancelled
+        current_date = timezone.now().date()
+        return ApplicationSelectedActivity.objects.filter(
+            Q(id=self.id, expiry_date__isnull=False),
+            Q(expiry_date__lt=current_date) |
+            Q(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED)
+        ).exclude(
+            activity_status__in=[
+                ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
+            ]
+        ).count() > 0
+
+    @property
+    def can_reinstate(self):
+        # Returns true if the activity has not yet expired and is currently suspended
+        current_date = timezone.now().date()
+        return self.expiry_date and\
+            self.expiry_date >= current_date and\
+            self.activity_status == ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
+
+    @property
+    def base_fees(self):
+        return Application.calculate_base_fees(
+            self.application.licence_purposes.filter(
+                licence_activity_id=self.licence_activity_id
+            ).values_list('id', flat=True)
         )
 
-    def __str__(self):
-        return "Application {id} Selected Activity: {activity_id}".format(
-            id=self.application_id,
-            activity_id=self.licence_activity_id
+    @property
+    def licence_fee_paid(self):
+        return self.payment_status in [
+            Invoice.PAYMENT_STATUS_NOT_REQUIRED,
+            Invoice.PAYMENT_STATUS_PAID,
+            Invoice.PAYMENT_STATUS_OVERPAID,
+        ]
+
+    @property
+    def payment_status(self):
+        if self.licence_fee == 0:
+            return Invoice.PAYMENT_STATUS_NOT_REQUIRED
+        else:
+            if self.invoices.count() == 0:
+                return Invoice.PAYMENT_STATUS_UNPAID
+            else:
+                try:
+                    latest_invoice = Invoice.objects.get(
+                        reference=self.invoices.latest('id').invoice_reference)
+                except Invoice.DoesNotExist:
+                    return Invoice.PAYMENT_STATUS_UNPAID
+                return latest_invoice.payment_status
+
+    @staticmethod
+    def get_current_activities_for_application_type(application_type, **kwargs):
+        applications = kwargs.get('applications', Application.objects.none())
+        activity_ids = kwargs.get('activity_ids', [])
+
+        date_filter = Application.get_activity_date_filter(
+            application_type)
+        return ApplicationSelectedActivity.objects.filter(
+            Q(id__in=activity_ids) if activity_ids else
+            Q(application_id__in=applications.values_list('id', flat=True)),
+            **date_filter
+        ).exclude(
+            activity_status__in=[
+                ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
+            ]
+        ).distinct()
+
+    def process_licence_fee_payment(self, request, application):
+        from ledger.payments.models import BpointToken
+        if self.licence_fee_paid:
+            return True
+
+        applicant = application.proxy_applicant if application.proxy_applicant else application.submitter
+        card_owner_id = applicant.id
+        card_token = BpointToken.objects.filter(user_id=card_owner_id).order_by('-id').first()
+        if not card_token:
+            logger.error("No card token found for user: %s" % card_owner_id)
+            return False
+
+        product_lines = []
+        application_submission = u'Activity licence issued for {} application {}'.format(
+            u'{} {}'.format(applicant.first_name, applicant.last_name), application.lodgement_number)
+        set_session_application(request.session, application)
+        product_lines.append({
+            'ledger_description': '{}'.format(self.licence_activity.name),
+            'quantity': 1,
+            'price_incl_tax': str(self.licence_fee),
+            'price_excl_tax': str(calculate_excl_gst(self.licence_fee)),
+            'oracle_code': ''
+        })
+        checkout(
+            request, application, lines=product_lines,
+            invoice_text=application_submission,
+            internal=True,
+            add_checkout_params={
+                'basket_owner': request.user.id,
+                'payment_method': 'card',
+                'checkout_token': card_token.id,
+            }
         )
+        try:
+            invoice_ref = request.session['checkout_invoice']
+        except KeyError:
+            logger.error("No invoice reference generated for Activity ID: %s" % self.licence_activity_id)
+            return False
+        ActivityInvoice.objects.get_or_create(
+            activity=self,
+            invoice_reference=invoice_ref
+        )
+        delete_session_application(request.session)
+        flush_checkout_session(request.session)
+        return self.licence_fee_paid and send_activity_invoice_email_notification(application, self, invoice_ref, request)
+
+    def reactivate_renew(self, request):
+        pass
+        # with transaction.atomic():
+        #     self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED
+        #     self.updated_by = request.user
+        #     self.save()
+
+    def surrender(self, request):
+        with transaction.atomic():
+            self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED
+            self.updated_by = request.user
+            self.save()
+
+    def cancel(self, request):
+        with transaction.atomic():
+            self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED
+            self.updated_by = request.user
+            self.save()
+
+    def suspend(self, request):
+        with transaction.atomic():
+            self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
+            self.updated_by = request.user
+            self.save()
+
+    def reinstate(self, request):
+        with transaction.atomic():
+            self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+            self.updated_by = request.user
+            self.save()
+
+    def mark_as_replaced(self, request):
+        with transaction.atomic():
+            self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
+            self.updated_by = request.user
+            self.save()
+
+
+class ActivityInvoice(models.Model):
+    activity = models.ForeignKey(ApplicationSelectedActivity, related_name='invoices')
+    invoice_reference = models.CharField(
+        max_length=50, null=True, blank=True, default='')
 
     class Meta:
         app_label = 'wildlifecompliance'
+        unique_together = ('activity', 'invoice_reference',)
+
+    def __str__(self):
+        return 'Activity {} : Invoice #{}'.format(
+            self.activity_id, self.invoice_reference)
+
+    # Properties
+    # ==================
+    @property
+    def active(self):
+        try:
+            invoice = Invoice.objects.get(reference=self.invoice_reference)
+            return False if invoice.voided else True
+        except Invoice.DoesNotExist:
+            pass
+        return False
+
 
 
 @python_2_unicode_compatible
@@ -1937,6 +2482,8 @@ class ApplicationFormDataRecord(models.Model):
     officer_comment = models.TextField(blank=True)
     assessor_comment = models.TextField(blank=True)
     deficiency = models.TextField(blank=True)
+    licence_activity = models.ForeignKey(LicenceActivity, related_name='form_data_records')
+    licence_purpose = models.ForeignKey(LicencePurpose, related_name='form_data_records')
 
     def __str__(self):
         return "Application {id} record {field}".format(
@@ -1980,6 +2527,8 @@ class ApplicationFormDataRecord(models.Model):
             officer_comment = field_data.get('officer_comment', '')
             assessor_comment = field_data.get('assessor_comment', '')
             deficiency = field_data.get('deficiency_value', '')
+            activity_id = field_data.get('licence_activity_id', '')
+            purpose_id = field_data.get('licence_purpose_id', '')
 
             if ApplicationFormDataRecord.INSTANCE_ID_SEPARATOR in field_name:
                 [parsed_schema_name, parsed_instance_name] = field_name.split(
@@ -1996,6 +2545,8 @@ class ApplicationFormDataRecord(models.Model):
             form_data_record = ApplicationFormDataRecord.objects.filter(
                 application_id=application.id,
                 field_name=field_name,
+                licence_activity_id=activity_id,
+                licence_purpose_id=purpose_id,
             ).first()
 
             if not form_data_record:
@@ -2005,6 +2556,8 @@ class ApplicationFormDataRecord(models.Model):
                     schema_name=schema_name,
                     instance_name=instance_name,
                     component_type=component_type,
+                    licence_activity_id=activity_id,
+                    licence_purpose_id=purpose_id
                 )
             if action == ApplicationFormDataRecord.ACTION_TYPE_ASSIGN_VALUE:
                 if not is_draft and not value and schema_name in required_fields:
