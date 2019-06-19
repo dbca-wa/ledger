@@ -194,7 +194,7 @@ export default {
             columns: [
                 {
                     data: 'id',
-                    visible: false
+                    visible: true
                 },
                 { 
                     data: 'Act', 
@@ -208,7 +208,9 @@ export default {
                 { 
                     data: 'Action',
                     mRender: function(data, type, row){
-                        return '<a href="#" class="remove_button">Remove</a>';
+                        console.log(data);
+                        console.log(row);
+                        return '<a href="#" class="remove_button" data-alleged-offence-id="' + row.id + '">Remove</a>';
                     }
                 },
             ]
@@ -255,7 +257,17 @@ export default {
           setAllocatedTo: "setAllocatedTo",
         }),
         removeClicked: function(e){   
-            console.log(e);
+            let vm = this;
+
+            let allegedOffenceId = parseInt(e.target.getAttribute("data-alleged-offence-id"));
+            vm.$refs.alleged_offence_table.vmDataTable.rows(function(idx, data, node){
+                if(data.id === allegedOffenceId){
+                    console.log('rowId: ');
+                    console.log(idx);
+                    vm.$refs.alleged_offence_table.vmDataTable.row(idx).remove().draw();
+                }
+            });
+
         },
         addAllegedOffenceClicked: function() {
             let vm = this;
