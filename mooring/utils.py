@@ -443,8 +443,6 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
             mooring_date_selected[date_rotate_forward] = 'notselected'
             mooring_rate = None
             if date_rotate_forward in mooring_rate_hash:
-                 print ("MOORING RATE ROTATE")
-                 print (mooring_rate_hash)
                  if site.pk in mooring_rate_hash[date_rotate_forward]:
                     
                     mooring_rate =  mooring_rate_hash[date_rotate_forward][site.pk]

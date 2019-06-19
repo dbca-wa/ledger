@@ -4,8 +4,6 @@ import os
 
 ROOT_URLCONF = 'mooring.urls'
 SITE_ID = 1
-print ("BASE DIR")
-print (os.path.join(BASE_DIR, 'staticfiles_mo'))
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_mo')
 
 # number of seconds before expiring a temporary booking

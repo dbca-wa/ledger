@@ -2703,8 +2703,10 @@ class AdmissionFeesView(TemplateView):
     template_name = 'mooring/admissions/admissions_form.html'
 
     def get(self, *args, **kwargs):
+        context_processor = template_context(self.request)
         context = {
-            'loc': self.kwargs['loc']
+            'loc': self.kwargs['loc'],
+            'context_processor' : context_processor
         }
         return render(self.request, self.template_name, context)
 
