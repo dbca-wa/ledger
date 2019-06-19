@@ -302,11 +302,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
-    def add_comms_log(self, request, *args, **kwargs):
+    def add_comms_log(self, request, workflow=False, *args, **kwargs):
         try:
             with transaction.atomic():
                 instance = self.get_object()
                 request.data['call_email'] = u'{}'.format(instance.id)
+                print(request.data)
                 # request.data['staff'] = u'{}'.format(request.user.id)
                 serializer = ComplianceLogEntrySerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
@@ -314,12 +315,17 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 # Save the files
                 for f in request.FILES:
                     document = comms.documents.create()
+                    print("filename")
+                    print(str(request.FILES[f]))
                     document.name = str(request.FILES[f])
                     document._file = request.FILES[f]
                     document.save()
                 # End Save Documents
 
-                return Response(serializer.data)
+                if workflow:
+                    return comms
+                else:
+                    return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -630,20 +636,29 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 instance = self.get_object()
-                request.data['call_email'] = u'{}'.format(instance.id)
-                serializer = ComplianceWorkflowLogEntrySerializer(data=request.data, partial=True)
-                serializer.is_valid(raise_exception=True)
-                workflow_entry = serializer.save()
-                # Save the files
-                for f in request.FILES:
-                    document = workflow_entry.documents.create()
-                    document.name = str(request.FILES[f])
-                    document._file = request.FILES[f]
-                    document.save()
+                workflow_entry = self.add_comms_log(request, workflow=True)
+                print("workflow_entry")
+                print(workflow_entry)
+                #request.data['call_email'] = u'{}'.format(instance.id)
+                #print("request for complianceworkflow serializer")
+                #print(request.data)
+                #serializer = ComplianceWorkflowLogEntrySerializer(data=request.data)
+                #serializer.is_valid(raise_exception=True)
+                #workflow_entry = serializer.save()
+                ## Save the files
+                #for f in request.FILES:
+                #    print("the file")
+                #    print(f)
+                #    document = workflow_entry.documents.create()
+                #    print("filename")
+                #    print(str(request.FILES[f]))
+                #    document.name = str(request.FILES[f])
+                #    document._file = request.FILES[f]
+                #    document.save()
 
                 attachments = []
-                for document in workflow_entry.documents.all():
-                    attachments.append(document)
+                for doc in workflow_entry.documents.all():
+                    attachments.append(doc)
 
                 email_group = []
                 if request.data.get('assigned_to'):
@@ -686,14 +701,25 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 instance.save()
 
                 # send email
-                send_call_email_forward_email(
+                email_data = send_call_email_forward_email(
                 email_group, 
                 instance,
                 # workflow_entry.documents,
                 workflow_entry,
                 request)
+                print("email_data")
+                print(email_data)
 
-                return Response(serializer.data)
+                serializer = ComplianceLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    headers = self.get_success_headers(serializer.data)
+                    return Response(
+                            serializer.data, 
+                            status=status.HTTP_201_CREATED,
+                            headers=headers
+                            )
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
