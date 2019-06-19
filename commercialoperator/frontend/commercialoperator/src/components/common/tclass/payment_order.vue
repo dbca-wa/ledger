@@ -1,24 +1,32 @@
 <template lang="html">
-    <div>
-        <div class="container">
-            <div class="row"><div class="col-sm-12">
-                <form method="post" name="new_payment" @submit.prevent="submit()" novalidate>
-                    <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
+    <div class="container">
+        <div class="col-sm-12"><div class="row">
 
-                    <div id="error" v-if="errors.length > 0" style="margin: 10px; padding: 5px; color: red; border:1px solid red;">
-                        <b>Please correct errors in row(s):</b>
-                        <ul>
-                            <li v-for="error in errors">
-                                {{error.name}}: {{ error.label }}
-                            </li>
-                        </ul>
-                    </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Admission Booking
+                        <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody"></a>
+                    </h3>
+                </div>
+                <div class="panel-body collapse in" :id="pBody">
+                    <form method="post" name="new_payment" @submit.prevent="submit()" novalidate>
+                        <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
 
-                    <label>Licence</label><v-select :options="licences" @change="proposal_parks()" v-model="selected_licence" />
-                    <OrderTable ref="order_table" :expiry_date="selected_licence.expiry_date" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="" id="id_payment" />
+                        <div id="error" v-if="errors.length > 0" style="margin: 10px; padding: 5px; color: red; border:1px solid red;">
+                            <b>Please correct errors in row(s):</b>
+                            <ul>
+                                <li v-for="error in errors">
+                                    {{error.name}}: {{ error.label }}
+                                </li>
+                            </ul>
+                        </div>
 
-                    <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
-                </form>
+                        <label>Licence</label><v-select :options="licences" @change="proposal_parks()" v-model="selected_licence" />
+                        <OrderTable ref="order_table" :expiry_date="selected_licence.expiry_date" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="" id="id_payment" />
+
+                        <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
