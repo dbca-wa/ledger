@@ -67,7 +67,8 @@ def send_amendment_email_notification(amendment_request, request, compliance):
     msg = email.send(compliance.submitter.email, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL  
     _log_compliance_email(msg, compliance, sender=sender)
-    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender)
+    if compliance.proposal.org_applicant:
+        _log_org_email(msg, compliance.proposal.org_applicant, compliance.submitter, sender=sender)
 
 
 #send reminder emails if Compliance has not been lodged by due date. Used in Cron job so cannot use 'request' parameter
@@ -90,7 +91,8 @@ def send_reminder_email_notification(compliance):
     except:
         sender_user = EmailUser.objects.create(email=sender, password='')
     _log_compliance_email(msg, compliance, sender=sender_user)
-    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender_user)
+    if compliance.proposal.org_applicant:
+        _log_org_email(msg, compliance.proposal.org_applicant, compliance.submitter, sender=sender_user)
 
 def send_internal_reminder_email_notification(compliance):
     email = ComplianceInternalReminderNotificationEmail()
@@ -113,7 +115,8 @@ def send_internal_reminder_email_notification(compliance):
     except:
         sender_user = EmailUser.objects.create(email=sender, password='')
     _log_compliance_email(msg, compliance, sender=sender_user)
-    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender_user)
+    if compliance.proposal.org_applicant:
+        _log_org_email(msg, compliance.proposal.org_applicant, compliance.submitter, sender=sender_user)
 
 def send_due_email_notification(compliance):
     email = ComplianceDueNotificationEmail()
@@ -133,7 +136,8 @@ def send_due_email_notification(compliance):
     except:
         sender_user = EmailUser.objects.create(email=sender, password='')
     _log_compliance_email(msg, compliance, sender=sender_user)
-    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender_user)
+    if compliance.proposal.org_applicant:
+        _log_org_email(msg, compliance.proposal.org_applicant, compliance.submitter, sender=sender_user)
 
 def send_internal_due_email_notification(compliance):
     email = ComplianceInternalDueNotificationEmail()
@@ -156,7 +160,8 @@ def send_internal_due_email_notification(compliance):
     except:
         sender_user = EmailUser.objects.create(email=sender, password='')
     _log_compliance_email(msg, compliance, sender=sender_user)
-    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender_user)
+    if compliance.proposal.org_applicant:
+        _log_org_email(msg, compliance.proposal.org_applicant, compliance.submitter, sender=sender_user)
 
 
 def send_compliance_accept_email_notification(compliance,request):
@@ -168,7 +173,8 @@ def send_compliance_accept_email_notification(compliance,request):
     msg = email.send(compliance.submitter.email, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_compliance_email(msg, compliance, sender=sender)
-    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender)
+    if compliance.proposal.org_applicant:
+        _log_org_email(msg, compliance.proposal.org_applicant, compliance.submitter, sender=sender)
 
 def send_external_submit_email_notification(request, compliance):
     email = ComplianceExternalSubmitSendNotificationEmail()
@@ -183,7 +189,8 @@ def send_external_submit_email_notification(request, compliance):
     msg = email.send(compliance.submitter.email, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_compliance_email(msg, compliance, sender=sender)
-    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender)
+    if compliance.proposal.org_applicant:
+        _log_org_email(msg, compliance.proposal.org_applicant, compliance.submitter, sender=sender)
 
 def send_submit_email_notification(request, compliance):
     email = ComplianceSubmitSendNotificationEmail()
@@ -200,7 +207,8 @@ def send_submit_email_notification(request, compliance):
     msg = email.send(compliance.proposal.assessor_recipients, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_compliance_email(msg, compliance, sender=sender)
-    _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender)
+    if compliance.proposal.org_applicant:
+        _log_org_email(msg, compliance.proposal.org_applicant, compliance.submitter, sender=sender)
 
 
 def _log_compliance_email(email_message, compliance, sender=None):

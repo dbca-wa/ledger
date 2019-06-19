@@ -206,7 +206,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
 
     def get_applicant_id(self,obj):
         try:
-            return obj.applicant.id
+            return obj.applicant_id
         except:
             return None
 
