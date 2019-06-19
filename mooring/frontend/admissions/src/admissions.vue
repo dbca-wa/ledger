@@ -647,7 +647,7 @@ export default {
         loadTerms: function() { 
            var terms = $('#terms').val();
            console.log(terms);
-  	   $('<a href="'+terms+'" target="blank"></a>')[0].click();    
+           window.open(terms,'_terms');
 
 	},
         calculateTotal: function(){
