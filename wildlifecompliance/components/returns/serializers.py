@@ -50,10 +50,19 @@ class ReturnSerializer(serializers.ModelSerializer):
             'text',
             'format',
             'template',
+            'has_payment',
             'sheet_activity_list',
             'sheet_species_list',
-            'sheet_species'
+            'sheet_species',
         )
+
+    def get_lodgement_number(self, _return):
+        """
+        Gets the lodgement number for a submitted Return.
+        :param _return: Return instance.
+        :return: lodgement number.
+        """
+        return _return.lodgement_number if _return.lodgement_date else '{0} (Pending)'.format(_return.id)
 
     def get_sheet_activity_list(self, _return):
         """
@@ -79,17 +88,10 @@ class ReturnSerializer(serializers.ModelSerializer):
         """
         return _return.sheet.species if _return.has_sheet else None
 
-    def get_lodgement_number(self, _return):
-        """
-        Gets the lodgement number for a submitted Return.
-        :param _return: Return instance.
-        :return: lodgement number.
-        """
-        return _return.lodgement_number if _return.lodgement_date else '{0} (Pending)'.format(_return.id)
-
 
 class ReturnTypeSerializer(serializers.ModelSerializer):
     data_format = CustomChoiceField(read_only=True)
+    name = serializers.SerializerMethodField()
 
     class Meta:
         model = ReturnType
@@ -97,8 +99,16 @@ class ReturnTypeSerializer(serializers.ModelSerializer):
             'id',
             'resources',
             'data_format',
+            'name',
         )
 
+    def get_name(self, _return_type):
+        """
+        Present name with versioning.
+        :param _return_type: Return_Type instance.
+        :return: formatted name.
+        """
+        return '{0} - v{1}'.format(_return_type.name, _return_type.version)
 
 class ReturnActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
@@ -108,7 +118,7 @@ class ReturnActionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ReturnCommsSerializer(serializers.ModelSerializer):
+class ReturnLogEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = ReturnLogEntry
         fields = '__all__'

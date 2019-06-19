@@ -10,7 +10,7 @@ import LicenceDashTable from '../licences/dashboard.vue'
 import CallEmailTableDash from '../call_email/call_email_dashboard.vue'
 import CallEmail from '../call_email/call_email.vue'
 import ReturnDashTable from '../returns/dashboard.vue'
-import Returns from '../returns/access.vue'
+import Returns from '../returns/return.vue'
 
 export default
 {
@@ -72,8 +72,7 @@ export default
         },
         {
             path: 'return/:return_id',
-            component: Returns,
-            name:'access_return'
+            component: Returns
         },
         {
             path: 'users',
