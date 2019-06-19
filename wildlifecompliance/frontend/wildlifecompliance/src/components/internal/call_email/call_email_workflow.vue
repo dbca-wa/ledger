@@ -10,7 +10,7 @@
                               <label>Region</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control col-sm-9" @change="updateVuex('region_id', $event, 'integer')" :value="call_email.region_id">
+                              <select class="form-control col-sm-9" @change.prevent="updateDistricts()" v-model="call_email.region_id">
                                 <option  v-for="option in regions" :value="option.id" v-bind:key="option.id">
                                   {{ option.display_name }} 
                                 </option>
@@ -24,7 +24,7 @@
                               <label>District</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" @change="updateVuex('district_id', $event, 'integer')"  :value="call_email.district_id">
+                              <select class="form-control" @change.prevent="updateAllocatedGroup(group_permission)" v-model="call_email.district_id">
                                 <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
                                   {{ option.display_name }} 
                                 </option>
@@ -38,7 +38,7 @@
                               <label>Allocate to</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" @change="setGenericAttribute({'attribute': 'assigned_to_id', 'event': $event, 'datatype': 'integer'})" :value="call_email.assigned_to_id">
+                              <select class="form-control" v-model="call_email.assigned_to_id">
                                 <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
@@ -53,7 +53,7 @@
                               <label>Inspection Type</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" @change="setGenericAttribute({'attribute': 'inspection_type_id', 'event': $event, 'datatype': 'integer'})" :value="call_email.inspection_type_id">
+                              <select class="form-control" v-model="call_email.inspection_type_id">
                                 <option  v-for="option in inspectionTypes" :value="option.id" v-bind:key="option.id">
                                   {{ option.description }} 
                                 </option>
@@ -68,7 +68,7 @@
                               <label>Priority</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" @change="setGenericAttribute({'attribute': 'case_priority_id', 'event': $event, 'datatype': 'integer'})" :value="call_email.case_priority_id">
+                              <select class="form-control" v-model="call_email.case_priority_id">
                                 <option  v-for="option in casePriorities" :value="option.id" v-bind:key="option.id">
                                   {{ option.description }} 
                                 </option>
@@ -83,7 +83,7 @@
                               <label>Referred To</label>
                             </div>
                             <div class="col-sm-9">
-                              <select class="form-control" @change="setGenericAttribute({'attribute': 'referrer_id', 'event': $event, 'datatype': 'integer'})" :value="call_email.referrer_id">
+                              <select class="form-control" v-model="call_email.referrer_id">
                                 <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
                                   {{ option.name }} 
                                 </option>
@@ -97,8 +97,9 @@
                               <div class="col-sm-3">
                                   <label class="control-label pull-left" for="details">Details</label>
                               </div>
-                              <div class="col-sm-6">
-                                  <textarea class="form-control" placeholder="add details" id="details" v-model="workflowDetails"/>
+			      <div class="col-sm-6">
+				  <textarea v-if="workflow_type === 'close'" class="form-control" placeholder="add details" id="details" v-model="call_email.advice_details"/>
+                                  <textarea v-else class="form-control" placeholder="add details" id="details" v-model="workflowDetails"/>
                               </div>
                           </div>
                         </div>
@@ -243,7 +244,6 @@ export default {
     ...mapActions('callemailStore', {
       loadAllocatedGroup: "loadAllocatedGroup",
       setRegionId: "setRegionId",
-      setGenericAttribute: "setGenericAttribute",
     }),
     ...mapActions({
       loadCurrentUser: "loadCurrentUser",
@@ -358,8 +358,13 @@ export default {
           payload.append('assigned_to_id', this.call_email.assigned_to_id);
         }
         
-        payload.append('details', this.workflowDetails);
-        payload.append('workflow_type', this.workflow_type);
+	if (this.workflow_type === 'close') {
+	    payload.append('details', this.call_email.advice_details);
+	} else {
+	    payload.append('details', this.workflowDetails);
+	}
+
+	payload.append('workflow_type', this.workflow_type);
         
         let res = await this.$http.post(post_url, payload);
         console.log(this);
