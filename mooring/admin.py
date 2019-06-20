@@ -148,10 +148,12 @@ class CancelPricePeriodAdmin(admin.ModelAdmin):
 
 @admin.register(models.Booking)
 class BookingAdmin(admin.ModelAdmin):
+    raw_id_fields = ('customer','created_by','overridden_by','canceled_by','old_booking','admission_payment',)
     list_display = ('id','arrival','departure','booking_type','mooringarea','legacy_id','legacy_name','status','cost_total')
     ordering = ('-id',)
     search_fileds = ('arrival','departure')
     list_filter = ('id','arrival','departure','mooringarea')
+    readonly_fields=('created',)
     inlines = [BookingInvoiceInline,MooringsiteBookingInline]
 
     def has_add_permission(self, request, obj=None):
@@ -393,7 +395,9 @@ class AdmissionLineInline(admin.TabularInline):
 
 @admin.register(models.AdmissionsBooking)
 class AdmissionBooking(admin.ModelAdmin):
+    raw_id_fields = ('customer',)
     list_display = ('confirmation_number', 'customer', 'totalCost')
+    readonly_fields=('created_by','canceled_by',)
     inlines = [AdmissionLineInline]
 
 
