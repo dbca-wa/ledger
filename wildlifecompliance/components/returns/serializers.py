@@ -1,4 +1,5 @@
 from ledger.accounts.models import EmailUser
+from wildlifecompliance.components.applications.models import ReturnRequest
 from wildlifecompliance.components.main.fields import CustomChoiceField
 from wildlifecompliance.components.returns.models import (
     Return,
@@ -111,6 +112,7 @@ class ReturnTypeSerializer(serializers.ModelSerializer):
         """
         return '{0} - v{1}'.format(_return_type.name, _return_type.version)
 
+
 class ReturnActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
 
@@ -122,4 +124,12 @@ class ReturnActionSerializer(serializers.ModelSerializer):
 class ReturnLogEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = ReturnLogEntry
+        fields = '__all__'
+
+
+class ReturnRequestSerializer(serializers.ModelSerializer):
+    reason = CustomChoiceField()
+
+    class Meta:
+        model = ReturnRequest
         fields = '__all__'
