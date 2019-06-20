@@ -435,6 +435,17 @@ class CallEmailAllocatedGroupSerializer(serializers.ModelSerializer):
         )
         
 
+class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
+    assigned_to_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    
+    class Meta:
+        model = CallEmail
+        fields = (
+            'assigned_to_id',
+        )
+
+
 class CreateCallEmailSerializer(serializers.ModelSerializer):
     # status_display = serializers.CharField(source='get_status_display')
     status = CustomChoiceField(read_only=True)

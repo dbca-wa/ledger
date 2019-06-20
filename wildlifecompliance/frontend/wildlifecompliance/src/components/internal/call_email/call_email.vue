@@ -33,7 +33,7 @@
                           <div class="row">
                             <div class="col-sm-12">
                               
-                              <select class="form-control" v-model="call_email.assigned_to_id" >
+                              <select class="form-control" v-model="call_email.assigned_to_id" @change="updateAssignedToId()">
                                 <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
@@ -470,6 +470,16 @@ export default {
         
       });
     },
+    updateAssignedToId: async function () {
+        let url = helpers.add_endpoint_join(
+            api_endpoints.call_email, 
+            this.call_email.id + '/update_assigned_to_id/'
+            );
+        let res = await Vue.http.post(
+            url, 
+            { 'assigned_to_id': this.call_email.assigned_to_id }
+        );
+    }
   },
   beforeRouteEnter: function(to, from, next) {
             next(async (vm) => {

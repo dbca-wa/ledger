@@ -83,6 +83,7 @@ from wildlifecompliance.components.call_email.serializers import (
     CasePrioritySerializer,
     # ExternalOrganisationSerializer,
     CallEmailAllocatedGroupSerializer,
+    UpdateAssignedToIdSerializer
     )
 from wildlifecompliance.components.users.models import (
     CompliancePermissionGroup,    
@@ -744,6 +745,31 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
+    def update_assigned_to_id(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+
+            serializer = UpdateAssignedToIdSerializer(instance=instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            if serializer.is_valid():
+                serializer.save()
+                headers = self.get_success_headers(serializer.data)
+                return Response(
+                        serializer.data, 
+                        status=status.HTTP_201_CREATED,
+                        headers=headers
+                        )
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
 class ClassificationViewSet(viewsets.ModelViewSet):
     queryset = Classification.objects.all()
