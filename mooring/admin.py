@@ -91,6 +91,11 @@ class MooringAreaAdmin(admin.GeoModelAdmin):
 class MooringAreaGroupAdmin(admin.ModelAdmin):
     filter_horizontal = ('members','moorings')
 
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "members":
+            kwargs["queryset"] = EmailUser.objects.filter(is_staff=True)
+        return super(MooringAreaGroupAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+
     def get_queryset(self, request):
         """ Filter based on the mooring group of the user. """
         qs = super(MooringAreaGroupAdmin, self).get_queryset(request)
