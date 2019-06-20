@@ -912,10 +912,10 @@ export default {
                     method: 'GET',
                     success: function(data, stat, xhr) {
                         if(data[0]){
-                            vm.vesselWeight =  Math.ceil(data[0].vessel_weight);
-                            vm.vesselBeam = Math.ceil(data[0].vessel_beam);
-                            vm.vesselSize = Math.ceil(data[0].vessel_size);
-                            vm.vesselDraft = Math.ceil(data[0].vessel_draft);
+                            vm.vesselWeight =  parseFloat(data[0].vessel_weight);
+                            vm.vesselBeam = parseFloat(data[0].vessel_beam);
+                            vm.vesselSize = parseFloat(data[0].vessel_size);
+                            vm.vesselDraft = parseFloat(data[0].vessel_draft);
                             $("#vesselSize").val(data[0].vessel_size);
                             $("#vesselWeight").val(data[0].vessel_weight);
                             $("#vesselBeam").val(data[0].vessel_beam);

@@ -929,10 +929,10 @@ export default {
                     success: function(data, stat, xhr) {
                         vm.searchedRego = reg;
                         if(data[0]){
-                            vm.vesselSize = Math.ceil(data[0].vessel_size);
-                            vm.vesselWeight = Math.ceil(data[0].vessel_weight);
-                            vm.vesselDraft = Math.ceil(data[0].vessel_draft);
-                            vm.vesselBeam = Math.ceil(data[0].vessel_beam);  
+                            vm.vesselSize = parseFloat(data[0].vessel_size);
+                            vm.vesselWeight = parseFloat(data[0].vessel_weight);
+                            vm.vesselDraft = parseFloat(data[0].vessel_draft);
+                            vm.vesselBeam = parseFloat(data[0].vessel_beam);  
                         } else {
                             console.log("Registration was not found.");
                         }
