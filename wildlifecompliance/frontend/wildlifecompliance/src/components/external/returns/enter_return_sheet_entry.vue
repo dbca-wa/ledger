@@ -130,12 +130,6 @@ export default {
       title: function(){
         return this.entrySpecies + '   Current stock: ' + this.entryTotal;
       },
-      isOutStock: function() {
-        return 'outward' in this.returns.sheet_activity_list[this.entryActivity] ? true : false
-      },
-      isInStock: function() {
-        return 'inward' in this.returns.sheet_activity_list[this.entryActivity] ? true : false
-      },
       isLicenceRequired: function() {
         return (this.returns.sheet_activity_list[this.entryActivity]['licence'] === 'true');
       },
@@ -144,14 +138,24 @@ export default {
       },
     },
     methods:{
+      isOutStock: function(activity) {
+        return 'outward' in this.returns.sheet_activity_list[activity] ? true : false
+      },
+      isInStock: function(activity) {
+        return 'inward' in this.returns.sheet_activity_list[activity] ? true : false
+      },
+      isStock: function(activity) {
+        return 'initial' in this.returns.sheet_activity_list[activity] ? true : false
+      },
       addToStock: function(value) {
         this.entryTotal = this.currentStock !== '' ? parseInt(this.currentStock) : 0
-        if (this.isInStock) {
+        if (this.isInStock(this.entryActivity)) {
             this.entryTotal = parseInt(this.entryTotal) + parseInt(value)
-        } else {
+        };
+        if (this.isStock(this.entryActivity)) {
             this.entryTotal = parseInt(value)
         };
-        if (this.isOutStock) {
+        if (this.isOutStock(this.entryActivity)) {
             this.entryTotal = parseInt(this.entryTotal) - parseInt(value)
         };
         if (this.isLicenceRequired || this.entryActivity === '0') { // notify required before total update.
@@ -292,15 +296,32 @@ export default {
         self.errors = false;
         self.close()
       },
-      adjustTotals: function() {
+      adjustTotals: function() { // update total value on subsequent rows.
         const self = this;
         if (parseInt(self.entryQty) === parseInt(self.initialQty)) {
           return true;
         }
         var rows = self.species_cache[self.returns.sheet_species];
+        var new_total = parseInt(self.entryTotal)
         for (let i=0; i<rows.length; i++) {
           if (parseInt(rows[i].date)>parseInt(self.entryDateTime)){ // activity is after accepted
-           rows[i].total = parseInt(rows[i].total + parseInt(self.entryQty))
+              if (self.isInStock(rows[i].activity)
+                    && (rows[i].transfer === 'accept' || rows[i].transfer === '')) {
+                  rows[i].total = parseInt(rows[i].total + parseInt(self.entryQty))
+                  new_total = new_total + parseInt(rows[i].qty)
+              } else {
+                  // initial stock entry
+                  rows[i].total = parseInt(rows[i].total)
+              };
+              if (this.isOutStock(rows[i].activity)
+                    && (rows[i].transfer === 'accept' || rows[i].transfer === '')) {
+                  rows[i].total = parseInt(rows[i].total - parseInt(self.entryQty))
+                  new_total = new_total - parseInt(rows[i].qty)
+              };
+              if (this.isStock(self.entryActivity)) { // initial stock entry
+                  rows[i].total = new_total;
+              }
+
           }
         }
         self.species_cache[self.returns.sheet_species] = rows;

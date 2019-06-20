@@ -798,7 +798,7 @@ class ReturnSheet(object):
         for species in self.species_list:
             try:
                 _data = request.data.get(species).encode('utf-8')
-                _data = tuple(ast.literal_eval(_data))
+                _data = ast.literal_eval(_data)  # ast should convert list to tuple.
                 table_rows = self._get_table_rows(_data)
                 self._return.save_return_table(species, table_rows, request)
             except AttributeError:

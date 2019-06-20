@@ -144,8 +144,9 @@ export default {
             drawCallback: function() {
               vm.sheetTitle = vm.species_list[vm.returns.sheet_species]
             },
-            rowCallback: function(row, data) {
-              vm.sheet_total = parseInt(data.total) > vm.sheet_total ? parseInt(data.total) : vm.sheet_total;
+            footerCallback: function(row, data, start, end, display) {
+              var api = this.api(), data;
+              vm.sheet_total = api.column(4).data()[0]
             },
             processing: true,
             ordering: true,
@@ -158,7 +159,7 @@ export default {
                 vm.species_cache[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.ajax.json()
               }
               // Populate activity list from the data in the table
-              var activityColumn = vm.$refs.return_datatable.vmDataTable.columns(1);
+              var activityColumn = vm.$refs.return_datatable.vmDataTable.columns(2);
               activityColumn.data().unique().sort().each( function ( d, j ) {
                 let activityTitles = [];
                 $.each(d,(index,a) => {
@@ -259,13 +260,13 @@ export default {
           }
           if (vm.intVal(rows[i].date)==vm.intVal(selected.data().date)) {
             rows[i].transfer = 'accept'
-            rows[i].species_id = vm.returns.sheet_species
 
             let transfer = {}  //{speciesID: {this.entryDateTime: row_data},}
             if (vm.returns.sheet_species in vm.species_transfer){
               transfer = vm.species_transfer[vm.returns.sheet_species]
             }
-            transfer[rows[i].date] = rows[i];
+            transfer[rows[i].date] = Object.assign({}, rows[i]);
+            transfer[rows[i].date].species_id = vm.returns.sheet_species
             vm.species_transfer[vm.returns.sheet_species] = transfer
           }
         }
@@ -283,13 +284,13 @@ export default {
         for (let i=0; i<rows.length; i++) {
           if (vm.intVal(rows[i].date)==vm.intVal(selected.data().date)) {
             rows[i].transfer = 'decline'
-            rows[i].species_id = vm.returns.sheet_species
 
             let transfer = {}  //{speciesID: {this.entryDateTime: row_data},}
             if (vm.returns.sheet_species in vm.species_transfer){
               transfer = vm.species_transfer[vm.returns.sheet_species]
             }
-            transfer[rows[i].date] = rows[i];
+            transfer[rows[i].date] = Object.assign({}, rows[i]);
+            transfer[rows[i].date].species_id = vm.returns.sheet_species
             vm.species_transfer[vm.returns.sheet_species] = transfer
           }
         }

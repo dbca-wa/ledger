@@ -54,6 +54,7 @@ class ReturnSerializer(serializers.ModelSerializer):
             'sheet_activity_list',
             'sheet_species_list',
             'sheet_species',
+            'return_fee',
         )
 
     def get_lodgement_number(self, _return):
