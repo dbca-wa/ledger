@@ -195,13 +195,13 @@
 
                 <div class="col-sm-12 form-group"><div class="row">
                     <label class="col-sm-3">{{ occurrenceDateLabel }}</label>
-                    <div class="col-sm-3">
-                      <datepicker :disabled="isReadonly" :disabledDates="disabledDates" input-class="form-control col-sm-3" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_from" name="datefrom"/>
+                    <div class="col-sm-3" :disabled="isReadonly">
+                      <datepicker :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_from"/>
                     </div>
-                    <div v-if="call_email.occurrence_from_to">
+                    <div v-if="call_email.occurrence_from_to" :disabled="isReadonly">
                       <label class="col-sm-3">Occurrence date to</label>
-                      <div class="col-sm-3">
-                        <datepicker :disabled="isReadonly" :disabledDates="disabledDates" input-class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_to" name="dateto"/>
+                      <div class="col-sm-3" :disabled="isReadonly">
+                        <datepicker :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_to" />
                       </div>
                     </div>
                 </div></div>
@@ -209,12 +209,16 @@
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-3">{{ occurrenceTimeLabel }}</label>
                   <div class="col-sm-3">
-                    <input :readonly="isReadonly" type="time" class="form-control" v-model="call_email.occurrence_time_from"/>
+                      <div class="input-group date" ref="occurrenceTimeFromPicker">
+                        <input :readonly="isReadonly" type="time" class="form-control" placeholder="HH:MM" v-model="call_email.occurrence_time_from"/>
+                      </div>
                   </div>
                   <div v-if="call_email.occurrence_from_to">
                       <label class="col-sm-3">Occurrence time to</label>
                       <div class="col-sm-3">
-                        <input :readonly="isReadonly" type="time" class="form-control" v-model="call_email.occurrence_time_to"/>
+                          <div class="input-group date" ref="occurrenceTimeToPicker">
+                            <input :readonly="isReadonly" type="time" class="form-control" placeholder="HH:MM" v-model="call_email.occurrence_time_to"/>
+                          </div>
                       </div>
                   </div>
                 </div></div>
