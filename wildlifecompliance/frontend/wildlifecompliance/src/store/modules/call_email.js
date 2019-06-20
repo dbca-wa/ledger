@@ -207,7 +207,6 @@ export const callemailStore = {
             state.call_email.location.properties.details = "";
         },
         updateAllocatedGroupList(state, members) {
-            console.log(members);
             Vue.set(state.call_email, 'allocated_group', {});
             let blankable_members = [];
             Object.assign(blankable_members, members);
@@ -222,7 +221,6 @@ export const callemailStore = {
                     title: "",
                     });
             }
-            console.log(blankable_members);
             Vue.set(state.call_email.allocated_group, 'members', blankable_members);
         },
         updateAllocatedGroupId(state, id) {
@@ -278,9 +276,12 @@ export const callemailStore = {
                 }
             }
         },
-        async saveCallEmail({ dispatch, state, rootGetters}, { route, crud }) {
+        async saveCallEmail({ dispatch, state, rootGetters}, { route, crud, internal }) {
             console.log("saveCallEmail");
+            console.log("internal");
+            console.log(internal);
             let callId = null;
+            let savedCallEmail = null;
             try {
                 let fetchUrl = null;
                 if (crud === 'create' || crud === 'duplicate') {
@@ -313,7 +314,7 @@ export const callemailStore = {
                     payload.renderer_data = rootGetters.renderer_form_data;
                     }
                 }
-                const savedCallEmail = await Vue.http.post(fetchUrl, payload);
+                savedCallEmail = await Vue.http.post(fetchUrl, payload);
                 console.log("savedCallEmail.body");
                 console.log(savedCallEmail.body);
                 await dispatch("setCallEmail", savedCallEmail.body);
@@ -321,14 +322,23 @@ export const callemailStore = {
 
             } catch (err) {
                 console.log(err);
-                await swal("Error", "There was an error saving the record", "error");
+                if (internal) {
+                    // return "There was an error saving the record";
+                    return err;
+                } else {
+                    await swal("Error", "There was an error saving the record", "error");
+                }
                 return window.location.href = "/internal/call_email/";
             }
             if (crud === 'duplicate') {
                 return window.location.href = "/internal/call_email/" + callId;
             }
             else if (crud !== 'create') {
-                await swal("Saved", "The record has been saved", "success");
+                if (!internal) {
+                    await swal("Saved", "The record has been saved", "success");
+                } else {
+                    return savedCallEmail;
+                }
             }
             if (route) {
                 return window.location.href = "/internal/call_email/";
@@ -337,8 +347,6 @@ export const callemailStore = {
             }
         },
         setAllocatedGroupList({ commit }, data) {
-            console.log("setAllocatedGroupList");
-            console.log(data);
             commit('updateAllocatedGroupList', data);
         },
         setRegionId({ commit }, id) {
@@ -346,18 +354,14 @@ export const callemailStore = {
         },
         
         async loadAllocatedGroup({ dispatch }, { region_district_id, group_permission } ) {
-            console.log(region_district_id);
-            console.log(group_permission);
             let url = helpers.add_endpoint_join(
                 api_endpoints.region_district,
                 region_district_id + '/get_group_id_by_region_district/'
                 );
-            console.log(url);
             let returned = await Vue.http.post(
                 url, 
                 { 'group_permission': group_permission
             });
-            console.log(returned.body);
             if (returned.body.group_id) {
                 await dispatch('setAllocatedGroupId', returned.body.group_id);
                 await dispatch('setAllocatedGroupList', null);
@@ -367,7 +371,6 @@ export const callemailStore = {
             }
         },
         setAllocatedGroupId({ commit, }, id) {
-            console.log("setAllocatedGroupId");
             commit("updateAllocatedGroupId", id);
         },
         setCallID({ commit, }, id) {

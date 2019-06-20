@@ -636,22 +636,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 instance = self.get_object()
                 workflow_entry = self.add_comms_log(request, workflow=True)
-                #request.data['call_email'] = u'{}'.format(instance.id)
-                #print("request for complianceworkflow serializer")
-                #print(request.data)
-                #serializer = ComplianceWorkflowLogEntrySerializer(data=request.data)
-                #serializer.is_valid(raise_exception=True)
-                #workflow_entry = serializer.save()
-                ## Save the files
-                #for f in request.FILES:
-                #    print("the file")
-                #    print(f)
-                #    document = workflow_entry.documents.create()
-                #    print("filename")
-                #    print(str(request.FILES[f]))
-                #    document.name = str(request.FILES[f])
-                #    document._file = request.FILES[f]
-                #    document.save()
 
                 attachments = []
                 for doc in workflow_entry.documents.all():

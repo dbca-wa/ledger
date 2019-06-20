@@ -434,15 +434,15 @@ export default {
     offence(){
       this.$refs.offence.isModalOpen = true;
     },
-    save: async function() {
-      if (this.call_email.id) {
-        await this.saveCallEmail({ route: false, crud: 'save' });
-      } else {
-        await this.saveCallEmail({ route: false, crud: 'create'});
-        this.$nextTick(function() {
-          this.$router.push({name: 'view-call-email', params: {call_email_id: this.call_email.id}});
-        });
-      }
+    save: async function () {
+        if (this.call_email.id) {
+            await this.saveCallEmail({ route: false, crud: 'save' });
+        } else {
+            await this.saveCallEmail({ route: false, crud: 'create'});
+            this.$nextTick(function () {
+                this.$router.push({name: 'view-call-email', params: {call_email_id: this.call_email.id}});
+            });
+        }
     },
     saveExit: async function() {
       if (this.call_email.id) {
@@ -473,7 +473,7 @@ export default {
   },
   beforeRouteEnter: function(to, from, next) {
             next(async (vm) => {
-                await vm.loadCurrentUser({ url: `/api/smy_compliance_user_details` });
+                await vm.loadCurrentUser({ url: `/api/my_compliance_user_details` });
                 
             });
   },
