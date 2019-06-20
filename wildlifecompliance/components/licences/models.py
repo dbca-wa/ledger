@@ -617,6 +617,109 @@ class WildlifeLicence(models.Model):
                 for activity in original_activities:
                     activity.mark_as_replaced(request)
 
+    def reinstate_licence(self, request):
+        '''
+        Reinstates all surrendered activities and purposes for a licence
+        '''
+        with transaction.atomic():
+            for activity_id in self.latest_activities.values_list('licence_activity_id', flat=True):
+                for activity in self.get_latest_activities_for_licence_activity_and_action(
+                        activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_REINSTATE):
+                    activity.reinstate(request)
+
+    def reinstate_purposes(self, request):
+        '''
+        Reinstates a licence's purposes for a selected licence_activity_id and purposes list
+        '''
+        from wildlifecompliance.components.applications.models import (
+            Application, ApplicationSelectedActivity
+        )
+        purpose_ids_list = request.data.get('purpose_ids_list', None)
+        purpose_ids_list = list(set(purpose_ids_list))
+        purpose_ids_list.sort()
+        licence_activity_id = LicencePurpose.objects.filter(id__in=purpose_ids_list). \
+            first().licence_activity_id
+        can_reinstate_purposes = self.get_latest_purposes_for_licence_activity_and_action(
+            licence_activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_REINSTATE)
+        can_reinstate_purposes_ids_list = [purpose.id for purpose in can_reinstate_purposes.order_by('id')]
+
+        # if all purposes were selected by the user for reinstate,
+        # reinstate all suspended ApplicationSelectedActivity records
+        if purpose_ids_list == can_reinstate_purposes_ids_list:
+            activities_to_reinstate = self.get_latest_activities_for_licence_activity_and_action(
+                licence_activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_REINSTATE)
+            with transaction.atomic():
+                # reinstate target activities
+                for activity in activities_to_reinstate:
+                    activity.reinstate(request)
+
+        # else, if not all purposes were selected by the user for reinstate:
+        #  - if any ApplicationSelectedActivity records can be reinstated completely (i.e. all purposes in the
+        #        Application record are selected for reinstate), reinstate them
+        #  - create new Application for the purposes to remain suspended, using the first application found
+        #        to have a purpose_id to remain suspended
+        #  - create new Application for the purposes to be reinstated, using the first application found
+        #        to have a purpose_id to reinstate
+        #  - add purposes from other relevant applications to either the new suspended or new reinstated application,
+        #        copying data from their respective Applications
+        #  - mark all previously suspended and not reinstated ApplicationSelectedActivity records as REPLACED
+        else:
+            new_suspended_application = None
+            new_reinstated_application = None
+
+            licence_latest_activities = self.get_latest_activities_for_licence_activity_and_action(
+                licence_activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_REINSTATE)
+            original_application_ids = licence_latest_activities.filter(
+                application__licence_purposes__in=purpose_ids_list).values_list('application_id', flat=True)
+            original_applications = Application.objects.filter(id__in=original_application_ids)
+            with transaction.atomic():
+                for application in original_applications:
+                    # get purpose_ids linked with application
+                    application_licence_purpose_ids_list = application.licence_purposes.filter(
+                        licence_activity_id=licence_activity_id).values_list('id', flat=True)
+
+                    # if application's purpose_ids are all listed in the purpose_ids_list,
+                    # completely reinstate ApplicationSelectedActivity
+                    if not set(application_licence_purpose_ids_list) - set(purpose_ids_list):
+                        activity = application.selected_activities.get(licence_activity_id=licence_activity_id)
+                        activity.reinstate(request)
+
+                    # if application still has suspended purposes after reinstating selected purposes
+                    if set(application_licence_purpose_ids_list) - set(purpose_ids_list):
+                        common_reinstated_purpose_ids = set(application_licence_purpose_ids_list) & set(purpose_ids_list)
+                        remaining_suspended_purpose_ids = set(application_licence_purpose_ids_list) - set(purpose_ids_list)
+
+                        # create new suspended application from this application if not exists
+                        if not new_suspended_application:
+                            new_suspended_application = application.copy_application_purposes_for_status(
+                                remaining_suspended_purpose_ids, ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED)
+                        # else, if new suspended application exists, link the target LicencePurpose IDs to it
+                        else:
+                            # Link the target LicencePurpose IDs to the application
+                            for licence_purpose_id in remaining_suspended_purpose_ids:
+                                application.copy_application_purpose_to_target_application(
+                                    new_suspended_application,
+                                    licence_purpose_id)
+
+                        # create new reinstated application from this application if not exists
+                        if not new_reinstated_application:
+                            new_reinstated_application = application.copy_application_purposes_for_status(
+                                common_reinstated_purpose_ids, ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT)
+                        # else, if new reinstated application exists, link the target LicencePurpose IDs to it
+                        else:
+                            # Link the target LicencePurpose IDs to the application
+                            for licence_purpose_id in common_reinstated_purpose_ids:
+                                application.copy_application_purpose_to_target_application(
+                                    new_reinstated_application,
+                                    licence_purpose_id)
+
+                # Set original activities to REPLACED except for any that were REINSTATED (CURRENT) completely
+                original_activities = ApplicationSelectedActivity.objects.\
+                    filter(application__id__in=original_application_ids).\
+                    exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT)
+                for activity in original_activities:
+                    activity.mark_as_replaced(request)
+
     def generate_doc(self):
         from wildlifecompliance.components.licences.pdf import create_licence_doc
         self.licence_document = create_licence_doc(

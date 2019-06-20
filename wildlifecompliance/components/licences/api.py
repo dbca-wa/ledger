@@ -324,7 +324,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data)
             else:
                 raise serializers.ValidationError(
-                    'Licence ID list must be specified')
+                    'Licence ID must be specified')
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -386,7 +386,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data)
             else:
                 raise serializers.ValidationError(
-                    'Licence ID list must be specified')
+                    'Licence ID must be specified')
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -451,7 +451,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data)
             else:
                 raise serializers.ValidationError(
-                    'Licence ID list must be specified')
+                    'Licence ID must be specified')
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -482,7 +482,7 @@ class LicenceViewSet(viewsets.ModelViewSet):
                                         first().licence_activity_id
                 instance = self.get_object()
                 can_suspend_purposes = instance.get_latest_purposes_for_licence_activity_and_action(
-                    licence_activity_id, 'suspend')
+                    licence_activity_id, WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SUSPEND)
                 can_suspend_purposes_ids_list = [purpose.id for purpose in can_suspend_purposes.order_by('id')]
                 if not set(purpose_ids_list).issubset(can_suspend_purposes_ids_list):
                     raise serializers.ValidationError(
@@ -493,6 +493,30 @@ class LicenceViewSet(viewsets.ModelViewSet):
             else:
                 raise serializers.ValidationError(
                     'Licence ID and Purpose IDs list must be specified')
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    def reinstate_licence(self, request, pk=None, *args, **kwargs):
+        try:
+            if not request.user.has_perm('wildlifecompliance.issuing_officer'):
+                raise serializers.ValidationError(
+                    'You are not authorised to reinstate licences')
+            if pk:
+                instance = self.get_object()
+                instance.reinstate_licence(request)
+                serializer = DTExternalWildlifeLicenceSerializer(instance, context={'request': request})
+                return Response(serializer.data)
+            else:
+                raise serializers.ValidationError(
+                    'Licence ID must be specified')
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

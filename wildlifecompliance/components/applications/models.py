@@ -2212,7 +2212,7 @@ class ApplicationSelectedActivity(models.Model):
     def can_reactivate_renew(self):
         # TODO: clarify business logic for when an activity renew is allowed to be reactivate.
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
-            Application.APPLICATION_TYPE_NEW_LICENCE,
+            Application.APPLICATION_TYPE_SYSTEM_GENERATED,
             activity_ids=[self.id]
         ).count() > 0
 
@@ -2220,7 +2220,7 @@ class ApplicationSelectedActivity(models.Model):
     def can_surrender(self):
         # TODO: clarify business logic for when an activity is allowed to be surrendered.
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
-            Application.APPLICATION_TYPE_NEW_LICENCE,
+            Application.APPLICATION_TYPE_SYSTEM_GENERATED,
             activity_ids=[self.id]
         ).count() > 0
 
@@ -2228,17 +2228,17 @@ class ApplicationSelectedActivity(models.Model):
     def can_cancel(self):
         # TODO: clarify business logic for when an activity is allowed to be cancelled.
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
-            Application.APPLICATION_TYPE_NEW_LICENCE,
+            Application.APPLICATION_TYPE_SYSTEM_GENERATED,
             activity_ids=[self.id]
         ).count() > 0
 
     @property
     def can_suspend(self):
-        # TODO: clarify business logic for when an activity is allowed to be suspended.
+        # Returns true if the activity_status is CURRENT
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
-            Application.APPLICATION_TYPE_NEW_LICENCE,
+            Application.APPLICATION_TYPE_SYSTEM_GENERATED,
             activity_ids=[self.id]
-        ).count() > 0
+        ).exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED).count() > 0
 
     @property
     def can_reissue(self):
@@ -2297,6 +2297,9 @@ class ApplicationSelectedActivity(models.Model):
 
     @staticmethod
     def get_current_activities_for_application_type(application_type, **kwargs):
+        # Retrieves the current activities for an ApplicationSelectedActivity, filterable by LicenceActivity ID
+        # and Application.APPLICATION_TYPE in the case of the additional date_filter (use
+        # Application.APPLICATION_TYPE_SYSTEM_GENERATED for no APPLICATION_TYPE filters)
         applications = kwargs.get('applications', Application.objects.none())
         activity_ids = kwargs.get('activity_ids', [])
 
