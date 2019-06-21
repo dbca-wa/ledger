@@ -201,8 +201,10 @@ class CallEmail(RevisionedMixin):
     occurrence_from_to = models.BooleanField(default=False)
     occurrence_date_from = models.DateField(null=True)
     occurrence_time_from = models.CharField(max_length=20, blank=True, null=True)
+    occurrence_time_start = models.TimeField(blank=True, null=True)
     occurrence_date_to = models.DateField(null=True)
     occurrence_time_to = models.CharField(max_length=20, blank=True, null=True)
+    occurrence_time_end = models.TimeField(blank=True, null=True)
     report_type = models.ForeignKey(
         ReportType,
         null=True,

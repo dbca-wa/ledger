@@ -229,6 +229,12 @@ export const callemailStore = {
         updateRegionId(state, id) {
             state.call_email.region_id = id;
         },
+        updateOccurrenceTimeStart(state, time) {
+            Vue.set(state.call_email, 'occurrence_time_start', time);
+        },
+        updateOccurrenceTimeEnd(state, time) {
+            Vue.set(state.call_email, 'occurrence_time_end', time);
+        },
     },
     actions: {
         async loadCallEmail({ dispatch, }, { call_email_id }) {
@@ -424,6 +430,11 @@ export const callemailStore = {
         setClassification({ commit, }, classification) {
             commit("updateClassification", classification)
         },
-
+        setOccurrenceTimeStart({ commit }, time ) {
+            commit("updateOccurrenceTimeStart", time);
+        },
+        setOccurrenceTimeEnd({ commit }, time ) {
+            commit("updateOccurrenceTimeEnd", time);
+        },
     },
 };

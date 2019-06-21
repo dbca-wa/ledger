@@ -198,7 +198,7 @@
                     <div class="col-sm-3" :disabled="isReadonly">
                       <datepicker :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_from"/>
                     </div>
-                    <div v-if="call_email.occurrence_from_to" :disabled="isReadonly">
+                    <div v-show="call_email.occurrence_from_to" :disabled="isReadonly">
                       <label class="col-sm-3">Occurrence date to</label>
                       <div class="col-sm-3" :disabled="isReadonly">
                         <datepicker :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_to" />
@@ -209,15 +209,21 @@
                 <div class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-3">{{ occurrenceTimeLabel }}</label>
                   <div class="col-sm-3">
-                      <div class="input-group date" ref="occurrenceTimeFromPicker">
-                        <input :readonly="isReadonly" type="time" class="form-control" placeholder="HH:MM" v-model="call_email.occurrence_time_from"/>
+                      <div class="input-group date" id="occurrenceTimeStartPicker">
+                        <input :disabled="isReadonly" type="text" class="form-control" placeholder="HH:MM" v-model="call_email.occurrence_time_start"/>
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
                       </div>
                   </div>
-                  <div v-if="call_email.occurrence_from_to">
+                  <div v-show="call_email.occurrence_from_to">
                       <label class="col-sm-3">Occurrence time to</label>
                       <div class="col-sm-3">
-                          <div class="input-group date" ref="occurrenceTimeToPicker">
-                            <input :readonly="isReadonly" type="time" class="form-control" placeholder="HH:MM" v-model="call_email.occurrence_time_to"/>
+                          <div class="input-group date" id="occurrenceTimeEndPicker">
+                            <input :disabled="isReadonly" type="text" class="form-control" placeholder="HH:MM" v-model="call_email.occurrence_time_end"/>
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                            </span>
                           </div>
                       </div>
                   </div>
@@ -310,6 +316,7 @@ import moment from 'moment';
 import CallWorkflow from './call_email_workflow';
 import Offence from '../offence/offence';
 import 'bootstrap/dist/css/bootstrap.css';
+import 'eonasdan-bootstrap-datetimepicker';
 
 export default {
   name: "ViewCallEmail",
@@ -415,11 +422,13 @@ export default {
   },
   methods: {
     ...mapActions('callemailStore', {
-      loadCallEmail: "loadCallEmail",
+      loadCallEmail: 'loadCallEmail',
       saveCallEmail: 'saveCallEmail',
-      // loadAllocatedGroup: "loadAllocatedGroup",
-      setRegionId: "setRegionId",
-      setAllocatedGroupList: "setAllocatedGroupList",
+      // loadAllocatedGroup: 'loadAllocatedGroup',
+      setRegionId: 'setRegionId',
+      setAllocatedGroupList: 'setAllocatedGroupList',
+      setOccurrenceTimeStart: 'setOccurrenceTimeStart',
+      setOccurrenceTimeEnd: 'setOccurrenceTimeEnd',
     }),
     ...mapActions({
       saveFormData: "saveFormData",
@@ -551,13 +560,27 @@ export default {
     }
   },
   mounted: function() {
-        console.log(this);
-        $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
-            var chev = $( this ).children()[ 0 ];
-            window.setTimeout( function () {
-                $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
-            }, 100 );
-        });
+      let vm = this;
+      $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
+          var chev = $( this ).children()[ 0 ];
+          window.setTimeout( function () {
+              $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
+          }, 100 );
+      });
+      // Time field controls
+      $('#occurrenceTimeStartPicker').datetimepicker({
+              format: 'LT'
+          });
+      $('#occurrenceTimeEndPicker').datetimepicker({
+              format: 'LT'
+          });
+      $('#occurrenceTimeStartPicker').on('dp.change', function(e) {
+          vm.setOccurrenceTimeStart(e.date.format('LT'));
+      });
+      $('#occurrenceTimeEndPicker').on('dp.change', function(e) {
+          vm.setOccurrenceTimeEnd(e.date.format('LT'));
+      });
+
   }
 };
 </script>
