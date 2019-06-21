@@ -330,8 +330,10 @@ export default {
       cTab: 'cTab'+this._uid,
       rTab: 'rTab'+this._uid,
       dtHeadersRelatedItems: [
-          'id',
-          'Test',
+          'Number',
+          'Type',
+          'Description',
+          'Action',
       ],
       dtOptionsRelatedItems: {
           columns: [
@@ -339,7 +341,13 @@ export default {
                   data: 'id',
               },
               {
-                  data: 'Test',
+                  data: 'Type',
+              },
+              {
+                  data: 'Description',
+              },
+              {
+                  data: 'Action',
               },
           ]
       },
