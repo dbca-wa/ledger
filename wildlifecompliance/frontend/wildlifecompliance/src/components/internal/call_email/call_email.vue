@@ -281,6 +281,8 @@
               <div class="col-sm-12 form-group"><div class="row">
               <h3></h3>
               </div></div>
+
+              <Offence ref="offence" />
             
             </div>          
           </div>

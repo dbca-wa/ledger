@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
-from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, calculate_excl_gst
+from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
 from ledger.payments.models import Invoice
 from wildlifecompliance.exceptions import BindApplicationException
 
@@ -358,3 +358,6 @@ def search_reference(reference_number):
         return url_string
     else:
         raise ValidationError('Record with provided reference number does not exist')
+
+
+
