@@ -1902,7 +1902,7 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             #serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception = True)
             instance = serializer.save()
-            #instance.generate_amendment(request)
+            instance.generate_amendment(request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
