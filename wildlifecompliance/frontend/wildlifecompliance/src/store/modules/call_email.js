@@ -320,7 +320,7 @@ export const callemailStore = {
                     payload.renderer_data = rootGetters.renderer_form_data;
                     }
                 }
-                const savedCallEmail = await Vue.http.post(fetchUrl, payload)
+                savedCallEmail = await Vue.http.post(fetchUrl, payload)
                 await dispatch("setCallEmail", savedCallEmail.body);
                 callId = savedCallEmail.body.id;
 

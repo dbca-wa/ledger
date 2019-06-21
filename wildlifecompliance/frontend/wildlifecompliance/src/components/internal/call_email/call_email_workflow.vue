@@ -146,7 +146,7 @@
                         </div>
                     </div>
                 </div>
-                <button type="button" :disabled="!userIsAssignee" class="btn btn-default" @click="ok">Ok</button>
+                <button type="button" class="btn btn-default" @click="ok">Ok</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
         </modal>
@@ -243,13 +243,6 @@ export default {
         return "Close complaint";
       }
     },
-    userIsAssignee: function() {
-        if (this.call_email.assigned_to_id === this.current_user.id) {
-            return true;
-        } else {
-            return false;
-        }
-    },
   },
   filters: {
     formatDate: function(data) {
@@ -336,6 +329,7 @@ export default {
 
     ok: async function () {
         const response = await this.sendData();
+        console.log(response);
         if (response === 'ok') {
             this.close();
         }
@@ -397,6 +391,7 @@ export default {
         //const parentResult = await this.$parent.save(true);
         //console.log(parentResult);
         let callEmailRes = await this.saveCallEmail({ route: false, crud: 'save', 'internal': true });
+        console.log(callEmailRes);
         if (callEmailRes.ok) {
             try {
                 let res = await Vue.http.post(post_url, payload);
