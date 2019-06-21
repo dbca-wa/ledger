@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import {
+    UPDATE_RETURNS_TRANSFER_SPECIES,
     UPDATE_RETURNS_TABS,
     UPDATE_RETURNS_SELECTED_SPECIES,
     UPDATE_RETURNS_SPECIES,
@@ -41,7 +42,7 @@ export const returnsRendererStore = {
         [UPDATE_RETURNS_SELECTED_SPECIES] (state, selected_species) {
             Vue.set(state, 'selected_species', selected_species);
         },
-        ['UPDATE_RETURNS_TRANSFER_SPECIES'] (state, transfer_species) {
+        [UPDATE_RETURNS_TRANSFER_SPECIES] (state, transfer_species) {
             Vue.set(state, 'transfer_species', transfer_species);
         },
     },
@@ -62,7 +63,7 @@ export const returnsRendererStore = {
             commit(UPDATE_RETURNS_SELECTED_SPECIES, species_cache);
         },
         setSpeciesTransfer({ commit }, { species_transfer }) {
-            commit('UPDATE_RETURNS_TRANSFER_SPECIES', species_transfer);
+            commit(UPDATE_RETURNS_TRANSFER_SPECIES, species_transfer);
         },
     }
 }

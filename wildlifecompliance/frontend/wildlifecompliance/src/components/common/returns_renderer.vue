@@ -39,7 +39,7 @@
                             <div class="row">
                                 <div class="col-sm-12">
                                     <strong>Status</strong><br/>
-                                    {{ returns.processing_status.name }}
+                                    {{ returns.processing_status }}
                                 </div>
                                 <div class="col-sm-12 top-buffer-s">
                                     <strong>Currently assigned to</strong><br/>
@@ -49,7 +49,7 @@
                                         </select>
                                         <select @change="assignTo"  v-if="!isLoading" class="form-control">
                                             <option value="null">Unassigned</option>
-                                        <!-- <option v-for="member in return.return_curators" :value="member.id">{{member.first_name}} {{member.last_name}}</option> -->
+                                        <!-- <option v-for="member in returns.return_curators" :value="member.id">{{member.first_name}} {{member.last_name}}</option> -->
                                         </select>
                                         <!-- <a v-if="!canViewonly" @click.prevent="assignMyself()" class="actionBtn pull-right">Assign to me</a> -->
                                     </div>
@@ -143,6 +143,7 @@ export default {
       'selected_returns_tab_id',
       'species_list',
       'is_external',
+      'current_user',
     ]),
     is_submitted: function() {
       return this.returns.lodgement_date != null ? true : false;
@@ -166,6 +167,7 @@ export default {
       'setReturnsSpecies',
       'setReturnsExternal',
       'setReturns',
+      'loadCurrentUser',
     ]),
     selectReturnsTab: function(component) {
         this.returns_tab_id = component.id;
@@ -173,13 +175,22 @@ export default {
     },
     amendmentRequest: function(){
       let vm = this;
-      //vm.save_wo();
 
       vm.$refs.amendment_request.amendment.text = '';
       vm.$refs.amendment_request.isModalOpen = true;
     },
+    canAssignToOfficer: function(){
+      if(!this.userHasRole('licensing_officer')) {
+        return false;
+      }
+      return this.returns && this.returns.processing_status.id == 'with_curator'
+    },
+    userIsAssignedOfficer: function(){
+      return this.current_user.id == this.returns.assigned_to;
+    },
   },
   created: function() {
+    this.loadCurrentUser({ url: `/api/my_user_details` });
     if (this.returns.format != 'sheet') {
       var headers = this.returns.table[0]['headers']
       for(let i = 0; i<headers.length; i++) {
@@ -187,6 +198,6 @@ export default {
       }
       this.setReturns(this.returns);
     }
-  }
+  },
 }
 </script>
