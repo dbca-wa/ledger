@@ -41,7 +41,7 @@
                         </span>
                     </div>
                 </div>
-                <div class="col-md-3 pull-right">
+                <div v-if="current_user && current_user.is_volunteer" class="col-md-3 pull-right">
                     <button @click.prevent="createCallEmailUrl"
                         class="btn btn-primary pull-right">New Call/Email</button>
                 </div>    
@@ -151,7 +151,7 @@
                             width: "10%",
                             mRender: function(data,type,full) {
                                 let links = '';
-                                    links += full.user_is_officer ? 
+                                    links += full.user_is_assignee ? 
                                         `<a href="/internal/call_email/${full.id}">Process</a>` :
                                         `<a href="/internal/call_email/${full.id}">View</a>`;
                                 return links;

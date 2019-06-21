@@ -279,9 +279,9 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             'caller_wishes_to_remain_anonymous',
             'occurrence_from_to',
             'occurrence_date_from',
-            'occurrence_time_from',
+            'occurrence_time_start',
             'occurrence_date_to',
-            'occurrence_time_to',
+            'occurrence_time_end',
             'advice_given',
             'advice_details',
             'email_user',
@@ -336,6 +336,16 @@ class CallEmailOptimisedSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', )
 
 
+class CallEmailAllocatedGroupSerializer(serializers.ModelSerializer):
+    allocated_group = CompliancePermissionGroupMembersSerializer()
+
+    class Meta:
+        model = CallEmail
+        fields = (
+            'allocated_group',
+        )
+
+
 class CallEmailSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     classification = ClassificationSerializer(read_only=True)
@@ -345,6 +355,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
     referrer = ReferrerSerializer(read_only=True)
     data = ComplianceFormDataRecordSerializer(many=True)
     email_user = EmailUserSerializer(read_only=True)
+    #allocated_group = CallEmailAllocatedGroupSerializer(read_only=True)
 
     class Meta:
         model = CallEmail
@@ -353,7 +364,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'status',
             # 'status_display',
             'assigned_to_id',
-            # 'allocated_group',
+            #'allocated_group',
             'allocated_group_id',
             'location',
             'location_id',
@@ -372,9 +383,9 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'caller_wishes_to_remain_anonymous',
             'occurrence_from_to',
             'occurrence_date_from',
-            'occurrence_time_from',
+            'occurrence_time_start',
             'occurrence_date_to',
-            'occurrence_time_to',
+            'occurrence_time_end',
             'referrer',
             'referrer_id',
             'advice_given',
@@ -394,7 +405,7 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     classification = ClassificationSerializer(read_only=True)
     lodgement_date = serializers.CharField(source='lodged_on')
-    user_is_officer = serializers.SerializerMethodField()
+    user_is_assignee = serializers.SerializerMethodField()
     assigned_to = ComplianceUserDetailsOptimisedSerializer(read_only=True)
 
     class Meta:
@@ -403,37 +414,41 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
             'id',
             'status',
             # 'status_display',
-            'user_is_officer',
+            'user_is_assignee',
             'classification',
             'classification_id',
             'lodgement_date',
             'number',
             'caller',
             'assigned_to',
+            'assigned_to_id',
+
         )
         read_only_fields = (
             'id', 
             )
 
-    def get_user_is_officer(self, obj):
-        user = EmailUser.objects.get(id=self.context.get('request', {}).user.id)
-        compliance_permissions = []
-        for group in user.groups.all():
-            for permission in group.permissions.all():
-                compliance_permissions.append(permission.codename)
-        if 'officer' in compliance_permissions:
+    def get_user_is_assignee(self, obj):
+        # user = EmailUser.objects.get(id=self.context.get('request', {}).user.id)
+        user_id = self.context.get('request', {}).user.id
+        # compliance_permissions = []
+        # for group in user.groups.all():
+          #  for permission in group.permissions.all():
+           #     compliance_permissions.append(permission.codename)
+        if user_id == obj.assigned_to_id:
             return True
 
 
-class CallEmailAllocatedGroupSerializer(serializers.ModelSerializer):
-    allocated_group = CompliancePermissionGroupMembersSerializer()
-
+class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
+    assigned_to_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    
     class Meta:
         model = CallEmail
         fields = (
-            'allocated_group',
+            'assigned_to_id',
         )
-        
+
 
 class CreateCallEmailSerializer(serializers.ModelSerializer):
     # status_display = serializers.CharField(source='get_status_display')
@@ -484,9 +499,9 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
             'caller_wishes_to_remain_anonymous',
             'occurrence_from_to',
             'occurrence_date_from',
-            'occurrence_time_from',
+            'occurrence_time_start',
             'occurrence_date_to',
-            'occurrence_time_to',
+            'occurrence_time_end',
             'advice_given',
             'advice_details',
             'referrer_id',

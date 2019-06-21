@@ -139,8 +139,14 @@
             </div>
           </div>
             <div slot="footer">
-                <button type="button" v-if="processingDetails" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Adding</button>
-                <button type="button" v-else class="btn btn-default" @click="ok">Ok</button>
+                <div v-if="errorResponse" class="form-group">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <strong>Error: {{ errorResponse }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" :disabled="!userIsAssignee" class="btn btn-default" @click="ok">Ok</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
         </modal>
@@ -176,6 +182,7 @@ export default {
       // call_email.region: null,
       // call_email.district_id: null,
       workflowDetails: '',
+      errorResponse: "",
       files: [
                 {
                     'file': null,
@@ -196,6 +203,9 @@ export default {
   computed: {
     ...mapGetters('callemailStore', {
       call_email: "call_email",
+    }),
+    ...mapGetters({
+        current_user: 'current_user',
     }),
     regionVisibility: function() {
       if (!(this.workflow_type === 'forward_to_wildlife_protection_branch' || 
@@ -233,7 +243,13 @@ export default {
         return "Close complaint";
       }
     },
-
+    userIsAssignee: function() {
+        if (this.call_email.assigned_to_id === this.current_user.id) {
+            return true;
+        } else {
+            return false;
+        }
+    },
   },
   filters: {
     formatDate: function(data) {
@@ -242,11 +258,12 @@ export default {
   },
   methods: {
     ...mapActions('callemailStore', {
-      loadAllocatedGroup: "loadAllocatedGroup",
-      setRegionId: "setRegionId",
+        loadAllocatedGroup: 'loadAllocatedGroup',
+        setRegionId: 'setRegionId',
+        saveCallEmail: 'saveCallEmail'
     }),
     ...mapActions({
-      loadCurrentUser: "loadCurrentUser",
+        loadCurrentUser: "loadCurrentUser",
     }),
     updateVuex: async function(attribute, event, datatype) {
       await this.setGenericAttribute({'attribute': attribute, 'event': event, 'datatype': datatype});
@@ -294,6 +311,7 @@ export default {
       } 
     },
     updateAllocatedGroup: async function() {
+      this.errorResponse = "";
       
       if (this.workflow_type === 'forward_to_wildlife_protection_branch') {
         for (let record of this.regionDistricts) {
@@ -304,16 +322,23 @@ export default {
       }
       let region_district_id = this.call_email.district_id ? this.call_email.district_id : this.call_email.region_id;
       if (this.group_permission && region_district_id) {
-        await this.loadAllocatedGroup({
+        let allocatedGroupResponse = await this.loadAllocatedGroup({
         'region_district_id': region_district_id, 
         'group_permission': this.group_permission,
         });
+        if (this.call_email.allocated_group && 
+            this.call_email.allocated_group.members.length <= 1) {
+            console.log(allocatedGroupResponse);
+            this.errorResponse = allocatedGroupResponse.errorResponse;
+        }
       }
     },
 
     ok: async function () {
-        await this.sendData();
-        this.close();
+        const response = await this.sendData();
+        if (response === 'ok') {
+            this.close();
+        }
     },
     cancel: function() {
         this.isModalOpen = false;
@@ -357,25 +382,32 @@ export default {
         if (this.call_email.assigned_to) {
           payload.append('assigned_to_id', this.call_email.assigned_to_id);
         }
-        
-	if (this.workflow_type === 'close') {
+        if (this.workflow_type === 'close') {
             payload.append('details', this.call_email.advice_details);
             if (this.call_email.advice_details) {
 	        this.call_email.advice_given = true;
+	        }
+	    } else {
+	        payload.append('details', this.workflowDetails);
 	    }
-	    
-	} else {
-	    payload.append('details', this.workflowDetails);
-	}
 
-	payload.append('workflow_type', this.workflow_type);
+	    payload.append('workflow_type', this.workflow_type);
+        payload.append('email_subject', this.modalTitle);
         
-        let res = await this.$http.post(post_url, payload);
-        console.log(this);
-        if (res.ok) {
-          await this.$parent.save();
-          this.$router.push({ name: 'internal-call-email-dash' });
-
+        //const parentResult = await this.$parent.save(true);
+        //console.log(parentResult);
+        let callEmailRes = await this.saveCallEmail({ route: false, crud: 'save', 'internal': true });
+        if (callEmailRes.ok) {
+            try {
+                let res = await Vue.http.post(post_url, payload);
+                if (res.ok) {    
+                    this.$router.push({ name: 'internal-call-email-dash' });
+                }
+            } catch(err) {
+                this.errorResponse = err.statusText;
+            } 
+        } else {
+            this.errorResponse = callEmailRes.statusText;
         }
     },
     
@@ -412,6 +444,7 @@ export default {
     
   },
   created: async function() {
+      console.log("created");
     // regions
     let returned_regions = await cache_helper.getSetCacheList('CallEmail_Regions', '/api/region_district/get_regions/');
     Object.assign(this.regions, returned_regions);

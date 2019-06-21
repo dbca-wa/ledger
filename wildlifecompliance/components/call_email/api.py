@@ -83,6 +83,7 @@ from wildlifecompliance.components.call_email.serializers import (
     CasePrioritySerializer,
     # ExternalOrganisationSerializer,
     CallEmailAllocatedGroupSerializer,
+    UpdateAssignedToIdSerializer
     )
 from wildlifecompliance.components.users.models import (
     CompliancePermissionGroup,    
@@ -337,7 +338,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     def create(self, request, *args, **kwargs):
-        print(request.data)
         try:
             with transaction.atomic():
                 request_data = request.data
@@ -616,22 +616,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 instance = self.get_object()
                 workflow_entry = self.add_comms_log(request, workflow=True)
-                #request.data['call_email'] = u'{}'.format(instance.id)
-                #print("request for complianceworkflow serializer")
-                #print(request.data)
-                #serializer = ComplianceWorkflowLogEntrySerializer(data=request.data)
-                #serializer.is_valid(raise_exception=True)
-                #workflow_entry = serializer.save()
-                ## Save the files
-                #for f in request.FILES:
-                #    print("the file")
-                #    print(f)
-                #    document = workflow_entry.documents.create()
-                #    print("filename")
-                #    print(str(request.FILES[f]))
-                #    document.name = str(request.FILES[f])
-                #    document._file = request.FILES[f]
-                #    document.save()
 
                 attachments = []
                 for doc in workflow_entry.documents.all():
@@ -710,6 +694,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 instance.region_id = request.data.get('region_id')
                 instance.district_id = request.data.get('district_id')
                 instance.allocated_group_id = request.data.get('allocated_group_id')
+                instance.assigned_to_id = None
                 instance.save()
 
                 # send email
@@ -740,6 +725,31 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
+    def update_assigned_to_id(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+
+            serializer = UpdateAssignedToIdSerializer(instance=instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            if serializer.is_valid():
+                serializer.save()
+                headers = self.get_success_headers(serializer.data)
+                return Response(
+                        serializer.data, 
+                        status=status.HTTP_201_CREATED,
+                        headers=headers
+                        )
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
 class ClassificationViewSet(viewsets.ModelViewSet):
     queryset = Classification.objects.all()
