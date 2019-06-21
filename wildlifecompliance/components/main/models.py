@@ -125,3 +125,34 @@ queryset_methods = {
 
 for method_name, method in queryset_methods.items():
     setattr(QuerySet, method_name, method)
+
+# list of approved related item models
+#
+# (Call_email, 'C'), (Offence, 'O'), Email_User, Inspection, ...
+
+def get_related_items(self, **kwargs):
+
+    return_list = []
+    for f in self._meta.get_fields():
+        # Get foreign key related fields
+        # TODO add approved related models list and compare to f.name
+        if f.is_relation and (f.one_to_many or f.many_to_one): # include related item models
+            field_value = f.value_from_object(self)
+            if field_value:
+                field_object = f.related_model.objects.get(id=field_value)
+
+                return_list.append(
+                    {   'model_name': f.name,
+                        'get_related_items_identifier': field_object.get_related_items_identifier, 
+                        'get_related_items_descriptor': field_object.get_related_items_descriptor
+                    })
+    return return_list       
+
+# Examples of model properties for get_related_items
+@property
+def get_related_items_identifier(self):
+    return self.id
+
+@property
+def get_related_items_descriptor(self):
+    return '{0}, {1}'.format(self.street, self.wkb_geometry)

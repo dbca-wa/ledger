@@ -261,13 +261,26 @@ export default {
                 }
              });
         },
+        preloadLastActivity: function() {
+            this.$http.get(
+                helpers.add_endpoint_json(api_endpoints.applications, this.application_id+'/last_current_activity')
+            ).then((response) => {
+                if(response.body.activity) {
+                    const start_date = response.body.activity.start_date;
+                    const expiry_date = response.body.activity.expiry_date;
+                    this.propose_issue.start_date = moment(start_date, 'YYYY-MM-DD').format('DD/MM/YYYY');
+                    this.propose_issue.expiry_date = moment(expiry_date, 'YYYY-MM-DD').format('DD/MM/YYYY');
+                }
+            },(error) => {
+                console.log(error);
+            } );
+        },
    },
    mounted:function () {
-        let vm =this;
-        vm.form = document.forms.licenceForm;
-        vm.addFormValidations();
+        this.form = document.forms.licenceForm;
+        this.addFormValidations();
         this.$nextTick(()=>{
-            vm.eventListeners();
+            this.eventListeners();
         });
    }
 }

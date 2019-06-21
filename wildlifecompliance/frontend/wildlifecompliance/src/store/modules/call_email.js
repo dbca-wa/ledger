@@ -32,6 +32,9 @@ export const callemailStore = {
             report_type: {
                 id: null,
             },
+            allocated_group: {
+                members: [],
+            },
         },
         classification_types: [],
         report_types: [],
@@ -147,15 +150,6 @@ export const callemailStore = {
                 state.report_types = [];
             }
         },
-        updateAllocatedTo(state, member_ids) {
-            console.log("updateAllocatedTo");
-            if (member_ids) {
-                state.call_email.allocated_to = [];
-                for (let member_id of member_ids) {
-                    state.call_email.allocated_to.push(member_id);
-                }
-            }
-        },
         updateClassification(state, classification) {
             if (classification) {
                 Vue.set(state.call_email, 'classification', classification);
@@ -211,7 +205,32 @@ export const callemailStore = {
         },
         updateLocationDetailsFieldEmpty(state) {
             state.call_email.location.properties.details = "";
-        }
+        },
+        updateAllocatedGroupList(state, members) {
+            console.log(members);
+            Vue.set(state.call_email, 'allocated_group', {});
+            let blankable_members = [];
+            Object.assign(blankable_members, members);
+            if (blankable_members) {
+                blankable_members.splice(0, 0, 
+                    {
+                    id: null, 
+                    email: "",
+                    first_name: "",
+                    last_name: "",
+                    full_name: "",
+                    title: "",
+                    });
+            }
+            console.log(blankable_members);
+            Vue.set(state.call_email.allocated_group, 'members', blankable_members);
+        },
+        updateAllocatedGroupId(state, id) {
+            state.call_email.allocated_group_id = id;
+        },
+        updateRegionId(state, id) {
+            state.call_email.region_id = id;
+        },
     },
     actions: {
         async loadCallEmail({ dispatch, }, { call_email_id }) {
@@ -294,7 +313,7 @@ export const callemailStore = {
                     payload.renderer_data = rootGetters.renderer_form_data;
                     }
                 }
-                const savedCallEmail = await Vue.http.post(fetchUrl, payload)
+                const savedCallEmail = await Vue.http.post(fetchUrl, payload);
                 console.log("savedCallEmail.body");
                 console.log(savedCallEmail.body);
                 await dispatch("setCallEmail", savedCallEmail.body);
@@ -317,9 +336,39 @@ export const callemailStore = {
                 return callId;
             }
         },
-        setAllocatedTo({ commit, }, member_ids) {
-            console.log("setAllocatedTo");
-            commit("updateAllocatedTo", member_ids);
+        setAllocatedGroupList({ commit }, data) {
+            console.log("setAllocatedGroupList");
+            console.log(data);
+            commit('updateAllocatedGroupList', data);
+        },
+        setRegionId({ commit }, id) {
+            commit('updateRegionId', id);
+        },
+        
+        async loadAllocatedGroup({ dispatch }, { region_district_id, group_permission } ) {
+            console.log(region_district_id);
+            console.log(group_permission);
+            let url = helpers.add_endpoint_join(
+                api_endpoints.region_district,
+                region_district_id + '/get_group_id_by_region_district/'
+                );
+            console.log(url);
+            let returned = await Vue.http.post(
+                url, 
+                { 'group_permission': group_permission
+            });
+            console.log(returned.body);
+            if (returned.body.group_id) {
+                await dispatch('setAllocatedGroupId', returned.body.group_id);
+                await dispatch('setAllocatedGroupList', null);
+            }
+            if (returned.body.allocated_group) {
+                await dispatch('setAllocatedGroupList', returned.body.allocated_group);
+            }
+        },
+        setAllocatedGroupId({ commit, }, id) {
+            console.log("setAllocatedGroupId");
+            commit("updateAllocatedGroupId", id);
         },
         setCallID({ commit, }, id) {
             console.log("setCallID");
@@ -372,5 +421,6 @@ export const callemailStore = {
         setClassification({ commit, }, classification) {
             commit("updateClassification", classification)
         },
+
     },
 };

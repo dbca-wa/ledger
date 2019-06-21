@@ -19,14 +19,6 @@ table {
     }
 }
 
-.width_55pc {
-    width: 55%;
-}
-
-.width_20pc {
-    width: 20%;
-}
-
 .assessment-button {
     margin-top: 10px;
     margin-left: 20px;
@@ -41,4 +33,10 @@ table {
 
 .conditions-table {
     margin-top: 20px;
+}
+
+@for $i from 0 through 20 {
+    .width_#{$i*5}pc {
+        width: $i*5% !important;
+    }
 }

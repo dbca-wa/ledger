@@ -147,6 +147,7 @@ export const applicationStore = {
                 Vue.http.get(url).then(res => {
                     dispatch('setOriginalApplication', res.body);
                     dispatch('setApplication', res.body);
+                    dispatch('refreshApplicationFees');
                     for(let form_data_record of res.body.data) {
                         dispatch('setFormValue', {
                             key: form_data_record.field_name,
@@ -158,6 +159,8 @@ export const applicationStore = {
                                 "schema_name": form_data_record.schema_name,
                                 "component_type": form_data_record.component_type,
                                 "instance_name": form_data_record.instance_name,
+                                "licence_activity_id": form_data_record.licence_activity_id,
+                                "licence_purpose_id": form_data_record.licence_purpose_id,
                             }
                         });
                     }
