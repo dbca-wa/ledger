@@ -338,7 +338,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     def create(self, request, *args, **kwargs):
-        print(request.data)
         try:
             with transaction.atomic():
                 request_data = request.data
@@ -715,6 +714,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 instance.region_id = request.data.get('region_id')
                 instance.district_id = request.data.get('district_id')
                 instance.allocated_group_id = request.data.get('allocated_group_id')
+                instance.assigned_to_id = None
                 instance.save()
 
                 # send email

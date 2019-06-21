@@ -374,7 +374,10 @@ export const callemailStore = {
             }
             if (returned.body.allocated_group) {
                 await dispatch('setAllocatedGroupList', returned.body.allocated_group);
-            }
+                if (returned.body.allocated_group.length <= 1) {
+                    return {'errorResponse': 'This group has no members'};
+                }
+            } 
         },
         setAllocatedGroupId({ commit, }, id) {
             commit("updateAllocatedGroupId", id);

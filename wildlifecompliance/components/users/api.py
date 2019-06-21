@@ -65,10 +65,10 @@ class GetComplianceUserDetails(views.APIView):
                 for permission in group.permissions.all():
                     compliance_permissions.append(permission.codename)
                 returned_data.update({ 'base_compliance_permissions': compliance_permissions })
-            if 'officer' in compliance_permissions:
-                returned_data.update({ 'is_officer': True })
+            if 'volunteer' in compliance_permissions:
+                returned_data.update({'is_volunteer': True})
             else:
-                returned_data.update({ 'is_officer': False })
+                returned_data.update({'is_volunteer': False})
         return Response(returned_data)
 
 

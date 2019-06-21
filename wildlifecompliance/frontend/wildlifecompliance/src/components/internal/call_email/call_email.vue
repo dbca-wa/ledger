@@ -5,7 +5,7 @@
           <h3>Call/Email: {{ call_email.number }}</h3>
         </div>
         <div class="col-md-3 pull-right">
-          <input type="button" @click.prevent="duplicate" class="pull-right btn btn-primary" value="Create Duplicate Call/Email"/>  
+          <input  v-if="current_user && current_user.is_volunteer" type="button" @click.prevent="duplicate" class="pull-right btn btn-primary" value="Create Duplicate Call/Email"/>  
         </div>
       </div>
           <div class="col-md-3">
@@ -24,7 +24,7 @@
                             </div>
                         </div>
 
-                        <div v-if="call_email.allocated_group" class="form-group">
+                        <div v-if="call_email.allocated_group && !(statusId === 'closed')" class="form-group">
                           <div class="row">
                             <div class="col-sm-12 top-buffer-s">
                               <strong>Currently assigned to</strong><br/>
@@ -128,7 +128,7 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div class="row action-button">
+                        <div v-if="!(statusId === 'closed')" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
                                   Close
@@ -249,8 +249,9 @@
                 
                 <div v-for="(item, index) in current_schema">
                   <compliance-renderer-block
-                    :component="item"
-                    v-bind:key="`compliance_renderer_block_${index}`"
+                     :readonly=isReadonly"
+                     :component="item"
+                     v-bind:key="`compliance_renderer_block_${index}`"
                     />
                 </div>
               </FormSection>
@@ -395,7 +396,8 @@ export default {
         }
     },
     isReadonly: function() {
-        if (this.call_email.status && this.call_email.status.id === 'draft') {
+        if (this.call_email.status && this.call_email.status.id === 'draft' &&
+        this.call_email.assigned_to_id === this.current_user.id) {
           return false;
         } else {
           return true;
