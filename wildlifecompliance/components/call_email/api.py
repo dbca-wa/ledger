@@ -39,7 +39,7 @@ from ledger.checkout.utils import calculate_excl_gst
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-
+from wildlifecompliance.components.main.api import save_location
 from wildlifecompliance.components.users.serializers import (
     UserAddressSerializer,
     ComplianceUserDetailsSerializer,
@@ -415,27 +415,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
     
-    def save_location(self, request, *args, **kwargs):
-        location_request_data = request.data.get('location')
-        if location_request_data.get('id'):
-            location_instance = Location.objects.get(id=location_request_data.get('id'))
-            location_serializer = LocationSerializer(
-                instance=location_instance, 
-                data=location_request_data, 
-                partial=True
-                )
-            location_serializer.is_valid(raise_exception=True)
-            if location_serializer.is_valid():
-                location_serializer.save()
-        else:
-            location_serializer = LocationSerializer(
-                data=location_request_data, 
-                partial=True
-                )
-            location_serializer.is_valid(raise_exception=True)
-            if location_serializer.is_valid():
-                location_instance = location_serializer.save()
-        return location_serializer.data
 
     def save_email_user(self, request):
         request_data = request.data
@@ -575,7 +554,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     request_data.get('location', {}).get('properties', {}).get('postcode', {}) or
                     request_data.get('location', {}).get('properties', {}).get('details', {})
                 ):
-                    returned_location = self.save_location(request)
+                    location_request_data = request.data.get('location')
+                    returned_location = save_location(location_request_data)
                     if returned_location:
                         request_data.update({'location_id': returned_location.get('id')})
 
@@ -852,7 +832,6 @@ class ReportTypeViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
    
-
 
 class LocationViewSet(viewsets.ModelViewSet):
     queryset = Location.objects.all()
