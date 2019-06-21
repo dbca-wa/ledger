@@ -161,7 +161,6 @@ export default {
     let vm = this;
 
     vm.$nextTick(function() {
-      console.debug("Start loading map");
       vm.initMap();
       vm.setBaseLayer("osm");
       vm.initAwesomplete();
@@ -173,7 +172,6 @@ export default {
           vm.refreshMarkerLocation();
       }
       vm.showHideAddressDetailsFields(false, false);
-      console.debug('End loading map');
     });
   },
   methods: {
@@ -188,7 +186,6 @@ export default {
       let vm = this;
       let lat = vm.offence.location.geometry.coordinates[1];
       let lng = vm.offence.location.geometry.coordinates[0];
-      console.log(vm.offence.location.geometry.coordinates);
       vm.mapOffence.flyTo({ lat: lat, lng: lng }, 12, {
         animate: true,
         duration: 1.5
@@ -206,13 +203,11 @@ export default {
       }, 300);
     },
     setMarkerLocation: function() {
-      console.log("setMarkerLocation");
       let vm = this;
       let lat = vm.offence.location.geometry.coordinates[1];
       let lng = vm.offence.location.geometry.coordinates[0];
       if (-90 < lat && lat < 90) {
         if (-180 < lng < 180) {
-          console.log(lat + ", " + lng);
           let lnglat = [lng, lat];
           vm.feature_marker.setLatLng({ lat: lat, lng: lng });
           vm.mapOffence.flyTo({ lat: lat, lng: lng }, 12, {
@@ -247,7 +242,6 @@ export default {
     //     this.saveLocation();
     // },
     reverseGeocoding: function(coordinates_4326) {
-      console.log("reverseGeocoding");
       var self = this;
 
       $.ajax({
@@ -263,24 +257,19 @@ export default {
           }),
         dataType: "json",
         success: function(data, status, xhr) {
-          console.log("reverse results: ");
-          console.log(data);
           let address_found = false;
           if (data.features && data.features.length > 0) {
             for (var i = 0; i < data.features.length; i++) {
               if (data.features[i].place_type.includes("address")) {
-                console.log(data.features[i]);
                 self.updateAddressFields(data.features[i]);
                 address_found = true;
               }
             }
           }
           if (address_found) {
-            console.log("address found");
             self.showHideAddressDetailsFields(true, false);
             self.setLocationDetailsFieldEmpty();
           } else {
-            console.log("address not found");
             self.showHideAddressDetailsFields(false, true);
             self.setLocationAddressEmpty();
           }
@@ -376,7 +365,6 @@ export default {
         });
     },
     updateAddressFields(feature) {
-      console.log("updateAddressField");
       let properties_for_update = new Object();
       let state_abbr_list = {
         "New South Wales": "NSW",
@@ -438,7 +426,6 @@ export default {
     },
     /* this function retrieve the coordinates from vuex and applys it to the marker */
     refreshMarkerLocation: function() {
-      console.log("refreshMarkerLocation");
       if (this.offence.location.geometry) {
         // this.feature_marker.setLatLng({lat: this.call_latitude, lng: this.call_longitude });
         this.feature_marker.setLatLng({
@@ -502,10 +489,8 @@ export default {
       this.cursor_location = null;
     },
     onClick: function(e) {
-      console.log("onClick offence");
       let self = this;
       let latlng = this.mapOffence.mouseEventToLatLng(e.originalEvent);
-      console.log(latlng);
       if (!self.feature_marker) {
         self.addMarker([latlng.lat, latlng.lng]);
       }

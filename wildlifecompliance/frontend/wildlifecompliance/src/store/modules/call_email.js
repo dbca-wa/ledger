@@ -295,8 +295,6 @@ export const callemailStore = {
                     }
                 }
                 const savedCallEmail = await Vue.http.post(fetchUrl, payload)
-                console.log("savedCallEmail.body");
-                console.log(savedCallEmail.body);
                 await dispatch("setCallEmail", savedCallEmail.body);
                 callId = savedCallEmail.body.id;
 

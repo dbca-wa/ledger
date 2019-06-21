@@ -25,6 +25,7 @@ module.exports = {
   applications_paginated: "/api/application_paginated/",
   licences: "/api/licences/",
   call_email: "/api/call_email/",
+  offence: "/api/offence/",
   classification: "/api/classification/",
   report_types: "/api/report_types/",
   referrers: "/api/referrers/",

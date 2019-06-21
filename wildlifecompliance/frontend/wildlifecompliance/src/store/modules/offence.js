@@ -11,12 +11,14 @@ export const offenceStore = {
     state: {
         offence: {
             id: null,
+            call_email_id: null,
             identifier: '',
             status: 'draft',
             offenders: [],
+//            alleged_offence_ids: [],
             alleged_offences: [],
             location: {
-                type: "Feature",
+                type: 'Feature',
                 properties: {
                     town_suburb: null,
                     street: null,
@@ -26,17 +28,17 @@ export const offenceStore = {
                     details: ''
                 },
                 geometry: {
-                    "type": "Point",
-                    "coordinates": [],
-                },
+                    'type': 'Point',
+                    'coordinates': []
+                }
             },
             occurrence_from_to: true,
             occurrence_date_from: null,
             occurrence_date_to: null,
             occurrence_time_from: null,
             occurrence_time_to: null,
-            details: '',
-        },
+            details: ''
+        }
     },
     getters: {
         offence: state => state.offence,
@@ -60,6 +62,13 @@ export const offenceStore = {
         },
     },
     mutations: {
+        updateAllegedOffenceIds(state, ids) {
+//            Vue.set(state.offence, 'alleged_offence_ids', ids);
+            Vue.set(state.offence, 'alleged_offences', ids);
+        },
+        updateCallEmailId(state, id) {
+            state.offence.call_email_id = id;
+        },
         updateOffence(state, offence) {
             Vue.set(state, 'offence', offence);
         },
@@ -96,6 +105,22 @@ export const offenceStore = {
                 console.log(err);
             }
         },
+        async saveOffence({dispatch, state}){
+            try{
+                let fetchUrl = helpers.add_endpoint_json(api_endpoints.offence, 'offence_save');
+                const savedOffence = await Vue.http.post(fetchUrl, state.offence);
+                console.log('savedOffence');
+                console.log(savedOffence);
+//                await dispatch("setOffence", savedOffence.body);
+                await swal("Saved", "The record has been saved", "success");
+            } catch (err) {
+                if (err.body.non_field_errors){
+                    await swal("Error", err.body.non_field_errors[0], "error");
+                } else {
+                    await swal("Error", "There was an error saving the record", "error");
+                }
+            }
+        },
         setOffence({ commit, }, offence) {
             commit("updateOffence", offence);
         },
@@ -110,6 +135,12 @@ export const offenceStore = {
         },
         setLocationDetailsFieldEmpty({ commit, }) {
             commit("updateLocationDetailsFieldEmpty");
+        },
+        setAllegedOffenceIds({ commit, }, ids){
+            commit("updateAllegedOffenceIds", ids);
+        },
+        setCallEmailId({ commit, }, id){
+            commit("updateCallEmailId", id);
         },
     },
 };

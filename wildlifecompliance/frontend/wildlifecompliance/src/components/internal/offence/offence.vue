@@ -115,12 +115,11 @@
                     <div :id="pTab" class="tab-pane fade in">
                         <div class="row">
                             <div class="col-sm-12 form-group"><div class="row">
-                                    <input class="col-sm-1" id="offender_indivisual" type="radio" v-model="offender_type" value="indivisual">
-                                    <label class="col-sm-1 radio-button-label" for="offender_indivisual">Indivisual</label>
-                                    <input class="col-sm-1" id="offender_organisation" type="radio" v-model="offender_type" value="organisation">
-                                    <label class="col-sm-1 radio-button-label" for="offender_organisation">Organisation</label>
-                                </div>
-                            </div>
+                                <input class="col-sm-1" id="offender_indivisual" type="radio" v-model="offender_type" value="indivisual">
+                                <label class="col-sm-1 radio-button-label" for="offender_indivisual">Indivisual</label>
+                                <input class="col-sm-1" id="offender_organisation" type="radio" v-model="offender_type" value="organisation">
+                                <label class="col-sm-1 radio-button-label" for="offender_organisation">Organisation</label>
+                            </div></div>
 
                             <div class="col-sm-12 form-group"><div class="row">
                                 <label class="col-sm-3">Offender</label>
@@ -172,128 +171,133 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'awesomplete/awesomplete.css'
 
 export default {
-  name: "Offence",
-  data: function() {
-    let vm = this;
-
-    vm.max_items = 20;
-    vm.ajax_for_alleged_offence = null;
-    vm.ajax_for_offender = null;
-    vm.suggest_list = []; // This stores a list of alleged offences displayed after search.
-    vm.suggest_list_offender = []; // This stores a list of alleged offences displayed after search.
-    vm.awe = null;
-    vm.awe_offender = null;
-
-    return {
-        officers: [],
-        isModalOpen: false,
-        processingDetails: false,
-        offender_type: 'indivisual',
-        current_alleged_offence: {
-            id: null,
-            Act: '',
-            SectionRegulation: '',
-            AllegedOffence: '',
-        },
-        current_offender: null,
-
-        oTab: 'oTab'+vm._uid,
-        dTab: 'dTab'+vm._uid,
-        pTab: 'pTab'+vm._uid,
-        lTab: 'lTab'+vm._uid,
-
-        dtHeadersOffender: [
-            'id',
-            'Action',
-        ],
-        dtHeadersAllegedOffence: [
-            'id',
-            'Act',
-            'Section/Regulation',
-            'Alleged Offence',
-            'Action',
-        ],
-        dtOptionsOffender: {
-            columns: [
-                {
-                    data: 'id',
-                    visible: true
-                },
-                {
-                    data: 'Action',
-                    mRender: function(data, type, row){
-                        console.log(data);
-                        console.log(row);
-                        return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
-                    }
-                },
-            ]
-        },
-        dtOptionsAllegedOffence: {
-            columns: [
-                {
-                    data: 'id',
-                    visible: false
-                },
-                { 
-                    data: 'Act', 
-                },
-                { 
-                    data: 'Section/Regulation',
-                },
-                { 
-                    data: 'Alleged Offence', 
-                },
-                { 
-                    data: 'Action',
-                    mRender: function(data, type, row){
-                        console.log(data);
-                        console.log(row);
-                        return '<a href="#" class="remove_button" data-alleged-offence-id="' + row.id + '">Remove</a>';
-                    }
-                },
-            ]
-        },
-    }
-  },
-  components: {
-    modal,
-    datatable,
-    MapLocationOffence,
-  },
-  computed: {
-    ...mapGetters('callemailStore', {
-      call_email: "call_email",
-    }),
-    ...mapGetters('offenceStore', {
-      offence: 'offence',
-    }),
-    modalTitle: function() {
-        return "Identify Offence";
+    name: "Offence",
+    data: function() {
+        let vm = this;
+    
+        vm.max_items = 20;
+        vm.ajax_for_alleged_offence = null;
+        vm.ajax_for_offender = null;
+        vm.suggest_list = []; // This stores a list of alleged offences displayed after search.
+        vm.suggest_list_offender = []; // This stores a list of alleged offences displayed after search.
+        vm.awe = null;
+        vm.awe_offender = null;
+    
+        return {
+            officers: [],
+            isModalOpen: false,
+            processingDetails: false,
+            offender_type: 'indivisual',
+            current_alleged_offence: {
+                id: null,
+                Act: '',
+                SectionRegulation: '',
+                AllegedOffence: '',
+            },
+            current_offender: null,
+    
+            oTab: 'oTab'+vm._uid,
+            dTab: 'dTab'+vm._uid,
+            pTab: 'pTab'+vm._uid,
+            lTab: 'lTab'+vm._uid,
+    
+            dtHeadersOffender: [
+                'id',
+                'Action',
+            ],
+            dtHeadersAllegedOffence: [
+                'id',
+                'Act',
+                'Section/Regulation',
+                'Alleged Offence',
+                'Action',
+            ],
+            dtOptionsOffender: {
+                columns: [
+                    {
+                        data: 'id',
+                        visible: true
+                    },
+                    {
+                        data: 'Action',
+                        mRender: function(data, type, row){
+                            console.log(data);
+                            console.log(row);
+                            return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
+                        }
+                    },
+                ]
+            },
+            dtOptionsAllegedOffence: {
+                columns: [
+                    {
+                        data: 'id',
+                        visible: false
+                    },
+                    { 
+                        data: 'Act', 
+                    },
+                    { 
+                        data: 'Section/Regulation',
+                    },
+                    { 
+                        data: 'Alleged Offence', 
+                    },
+                    { 
+                        data: 'Action',
+                        mRender: function(data, type, row){
+                            console.log(data);
+                            console.log(row);
+                            return '<a href="#" class="remove_button" data-alleged-offence-id="' + row.id + '">Remove</a>';
+                        }
+                    },
+                ]
+            },
+        }
     },
-    occurrenceDateLabel: function() {
-      if (this.offence.occurrence_from_to) {
-        return "Occurrence date from";
-      } else {
-        return "Occurrence date";
-      }
+    components: {
+        modal,
+        datatable,
+        MapLocationOffence,
     },
-    occurrenceTimeLabel: function() {
-      if (this.offence.occurrence_from_to) {
-        return "Occurrence time from";
-      } else {
-        return "Occurrence time";
-      }
+    computed: {
+        ...mapGetters('callemailStore', {
+            call_email: "call_email",
+        }),
+        ...mapGetters('offenceStore', {
+            offence: 'offence',
+        }),
+        modalTitle: function() {
+            return "Identify Offence";
+        },
+        occurrenceDateLabel: function() {
+            if (this.offence.occurrence_from_to) {
+                return "Occurrence date from";
+            } else {
+                return "Occurrence date";
+            }
+        },
+        occurrenceTimeLabel: function() {
+            if (this.offence.occurrence_from_to) {
+                return "Occurrence time from";
+            } else {
+                return "Occurrence time";
+            }
+        },
     },
-  },
-  filters: {
-    formatDate: function(data) {
-      return data ? moment(data).format("DD/MM/YYYY HH:mm:ss") : "";
-    }
-  },
-  methods: {
+    filters: {
+        formatDate: function(data) {
+            return data ? moment(data).format("DD/MM/YYYY HH:mm:ss") : "";
+        }
+    },
+    methods: {
         ...mapActions('callemailStore', {
-          setAllocatedTo: "setAllocatedTo",
+            setAllocatedTo: "setAllocatedTo",
+        }),
+        ...mapActions('offenceStore', {
+            setAllegedOffenceIds: "setAllegedOffenceIds",
+            setCallEmailId: "setCallEmailId",
+            saveOffence: "saveOffence",
         }),
         removeOffenderClicked: function(e){   
             let vm = this;
@@ -328,11 +332,10 @@ export default {
                             'id': vm.current_offender.id,
                         }
                     ).draw();
-
                 }
-
-                vm.setCurrentOffenderEmpty();
             }
+
+            vm.setCurrentOffenderEmpty();
         },
         addAllegedOffenceClicked: function() {
             let vm = this;
@@ -349,11 +352,10 @@ export default {
                             'Alleged Offence': vm.current_alleged_offence.AllegedOffence,
                         }
                     ).draw();
-
                 }
-
-                vm.setCurrentOffenceEmpty();
             }
+
+            vm.setCurrentOffenceEmpty();
         },
         ok: async function () {
             await this.sendData();
@@ -371,8 +373,23 @@ export default {
             this.$refs.mapOffenceComponent.mapTabClicked();
         },
         sendData: async function(){
-            // TODO
-            console.log('Send data to save');
+            let vm = this;
+
+            // Set call_email id to the offence
+            vm.setCallEmailId(vm.call_email.id);
+
+            // Collect offenders data from the datatable, and set them to the vuex
+            let offenders = vm.$refs.offender_table.vmDataTable.rows().data().toArray();
+
+            // Collect alleged offence data from the datatable, and set them to the vuex
+            let alleged_offences = vm.$refs.alleged_offence_table.vmDataTable.rows().data().toArray();
+            let alleged_offence_ids = alleged_offences.map(a => {
+                return({ 'id': a.id });
+            });
+            vm.setAllegedOffenceIds(alleged_offence_ids);
+
+            // TODO: send data to the server
+            vm.saveOffence();
         },
         addEventListeners: function () {
             let vm = this;
@@ -447,7 +464,7 @@ export default {
                     vm.awe_offender.evaluate();
                 },
                 error: function (e){
-                    console.log(e);
+
                 }
             });
 
@@ -478,10 +495,9 @@ export default {
                     }
                     vm.awe.list = vm.suggest_list;
                     vm.awe.evaluate();
-                    console.log(vm.suggest_list);
                 },
                 error: function (e){
-                    console.log(e);
+
                 }
             });
         },
@@ -534,12 +550,11 @@ export default {
                 let elem_id = origin[0].id;
                 let reg = /^.+(\d+)$/gi;
                 let result = reg.exec(elem_id)
-                if(result[1]){
+                if(result && result[1]){
                     let idx = result[1];
                     self.setCurrentOffender(self.suggest_list_offender[idx].id);
                 }else{
-                    console.log("result");
-                    console.log(result);
+                    self.setCurrentOffenderEmpty();
                 }
             });
         },
@@ -588,12 +603,11 @@ export default {
                 let elem_id = origin[0].id;
                 let reg = /^.+(\d+)$/gi;
                 let result = reg.exec(elem_id)
-                if(result[1]){
+                if(result && result[1]){
                     let idx = result[1];
                     self.setCurrentOffenceSelected(self.suggest_list[idx]);
                 }else{
-                    console.log("result");
-                    console.log(result);
+                    self.setCurrentOffenceEmpty();
                 }
             });
         },
@@ -624,7 +638,7 @@ export default {
         setCurrentOffenderEmpty: function(){
             let vm = this;
 
-            vm.current_offender.id = null;
+            vm.current_offender = null;
 
             $('#offender_input').val('');
         },
