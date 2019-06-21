@@ -10,8 +10,8 @@ from ledger.licence.models import LicenceType
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
-    UserAction, Document
-from wildlifecompliance.components.users.models import RegionDistrict
+    UserAction, Document, get_related_items
+from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +137,30 @@ class MapLayer(models.Model):
         return '{0}, {1}'.format(self.display_name, self.layer_name)
 
 
+class CasePriority(models.Model):
+    description = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_CasePriority'
+        verbose_name_plural = 'CM_CasePriorities'
+
+    def __str__(self):
+        return self.description
+
+
+class InspectionType(models.Model):
+    description = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_InspectionType'
+        verbose_name_plural = 'CM_InspectionTypes'
+
+    def __str__(self):
+        return self.description
+
+
 class CallEmail(RevisionedMixin):
     STATUS_CHOICES = (
         ('draft', 'Draft'),
@@ -204,12 +228,22 @@ class CallEmail(RevisionedMixin):
         related_name='callemail_district', 
         null=True
     )
-    allocated_to = models.ManyToManyField(
-        EmailUser, 
-        related_name='callemail_allocated_to',
-        blank=True
+    allocated_group = models.ForeignKey(
+        CompliancePermissionGroup,
+        related_name='callemail_allocated_group', 
+        null=True
     )
-
+    case_priority = models.ForeignKey(
+        CasePriority,
+        related_name='callemail_case_priority', 
+        null=True
+    )
+    inspection_type = models.ForeignKey(
+        InspectionType,
+        related_name='callemail_inspection_type', 
+        null=True
+    )
+    
     class Meta:
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_Call/Email'
@@ -241,6 +275,10 @@ class CallEmail(RevisionedMixin):
     
     def log_user_action(self, action, request):
         return ComplianceUserAction.log_action(self, action, request.user)
+
+    @property
+    def related_items(self):
+        return get_related_items(self)
 
 
 @python_2_unicode_compatible
@@ -399,6 +437,14 @@ class ComplianceLogEntry(CommunicationsLogEntry):
 
 class ComplianceUserAction(UserAction):
     ACTION_SAVE_CALL_EMAIL_ = "Save Call/Email {}"
+    ACTION_FORWARD_TO_REGIONS = "Forward Call/Email {} to regions"
+    ACTION_FORWARD_TO_WILDLIFEPROTECTION_BRANCH_ = "Forward Call/Email {} to Wildlife Protection Branch"
+    ACTION_ALLOCATE_FOR_FOLLOWUP = "Allocate Call/Email {} for follow up"
+    ACTION_ALLOCATE_FOR_INSPECTION = "Allocate Call/Email {} for inspection"
+    ACTION_ALLOCATE_FOR_CASE = "Allocate Call/Email {} for case"
+    ACTION_CLOSE = "Close case Call/Email {}"
+    ACTION_OFFENCE = "Create linked offence for Call/Email {}"
+    ACTION_SANCTION_OUTCOME = "Create Sanction Outcome for Call/Email {}"
 
     class Meta:
         app_label = 'wildlifecompliance'

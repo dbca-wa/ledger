@@ -3,6 +3,7 @@ from decimal import Decimal as D, getcontext
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.conf import settings
+from django.db.models import Q
 from oscar.apps.checkout.utils import CheckoutSessionData as CoreCheckoutSessionData
 from oscar.apps.voucher.models import Voucher
 from oscar.core.loading import get_class
@@ -75,7 +76,10 @@ def create_checkout_session(request, parameters):
     session_data = CheckoutSessionData(request) 
 
     # reset method of payment when creating a new session
-    session_data.pay_by(None)
+    try:
+        session_data.pay_by(parameters['payment_method'])
+    except KeyError:
+        session_data.pay_by(None)
     
     session_data.use_system(serializer.validated_data['system'])
     session_data.charge_by(serializer.validated_data['card_method'])
@@ -351,8 +355,14 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
             if not isinstance(owner, User):
                 owner = User.objects.get(id=owner)
             # Check if owner has previous baskets
-            if owner.baskets.filter(status='Open'):
-                old_basket = owner.baskets.get(status='Open')
+            old_baskets = owner.baskets.filter(
+                Q(status='Open'),
+                Q(system__isnull=True) |
+                Q(system__icontains=system)
+            )
+            if force_flush:
+                for old_basket in old_baskets:
+                    old_basket.flush()
 
         # Use the previously open basket if its present or create a new one
         if old_basket:

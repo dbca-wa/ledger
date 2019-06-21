@@ -27,7 +27,7 @@ from '@/utils/hooks'
         props:{
             form_width: {
                 type: String,
-                default: 'col-md-9'
+                default: 'col-md-8'
             }
         },
     }

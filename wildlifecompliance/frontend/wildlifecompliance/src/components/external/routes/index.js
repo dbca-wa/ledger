@@ -5,9 +5,7 @@ import ApplicationApplyOrganisation from '../application_apply_organisation.vue'
 import ApplicationApplyLicence from '../application_apply_licence.vue'
 import ApplicationSubmit from '../application_submit.vue'
 import Organisation from '../organisations/manage.vue'
-import Returns from '../returns/enter_return.vue'
-import ReturnsQuestion from '../returns/enter_return_question.vue'
-import ReturnsSheet from '../returns/enter_return_sheet.vue'
+import Returns from '../returns/return.vue'
 export default
 {
     path: '/external',
@@ -29,31 +27,8 @@ export default
             component: Organisation
         },
         {
-            path: 'return',
-            component:
-            {
-                render(c)
-                {
-                    return c('router-view')
-                }
-            },
-            children: [
-                {
-                    path: ':return_id',
-                    component: Returns,
-                    name: 'enter_return'
-                },
-                {
-                    path: 'question/:return_id',
-                    component: ReturnsQuestion,
-                    name: 'enter_return_question'
-                },
-                {
-                    path: 'sheet/:return_id',
-                    component: ReturnsSheet,
-                    name: 'enter_return_sheet'
-                },
-            ]
+            path: 'return/:return_id',
+            component: Returns
         },
         {
             path: 'application',

@@ -15,6 +15,7 @@ let dbName = 'WildlifeCompliance';
 const timeNow = Date.now();
 let expiryDiff = 86400000;  // 1 day = 86400000 milliseconds;
 
+
 module.exports = {
     getSetCache: async (store_name, key, url, expiry) => {
         
@@ -102,9 +103,9 @@ module.exports = {
                     }
                 }
             } 
-            store_keys = await storeInstance.keys();
-            if ((store_keys.length == 0)) {
-                // empty store - get data from url
+            // if ((store_keys.length === 0)) {
+            else {    
+            // empty store - get data from url
                 const returnedFromUrl = await Vue.http.get(url);
                 // ensure store is empty
                 await storeInstance.clear();
@@ -131,11 +132,11 @@ module.exports = {
 
         } catch(err) {
             // on cache failure, request data from backend directly
-            const returnedFromUrl = await Vue.http.get(url);
-            if (returnedFromUrl.body.results) {
-                return returnedFromUrl.body.results;
+            const returnedFromDb = await Vue.http.get(url);
+            if (returnedFromDb.body.results) {
+                return returnedFromDb.body.results;
             } else {
-                return returnedFromUrl.body;
+                return returnedFromDb.body;
             }
         }
     }

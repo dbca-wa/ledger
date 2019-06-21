@@ -7,6 +7,7 @@ from wildlifecompliance.components.organisations.models import (
 )
 from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
 from wildlifecompliance.components.organisations.utils import can_admin_org, is_consultant
+from wildlifecompliance.helpers import is_customer, is_internal
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from rest_framework.fields import CurrentUserDefault
@@ -234,6 +235,8 @@ class MyUserDetailsSerializer(serializers.ModelSerializer):
     contact_details = serializers.SerializerMethodField()
     wildlifecompliance_organisations = serializers.SerializerMethodField()
     identification = DocumentSerializer()
+    is_customer = serializers.SerializerMethodField()
+    is_internal = serializers.SerializerMethodField()
 
     class Meta:
         model = EmailUser
@@ -252,7 +255,9 @@ class MyUserDetailsSerializer(serializers.ModelSerializer):
             'wildlifecompliance_organisations',
             'personal_details',
             'address_details',
-            'contact_details'
+            'contact_details',
+            'is_customer',
+            'is_internal',
         )
 
     def get_personal_details(self, obj):
@@ -277,6 +282,12 @@ class MyUserDetailsSerializer(serializers.ModelSerializer):
             wildlifecompliance_organisations, many=True, context={
                 'user_id': obj.id}).data
         return serialized_orgs
+
+    def get_is_customer(self, obj):
+        return is_customer(self.context.get('request'))
+
+    def get_is_internal(self, obj):
+        return is_internal(self.context.get('request'))
 
 
 class ComplianceUserDetailsSerializer(serializers.ModelSerializer):
@@ -402,6 +413,16 @@ class CompliancePermissionGroupSerializer(serializers.ModelSerializer):
             'name',
             'region_district',
             'display_name',
+            )
+
+
+class CompliancePermissionGroupMembersSerializer(serializers.ModelSerializer):
+    members = ComplianceUserDetailsOptimisedSerializer(many=True)
+
+    class Meta:
+        model = CompliancePermissionGroup
+        fields = (
+            'members',
             )
 
 

@@ -6,7 +6,10 @@ from django.conf.urls.static import static
 from rest_framework import routers
 
 from wildlifecompliance import views
-from wildlifecompliance.components.applications.views import ApplicationSuccessView
+from wildlifecompliance.components.applications.views import (
+    ApplicationSuccessView,
+    LicenceFeeSuccessView,
+)
 from wildlifecompliance.admin import wildlifecompliance_admin_site
 
 from wildlifecompliance.components.main.views import SearchKeywordsView, SearchReferenceView
@@ -72,6 +75,8 @@ router.register(r'search_alleged_offences', offence_api.SearchSectionRegulation)
 router.register(r'map_layers', call_email_api.MapLayerViewSet)
 router.register(r'compliancepermissiongroup', users_api.CompliancePermissionGroupViewSet)
 router.register(r'region_district', users_api.RegionDistrictViewSet)
+router.register(r'case_priorities', call_email_api.CasePriorityViewSet)
+router.register(r'inspection_types', call_email_api.InspectionTypeViewSet)
 router.register(r'offence', offence_api.OffenceViewSet)
 
 api_patterns = [url(r'^api/my_user_details/$',
@@ -144,6 +149,9 @@ urlpatterns = [
     url(r'^application_submit/submit_with_invoice/',
         ApplicationSuccessView.as_view(),
         name='external-application-success-invoice'),
+    url(r'^application/finish_licence_fee_payment/',
+        LicenceFeeSuccessView.as_view(),
+        name='external-licence-fee-success-invoice'),
 
     # following url is defined so that to include url path when sending
     # call_email emails to users

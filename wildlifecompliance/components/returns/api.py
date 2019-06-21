@@ -19,7 +19,7 @@ from wildlifecompliance.components.returns.models import (
 from wildlifecompliance.components.returns.serializers import (
     ReturnSerializer,
     ReturnActionSerializer,
-    ReturnCommsSerializer,
+    ReturnLogEntrySerializer,
     ReturnTypeSerializer,
 )
 
@@ -89,7 +89,7 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
             instance = self.get_object()
             if not instance.has_data:
                 return Response(
-                        {'error': 'Upload not applicable for Return Type.'}, status=status.HTTP_406_NOT_FOUND)
+                        {'error': 'Upload not applicable for Return Type.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
             spreadsheet = SpreadSheet(instance, request.FILES['spreadsheet']).factory()
             if not spreadsheet.is_valid():
                 return Response(
@@ -116,6 +116,42 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(instance.table)
 
     @detail_route(methods=['POST', ])
+    def sheet_check_transfer(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+
+            if not instance.sheet.is_valid_transfer(request):
+                raise ValidationError({'err': 'Transfer not valid.'})
+
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    def sheet_pay_transfer(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
     def save(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -130,22 +166,6 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
                 instance.question.store(request)
 
             instance.save()
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['POST', ])
-    def pay(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -198,7 +218,7 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
         try:
             instance = self.get_object()
             qs = instance.comms_logs.all()
-            serializer = ReturnCommsSerializer(qs, many=True)
+            serializer = ReturnLogEntrySerializer(qs, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -218,7 +238,7 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
                 instance = self.get_object()
                 request.data['compliance'] = u'{}'.format(instance.id)
                 request.data['staff'] = u'{}'.format(request.user.id)
-                serializer = ReturnCommsSerializer(data=request.data)
+                serializer = ReturnLogEntrySerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
                 comms = serializer.save()
                 # Save the files

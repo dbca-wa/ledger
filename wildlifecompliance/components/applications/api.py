@@ -18,7 +18,12 @@ from wildlifecompliance.components.applications.utils import (
     SchemaParser,
     MissingFieldsException,
 )
-from wildlifecompliance.components.main.utils import checkout, set_session_application, delete_session_application
+from wildlifecompliance.components.main.utils import (
+    checkout,
+    set_session_application,
+    set_session_activity,
+    delete_session_application
+)
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.applications.email import (
     send_application_amendment_notification,
@@ -33,6 +38,7 @@ from wildlifecompliance.components.applications.models import (
     AmendmentRequest,
     ApplicationUserAction,
     ApplicationFormDataRecord,
+    ActivityInvoice,
 )
 from wildlifecompliance.components.applications.serializers import (
     ApplicationSerializer,
@@ -55,6 +61,7 @@ from wildlifecompliance.components.applications.serializers import (
     AmendmentRequestSerializer,
     ApplicationProposedIssueSerializer,
     DTAssessmentSerializer,
+    ApplicationSelectedActivitySerializer,
 )
 
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
@@ -223,12 +230,14 @@ class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if is_internal(self.request):
-            return Application.objects.all()
+            return Application.objects.all()\
+                .exclude(application_type=Application.APPLICATION_TYPE_SYSTEM_GENERATED)
         elif is_customer(self.request):
             user_orgs = [
                 org.id for org in user.wildlifecompliance_organisations.all()]
             return Application.objects.filter(Q(org_applicant_id__in=user_orgs) | Q(
-                proxy_applicant=user) | Q(submitter=user))
+                proxy_applicant=user) | Q(submitter=user))\
+                .exclude(application_type=Application.APPLICATION_TYPE_SYSTEM_GENERATED)
         return Application.objects.none()
 
     @list_route(methods=['GET', ])
@@ -468,7 +477,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             qs = instance.assessments
             serializer = AssessmentSerializer(qs, many=True)
-            print(qs)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -540,7 +548,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             try:
-                instance.submit(request, self)
+                instance.submit(request)
             except MissingFieldsException as e:
                 return Response({
                     'missing': e.error_list},
@@ -592,6 +600,53 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def licence_fee_checkout(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            activity_id = request.data.get('activity_id')
+            if not activity_id:
+                raise Exception(
+                    'No activity selected for payment!')
+            activity = ApplicationSelectedActivity.objects.get(id=activity_id)
+
+            product_lines = []
+            application_submission = u'Activity licence issued for {} application {}'.format(
+                u'{} {}'.format(request.user.first_name, request.user.last_name), instance.lodgement_number)
+
+            set_session_activity(request.session, activity)
+            product_lines.append({
+                'ledger_description': '{}'.format(activity.licence_activity.name),
+                'quantity': 1,
+                'price_incl_tax': str(activity.licence_fee),
+                'price_excl_tax': str(calculate_excl_gst(activity.licence_fee)),
+                'oracle_code': ''
+            })
+            checkout_result = checkout(
+                request, instance,
+                lines=product_lines,
+                invoice_text=application_submission,
+                add_checkout_params={
+                    'return_url': request.build_absolute_uri(
+                        reverse('external-licence-fee-success-invoice'))
+                },
+            )
+            return checkout_result
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
     @detail_route(methods=['POST', ])
     def accept_id_check(self, request, *args, **kwargs):
@@ -664,6 +719,30 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET', ])
+    def last_current_activity(self, request, *args, **kwargs):
+        instance = self.get_object()
+        user = request.user
+        if user not in instance.licence_officers:
+            raise serializers.ValidationError(
+                'You are not in any relevant licence officer groups for this application.')
+
+        if not instance:
+            return Response({'activity': None})
+
+        last_activity = instance.get_activity_chain(
+            activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+        ).order_by(
+            '-issue_date'
+        ).first()
+
+        if not last_activity:
+            return Response({'activity': None})
+
+        serializer = ApplicationSelectedActivitySerializer(
+            last_activity, context={'request': request})
+        return Response({'activity': serializer.data})
 
     @detail_route(methods=['GET', ])
     def assign_to_me(self, request, *args, **kwargs):
@@ -841,8 +920,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             qs = instance.get_proposed_decisions(request)
-            # qs = instance.decisions.filter(action='propose_issue')
-            # print(qs)
             serializer = ApplicationProposedIssueSerializer(qs, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -977,22 +1054,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    # @detail_route(methods=['post'])
-    # @renderer_classes((JSONRenderer,))
-    # def assess_save(self, request, *args, **kwargs):
-    #     try:
-    #         instance = self.get_object()
-    #         save_assess_data(instance, request, self)
-    #         return redirect(reverse('external'))
-    #     except serializers.ValidationError:
-    #         print(traceback.print_exc())
-    #         raise
-    #     except ValidationError as e:
-    #         raise serializers.ValidationError(repr(e.error_dict))
-    #     except Exception as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(str(e))
-
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
         from wildlifecompliance.components.licences.models import LicencePurpose
@@ -1019,18 +1080,21 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 serializer = CreateExternalApplicationSerializer(data=data)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-
                 licence_purposes_queryset = LicencePurpose.objects.filter(
                     id__in=licence_purposes
                 )
                 licence_category = licence_purposes_queryset.first().licence_category
-                licence_activities = licence_purposes_queryset.values_list('licence_activity_id', flat=True).distinct()
-                active_applications = Application.get_active_licence_applications(request)
+                licence_activities = Application.get_active_licence_activities(
+                    request, application_type).values_list('licence_activity_id', flat=True)
+                active_applications = Application.get_active_licence_applications(request, application_type)
                 active_application = active_applications.filter(
                     licence_purposes__licence_category_id=licence_category.id
                 ).order_by('-id').first()
 
-                if application_type == Application.APPLICATION_TYPE_AMENDMENT:
+                if application_type in [
+                    Application.APPLICATION_TYPE_AMENDMENT,
+                    Application.APPLICATION_TYPE_RENEWAL,
+                ]:
                     if not active_application:
                         raise serializers.ValidationError(
                             'Cannot create amendment application: active licence not found!')
@@ -1049,8 +1113,10 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                     serializer.instance.save()
 
                 serializer.instance.update_dynamic_attributes()
+                response = Response(serializer.data)
 
-            return Response(serializer.data)
+            return response
+
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -1448,7 +1514,6 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
-            # print(request.data)
             amend_data = self.request.data
             reason = amend_data.pop('reason')
             application_id = amend_data.pop('application')
