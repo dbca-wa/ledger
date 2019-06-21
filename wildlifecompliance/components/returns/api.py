@@ -32,8 +32,8 @@ from wildlifecompliance.components.applications.models import (
     ReturnRequest,
 )
 
-from wildlifecompliance.components.applications.email import (
-    send_application_amendment_notification,
+from wildlifecompliance.components.returns.email import (
+    send_return_amendment_email_notification,
 )
 
 
@@ -339,7 +339,7 @@ class ReturnTypeViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
 
-class ReturnRequestViewSet(viewsets.ModelViewSet):
+class ReturnAmendmentRequestViewSet(viewsets.ModelViewSet):
     queryset = ReturnRequest.objects.all()
     serializer_class = ReturnRequestSerializer
 
@@ -360,36 +360,26 @@ class ReturnRequestViewSet(viewsets.ModelViewSet):
         try:
             amend_data = self.request.data
             reason = amend_data.pop('reason')
-            return_id = amend_data.pop('return_id')
+            a_return = amend_data.pop('a_return')
             text = amend_data.pop('text')
-            activity_list = amend_data.pop('activity_list')
-            if not activity_list:
-                raise serializers.ValidationError('Please select at least one activity to amend!')
 
-            data = {}
-            a_return = Return.objects.get(id=return_id)
-            application = a_return.application
-            for activity_id in activity_list:
-                data = {
+            returns = Return.objects.get(id=a_return['id'])
+            application = a_return['application']
+            licence = a_return['licence']
+            assigned_to = a_return['assigned_to']
+            data = {
                     'application': application,
                     'reason': reason,
                     'text': text,
-                    'licence_activity': activity_id
-                }
+                    'officer': assigned_to
+            }
 
-                selected_activity = application.get_selected_activity(activity_id)
-                # if selected_activity.processing_status == ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED:
-                #    raise serializers.ValidationError('Selected activity has been discarded by the customer!')
-
-                serializer = self.get_serializer(data=data)
-                serializer.is_valid(raise_exception=True)
-                instance = serializer.save()
-                instance.reason = reason
-                instance.generate_amendment(request)
-
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
             # send email
-            send_application_amendment_notification(
-                data, application, request)
+            send_return_amendment_email_notification(
+                request, data, returns, licence)
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -406,7 +396,7 @@ class ReturnRequestViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
-class ReturnRequestReasonChoicesView(views.APIView):
+class ReturnAmendmentRequestReasonChoicesView(views.APIView):
 
     renderer_classes = [JSONRenderer, ]
 
