@@ -15,7 +15,6 @@ export const offenceStore = {
             identifier: '',
             status: 'draft',
             offenders: [],
-//            alleged_offence_ids: [],
             alleged_offences: [],
             location: {
                 type: 'Feature',
@@ -63,8 +62,10 @@ export const offenceStore = {
     },
     mutations: {
         updateAllegedOffenceIds(state, ids) {
-//            Vue.set(state.offence, 'alleged_offence_ids', ids);
             Vue.set(state.offence, 'alleged_offences', ids);
+        },
+        updateOffenders(state, offenders) {
+            Vue.set(state.offence, 'offenders', offenders);
         },
         updateCallEmailId(state, id) {
             state.offence.call_email_id = id;
@@ -109,9 +110,6 @@ export const offenceStore = {
             try{
                 let fetchUrl = helpers.add_endpoint_json(api_endpoints.offence, 'offence_save');
                 const savedOffence = await Vue.http.post(fetchUrl, state.offence);
-                console.log('savedOffence');
-                console.log(savedOffence);
-//                await dispatch("setOffence", savedOffence.body);
                 await swal("Saved", "The record has been saved", "success");
             } catch (err) {
                 if (err.body.non_field_errors){
@@ -138,6 +136,9 @@ export const offenceStore = {
         },
         setAllegedOffenceIds({ commit, }, ids){
             commit("updateAllegedOffenceIds", ids);
+        },
+        setOffenders({ commit, }, offenders){
+            commit("updateOffenders", offenders);
         },
         setCallEmailId({ commit, }, id){
             commit("updateCallEmailId", id);

@@ -434,9 +434,6 @@ export default {
             });
         },
         loadEmailUser: function(id){
-            console.log('loadEmailUser');
-            console.log(id);
-
             let vm = this;
             let initialisers = [
                 utils.fetchUser(id),

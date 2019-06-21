@@ -296,6 +296,7 @@ export default {
         }),
         ...mapActions('offenceStore', {
             setAllegedOffenceIds: "setAllegedOffenceIds",
+            setOffenders: "setOffenders",
             setCallEmailId: "setCallEmailId",
             saveOffence: "saveOffence",
         }),
@@ -327,11 +328,9 @@ export default {
                 let already_exists = vm.$refs.offender_table.vmDataTable.columns(0).data()[0].includes(vm.current_offender.id);
 
                 if (!already_exists){
-                    vm.$refs.offender_table.vmDataTable.row.add(
-                        {
-                            'id': vm.current_offender.id,
-                        }
-                    ).draw();
+                    vm.$refs.offender_table.vmDataTable.row.add({
+                        'id': vm.current_offender.id,
+                    }).draw();
                 }
             }
 
@@ -380,11 +379,12 @@ export default {
 
             // Collect offenders data from the datatable, and set them to the vuex
             let offenders = vm.$refs.offender_table.vmDataTable.rows().data().toArray();
+            vm.setOffenders(offenders);
 
             // Collect alleged offence data from the datatable, and set them to the vuex
             let alleged_offences = vm.$refs.alleged_offence_table.vmDataTable.rows().data().toArray();
             let alleged_offence_ids = alleged_offences.map(a => {
-                return({ 'id': a.id });
+                return({ 'id': a.id }); // We just need id to create relations between the offence and the alleged offence(s)
             });
             vm.setAllegedOffenceIds(alleged_offence_ids);
 

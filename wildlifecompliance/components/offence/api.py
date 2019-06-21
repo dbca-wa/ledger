@@ -6,12 +6,13 @@ from rest_framework import viewsets, filters, serializers, status
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
+from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.call_email.models import Location
 from wildlifecompliance.components.call_email.serializers import LocationSerializer
 from wildlifecompliance.components.main.api import save_location
 from wildlifecompliance.components.offence.models import Offence, SectionRegulation
 from wildlifecompliance.components.offence.serializers import OffenceSerializer, SectionRegulationSerializer, \
-    SaveOffenceSerializer
+    SaveOffenceSerializer, SaveOffenderSerializer
 from wildlifecompliance.helpers import is_internal
 
 
@@ -45,51 +46,32 @@ class OffenceViewSet(viewsets.ModelViewSet):
 
                 # 2. Save Offence
                 serializer = SaveOffenceSerializer(data=request_data)
-                if serializer.is_valid():
-                    # Here, relations between this offence and location, and this offence and call_email are created
-                    saved_offence_instance = serializer.save()
+                serializer.is_valid(raise_exception=True)
+                saved_offence_instance = serializer.save()  # Here, relations between this offence and location, and this offence and call_email are created
 
-                    # 3. Create relations between this offence and the alleged 0ffence(s)
-                    for dict in request_data['alleged_offences']:
-                        alleged_offence = SectionRegulation.objects.get(id=dict['id'])
-                        saved_offence_instance.alleged_offences.add(alleged_offence)
-                    saved_offence_instance.save()
+                # 3. Create relations between this offence and the alleged 0ffence(s)
+                for dict in request_data['alleged_offences']:
+                    alleged_offence = SectionRegulation.objects.get(id=dict['id'])
+                    saved_offence_instance.alleged_offences.add(alleged_offence)
+                saved_offence_instance.save()
 
-                    # 4. Create relations between this offence and offender(s)
+                # 4. Create relations between this offence and offender(s)
+                for dict in request_data['offenders']:
+                    offender = EmailUser.objects.get(id=dict['id'])
+                    serializer_offender = SaveOffenderSerializer(data={'offence_id': saved_offence_instance.id, 'person_id': offender.id})
+                    serializer_offender.is_valid(raise_exception=True)
+                    serializer_offender.save()
 
-                    # TODO: log user action
+                # TODO: log user action
 
-                    # 4. Return Json
-                    headers = self.get_success_headers(serializer.data)
-                    return_serializer = OffenceSerializer(instance=saved_offence_instance)
-                    return Response(
-                        return_serializer.data,
-                        status=status.HTTP_201_CREATED,
-                        headers=headers
-                    )
-                else:
-                    pass
-
-                # if request_data.get('renderer_data'):
-                #     self.form_data(request)
-                #
-                # if request_data.get('report_type'):
-                #     request_data.update({'report_type_id': request_data.get('report_type', {}).get('id')})
-                #
-                # serializer = SaveCallEmailSerializer(instance, data=request_data)
-                # serializer.is_valid(raise_exception=True)
-                # if serializer.is_valid():
-                #     saved_instance = serializer.save()
-                #     instance.log_user_action(
-                #         ComplianceUserAction.ACTION_SAVE_CALL_EMAIL_.format(
-                #             instance.number), request)
-                #     headers = self.get_success_headers(serializer.data)
-                #     return_serializer = CallEmailSerializer(instance=saved_instance)
-                #     return Response(
-                #         return_serializer.data,
-                #         status=status.HTTP_201_CREATED,
-                #         headers=headers
-                #     )
+                # 4. Return Json
+                headers = self.get_success_headers(serializer.data)
+                return_serializer = OffenceSerializer(instance=saved_offence_instance)
+                return Response(
+                    return_serializer.data,
+                    status=status.HTTP_201_CREATED,
+                    headers=headers
+                )
 
         except serializers.ValidationError:
             print(traceback.print_exc())

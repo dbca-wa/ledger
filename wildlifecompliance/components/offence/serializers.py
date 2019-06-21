@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from wildlifecompliance.components.call_email.serializers import LocationSerializer
-from wildlifecompliance.components.offence.models import Offence, SectionRegulation
+from wildlifecompliance.components.offence.models import Offence, SectionRegulation, Offender
 
 
 class SectionRegulationSerializer(serializers.ModelSerializer):
@@ -62,9 +62,18 @@ class SaveOffenceSerializer(serializers.ModelSerializer):
             'occurrence_time_to',
             'details',
         )
-        read_only_fields = (
+        read_only_fields = ()
 
+
+class SaveOffenderSerializer(serializers.ModelSerializer):
+    offence_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+    person_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+
+    class Meta:
+        model = Offender
+        fields = (
+            'id',
+            'offence_id',
+            'person_id',
         )
-
-
-
+        read_only_fields = ()
