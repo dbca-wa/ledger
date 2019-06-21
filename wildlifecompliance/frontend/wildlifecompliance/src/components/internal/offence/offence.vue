@@ -221,8 +221,6 @@ export default {
                     {
                         data: 'Action',
                         mRender: function(data, type, row){
-                            console.log(data);
-                            console.log(row);
                             return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
                         }
                     },
@@ -246,8 +244,6 @@ export default {
                     { 
                         data: 'Action',
                         mRender: function(data, type, row){
-                            console.log(data);
-                            console.log(row);
                             return '<a href="#" class="remove_button" data-alleged-offence-id="' + row.id + '">Remove</a>';
                         }
                     },
