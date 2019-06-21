@@ -664,7 +664,7 @@ export default {
 };
 </script>
 
-<style lang="css">
+<style lang="css" scoped>
 .btn-file {
     position: relative;
     overflow: hidden;
@@ -697,6 +697,8 @@ export default {
 }
 .tab-content {
     background: white;
+    padding: 10px;
+    border: solid 1px lightgray;
 }
 #DataTable {
     padding: 10px 5px;
