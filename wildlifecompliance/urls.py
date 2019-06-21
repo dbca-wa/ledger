@@ -14,6 +14,7 @@ from wildlifecompliance.admin import wildlifecompliance_admin_site
 
 from wildlifecompliance.components.main.views import SearchKeywordsView, SearchReferenceView
 from wildlifecompliance.components.applications import views as application_views
+from wildlifecompliance.components.offence.api import OffenceViewSet
 from wildlifecompliance.components.users import api as users_api
 from wildlifecompliance.components.organisations import api as org_api
 from wildlifecompliance.components.applications import api as application_api
@@ -74,9 +75,9 @@ router.register(r'search_alleged_offences', offence_api.SearchSectionRegulation)
 router.register(r'map_layers', call_email_api.MapLayerViewSet)
 router.register(r'compliancepermissiongroup', users_api.CompliancePermissionGroupViewSet)
 router.register(r'region_district', users_api.RegionDistrictViewSet)
-router.register(r'offences', offence_api.OffenceViewSet)
 router.register(r'case_priorities', call_email_api.CasePriorityViewSet)
 router.register(r'inspection_types', call_email_api.InspectionTypeViewSet)
+router.register(r'offence', offence_api.OffenceViewSet)
 
 api_patterns = [url(r'^api/my_user_details/$',
                     users_api.GetMyUserDetails.as_view(),

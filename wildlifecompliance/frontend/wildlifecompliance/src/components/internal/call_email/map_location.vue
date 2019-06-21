@@ -1,38 +1,38 @@
 <template lang="html">
     <div>
-        <div id="map-wrapper">
-            <div id="search-box">
-                <input id="search-input" />
+        <div class="map-wrapper">
+            <div class="search-box">
+                <input :id="idSearchInput" class="search-input" />
             </div>
-            <div id="mapLeaf"></div>
-            <div id="basemap-button">
-                <img id="basemap_sat" src="../../../assets/img/satellite_icon.jpg" @click.stop="setBaseLayer('sat')" />
-                <img id="basemap_osm" src="../../../assets/img/map_icon.png" @click.stop="setBaseLayer('osm')" />
+            <div :id="idMap" class="mapLeaf"></div>
+            <div class="basemap-button">
+                <img :id="idBasemapSat" class="basemap-button-img" src="../../../assets/img/satellite_icon.jpg" @click.stop="setBaseLayer('sat')" />
+                <img :id="idBasemapOsm" class="basemap-button-img" src="../../../assets/img/map_icon.png" @click.stop="setBaseLayer('osm')" />
             </div>
-            <div id="cursor-location">
+            <div class="cursor-location">
                 <div v-if="cursor_location">
-                    <span id="cursor-location-lat">{{ cursor_location.lat.toFixed(5) }}, {{ cursor_location.lng.toFixed(5) }}</span>
+                    <span>{{ cursor_location.lat.toFixed(5) }}, {{ cursor_location.lng.toFixed(5) }}</span>
                 </div>
             </div>
-            <div id="centre_marker" @click.stop="setMarkerCentre()">
+            <div class="centre_marker" @click.stop="setMarkerCentre()">
                 CenterMarker
             </div>
         </div>
 
-        <div id="lat" class="col-sm-4 form-group"><div class="row">
+        <div class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Latitude:</label>
             <div v-if="call_email.location">
                 <input :readonly="isReadonly" type="number" min="-90" max="90" class="form-control" v-model.number="call_email.location.geometry.coordinates[1]" />
             </div>
         </div></div>
-        <div id="lon" class="col-sm-4 form-group"><div class="row">
+        <div class="col-sm-4 form-group"><div class="row">
             <label class="col-sm-4">Longitude:</label>
             <div v-if="call_email.location">
                 <input :readonly="isReadonly" type="number" min="-180" max="180" class="form-control" v-model.number="call_email.location.geometry.coordinates[0]" />
             </div>
         </div></div>
 
-        <div id="location_fields_address">
+        <div :id="idLocationFieldsAddress">
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Street</label>
                 <input :readonly="isReadonly" class="form-control" v-model="call_email.location.properties.street" readonly />
@@ -55,10 +55,10 @@
             </div></div>
         </div>
 
-        <div id="location_fields_details">
+        <div :id="idLocationFieldsDetails">
             <div class="col-sm-12 form-group"><div class="row">
                 <label class="col-sm-4">Details</label>
-                <textarea id="location_address_field" class="form-control" v-model="call_email.location.properties.details" />
+                <textarea class="form-control location_address_field" v-model="call_email.location.properties.details" />
             </div></div>
         </div>
     
@@ -71,7 +71,7 @@ import 'leaflet-measure';  /* This should be imported after leaflet */
 import 'leaflet.locatecontrol';
 import Awesomplete from 'awesomplete';
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
-
+import { guid, } from "@/utils/helpers";
 import 'bootstrap/dist/css/bootstrap.css';
 import 'awesomplete/awesomplete.css';
 import 'leaflet/dist/leaflet.css';
@@ -89,6 +89,7 @@ export default {
         vm.icon_enquiery = L.icon({iconUrl: require('../../../assets/marker-green-locked.svg'), ...baseDic });
         vm.icon_complaint = L.icon({iconUrl: require('../../../assets/marker-red-locked.svg'), ...baseDic});
         vm.icon_incident = L.icon({iconUrl: require('../../../assets/marker-yellow-locked.svg'), ...baseDic});
+        vm.guid = guid();
 
         return {
             defaultCenter: defaultCentre,
@@ -100,7 +101,13 @@ export default {
             awe: null,
             suggest_list: [],
             feature_marker: null,
-            cursor_location: null
+            cursor_location: null,
+            idMap: vm.guid + 'mapLeaf',
+            idLocationFieldsAddress: vm.guid + 'LocationFieldsAddress',
+            idLocationFieldsDetails: vm.guid + 'LocationFieldsDetails',
+            idSearchInput: vm.guid + 'SearchInput',
+            idBasemapSat: vm.guid + 'BasemapSat',
+            idBasemapOsm: vm.guid + 'BasemapOsm',
         };
     },
     computed: {
@@ -156,7 +163,7 @@ export default {
     },
     methods: {
         ...mapActions('callemailStore', {
-            saveLocation: 'saveLocation',
+            // saveLocation: 'saveLocation',
             setLocationPoint: 'setLocationPoint',
             setLocationAddress: 'setLocationAddress',
             setLocationAddressEmpty: 'setLocationAddressEmpty',
@@ -214,10 +221,10 @@ export default {
             vm.feature_marker.addTo(vm.map);
             vm.setMarkerIcon();
         },
-        saveInstanceLocation: async function() {
-            await this.$nextTick();
-            this.saveLocation();
-        },
+        // saveInstanceLocation: async function() {
+        //     await this.$nextTick();
+        //     // this.saveLocation();
+        // },
         reverseGeocoding: function(coordinates_4326){
             var self = this;
 
@@ -284,7 +291,7 @@ export default {
         },
         initAwesomplete: function(){
             var self = this;
-            var element_search = document.getElementById('search-input');
+            var element_search = document.getElementById(self.idSearchInput);
             this.awe = new Awesomplete(element_search);
             $(element_search).on('keyup', function(ev){
                 var keyCode = ev.keyCode || ev.which;
@@ -365,26 +372,26 @@ export default {
             if (selected_layer_name == 'sat') {
                 this.map.removeLayer(this.tileLayer);
                 this.map.addLayer(this.tileLayerSat);
-                $('#basemap_sat').hide();
-                $('#basemap_osm').show();
+                $('#' + this.idBasemapSat).hide();
+                $('#' + this.idBasemapOsm).show();
             }
             else {
                 this.map.removeLayer(this.tileLayerSat);
                 this.map.addLayer(this.tileLayer);
-                $('#basemap_osm').hide();
-                $('#basemap_sat').show();
+                $('#' + this.idBasemapOsm).hide();
+                $('#' + this.idBasemapSat).show();
             }
         },
         showHideAddressDetailsFields: function(showAddressFields, showDetailsFields){
             if(showAddressFields){
-                $("#location_fields_address").fadeIn();
+                $("#" + this.idLocationFieldsAddress).fadeIn();
             } else {
-                $("#location_fields_address").fadeOut();
+                $("#" + this.idLocationFieldsAddress).fadeOut();
             }
             if(showDetailsFields){
-                $("#location_fields_details").fadeIn();
+                $("#" + this.idLocationFieldsDetails).fadeIn();
             } else {
-                $("#location_fields_details").fadeOut();
+                $("#" + this.idLocationFieldsDetails).fadeOut();
             }
         },
         /* this function retrieve the coordinates from vuex and applys it to the marker */
@@ -400,7 +407,7 @@ export default {
             }
         },
         initMap: function(){
-            this.map = L.map('mapLeaf').setView([-31.9505, 115.8605], 4);
+            this.map = L.map(this.idMap).setView([-31.9505, 115.8605], 4);
             this.tileLayer = L.tileLayer(
                 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 {
@@ -462,21 +469,21 @@ export default {
 </script>
 
 <style scoped lang="css">
-#map-wrapper {
+.map-wrapper {
     position: relative;
 }
-#mapLeaf {
+.mapLeaf {
     position: relative;
     height: 500px;
     cursor: default;
 }
-#search-box {
+.search-box {
     z-index: 1000;
     position: absolute;
     top: 10px;
     left: 50px;
 }
-#search-input {
+.search-input {
     z-index: 1000;
     width: 300px;
     padding: 5px;
@@ -484,7 +491,7 @@ export default {
     -webkit-border-radius: 5px;
     border-radius: 5px;
 }
-#basemap-button {
+.basemap-button {
     position: absolute;
     top: 10px;
     right: 10px;
@@ -497,16 +504,16 @@ export default {
     filter: brightness(1.0);
     border: 2px white solid;
 }
-#basemap_sat,#basemap_osm {
+.basemap-button-img {
     /* border-radius: 5px; */
 }
-#basemap-button:hover {
+.basemap-button:hover {
     cursor: pointer;
     -moz-filter: brightness(0.9);
     -webkit-filter: brightness(0.9);
     filter: brightness(0.9);
 }
-#basemap-button:active {
+.basemap-button:active {
     top: 11px;
     right: 9px;
     -moz-box-shadow: 2px 2px 2px #555;
@@ -516,7 +523,7 @@ export default {
     -webkit-filter: brightness(0.8);
     filter: brightness(0.8);
 }
-#basemap-button:active {
+.basemap-button:active {
     top: 11px;
     right: 9px;
     -moz-box-shadow: 2px 2px 2px #555;
@@ -526,10 +533,10 @@ export default {
     -webkit-filter: brightness(0.8);
     filter: brightness(0.8);
 }
-#location_address_field {
+.location_address_field {
     resize: vertical;
 }
-#cursor-location {
+.cursor-location {
     position: absolute;
     bottom: 0px;
     color: white;
@@ -538,7 +545,7 @@ export default {
     font-size: 0.9em;
     padding: 5px;
 }
-#centre_marker {
+.centre_marker {
     position: absolute;
     bottom: 30px;
     color: white;
