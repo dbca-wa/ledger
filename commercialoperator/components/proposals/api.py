@@ -134,6 +134,25 @@ class GetEmptyList(views.APIView):
 #		import ipdb; ipdb.set_trace()
 #		return queryset
 
+'''
+1. internal_proposal.json
+2. regions.json
+3. trails.json
+4. vehicles.json
+5. access_types.json
+6. required_documents.json
+7. land_activities.json
+8. vessels.json
+9. marine_activities.json
+10. marine_parks.json
+11. accreditation_choices.json
+12. licence_period_choices.json
+13. global_settings.json
+14. questions.json
+15. amendment_request_reason_choices.json
+16. contacts.json
+
+'''
 class ProposalFilterBackend(DatatablesFilterBackend):
     """
     Custom filters
