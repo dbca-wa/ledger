@@ -52,13 +52,13 @@
                                 <div class="form-group">
                                     <label class="control-label" for="User">Search User</label>
                                     
-                                    <TextFilteredField :url="filtered_url" name="User" label="User" id="id_holder"/>
+                                    <TextFilteredField :url="filtered_url" name="User" id="id_holder"/>
                                 </div>
                             </div>
                             <div class="">
                               <div class="col-md-12 text-center">
                                 <div >
-                                  <input type="button" @click.prevent="viewUserDetails" class="btn btn-primary" style="margin-bottom: 5px" value="View User Details"/>
+                                  <input type="button" @click.prevent="viewUserDetails" class="btn btn-primary" style="margin-bottom: 5px" value="View Details"/>
                                 </div>
                               </div> 
                             </div>
@@ -158,7 +158,7 @@
                 </div>
                 <div class="panel-body collapse in" :id="rBody">
                     <div class="row">
-                       <label for="" class="control-label col-lg-12">Keyword</label>                              
+                       <label for="" class="control-label col-lg-12">Reference</label>                              
                           <div class="col-md-8">
                               <input type="search"  class="form-control input-sm" name="referenceWord" placeholder="" v-model="referenceWord"></input>
                           </div> 

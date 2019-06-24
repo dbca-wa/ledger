@@ -817,6 +817,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         search_data.update({'trails': trails})
         search_data.update({'vehicles': vehicles})
         search_data.update({'vessels': vessels})
+        search_data.update({'activities': activities})
         
         try:
             other_details=ProposalOtherDetails.objects.get(proposal=self)
