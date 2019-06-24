@@ -294,7 +294,11 @@
 
                         </div>
                         <div :id="rTab" class="tab-pane fade in active">
-
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-12">
+                                    <datatable ref="related_items_table" id="related_items_table" :dtOptions="dtOptionsRelatedItems" :dtHeaders="dtHeadersRelatedItems" />
+                                </div>
+                            </div></div>
                         </div>
                     </div>
                 </div>
@@ -323,7 +327,7 @@
 <script>
 import Vue from "vue";
 import FormSection from "@/components/forms/section_toggle.vue";
-
+import datatable from '@vue-utils/datatable.vue'
 import CommsLogs from "@common-components/comms_logs.vue";
 import MapLocation from "./map_location.vue";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
@@ -341,6 +345,30 @@ export default {
   name: "ViewCallEmail",
   data: function() {
     return {
+      cTab: 'cTab'+this._uid,
+      rTab: 'rTab'+this._uid,
+      dtHeadersRelatedItems: [
+          'Number',
+          'Type',
+          'Description',
+          'Action',
+      ],
+      dtOptionsRelatedItems: {
+          columns: [
+              {
+                  data: 'id',
+              },
+              {
+                  data: 'Type',
+              },
+              {
+                  data: 'Description',
+              },
+              {
+                  data: 'Action',
+              },
+          ]
+      },
       disabledDates: {
         from: new Date(),
       },
@@ -379,6 +407,7 @@ export default {
     Datepicker,
     CallWorkflow,
     Offence,
+    datatable,
   },
   computed: {
     ...mapGetters('callemailStore', {
