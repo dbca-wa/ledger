@@ -361,21 +361,21 @@ export default {
         if (this.call_email.district_id) {
           payload.append('district_id', this.call_email.district_id);
         }
-        if (this.call_email.allocated_group && this.call_email.allocated_group.length > 0) {
-          let user_id_list = [];
-          for (let user of this.call_email.allocated_group) {
-            if (user.id) {
-              user_id_list.push(user.id);
-            }
-          }
-          payload.append('allocated_group', user_id_list);
-        }
+        //if (this.call_email.allocated_group && this.call_email.allocated_group.length > 0) {
+        //  let user_id_list = [];
+        //  for (let user of this.call_email.allocated_group) {
+        //    if (user.id) {
+        //      user_id_list.push(user.id);
+        //    }
+        //  }
+        //  payload.append('allocated_group', user_id_list);
+        //}
         // if (this.call_email.allocated_group_id) {
         //   payload.append('allocated_group_id', this.call_email.allocated_group_id);
         // }
-        if (this.call_email.assigned_to) {
-          payload.append('assigned_to_id', this.call_email.assigned_to_id);
-        }
+        //if (this.call_email.assigned_to) {
+        //  payload.append('assigned_to_id', this.call_email.assigned_to_id);
+        //}
         if (this.workflow_type === 'close') {
             payload.append('details', this.call_email.advice_details);
             if (this.call_email.advice_details) {

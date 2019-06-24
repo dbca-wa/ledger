@@ -691,9 +691,9 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                             ComplianceUserAction.ACTION_SANCTION_OUTCOME.format(instance.number), 
                             request)
 
-                instance.region_id = request.data.get('region_id')
-                instance.district_id = request.data.get('district_id')
-                instance.allocated_group_id = request.data.get('allocated_group_id')
+                #instance.region_id = request.data.get('region_id')
+                #instance.district_id = request.data.get('district_id')
+                #instance.allocated_group_id = request.data.get('allocated_group_id')
                 instance.assigned_to_id = None
                 instance.save()
 
@@ -738,9 +738,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             if serializer.is_valid():
                 serializer.save()
-                headers = self.get_success_headers(serializer.data)
+                return_serializer = CallEmailSerializer(instance=instance,
+                        context={'request': request}
+                        )
+                headers = self.get_success_headers(return_serializer.data)
                 return Response(
-                        serializer.data, 
+                        return_serializer.data, 
                         status=status.HTTP_201_CREATED,
                         headers=headers
                         )

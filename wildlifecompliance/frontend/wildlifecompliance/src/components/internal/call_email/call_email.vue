@@ -33,7 +33,7 @@
                           <div class="row">
                             <div class="col-sm-12">
                               
-                              <select :disabled="call_email.readonly_user" class="form-control" v-model="call_email.assigned_to_id" @change="updateAssignedToId()">
+                              <select :disabled="!call_email.user_in_group" class="form-control" v-model="call_email.assigned_to_id" @change="updateAssignedToId()">
                                 <option  v-for="option in call_email.allocated_group" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
@@ -433,6 +433,7 @@ export default {
     ...mapActions('callemailStore', {
       loadCallEmail: 'loadCallEmail',
       saveCallEmail: 'saveCallEmail',
+      setCallEmail: 'setCallEmail', 
       // loadAllocatedGroup: 'loadAllocatedGroup',
       setRegionId: 'setRegionId',
       setAllocatedGroupList: 'setAllocatedGroupList',
@@ -501,6 +502,7 @@ export default {
             url, 
             { 'assigned_to_id': this.call_email.assigned_to_id }
         );
+        await this.setCallEmail(res.body); 
     }
   },
   beforeRouteEnter: function(to, from, next) {

@@ -358,7 +358,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
     # allocated_group = CallEmailAllocatedGroupSerializer(many=True)
     # allocated_group = CompliancePermissionGroupMembersSerializer()
     allocated_group = serializers.SerializerMethodField()
-    user_is_assignee = serializers.SerializerMethodField()
+    user_in_group = serializers.SerializerMethodField()
     readonly_user = serializers.SerializerMethodField()
     readonly_status = serializers.SerializerMethodField()
 
@@ -401,7 +401,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'district_id',
             'case_priority_id',
             'inspection_type_id',
-            'user_is_assignee',
+            'user_in_group',
             'readonly_user',
             'readonly_status',
         )
@@ -409,22 +409,22 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'id', 
             )
 
-    def get_user_is_assignee(self, obj):
-        # user = EmailUser.objects.get(id=self.context.get('request', {}).user.id)
+    def get_user_in_group(self, obj):
         user_id = self.context.get('request', {}).user.id
-        # compliance_permissions = []
-        # for group in user.groups.all():
-          #  for permission in group.permissions.all():
-           #     compliance_permissions.append(permission.codename)
-        if user_id == obj.assigned_to_id:
-            return True
+
+        if obj.allocated_group:
+           for member in obj.allocated_group.members:
+               if user_id == member.id:
+                  return True
+        else:
+            return False
 
     def get_readonly_user(self, obj):
         user_id = self.context.get('request', {}).user.id
 
         if user_id == obj.assigned_to_id:
             return False
-        elif obj.allocated_group:
+        elif obj.allocated_group and not obj.assigned_to_id:
            for member in obj.allocated_group.members:
                if user_id == member.id:
                   return False
@@ -459,6 +459,7 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
     lodgement_date = serializers.CharField(source='lodged_on')
     user_is_assignee = serializers.SerializerMethodField()
     assigned_to = ComplianceUserDetailsOptimisedSerializer(read_only=True)
+    user_action = serializers.SerializerMethodField()
 
     class Meta:
         model = CallEmail
@@ -474,6 +475,7 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
             'caller',
             'assigned_to',
             'assigned_to_id',
+            'user_action'
 
         )
         read_only_fields = (
@@ -489,6 +491,19 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
            #     compliance_permissions.append(permission.codename)
         if user_id == obj.assigned_to_id:
             return True
+
+    def get_user_action(self, obj):
+        user_id = self.context.get('request', {}).user.id
+        url = "/internal/call_email/" + str(obj.id)
+
+        if user_id == obj.assigned_to_id:
+            return '<a href=' + url + '>Process</a>';
+        elif obj.allocated_group:
+           for member in obj.allocated_group.members:
+               if user_id == member.id:
+                  return '<a href=' + url + '>Process</a>';
+        else:
+            return '<a href=' + url + '>View</a>';
 
 
 class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
