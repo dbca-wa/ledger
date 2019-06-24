@@ -5,7 +5,7 @@
           <h3>Call/Email: {{ call_email.number }}</h3>
         </div>
         <div class="col-md-3 pull-right">
-          <input type="button" @click.prevent="duplicate" class="pull-right btn btn-primary" value="Create Duplicate Call/Email"/>  
+          <input  v-if="current_user && current_user.is_volunteer" type="button" @click.prevent="duplicate" class="pull-right btn btn-primary" value="Create Duplicate Call/Email"/>  
         </div>
       </div>
           <div class="col-md-3">
@@ -24,7 +24,7 @@
                             </div>
                         </div>
 
-                        <div v-if="call_email.allocated_group" class="form-group">
+                        <div v-if="call_email.allocated_group && !(statusId === 'closed')" class="form-group">
                           <div class="row">
                             <div class="col-sm-12 top-buffer-s">
                               <strong>Currently assigned to</strong><br/>
@@ -33,8 +33,8 @@
                           <div class="row">
                             <div class="col-sm-12">
                               
-                              <select class="form-control" v-model="call_email.assigned_to_id" >
-                                <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
+                              <select :disabled="!call_email.user_in_group" class="form-control" v-model="call_email.assigned_to_id" @change="updateAssignedToId()">
+                                <option  v-for="option in call_email.allocated_group" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
                               </select>
@@ -80,7 +80,6 @@
                           <div class="col-sm-12"/>
                         </div> -->
                         <div v-if="statusId ==='open_followup'" class="row action-button">
-                        <!-- <div v-if="statusId ==='open'" class="row action-button"> -->
                           <div class="col-sm-12">
                                 <a @click="offence()" class="btn btn-primary btn-block">
                                   Offence
@@ -129,7 +128,7 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div class="row action-button">
+                        <div v-if="!(statusId === 'closed')" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
                                   Close
@@ -154,138 +153,152 @@
                     <div class="tab-content">
                         <div :id="cTab" class="tab-pane fade in active">
 
-                          <FormSection :formCollapse="false" label="Caller" Index="0">
-                            
-                            <div class="row"><div class="col-sm-8 form-group">
-                              <label class="col-sm-12">Caller name</label>
-                              <input :readonly="isReadonly" class="form-control" v-model="call_email.caller"/>
-                            </div></div>
-                            <div class="col-sm-4 form-group"><div class="row">
-                              <label class="col-sm-12">Caller contact number</label>
-                            <input :readonly="isReadonly" class="form-control" v-model="call_email.caller_phone_number"/>
-                            </div></div>
-                            
-                            <div class="col-sm-12 form-group"><div class="row">
-                              <label class="col-sm-4">Anonymous call?</label>
-                                <input :disabled="isReadonly" class="col-sm-1" id="yes" type="radio" v-model="call_email.anonymous_call" v-bind:value="true">
-                                <label class="col-sm-1" for="yes">Yes</label>
-                                <input :disabled="isReadonly" class="col-sm-1" id="no" type="radio" v-model="call_email.anonymous_call" v-bind:value="false">
-                                <label class="col-sm-1" for="no">No</label>
-                            </div></div>
-            
-                            <div class="col-sm-12 form-group"><div class="row">
-                              <label class="col-sm-4">Caller wishes to remain anonymous?</label>
-                                <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
-                                <label class="col-sm-1">Yes</label>
-                                <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
-                                <label class="col-sm-1">No</label>
-                            </div></div>
-            
-                            <div v-if="personSearchVisible">
-                                <SearchPerson />
-                            </div>
-                          </FormSection>
-            
-                          <FormSection :formCollapse="false" label="Location" Index="1">
-                              <div v-if="call_email.location">
-                                <MapLocation v-bind:key="call_email.location.id"/>
-                              </div>
-                          </FormSection>
-            
-                          <FormSection :formCollapse="true" label="Details" Index="2">
-            
-                            <div class="col-sm-12 form-group"><div class="row">
-                              <label class="col-sm-4">Use occurrence from/to</label>
-                                <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.occurrence_from_to" v-bind:value="true">
-                                <label class="col-sm-1">Yes</label>
-                                <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.occurrence_from_to" v-bind:value="false">
-                                <label class="col-sm-1">No</label>
-                            </div></div>
-            
-                            <div class="col-sm-12 form-group"><div class="row">
-                                <label class="col-sm-3">{{ occurrenceDateLabel }}</label>
-                                <div class="col-sm-3">
-                                  <datepicker :disabled="isReadonly" :disabledDates="disabledDates" input-class="form-control col-sm-3" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_from" name="datefrom"/>
-                                </div>
-                                <div v-if="call_email.occurrence_from_to">
-                                  <label class="col-sm-3">Occurrence date to</label>
-                                  <div class="col-sm-3">
-                                    <datepicker :disabled="isReadonly" :disabledDates="disabledDates" input-class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_to" name="dateto"/>
-                                  </div>
-                                </div>
-                            </div></div>
-            
-                            <div class="col-sm-12 form-group"><div class="row">
-                              <label class="col-sm-3">{{ occurrenceTimeLabel }}</label>
-                              <div class="col-sm-3">
-                                <input :readonly="isReadonly" type="time" class="form-control" v-model="call_email.occurrence_time_from"/>
-                              </div>
-                              <div v-if="call_email.occurrence_from_to">
-                                  <label class="col-sm-3">Occurrence time to</label>
-                                  <div class="col-sm-3">
-                                    <input :readonly="isReadonly" type="time" class="form-control" v-model="call_email.occurrence_time_to"/>
-                                  </div>
-                              </div>
-                            </div></div>
+
+
+
+              <FormSection :formCollapse="false" label="Caller" Index="0">
+                
+                <div class="row"><div class="col-sm-8 form-group">
+                  <label class="col-sm-12">Caller name</label>
+                  <input :readonly="isReadonly" class="form-control" v-model="call_email.caller"/>
+                </div></div>
+                <div class="col-sm-4 form-group"><div class="row">
+                  <label class="col-sm-12">Caller contact number</label>
+                <input :readonly="isReadonly" class="form-control" v-model="call_email.caller_phone_number"/>
+                </div></div>
+                
+                <div class="col-sm-12 form-group"><div class="row">
+                  <label class="col-sm-4">Anonymous call?</label>
+                    <input :disabled="isReadonly" class="col-sm-1" id="yes" type="radio" v-model="call_email.anonymous_call" v-bind:value="true">
+                    <label class="col-sm-1" for="yes">Yes</label>
+                    <input :disabled="isReadonly" class="col-sm-1" id="no" type="radio" v-model="call_email.anonymous_call" v-bind:value="false">
+                    <label class="col-sm-1" for="no">No</label>
+                </div></div>
+
+                <div class="col-sm-12 form-group"><div class="row">
+                  <label class="col-sm-4">Caller wishes to remain anonymous?</label>
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
+                    <label class="col-sm-1">Yes</label>
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
+                    <label class="col-sm-1">No</label>
+                </div></div>
+
+                <div v-if="personSearchVisible">
+                    <SearchPerson />
+                </div>
+              </FormSection>
+
+              <FormSection :formCollapse="false" label="Location" Index="1">
+                  <div v-if="call_email.location">
+                    <MapLocation v-bind:key="call_email.location.id"/>
+                  </div>
+              </FormSection>
+
+              <FormSection :formCollapse="true" label="Details" Index="2">
+
+                <div class="col-sm-12 form-group"><div class="row">
+                  <label class="col-sm-4">Use occurrence from/to</label>
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.occurrence_from_to" v-bind:value="true">
+                    <label class="col-sm-1">Yes</label>
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.occurrence_from_to" v-bind:value="false">
+                    <label class="col-sm-1">No</label>
+                </div></div>
+
+                <div class="col-sm-12 form-group"><div class="row">
+                    <label class="col-sm-3">{{ occurrenceDateLabel }}</label>
+                    <div class="col-sm-3" :disabled="isReadonly">
+                      <datepicker :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_from"/>
+                    </div>
+                    <div v-show="call_email.occurrence_from_to" :disabled="isReadonly">
+                      <label class="col-sm-3">Occurrence date to</label>
+                      <div class="col-sm-3" :disabled="isReadonly">
+                        <datepicker :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_to" />
+                      </div>
+                    </div>
+                </div></div>
+
+                <div class="col-sm-12 form-group"><div class="row">
+                  <label class="col-sm-3">{{ occurrenceTimeLabel }}</label>
+                  <div class="col-sm-3">
+                      <div class="input-group date" id="occurrenceTimeStartPicker">
+                        <input :disabled="isReadonly" type="text" class="form-control" placeholder="HH:MM" v-model="call_email.occurrence_time_start"/>
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
+                      </div>
+                  </div>
+                  <div v-show="call_email.occurrence_from_to">
+                      <label class="col-sm-3">Occurrence time to</label>
+                      <div class="col-sm-3">
+                          <div class="input-group date" id="occurrenceTimeEndPicker">
+                            <input :disabled="isReadonly" type="text" class="form-control" placeholder="HH:MM" v-model="call_email.occurrence_time_end"/>
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                            </span>
+                          </div>
+                      </div>
+                  </div>
+                </div></div>
+  
+                <div class="col-sm-12 form-group"><div class="row">
+                  <label class="col-sm-4">Classification</label>
+                  <select :disabled="isReadonly" class="form-control" v-model="call_email.classification_id">
+                        <option v-for="option in classification_types" :value="option.id" v-bind:key="option.id">
+                          {{ option.name }} 
+                        </option>
+                    </select>
+                </div></div>
+
+                <div class="col-sm-12 form-group"><div class="row">
+                  <label class="col-sm-4">Report Type</label>
+                  <select :disabled="isReadonly" @change.prevent="loadSchema" class="form-control" v-model="call_email.report_type_id">
+                          <option v-for="option in report_types" :value="option.id" v-bind:key="option.id">
+                            {{ option.report_type }} 
+                          </option>
+                  </select>
+                </div></div>
+                
+                <div v-for="(item, index) in current_schema">
+                  <compliance-renderer-block
+                     :component="item"
+                     v-bind:key="`compliance_renderer_block_${index}`"
+                    />
+                </div>
+              </FormSection>
+
+              <FormSection :formCollapse="true" label="Outcome" Index="3">
+                <div class="col-sm-12 form-group"><div class="row">
+                  <label class="col-sm-4">Referred To</label>
+                  <select :disabled="isReadonly" class="form-control" v-model="call_email.referrer_id">
+                          <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
+                            {{ option.name }} 
+                          </option>
+                  </select>
+                </div></div>
+                <div class="col-sm-12 form-group"><div class="row">
+                  <label class="col-sm-4">Advice given</label>
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.advice_given" v-bind:value="true">
+                    <label class="col-sm-1">Yes</label>
+                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.advice_given" v-bind:value="false">
+                    <label class="col-sm-1">No</label>
+                </div></div>
+                <div v-if="call_email.advice_given" class="col-sm-12 form-group"><div class="row">
+                  <label class="col-sm-4">Advice details</label>
+                  <textarea :readonly="isReadonly" class="form-control" rows="5" v-model="call_email.advice_details"/>
+                </div></div>
+              </FormSection>
               
-                            <div class="col-sm-12 form-group"><div class="row">
-                              <label class="col-sm-4">Classification</label>
-                              <select :disabled="isReadonly" class="form-control" v-model="call_email.classification_id">
-                                    <option v-for="option in classification_types" :value="option.id" v-bind:key="option.id">
-                                      {{ option.name }} 
-                                    </option>
-                                </select>
-                            </div></div>
-            
-                            <div class="col-sm-12 form-group"><div class="row">
-                              <label class="col-sm-4">Report Type</label>
-                              <select :disabled="isReadonly" @change.prevent="loadSchema" class="form-control" v-model="call_email.report_type_id">
-                                      <option v-for="option in report_types" :value="option.id" v-bind:key="option.id">
-                                        {{ option.report_type }} 
-                                      </option>
-                              </select>
-                            </div></div>
-                            
-                            <div v-for="(item, index) in current_schema">
-                              <compliance-renderer-block
-                                :component="item"
-                                v-bind:key="`compliance_renderer_block_${index}`"
-                                />
-                            </div>
-                          </FormSection>
-            
-                          <FormSection :formCollapse="true" label="Outcome" Index="3">
-                            <div class="col-sm-12 form-group"><div class="row">
-                              <label class="col-sm-4">Referred To</label>
-                              <select :disabled="isReadonly" class="form-control" v-model="call_email.referrer_id">
-                                      <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
-                                        {{ option.name }} 
-                                      </option>
-                              </select>
-                            </div></div>
-                            <div class="col-sm-12 form-group"><div class="row">
-                              <label class="col-sm-4">Advice given</label>
-                                <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.advice_given" v-bind:value="true">
-                                <label class="col-sm-1">Yes</label>
-                                <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.advice_given" v-bind:value="false">
-                                <label class="col-sm-1">No</label>
-                            </div></div>
-                            <div v-if="call_email.advice_given" class="col-sm-12 form-group"><div class="row">
-                              <label class="col-sm-4">Advice details</label>
-                              <textarea :readonly="isReadonly" class="form-control" rows="5" v-model="call_email.advice_details"/>
-                            </div></div>
-                          </FormSection>
-                          
+
+
+
+
                         </div>
                         <div :id="rTab" class="tab-pane fade in active">
-                            <div class="col-sm-12 form-group"><div class="row">
-                                <div class="col-sm-12">
-                                    <datatable ref="related_items_table" id="related_items_table" :dtOptions="dtOptionsRelatedItems" :dtHeaders="dtHeadersRelatedItems" />
-                                </div>
-                            </div></div>
+
                         </div>
                     </div>
                 </div>
+
 
             </div>          
           </div>
@@ -310,7 +323,7 @@
 <script>
 import Vue from "vue";
 import FormSection from "@/components/forms/section_toggle.vue";
-import datatable from '@vue-utils/datatable.vue'
+
 import CommsLogs from "@common-components/comms_logs.vue";
 import MapLocation from "./map_location.vue";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
@@ -322,36 +335,12 @@ import moment from 'moment';
 import CallWorkflow from './call_email_workflow';
 import Offence from '../offence/offence';
 import 'bootstrap/dist/css/bootstrap.css';
+import 'eonasdan-bootstrap-datetimepicker';
 
 export default {
   name: "ViewCallEmail",
   data: function() {
     return {
-      cTab: 'cTab'+this._uid,
-      rTab: 'rTab'+this._uid,
-      dtHeadersRelatedItems: [
-          'Number',
-          'Type',
-          'Description',
-          'Action',
-      ],
-      dtOptionsRelatedItems: {
-          columns: [
-              {
-                  data: 'id',
-              },
-              {
-                  data: 'Type',
-              },
-              {
-                  data: 'Description',
-              },
-              {
-                  data: 'Action',
-              },
-          ]
-      },
-
       disabledDates: {
         from: new Date(),
       },
@@ -390,7 +379,6 @@ export default {
     Datepicker,
     CallWorkflow,
     Offence,
-    datatable,
   },
   computed: {
     ...mapGetters('callemailStore', {
@@ -426,11 +414,20 @@ export default {
         }
     },
     isReadonly: function() {
-        if (this.call_email.status && this.call_email.status.id === 'draft') {
-          return false;
-        } else {
-          return true;
-        }
+        return this.call_email.readonly_user;
+        
+        //if (this.call_email.readonly_status) {
+         //   return true;
+        //} else {
+         //   return this.call_email.readonly_user;
+       // }
+        
+        //if (this.call_email.status && this.call_email.status.id === 'draft' &&
+        //this.call_email.assigned_to_id === this.current_user.id) {
+         // return false;
+        //} else {
+        //  return true;
+        //}
     },
     statusDisplay: function() {
       return this.call_email.status ? this.call_email.status.name : '';
@@ -453,11 +450,14 @@ export default {
   },
   methods: {
     ...mapActions('callemailStore', {
-      loadCallEmail: "loadCallEmail",
+      loadCallEmail: 'loadCallEmail',
       saveCallEmail: 'saveCallEmail',
-      // loadAllocatedGroup: "loadAllocatedGroup",
-      setRegionId: "setRegionId",
-      setAllocatedGroupList: "setAllocatedGroupList",
+      setCallEmail: 'setCallEmail', 
+      // loadAllocatedGroup: 'loadAllocatedGroup',
+      setRegionId: 'setRegionId',
+      setAllocatedGroupList: 'setAllocatedGroupList',
+      setOccurrenceTimeStart: 'setOccurrenceTimeStart',
+      setOccurrenceTimeEnd: 'setOccurrenceTimeEnd',
     }),
     ...mapActions({
       saveFormData: "saveFormData",
@@ -476,15 +476,15 @@ export default {
     offence(){
       this.$refs.offence.isModalOpen = true;
     },
-    save: async function() {
-      if (this.call_email.id) {
-        await this.saveCallEmail({ route: false, crud: 'save' });
-      } else {
-        await this.saveCallEmail({ route: false, crud: 'create'});
-        this.$nextTick(function() {
-          this.$router.push({name: 'view-call-email', params: {call_email_id: this.call_email.id}});
-        });
-      }
+    save: async function () {
+        if (this.call_email.id) {
+            await this.saveCallEmail({ route: false, crud: 'save' });
+        } else {
+            await this.saveCallEmail({ route: false, crud: 'create'});
+            this.$nextTick(function () {
+                this.$router.push({name: 'view-call-email', params: {call_email_id: this.call_email.id}});
+            });
+        }
     },
     saveExit: async function() {
       if (this.call_email.id) {
@@ -512,6 +512,17 @@ export default {
         
       });
     },
+    updateAssignedToId: async function () {
+        let url = helpers.add_endpoint_join(
+            api_endpoints.call_email, 
+            this.call_email.id + '/update_assigned_to_id/'
+            );
+        let res = await Vue.http.post(
+            url, 
+            { 'assigned_to_id': this.call_email.assigned_to_id }
+        );
+        await this.setCallEmail(res.body); 
+    }
   },
   beforeRouteEnter: function(to, from, next) {
             next(async (vm) => {
@@ -569,23 +580,37 @@ export default {
     Object.assign(this.regionDistricts, returned_region_districts);
 
     // load volunteer group list
-    let url = helpers.add_endpoint_join(
-                api_endpoints.call_email, 
-                this.call_email.id + '/get_allocated_group/'
-                );
-    let returned_volunteer_list = await Vue.http.get(url);
-    if (returned_volunteer_list.body.allocated_group) {
-      this.setAllocatedGroupList(returned_volunteer_list.body.allocated_group.members);
-    }
+    //let url = helpers.add_endpoint_join(
+      //          api_endpoints.call_email, 
+        //        this.call_email.id + '/get_allocated_group/'
+          //      );
+//    let returned_volunteer_list = await Vue.http.get(url);
+  //  if (returned_volunteer_list.body.allocated_group) {
+    //  this.setAllocatedGroupList(returned_volunteer_list.body.allocated_group.members);
+    //}
   },
   mounted: function() {
-        console.log(this);
-        $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
-            var chev = $( this ).children()[ 0 ];
-            window.setTimeout( function () {
-                $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
-            }, 100 );
-        });
+      let vm = this;
+      $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
+          var chev = $( this ).children()[ 0 ];
+          window.setTimeout( function () {
+              $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
+          }, 100 );
+      });
+      // Time field controls
+      $('#occurrenceTimeStartPicker').datetimepicker({
+              format: 'LT'
+          });
+      $('#occurrenceTimeEndPicker').datetimepicker({
+              format: 'LT'
+          });
+      $('#occurrenceTimeStartPicker').on('dp.change', function(e) {
+          vm.setOccurrenceTimeStart(e.date.format('LT'));
+      });
+      $('#occurrenceTimeEndPicker').on('dp.change', function(e) {
+          vm.setOccurrenceTimeEnd(e.date.format('LT'));
+      });
+
   }
 };
 </script>
@@ -593,8 +618,5 @@ export default {
 <style lang="css">
 .action-button {
     margin-top: 5px;
-}
-#main-column {
-  margin-left:20px;
 }
 </style>

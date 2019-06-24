@@ -31,6 +31,7 @@ from wildlifecompliance.components.users.serializers import (
     ComplianceUserDetailsSerializer,
     CompliancePermissionGroupDetailedSerializer,
     ComplianceUserDetailsOptimisedSerializer,
+    CompliancePermissionGroupMembersSerializer,
 )
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
@@ -65,10 +66,10 @@ class GetComplianceUserDetails(views.APIView):
                 for permission in group.permissions.all():
                     compliance_permissions.append(permission.codename)
                 returned_data.update({ 'base_compliance_permissions': compliance_permissions })
-            if 'officer' in compliance_permissions:
-                returned_data.update({ 'is_officer': True })
+            if 'volunteer' in compliance_permissions:
+                returned_data.update({'is_volunteer': True})
             else:
-                returned_data.update({ 'is_officer': False })
+                returned_data.update({'is_volunteer': False})
         return Response(returned_data)
 
 
@@ -585,8 +586,21 @@ class RegionDistrictViewSet(viewsets.ModelViewSet):
             group = CompliancePermissionGroup.objects.filter(region_district=instance).filter(permissions=permission).first()
             print(group)
 
-            serializer = ComplianceUserDetailsOptimisedSerializer(group.members, many=True)
-            return Response(data={'allocated_group': serializer.data, 'group_id': group.id})
+            allocated_group = [{
+                'email': '',
+                'first_name': '',
+                'full_name': '',
+                'id': None,
+                'last_name': '',
+                'title': '',
+                }]
+            #serializer = ComplianceUserDetailsOptimisedSerializer(group.members, many=True)
+            serializer = CompliancePermissionGroupMembersSerializer(instance=group)
+            print(serializer.data)
+            for member in serializer.data['members']:
+                allocated_group.append(member)
+
+            return Response(data={'allocated_group': allocated_group, 'group_id': group.id})
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

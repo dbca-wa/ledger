@@ -207,29 +207,35 @@ export const callemailStore = {
             state.call_email.location.properties.details = "";
         },
         updateAllocatedGroupList(state, members) {
-            console.log(members);
             Vue.set(state.call_email, 'allocated_group', {});
-            let blankable_members = [];
-            Object.assign(blankable_members, members);
-            if (blankable_members) {
-                blankable_members.splice(0, 0, 
-                    {
-                    id: null, 
-                    email: "",
-                    first_name: "",
-                    last_name: "",
-                    full_name: "",
-                    title: "",
-                    });
-            }
-            console.log(blankable_members);
-            Vue.set(state.call_email.allocated_group, 'members', blankable_members);
+            //let blankable_members = [];
+            //Object.assign(blankable_members, members);
+            //if (blankable_members) {
+              //  blankable_members.splice(0, 0, 
+                //    {
+                  //  id: null, 
+                   // email: "",
+                   // first_name: "",
+                    //last_name: "",
+                    //full_name: "",
+                    //title: "",
+                    //});
+            //}
+            //Vue.set(state.call_email.allocated_group, 'members', blankable_members);
+            console.log(members);
+            Vue.set(state.call_email, 'allocated_group', members);
         },
         updateAllocatedGroupId(state, id) {
             state.call_email.allocated_group_id = id;
         },
         updateRegionId(state, id) {
             state.call_email.region_id = id;
+        },
+        updateOccurrenceTimeStart(state, time) {
+            Vue.set(state.call_email, 'occurrence_time_start', time);
+        },
+        updateOccurrenceTimeEnd(state, time) {
+            Vue.set(state.call_email, 'occurrence_time_end', time);
         },
     },
     actions: {
@@ -278,9 +284,12 @@ export const callemailStore = {
                 }
             }
         },
-        async saveCallEmail({ dispatch, state, rootGetters}, { route, crud }) {
+        async saveCallEmail({ dispatch, state, rootGetters}, { route, crud, internal }) {
             console.log("saveCallEmail");
+            console.log("internal");
+            console.log(internal);
             let callId = null;
+            let savedCallEmail = null;
             try {
                 let fetchUrl = null;
                 if (crud === 'create' || crud === 'duplicate') {
@@ -313,20 +322,29 @@ export const callemailStore = {
                     payload.renderer_data = rootGetters.renderer_form_data;
                     }
                 }
-                const savedCallEmail = await Vue.http.post(fetchUrl, payload)
+                savedCallEmail = await Vue.http.post(fetchUrl, payload)
                 await dispatch("setCallEmail", savedCallEmail.body);
                 callId = savedCallEmail.body.id;
 
             } catch (err) {
                 console.log(err);
-                await swal("Error", "There was an error saving the record", "error");
+                if (internal) {
+                    // return "There was an error saving the record";
+                    return err;
+                } else {
+                    await swal("Error", "There was an error saving the record", "error");
+                }
                 return window.location.href = "/internal/call_email/";
             }
             if (crud === 'duplicate') {
                 return window.location.href = "/internal/call_email/" + callId;
             }
             else if (crud !== 'create') {
-                await swal("Saved", "The record has been saved", "success");
+                if (!internal) {
+                    await swal("Saved", "The record has been saved", "success");
+                } else {
+                    return savedCallEmail;
+                }
             }
             if (route) {
                 return window.location.href = "/internal/call_email/";
@@ -335,8 +353,6 @@ export const callemailStore = {
             }
         },
         setAllocatedGroupList({ commit }, data) {
-            console.log("setAllocatedGroupList");
-            console.log(data);
             commit('updateAllocatedGroupList', data);
         },
         setRegionId({ commit }, id) {
@@ -344,28 +360,27 @@ export const callemailStore = {
         },
         
         async loadAllocatedGroup({ dispatch }, { region_district_id, group_permission } ) {
-            console.log(region_district_id);
-            console.log(group_permission);
             let url = helpers.add_endpoint_join(
                 api_endpoints.region_district,
                 region_district_id + '/get_group_id_by_region_district/'
                 );
-            console.log(url);
             let returned = await Vue.http.post(
                 url, 
                 { 'group_permission': group_permission
             });
-            console.log(returned.body);
+            console.log(returned);
             if (returned.body.group_id) {
                 await dispatch('setAllocatedGroupId', returned.body.group_id);
                 await dispatch('setAllocatedGroupList', null);
             }
             if (returned.body.allocated_group) {
                 await dispatch('setAllocatedGroupList', returned.body.allocated_group);
-            }
+                if (returned.body.allocated_group.length <= 1) {
+                    return {'errorResponse': 'This group has no members'};
+                }
+            } 
         },
         setAllocatedGroupId({ commit, }, id) {
-            console.log("setAllocatedGroupId");
             commit("updateAllocatedGroupId", id);
         },
         setCallID({ commit, }, id) {
@@ -419,6 +434,11 @@ export const callemailStore = {
         setClassification({ commit, }, classification) {
             commit("updateClassification", classification)
         },
-
+        setOccurrenceTimeStart({ commit }, time ) {
+            commit("updateOccurrenceTimeStart", time);
+        },
+        setOccurrenceTimeEnd({ commit }, time ) {
+            commit("updateOccurrenceTimeEnd", time);
+        },
     },
 };
