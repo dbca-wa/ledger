@@ -161,28 +161,28 @@
                         <div class="small-6 columns">
                             <label for="vesselSize" class="text-left">Vessel Size (Meters)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselSize" ref="vesselSize" name="vessel_size" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselSize" step="1" :disabled="current_booking.length > 0"/>
+                            <input type="number" id="vesselSize" ref="vesselSize" name="vessel_size" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselSize" step='0.01' :disabled="current_booking.length > 0"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
                             <label for="vesselDraft" class="text-left">Vessel Draft (Meters)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselDraft" ref="vesselDraft" name="vessel_draft" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselDraft" step="1" :disabled="current_booking.length > 0"/>
+                            <input type="number" id="vesselDraft" ref="vesselDraft" name="vessel_draft" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselDraft" step='0.01' :disabled="current_booking.length > 0"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
                             <label for="vesselBeam" class="text-left">Vessel Beams (Meters)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselBeam" ref="vesselBeam" name="vessel_beam" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselBeam" step="1" :disabled="current_booking.length > 0" />
+                            <input type="number" id="vesselBeam" ref="vesselBeam" name="vessel_beam" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselBeam" step='0.01' :disabled="current_booking.length > 0" />
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
                             <label for="vesselWeight" class="text-left">Vessel Weight (Tonnes)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselWeight" ref="vesselWeight" name="vessel_weight" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselWeight" step="1" :disabled="current_booking.length > 0"/>
+                            <input type="number" id="vesselWeight" ref="vesselWeight" name="vessel_weight" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselWeight" step='0.01' :disabled="current_booking.length > 0"/>
                         </div>
                     </div>
                 </div>
