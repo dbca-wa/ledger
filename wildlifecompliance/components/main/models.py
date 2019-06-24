@@ -135,28 +135,19 @@ approved_related_item_models = [
         ]
 
 def get_related_items(self, **kwargs):
-    # import ipdb; ipdb.set_trace()
     return_list = []
     for f in self._meta.get_fields():
         if f.is_relation and f.related_model.__name__ in approved_related_item_models:
-            # Get foreign key related fields
-            # TODO add approved related models list and compare to f.name
-            # if f.is_relation and (f.one_to_many or f.many_to_one): # include related item models
-            if f.is_relation and f.one_to_many: # include related item models
-                print(f)
-                #field_value = f.field.value_from_object(f.field.model)
-                # print(field_value)
+            if f.is_relation and f.one_to_many:
 
                 field_objects = f.related_model.objects.filter(call_email_id=self.id)
                 for field_object in field_objects:
-                    print(field_object)
                     return_list.append(
                         {   'model_name': f.name,
                             'get_related_items_identifier': field_object.get_related_items_identifier, 
                             'get_related_items_descriptor': field_object.get_related_items_descriptor
                         })
             elif f.is_relation:
-                print(f)
                 field_value = f.value_from_object(self)
 
                 if field_value:
