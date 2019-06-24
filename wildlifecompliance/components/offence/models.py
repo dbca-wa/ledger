@@ -67,6 +67,14 @@ class Offence(RevisionedMixin):
 
     def __str__(self):
         return 'ID: {}, Status: {}, Identifier: {}'.format(self.id, self.status, self.identifier)
+    
+    @property
+    def get_related_items_identifier(self):
+        return 'ID: {}, Status: {}, Identifier: {}'.format(self.id, self.status, self.identifier)
+    
+    @property
+    def get_related_items_descriptor(self):
+        return 'ID: {}, Status: {}, Identifier: {}'.format(self.id, self.status, self.identifier)
 
 
 class Offender(models.Model):
