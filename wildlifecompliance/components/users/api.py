@@ -31,6 +31,7 @@ from wildlifecompliance.components.users.serializers import (
     ComplianceUserDetailsSerializer,
     CompliancePermissionGroupDetailedSerializer,
     ComplianceUserDetailsOptimisedSerializer,
+    CompliancePermissionGroupMembersSerializer,
 )
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
@@ -585,8 +586,21 @@ class RegionDistrictViewSet(viewsets.ModelViewSet):
             group = CompliancePermissionGroup.objects.filter(region_district=instance).filter(permissions=permission).first()
             print(group)
 
-            serializer = ComplianceUserDetailsOptimisedSerializer(group.members, many=True)
-            return Response(data={'allocated_group': serializer.data, 'group_id': group.id})
+            allocated_group = [{
+                'email': '',
+                'first_name': '',
+                'full_name': '',
+                'id': None,
+                'last_name': '',
+                'title': '',
+                }]
+            #serializer = ComplianceUserDetailsOptimisedSerializer(group.members, many=True)
+            serializer = CompliancePermissionGroupMembersSerializer(instance=group)
+            print(serializer.data)
+            for member in serializer.data['members']:
+                allocated_group.append(member)
+
+            return Response(data={'allocated_group': allocated_group, 'group_id': group.id})
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

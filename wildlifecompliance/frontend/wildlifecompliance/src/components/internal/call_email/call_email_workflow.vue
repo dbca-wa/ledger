@@ -39,7 +39,7 @@
                             </div>
                             <div class="col-sm-9">
                               <select class="form-control" v-model="call_email.assigned_to_id">
-                                <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
+                                <option  v-for="option in call_email.allocated_group" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
                               </select>
@@ -320,7 +320,7 @@ export default {
         'group_permission': this.group_permission,
         });
         if (this.call_email.allocated_group && 
-            this.call_email.allocated_group.members.length <= 1) {
+            this.call_email.allocated_group.length <= 1) {
             console.log(allocatedGroupResponse);
             this.errorResponse = allocatedGroupResponse.errorResponse;
         }
@@ -361,9 +361,9 @@ export default {
         if (this.call_email.district_id) {
           payload.append('district_id', this.call_email.district_id);
         }
-        if (this.call_email.allocated_group && this.call_email.allocated_group.members.length > 0) {
+        if (this.call_email.allocated_group && this.call_email.allocated_group.length > 0) {
           let user_id_list = [];
-          for (let user of this.call_email.allocated_group.members) {
+          for (let user of this.call_email.allocated_group) {
             if (user.id) {
               user_id_list.push(user.id);
             }

@@ -355,7 +355,13 @@ class CallEmailSerializer(serializers.ModelSerializer):
     referrer = ReferrerSerializer(read_only=True)
     data = ComplianceFormDataRecordSerializer(many=True)
     email_user = EmailUserSerializer(read_only=True)
-    #allocated_group = CallEmailAllocatedGroupSerializer(read_only=True)
+    # allocated_group = CallEmailAllocatedGroupSerializer(many=True)
+    # allocated_group = CompliancePermissionGroupMembersSerializer()
+    allocated_group = serializers.SerializerMethodField()
+    user_is_assignee = serializers.SerializerMethodField()
+    readonly_user = serializers.SerializerMethodField()
+    readonly_status = serializers.SerializerMethodField()
+
 
     class Meta:
         model = CallEmail
@@ -364,7 +370,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'status',
             # 'status_display',
             'assigned_to_id',
-            #'allocated_group',
+            'allocated_group',
             'allocated_group_id',
             'location',
             'location_id',
@@ -395,11 +401,57 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'district_id',
             'case_priority_id',
             'inspection_type_id',
+            'user_is_assignee',
+            'readonly_user',
+            'readonly_status',
         )
         read_only_fields = (
             'id', 
             )
-        
+
+    def get_user_is_assignee(self, obj):
+        # user = EmailUser.objects.get(id=self.context.get('request', {}).user.id)
+        user_id = self.context.get('request', {}).user.id
+        # compliance_permissions = []
+        # for group in user.groups.all():
+          #  for permission in group.permissions.all():
+           #     compliance_permissions.append(permission.codename)
+        if user_id == obj.assigned_to_id:
+            return True
+
+    def get_readonly_user(self, obj):
+        user_id = self.context.get('request', {}).user.id
+
+        if user_id == obj.assigned_to_id:
+            return False
+        elif obj.allocated_group:
+           for member in obj.allocated_group.members:
+               if user_id == member.id:
+                  return False
+        else:
+            return True
+
+    def get_readonly_status(self, obj):
+        if obj.status != 'draft':
+            return True
+        else:
+            return False
+
+    def get_allocated_group(self, obj):
+        allocated_group = [{
+            'email': '',
+            'first_name': '',
+            'full_name': '',
+            'id': None,
+            'last_name': '',
+            'title': '',
+            }]
+        returned_allocated_group = CompliancePermissionGroupMembersSerializer(instance=obj.allocated_group)
+        for member in returned_allocated_group.data['members']:
+            allocated_group.append(member)
+
+        return allocated_group
+
 
 class CallEmailDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)

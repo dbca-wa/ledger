@@ -318,17 +318,7 @@ const ComplianceRendererBlock = {
           type: String,
           default: null
       },
-      readonlyParent: {
-          type: Boolean,
-          default: false
-      },
   },
-  created: function () {
-        //console.log("something");
-        //console.log(this.is_readonly);
-        //console.log(this.readonlyParent);
-  },
-
   computed: {
     ...mapGetters([
         'renderer_form_data',
@@ -339,7 +329,7 @@ const ComplianceRendererBlock = {
     }),
     is_readonly: function() {
         // return this.readonlyParent ? this.readonlyParent : this.component.readonly;
-        return this.component.readonly ? this.component.readonly : this.readonlyParent;
+        return this.component.readonly ? this.component.readonly : this.call_email.readonly;
     },
     comment_data: function() {
         return this.call_email.comment_data;
