@@ -118,17 +118,17 @@ export default {
                 mRender: function(data, type, full) {
                    if (full.activity && vm.is_external
                                 && !vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])
-                                && (full.transfer === 'notify' || full.transfer === '')) {
+                                && (full.transfer === 'Notified' || full.transfer === '')) {
                       var column = `<a class="edit-row" data-rowid=\"__ROWID__\">Edit</a><br/>`;
                       column = column.replace(/__ROWID__/g, full.rowId);
                       return column;
                    }
-                   if (full.activity && (full.transfer === 'accept' || full.transfer === 'decline')) {
+                   if (full.activity && (full.transfer === 'Accepted' || full.transfer === 'Declined')) {
                       return full.transfer;
                    }
                    if (full.activity && vm.is_external
                                 && (vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])
-                                && full.transfer === 'notify')) {
+                                && full.transfer === 'Notified')) {
                       var accept = `<a class="accept-row" data-rowid=\"__ROWID__\">Accept</a> or `;
                       accept = accept.replace(/__ROWID__/g, full.rowId);
                       var decline = `<a class="decline-row" data-rowid=\"__ROWID__\">Decline</a><br/>`;
@@ -205,6 +205,7 @@ export default {
       const self = this;
       var rows = self.$refs.return_datatable.vmDataTable
       self.$refs.sheet_entry.isAddEntry = true;
+      self.$refs.sheet_entry.return_table = rows;
       self.$refs.sheet_entry.row_of_data = rows;
       self.$refs.sheet_entry.activityList = self.returns.sheet_activity_list;
       self.$refs.sheet_entry.speciesType = self.returns.sheet_species
@@ -212,6 +213,7 @@ export default {
       self.$refs.sheet_entry.entryActivity = Object.keys(self.returns.sheet_activity_list)[0];
       self.$refs.sheet_entry.entryTotal = self.sheet_total;
       self.$refs.sheet_entry.currentStock = self.sheet_total;
+      self.$refs.sheet_entry.initialQty = '0';
       self.$refs.sheet_entry.entryComment = '';
       self.$refs.sheet_entry.entryLicence = '';
       self.$refs.sheet_entry.entryDateTime = '';
@@ -231,6 +233,7 @@ export default {
         vm.$refs.sheet_entry.isChangeEntry = true;
         vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
         vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
+        vm.$refs.sheet_entry.return_table = vm.$refs.return_datatable.vmDataTable
         vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
         vm.$refs.sheet_entry.entrySpecies = vm.sheetTitle;
         vm.$refs.sheet_entry.entryDateTime = vm.$refs.sheet_entry.row_of_data.data().date;
@@ -259,7 +262,7 @@ export default {
             rows[i].total = vm.intVal(rows[i].total) + vm.intVal(selected.data().qty)
           }
           if (vm.intVal(rows[i].date)==vm.intVal(selected.data().date)) {
-            rows[i].transfer = 'accept'
+            rows[i].transfer = 'Accepted'
 
             let transfer = {}  //{speciesID: {this.entryDateTime: row_data},}
             if (vm.returns.sheet_species in vm.species_transfer){
@@ -283,7 +286,7 @@ export default {
         var rows = vm.$refs.return_datatable.vmDataTable.data();
         for (let i=0; i<rows.length; i++) {
           if (vm.intVal(rows[i].date)==vm.intVal(selected.data().date)) {
-            rows[i].transfer = 'decline'
+            rows[i].transfer = 'Declined'
 
             let transfer = {}  //{speciesID: {this.entryDateTime: row_data},}
             if (vm.returns.sheet_species in vm.species_transfer){
@@ -298,15 +301,6 @@ export default {
         vm.$refs.return_datatable.vmDataTable.clear().draw();
         vm.$refs.return_datatable.vmDataTable.rows.add(vm.species_cache[vm.returns.sheet_species]);
         vm.$refs.return_datatable.vmDataTable.draw();
-     });
-
-     vm.$refs.return_datatable.vmDataTable.on('click','.pay-transfer', function(e) {  // TODO: payments
-        e.preventDefault();
-        vm.$refs.sheet_entry.isChangeEntry = true;
-        vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
-        vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
-        vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
-        vm.$refs.sheet_entry.isModalOpen = false;
      });
 
      // Instantiate Form Actions

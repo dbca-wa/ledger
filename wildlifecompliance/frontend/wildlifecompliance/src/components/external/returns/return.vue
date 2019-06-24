@@ -98,8 +98,8 @@ export default {
         data.append(speciesID, speciesJSON)
       };
       var speciesJSON = []
+      let cnt = 0;
       for (const speciesID in self.species_transfer) { // Running Sheet Transfers
-        let cnt = 0;
         Object.keys(self.species_transfer[speciesID]).forEach(function(key) {
           speciesJSON[cnt] = JSON.stringify(self.species_transfer[speciesID][key])
           cnt++;
