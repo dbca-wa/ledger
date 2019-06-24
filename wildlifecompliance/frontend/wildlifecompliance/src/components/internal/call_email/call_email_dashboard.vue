@@ -148,16 +148,18 @@
                         // }
                         {
                         // Actions
-                            width: "10%",
-                            mRender: function(data,type,full) {
-                                let links = '';
-                                    links += full.user_is_assignee ? 
-                                        `<a href="/internal/call_email/${full.id}">Process</a>` :
-                                        `<a href="/internal/call_email/${full.id}">View</a>`;
-                                return links;
-                            },
-                            orderable: false,
-                            searchable: false
+                            //width: "10%",
+                            //mRender: function(data,type,full) {
+                              //  let links = '';
+                                //    links += full.user_is_assignee ? 
+                                  //      `<a href="/internal/call_email/${full.id}">Process</a>` :
+                                    //    `<a href="/internal/call_email/${full.id}">View</a>`;
+                                //return links;
+                            //},
+                            //orderable: false,
+                            //searchable: false
+                            data: "user_action",
+                            
                         }
                     ],
                 },

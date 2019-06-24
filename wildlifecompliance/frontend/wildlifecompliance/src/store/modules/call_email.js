@@ -208,20 +208,22 @@ export const callemailStore = {
         },
         updateAllocatedGroupList(state, members) {
             Vue.set(state.call_email, 'allocated_group', {});
-            let blankable_members = [];
-            Object.assign(blankable_members, members);
-            if (blankable_members) {
-                blankable_members.splice(0, 0, 
-                    {
-                    id: null, 
-                    email: "",
-                    first_name: "",
-                    last_name: "",
-                    full_name: "",
-                    title: "",
-                    });
-            }
-            Vue.set(state.call_email.allocated_group, 'members', blankable_members);
+            //let blankable_members = [];
+            //Object.assign(blankable_members, members);
+            //if (blankable_members) {
+              //  blankable_members.splice(0, 0, 
+                //    {
+                  //  id: null, 
+                   // email: "",
+                   // first_name: "",
+                    //last_name: "",
+                    //full_name: "",
+                    //title: "",
+                    //});
+            //}
+            //Vue.set(state.call_email.allocated_group, 'members', blankable_members);
+            console.log(members);
+            Vue.set(state.call_email, 'allocated_group', members);
         },
         updateAllocatedGroupId(state, id) {
             state.call_email.allocated_group_id = id;
@@ -320,7 +322,7 @@ export const callemailStore = {
                     payload.renderer_data = rootGetters.renderer_form_data;
                     }
                 }
-                const savedCallEmail = await Vue.http.post(fetchUrl, payload)
+                savedCallEmail = await Vue.http.post(fetchUrl, payload)
                 await dispatch("setCallEmail", savedCallEmail.body);
                 callId = savedCallEmail.body.id;
 
@@ -366,6 +368,7 @@ export const callemailStore = {
                 url, 
                 { 'group_permission': group_permission
             });
+            console.log(returned);
             if (returned.body.group_id) {
                 await dispatch('setAllocatedGroupId', returned.body.group_id);
                 await dispatch('setAllocatedGroupList', null);

@@ -306,7 +306,7 @@ const ComplianceRendererBlock = {
       GridBlock,
   },
   data: function() {
-    return {
+      return {
     }
   },
   props:{
@@ -317,7 +317,7 @@ const ComplianceRendererBlock = {
       instance: {
           type: String,
           default: null
-      }
+      },
   },
   computed: {
     ...mapGetters([
@@ -328,7 +328,8 @@ const ComplianceRendererBlock = {
         call_email: 'call_email',
     }),
     is_readonly: function() {
-        return this.component.readonly ? this.component.readonly : null;
+        // return this.readonlyParent ? this.readonlyParent : this.component.readonly;
+        return this.component.readonly ? this.component.readonly : this.call_email.readonly_user;
     },
     comment_data: function() {
         return this.call_email.comment_data;

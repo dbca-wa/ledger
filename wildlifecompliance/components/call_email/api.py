@@ -384,7 +384,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                             action=ComplianceFormDataRecord.ACTION_TYPE_ASSIGN_VALUE
                         )
                         # Serializer returns CallEmail.data for HTTP response
-                        duplicate = CallEmailSerializer(instance=new_instance)
+                        duplicate = CallEmailSerializer(instance=new_instance, context={'request': request})
                         headers = self.get_success_headers(duplicate.data)
 
                         # duplicate.data.update({'classification_id': request_data.get('classification_id')})
@@ -575,7 +575,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                         ComplianceUserAction.ACTION_SAVE_CALL_EMAIL_.format(
                         instance.number), request)
                     headers = self.get_success_headers(serializer.data)
-                    return_serializer = CallEmailSerializer(instance=saved_instance)
+                    return_serializer = CallEmailSerializer(instance=saved_instance, context={'request': request})
                     return Response(
                         return_serializer.data,
                         status=status.HTTP_201_CREATED,
@@ -691,9 +691,9 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                             ComplianceUserAction.ACTION_SANCTION_OUTCOME.format(instance.number), 
                             request)
 
-                instance.region_id = request.data.get('region_id')
-                instance.district_id = request.data.get('district_id')
-                instance.allocated_group_id = request.data.get('allocated_group_id')
+                #instance.region_id = request.data.get('region_id')
+                #instance.district_id = request.data.get('district_id')
+                #instance.allocated_group_id = request.data.get('allocated_group_id')
                 instance.assigned_to_id = None
                 instance.save()
 
@@ -709,9 +709,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
                     serializer.save()
-                    headers = self.get_success_headers(serializer.data)
+                    return_serializer = CallEmailSerializer(instance=instance, 
+                            context={'request': request}
+                            ) 
+                    headers = self.get_success_headers(return_serializer.data)
                     return Response(
-                            serializer.data, 
+                            return_serializer.data, 
                             status=status.HTTP_201_CREATED,
                             headers=headers
                             )
@@ -735,9 +738,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             if serializer.is_valid():
                 serializer.save()
-                headers = self.get_success_headers(serializer.data)
+                return_serializer = CallEmailSerializer(instance=instance,
+                        context={'request': request}
+                        )
+                headers = self.get_success_headers(return_serializer.data)
                 return Response(
-                        serializer.data, 
+                        return_serializer.data, 
                         status=status.HTTP_201_CREATED,
                         headers=headers
                         )

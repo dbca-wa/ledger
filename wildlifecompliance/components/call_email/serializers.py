@@ -355,7 +355,13 @@ class CallEmailSerializer(serializers.ModelSerializer):
     referrer = ReferrerSerializer(read_only=True)
     data = ComplianceFormDataRecordSerializer(many=True)
     email_user = EmailUserSerializer(read_only=True)
-    #allocated_group = CallEmailAllocatedGroupSerializer(read_only=True)
+    # allocated_group = CallEmailAllocatedGroupSerializer(many=True)
+    # allocated_group = CompliancePermissionGroupMembersSerializer()
+    allocated_group = serializers.SerializerMethodField()
+    user_in_group = serializers.SerializerMethodField()
+    readonly_user = serializers.SerializerMethodField()
+    readonly_status = serializers.SerializerMethodField()
+
 
     class Meta:
         model = CallEmail
@@ -364,7 +370,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'status',
             # 'status_display',
             'assigned_to_id',
-            #'allocated_group',
+            'allocated_group',
             'allocated_group_id',
             'location',
             'location_id',
@@ -395,11 +401,57 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'district_id',
             'case_priority_id',
             'inspection_type_id',
+            'user_in_group',
+            'readonly_user',
+            'readonly_status',
         )
         read_only_fields = (
             'id', 
             )
-        
+
+    def get_user_in_group(self, obj):
+        user_id = self.context.get('request', {}).user.id
+
+        if obj.allocated_group:
+           for member in obj.allocated_group.members:
+               if user_id == member.id:
+                  return True
+        else:
+            return False
+
+    def get_readonly_user(self, obj):
+        user_id = self.context.get('request', {}).user.id
+
+        if user_id == obj.assigned_to_id:
+            return False
+        elif obj.allocated_group and not obj.assigned_to_id:
+           for member in obj.allocated_group.members:
+               if user_id == member.id:
+                  return False
+        else:
+            return True
+
+    def get_readonly_status(self, obj):
+        if obj.status != 'draft':
+            return True
+        else:
+            return False
+
+    def get_allocated_group(self, obj):
+        allocated_group = [{
+            'email': '',
+            'first_name': '',
+            'full_name': '',
+            'id': None,
+            'last_name': '',
+            'title': '',
+            }]
+        returned_allocated_group = CompliancePermissionGroupMembersSerializer(instance=obj.allocated_group)
+        for member in returned_allocated_group.data['members']:
+            allocated_group.append(member)
+
+        return allocated_group
+
 
 class CallEmailDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
@@ -407,6 +459,7 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
     lodgement_date = serializers.CharField(source='lodged_on')
     user_is_assignee = serializers.SerializerMethodField()
     assigned_to = ComplianceUserDetailsOptimisedSerializer(read_only=True)
+    user_action = serializers.SerializerMethodField()
 
     class Meta:
         model = CallEmail
@@ -422,6 +475,7 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
             'caller',
             'assigned_to',
             'assigned_to_id',
+            'user_action'
 
         )
         read_only_fields = (
@@ -437,6 +491,19 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
            #     compliance_permissions.append(permission.codename)
         if user_id == obj.assigned_to_id:
             return True
+
+    def get_user_action(self, obj):
+        user_id = self.context.get('request', {}).user.id
+        url = "/internal/call_email/" + str(obj.id)
+
+        if user_id == obj.assigned_to_id:
+            return '<a href=' + url + '>Process</a>';
+        elif obj.allocated_group:
+           for member in obj.allocated_group.members:
+               if user_id == member.id:
+                  return '<a href=' + url + '>Process</a>';
+        else:
+            return '<a href=' + url + '>View</a>';
 
 
 class UpdateAssignedToIdSerializer(serializers.ModelSerializer):

@@ -33,8 +33,8 @@
                           <div class="row">
                             <div class="col-sm-12">
                               
-                              <select class="form-control" v-model="call_email.assigned_to_id" @change="updateAssignedToId()">
-                                <option  v-for="option in call_email.allocated_group.members" :value="option.id" v-bind:key="option.id">
+                              <select :disabled="!call_email.user_in_group" class="form-control" v-model="call_email.assigned_to_id" @change="updateAssignedToId()">
+                                <option  v-for="option in call_email.allocated_group" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
                                 </option>
                               </select>
@@ -249,7 +249,6 @@
                 
                 <div v-for="(item, index) in current_schema">
                   <compliance-renderer-block
-                     :readonly=isReadonly"
                      :component="item"
                      v-bind:key="`compliance_renderer_block_${index}`"
                     />
@@ -282,8 +281,6 @@
               <h3></h3>
               </div></div>
 
-              <Offence ref="offence" />
-            
             </div>          
           </div>
 
@@ -398,12 +395,20 @@ export default {
         }
     },
     isReadonly: function() {
-        if (this.call_email.status && this.call_email.status.id === 'draft' &&
-        this.call_email.assigned_to_id === this.current_user.id) {
-          return false;
-        } else {
-          return true;
-        }
+        return this.call_email.readonly_user;
+        
+        //if (this.call_email.readonly_status) {
+         //   return true;
+        //} else {
+         //   return this.call_email.readonly_user;
+       // }
+        
+        //if (this.call_email.status && this.call_email.status.id === 'draft' &&
+        //this.call_email.assigned_to_id === this.current_user.id) {
+         // return false;
+        //} else {
+        //  return true;
+        //}
     },
     statusDisplay: function() {
       return this.call_email.status ? this.call_email.status.name : '';
@@ -428,6 +433,7 @@ export default {
     ...mapActions('callemailStore', {
       loadCallEmail: 'loadCallEmail',
       saveCallEmail: 'saveCallEmail',
+      setCallEmail: 'setCallEmail', 
       // loadAllocatedGroup: 'loadAllocatedGroup',
       setRegionId: 'setRegionId',
       setAllocatedGroupList: 'setAllocatedGroupList',
@@ -496,6 +502,7 @@ export default {
             url, 
             { 'assigned_to_id': this.call_email.assigned_to_id }
         );
+        await this.setCallEmail(res.body); 
     }
   },
   beforeRouteEnter: function(to, from, next) {
@@ -554,14 +561,14 @@ export default {
     Object.assign(this.regionDistricts, returned_region_districts);
 
     // load volunteer group list
-    let url = helpers.add_endpoint_join(
-                api_endpoints.call_email, 
-                this.call_email.id + '/get_allocated_group/'
-                );
-    let returned_volunteer_list = await Vue.http.get(url);
-    if (returned_volunteer_list.body.allocated_group) {
-      this.setAllocatedGroupList(returned_volunteer_list.body.allocated_group.members);
-    }
+    //let url = helpers.add_endpoint_join(
+      //          api_endpoints.call_email, 
+        //        this.call_email.id + '/get_allocated_group/'
+          //      );
+//    let returned_volunteer_list = await Vue.http.get(url);
+  //  if (returned_volunteer_list.body.allocated_group) {
+    //  this.setAllocatedGroupList(returned_volunteer_list.body.allocated_group.members);
+    //}
   },
   mounted: function() {
       let vm = this;
