@@ -215,6 +215,22 @@ export default {
     })
 
     },
+    fetchOrgApplicant(applicant_id){
+        let vm=this;
+        Vue.http.get(helpers.add_endpoint_json(api_endpoints.organisations,applicant_id)).then((response) => {
+
+            vm.applicant = response.body;
+            vm.applicant.name = response.body.name;
+            vm.applicant.abn = response.body.abn;
+            if (response.body.address==null) {
+                vm.applicant.address = vm.address_default;
+            } else {
+                vm.applicant.address = response.body.address;
+            }
+        },(error) => {
+            console.log(error);
+        })
+    },
     fetchProxyApplicant(applicant_id){
         let vm=this;
         Vue.http.get(helpers.add_endpoint_json(api_endpoints.users,applicant_id)).then((response) => {
