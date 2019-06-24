@@ -2194,6 +2194,7 @@ class ApplicationSelectedActivity(models.Model):
 
     @property
     def can_amend(self):
+        # TODO: check for situation where a new licence of same purpose exists
         # Returns true if the activity can be included in a Amendment Application
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_AMENDMENT,
@@ -2202,6 +2203,7 @@ class ApplicationSelectedActivity(models.Model):
 
     @property
     def can_renew(self):
+        # TODO: check for situation where a new licence of same purpose exists
         # Returns true if the activity can be included in a Renewal Application
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_RENEWAL,
@@ -2210,6 +2212,7 @@ class ApplicationSelectedActivity(models.Model):
 
     @property
     def can_reactivate_renew(self):
+        # TODO: check for situation where a new licence of same purpose exists
         # TODO: clarify business logic for when an activity renew is allowed to be reactivate.
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_SYSTEM_GENERATED,
@@ -2242,6 +2245,7 @@ class ApplicationSelectedActivity(models.Model):
 
     @property
     def can_reissue(self):
+        # TODO: check for situation where a new licence of same purpose exists
         # Returns true if the activity has expired, excluding if it was surrendered or cancelled
         current_date = timezone.now().date()
         return ApplicationSelectedActivity.objects.filter(
@@ -2258,11 +2262,15 @@ class ApplicationSelectedActivity(models.Model):
 
     @property
     def can_reinstate(self):
-        # Returns true if the activity has not yet expired and is currently suspended
+        # TODO: check for situation where a new licence of same purpose exists
+        # Returns true if the activity has not yet expired and is currently suspended or cancelled
         current_date = timezone.now().date()
         return self.expiry_date and\
             self.expiry_date >= current_date and\
-            self.activity_status == ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
+            self.activity_status in [
+                ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED
+            ]
 
     @property
     def base_fees(self):
@@ -2365,11 +2373,11 @@ class ApplicationSelectedActivity(models.Model):
         return self.licence_fee_paid and send_activity_invoice_email_notification(application, self, invoice_ref, request)
 
     def reactivate_renew(self, request):
-        pass
-        # with transaction.atomic():
-        #     self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED
-        #     self.updated_by = request.user
-        #     self.save()
+        # TODO: this needs work, reactivate renew logic to be clarified and function adjusted
+        with transaction.atomic():
+            self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED
+            self.updated_by = request.user
+            self.save()
 
     def surrender(self, request):
         with transaction.atomic():
