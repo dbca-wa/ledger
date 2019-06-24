@@ -2769,6 +2769,13 @@ class ProposalAssessment(RevisionedMixin):
     def checklist(self):
         return self.answers.all()
 
+    @property
+    def referral_group_name(self):
+        if self.referral_group:            
+            return self.referral_group.name
+        else:
+            return ''
+
 
 class ProposalAssessmentAnswer(RevisionedMixin):
     question=models.ForeignKey(ChecklistQuestion, related_name='answers')

@@ -5,7 +5,7 @@
                 <div class="">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <h3 class="panel-title">Workflow - Checklist<small v-if="assessment.referral_group">   Referral Group: {{assessment.referral_group}}</small>
+                            <h3 class="panel-title">Workflow - Checklist <small v-if="assessment.referral_group">   Referral Group: {{assessment.referral_group_name}}</small>
                                 <a class="panelClicker" :href="'#'+detailsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="detailsBody">
                                     <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                                 </a>

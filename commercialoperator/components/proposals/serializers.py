@@ -282,6 +282,7 @@ class ProposalAssessmentSerializer(serializers.ModelSerializer):
                 'submitter',
                 'referral_assessment',
                 'referral_group',
+                'referral_group_name',
                 'checklist'
                 )
 
