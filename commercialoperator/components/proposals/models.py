@@ -1238,7 +1238,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             raise ValidationError('You cannot change the current status at this time')
         elif self.approval and self.approval.can_reissue:
             if self.__approver_group() in request.user.proposalapprovergroup_set.all():
-                import ipdb; ipdb.set_trace()
+                #import ipdb; ipdb.set_trace()
                 self.processing_status = status
                 self.save()
                 # Create a log entry for the proposal
