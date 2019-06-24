@@ -130,22 +130,34 @@ for method_name, method in queryset_methods.items():
 #
 # (Call_email, 'C'), (Offence, 'O'), Email_User, Inspection, ...
 
-def get_related_items(self, **kwargs):
+approved_related_item_models = [
+        'Offence',
+        ]
 
+def get_related_items(self, **kwargs):
     return_list = []
     for f in self._meta.get_fields():
-        # Get foreign key related fields
-        # TODO add approved related models list and compare to f.name
-        if f.is_relation and (f.one_to_many or f.many_to_one): # include related item models
-            field_value = f.value_from_object(self)
-            if field_value:
-                field_object = f.related_model.objects.get(id=field_value)
+        if f.is_relation and f.related_model.__name__ in approved_related_item_models:
+            if f.is_relation and f.one_to_many:
 
-                return_list.append(
-                    {   'model_name': f.name,
-                        'get_related_items_identifier': field_object.get_related_items_identifier, 
-                        'get_related_items_descriptor': field_object.get_related_items_descriptor
-                    })
+                field_objects = f.related_model.objects.filter(call_email_id=self.id)
+                for field_object in field_objects:
+                    return_list.append(
+                        {   'model_name': f.name,
+                            'get_related_items_identifier': field_object.get_related_items_identifier, 
+                            'get_related_items_descriptor': field_object.get_related_items_descriptor
+                        })
+            elif f.is_relation:
+                field_value = f.value_from_object(self)
+
+                if field_value:
+                    field_object = f.related_model.objects.get(id=field_value)
+
+                    return_list.append(
+                        {   'model_name': f.name,
+                            'get_related_items_identifier': field_object.get_related_items_identifier, 
+                            'get_related_items_descriptor': field_object.get_related_items_descriptor
+                        })
     return return_list       
 
 # Examples of model properties for get_related_items

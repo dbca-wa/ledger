@@ -32,6 +32,8 @@ def prepare_attachments(attachments):
 
 def send_call_email_forward_email(select_group, call_email, workflow_entry, request=None):
     email = CallEmailForwardNotificationEmail()
+    if request.data.get('email_subject'):
+        email.subject = request.data.get('email_subject')
     url = request.build_absolute_uri(
         reverse(
             'internal-call-email-detail',
