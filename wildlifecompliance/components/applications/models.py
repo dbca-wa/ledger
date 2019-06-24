@@ -168,6 +168,15 @@ class Application(RevisionedMixin):
         CUSTOMER_STATUS_AMENDMENT_REQUIRED,
     ]
 
+    # List of statuses from above that allow a customer to view an application
+    # (read-only)
+    CUSTOMER_VIEWABLE_STATE = [
+        CUSTOMER_STATUS_UNDER_REVIEW,
+        CUSTOMER_STATUS_ACCEPTED,
+        CUSTOMER_STATUS_PARTIALLY_APPROVED,
+        CUSTOMER_STATUS_DECLINED,
+    ]
+
     PROCESSING_STATUS_DRAFT = 'draft'
     PROCESSING_STATUS_AWAITING_APPLICANT_RESPONSE = 'awaiting_applicant_response'
     PROCESSING_STATUS_APPROVED = 'approved'
@@ -184,15 +193,6 @@ class Application(RevisionedMixin):
         (PROCESSING_STATUS_DISCARDED, 'Discarded'),
         (PROCESSING_STATUS_UNDER_REVIEW, 'Under Review'),
     )
-
-    # List of statuses from above that allow a customer to view an application
-    # (read-only)
-    CUSTOMER_VIEWABLE_STATE = [
-        PROCESSING_STATUS_UNDER_REVIEW,
-        PROCESSING_STATUS_APPROVED,
-        PROCESSING_STATUS_DECLINED,
-        PROCESSING_STATUS_PARTIALLY_APPROVED,
-    ]
 
     ID_CHECK_STATUS_NOT_CHECKED = 'not_checked'
     ID_CHECK_STATUS_AWAITING_UPDATE = 'awaiting_update'
