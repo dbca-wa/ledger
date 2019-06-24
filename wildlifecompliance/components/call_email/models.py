@@ -209,10 +209,10 @@ class CallEmail(RevisionedMixin):
         null=True,
         related_name='call_schema',
     )
-    referrer = models.ForeignKey(
+    referrer = models.ManyToManyField(
         Referrer,
-        null=True,
-        related_name="report_referrer"
+        blank=True,
+        # related_name="report_referrer"
     )
     email_user = models.ForeignKey(
         EmailUser,

@@ -360,7 +360,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
                 permission = Permission.objects.filter(codename='volunteer').filter(content_type_id=compliance_content_type.id).first()
                 group = CompliancePermissionGroup.objects.filter(permissions=permission).first()
-                print(group)
                 request_data.update({'allocated_group_id': group.id})
                 
                 serializer = CreateCallEmailSerializer(data=request_data, partial=True)
@@ -371,7 +370,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     # Ensure classification_id and report_type_id is returned for Vue template evaluation                
                     # new_returned.update({'classification_id': request_data.get('classification_id')})
                     new_returned.update({'report_type_id': request_data.get('report_type_id')})
-                    new_returned.update({'referrer_id': request_data.get('referrer_id')})
+                    # new_returned.update({'referrer_id': request_data.get('referrer_id')})
                     if request_data.get('location'):
                         new_returned.update({'location_id': request_data.get('location').get('id')})
 
@@ -383,13 +382,14 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                             request.data.get('renderer_data'),
                             action=ComplianceFormDataRecord.ACTION_TYPE_ASSIGN_VALUE
                         )
+
                         # Serializer returns CallEmail.data for HTTP response
                         duplicate = CallEmailSerializer(instance=new_instance, context={'request': request})
                         headers = self.get_success_headers(duplicate.data)
 
                         # duplicate.data.update({'classification_id': request_data.get('classification_id')})
                         duplicate.data.update({'report_type_id': request_data.get('report_type_id')})
-                        duplicate.data.update({'referrer_id': request_data.get('referrer_id')})
+                        # duplicate.data.update({'referrer_id': request_data.get('referrer_id')})
                         if request_data.get('location'):
                             duplicate.data.update({'location_id': request_data.get('location').get('id')})
                         
@@ -612,6 +612,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def add_workflow_log(self, request, *args, **kwargs):
+        print(request.data)
         try:
             with transaction.atomic():
                 instance = self.get_object()
@@ -694,6 +695,20 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 #instance.region_id = request.data.get('region_id')
                 #instance.district_id = request.data.get('district_id')
                 #instance.allocated_group_id = request.data.get('allocated_group_id')
+                if request.data.get('referrers_selected'):
+                    referrers_selected = request.data.get('referrers_selected').split(",")
+                    print(referrers_selected)
+                    for selection in referrers_selected:
+                        print(selection)
+                        try:
+                            selection_int = int(selection)
+                        except Exception as e:
+                            raise e
+                        referrer = Referrer.objects.get(id=selection_int)
+                        if referrer:
+                                instance.referrer.add(referrer)
+                print("referrers")
+                print(instance.referrer.all())
                 instance.assigned_to_id = None
                 instance.save()
 

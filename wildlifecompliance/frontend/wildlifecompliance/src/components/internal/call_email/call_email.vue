@@ -255,25 +255,18 @@
                 </div>
               </FormSection>
 
-              <FormSection :formCollapse="true" label="Outcome" Index="3">
-                <div class="col-sm-12 form-group"><div class="row">
-                  <label class="col-sm-4">Referred To</label>
-                  <select :disabled="isReadonly" class="form-control" v-model="call_email.referrer_id">
-                          <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
-                            {{ option.name }} 
-                          </option>
-                  </select>
+              <FormSection v-if="(call_email.referrer && call_email.referrer.length > 0) || call_email.advice_details" :formCollapse="true" label="Outcome" Index="3">
+                  <div v-if="call_email.referrer && call_email.referrer.length > 0" class="col-sm-12 form-group"><div class="row">
+                    <label class="col-sm-4">Referred To</label>
+                    <select multiple :readonly="true" class="form-control" v-model="call_email.referrer">
+                      <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
+                        {{ option.name }} 
+                      </option>
+                    </select>
                 </div></div>
-                <div class="col-sm-12 form-group"><div class="row">
-                  <label class="col-sm-4">Advice given</label>
-                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.advice_given" v-bind:value="true">
-                    <label class="col-sm-1">Yes</label>
-                    <input :disabled="isReadonly" class="col-sm-1" type="radio" v-model="call_email.advice_given" v-bind:value="false">
-                    <label class="col-sm-1">No</label>
-                </div></div>
-                <div v-if="call_email.advice_given" class="col-sm-12 form-group"><div class="row">
+                <div v-if="call_email.advice_details" class="col-sm-12 form-group"><div class="row">
                   <label class="col-sm-4">Advice details</label>
-                  <textarea :readonly="isReadonly" class="form-control" rows="5" v-model="call_email.advice_details"/>
+                  <textarea :readonly="true" class="form-control" rows="5" v-model="call_email.advice_details"/>
                 </div></div>
               </FormSection>
               
