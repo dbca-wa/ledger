@@ -224,7 +224,7 @@ export default {
                     vm.approval.to_date =  e.date.format('DD/MM/YYYY');
                 }
                 else if ($(vm.$refs.to_date).data('date') === "") {
-                    vm.approval.to_date = "";
+                    vm.approval.to_date = null;
                 }
              });
        }
