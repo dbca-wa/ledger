@@ -48,7 +48,6 @@ class ReturnSerializer(serializers.ModelSerializer):
             'resources',
             'table',
             'condition',
-            'text',
             'format',
             'template',
             'has_payment',

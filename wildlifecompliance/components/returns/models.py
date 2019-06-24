@@ -35,13 +35,13 @@ class ReturnType(models.Model):
     """
     A definition to identify the format used to facilitate Return.
     """
-    RETURN_TYPE_SHEET = 'sheet'
-    RETURN_TYPE_QUESTION = 'question'
-    RETURN_TYPE_DATA = 'data'
-    RETURN_TYPE_CHOICES = (
-        (RETURN_TYPE_SHEET, 'Sheet'),
-        (RETURN_TYPE_QUESTION, 'Question'),
-        (RETURN_TYPE_DATA, 'Data')
+    FORMAT_SHEET = 'sheet'
+    FORMAT_QUESTION = 'question'
+    FORMAT_DATA = 'data'
+    FORMAT_CHOICES = (
+        (FORMAT_SHEET, 'Sheet'),
+        (FORMAT_QUESTION, 'Question'),
+        (FORMAT_DATA, 'Data')
     )
     name = models.CharField(null=True, blank=True, max_length=100)
     description = models.TextField(null=True, blank=True, max_length=256)
@@ -49,9 +49,15 @@ class ReturnType(models.Model):
     data_format = models.CharField(
         'Data format',
         max_length=30,
-        choices=RETURN_TYPE_CHOICES,
-        default=RETURN_TYPE_SHEET)
+        choices=FORMAT_CHOICES,
+        default=FORMAT_DATA)
+    # data_template is only used by ReturnData Format for upload.
     data_template = models.FileField(upload_to=template_directory_path, null=True, blank=True)
+    fee_required = models.BooleanField(default=False)
+    # fee_amount is a base amount required for the Return Type.
+    fee_amount = models.DecimalField(max_digits=8, decimal_places=2, default='0')
+    # fee_name is an optional field for fee and can be used to correspond to JSON property.
+    fee_name = models.CharField(null=True, blank=True, max_length=50)
     replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
     version = models.SmallIntegerField(default=1, blank=False, null=False)
 
@@ -105,19 +111,18 @@ class Return(models.Model):
     RETURN_CUSTOMER_STATUS_ACCEPTED = 'accepted'
 
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
-    application = models.ForeignKey(Application, related_name='returns')
+    application = models.ForeignKey(Application, related_name='returns_application')
     licence = models.ForeignKey(
         'wildlifecompliance.WildlifeLicence',
-        related_name='returns')
+        related_name='returns_licence')
     due_date = models.DateField()
-    text = models.TextField(blank=True)
     processing_status = models.CharField(
         choices=PROCESSING_STATUS_CHOICES,
         max_length=20,
         default=RETURN_PROCESSING_STATUS_FUTURE)
     assigned_to = models.ForeignKey(
         EmailUser,
-        related_name='wildlifecompliance_return_assignments',
+        related_name='returns_curator',
         null=True,
         blank=True)
     condition = models.ForeignKey(
@@ -131,7 +136,7 @@ class Return(models.Model):
         EmailUser,
         blank=True,
         null=True,
-        related_name='disturbance_compliances')
+        related_name='returns_submitter')
     reminder_sent = models.BooleanField(default=False)
     post_reminder_sent = models.BooleanField(default=False)
     return_type = models.ForeignKey(ReturnType, null=True)
@@ -149,10 +154,6 @@ class Return(models.Model):
             new_lodgement_id = 'R{0:06d}'.format(self.pk)
             self.lodgement_number = new_lodgement_id
             self.save()
-
-    @property
-    def regions(self):
-        return self.application.regions_list
 
     @property
     def activity(self):
@@ -227,7 +228,7 @@ class Return(models.Model):
         Property defining if the Return is Question based.
         :return: Boolean
         """
-        return True if self.format == ReturnType.RETURN_TYPE_QUESTION else False
+        return True if self.format == ReturnType.FORMAT_QUESTION else False
 
     @property
     def has_data(self):
@@ -235,7 +236,7 @@ class Return(models.Model):
         Property defining if the Return is Data based.
         :return: Boolean
         """
-        return True if self.format == ReturnType.RETURN_TYPE_DATA else False
+        return True if self.format == ReturnType.FORMAT_DATA else False
 
     @property
     def has_sheet(self):
@@ -243,7 +244,7 @@ class Return(models.Model):
         Property defining if the Return is Running Sheet based.
         :return: Boolean
         """
-        return True if self.format == ReturnType.RETURN_TYPE_SHEET else False
+        return True if self.format == ReturnType.FORMAT_SHEET else False
 
     @property
     def customer_status(self):
@@ -352,38 +353,6 @@ class Return(models.Model):
             self.log_user_action(ReturnUserAction.ACTION_SAVE_REQUEST.format(self), request)
         except BaseException:
             raise
-
-    def store(self, request):
-        """
-        Save the current state of the Return.
-        :param request:
-        :return:
-        """
-        pass
-
-    def submit(self, request):
-        """
-        Submit Return to Curator.
-        :param request:
-        :return:
-        """
-        pass
-
-    def amend(self, request):
-        """
-        Request amendment for Return.
-        :param request:
-        :return:
-        """
-        pass
-
-    def discard(self, request):
-        """
-        Discard a Return.
-        :param request:
-        :return:
-        """
-        pass
 
     def log_user_action(self, action, request):
         return ReturnUserAction.log_action(self, action, request.user)
@@ -518,7 +487,7 @@ class ReturnData(object):
 
     def _is_post_data_valid(self, tables_info, post_data):
         """
-        Validates table data against the schema,
+        Validates table data against the Schema for correct entry of data types.
         :param tables_info:
         :param post_data:
         :return:
@@ -533,7 +502,7 @@ class ReturnData(object):
 
     def _get_table_rows(self, table_name, post_data):
         """
-        Build row of data.
+        Builds a row of data taken from a table into a standard that can be consumed by the Schema.
         :param table_name:
         :param post_data:
         :return:
@@ -582,7 +551,7 @@ class ReturnQuestion(object):
         """
         tables = []
         for resource in self._return.return_type.resources:
-            resource_name = ReturnType.RETURN_TYPE_QUESTION
+            resource_name = ReturnType.FORMAT_QUESTION
             schema = Schema(resource.get('schema'))
             headers = []
             for f in schema.fields:
@@ -626,11 +595,11 @@ class ReturnQuestion(object):
         :return:
         """
         table_rows = self._get_table_rows(request.data)  # Nb: There is only ONE row where each Question is a header.
-        self._return.save_return_table(ReturnType.RETURN_TYPE_QUESTION, table_rows, request)
+        self._return.save_return_table(ReturnType.FORMAT_QUESTION, table_rows, request)
 
     def _get_table_rows(self, _data):
         """
-        Gets the formatted row of data from Questions and Answers.
+        Builds a row of data taken from the Request into a standard that can be saved.
         :param _data:
         :return:
         """
@@ -662,6 +631,7 @@ class ReturnSheet(object):
 
     _NO_ACTIVITY = {"echo": 1, "totalRecords": "0", "totalDisplayRecords": "0", "data": []}
 
+    # todo: change activity id to a meaningful name
     _ACTIVITY_TYPES = {
         "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false", "initial": ""},
         "SA02": {"label": "In through import", "auto": "false", "licence": "false", "pay": "false", "inward": ""},
@@ -692,6 +662,7 @@ class ReturnSheet(object):
         """
         _data = []
         # TODO: create default entries for each species on the licence.
+        # TODO: Each species has a defaulted Stock Activity (0 Totals).
         '''
         new_sheet = the_return.sheet
         for species in the_return.licence.species_list:
@@ -742,6 +713,7 @@ class ReturnSheet(object):
         """
         return self._ACTIVITY_TYPES
 
+    # todo: more generic method name for payment transfer
     @property
     def process_transfer_fee_payment(self, request):
         from ledger.payments.models import BpointToken
@@ -804,9 +776,6 @@ class ReturnSheet(object):
             except AttributeError:
                 continue
         self._add_transfer_activity(request)
-
-    def send_transfer_sender(self):
-        return self._return.submitter
 
     def set_species(self, _species):
         """
@@ -937,7 +906,7 @@ class ReturnSheet(object):
         """
         try:
             return Return.objects.filter(licence__licence_number=licence_no,
-                                         return_type__data_format=ReturnType.RETURN_TYPE_SHEET
+                                         return_type__data_format=ReturnType.FORMAT_SHEET
                                          ).first()
         except Return.DoesNotExist:
             raise ValidationError({'error': 'Error exception.'})
@@ -1009,9 +978,9 @@ class ReturnActivity(object):
     """
 
     _TRANSFER_STATUS_NONE = ''
-    _TRANSFER_STATUS_NOTIFY = 'notify'
-    _TRANSFER_STATUS_ACCEPT = 'accept'
-    _TRANSFER_STATUS_DECLINE = 'decline'
+    _TRANSFER_STATUS_NOTIFY = 'Notified'
+    _TRANSFER_STATUS_ACCEPT = 'Accepted'
+    _TRANSFER_STATUS_DECLINE = 'Declined'
 
     # Activity properties.
     _ACTIVITY_DATE = 'date'
@@ -1040,7 +1009,7 @@ class ReturnActivity(object):
         """
         try:
             return Return.objects.filter(licence__licence_number=self.licence,
-                                         return_type__data_format=ReturnType.RETURN_TYPE_SHEET
+                                         return_type__data_format=ReturnType.FORMAT_SHEET
                                          ).first()
         except Return.DoesNotExist:
             raise ValidationError({'error': 'Error exception.'})
@@ -1078,7 +1047,7 @@ class NotifyTransfer(ReturnActivity):
         try:
             return_table = ReturnTable.objects.get_or_create(
                 name=species, ret=to_return)[0]
-            rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
+            rows = ReturnRow.objects.filter(return_table=return_table)  # TODO: optimistic locking of rows.
             table_rows = []
             row_exists = False
             total = 0
@@ -1134,7 +1103,7 @@ class AcceptTransfer(ReturnActivity):
         try:
             return_table = ReturnTable.objects.get(
                 name=species, ret=to_return)
-            rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
+            rows = ReturnRow.objects.filter(return_table=return_table)  # TODO: Requires optimistic locking of rows.
             table_rows = []
             row_exists = False
             for row in rows:  # update total and status for accepted activity.
@@ -1181,7 +1150,7 @@ class DeclineTransfer(ReturnActivity):
         try:
             return_table = ReturnTable.objects.get(
                 name=species, ret=to_return)
-            rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
+            rows = ReturnRow.objects.filter(return_table=return_table)  # TODO: requires optimistic locking of rows.
             table_rows = []
             row_exists = False
             for row in rows:  # update status for selected activity.
