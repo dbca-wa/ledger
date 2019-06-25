@@ -124,6 +124,7 @@ export const callemailStore = {
             Vue.set(state, 'call_email', {
                 ...call_email
             });
+            console.log(state.call_email.referrer);
         },
         updateSchema(state, schema) {
             //state.call_email.schema = schema;
