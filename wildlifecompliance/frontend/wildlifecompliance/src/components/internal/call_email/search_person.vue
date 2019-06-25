@@ -547,7 +547,7 @@ export default {
 }
 </script>        
 
-<style>
+<style scoped>
 .awesomplete {
     z-index: 1050 !important;
 }
