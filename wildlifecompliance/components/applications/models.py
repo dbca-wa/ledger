@@ -2441,7 +2441,6 @@ class ActivityInvoice(models.Model):
         return False
 
 
-
 @python_2_unicode_compatible
 class ApplicationFormDataRecord(models.Model):
 
