@@ -289,6 +289,7 @@ export default {
     methods: {
         ...mapActions('callemailStore', {
             setAllocatedTo: "setAllocatedTo",
+            loadCallEmail: 'loadCallEmail',
         }),
         ...mapActions('offenceStore', {
             setAllegedOffenceIds: "setAllegedOffenceIds",
@@ -354,6 +355,10 @@ export default {
         },
         ok: async function () {
             await this.sendData();
+
+            // Update call_email in vuex
+            await this.loadCallEmail({ call_email_id: this.call_email.id }); 
+
             this.close();
         },
         cancel: function() {
@@ -361,7 +366,6 @@ export default {
             this.close();
         },
         close: function () {
-            let vm = this;
             this.isModalOpen = false;
         },
         mapOffenceClicked: function(){
