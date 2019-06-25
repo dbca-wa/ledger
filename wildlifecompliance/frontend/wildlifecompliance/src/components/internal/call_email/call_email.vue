@@ -141,9 +141,20 @@
             </div>
 
           </div>
-          <div class="col-md-1"/>        
-          <div class="col-md-8">  
+
+          <div class="col-md-9" id="main-column">  
             <div class="row">
+
+                <div class="container-fluid">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" :href="'#'+cTab">Call/Email</a></li>
+                        <li><a data-toggle="tab" :href="'#'+rTab">Related Items</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div :id="cTab" class="tab-pane fade in active">
+
+
+
 
               <FormSection :formCollapse="false" label="Caller" Index="0">
                 
@@ -269,10 +280,20 @@
                   <textarea :readonly="true" class="form-control" rows="5" v-model="call_email.advice_details"/>
                 </div></div>
               </FormSection>
-              
-              <div class="col-sm-12 form-group"><div class="row">
-              <h3></h3>
-              </div></div>
+
+
+
+                        </div>  
+                        <div :id="rTab" class="tab-pane fade in">
+                           <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-12">
+                                    <datatable ref="related_items_table" id="related_items_table" :dtOptions="dtOptionsRelatedItems" :dtHeaders="dtHeadersRelatedItems" />
+                                </div>
+                            </div></div>
+                        </div>
+                    </div>
+                </div>       
+
 
             </div>          
           </div>
@@ -300,6 +321,7 @@ import FormSection from "@/components/forms/section_toggle.vue";
 
 import CommsLogs from "@common-components/comms_logs.vue";
 import MapLocation from "./map_location.vue";
+import datatable from '@vue-utils/datatable.vue'
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import SearchPerson from "./search_person.vue";
 import utils from "@/components/external/utils";
@@ -315,6 +337,34 @@ export default {
   name: "ViewCallEmail",
   data: function() {
     return {
+      cTab: 'cTab'+this._uid,
+      rTab: 'rTab'+this._uid,
+      dtHeadersRelatedItems: [
+          'Number',
+          'Type',
+          'Description',
+          'Action',
+      ],
+      dtOptionsRelatedItems: {
+          columns: [
+              {
+                  data: 'identifier',
+              },
+              {
+                  data: 'model_name',
+              },
+              {
+                  data: 'descriptor',
+              },
+              {
+                  data: 'Action',
+                  mRender: function(data, type, row){
+                      // return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
+                      return '<a href="#">View (not implemented)</a>';
+                  }
+              },
+          ]
+      },
       disabledDates: {
         from: new Date(),
       },
@@ -353,6 +403,7 @@ export default {
     Datepicker,
     CallWorkflow,
     Offence,
+    datatable,
   },
   computed: {
     ...mapGetters('callemailStore', {
@@ -604,5 +655,10 @@ export default {
 <style lang="css">
 .action-button {
     margin-top: 5px;
+}
+#main-column {
+  padding-left: 3%;
+  padding-right: 0;
+  margin-bottom: 50px;
 }
 </style>

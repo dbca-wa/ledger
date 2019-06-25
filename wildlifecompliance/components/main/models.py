@@ -143,9 +143,9 @@ def get_related_items(self, **kwargs):
                 field_objects = f.related_model.objects.filter(call_email_id=self.id)
                 for field_object in field_objects:
                     return_list.append(
-                        {   'model_name': f.name,
-                            'get_related_items_identifier': field_object.get_related_items_identifier, 
-                            'get_related_items_descriptor': field_object.get_related_items_descriptor
+                        {   'model_name': f.related_model.__name__,
+                            'identifier': field_object.get_related_items_identifier,
+                            'descriptor': field_object.get_related_items_descriptor
                         })
             elif f.is_relation:
                 field_value = f.value_from_object(self)

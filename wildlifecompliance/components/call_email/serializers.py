@@ -18,6 +18,7 @@ from wildlifecompliance.components.call_email.models import (
     CasePriority,
     InspectionType,
     )
+from wildlifecompliance.components.main.models import get_related_items
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from wildlifecompliance.components.users.serializers import (
     ComplianceUserDetailsOptimisedSerializer,
@@ -363,9 +364,9 @@ class CallEmailSerializer(serializers.ModelSerializer):
     user_in_group = serializers.SerializerMethodField()
     readonly_user = serializers.SerializerMethodField()
     readonly_status = serializers.SerializerMethodField()
+    related_items = serializers.SerializerMethodField()
     selected_referrers = serializers.SerializerMethodField()
     user_is_assignee = serializers.SerializerMethodField()
-
 
     class Meta:
         model = CallEmail
@@ -408,6 +409,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'user_in_group',
             'readonly_user',
             'readonly_status',
+            'related_items',
             'selected_referrers',
             'user_is_assignee',
         )
@@ -457,6 +459,9 @@ class CallEmailSerializer(serializers.ModelSerializer):
             allocated_group.append(member)
 
         return allocated_group
+
+    def get_related_items(self, obj):
+        return get_related_items(obj)
 
     def get_selected_referrers(self, obj):
         referrers_selected  = []

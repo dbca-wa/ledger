@@ -278,9 +278,9 @@ class CallEmail(RevisionedMixin):
     def log_user_action(self, action, request):
         return ComplianceUserAction.log_action(self, action, request.user)
 
-    @property
-    def related_items(self):
-        return get_related_items(self)
+    # @property
+    # def related_items(self):
+    #     return get_related_items(self)
 
 
 @python_2_unicode_compatible
