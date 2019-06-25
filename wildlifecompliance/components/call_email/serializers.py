@@ -236,10 +236,8 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)
     location_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
-    #referrer_id = serializers.IntegerField(
-     #   required=False, write_only=True, allow_null=True)
-    #referrers_selected = serializer.ListField(
-     #   required=False, write_only=True, blank=True)
+    referrer_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
     email_user_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
     region_id = serializers.IntegerField(
@@ -274,7 +272,7 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             'report_type_id',
             'caller',
             
-            #'referrer_selected',
+            'referrer_id',
             'referrer',
             'caller_phone_number',
             'anonymous_call',
@@ -354,7 +352,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
     lodgement_date = serializers.CharField(source='lodged_on')
     report_type = ReportTypeSerializer(read_only=True)
     location = LocationSerializer(read_only=True)
-    referrer = ReferrerSerializer(many=True)
+    referrer = ReferrerSerializer(read_only=True)
     data = ComplianceFormDataRecordSerializer(many=True)
     email_user = EmailUserSerializer(read_only=True)
     # allocated_group = CallEmailAllocatedGroupSerializer(many=True)
@@ -363,8 +361,6 @@ class CallEmailSerializer(serializers.ModelSerializer):
     user_in_group = serializers.SerializerMethodField()
     readonly_user = serializers.SerializerMethodField()
     readonly_status = serializers.SerializerMethodField()
-    selected_referrers = serializers.SerializerMethodField()
-    user_is_assignee = serializers.SerializerMethodField()
 
 
     class Meta:
@@ -397,7 +393,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'occurrence_date_to',
             'occurrence_time_end',
             'referrer',
-            # 'referrer_id',
+            'referrer_id',
             'advice_given',
             'advice_details',
             'email_user',
@@ -408,8 +404,6 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'user_in_group',
             'readonly_user',
             'readonly_status',
-            'selected_referrers',
-            'user_is_assignee',
         )
         read_only_fields = (
             'id', 
@@ -458,21 +452,6 @@ class CallEmailSerializer(serializers.ModelSerializer):
 
         return allocated_group
 
-    def get_selected_referrers(self, obj):
-        referrers_selected  = []
-        #returned_referrers = ReferrerSerializer(obj.referrer)
-        #print(returned_referrers.data)
-        for referrer in obj.referrer.all():
-            print(referrer)
-            referrers_selected.append(str(referrer.id))
-
-        return referrers_selected
-    
-    def get_user_is_assignee(self, obj):
-        user_id = self.context.get('request', {}).user.id
-        if user_id == obj.assigned_to_id:
-            return True
-
 
 class CallEmailDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
@@ -519,7 +498,7 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
 
         if user_id == obj.assigned_to_id:
             return '<a href=' + url + '>Process</a>';
-        elif obj.allocated_group and not obj.assigned_to_id:
+        elif obj.allocated_group:
            for member in obj.allocated_group.members:
                if user_id == member.id:
                   return '<a href=' + url + '>Process</a>';
@@ -551,8 +530,8 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)        
     location_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)        
-    #referrer_id = serializers.IntegerField(
-     #   required=False, write_only=True, allow_null=True)   
+    referrer_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)   
     region_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
     district_id = serializers.IntegerField(
@@ -592,7 +571,7 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
             'occurrence_time_end',
             'advice_given',
             'advice_details',
-            #'referrer_id',
+            'referrer_id',
             'region_id',
             'district_id',
             'case_priority_id',

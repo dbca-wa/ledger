@@ -103,8 +103,8 @@ module.exports = {
                     }
                 }
             } 
-            if (store_keys.length === 0) {
-            // else {    
+            // if ((store_keys.length === 0)) {
+            else {    
             // empty store - get data from url
                 const returnedFromUrl = await Vue.http.get(url);
                 // ensure store is empty

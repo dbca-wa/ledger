@@ -83,7 +83,7 @@
                               <label>Referred To</label>
                             </div>
                             <div class="col-sm-9">
-                              <select multiple class="form-control" v-model="referrers_selected">
+                              <select class="form-control" v-model="call_email.referrer_id">
                                 <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
                                   {{ option.name }} 
                                 </option>
@@ -177,7 +177,6 @@ export default {
       inspectionTypes: [],
       externalOrganisations: [],
       referrers: [],
-      referrers_selected: [],
       // compliance_permission_groups: [],
       group_permission: '',
       // call_email.region: null,
@@ -388,7 +387,6 @@ export default {
 
 	    payload.append('workflow_type', this.workflow_type);
         payload.append('email_subject', this.modalTitle);
-        payload.append('referrers_selected', this.referrers_selected);
         
         //const parentResult = await this.$parent.save(true);
         //console.log(parentResult);
