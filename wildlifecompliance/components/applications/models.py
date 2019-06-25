@@ -2238,6 +2238,8 @@ class ApplicationSelectedActivity(models.Model):
     @property
     def can_suspend(self):
         # Returns true if the activity_status is CURRENT
+        # Extra exclude for SUSPENDED due to get_current_activities_for_application_type
+        # intentionally not excluding these as part of the queryset
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_SYSTEM_GENERATED,
             activity_ids=[self.id]
