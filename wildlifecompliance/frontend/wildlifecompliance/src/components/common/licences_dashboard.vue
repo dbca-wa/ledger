@@ -185,21 +185,20 @@ export default {
                             let proxy_id = full.current_application.proxy_applicant ? full.current_application.proxy_applicant.id : '';
                             let licence_category_id = full.current_application.category_id ? full.current_application.category_id : '';
                             links += `<a add-activity-purpose='${full.id}' org-id='${org_id}' proxy-id='${proxy_id}' licence-category-id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
-                            // TODO: add can_renew, can_reactivate_renew, etc. to licence, same like activity, and apply to if statements below
                             links += `<a>Renew</a><br/>`
-                            if (!vm.is_external) {
+                            if (!vm.is_external && full.can_reactivate_renew) {
                                 links += `<a>Reactivate Renew</a><br/>`
                             }
-                            if (vm.is_external) {
+                            if (vm.is_external && full.can_surrender) {
                                 links += `<a surrender-licence='${full.id}'>Surrender</a><br/>`
                             }
-                            if (!vm.is_external) {
+                            if (!vm.is_external && full.can_cancel) {
                                 links += `<a cancel-licence='${full.id}'>Cancel</a><br/>`
                             }
-                            if (!vm.is_external) {
+                            if (!vm.is_external && full.can_suspend) {
                                 links += `<a suspend-licence='${full.id}'>Suspend</a><br/>`
                             }
-                            if (!vm.is_external) {
+                            if (!vm.is_external && full.can_reinstate) {
                                 links += `<a reinstate-licence='${full.id}'>Reinstate</a><br/>`
                             }
                             return links;

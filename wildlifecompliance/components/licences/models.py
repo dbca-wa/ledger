@@ -311,6 +311,46 @@ class WildlifeLicence(models.Model):
     def is_issued(self):
         return self.licence_number is not None and len(self.licence_number) > 0
 
+    @property
+    def can_amend(self):
+        # Returns True if any of the licence's latest_activities can be amended
+        return self.latest_activities.computed_filter(can_amend=True).count() > 0
+
+    @property
+    def can_renew(self):
+        # Returns True if any of the licence's latest_activities can be renewed
+        return self.latest_activities.computed_filter(can_renew=True).count() > 0
+
+    @property
+    def can_reactivate_renew(self):
+        # Returns True if renew for any of the licence's latest_activities can be reactivated
+        return self.latest_activities.computed_filter(can_reactivate_renew=True).count() > 0
+
+    @property
+    def can_surrender(self):
+        # Returns True if any of the licence's latest_activities can be surrendered
+        return self.latest_activities.computed_filter(can_surrender=True).count() > 0
+
+    @property
+    def can_cancel(self):
+        # Returns True if any of the licence's latest_activities can be cancelled
+        return self.latest_activities.computed_filter(can_cancel=True).count() > 0
+
+    @property
+    def can_suspend(self):
+        # Returns True if any of the licence's latest_activities can be suspended
+        return self.latest_activities.computed_filter(can_suspend=True).count() > 0
+
+    @property
+    def can_reissue(self):
+        # Returns True if any of the licence's latest_activities can be reissued
+        return self.latest_activities.computed_filter(can_reissue=True).count() > 0
+
+    @property
+    def can_reinstate(self):
+        # Returns True if any of the licence's latest_activities can be reinstated
+        return self.latest_activities.computed_filter(can_reinstate=True).count() > 0
+
     def apply_action_to_licence(self, request, action):
         '''
         Applies a specified action to a all of a licence's activities and purposes for a licence

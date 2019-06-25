@@ -59,6 +59,14 @@ class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
             'last_issue_date',
             'latest_activities',
             'latest_activities_merged',
+            'can_amend',
+            'can_renew',
+            'can_reactivate_renew',
+            'can_surrender',
+            'can_cancel',
+            'can_suspend',
+            'can_reissue',
+            'can_reinstate',
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render
@@ -87,6 +95,14 @@ class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
             'last_issue_date',
             'latest_activities',
             'latest_activities_merged',
+            'can_amend',
+            'can_renew',
+            'can_reactivate_renew',
+            'can_surrender',
+            'can_cancel',
+            'can_suspend',
+            'can_reissue',
+            'can_reinstate',
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render
