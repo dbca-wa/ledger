@@ -1,5 +1,8 @@
 from __future__ import unicode_literals
+from concurrency.exceptions import RecordModifiedError
+from concurrency.fields import IntegerVersionField
 from django.db import models, transaction
+from django.db.utils import IntegrityError
 from django.db.models.signals import post_save
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.dispatch import receiver
@@ -340,8 +343,8 @@ class Return(models.Model):
         :return:
         """
         try:
-            return_table = ReturnTable.objects.get_or_create(
-                name=table_name, ret=self)[0]
+            return_table = ReturnTable.objects.get_or_create(name=table_name, ret=self)[0]
+            return_table.save()
             # delete any existing rows as they will all be recreated
             return_table.returnrow_set.all().delete()
             return_rows = [
@@ -351,6 +354,8 @@ class Return(models.Model):
             ReturnRow.objects.bulk_create(return_rows)
             # log transaction
             self.log_user_action(ReturnUserAction.ACTION_SAVE_REQUEST.format(self), request)
+        except RecordModifiedError:
+            raise IntegrityError('A concurrent save occurred please refresh page details.')
         except BaseException:
             raise
 
@@ -1045,9 +1050,9 @@ class NotifyTransfer(ReturnActivity):
         self.licence = from_return.licence.licence_number
 
         try:
-            return_table = ReturnTable.objects.get_or_create(
-                name=species, ret=to_return)[0]
-            rows = ReturnRow.objects.filter(return_table=return_table)  # TODO: optimistic locking of rows.
+            return_table = ReturnTable.objects.get_or_create(name=species, ret=to_return)[0]
+            return_table.save()
+            rows = ReturnRow.objects.filter(return_table=return_table)
             table_rows = []
             row_exists = False
             total = 0
@@ -1080,6 +1085,8 @@ class NotifyTransfer(ReturnActivity):
                 send_sheet_transfer_email_notification(request, to_return, from_return)
 
             return row_exists
+        except RecordModifiedError:
+            raise IntegrityError('A concurrent save occurred please refresh page details.')
         except BaseException:
             raise
 
@@ -1101,9 +1108,9 @@ class AcceptTransfer(ReturnActivity):
         to_return = self.get_licence_return()
 
         try:
-            return_table = ReturnTable.objects.get(
-                name=species, ret=to_return)
-            rows = ReturnRow.objects.filter(return_table=return_table)  # TODO: Requires optimistic locking of rows.
+            return_table = ReturnTable.objects.get(name=species, ret=to_return)
+            return_table.save()
+            rows = ReturnRow.objects.filter(return_table=return_table)
             table_rows = []
             row_exists = False
             for row in rows:  # update total and status for accepted activity.
@@ -1127,6 +1134,8 @@ class AcceptTransfer(ReturnActivity):
             from_return.log_user_action(ReturnUserAction.ACTION_ACCEPT_TRANSFER.format(from_return), request)
 
             return row_exists
+        except RecordModifiedError:
+            raise IntegrityError('A concurrent save occurred please refresh page details.')
         except BaseException:
             raise
 
@@ -1148,9 +1157,9 @@ class DeclineTransfer(ReturnActivity):
         to_return = self.get_licence_return()
 
         try:
-            return_table = ReturnTable.objects.get(
-                name=species, ret=to_return)
-            rows = ReturnRow.objects.filter(return_table=return_table)  # TODO: requires optimistic locking of rows.
+            return_table = ReturnTable.objects.get(name=species, ret=to_return)
+            return_table.save()
+            rows = ReturnRow.objects.filter(return_table=return_table)
             table_rows = []
             row_exists = False
             for row in rows:  # update status for selected activity.
@@ -1170,14 +1179,16 @@ class DeclineTransfer(ReturnActivity):
             from_return.log_user_action(ReturnUserAction.ACTION_DECLINE_TRANSFER.format(from_return), request)
 
             return row_exists
+        except RecordModifiedError:
+            raise IntegrityError('A concurrent save occurred please refresh page details.')
         except BaseException:
             raise
 
 
 class ReturnTable(RevisionedMixin):
     ret = models.ForeignKey(Return)
-
     name = models.CharField(max_length=50)
+    version = IntegerVersionField()
 
     class Meta:
         app_label = 'wildlifecompliance'

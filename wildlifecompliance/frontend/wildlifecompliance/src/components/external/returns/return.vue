@@ -117,9 +117,13 @@ export default {
                             'success'
                        );
                     },(error)=>{
-                        console.log(error);
-      });
+                       console.log(error);
+                       swal('Error',
+                            'There was an error saving your return details.<br/>' + error.body,
+                            'error'
+                       )
 
+                    });
     },
     submit: function(e) {
       const self = this;
