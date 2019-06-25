@@ -83,7 +83,7 @@
                         <div v-if="statusId ==='open_followup' && !this.call_email.readonly_user" class="row action-button">
 
                         <!-- <div v-if="statusId ==='open_followup'" class="row action-button"> -->
-                        <div class="row action-button">
+                        <!-- <div class="row action-button"> -->
 
                           <div class="col-sm-12">
                                 <a @click="offence()" class="btn btn-primary btn-block">

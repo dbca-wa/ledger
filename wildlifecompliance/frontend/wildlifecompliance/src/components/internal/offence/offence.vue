@@ -115,8 +115,8 @@
                     <div :id="pTab" class="tab-pane fade in">
                         <div class="row">
                             <div class="col-sm-12 form-group"><div class="row">
-                                <input class="col-sm-1" id="offender_indivisual" type="radio" v-model="offender_type" value="indivisual">
-                                <label class="col-sm-1 radio-button-label" for="offender_indivisual">Indivisual</label>
+                                <input class="col-sm-1" id="offender_individual" type="radio" v-model="offender_type" value="individual">
+                                <label class="col-sm-1 radio-button-label" for="offender_individual">Individual</label>
                                 <input class="col-sm-1" id="offender_organisation" type="radio" v-model="offender_type" value="organisation">
                                 <label class="col-sm-1 radio-button-label" for="offender_organisation">Organisation</label>
                             </div></div>
@@ -187,7 +187,7 @@ export default {
             officers: [],
             isModalOpen: false,
             processingDetails: false,
-            offender_type: 'indivisual',
+            offender_type: 'individual',
             current_alleged_offence: {
                 id: null,
                 Act: '',
