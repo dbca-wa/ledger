@@ -1450,6 +1450,8 @@ class Application(RevisionedMixin):
                         activity.save()
 
                         # Update the current (now old) activity
+                        # TODO: upon issuing, when looking up latest_activity, needs to create a copy of the
+                        # TODO: activity if any purposes are outstanding and not issued along with this activity
                         latest_activity.updated_by = request.user
                         latest_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
                         latest_activity.save()
@@ -1597,6 +1599,8 @@ class Application(RevisionedMixin):
                         expiry_date = item.get('end_date')
 
                         if self.application_type == Application.APPLICATION_TYPE_AMENDMENT:
+                            # TODO: upon issuing, when looking up latest_activity, needs to create a copy of the
+                            # TODO: activity if any purposes are outstanding and not issued along with this activity
                             latest_activity = self.get_latest_current_activity(licence_activity_id)
                             if not latest_activity:
                                 raise Exception("Active licence not found for activity ID: %s" % licence_activity_id)

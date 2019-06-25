@@ -40,11 +40,16 @@
 
                                                                 <div class ="col-sm-12">
                                                                     <input type="checkbox"
-                                                                        :disabled="isAmendment || isRenewal"
                                                                         :value="purpose.id"
                                                                         :id="purpose.id"
                                                                         v-model="type.purpose[index2].selected"
                                                                         @change="handlePurposeCheckboxChange(index,$event)">
+                                                                    <!--<input type="checkbox"
+                                                                        :disabled="isAmendment || isRenewal"
+                                                                        :value="purpose.id"
+                                                                        :id="purpose.id"
+                                                                        v-model="type.purpose[index2].selected"
+                                                                        @change="handlePurposeCheckboxChange(index,$event)">-->
                                                                             {{purpose.name}}
                                                                             <span> ({{purpose.base_application_fee}} + {{purpose.base_licence_fee}})</span>
                                                                 </div>
@@ -151,9 +156,9 @@ export default {
         },
         selectionLabel: function() {
             return this.isAmendment ?
-            `Select the licence activity you wish to amend` :
+            `Select the licence activity and purposes you wish to amend` :
             this.isRenewal ?
-            `Select one or more activities you wish to renew` :
+            `Select one or more activities and purposes you wish to renew` :
             `Select the class of licence you wish to apply for`;
         },
         categoryCount: function() {
