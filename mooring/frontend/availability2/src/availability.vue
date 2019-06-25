@@ -161,28 +161,28 @@
                         <div class="small-6 columns">
                             <label for="vesselSize" class="text-left">Vessel Size (Meters)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselSize" ref="vesselSize" name="vessel_size" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselSize" step="1" :disabled="current_booking.length > 0"/>
+                            <input type="number" id="vesselSize" ref="vesselSize" name="vessel_size" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselSize" step='0.01' :disabled="current_booking.length > 0"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
                             <label for="vesselDraft" class="text-left">Vessel Draft (Meters)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselDraft" ref="vesselDraft" name="vessel_draft" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselDraft" step="1" :disabled="current_booking.length > 0"/>
+                            <input type="number" id="vesselDraft" ref="vesselDraft" name="vessel_draft" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselDraft" step='0.01' :disabled="current_booking.length > 0"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
                             <label for="vesselBeam" class="text-left">Vessel Beams (Meters)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselBeam" ref="vesselBeam" name="vessel_beam" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselBeam" step="1" :disabled="current_booking.length > 0" />
+                            <input type="number" id="vesselBeam" ref="vesselBeam" name="vessel_beam" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselBeam" step='0.01' :disabled="current_booking.length > 0" />
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
                             <label for="vesselWeight" class="text-left">Vessel Weight (Tonnes)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselWeight" ref="vesselWeight" name="vessel_weight" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselWeight" step="1" :disabled="current_booking.length > 0"/>
+                            <input type="number" id="vesselWeight" ref="vesselWeight" name="vessel_weight" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselWeight" step='0.01' :disabled="current_booking.length > 0"/>
                         </div>
                     </div>
                 </div>
@@ -929,10 +929,10 @@ export default {
                     success: function(data, stat, xhr) {
                         vm.searchedRego = reg;
                         if(data[0]){
-                            vm.vesselSize = Math.ceil(data[0].vessel_size);
-                            vm.vesselWeight = Math.ceil(data[0].vessel_weight);
-                            vm.vesselDraft = Math.ceil(data[0].vessel_draft);
-                            vm.vesselBeam = Math.ceil(data[0].vessel_beam);  
+                            vm.vesselSize = parseFloat(data[0].vessel_size);
+                            vm.vesselWeight = parseFloat(data[0].vessel_weight);
+                            vm.vesselDraft = parseFloat(data[0].vessel_draft);
+                            vm.vesselBeam = parseFloat(data[0].vessel_beam);  
                         } else {
                             console.log("Registration was not found.");
                         }
@@ -1196,7 +1196,7 @@ export default {
                                             if (booking_period.length > 1) {
                                                     vm.mooring_book_row[index] = false;
                                             } else {      
-                                                if (booking_period[0].status == 'closed' || booking_period[0].status == 'selected' || booking_period[0].status == 'perday' || booking_period[0].status == 'maxstay') {
+                                                if (booking_period[0].status == 'closed' || booking_period[0].status == 'selected' || booking_period[0].status == 'perday' || booking_period[0].status == 'maxstay' || booking_period[0].status == 'toofar' || booking_period[0].status == 'maxstay') {
                                                     // vm.mooring_book_row[index] = 'disabled';
                                                     vm.mooring_book_row_disabled[index] = true;	
                                                 }
