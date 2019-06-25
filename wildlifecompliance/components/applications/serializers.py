@@ -171,6 +171,10 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
 
 
 class ExternalApplicationSelectedActivityMergedSerializer(serializers.Serializer):
+    """
+    Custom serializer for WildlifeLicence.latest_activities_merged LIST of DICT objects for each
+    ApplicationSelectedActivity, therefore use of obj.get('fieldname') to retrieve data in SerializerMethodFields
+    """
     licence_activity_id = serializers.IntegerField(read_only=True)
     activity_name_str = serializers.CharField(read_only=True)
     issue_date = serializers.SerializerMethodField(read_only=True)
@@ -207,13 +211,13 @@ class ExternalApplicationSelectedActivityMergedSerializer(serializers.Serializer
         datatables_always_serialize = fields
 
     def get_issue_date(self, obj):
-        return obj['issue_date'].strftime('%d/%m/%Y') if obj['issue_date'] else ''
+        return obj.get('issue_date').strftime('%d/%m/%Y') if obj.get('issue_date') else ''
 
     def get_start_date(self, obj):
-        return obj['start_date'].strftime('%d/%m/%Y') if obj['start_date'] else ''
+        return obj.get('start_date').strftime('%d/%m/%Y') if obj.get('start_date') else ''
 
     def get_expiry_date(self, obj):
-        return obj['expiry_date'].strftime('%d/%m/%Y') if obj['expiry_date'] else ''
+        return obj.get('expiry_date').strftime('%d/%m/%Y') if obj.get('expiry_date') else ''
 
     def get_can_reissue(self, obj):
         try:
@@ -225,7 +229,7 @@ class ExternalApplicationSelectedActivityMergedSerializer(serializers.Serializer
         return user.has_perm('wildlifecompliance.system_administrator') or (
             user.has_wildlifelicenceactivity_perm([
                 'issuing_officer',
-            ], obj.licence_activity_id) and obj.can_reissue
+            ], obj.get('licence_activity_id')) and obj.get('can_reissue')
         )
 
 

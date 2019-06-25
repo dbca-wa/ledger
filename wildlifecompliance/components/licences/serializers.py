@@ -197,9 +197,16 @@ class LicenceCategorySerializer(serializers.ModelSerializer):
             'licence_activity_id', flat=True
         )) if purposes else []
 
-        activities = obj.activity.filter(
-            id__in=activity_ids
-        ) if activity_ids else obj.activity.all()
+        # If purpose_records context is set but is empty, force display of zero activities
+        # otherwise, assume we want to retrieve all activities for the Licence Category
+        if self.context.has_key('purpose_records'):
+            activities = obj.activity.filter(
+                id__in=activity_ids
+            )
+        else:
+            activities = obj.activity.filter(
+                id__in=activity_ids
+            ) if activity_ids else obj.activity.all()
 
         serializer = ActivitySerializer(
             activities,

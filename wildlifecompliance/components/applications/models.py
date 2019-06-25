@@ -1821,7 +1821,7 @@ class Application(RevisionedMixin):
             else (
                 Q(submitter=proxy_id) | Q(proxy_applicant=proxy_id)
             ) if proxy_id
-            else Q(submitter=request.user)
+            else Q(submitter=request.user, proxy_applicant=None, org_applicant=None)
         )
 
 
@@ -2305,9 +2305,13 @@ class ApplicationSelectedActivity(models.Model):
 
     @staticmethod
     def get_current_activities_for_application_type(application_type, **kwargs):
-        # Retrieves the current activities for an ApplicationSelectedActivity, filterable by LicenceActivity ID
-        # and Application.APPLICATION_TYPE in the case of the additional date_filter (use
-        # Application.APPLICATION_TYPE_SYSTEM_GENERATED for no APPLICATION_TYPE filters)
+        """
+        Retrieves the current or suspended activities for an ApplicationSelectedActivity,
+        filterable by LicenceActivity ID and Application.APPLICATION_TYPE in the case
+        of the additional date_filter (use Application.APPLICATION_TYPE_SYSTEM_GENERATED
+        for no APPLICATION_TYPE filters)
+        """
+
         applications = kwargs.get('applications', Application.objects.none())
         activity_ids = kwargs.get('activity_ids', [])
 
