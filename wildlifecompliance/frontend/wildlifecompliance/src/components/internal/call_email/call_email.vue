@@ -153,135 +153,130 @@
                     <div class="tab-content">
                         <div :id="cTab" class="tab-pane fade in active">
 
-
-
-
-              <FormSection :formCollapse="false" label="Caller" Index="0">
-                
-                <div class="row"><div class="col-sm-8 form-group">
-                  <label class="col-sm-12">Caller name</label>
-                  <input :readonly="readonlyForm" class="form-control" v-model="call_email.caller"/>
-                </div></div>
-                <div class="col-sm-4 form-group"><div class="row">
-                  <label class="col-sm-12">Caller contact number</label>
-                <input :readonly="readonlyForm" class="form-control" v-model="call_email.caller_phone_number"/>
-                </div></div>
-                
-                <div class="col-sm-12 form-group"><div class="row">
-                  <label class="col-sm-4">Anonymous call?</label>
-                    <input :disabled="readonlyForm" class="col-sm-1" id="yes" type="radio" v-model="call_email.anonymous_call" v-bind:value="true">
-                    <label class="col-sm-1" for="yes">Yes</label>
-                    <input :disabled="readonlyForm" class="col-sm-1" id="no" type="radio" v-model="call_email.anonymous_call" v-bind:value="false">
-                    <label class="col-sm-1" for="no">No</label>
-                </div></div>
-
-                <div class="col-sm-12 form-group"><div class="row">
-                  <label class="col-sm-4">Caller wishes to remain anonymous?</label>
-                    <input :disabled="readonlyForm" class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
-                    <label class="col-sm-1">Yes</label>
-                    <input :disabled="readonlyForm" class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
-                    <label class="col-sm-1">No</label>
-                </div></div>
-
-                <div>
-                    <SearchPerson />
-                </div>
-              </FormSection>
-
-              <FormSection :formCollapse="false" label="Location" Index="1">
-                  <div v-if="call_email.location">
-                    <MapLocation v-bind:key="call_email.location.id"/>
-                  </div>
-              </FormSection>
-
-              <FormSection :formCollapse="true" label="Details" Index="2">
-
-                <div class="col-sm-12 form-group"><div class="row">
-                  <label class="col-sm-4">Use occurrence from/to</label>
-                    <input :disabled="readonlyForm" class="col-sm-1" type="radio" v-model="call_email.occurrence_from_to" v-bind:value="true">
-                    <label class="col-sm-1">Yes</label>
-                    <input :disabled="readonlyForm" class="col-sm-1" type="radio" v-model="call_email.occurrence_from_to" v-bind:value="false">
-                    <label class="col-sm-1">No</label>
-                </div></div>
-
-                <div class="col-sm-12 form-group"><div class="row">
-                    <label class="col-sm-3">{{ occurrenceDateLabel }}</label>
-                    <div class="col-sm-3" :disabled="readonlyForm">
-                      <datepicker :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_from"/>
-                    </div>
-                    <div v-show="call_email.occurrence_from_to" :disabled="readonlyForm">
-                      <label class="col-sm-3">Occurrence date to</label>
-                      <div class="col-sm-3" :disabled="readonlyForm">
-                        <datepicker :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_to" />
-                      </div>
-                    </div>
-                </div></div>
-
-                <div class="col-sm-12 form-group"><div class="row">
-                  <label class="col-sm-3">{{ occurrenceTimeLabel }}</label>
-                  <div class="col-sm-3">
-                      <div class="input-group date" id="occurrenceTimeStartPicker">
-                        <input :disabled="readonlyForm" type="text" class="form-control" placeholder="HH:MM" v-model="call_email.occurrence_time_start"/>
-                        <span class="input-group-addon">
-                            <span class="glyphicon glyphicon-calendar"></span>
-                        </span>
-                      </div>
-                  </div>
-                  <div v-show="call_email.occurrence_from_to">
-                      <label class="col-sm-3">Occurrence time to</label>
-                      <div class="col-sm-3">
-                          <div class="input-group date" id="occurrenceTimeEndPicker">
-                            <input :disabled="readonlyForm" type="text" class="form-control" placeholder="HH:MM" v-model="call_email.occurrence_time_end"/>
-                            <span class="input-group-addon">
-                                <span class="glyphicon glyphicon-calendar"></span>
-                            </span>
-                          </div>
-                      </div>
-                  </div>
-                </div></div>
-  
-                <div class="col-sm-12 form-group"><div class="row">
-                  <label class="col-sm-4">Classification</label>
-                  <select :disabled="readonlyForm" class="form-control" v-model="call_email.classification_id">
-                        <option v-for="option in classification_types" :value="option.id" v-bind:key="option.id">
-                          {{ option.name }} 
-                        </option>
-                    </select>
-                </div></div>
-
-                <div class="col-sm-12 form-group"><div class="row">
-                  <label class="col-sm-4">Report Type</label>
-                  <select :disabled="readonlyForm" @change.prevent="loadSchema" class="form-control" v-model="call_email.report_type_id">
-                          <option v-for="option in report_types" :value="option.id" v-bind:key="option.id">
-                            {{ option.report_type }} 
-                          </option>
-                  </select>
-                </div></div>
-                
-                <div v-for="(item, index) in current_schema">
-                  <compliance-renderer-block
-                     :component="item"
-                     v-bind:key="`compliance_renderer_block_${index}`"
-                    />
-                </div>
-              </FormSection>
-
-              <FormSection v-if="(call_email.referrer && call_email.referrer.length > 0) || call_email.advice_details" :formCollapse="true" label="Outcome" Index="3">
-                  <div v-if="call_email.referrer && call_email.referrer.length > 0" class="col-sm-12 form-group"><div class="row">
-                    <label class="col-sm-4">Referred To</label>
-                    <select multiple :readonly="true" class="form-control" v-model="call_email.selected_referrers" >
-                      <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
-                        {{ option.name }} 
-                      </option>
-                    </select>
-                </div></div>
-                <div v-if="call_email.advice_details" class="col-sm-12 form-group"><div class="row">
-                  <label class="col-sm-4">Advice details</label>
-                  <textarea :readonly="true" class="form-control" rows="5" v-model="call_email.advice_details"/>
-                </div></div>
-              </FormSection>
-
-
+                          <FormSection :formCollapse="false" label="Caller" Index="0">
+                            
+                            <div class="row"><div class="col-sm-8 form-group">
+                              <label class="col-sm-12">Caller name</label>
+                              <input :readonly="readonlyForm" class="form-control" v-model="call_email.caller"/>
+                            </div></div>
+                            <div class="col-sm-4 form-group"><div class="row">
+                              <label class="col-sm-12">Caller contact number</label>
+                            <input :readonly="readonlyForm" class="form-control" v-model="call_email.caller_phone_number"/>
+                            </div></div>
+                            
+                            <div class="col-sm-12 form-group"><div class="row">
+                              <label class="col-sm-4">Anonymous call?</label>
+                                <input :disabled="readonlyForm" class="col-sm-1" id="yes" type="radio" v-model="call_email.anonymous_call" v-bind:value="true">
+                                <label class="col-sm-1" for="yes">Yes</label>
+                                <input :disabled="readonlyForm" class="col-sm-1" id="no" type="radio" v-model="call_email.anonymous_call" v-bind:value="false">
+                                <label class="col-sm-1" for="no">No</label>
+                            </div></div>
+            
+                            <div class="col-sm-12 form-group"><div class="row">
+                              <label class="col-sm-4">Caller wishes to remain anonymous?</label>
+                                <input :disabled="readonlyForm" class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="true">
+                                <label class="col-sm-1">Yes</label>
+                                <input :disabled="readonlyForm" class="col-sm-1" type="radio" v-model="call_email.caller_wishes_to_remain_anonymous" v-bind:value="false">
+                                <label class="col-sm-1">No</label>
+                            </div></div>
+            
+                            <div>
+                                <SearchPerson />
+                            </div>
+                          </FormSection>
+            
+                          <FormSection :formCollapse="false" label="Location" Index="1">
+                              <div v-if="call_email.location">
+                                <MapLocation v-bind:key="call_email.location.id"/>
+                              </div>
+                          </FormSection>
+            
+                          <FormSection :formCollapse="true" label="Details" Index="2">
+            
+                            <div class="col-sm-12 form-group"><div class="row">
+                              <label class="col-sm-4">Use occurrence from/to</label>
+                                <input :disabled="readonlyForm" class="col-sm-1" type="radio" v-model="call_email.occurrence_from_to" v-bind:value="true">
+                                <label class="col-sm-1">Yes</label>
+                                <input :disabled="readonlyForm" class="col-sm-1" type="radio" v-model="call_email.occurrence_from_to" v-bind:value="false">
+                                <label class="col-sm-1">No</label>
+                            </div></div>
+            
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <label class="col-sm-3">{{ occurrenceDateLabel }}</label>
+                                <div class="col-sm-3" :disabled="readonlyForm">
+                                  <datepicker :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_from"/>
+                                </div>
+                                <div v-show="call_email.occurrence_from_to" :disabled="readonlyForm">
+                                  <label class="col-sm-3">Occurrence date to</label>
+                                  <div class="col-sm-3" :disabled="readonlyForm">
+                                    <datepicker :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_to" />
+                                  </div>
+                                </div>
+                            </div></div>
+            
+                            <div class="col-sm-12 form-group"><div class="row">
+                              <label class="col-sm-3">{{ occurrenceTimeLabel }}</label>
+                              <div class="col-sm-3">
+                                  <div class="input-group date" id="occurrenceTimeStartPicker">
+                                    <input :disabled="readonlyForm" type="text" class="form-control" placeholder="HH:MM" v-model="call_email.occurrence_time_start"/>
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                  </div>
+                              </div>
+                              <div v-show="call_email.occurrence_from_to">
+                                  <label class="col-sm-3">Occurrence time to</label>
+                                  <div class="col-sm-3">
+                                      <div class="input-group date" id="occurrenceTimeEndPicker">
+                                        <input :disabled="readonlyForm" type="text" class="form-control" placeholder="HH:MM" v-model="call_email.occurrence_time_end"/>
+                                        <span class="input-group-addon">
+                                            <span class="glyphicon glyphicon-calendar"></span>
+                                        </span>
+                                      </div>
+                                  </div>
+                              </div>
+                            </div></div>
+              
+                            <div class="col-sm-12 form-group"><div class="row">
+                              <label class="col-sm-4">Classification</label>
+                              <select :disabled="readonlyForm" class="form-control" v-model="call_email.classification_id">
+                                    <option v-for="option in classification_types" :value="option.id" v-bind:key="option.id">
+                                      {{ option.name }} 
+                                    </option>
+                                </select>
+                            </div></div>
+            
+                            <div class="col-sm-12 form-group"><div class="row">
+                              <label class="col-sm-4">Report Type</label>
+                              <select :disabled="readonlyForm" @change.prevent="loadSchema" class="form-control" v-model="call_email.report_type_id">
+                                      <option v-for="option in report_types" :value="option.id" v-bind:key="option.id">
+                                        {{ option.report_type }} 
+                                      </option>
+                              </select>
+                            </div></div>
+                            
+                            <div v-for="(item, index) in current_schema">
+                              <compliance-renderer-block
+                                 :component="item"
+                                 v-bind:key="`compliance_renderer_block_${index}`"
+                                />
+                            </div>
+                          </FormSection>
+            
+                          <FormSection v-if="(call_email.referrer && call_email.referrer.length > 0) || call_email.advice_details" :formCollapse="true" label="Outcome" Index="3">
+                              <div v-if="call_email.referrer && call_email.referrer.length > 0" class="col-sm-12 form-group"><div class="row">
+                                <label class="col-sm-4">Referred To</label>
+                                <select multiple :readonly="true" class="form-control" v-model="call_email.selected_referrers" >
+                                  <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
+                                    {{ option.name }} 
+                                  </option>
+                                </select>
+                            </div></div>
+                            <div v-if="call_email.advice_details" class="col-sm-12 form-group"><div class="row">
+                              <label class="col-sm-4">Advice details</label>
+                              <textarea :readonly="true" class="form-control" rows="5" v-model="call_email.advice_details"/>
+                            </div></div>
+                          </FormSection>
 
                         </div>  
                         <div :id="rTab" class="tab-pane fade in">
