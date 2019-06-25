@@ -6,6 +6,7 @@ from django.dispatch import receiver
 from django.db.models.signals import pre_delete
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.db.models import Max
+from django.db.models import Q
 from ledger.accounts.models import EmailUser
 from ledger.licence.models import LicenceType
 from wildlifecompliance.components.main.models import (
@@ -310,6 +311,23 @@ class WildlifeLicence(models.Model):
     @property
     def is_issued(self):
         return self.licence_number is not None and len(self.licence_number) > 0
+
+    @property
+    def can_add_activity_purpose(self):
+        # Returns True if the licence is the most recent one of it's category, filtered by
+        # matching org_applicant, proxy_applicant and submitter
+        organisation_id = self.current_application.org_applicant
+        proxy_id = self.current_application.proxy_applicant
+        submitter = self.current_application.submitter
+        return WildlifeLicence.objects.filter(
+            Q(current_application__org_applicant_id=organisation_id) if organisation_id else
+            (Q(current_application__submitter=proxy_id) |
+                Q(current_application__proxy_applicant=proxy_id)) if proxy_id else
+            Q(current_application__submitter=submitter,
+              current_application__proxy_applicant=None,
+              current_application__org_applicant=None
+            )
+        ).latest('licence_number') == self
 
     @property
     def can_amend(self):

@@ -2221,7 +2221,7 @@ class ApplicationSelectedActivity(models.Model):
 
     @property
     def can_surrender(self):
-        # TODO: clarify business logic for when an activity is allowed to be surrendered.
+        # Returns true if the activity is CURRENT or SUSPENDED
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_SYSTEM_GENERATED,
             activity_ids=[self.id]
@@ -2229,7 +2229,7 @@ class ApplicationSelectedActivity(models.Model):
 
     @property
     def can_cancel(self):
-        # TODO: clarify business logic for when an activity is allowed to be cancelled.
+        # Returns true if the activity is CURRENT or SUSPENDED
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_SYSTEM_GENERATED,
             activity_ids=[self.id]
@@ -2264,8 +2264,24 @@ class ApplicationSelectedActivity(models.Model):
 
     @property
     def can_reinstate(self):
-        # TODO: check for situation where a new licence of same purpose exists
-        # Returns true if the activity has not yet expired and is currently suspended or cancelled
+        # Confirm that at least one of the purposes linked with this activity does not already have an
+        # activity that is CURRENT, if all purposes in this activity are already CURRENT in other licences, return False
+        purposes_to_reinstate = [purpose.id for purpose in self.purposes]
+        current_purposes = []
+        for asa in ApplicationSelectedActivity.objects.filter(
+            licence_activity_id=self.licence_activity_id,
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
+            activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT,
+            application__org_applicant=self.application.org_applicant,
+            application__proxy_applicant=self.application.proxy_applicant,
+            application__submitter=self.application.submitter
+        ).exclude(id=self.id):
+            for purpose in asa.purposes:
+                current_purposes.append(purpose.id)
+        current_purposes_ids_set = set(current_purposes)
+        if not set(purposes_to_reinstate) - current_purposes_ids_set:
+            return False
+        # Returns true if the activity has not yet expired and is currently SUSPENDED or CANCELLED
         current_date = timezone.now().date()
         return self.expiry_date and\
             self.expiry_date >= current_date and\
