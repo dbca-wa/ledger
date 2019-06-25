@@ -76,10 +76,15 @@
                                 </a>
                           </div>
                         </div>
+
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
                         <div v-if="statusId ==='open_followup' && !this.call_email.readonly_user" class="row action-button">
+
+                        <!-- <div v-if="statusId ==='open_followup'" class="row action-button"> -->
+                        <div class="row action-button">
+
                           <div class="col-sm-12">
                                 <a @click="offence()" class="btn btn-primary btn-block">
                                   Offence
@@ -497,7 +502,30 @@ export default {
     ...mapActions({
       loadCurrentUser: "loadCurrentUser",
     }),
+    constructRelatedItemsTable: function() {
+        console.log('constructRelatedItemsTable');
+        
+        let vm = this;
+        
+        vm.$refs.related_items_table.vmDataTable.clear().draw();
 
+        if(vm.call_email.related_items){
+          for(let i = 0; i<vm.call_email.related_items.length; i++){
+            let already_exists = vm.$refs.related_items_table.vmDataTable.columns(0).data()[0].includes(vm.call_email.related_items[i].id);
+
+            if (!already_exists){
+                vm.$refs.related_items_table.vmDataTable.row.add(
+                    {
+                        'identifier': vm.call_email.related_items[i].get_related_items_identifier,
+                        'descriptor': vm.call_email.related_items[i].get_related_items_descriptor,
+                        'model_name': vm.call_email.related_items[i].model_name,
+                        'Action': vm.call_email.related_items[i],
+                    }
+                ).draw();
+            }
+          }
+        }
+    },
     addWorkflow(workflow_type) {
       this.workflow_type = workflow_type;
       this.$nextTick(() => {
@@ -652,8 +680,11 @@ export default {
     margin-top: 5px;
 }
 #main-column {
-  padding-left: 3%;
+  padding-left: 2%;
   padding-right: 0;
   margin-bottom: 50px;
+}
+.awesomplete {
+    width: 100% !important;
 }
 </style>
