@@ -363,6 +363,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
     user_in_group = serializers.SerializerMethodField()
     readonly_user = serializers.SerializerMethodField()
     readonly_status = serializers.SerializerMethodField()
+    selected_referrers = serializers.SerializerMethodField()
+    user_is_assignee = serializers.SerializerMethodField()
 
 
     class Meta:
@@ -406,6 +408,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'user_in_group',
             'readonly_user',
             'readonly_status',
+            'selected_referrers',
+            'user_is_assignee',
         )
         read_only_fields = (
             'id', 
@@ -453,6 +457,21 @@ class CallEmailSerializer(serializers.ModelSerializer):
             allocated_group.append(member)
 
         return allocated_group
+
+    def get_selected_referrers(self, obj):
+        referrers_selected  = []
+        #returned_referrers = ReferrerSerializer(obj.referrer)
+        #print(returned_referrers.data)
+        for referrer in obj.referrer.all():
+            print(referrer)
+            referrers_selected.append(str(referrer.id))
+
+        return referrers_selected
+    
+    def get_user_is_assignee(self, obj):
+        user_id = self.context.get('request', {}).user.id
+        if user_id == obj.assigned_to_id:
+            return True
 
 
 class CallEmailDatatableSerializer(serializers.ModelSerializer):
