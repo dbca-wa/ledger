@@ -221,8 +221,6 @@ export default {
                     {
                         data: 'Action',
                         mRender: function(data, type, row){
-                            console.log(data);
-                            console.log(row);
                             return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
                         }
                     },
@@ -246,8 +244,6 @@ export default {
                     { 
                         data: 'Action',
                         mRender: function(data, type, row){
-                            console.log(data);
-                            console.log(row);
                             return '<a href="#" class="remove_button" data-alleged-offence-id="' + row.id + '">Remove</a>';
                         }
                     },
@@ -293,6 +289,7 @@ export default {
     methods: {
         ...mapActions('callemailStore', {
             setAllocatedTo: "setAllocatedTo",
+            loadCallEmail: 'loadCallEmail',
         }),
         ...mapActions('offenceStore', {
             setAllegedOffenceIds: "setAllegedOffenceIds",
@@ -358,6 +355,10 @@ export default {
         },
         ok: async function () {
             await this.sendData();
+
+            // Update call_email in vuex
+            await this.loadCallEmail({ call_email_id: this.call_email.id }); 
+
             this.close();
         },
         cancel: function() {
@@ -365,7 +366,6 @@ export default {
             this.close();
         },
         close: function () {
-            let vm = this;
             this.isModalOpen = false;
         },
         mapOffenceClicked: function(){
@@ -668,7 +668,7 @@ export default {
 };
 </script>
 
-<style lang="css">
+<style lang="css" scoped>
 .btn-file {
     position: relative;
     overflow: hidden;
@@ -701,6 +701,8 @@ export default {
 }
 .tab-content {
     background: white;
+    padding: 10px;
+    border: solid 1px lightgray;
 }
 #DataTable {
     padding: 10px 5px;
