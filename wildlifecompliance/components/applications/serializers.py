@@ -638,7 +638,7 @@ class ApplicationSerializer(BaseApplicationSerializer):
     can_be_processed = serializers.SerializerMethodField(read_only=True)
 
     def get_readonly(self, obj):
-        return obj.can_user_view
+        return not obj.can_user_edit
 
     def get_amendment_requests(self, obj):
         return ExternalAmendmentRequestSerializer(

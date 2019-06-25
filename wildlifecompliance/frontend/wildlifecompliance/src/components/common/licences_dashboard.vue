@@ -200,7 +200,7 @@ export default {
                                 links += `<a suspend-licence='${full.id}'>Suspend</a><br/>`
                             }
                             if (!vm.is_external) {
-                                links += `<a>Reinstate</a><br/>`
+                                links += `<a reinstate-licence='${full.id}'>Reinstate</a><br/>`
                             }
                             return links;
                         },
@@ -613,6 +613,36 @@ export default {
                         var licence_activity_id = $(this).attr('reissue-activity');
                         var licence_id = $(this).attr('lic-id');
                         console.log('send user to create reissue application')
+                    }
+                },(error) => {
+                });
+            });
+            // Reinstate licence listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reinstate-licence]', function(e) {
+                e.preventDefault();
+                swal({
+                    title: "Reinstate Licence",
+                    text: "Are you sure you want to reinstate all suspended activities and purposes for this licence?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        var licence_id = $(this).attr('reinstate-licence');
+                        vm.$http.post(helpers.add_endpoint_json(api_endpoints.licences,licence_id+'/reinstate_licence')).then((response)=>{
+                                swal(
+                                        'Reinstate Licence',
+                                        'The selected licence\'s suspended activities and purposes have been Reinstated.',
+                                        'success'
+                                )
+                                vm.refreshFromResponse(response)
+                            },(error)=>{
+                                swal(
+                                    'Reinstate Licence Error',
+                                    helpers.apiVueResourceError(error),
+                                    'error'
+                                )
+                            });
                     }
                 },(error) => {
                 });
