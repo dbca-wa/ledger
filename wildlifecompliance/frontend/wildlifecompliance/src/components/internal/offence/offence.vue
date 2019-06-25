@@ -115,8 +115,8 @@
                     <div :id="pTab" class="tab-pane fade in">
                         <div class="row">
                             <div class="col-sm-12 form-group"><div class="row">
-                                <input class="col-sm-1" id="offender_indivisual" type="radio" v-model="offender_type" value="indivisual">
-                                <label class="col-sm-1 radio-button-label" for="offender_indivisual">Indivisual</label>
+                                <input class="col-sm-1" id="offender_individual" type="radio" v-model="offender_type" value="individual">
+                                <label class="col-sm-1 radio-button-label" for="offender_individual">Individual</label>
                                 <input class="col-sm-1" id="offender_organisation" type="radio" v-model="offender_type" value="organisation">
                                 <label class="col-sm-1 radio-button-label" for="offender_organisation">Organisation</label>
                             </div></div>
@@ -187,7 +187,7 @@ export default {
             officers: [],
             isModalOpen: false,
             processingDetails: false,
-            offender_type: 'indivisual',
+            offender_type: 'individual',
             current_alleged_offence: {
                 id: null,
                 Act: '',
@@ -203,6 +203,7 @@ export default {
     
             dtHeadersOffender: [
                 'id',
+                'Description',
                 'Action',
             ],
             dtHeadersAllegedOffence: [
@@ -217,6 +218,21 @@ export default {
                     {
                         data: 'id',
                         visible: true
+                    },
+                    {
+                        data: '',
+                        mRender: function(data, type, row){
+                            console.log('ahobaka');
+
+                            let full_name = [row.first_name, row.last_name].filter(Boolean).join(' ');
+                            let email = row.email?'E:' + row.email:'';
+                            let p_number = row.phone_number?'P:' + row.phone_number:'';
+                            let m_number = row.mobile_number?'M:' + row.mobile_number:'';
+                            let dob = row.dob?'DOB:' + row.dob:'DOB: ---';
+                            let myLabel = ['<span class="full_name">' + full_name + '</span>', email, p_number, m_number, dob].filter(Boolean).join('<br />');
+
+                            return myLabel;
+                        }
                     },
                     {
                         data: 'Action',
@@ -296,6 +312,7 @@ export default {
             setOffenders: "setOffenders",
             setCallEmailId: "setCallEmailId",
             saveOffence: "saveOffence",
+            setOffenceEmpty: "setOffenceEmpty",
         }),
         removeOffenderClicked: function(e){   
             let vm = this;
@@ -327,6 +344,12 @@ export default {
                 if (!already_exists){
                     vm.$refs.offender_table.vmDataTable.row.add({
                         'id': vm.current_offender.id,
+                        'first_name': vm.current_offender.first_name,
+                        'last_name': vm.current_offender.last_name,
+                        'email': vm.current_offender.email,
+                        'p_number': vm.current_offender.p_number,
+                        'm_number': vm.current_offender.m_numberum,
+                        'dob': vm.current_offender.dob,
                     }).draw();
                 }
             }
@@ -351,14 +374,16 @@ export default {
                 }
             }
 
-            vm.setCurrentOffenceEmpty();
+            vm.setCurrentAllegedOffenceEmpty();
         },
         ok: async function () {
+            console.log('ok');
             await this.sendData();
 
             // Update call_email in vuex
             await this.loadCallEmail({ call_email_id: this.call_email.id }); 
 
+            this.setOffenceEmpty();
             this.close();
         },
         cancel: function() {
@@ -607,14 +632,11 @@ export default {
                     let idx = result[1];
                     self.setCurrentOffenceSelected(self.suggest_list[idx]);
                 }else{
-                    self.setCurrentOffenceEmpty();
+                    self.setCurrentAllegedOffenceEmpty();
                 }
             });
         },
         setCurrentOffender: function(id){
-            console.log('setCurrentOffender');
-            console.log(id);
-
             let vm = this;
             let initialisers = [
                 utils.fetchUser(id),
@@ -632,7 +654,7 @@ export default {
                 vm.current_alleged_offence.SectionRegulation = offence.name;
                 vm.current_alleged_offence.AllegedOffence = offence.offence_text;
             } else {
-                vm.setCurrentOffenceEmpty();
+                vm.setCurrentAllegedOffenceEmpty();
             }
         },
         setCurrentOffenderEmpty: function(){
@@ -642,7 +664,7 @@ export default {
 
             $('#offender_input').val('');
         },
-        setCurrentOffenceEmpty: function(){
+        setCurrentAllegedOffenceEmpty: function(){
             let vm = this;
 
             vm.current_alleged_offence.id = null;

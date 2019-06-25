@@ -73,6 +73,39 @@ export const offenceStore = {
         updateOffence(state, offence) {
             Vue.set(state, 'offence', offence);
         },
+        updateOffenceEmpty(state){
+            console.log('updateOffenceEmpty');
+            let offence = {
+                id: null,
+                call_email_id: null,
+                identifier: '',
+                status: 'draft',
+                offenders: [],
+                alleged_offences: [],
+                location: {
+                    type: 'Feature',
+                    properties: {
+                        town_suburb: null,
+                        street: null,
+                        state: 'WA',
+                        postcode: null,
+                        country: 'Australia',
+                        details: ''
+                    },
+                    geometry: {
+                        'type': 'Point',
+                        'coordinates': []
+                    }
+                },
+                occurrence_from_to: true,
+                occurrence_date_from: null,
+                occurrence_date_to: null,
+                occurrence_time_from: null,
+                occurrence_time_to: null,
+                details: ''
+            };
+            Vue.set(state, 'offence', offence);
+        },
         updateLocationPoint(state, point) {
             state.offence.location.geometry.coordinates = point;
         },
@@ -121,6 +154,10 @@ export const offenceStore = {
         },
         setOffence({ commit, }, offence) {
             commit("updateOffence", offence);
+        },
+        setOffenceEmpty({ commit, }){
+            console.log('setOffenceEmpty');
+            commit("updateOffenceEmpty");
         },
         setLocationPoint({ commit, }, point) {
             commit("updateLocationPoint", point);
