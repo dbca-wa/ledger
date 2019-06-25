@@ -405,6 +405,14 @@ export default {
     Offence,
     datatable,
   },
+  watch: {
+      call_email: {
+          handler: function (){
+              this.constructRelatedItemsTable();
+          },
+          deep: true
+      },
+  },
   computed: {
     ...mapGetters('callemailStore', {
       call_email: "call_email",
@@ -516,8 +524,8 @@ export default {
             if (!already_exists){
                 vm.$refs.related_items_table.vmDataTable.row.add(
                     {
-                        'identifier': vm.call_email.related_items[i].get_related_items_identifier,
-                        'descriptor': vm.call_email.related_items[i].get_related_items_descriptor,
+                        'identifier': vm.call_email.related_items[i].identifier,
+                        'descriptor': vm.call_email.related_items[i].descriptor,
                         'model_name': vm.call_email.related_items[i].model_name,
                         'Action': vm.call_email.related_items[i],
                     }
