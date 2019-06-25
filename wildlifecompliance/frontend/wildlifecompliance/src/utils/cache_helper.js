@@ -91,9 +91,7 @@ module.exports = {
                 let timeDiff = timeNow - firstEntry[0];
                 // ensure cached value is not stale
                 if (timeDiff > expiryDiff) {
-                    for (let store_key of store_keys) {
-                        await storeInstance.removeItem(store_key);
-                    }
+                    storeInstance.clear();
                 } else {
                     for (let store_key of store_keys) {
                         let this_val = await storeInstance.getItem(store_key);
@@ -103,7 +101,8 @@ module.exports = {
                     }
                 }
             } 
-            if (store_keys.length === 0) {
+            let fresh_keys = await storeInstance.keys();
+            if (fresh_keys.length === 0) {
             // else {    
             // empty store - get data from url
                 const returnedFromUrl = await Vue.http.get(url);
