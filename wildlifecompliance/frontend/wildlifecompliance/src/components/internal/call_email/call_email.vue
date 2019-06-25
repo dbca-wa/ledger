@@ -77,7 +77,8 @@
                           </div>
                         </div>
 
-                        <div v-if="statusId ==='open_followup'" class="row action-button">
+                        <!-- <div v-if="statusId ==='open_followup'" class="row action-button"> -->
+                        <div class="row action-button">
                           <div class="col-sm-12">
                                 <a @click="offence()" class="btn btn-primary btn-block">
                                   Offence
@@ -497,8 +498,8 @@ export default {
             if (!already_exists){
                 vm.$refs.related_items_table.vmDataTable.row.add(
                     {
-                        'identifier': vm.call_email.related_items[i].identifier,
-                        'descriptor': vm.call_email.related_items[i].descriptor,
+                        'identifier': vm.call_email.related_items[i].get_related_items_identifier,
+                        'descriptor': vm.call_email.related_items[i].get_related_items_descriptor,
                         'model_name': vm.call_email.related_items[i].model_name,
                         'Action': vm.call_email.related_items[i],
                     }
@@ -661,8 +662,11 @@ export default {
     margin-top: 5px;
 }
 #main-column {
-  padding-left: 3%;
+  padding-left: 2%;
   padding-right: 0;
   margin-bottom: 50px;
+}
+.awesomplete {
+    width: 100% !important;
 }
 </style>
