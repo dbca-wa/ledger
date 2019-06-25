@@ -140,7 +140,7 @@
 
           </div>
 
-          <div class="col-md-8" id="main-column">  
+          <div class="col-md-9" id="main-column">  
             <div class="row">
 
                 <div class="container-fluid">
@@ -661,6 +661,8 @@ export default {
     margin-top: 5px;
 }
 #main-column {
-  margin-left: 10px;
+  padding-left: 3%;
+  padding-right: 0;
+  margin-bottom: 50px;
 }
 </style>
