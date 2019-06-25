@@ -83,11 +83,10 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
             return False
         if user is None:
             return False
-        return user.has_perm('wildlifecompliance.system_administrator') or (
+        return (user.has_perm('wildlifecompliance.system_administrator') or
             user.has_wildlifelicenceactivity_perm([
                 'issuing_officer',
-            ], obj.licence_activity_id) and obj.can_reissue
-        )
+            ], obj.licence_activity_id)) and obj.can_reissue
 
     def get_can_pay_licence_fee(self, obj):
         return not obj.licence_fee_paid and obj.processing_status == ApplicationSelectedActivity.PROCESSING_STATUS_AWAITING_LICENCE_FEE_PAYMENT
@@ -160,11 +159,10 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
             return False
         if user is None:
             return False
-        return user.has_perm('wildlifecompliance.system_administrator') or (
+        return (user.has_perm('wildlifecompliance.system_administrator') or
             user.has_wildlifelicenceactivity_perm([
                 'issuing_officer',
-            ], obj.licence_activity_id) and obj.can_reissue
-        )
+            ], obj.licence_activity_id)) and obj.can_reissue
 
     def get_can_pay_licence_fee(self, obj):
         return not obj.licence_fee_paid and obj.processing_status == ApplicationSelectedActivity.PROCESSING_STATUS_AWAITING_LICENCE_FEE_PAYMENT
@@ -226,11 +224,10 @@ class ExternalApplicationSelectedActivityMergedSerializer(serializers.Serializer
             return False
         if user is None:
             return False
-        return user.has_perm('wildlifecompliance.system_administrator') or (
+        return (user.has_perm('wildlifecompliance.system_administrator') or
             user.has_wildlifelicenceactivity_perm([
                 'issuing_officer',
-            ], obj.get('licence_activity_id')) and obj.get('can_reissue')
-        )
+            ], obj.get('licence_activity_id'))) and obj.get('can_reissue')
 
 
 class EmailUserSerializer(serializers.ModelSerializer):
