@@ -1,6 +1,20 @@
 from rest_framework import serializers
+
+from ledger.accounts.models import Organisation
 from wildlifecompliance.components.call_email.serializers import LocationSerializer
 from wildlifecompliance.components.offence.models import Offence, SectionRegulation, Offender
+
+
+class OrganisationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Organisation
+        fields = (
+            'id',
+            'abn',
+            'name',
+        )
+        read_only_fields = ()
 
 
 class SectionRegulationSerializer(serializers.ModelSerializer):
@@ -13,9 +27,7 @@ class SectionRegulationSerializer(serializers.ModelSerializer):
             'name',
             'offence_text',
         )
-        read_only_fields = (
-
-        )
+        read_only_fields = ()
 
 
 class OffenceSerializer(serializers.ModelSerializer):
