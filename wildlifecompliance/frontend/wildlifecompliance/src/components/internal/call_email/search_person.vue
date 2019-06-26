@@ -484,6 +484,12 @@ export default {
                 }
             });
         },
+        markMatchedText(original_text, input){
+            let ret_text = original_text.replace(new RegExp(input, "gi"), function(a, b){
+                return '<mark>' + a + '</mark>';
+            });
+            return ret_text;
+        },
         initAwesomplete: function(){
             var self = this;
 
@@ -492,6 +498,10 @@ export default {
                 maxItems: self.max_items, 
                 sort: false, 
                 filter: ()=>{ return true; }, // Display all the items in the list without filtering.
+                item: function(text, input){
+                    let ret =  Awesomplete.ITEM(text, ''); // Not sure how this works but this doesn't add <mark></mark>
+                    return ret;
+                },
                 data: function(item, input){
                     let f_name = item.first_name?item.first_name:'';
                     let l_name = item.last_name?item.last_name:'';
@@ -501,7 +511,15 @@ export default {
                     let p_number = item.phone_number?'P:' + item.phone_number:'';
                     let m_number = item.mobile_number?'M:' + item.mobile_number:'';
                     let dob = item.dob?'DOB:' + item.dob:'DOB: ---';
-                    let myLabel = ['<span class="full_name">' + full_name + '</span>', email, p_number, m_number, dob].filter(Boolean).join('<br />');
+                    
+                    let full_name_marked = '<strong>' + self.markMatchedText(full_name, input) + '</strong>';
+                    let email_marked = self.markMatchedText(email, input);
+                    let p_number_marked = self.markMatchedText(p_number, input);
+                    let m_number_marked = self.markMatchedText(m_number, input);
+                    let dob_marked = self.markMatchedText(dob, input);
+
+                    let myLabel = [full_name_marked, email_marked, p_number_marked, m_number_marked, dob_marked].filter(Boolean).join('<br />');
+                    myLabel = '<div data-item-id="' + item.id + '">' + myLabel + '</div>';
 
                     return { 
                         label: myLabel,   // Displayed in the list below the search box
@@ -524,32 +542,29 @@ export default {
                 /* Retrieve element id of the selected item from the list
                  * By parsing it, we can get the order-number of the item in the list
                  */
-                console.log("origin");
-                console.log(ev.originalEvent.origin);
                 let origin = $(ev.originalEvent.origin)
                 let originTagName = origin[0].tagName;
-                if (originTagName == "SPAN"){
+                if (originTagName != "DIV"){
+                    // Assuming origin is a child element of <li>
                     origin = origin.parent();
                 }
-                let elem_id = origin[0].id;
-                let reg = /^.+(\d+)$/gi;
-                let result = reg.exec(elem_id)
-                if(result[1]){
-                    let idx = result[1];
-                    self.loadEmailUser(self.suggest_list[idx].id);
-                }else{
-                    console.log("result");
-                    console.log(result);
+                let elem_id = origin[0].getAttribute('data-item-id');
+                for(let i = 0; i < self.suggest_list.length; i++){
+                    if (self.suggest_list[i].id == parseInt(elem_id)){
+                        self.loadEmailUser(self.suggest_list[i].id);
+                        break;
+                    }
                 }
             });
         },
     }
 }
-</script>        
+</script>       R
 
-<style scoped>
+<style>
 .awesomplete {
     z-index: 1050 !important;
+    display: inherit !important;
 }
 .awesomplete > ul {
     z-index: 2001;
@@ -572,8 +587,5 @@ export default {
 #search-person {
     z-index: 1000;
     /* width: 400px; */
-}
-.awesomplete {
-    display: inherit !important;
 }
 </style>
