@@ -520,18 +520,19 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
 
     def get_user_action(self, obj):
         user_id = self.context.get('request', {}).user.id
-        url = "/internal/call_email/" + str(obj.id)
+        view_url = '<a href=/internal/call_email/' + str(obj.id) + '>View</a>'
+        process_url = '<a href=/internal/call_email/' + str(obj.id) + '>Process</a>'
 
         if obj.status == 'closed':
-            return '<a href=' + url + '>View</a>'
+            return view_url
         elif user_id == obj.assigned_to_id:
-            return '<a href=' + url + '>Process</a>'
+            return process_url
         elif obj.allocated_group and not obj.assigned_to_id:
            for member in obj.allocated_group.members:
                if user_id == member.id:
-                  return '<a href=' + url + '>Process</a>'
+                  return process_url
         else:
-            return '<a href=' + url + '>View</a>'
+            return view_url
 
 
 class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
