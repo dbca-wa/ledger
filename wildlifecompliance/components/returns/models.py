@@ -343,7 +343,8 @@ class Return(models.Model):
         :return:
         """
         try:
-            return_table = ReturnTable.objects.get_or_create(name=table_name, ret=self)[0]
+            # get the Return Table record and save immediately to check if it has been concurrently modified.
+            return_table, created = ReturnTable.objects.get_or_create(name=table_name, ret=self)
             return_table.save()
             # delete any existing rows as they will all be recreated
             return_table.returnrow_set.all().delete()
@@ -668,6 +669,7 @@ class ReturnSheet(object):
         _data = []
         # TODO: create default entries for each species on the licence.
         # TODO: Each species has a defaulted Stock Activity (0 Totals).
+        # TODO: Call _set_activity_from_previous to carry over Stock totals for Licence reissues.
         '''
         new_sheet = the_return.sheet
         for species in the_return.licence.species_list:
@@ -811,7 +813,7 @@ class ReturnSheet(object):
         _transfers = ast.literal_eval(_data)
         _licence = _transfers['licence']
         is_valid = False if not is_valid else self._is_valid_transfer_licence(_licence)
-        #is_valid = False if not is_valid else self._is_valid_transfer_quantity(request)
+        is_valid = False if not is_valid else self._is_valid_transfer_quantity(request)
 
         return is_valid
 
@@ -883,25 +885,20 @@ class ReturnSheet(object):
     def _set_activity_from_previous(self):
         """
         Sets Running Sheet Species stock total from previous Licence Running Sheet.
-        :return:
+        :return: tuple of species and total.
         """
         previous_licence = self._return.application.previous_application.licence
-        if previous_licence:
-            # TODO : for the reissue of licences. Species stock count must carry over. Nb. change in species.
-            '''      
-            table = {'data': None}              
-            for each species in previous_licence
-                try:
-                    return_table = self._return.returntable_set.get(name=_resource_name)
-                    rows = [_return_row.data for _return_row in _return_table.returnrow_set.all()]
-                    table['data'] = rows
-                    table['echo'] = 1
-                    table['totalRecords'] = str(rows.__len__())
-                    table['totalDisplayRecords'] = str(rows.__len__())
-                except ReturnTable.DoesNotExist:
-                    self._table = self._NO_ACTIVITY
-                self._create_return_data(self._return, _species_id, _table)
-            '''
+        previous_return = self._get_licence_return(previous_licence)
+        previous_stock = {}  # {species_id: amount}
+        if previous_return:
+            species_tables = ReturnTable.objects.filter(ret=previous_return)
+            for table in species_tables:
+                rows = ReturnRow.objects.filter(return_table=table)
+                stock_total = 0
+                for row in rows:
+                    stock_total = row.data['total']
+                previous_stock[table.name] = stock_total
+        return previous_stock
 
     def _get_licence_return(self, licence_no):
         """
@@ -947,6 +944,7 @@ class ReturnSheet(object):
         :param request:
         :return: boolean
         """
+        # TODO: This validation is not completed.
         if not request.data.get('transfer'):
             return False
         data = request.data.get('transfer').encode('utf-8')
@@ -972,6 +970,7 @@ class ReturnSheet(object):
                 row.data[self._TOTAL] = int(row.data[self._TOTAL]) - int(self.qty)
             table_rows.append(row.data)
         '''
+        return True
 
     def __str__(self):
         return self._return.lodgement_number
@@ -1050,7 +1049,8 @@ class NotifyTransfer(ReturnActivity):
         self.licence = from_return.licence.licence_number
 
         try:
-            return_table = ReturnTable.objects.get_or_create(name=species, ret=to_return)[0]
+            # get the Return Table record and save immediately to check if it has been concurrently modified.
+            return_table, created = ReturnTable.objects.get_or_create(name=species, ret=to_return)
             return_table.save()
             rows = ReturnRow.objects.filter(return_table=return_table)
             table_rows = []
@@ -1108,6 +1108,7 @@ class AcceptTransfer(ReturnActivity):
         to_return = self.get_licence_return()
 
         try:
+            # get the Return Table record and save immediately to check if it has been concurrently modified.
             return_table = ReturnTable.objects.get(name=species, ret=to_return)
             return_table.save()
             rows = ReturnRow.objects.filter(return_table=return_table)
@@ -1157,6 +1158,7 @@ class DeclineTransfer(ReturnActivity):
         to_return = self.get_licence_return()
 
         try:
+            # get the Return Table record and save immediately to check if it has been concurrently modified.
             return_table = ReturnTable.objects.get(name=species, ret=to_return)
             return_table.save()
             rows = ReturnRow.objects.filter(return_table=return_table)
