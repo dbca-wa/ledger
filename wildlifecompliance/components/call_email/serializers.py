@@ -522,7 +522,9 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
         user_id = self.context.get('request', {}).user.id
         url = "/internal/call_email/" + str(obj.id)
 
-        if user_id == obj.assigned_to_id:
+        if obj.status == 'closed':
+            return '<a href=' + url + '>View</a>';
+        elif user_id == obj.assigned_to_id:
             return '<a href=' + url + '>Process</a>';
         elif obj.allocated_group and not obj.assigned_to_id:
            for member in obj.allocated_group.members:
