@@ -1282,14 +1282,14 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
                 # save the files
                 #import ipdb; ipdb.set_trace()
-                documents_qs = instance.onhold_documents.filter(input_name='on_hold_file', visible=true)
+                documents_qs = instance.onhold_documents.filter(input_name='on_hold_file', visible=True)
                 for f in documents_qs:
                     document = comms.documents.create(_file=f._file, name=f.name)
                     #document = comms.documents.create()
                     #document.name = f.name
                     #document._file = f._file #.strip('/media')
                     document.input_name = f.input_name
-                    document.can_delete = true
+                    document.can_delete = True
                     document.save()
                 # end save documents
 
