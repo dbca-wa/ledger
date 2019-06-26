@@ -8,12 +8,15 @@
                         <div class="col-sm-12">
                             <div class="form-group">
                                 <div class="row">
-                                    <div class="col-sm-12">
+                                    <div v-if=hasActionableLicencePurposes class="col-sm-12">
                                         <div v-for="purpose in actionableLicencePurposes">
                                             <div>
                                                 <input type="checkbox" :value ="purpose.id" :id="purpose.id" v-model="action_licence.purpose_ids_list"> {{purpose.name}}
                                             </div>
                                         </div>
+                                    </div>
+                                    <div v-else class="col-sm-12">
+                                        <span>You cannot apply this action to any purposes. This may be due to open applications that have yet to be processed.</span>
                                     </div>
                                 </div>
                             </div>
@@ -23,7 +26,7 @@
             </div>
             <div slot="footer">
                 <button type="button" v-if="actioningPurposes" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i>{{actioning_text}} Purpose(s)</button>
-                <button type="button" v-else class="btn btn-danger" @click="ok">{{action_text}} Purpose(s)</button>
+                <button type="button" v-if="hasActionableLicencePurposes && !actioningPurposes" class="btn btn-danger" @click="ok">{{action_text}} Purpose(s)</button>
                 <button type="button" class="btn btn-default" @click="cancel">Close</button>
             </div>
         </modal>
@@ -112,6 +115,9 @@ export default {
         },
         actionableLicencePurposes: function() {
             return this.licence_activity_purposes;
+        },
+        hasActionableLicencePurposes: function() {
+            return this.licence_activity_purposes.length > 0;
         },
     },
     methods:{

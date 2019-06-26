@@ -185,26 +185,26 @@ export default {
                             let proxy_id = full.current_application.proxy_applicant ? full.current_application.proxy_applicant.id : '';
                             let licence_category_id = full.current_application.category_id ? full.current_application.category_id : '';
 
-                            if (full.can_add_activity_purpose) {
+                            if (full.is_latest_in_category) {
                                 links += `<a add-activity-purpose='${full.id}' org-id='${org_id}' proxy-id='${proxy_id}' licence-category-id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
-                            }
-                            if (!vm.is_external && full.can_renew) {
-                                links += `<a renew-licence='${full.id}'>Renew</a><br/>`
-                            }
-                            if (!vm.is_external && full.can_reactivate_renew) {
-                                links += `<a reactivate-renew-licence='${full.id}'>Reactivate Renew</a><br/>`
-                            }
-                            if (full.can_surrender) {
-                                links += `<a surrender-licence='${full.id}'>Surrender</a><br/>`
-                            }
-                            if (!vm.is_external && full.can_cancel) {
-                                links += `<a cancel-licence='${full.id}'>Cancel</a><br/>`
-                            }
-                            if (!vm.is_external && full.can_suspend) {
-                                links += `<a suspend-licence='${full.id}'>Suspend</a><br/>`
-                            }
-                            if (!vm.is_external && full.can_reinstate) {
-                                links += `<a reinstate-licence='${full.id}'>Reinstate</a><br/>`
+                                if (!vm.is_external && full.can_renew) {
+                                    links += `<a renew-licence='${full.id}'>Renew</a><br/>`
+                                }
+                                if (!vm.is_external && full.can_reactivate_renew) {
+                                    links += `<a reactivate-renew-licence='${full.id}'>Reactivate Renew</a><br/>`
+                                }
+                                if (full.can_surrender) {
+                                    links += `<a surrender-licence='${full.id}'>Surrender</a><br/>`
+                                }
+                                if (!vm.is_external && full.can_cancel) {
+                                    links += `<a cancel-licence='${full.id}'>Cancel</a><br/>`
+                                }
+                                if (!vm.is_external && full.can_suspend) {
+                                    links += `<a suspend-licence='${full.id}'>Suspend</a><br/>`
+                                }
+                                if (!vm.is_external && full.can_reinstate) {
+                                    links += `<a reinstate-licence='${full.id}'>Reinstate</a><br/>`
+                                }
                             }
                             return links;
                         },
@@ -718,35 +718,35 @@ export default {
                                     replace(/(?:\r\n|\r|\n|,)/g, '<br>')}</td>
                                 <td>${activity['expiry_date']}</td>
                                 <td>`;
-                                    if (activity['can_amend']) {
+                                    if (activity['can_amend'] && activity['is_in_latest_licence']) {
                                         activity_rows +=
                                             `<a amend-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Amend</a></br>`;
                                     }
-                                    if (activity['can_renew']) {
+                                    if (activity['can_renew'] && activity['is_in_latest_licence']) {
                                         activity_rows +=
                                             `<a renew-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Renew</a></br>`;
                                     }
-                                    if (!vm.is_external && activity['can_reactivate_renew']) {
+                                    if (!vm.is_external && activity['can_reactivate_renew'] && activity['is_in_latest_licence']) {
                                         activity_rows +=
                                             `<a reactivate-renew-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Reactivate Renew</a></br>`;
                                     }
-                                    if (activity['can_surrender']) {
+                                    if (activity['can_surrender'] && activity['is_in_latest_licence']) {
                                         activity_rows +=
                                             `<a surrender-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Surrender</a></br>`;
                                     }
-                                    if (!vm.is_external && activity['can_cancel']) {
+                                    if (!vm.is_external && activity['can_cancel'] && activity['is_in_latest_licence']) {
                                         activity_rows +=
                                             `<a cancel-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Cancel</a></br>`;
                                     }
-                                    if (!vm.is_external && activity['can_suspend']) {
+                                    if (!vm.is_external && activity['can_suspend'] && activity['is_in_latest_licence']) {
                                         activity_rows +=
                                             `<a suspend-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Suspend</a></br>`;
                                     }
-                                    if (!vm.is_external && activity['can_reissue']) {
+                                    if (!vm.is_external && activity['can_reissue'] && activity['is_in_latest_licence']) {
                                         activity_rows +=
                                             `<a reissue-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Reissue</a></br>`;
                                     }
-                                    if (!vm.is_external && activity['can_reinstate']) {
+                                    if (!vm.is_external && activity['can_reinstate'] && activity['is_in_latest_licence']) {
                                         activity_rows +=
                                             `<a reinstate-purposes='${activity["licence_activity_id"]}' lic-id='${licence_id}'>Reinstate</a></br>`;
                                     }

@@ -225,15 +225,39 @@ class WildlifeLicence(models.Model):
         return activities
 
     def get_latest_purposes_for_licence_activity_and_action(self, licence_activity_id=None, action=None):
-        '''
+        """
         Return a list of LicencePurpose records for the licence
         Filter by licence_activity_id (optional) and/or specified action (optional)
-        '''
+        Exclude purposes that are currently in an application being processed
+        """
         can_action_purpose_list = []
         for activity in self.get_latest_activities_for_licence_activity_and_action(licence_activity_id, action):
             for purpose in activity.purposes:
-                can_action_purpose_list.append(purpose.id)
+                purposes_in_open_applications_for_applicant = self.get_purposes_in_open_applications()
+                if purpose.id not in purposes_in_open_applications_for_applicant:
+                    can_action_purpose_list.append(purpose.id)
         return LicencePurpose.objects.filter(id__in=can_action_purpose_list).distinct()
+
+    def get_purposes_in_open_applications(self):
+        """
+        Return a list of LicencePurpose records for the licence that are currently in an application being processed
+        """
+        from wildlifecompliance.components.applications.models import Application, ApplicationSelectedActivity
+        return Application.objects.filter(
+            Q(org_applicant=self.current_application.org_applicant)
+            if self.current_application.org_applicant
+            else Q(proxy_applicant=self.current_application.proxy_applicant)
+            if self.current_application.proxy_applicant
+            else Q(submitter=self.current_application.submitter, proxy_applicant=None, org_applicant=None)
+        ).computed_filter(
+            licence_category_id=self.licence_category.id
+        ).exclude(
+            selected_activities__processing_status__in=[
+                ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
+                ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
+                ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED
+            ]
+        ).values_list('licence_purposes', flat=True)
 
     @property
     def latest_activities_merged(self):
@@ -258,6 +282,7 @@ class WildlifeLicence(models.Model):
                     'activity_purpose_names_and_status': '\n'.join(['{} ({})'.format(
                         p.name, activity.get_activity_status_display())
                         for p in activity.purposes]),
+                    'is_in_latest_licence': activity.is_in_latest_licence,
                     'can_renew': activity.can_renew,
                     'can_amend': activity.can_amend,
                     'can_surrender': activity.can_surrender,
@@ -272,6 +297,8 @@ class WildlifeLicence(models.Model):
                     '\n' + '\n'.join(['{} ({})'.format(
                         p.name, activity.get_activity_status_display())
                         for p in activity.purposes])
+                activity_key['is_in_latest_licence'] = activity_key['is_in_latest_licence']\
+                                                       or activity.is_in_latest_licence
                 activity_key['can_renew'] = activity_key['can_renew'] or activity.can_renew
                 activity_key['can_amend'] = activity_key['can_amend'] or activity.can_amend
                 activity_key['can_surrender'] = activity_key['can_surrender'] or activity.can_surrender
@@ -313,7 +340,7 @@ class WildlifeLicence(models.Model):
         return self.licence_number is not None and len(self.licence_number) > 0
 
     @property
-    def can_add_activity_purpose(self):
+    def is_latest_in_category(self):
         # Returns True if the licence is the most recent one of it's category, filtered by
         # matching org_applicant, proxy_applicant and submitter
         organisation_id = self.current_application.org_applicant
@@ -370,9 +397,9 @@ class WildlifeLicence(models.Model):
         return self.latest_activities.computed_filter(can_reinstate=True).count() > 0
 
     def apply_action_to_licence(self, request, action):
-        '''
+        """
         Applies a specified action to a all of a licence's activities and purposes for a licence
-        '''
+        """
         if action not in [
             WildlifeLicence.ACTIVITY_PURPOSE_ACTION_REACTIVATE_RENEW,
             WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SURRENDER,
@@ -397,9 +424,9 @@ class WildlifeLicence(models.Model):
                         activity.reinstate(request)
 
     def apply_action_to_purposes(self, request, action):
-        '''
+        """
         Applies a specified action to a licence's purposes for a single licence_activity_id and selected purposes list
-        '''
+        """
         from wildlifecompliance.components.applications.models import (
             Application, ApplicationSelectedActivity
         )

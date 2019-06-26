@@ -312,7 +312,7 @@ class Application(RevisionedMixin):
         null=True,
         blank=True)
     previous_application = models.ForeignKey(
-        'self', on_delete=models.PROTECT, blank=True, null=True)
+        'self', on_delete=models.PROTECT, blank=True, null=True, related_name='parents')
     application_fee = models.DecimalField(
         max_digits=8, decimal_places=2, default='0')
 
@@ -2202,8 +2202,6 @@ class ApplicationSelectedActivity(models.Model):
     @property
     def can_amend(self):
         # Returns true if the activity can be included in a Amendment Application
-        if not self.is_in_latest_licence:
-            return False
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_AMENDMENT,
             activity_ids=[self.id]
@@ -2212,8 +2210,6 @@ class ApplicationSelectedActivity(models.Model):
     @property
     def can_renew(self):
         # Returns true if the activity can be included in a Renewal Application
-        if not self.is_in_latest_licence:
-            return False
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_RENEWAL,
             activity_ids=[self.id]
@@ -2222,8 +2218,6 @@ class ApplicationSelectedActivity(models.Model):
     @property
     def can_reactivate_renew(self):
         # Returns true if the activity has expired, excluding if it was surrendered or cancelled
-        if not self.is_in_latest_licence:
-            return False
         current_date = timezone.now().date()
         return ApplicationSelectedActivity.objects.filter(
             Q(id=self.id, expiry_date__isnull=False),
@@ -2240,9 +2234,6 @@ class ApplicationSelectedActivity(models.Model):
     @property
     def can_surrender(self):
         # Returns true if the activity is CURRENT or SUSPENDED
-        if not self.is_in_latest_licence:
-            # Should not be possible for surrender but check just in case
-            return False
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_SYSTEM_GENERATED,
             activity_ids=[self.id]
@@ -2251,9 +2242,6 @@ class ApplicationSelectedActivity(models.Model):
     @property
     def can_cancel(self):
         # Returns true if the activity is CURRENT or SUSPENDED
-        if not self.is_in_latest_licence:
-            # Should not be possible for cancel but check just in case
-            return False
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_SYSTEM_GENERATED,
             activity_ids=[self.id]
@@ -2264,9 +2252,6 @@ class ApplicationSelectedActivity(models.Model):
         # Returns true if the activity_status is CURRENT
         # Extra exclude for SUSPENDED due to get_current_activities_for_application_type
         # intentionally not excluding these as part of the queryset
-        if not self.is_in_latest_licence:
-            # Should not be possible for suspend but check just in case
-            return False
         return ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_SYSTEM_GENERATED,
             activity_ids=[self.id]
@@ -2275,8 +2260,6 @@ class ApplicationSelectedActivity(models.Model):
     @property
     def can_reissue(self):
         # Returns true if the activity has expired, excluding if it was surrendered or cancelled
-        if not self.is_in_latest_licence:
-            return False
         current_date = timezone.now().date()
         return ApplicationSelectedActivity.objects.filter(
             Q(id=self.id, expiry_date__isnull=False),
@@ -2292,34 +2275,52 @@ class ApplicationSelectedActivity(models.Model):
 
     @property
     def can_reinstate(self):
-        if not self.is_in_latest_licence:
-            return False
-        # Returns true if the activity has not yet expired and is currently SUSPENDED or CANCELLED
+        # Returns true if the activity has not yet expired and is currently SUSPENDED, CANCELLED or SURRENDERED
         current_date = timezone.now().date()
         return self.expiry_date and\
             self.expiry_date >= current_date and\
             self.activity_status in [
                 ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED,
-                ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED
+                ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED
             ]
+
+    # def get_actionable_purposes(self):
+    #     """
+    #     Return a list of LicencePurpose records for the activity that are
+    #     not currently in an application being processed
+    #     """
+    #     return self.purposes.exclude(Application.objects.filter(
+    #         Q(org_applicant=self.application.org_applicant)
+    #         if self.application.org_applicant
+    #         else Q(proxy_applicant=self.application.proxy_applicant)
+    #         if self.application.proxy_applicant
+    #         else Q(submitter=self.application.submitter, proxy_applicant=None, org_applicant=None)
+    #     ).computed_filter(
+    #         licence_category_id=self.purposes.first().licence_category.id
+    #     ).exclude(
+    #         selected_activities__processing_status__in=[
+    #             ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
+    #             ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
+    #             ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED
+    #         ]
+    #     ).values_list('licence_purposes', flat=True))
 
     @property
     def is_in_latest_licence(self):
-        from wildlifecompliance.components.licences.models import WildlifeLicence
         # Returns true if the activity is in the latest WildlifeLicence record for the relevant applicant
-        self_licence = None
-        try:
-            self_licence = WildlifeLicence.objects.get(current_application__in=self.application.get_application_children())
-        except BaseException:
-            # Activity not in any licence
-            return False
+        from wildlifecompliance.components.licences.models import WildlifeLicence
+
         latest_licence = WildlifeLicence.objects.filter(
-            licence_category_id=self.licence_activity.licence_category_id,
-            current_application__org_applicant=self.application.org_applicant,
-            current_application__proxy_applicant=self.application.proxy_applicant,
-            current_application__submitter=self.application.submitter
+            Q(current_application__org_applicant=self.application.org_applicant)
+            if self.application.org_applicant
+            else Q(current_application__proxy_applicant=self.application.proxy_applicant)
+            if self.application.proxy_applicant
+            else Q(current_application__submitter=self.application.submitter, current_application__proxy_applicant=None,
+                   current_application__org_applicant=None),
+            licence_category_id=self.licence_activity.licence_category_id
         ).order_by('-id').first()
-        if self_licence == latest_licence:
+        if self in latest_licence.latest_activities:
             return True
         return False
 
@@ -2429,6 +2430,7 @@ class ApplicationSelectedActivity(models.Model):
 
     def reactivate_renew(self, request):
         # TODO: this needs work, reactivate renew logic to be clarified and function adjusted
+        # TODO: perhaps set a grace period of default 2 weeks?
         with transaction.atomic():
             self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED
             self.updated_by = request.user

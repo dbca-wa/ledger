@@ -38,6 +38,7 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     activity_purpose_names = serializers.SerializerMethodField(read_only=True)
     processing_status = CustomChoiceField(read_only=True)
     activity_status = CustomChoiceField(read_only=True)
+    is_in_latest_licence = serializers.BooleanField(read_only=True)
     can_renew = serializers.BooleanField(read_only=True)
     can_amend = serializers.BooleanField(read_only=True)
     can_surrender = serializers.BooleanField(read_only=True)
@@ -99,6 +100,7 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
     expiry_date = serializers.SerializerMethodField(read_only=True)
     activity_purpose_names = serializers.SerializerMethodField(read_only=True)
     activity_status = CustomChoiceField(read_only=True)
+    is_in_latest_licence = serializers.BooleanField(read_only=True)
     can_renew = serializers.BooleanField(read_only=True)
     can_amend = serializers.BooleanField(read_only=True)
     can_surrender = serializers.BooleanField(read_only=True)
@@ -121,6 +123,7 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
             'expiry_date',
             'activity_purpose_names',
             'activity_status',
+            'is_in_latest_licence',
             'can_renew',
             'can_amend',
             'can_surrender',
@@ -179,6 +182,7 @@ class ExternalApplicationSelectedActivityMergedSerializer(serializers.Serializer
     start_date = serializers.SerializerMethodField(read_only=True)
     expiry_date = serializers.SerializerMethodField(read_only=True)
     activity_purpose_names_and_status = serializers.CharField(read_only=True)
+    is_in_latest_licence = serializers.BooleanField(read_only=True)
     can_renew = serializers.BooleanField(read_only=True)
     can_amend = serializers.BooleanField(read_only=True)
     can_surrender = serializers.BooleanField(read_only=True)
@@ -195,6 +199,7 @@ class ExternalApplicationSelectedActivityMergedSerializer(serializers.Serializer
             'start_date',
             'expiry_date',
             'activity_purpose_names_and_status',
+            'is_in_latest_licence',
             'can_renew',
             'can_amend',
             'can_surrender',
