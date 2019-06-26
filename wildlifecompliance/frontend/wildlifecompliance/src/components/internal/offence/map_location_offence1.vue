@@ -509,7 +509,7 @@ export default {
 .mapLeaf {
   /* position: relative; */
   height: 500px;
-  width: 800px;
+  /* width: 800px; */
   cursor: default;
 }
 .search-box {
