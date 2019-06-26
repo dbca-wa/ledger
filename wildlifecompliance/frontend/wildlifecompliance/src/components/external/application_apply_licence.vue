@@ -16,7 +16,7 @@
                           
                             <div class="col-sm-12">
                                 <div class="row">
-                                    <label class="col-sm-4">
+                                    <label class="col-sm-6">
                                         {{ selectionLabel }}:
                                     </label>
                                 </div>

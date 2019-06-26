@@ -606,10 +606,20 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
     serializer_class = LicenceCategorySerializer
 
     def list(self, request, *args, **kwargs):
+        """
+        Returns a queryset of LicenceCategory objects and a queryset of LicencePurpose objects allowed for
+        licence activity/purpose selection.
+        Filters based on the following request parameters:
+        - application_type
+        - licence_category (LicenceCategory, id)
+        - licence_activity (LicenceActivity, id)
+        - organisation_id (Organisation, id), used in Application.get_active_licence_applications
+        - proxy_id (EmailUser, id), used in Application.get_active_licence_applications
+        """
         from wildlifecompliance.components.licences.models import LicencePurpose
 
         queryset = self.get_queryset()
-        available_purpose_records = None
+        available_purpose_records = LicencePurpose.objects.all()
         application_type = request.GET.get('application_type')
         licence_category_id = request.GET.get('licence_category')
         licence_activity_id = request.GET.get('licence_activity')
@@ -641,7 +651,7 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
                 Application.APPLICATION_TYPE_ACTIVITY,
                 Application.APPLICATION_TYPE_NEW_LICENCE,
             ]:
-                available_purpose_records = LicencePurpose.objects.exclude(
+                available_purpose_records = available_purpose_records.exclude(
                     id__in=active_purpose_ids
                 )
 
@@ -656,7 +666,7 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
                 )
 
                 queryset = queryset.filter(id__in=active_licence_activity_ids)
-                available_purpose_records = LicencePurpose.objects.filter(
+                available_purpose_records = available_purpose_records.filter(
                     id__in=amendable_purpose_ids,
                     licence_activity_id__in=current_activities.values_list(
                         'licence_activity_id', flat=True)
