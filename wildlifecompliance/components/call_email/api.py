@@ -709,8 +709,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                             instance.referrer.add(referrer)
                 print("referrers")
                 print(instance.referrer.all())
-                if not workflow_type == 'allocate_for_follow_up':
-                    instance.assigned_to_id = None
+                #if not workflow_type == 'allocate_for_follow_up':
+                 #   instance.assigned_to_id = None
                 instance.save()
 
                 # send email

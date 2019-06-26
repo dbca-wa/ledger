@@ -440,7 +440,7 @@ class ComplianceLogEntry(CommunicationsLogEntry):
 class ComplianceUserAction(UserAction):
     ACTION_SAVE_CALL_EMAIL_ = "Save Call/Email {}"
     ACTION_FORWARD_TO_REGIONS = "Forward Call/Email {} to regions"
-    ACTION_FORWARD_TO_WILDLIFEPROTECTION_BRANCH_ = "Forward Call/Email {} to Wildlife Protection Branch"
+    ACTION_FORWARD_TO_WILDLIFE_PROTECTION_BRANCH = "Forward Call/Email {} to Wildlife Protection Branch"
     ACTION_ALLOCATE_FOR_FOLLOWUP = "Allocate Call/Email {} for follow up"
     ACTION_ALLOCATE_FOR_INSPECTION = "Allocate Call/Email {} for inspection"
     ACTION_ALLOCATE_FOR_CASE = "Allocate Call/Email {} for case"
