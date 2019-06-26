@@ -1329,7 +1329,14 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 comms = serializer.save()
 
                 # Save the files
-                documents_qs = instance.qaofficer_documents.filter(input_name='qaofficer_file', visible=True)
+                #import ipdb; ipdb.set_trace()
+                document_qs=[]
+                if is_with_qaofficer:
+                    #Get the list of documents attached by assessor when sending application to QA officer                    
+                    documents_qs = instance.qaofficer_documents.filter(input_name='assessor_qa_file', visible=True)
+                else:
+                    #Get the list of documents attached by QA officer when sending application back to assessor                    
+                    documents_qs = instance.qaofficer_documents.filter(input_name='qaofficer_file', visible=True)                    
                 for f in documents_qs:
                     document = comms.documents.create(_file=f._file, name=f.name)
                     #document = comms.documents.create()
