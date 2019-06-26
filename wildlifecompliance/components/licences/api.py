@@ -655,6 +655,16 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
                     id__in=active_purpose_ids
                 )
 
+            # Exclude active licence categories for New Licence application type
+            if application_type == Application.APPLICATION_TYPE_NEW_LICENCE:
+                queryset = queryset.exclude(id__in=current_activities.values_list(
+                    'licence_activity__licence_category_id', flat=True).distinct())
+
+            # Only display active licence categories for New Activity/purpose application type
+            if application_type == Application.APPLICATION_TYPE_ACTIVITY:
+                queryset = queryset.filter(id__in=current_activities.values_list(
+                    'licence_activity__licence_category_id', flat=True).distinct())
+
             # Only include active purposes for Amendment or Renewal application types
             elif application_type in [
                 Application.APPLICATION_TYPE_AMENDMENT,
