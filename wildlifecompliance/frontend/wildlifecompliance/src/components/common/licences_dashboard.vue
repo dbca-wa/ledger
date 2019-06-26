@@ -185,7 +185,7 @@ export default {
                             let proxy_id = full.current_application.proxy_applicant ? full.current_application.proxy_applicant.id : '';
                             let licence_category_id = full.current_application.category_id ? full.current_application.category_id : '';
 
-                            if (!vm.is_external && full.can_add_activity_purpose) {
+                            if (full.can_add_activity_purpose) {
                                 links += `<a add-activity-purpose='${full.id}' org-id='${org_id}' proxy-id='${proxy_id}' licence-category-id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
                             }
                             if (!vm.is_external && full.can_renew) {
@@ -194,7 +194,7 @@ export default {
                             if (!vm.is_external && full.can_reactivate_renew) {
                                 links += `<a reactivate-renew-licence='${full.id}'>Reactivate Renew</a><br/>`
                             }
-                            if (vm.is_external && full.can_surrender) {
+                            if (full.can_surrender) {
                                 links += `<a surrender-licence='${full.id}'>Surrender</a><br/>`
                             }
                             if (!vm.is_external && full.can_cancel) {

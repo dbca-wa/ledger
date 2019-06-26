@@ -327,7 +327,7 @@ class WildlifeLicence(models.Model):
               current_application__proxy_applicant=None,
               current_application__org_applicant=None
             )
-        ).latest('licence_number') == self
+        ).latest('id') == self
 
     @property
     def can_amend(self):
