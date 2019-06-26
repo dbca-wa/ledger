@@ -2550,31 +2550,33 @@ class Referral(RevisionedMixin):
     def add_referral_document(self, request):
         with transaction.atomic():
             try:
-                referral_document = request.data['referral_document']
-                #import ipdb; ipdb.set_trace()
-                if referral_document != 'null':
-                    try:
-                        document = self.referral_documents.get(input_name=str(referral_document))
-                    except ReferralDocument.DoesNotExist:
-                        document = self.referral_documents.get_or_create(input_name=str(referral_document), name=str(referral_document))[0]
-                    document.name = str(referral_document)
-                    # commenting out below tow lines - we want to retain all past attachments - reversion can use them
-                    #if document._file and os.path.isfile(document._file.path):
-                    #    os.remove(document._file.path)
-                    document._file = referral_document
-                    document.save()
-                    d=ReferralDocument.objects.get(id=document.id)
-                    self.referral_document = d
-                    comment = 'Referral Document Added: {}'.format(document.name)
-                else:
-                    self.referral_document = None
-                    comment = 'Referral Document Deleted: {}'.format(request.data['referral_document_name'])
-                #self.save()
-                self.save(version_comment=comment) # to allow revision to be added to reversion history
-                self.proposal.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
-                # Create a log entry for the organisation
-                applicant_field=getattr(self.proposal, self.proposal.applicant_field)
-                applicant_field.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
+                if request.data.has_key('referral_document'):
+                    referral_document = request.data['referral_document']
+                    #import ipdb; ipdb.set_trace()
+                    if referral_document != 'null':
+                        try:
+                            document = self.referral_documents.get(input_name=str(referral_document))
+                        except ReferralDocument.DoesNotExist:
+                            document = self.referral_documents.get_or_create(input_name=str(referral_document), name=str(referral_document))[0]
+                        document.name = str(referral_document)
+                        # commenting out below tow lines - we want to retain all past attachments - reversion can use them
+                        #if document._file and os.path.isfile(document._file.path):
+                        #    os.remove(document._file.path)
+                        document._file = referral_document
+                        document.save()
+                        d=ReferralDocument.objects.get(id=document.id)
+                        self.referral_document = d
+                        comment = 'Referral Document Added: {}'.format(document.name)
+                    else:
+                        self.referral_document = None
+                        #comment = 'Referral Document Deleted: {}'.format(request.data['referral_document_name'])
+                        comment = 'Referral Document Deleted'
+                    #self.save()
+                    self.save(version_comment=comment) # to allow revision to be added to reversion history
+                    self.proposal.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
+                    # Create a log entry for the organisation
+                    applicant_field=getattr(self.proposal, self.proposal.applicant_field)
+                    applicant_field.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
                 return self
             except:
                 raise
