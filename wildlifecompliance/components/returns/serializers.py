@@ -25,12 +25,13 @@ class EmailUserSerializer(serializers.ModelSerializer):
 class ReturnSerializer(serializers.ModelSerializer):
     # activity = serializers.CharField(source='application.activity')
     processing_status = serializers.CharField(
-        source='get_processing_status_display') # TODO: check if this should be changed to use CustomChoice
+        source='get_processing_status_display')  # TODO: check if this should be changed to use CustomChoice
     submitter = EmailUserSerializer()
     lodgement_number = serializers.SerializerMethodField()
     sheet_activity_list = serializers.SerializerMethodField()
     sheet_species_list = serializers.SerializerMethodField()
     sheet_species = serializers.SerializerMethodField()
+    licence = serializers.SerializerMethodField()
 
     class Meta:
         model = Return
@@ -63,7 +64,7 @@ class ReturnSerializer(serializers.ModelSerializer):
         :param _return: Return instance.
         :return: lodgement number.
         """
-        return _return.lodgement_number if _return.lodgement_date else '{0} (Pending)'.format(_return.id)
+        return _return.lodgement_number
 
     def get_sheet_activity_list(self, _return):
         """
@@ -88,6 +89,14 @@ class ReturnSerializer(serializers.ModelSerializer):
         :return: species identifier for a Return Running Sheet.
         """
         return _return.sheet.species if _return.has_sheet else None
+
+    def get_licence(self, _return):
+        """
+        Gets the formatted Licence Number from the return.
+        :param _return: Return instance.
+        :return: formatted Licence Number.
+        """
+        return _return.licence.licence_number
 
 
 class ReturnTypeSerializer(serializers.ModelSerializer):
