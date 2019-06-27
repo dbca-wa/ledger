@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from reversion.admin import VersionAdmin
 
@@ -18,5 +19,17 @@ class OffenceAdmin(admin.ModelAdmin):
 # class SectionRegulationAdmin(admin.ModelAdmin):
 #     pass
 
-admin.site.register(models.SectionRegulation, VersionAdmin)
+class SectionRegulationForm(forms.ModelForm):
+    offence_text = forms.CharField(widget=forms.Textarea)
+
+    class Meta:
+        model = models.SectionRegulation
+        fields = '__all__'
+
+
+class SectionRegulationAdmin(VersionAdmin):
+    form = SectionRegulationForm
+
+
+admin.site.register(models.SectionRegulation, SectionRegulationAdmin)
 
