@@ -255,10 +255,12 @@ export default {
                                     if(full.can_reissue){
                                         links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
                                     }
-                                    if(full.application_type=='E Class' && full.can_extend){
-                                        links +=  `<a href='#${full.id}' data-extend-approval='${full.id}'>Extend</a><br/>`;
-                                    } else if (full.application_type=='E Class'){
-                                        links +=  `<a class='disabled' title='Licence has already been extended' style="color: grey;text-decoration: none;">Extend</a><br/>`;
+                                    if(full.application_type=='E Class' && (full.status=='Current' || full.status=='Suspended')){
+                                        if(full.can_extend){
+                                            links +=  `<a href='#${full.id}' data-extend-approval='${full.id}'>Extend</a><br/>`;
+                                        } else {
+                                            links +=  `<a class='disabled' title='Licence has already been extended' style="color: grey;text-decoration: none;">Extend</a><br/>`;
+                                        }
                                     }
                                     if(full.can_reissue && full.can_action){
                                         links +=  `<a href='#${full.id}' data-cancel-approval='${full.id}'>Cancel</a><br/>`;
