@@ -329,7 +329,7 @@ const ComplianceRendererBlock = {
     }),
     is_readonly: function() {
         // return this.readonlyParent ? this.readonlyParent : this.component.readonly;
-        return this.component.readonly ? this.component.readonly : this.call_email.readonly_user;
+        return this.component.readonly ? this.component.readonly : !this.call_email.can_user_edit_form;
     },
     comment_data: function() {
         return this.call_email.comment_data;

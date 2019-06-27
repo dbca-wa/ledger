@@ -362,11 +362,13 @@ class CallEmailSerializer(serializers.ModelSerializer):
     # allocated_group = CompliancePermissionGroupMembersSerializer()
     allocated_group = serializers.SerializerMethodField()
     user_in_group = serializers.SerializerMethodField()
-    readonly_user = serializers.SerializerMethodField()
-    readonly_status = serializers.SerializerMethodField()
     related_items = serializers.SerializerMethodField()
     selected_referrers = serializers.SerializerMethodField()
     user_is_assignee = serializers.SerializerMethodField()
+    can_user_action = serializers.SerializerMethodField()
+    can_user_edit_form = serializers.SerializerMethodField()
+    can_user_search_person = serializers.SerializerMethodField()
+
 
     class Meta:
         model = CallEmail
@@ -407,11 +409,12 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'case_priority_id',
             'inspection_type_id',
             'user_in_group',
-            'readonly_user',
-            'readonly_status',
             'related_items',
             'selected_referrers',
             'user_is_assignee',
+            'can_user_action',
+            'can_user_edit_form',
+            'can_user_search_person',
         )
         read_only_fields = (
             'id', 
@@ -427,21 +430,15 @@ class CallEmailSerializer(serializers.ModelSerializer):
         else:
             return False
 
-    def get_readonly_user(self, obj):
+    def get_can_user_action(self, obj):
         user_id = self.context.get('request', {}).user.id
 
         if user_id == obj.assigned_to_id:
-            return False
+            return True
         elif obj.allocated_group and not obj.assigned_to_id:
            for member in obj.allocated_group.members:
                if user_id == member.id:
-                  return False
-        else:
-            return True
-
-    def get_readonly_status(self, obj):
-        if obj.status != 'draft':
-            return True
+                  return True
         else:
             return False
 
@@ -476,6 +473,36 @@ class CallEmailSerializer(serializers.ModelSerializer):
     def get_user_is_assignee(self, obj):
         user_id = self.context.get('request', {}).user.id
         if user_id == obj.assigned_to_id:
+            return True
+
+    def get_can_user_edit_form(self, obj):
+        user_id = self.context.get('request', {}).user.id
+
+        if obj.status == 'draft':
+            if user_id == obj.assigned_to_id:
+                return True
+            elif obj.allocated_group and not obj.assigned_to_id:
+               for member in obj.allocated_group.members:
+                   if user_id == member.id:
+                      return True
+            else:
+                return False
+        else:
+            return True
+
+    def get_can_user_search_person(self, obj):
+        user_id = self.context.get('request', {}).user.id
+
+        if obj.status in ('draft', 'open'):
+            if user_id == obj.assigned_to_id:
+                return True
+            elif obj.allocated_group and not obj.assigned_to_id:
+               for member in obj.allocated_group.members:
+                   if user_id == member.id:
+                      return True
+            else:
+                return False
+        else:
             return True
 
 
