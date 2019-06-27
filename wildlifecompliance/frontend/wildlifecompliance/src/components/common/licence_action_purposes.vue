@@ -26,7 +26,7 @@
             </div>
             <div slot="footer">
                 <button type="button" v-if="actioningPurposes" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i>{{actioning_text}} Purpose(s)</button>
-                <button type="button" v-if="hasActionableLicencePurposes && !actioningPurposes" class="btn btn-danger" @click="ok">{{action_text}} Purpose(s)</button>
+                <button type="button" v-if="hasActionableLicencePurposes && !actioningPurposes" class="btn btn-primary" @click="ok">{{action_text}} Purpose(s)</button>
                 <button type="button" class="btn btn-default" @click="cancel">Close</button>
             </div>
         </modal>

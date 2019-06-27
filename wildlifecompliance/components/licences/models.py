@@ -205,24 +205,35 @@ class WildlifeLicence(models.Model):
         Filter by licence_activity_id (optional) and/or specified action (optional)
         '''
         # for a given licence_activity_id and action, return relevant applications
-        activities = self.latest_activities
-        if licence_activity_id:
-            activities = activities.filter(licence_activity_id=licence_activity_id)
-        # get the list of can_<action> ApplicationSelectedActivity records
-        if action:
-            can_action_asa_ids = []
-            if action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_CANCEL:
-                can_action_asa_ids = [asa.id for asa in activities if asa.can_cancel]
-            elif action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SUSPEND:
-                can_action_asa_ids = [asa.id for asa in activities if asa.can_suspend]
-            elif action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SURRENDER:
-                can_action_asa_ids = [asa.id for asa in activities if asa.can_surrender]
-            elif action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_REACTIVATE_RENEW:
-                can_action_asa_ids = [asa.id for asa in activities if asa.can_reactivate_renew]
-            elif action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_REINSTATE:
-                can_action_asa_ids = [asa.id for asa in activities if asa.can_reinstate]
-            activities = activities.filter(id__in=can_action_asa_ids)
-        return activities
+        # only check if licence is the latest in its category for the applicant
+        if self.is_latest_in_category:
+            latest_activities = self.latest_activities
+            if licence_activity_id:
+                latest_activities = latest_activities.filter(licence_activity_id=licence_activity_id)
+            # get the list of can_<action> ApplicationSelectedActivity records
+            if action:
+                can_action_activity_ids = []
+                for activity in latest_activities:
+                    activity_can_action = activity.can_action
+                    if action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_CANCEL:
+                        if activity_can_action['can_cancel']:
+                            can_action_activity_ids.append(activity.id)
+                    elif action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SUSPEND:
+                        if activity_can_action['can_suspend']:
+                            can_action_activity_ids.append(activity.id)
+                    elif action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_SURRENDER:
+                        if activity_can_action['can_surrender']:
+                            can_action_activity_ids.append(activity.id)
+                    elif action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_REACTIVATE_RENEW:
+                        if activity_can_action['can_reactivate_renew']:
+                            can_action_activity_ids.append(activity.id)
+                    elif action == WildlifeLicence.ACTIVITY_PURPOSE_ACTION_REINSTATE:
+                        if activity_can_action['can_reinstate']:
+                            can_action_activity_ids.append(activity.id)
+                latest_activities = latest_activities.filter(id__in=can_action_activity_ids)
+        else:
+            latest_activities = []
+        return latest_activities
 
     def get_latest_purposes_for_licence_activity_and_action(self, licence_activity_id=None, action=None):
         """
@@ -231,9 +242,9 @@ class WildlifeLicence(models.Model):
         Exclude purposes that are currently in an application being processed
         """
         can_action_purpose_list = []
+        purposes_in_open_applications_for_applicant = self.get_purposes_in_open_applications()
         for activity in self.get_latest_activities_for_licence_activity_and_action(licence_activity_id, action):
             for purpose in activity.purposes:
-                purposes_in_open_applications_for_applicant = self.get_purposes_in_open_applications()
                 if purpose.id not in purposes_in_open_applications_for_applicant:
                     can_action_purpose_list.append(purpose.id)
         return LicencePurpose.objects.filter(id__in=can_action_purpose_list).distinct()
@@ -272,6 +283,7 @@ class WildlifeLicence(models.Model):
         #         activities = latest_activities.filter(licence_activity_id=licence_activity_id)
         for activity in latest_activities:
             # Check if a record for the licence_activity_id already exists, if not, add
+            activity_can_action = activity.can_action
             if not merged_activities.get(activity.licence_activity_id):
                 merged_activities[activity.licence_activity_id] = {
                     'licence_activity_id': activity.licence_activity_id,
@@ -282,30 +294,37 @@ class WildlifeLicence(models.Model):
                     'activity_purpose_names_and_status': '\n'.join(['{} ({})'.format(
                         p.name, activity.get_activity_status_display())
                         for p in activity.purposes]),
-                    'is_in_latest_licence': activity.is_in_latest_licence,
-                    'can_renew': activity.can_renew,
-                    'can_amend': activity.can_amend,
-                    'can_surrender': activity.can_surrender,
-                    'can_cancel': activity.can_cancel,
-                    'can_suspend': activity.can_suspend,
-                    'can_reissue': activity.can_reissue,
-                    'can_reinstate': activity.can_reinstate,
+                    'can_action':
+                        {
+                            'can_renew': activity_can_action['can_renew'],
+                            'can_amend': activity_can_action['can_amend'],
+                            'can_surrender': activity_can_action['can_surrender'],
+                            'can_cancel': activity_can_action['can_cancel'],
+                            'can_suspend': activity_can_action['can_suspend'],
+                            'can_reissue': activity_can_action['can_reissue'],
+                            'can_reinstate': activity_can_action['can_reinstate'],
+                        }
                 }
             else:
                 activity_key = merged_activities[activity.licence_activity_id]
-                activity_key['activity_purpose_names_and_status'] +=  \
+                activity_key['activity_purpose_names_and_status'] += \
                     '\n' + '\n'.join(['{} ({})'.format(
                         p.name, activity.get_activity_status_display())
                         for p in activity.purposes])
-                activity_key['is_in_latest_licence'] = activity_key['is_in_latest_licence']\
-                                                       or activity.is_in_latest_licence
-                activity_key['can_renew'] = activity_key['can_renew'] or activity.can_renew
-                activity_key['can_amend'] = activity_key['can_amend'] or activity.can_amend
-                activity_key['can_surrender'] = activity_key['can_surrender'] or activity.can_surrender
-                activity_key['can_cancel'] = activity_key['can_cancel'] or activity.can_cancel
-                activity_key['can_suspend'] = activity_key['can_suspend'] or activity.can_suspend
-                activity_key['can_reissue'] = activity_key['can_reissue'] or activity.can_reissue
-                activity_key['can_reinstate'] = activity_key['can_reinstate'] or activity.can_reinstate
+                activity_key['can_action']['can_renew'] =\
+                    activity_key['can_action']['can_renew'] or activity_can_action['can_renew']
+                activity_key['can_action']['can_amend'] =\
+                    activity_key['can_action']['can_amend'] or activity_can_action['can_amend']
+                activity_key['can_action']['can_surrender'] =\
+                    activity_key['can_action']['can_surrender'] or activity_can_action['can_surrender']
+                activity_key['can_action']['can_cancel'] =\
+                    activity_key['can_action']['can_cancel'] or activity_can_action['can_cancel']
+                activity_key['can_action']['can_suspend'] =\
+                    activity_key['can_action']['can_suspend'] or activity_can_action['can_suspend']
+                activity_key['can_action']['can_reissue'] =\
+                    activity_key['can_action']['can_reissue'] or activity_can_action['can_reissue']
+                activity_key['can_action']['can_reinstate'] =\
+                    activity_key['can_action']['can_reinstate'] or activity_can_action['can_reinstate']
 
         merged_activities_list = merged_activities.values()
 
@@ -357,44 +376,41 @@ class WildlifeLicence(models.Model):
         ).latest('id') == self
 
     @property
-    def can_amend(self):
-        # Returns True if any of the licence's latest_activities can be amended
-        return self.latest_activities.computed_filter(can_amend=True).count() > 0
+    def can_action(self):
+        # Returns DICT of can_<action> if any of the licence's latest_activities can be actioned
+        can_action = {
+            'can_amend': False,
+            'can_renew': False,
+            'can_reactivate_renew': False,
+            'can_surrender': False,
+            'can_cancel': False,
+            'can_suspend': False,
+            'can_reissue': False,
+            'can_reinstate': False,
+        }
 
-    @property
-    def can_renew(self):
-        # Returns True if any of the licence's latest_activities can be renewed
-        return self.latest_activities.computed_filter(can_renew=True).count() > 0
+        # only check if licence is the latest in its category for the applicant
+        if self.is_latest_in_category:
+            for activity in self.latest_activities:
+                activity_can_action = activity.can_action
+                if activity_can_action.get('can_amend'):
+                    can_action['can_amend'] = True
+                if activity_can_action.get('can_renew'):
+                    can_action['can_renew'] = True
+                if activity_can_action.get('can_reactivate_renew'):
+                    can_action['can_reactivate_renew'] = True
+                if activity_can_action.get('can_surrender'):
+                    can_action['can_surrender'] = True
+                if activity_can_action.get('can_cancel'):
+                    can_action['can_cancel'] = True
+                if activity_can_action.get('can_suspend'):
+                    can_action['can_suspend'] = True
+                if activity_can_action.get('can_reissue'):
+                    can_action['can_reissue'] = True
+                if activity_can_action.get('can_reinstate'):
+                    can_action['can_reinstate'] = True
 
-    @property
-    def can_reactivate_renew(self):
-        # Returns True if renew for any of the licence's latest_activities can be reactivated
-        return self.latest_activities.computed_filter(can_reactivate_renew=True).count() > 0
-
-    @property
-    def can_surrender(self):
-        # Returns True if any of the licence's latest_activities can be surrendered
-        return self.latest_activities.computed_filter(can_surrender=True).count() > 0
-
-    @property
-    def can_cancel(self):
-        # Returns True if any of the licence's latest_activities can be cancelled
-        return self.latest_activities.computed_filter(can_cancel=True).count() > 0
-
-    @property
-    def can_suspend(self):
-        # Returns True if any of the licence's latest_activities can be suspended
-        return self.latest_activities.computed_filter(can_suspend=True).count() > 0
-
-    @property
-    def can_reissue(self):
-        # Returns True if any of the licence's latest_activities can be reissued
-        return self.latest_activities.computed_filter(can_reissue=True).count() > 0
-
-    @property
-    def can_reinstate(self):
-        # Returns True if any of the licence's latest_activities can be reinstated
-        return self.latest_activities.computed_filter(can_reinstate=True).count() > 0
+        return can_action
 
     def apply_action_to_licence(self, request, action):
         """

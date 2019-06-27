@@ -5,20 +5,44 @@ from wildlifecompliance.components.licences.models import (
     LicencePurpose
 )
 from wildlifecompliance.components.applications.serializers import (
-    BaseApplicationSerializer,
-    DTInternalApplicationSerializer,
-    DTExternalApplicationSerializer,
-    ApplicationSelectedActivitySerializer,
-    ExternalApplicationSelectedActivitySerializer,
+    WildlifeLicenceApplicationSerializer,
     ExternalApplicationSelectedActivityMergedSerializer
 )
 from rest_framework import serializers
 
 
+class WildlifeLicenceCanActionSerializer(serializers.Serializer):
+    """
+    Custom serializer for WildlifeLicence.can_action DICT object for each action
+    """
+    can_renew = serializers.BooleanField(read_only=True)
+    can_amend = serializers.BooleanField(read_only=True)
+    can_surrender = serializers.BooleanField(read_only=True)
+    can_cancel = serializers.BooleanField(read_only=True)
+    can_suspend = serializers.BooleanField(read_only=True)
+    can_reissue = serializers.BooleanField(read_only=True)
+    can_reinstate = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        fields = (
+            'can_renew',
+            'can_amend',
+            'can_surrender',
+            'can_cancel',
+            'can_suspend',
+            'can_reissue',
+            'can_reinstate',
+        )
+        # the serverSide functionality of datatables is such that only columns that have field 'data'
+        # defined are requested from the serializer. Use datatables_always_serialize to force render
+        # of fields that are not listed as 'data' in the datatable columns
+        datatables_always_serialize = fields
+
+
 class WildlifeLicenceSerializer(serializers.ModelSerializer):
     licence_document = serializers.CharField(
         source='licence_document._file.url')
-    current_application = BaseApplicationSerializer(read_only=True)
+    current_application = WildlifeLicenceApplicationSerializer(read_only=True)
     last_issue_date = serializers.SerializerMethodField(read_only=True)
     licence_number = serializers.SerializerMethodField(read_only=True)
 
@@ -44,10 +68,10 @@ class WildlifeLicenceSerializer(serializers.ModelSerializer):
 class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
     licence_document = serializers.CharField(
         source='licence_document._file.url')
-    current_application = DTInternalApplicationSerializer(read_only=True)
+    current_application = WildlifeLicenceApplicationSerializer(read_only=True)
     last_issue_date = serializers.SerializerMethodField(read_only=True)
-    latest_activities = ExternalApplicationSelectedActivitySerializer(many=True, read_only=True)
     latest_activities_merged = ExternalApplicationSelectedActivityMergedSerializer(many=True, read_only=True)
+    can_action = WildlifeLicenceCanActionSerializer(read_only=True)
 
     class Meta:
         model = WildlifeLicence
@@ -57,17 +81,9 @@ class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
             'licence_document',
             'current_application',
             'last_issue_date',
-            'latest_activities',
             'latest_activities_merged',
             'is_latest_in_category',
-            'can_amend',
-            'can_renew',
-            'can_reactivate_renew',
-            'can_surrender',
-            'can_cancel',
-            'can_suspend',
-            'can_reissue',
-            'can_reinstate',
+            'can_action',
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render
@@ -81,10 +97,10 @@ class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
 class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
     licence_document = serializers.CharField(
         source='licence_document._file.url')
-    current_application = DTExternalApplicationSerializer(read_only=True)
+    current_application = WildlifeLicenceApplicationSerializer(read_only=True)
     last_issue_date = serializers.SerializerMethodField(read_only=True)
-    latest_activities = ExternalApplicationSelectedActivitySerializer(many=True, read_only=True)
     latest_activities_merged = ExternalApplicationSelectedActivityMergedSerializer(many=True, read_only=True)
+    can_action = WildlifeLicenceCanActionSerializer(read_only=True)
 
     class Meta:
         model = WildlifeLicence
@@ -94,17 +110,9 @@ class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
             'licence_document',
             'current_application',
             'last_issue_date',
-            'latest_activities',
             'latest_activities_merged',
             'is_latest_in_category',
-            'can_amend',
-            'can_renew',
-            'can_reactivate_renew',
-            'can_surrender',
-            'can_cancel',
-            'can_suspend',
-            'can_reissue',
-            'can_reinstate',
+            'can_action',
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render

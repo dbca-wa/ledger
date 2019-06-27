@@ -2200,26 +2200,39 @@ class ApplicationSelectedActivity(models.Model):
         ).distinct()
 
     @property
-    def can_amend(self):
-        # Returns true if the activity can be included in a Amendment Application
-        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+    def can_action(self):
+        # Returns a DICT object containing can_<action> Boolean results of each action check
+        can_action = {
+            'licence_activity_id': self.licence_activity_id,
+            'can_amend': False,
+            'can_renew': False,
+            'can_reactivate_renew': False,
+            'can_surrender': False,
+            'can_cancel': False,
+            'can_suspend': False,
+            'can_reissue': False,
+            'can_reinstate': False,
+        }
+        current_date = timezone.now().date()
+
+        # return false for all actions if activity is not in latest licence
+        if not self.is_in_latest_licence:
+            return can_action
+
+        # can_amend is true if the activity can be included in a Amendment Application
+        can_action['can_amend'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_AMENDMENT,
             activity_ids=[self.id]
         ).count() > 0
 
-    @property
-    def can_renew(self):
-        # Returns true if the activity can be included in a Renewal Application
-        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+        # can_renew is true if the activity can be included in a Renewal Application
+        can_action['can_renew'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_RENEWAL,
             activity_ids=[self.id]
         ).count() > 0
 
-    @property
-    def can_reactivate_renew(self):
-        # Returns true if the activity has expired, excluding if it was surrendered or cancelled
-        current_date = timezone.now().date()
-        return ApplicationSelectedActivity.objects.filter(
+        # can_reactivate_renew is true if the activity has expired, excluding if it was surrendered or cancelled
+        can_action['can_reactivate_renew'] = ApplicationSelectedActivity.objects.filter(
             Q(id=self.id, expiry_date__isnull=False),
             Q(expiry_date__lt=current_date) |
             Q(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED)
@@ -2231,37 +2244,28 @@ class ApplicationSelectedActivity(models.Model):
             ]
         ).count() > 0
 
-    @property
-    def can_surrender(self):
-        # Returns true if the activity is CURRENT or SUSPENDED
-        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+        # can_surrender is true if the activity is CURRENT or SUSPENDED
+        can_action['can_surrender'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_SYSTEM_GENERATED,
             activity_ids=[self.id]
         ).count() > 0
 
-    @property
-    def can_cancel(self):
-        # Returns true if the activity is CURRENT or SUSPENDED
-        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+        # can_cancel is true if the activity is CURRENT or SUSPENDED
+        can_action['can_cancel'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_SYSTEM_GENERATED,
             activity_ids=[self.id]
         ).count() > 0
 
-    @property
-    def can_suspend(self):
-        # Returns true if the activity_status is CURRENT
+        # can_suspend is true if the activity_status is CURRENT
         # Extra exclude for SUSPENDED due to get_current_activities_for_application_type
         # intentionally not excluding these as part of the queryset
-        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+        can_action['can_suspend'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_SYSTEM_GENERATED,
             activity_ids=[self.id]
         ).exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED).count() > 0
 
-    @property
-    def can_reissue(self):
-        # Returns true if the activity has expired, excluding if it was surrendered or cancelled
-        current_date = timezone.now().date()
-        return ApplicationSelectedActivity.objects.filter(
+        # can_reissue is true if the activity has expired, excluding if it was surrendered or cancelled
+        can_action['can_reissue'] = ApplicationSelectedActivity.objects.filter(
             Q(id=self.id, expiry_date__isnull=False),
             Q(expiry_date__lt=current_date) |
             Q(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED)
@@ -2273,17 +2277,16 @@ class ApplicationSelectedActivity(models.Model):
             ]
         ).count() > 0
 
-    @property
-    def can_reinstate(self):
-        # Returns true if the activity has not yet expired and is currently SUSPENDED, CANCELLED or SURRENDERED
-        current_date = timezone.now().date()
-        return self.expiry_date and\
-            self.expiry_date >= current_date and\
-            self.activity_status in [
-                ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED,
-                ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
-                ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED
-            ]
+        # can_reinstate is true if the activity has not yet expired and is currently SUSPENDED, CANCELLED or SURRENDERED
+        can_action['can_reinstate'] = self.expiry_date and \
+               self.expiry_date >= current_date and \
+               self.activity_status in [
+                   ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED,
+                   ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
+                   ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED
+               ]
+
+        return can_action
 
     # def get_actionable_purposes(self):
     #     """
@@ -2319,7 +2322,7 @@ class ApplicationSelectedActivity(models.Model):
             else Q(current_application__submitter=self.application.submitter, current_application__proxy_applicant=None,
                    current_application__org_applicant=None),
             licence_category_id=self.licence_activity.licence_category_id
-        ).order_by('-id').first()
+        ).latest('id')
         if self in latest_licence.latest_activities:
             return True
         return False
