@@ -750,7 +750,22 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
 
-            serializer = UpdateAssignedToIdSerializer(instance=instance, data=request.data)
+            if request.data.get('current_user'):
+                  serializer = UpdateAssignedToIdSerializer(
+                        instance=instance,
+                        data={
+                            'assigned_to_id': request.user.id,
+                            }
+                        )
+            elif request.data.get('blank'):
+                  serializer = UpdateAssignedToIdSerializer(
+                        instance=instance,
+                        data={
+                            'assigned_to_id': None,
+                            }
+                        )
+            else:
+                serializer = UpdateAssignedToIdSerializer(instance=instance, data=request.data)
             serializer.is_valid(raise_exception=True)
             if serializer.is_valid():
                 serializer.save()

@@ -442,7 +442,8 @@ export default {
   },
   created: async function() {
     // Blank out 'assigned to' field
-    this.call_email.assigned_to_id = null;
+    //this.call_email.assigned_to_id = null;
+    await this.$parent.updateAssignedToId('blank');
     // regions
     let returned_regions = await cache_helper.getSetCacheList('CallEmail_Regions', '/api/region_district/get_regions/');
     Object.assign(this.regions, returned_regions);
