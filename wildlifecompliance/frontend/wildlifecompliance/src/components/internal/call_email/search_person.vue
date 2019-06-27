@@ -10,9 +10,9 @@
             </div>
         </div>
         <div class="col-md-12">
-            <ul class="nav nav-tabs">
-                <li class="active"><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
-                <li><a data-toggle="tab" :href="'#'+oTab">Licensing</a></li>
+            <ul class="nav nav-pills">
+                <li class="nav-item active"><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
+                <li class="nav-item"><a data-toggle="tab" :href="'#'+oTab">Licensing</a></li>
             </ul>
             <div class="tab-content">
                 <div :id="dTab" class="tab-pane fade in active">
@@ -579,8 +579,8 @@ export default {
     color: green;
 }
 .tab-content {
-    padding: 10px;
-    border: solid 1px lightgray;
+    /* padding: 10px;
+    border: solid 1px lightgray; */
 }
 .nav-tabs {
     border-bottom: none !important;

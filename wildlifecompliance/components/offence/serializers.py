@@ -80,6 +80,7 @@ class SaveOffenceSerializer(serializers.ModelSerializer):
 class SaveOffenderSerializer(serializers.ModelSerializer):
     offence_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
     person_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+    organisation_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
 
     class Meta:
         model = Offender
@@ -87,5 +88,6 @@ class SaveOffenderSerializer(serializers.ModelSerializer):
             'id',
             'offence_id',
             'person_id',
+            'organisation_id',
         )
         read_only_fields = ()
