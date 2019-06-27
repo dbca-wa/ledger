@@ -1,11 +1,11 @@
 from django.db import models
-from ledger.accounts.models import RevisionedMixin, EmailUser
+from ledger.accounts.models import RevisionedMixin, EmailUser, Organisation
 from wildlifecompliance.components.call_email.models import Location, CallEmail
 
 
 class SectionRegulation(RevisionedMixin):
     act = models.CharField(max_length=100, blank=True)
-    name = models.CharField(max_length=50, blank=True)
+    name = models.CharField(max_length=50, blank=True, verbose_name='Regulation')
     offence_text = models.CharField(max_length=200, blank=True)
     amount =  models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
 
@@ -89,6 +89,11 @@ class Offender(models.Model):
         EmailUser,
         null=True,
         related_name='offender_person',
+    )
+    organisation = models.ForeignKey(
+        Organisation,
+        null=True,
+        related_name='offender_organisation',
     )
     offence = models.ForeignKey(
         Offence,

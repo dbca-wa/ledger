@@ -140,6 +140,9 @@ export const offenceStore = {
             }
         },
         async saveOffence({dispatch, state}){
+            console.log('saveOffence');
+            console.log(state.offence);
+
             try{
                 let fetchUrl = helpers.add_endpoint_json(api_endpoints.offence, 'offence_save');
                 const savedOffence = await Vue.http.post(fetchUrl, state.offence);

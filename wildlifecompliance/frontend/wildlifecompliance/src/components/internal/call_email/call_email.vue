@@ -154,9 +154,9 @@
             <div class="row">
 
                 <div class="container-fluid">
-                    <ul class="nav nav-tabs">
-                        <li class="active"><a data-toggle="tab" :href="'#'+cTab">Call/Email</a></li>
-                        <li><a data-toggle="tab" :href="'#'+rTab">Related Items</a></li>
+                    <ul class="nav nav-pills aho2">
+                        <li class="nav-item active"><a data-toggle="tab" :href="'#'+cTab">Call/Email</a></li>
+                        <li class="nav-item"><a data-toggle="tab" :href="'#'+rTab">Related Items</a></li>
                     </ul>
                     <div class="tab-content">
                         <div :id="cTab" class="tab-pane fade in active">
@@ -288,11 +288,13 @@
 
                         </div>  
                         <div :id="rTab" class="tab-pane fade in">
-                           <div class="col-sm-12 form-group"><div class="row">
-                                <div class="col-sm-12">
-                                    <datatable ref="related_items_table" id="related_items_table" :dtOptions="dtOptionsRelatedItems" :dtHeaders="dtHeadersRelatedItems" />
-                                </div>
-                            </div></div>
+                            <FormSection :formCollapse="false" label="Related Items">
+                                <div class="col-sm-12 form-group"><div class="row">
+                                    <div class="col-sm-12">
+                                        <datatable ref="related_items_table" id="related_items_table" :dtOptions="dtOptionsRelatedItems" :dtHeaders="dtHeadersRelatedItems" />
+                                    </div>
+                                </div></div>
+                            </FormSection>
                         </div>
                     </div>
                 </div>       
@@ -665,5 +667,13 @@ export default {
 }
 .awesomplete {
     width: 100% !important;
+}
+.nav>li>a:focus, .nav>li>a:hover {
+  text-decoration: none;
+  background-color: #eee;
+}
+.nav-item {
+  background-color: hsla(0, 0%, 78%, .8) !important;
+  margin-bottom: 2px;
 }
 </style>
