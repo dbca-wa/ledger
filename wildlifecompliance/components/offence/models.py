@@ -5,7 +5,7 @@ from wildlifecompliance.components.call_email.models import Location, CallEmail
 
 class SectionRegulation(RevisionedMixin):
     act = models.CharField(max_length=100, blank=True)
-    name = models.CharField(max_length=50, blank=True)
+    name = models.CharField(max_length=50, blank=True, verbose_name='Regulation')
     offence_text = models.CharField(max_length=200, blank=True)
     amount =  models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
 
