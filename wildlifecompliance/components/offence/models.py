@@ -1,5 +1,5 @@
 from django.db import models
-from ledger.accounts.models import RevisionedMixin, EmailUser
+from ledger.accounts.models import RevisionedMixin, EmailUser, Organisation
 from wildlifecompliance.components.call_email.models import Location, CallEmail
 
 
@@ -89,6 +89,11 @@ class Offender(models.Model):
         EmailUser,
         null=True,
         related_name='offender_person',
+    )
+    organisation = models.ForeignKey(
+        Organisation,
+        null=True,
+        related_name='offender_organisation',
     )
     offence = models.ForeignKey(
         Offence,
