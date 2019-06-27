@@ -488,7 +488,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             else:
                 return False
         else:
-            return True
+            return False
 
     def get_can_user_search_person(self, obj):
         user_id = self.context.get('request', {}).user.id
@@ -503,7 +503,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             else:
                 return False
         else:
-            return True
+            return False
 
 
 class CallEmailDatatableSerializer(serializers.ModelSerializer):
