@@ -57,10 +57,13 @@ class OffenceViewSet(viewsets.ModelViewSet):
 
                 # 4. Create relations between this offence and offender(s)
                 for dict in request_data['offenders']:
-                    offender = EmailUser.objects.get(id=dict['id'])
-                    serializer_offender = SaveOffenderSerializer(data={'offence_id': saved_offence_instance.id, 'person_id': offender.id})
-                    serializer_offender.is_valid(raise_exception=True)
-                    serializer_offender.save()
+                    if dict.data_type == 'individual':
+                        offender = EmailUser.objects.get(id=dict['id'])
+                        serializer_offender = SaveOffenderSerializer(data={'offence_id': saved_offence_instance.id, 'person_id': offender.id})
+                        serializer_offender.is_valid(raise_exception=True)
+                        serializer_offender.save()
+                    elif dict.data_type == 'organisation':
+                        pass
 
                 # TODO: log user action
 

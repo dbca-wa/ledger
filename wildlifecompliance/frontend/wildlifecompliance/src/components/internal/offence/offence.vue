@@ -218,7 +218,7 @@ export default {
                 columns: [
                     {
                         data: 'id',
-                        visible: true
+                        visible: false
                     },
                     {
                         data: 'data_type',
@@ -350,7 +350,6 @@ export default {
             let vm = this;
 
             if(vm.current_offender.id && vm.current_offender.data_type){
-                console.log('addOffenderClicked');
                 let already_exists = false;
 
                 let ids = vm.$refs.offender_table.vmDataTable.columns(0).data()[0];
@@ -517,9 +516,6 @@ export default {
                 url: search_url + searchTerm,
                 success: function(data){
                     if (data && data.results) {
-                        console.log('search result: ');
-                        console.log(data.results);
-
                         let persons = data.results;
                         let limit = Math.min(vm.max_items, persons.length);
                         for (var i = 0; i < limit; i++){
@@ -536,7 +532,6 @@ export default {
 
         },
         search: function(searchTerm){
-            console.log('searchTerm');
             var vm = this;
             vm.suggest_list = [];
             vm.suggest_list.length = 0;
@@ -651,7 +646,6 @@ export default {
                 let data_item_id = origin[0].getAttribute('data-item-id');
                 let data_type = origin[0].getAttribute('data-type');
 
-                console.log('offender id: ' + data_item_id);
                 for(let i = 0; i < self.suggest_list_offender.length; i++){
                     if (self.suggest_list_offender[i].id == parseInt(data_item_id)){
                         self.setCurrentOffender(data_type, self.suggest_list_offender[i].id);
