@@ -160,6 +160,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import Awesomplete from 'awesomplete'
 import modal from '@vue-utils/bootstrap-modal.vue'
 import datatable from '@vue-utils/datatable.vue'
@@ -202,6 +203,7 @@ export default {
             lTab: 'lTab'+vm._uid,
             dtHeadersOffender: [
                 'id',
+                'data_type',
                 'Description',
                 'Action',
             ],
@@ -216,19 +218,31 @@ export default {
                 columns: [
                     {
                         data: 'id',
+                        visible: false
+                    },
+                    {
+                        data: 'data_type',
                         visible: true
                     },
                     {
                         data: '',
                         mRender: function(data, type, row){
-                            let full_name = [row.first_name, row.last_name].filter(Boolean).join(' ');
-                            let email = row.email?'E:' + row.email:'';
-                            let p_number = row.phone_number?'P:' + row.phone_number:'';
-                            let m_number = row.mobile_number?'M:' + row.mobile_number:'';
-                            let dob = row.dob?'DOB:' + row.dob:'DOB: ---';
-                            let myLabel = ['<span class="full_name">' + full_name + '</span>', email, p_number, m_number, dob].filter(Boolean).join('<br />');
+                            if (row.data_type == 'individual'){
+                                let full_name = [row.first_name, row.last_name].filter(Boolean).join(' ');
+                                let email = row.email?'E:' + row.email:'';
+                                let p_number = row.phone_number?'P:' + row.phone_number:'';
+                                let m_number = row.mobile_number?'M:' + row.mobile_number:'';
+                                let dob = row.dob?'DOB:' + row.dob:'DOB: ---';
+                                let myLabel = ['<strong>' + full_name + '</strong>', email, p_number, m_number, dob].filter(Boolean).join('<br />');
 
-                            return myLabel;
+                                return myLabel;
+                            } else if (row.data_type == 'organisation'){
+                                let name = row.name?row.name:'';
+                                let abn = row.abn?'ABN:' + row.abn:'';
+                                let myLabel = ['<strong>' + name + '</strong>', abn].filter(Boolean).join('<br />');
+
+                                return myLabel;
+                            }
                         }
                     },
                     {
@@ -335,19 +349,39 @@ export default {
         addOffenderClicked: function() {
             let vm = this;
 
-            if(vm.current_offender.id){
-                let already_exists = vm.$refs.offender_table.vmDataTable.columns(0).data()[0].includes(vm.current_offender.id);
+            if(vm.current_offender.id && vm.current_offender.data_type){
+                let already_exists = false;
+
+                let ids = vm.$refs.offender_table.vmDataTable.columns(0).data()[0];
+                let data_types = vm.$refs.offender_table.vmDataTable.columns(1).data()[0];
+
+                for (let i=0; i<ids.length; i++){
+                    if (ids[i] == vm.current_offender.id && data_types[i] == vm.current_offender.data_type){
+                        already_exists = true;
+                        break;
+                    }
+                }
 
                 if (!already_exists){
-                    vm.$refs.offender_table.vmDataTable.row.add({
-                        'id': vm.current_offender.id,
-                        'first_name': vm.current_offender.first_name,
-                        'last_name': vm.current_offender.last_name,
-                        'email': vm.current_offender.email,
-                        'p_number': vm.current_offender.p_number,
-                        'm_number': vm.current_offender.m_numberum,
-                        'dob': vm.current_offender.dob,
-                    }).draw();
+                    if (vm.current_offender.data_type == 'individual'){
+                        vm.$refs.offender_table.vmDataTable.row.add({
+                            'data_type': vm.current_offender.data_type,
+                            'id': vm.current_offender.id,
+                            'first_name': vm.current_offender.first_name,
+                            'last_name': vm.current_offender.last_name,
+                            'email': vm.current_offender.email,
+                            'p_number': vm.current_offender.p_number,
+                            'm_number': vm.current_offender.m_numberum,
+                            'dob': vm.current_offender.dob,
+                        }).draw();
+                    } else if (vm.current_offender.data_type == 'organisation'){
+                        vm.$refs.offender_table.vmDataTable.row.add({
+                            'data_type': vm.current_offender.data_type,
+                            'id': vm.current_offender.id,
+                            'name': vm.current_offender.name,
+                            'abn': vm.current_offender.abn,
+                        }).draw();
+                    }
                 }
             }
 
@@ -374,7 +408,6 @@ export default {
             vm.setCurrentAllegedOffenceEmpty();
         },
         ok: async function () {
-            console.log('ok');
             await this.sendData();
 
             // Update call_email in vuex
@@ -483,9 +516,6 @@ export default {
                 url: search_url + searchTerm,
                 success: function(data){
                     if (data && data.results) {
-                        console.log('search result: ');
-                        console.log(data.results);
-
                         let persons = data.results;
                         let limit = Math.min(vm.max_items, persons.length);
                         for (var i = 0; i < limit; i++){
@@ -502,7 +532,6 @@ export default {
 
         },
         search: function(searchTerm){
-            console.log('searchTerm');
             var vm = this;
             vm.suggest_list = [];
             vm.suggest_list.length = 0;
@@ -569,7 +598,7 @@ export default {
                         let dob_marked = self.markMatchedText(dob, input);
 
                         let myLabel = [full_name_marked, email_marked, p_number_marked, m_number_marked, dob_marked].filter(Boolean).join('<br />');
-                        myLabel = '<div data-item-id=' + item.id + '>' + myLabel + '</div>';
+                        myLabel = '<div data-item-id=' + item.id + ' data-type="individual">' + myLabel + '</div>';
 
                         return { 
                             label: myLabel,   // Displayed in the list below the search box
@@ -577,9 +606,18 @@ export default {
                             id: item.id
                         };
                     } else {
+                        let name = item.name?item.name:'';
+                        let abn = item.abn?'ABN:' + item.abn:'';
+
+                        let name_marked = '<strong>' + self.markMatchedText(name, input) + '</strong>';
+                        let abn_marked = self.markMatchedText(abn, input);
+
+                        let myLabel = [name_marked, abn_marked].filter(Boolean).join('<br />');
+                        myLabel = '<div data-item-id=' + item.id + ' data-type="organisation">' + myLabel + '</div>';
+
                         return { 
-                            label: item.name,
-                            value: item.name,
+                            label: myLabel,
+                            value: [name, abn].filter(Boolean).join(', '),
                             id: item.id
                         };
                     }
@@ -605,10 +643,12 @@ export default {
                     // Assuming origin is a child element of <li>
                     origin = origin.parent();
                 }
-                let elem_id = origin[0].getAttribute('data-item-id');
+                let data_item_id = origin[0].getAttribute('data-item-id');
+                let data_type = origin[0].getAttribute('data-type');
+
                 for(let i = 0; i < self.suggest_list_offender.length; i++){
-                    if (self.suggest_list_offender[i].id == parseInt(elem_id)){
-                        self.setCurrentOffender(self.suggest_list_offender[i].id);
+                    if (self.suggest_list_offender[i].id == parseInt(data_item_id)){
+                        self.setCurrentOffender(data_type, self.suggest_list_offender[i].id);
                         break;
                     }
                 }
@@ -674,14 +714,36 @@ export default {
                 }
             });
         },
-        setCurrentOffender: function(id){
-            let vm = this;
-            let initialisers = [
-                utils.fetchUser(id),
-            ]
-            Promise.all(initialisers).then(data => {
-                vm.current_offender = data[0];
+        searchOrganisation: function(id){
+            return new Promise ((resolve,reject) => {
+                Vue.http.get('/api/search_organisation/' + id).then((response) => {
+                    resolve(response.body);
+                },
+                (error) => {
+                    reject(error);
+                });
             });
+        },
+        setCurrentOffender: function(data_type, id){
+            let vm = this;
+
+            if (data_type == 'individual'){
+                let initialisers = [
+                    utils.fetchUser(id),
+                ]
+                Promise.all(initialisers).then(data => {
+                    vm.current_offender = data[0];
+                    vm.current_offender.data_type = 'individual';
+                });
+            } else if (data_type == 'organisation'){
+                let initialisers = [
+                    vm.searchOrganisation(id),
+                ]
+                Promise.all(initialisers).then(data => {
+                    vm.current_offender = data[0];
+                    vm.current_offender.data_type = 'organisation';
+                });
+            }
         },
         setCurrentOffenceSelected: function(offence){
             let vm = this;
