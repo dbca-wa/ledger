@@ -1,6 +1,6 @@
 <template lang="html">
     <div class="col-sm-12 form-group">
-        <div class="row" v-if="isEditable">
+        <div class="row" >
             <label class="col-sm-3 control-label">Search Person</label>
             <div class="col-sm-6">
                 <input :readonly="!isEditable" class="col-sm-5 form-control" id="search-person" />
@@ -82,7 +82,7 @@
                                         <label for="" class="col-sm-3 control-label">Street</label>
                                         <div class="col-sm-6">
                                             <div v-if="call_email.email_user"><div v-if="call_email.email_user.residential_address">
-                                                <input type="text" class="form-control" name="street" placeholder="" v-model="call_email.email_user.residential_address.line1" v-bind:key="call_email.email_user.residential_address.id">
+                                                <input :readonly="!isEditable" type="text" class="form-control" name="street" placeholder="" v-model="call_email.email_user.residential_address.line1" v-bind:key="call_email.email_user.residential_address.id">
                                             </div></div>
                                         </div>
                                         </div>
@@ -90,7 +90,7 @@
                                         <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
                                         <div class="col-sm-6">
                                             <div v-if="call_email.email_user"><div v-if="call_email.email_user.residential_address">
-                                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="call_email.email_user.residential_address.locality" v-bind:key="call_email.email_user.residential_address.id">
+                                                <input :readonly="!isEditable" type="text" class="form-control" name="surburb" placeholder="" v-model="call_email.email_user.residential_address.locality" v-bind:key="call_email.email_user.residential_address.id">
                                             </div></div>
                                         </div>
                                         </div>
@@ -98,13 +98,13 @@
                                         <label for="" class="col-sm-3 control-label">State</label>
                                         <div class="col-sm-2">
                                             <div v-if="call_email.email_user"><div v-if="call_email.email_user.residential_address">
-                                                <input type="text" class="form-control" name="country" placeholder="" v-model="call_email.email_user.residential_address.state" v-bind:key="call_email.email_user.residential_address.id">
+                                                <input :readonly="!isEditable" type="text" class="form-control" name="country" placeholder="" v-model="call_email.email_user.residential_address.state" v-bind:key="call_email.email_user.residential_address.id">
                                             </div></div>
                                         </div>
                                         <label for="" class="col-sm-2 control-label">Postcode</label>
                                         <div class="col-sm-2">
                                             <div v-if="call_email.email_user"><div v-if="call_email.email_user.residential_address">
-                                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="call_email.email_user.residential_address.postcode" v-bind:key="call_email.email_user.residential_address.id">
+                                                <input :readonly="!isEditable" type="text" class="form-control" name="postcode" placeholder="" v-model="call_email.email_user.residential_address.postcode" v-bind:key="call_email.email_user.residential_address.id">
                                             </div></div>
                                         </div>
                                         </div>
@@ -112,7 +112,7 @@
                                         <label for="" class="col-sm-3 control-label" >Country</label>
                                         <div class="col-sm-4">
                                             <div v-if="call_email.email_user"><div v-if="call_email.email_user.residential_address">
-                                                <select class="form-control" name="country" v-model="call_email.email_user.residential_address.country" v-bind:key="call_email.email_user.residential_address.id">
+                                                <select :disabled="!isEditable" class="form-control" name="country" v-model="call_email.email_user.residential_address.country" v-bind:key="call_email.email_user.residential_address.id">
                                                     <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
                                                 </select>
                                             </div></div>
@@ -241,7 +241,7 @@ export default {
             errorDob: false,
             objectAlert: false,
 
-            forDemo: false,
+            //forDemo: false,
         }
     },
     components: {
@@ -259,23 +259,24 @@ export default {
             // renderer_form_data: 'renderer_form_data',
             current_user: 'current_user',
         }),
-        isReadonly: function() {
-            if (this.call_email.status && this.call_email.status.id === 'draft') {
-                return false;
-            } else {
-                return true;
-            }
-        },
+        //isReadonly: function() {
+          //  if (this.call_email.status && this.call_email.status.id === 'draft') {
+            //    return false;
+            //} else {
+            //    return true;
+           // }
+        //},
         isEditable: function() {
-            if (!this.forDemo){
-                return true;
-            }
+            //if (!this.forDemo){
+             //   return true;
+            //}
 
-            if (this.call_email.status && this.call_email.status.id === 'open' && this.current_user.is_officer) {
-                return true;
-            } else {
-                return false;
-            }
+            //if (this.call_email.status && this.call_email.status.id === 'open' && this.current_user.is_officer) {
+              //  return true;
+            //} else {
+              //  return false;
+            //}
+            return this.call_email.can_user_search_person;
         },
         applications_url: function(){
             if (this.call_email.email_user && this.call_email.email_user.id){
