@@ -2,11 +2,11 @@
     <div>
         <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="modalTitle" large>
             <div class="container-fluid">
-                <ul class="nav nav-tabs">
-                    <li class="active"><a data-toggle="tab" :href="'#'+oTab">Offence</a></li>
-                    <li><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
-                    <li><a data-toggle="tab" :href="'#'+pTab">Offender(s)</a></li>
-                    <li><a data-toggle="tab" :href="'#'+lTab" @click="mapOffenceClicked">Location</a></li>
+                <ul class="nav nav-pills">
+                    <li class="nav-item active"><a data-toggle="tab" :href="'#'+oTab">Offence</a></li>
+                    <li class="nav-item"><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
+                    <li class="nav-item"><a data-toggle="tab" :href="'#'+pTab">Offender(s)</a></li>
+                    <li class="nav-item"><a data-toggle="tab" :href="'#'+lTab" @click="mapOffenceClicked">Location</a></li>
                 </ul>
                 <div class="tab-content">
                     <div :id="oTab" class="tab-pane fade in active">
