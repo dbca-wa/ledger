@@ -28,8 +28,9 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="">Activity Type:</label>
-                        <select class="form-control">
-                            <option v-for="sa in sheet_activity_type" :value="sa">{{sa['label']}}</option>
+                        <select class="form-control" v-model="filterActivityType">
+                            <option value="All">All</option>
+                            <option v-for="sa in sheet_activity_type" :value="sa['label']">{{sa['label']}}</option>
                         </select>
                     </div>
                 </div>
@@ -74,6 +75,7 @@ export default {
         pdBody: 'pdBody' + vm._uid,
         datatable_id: 'return-datatable',
         form: null,
+        filterActivityType: 'All',
         readonly: false,
         isModalOpen: false,
         sheetTitle: null,
@@ -163,7 +165,7 @@ export default {
               activityColumn.data().unique().sort().each( function ( d, j ) {
                 let activityTitles = [];
                 $.each(d,(index,a) => {
-                  a != null && activityTitles.indexOf(a)<0 ? activityTitles.push(vm.returns.sheet_activity_list[a]): '';
+                  a != null && activityTitles.indexOf(vm.returns.sheet_activity_list[a])<0 ? activityTitles.push(vm.returns.sheet_activity_list[a]): '';
                 })
                 vm.sheet_activity_type = activityTitles;
               });
@@ -175,6 +177,13 @@ export default {
     SheetEntry,
     datatable,
     Returns,
+  },
+  watch:{
+    filterActivityType: function(value){
+      let table = this.$refs.return_datatable.vmDataTable
+      value = value != 'All' ? value : ''
+      table.column(2).search(value).draw();
+    },
   },
   computed: {
      ...mapGetters([
