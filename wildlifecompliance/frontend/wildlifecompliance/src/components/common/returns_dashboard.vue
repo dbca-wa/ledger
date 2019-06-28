@@ -92,14 +92,19 @@ export default {
             return_statusTitles : [],
             table_headers:["Number","Due Date","Status","Licence","Action"],
             table_options:{
-                // serverSide: true,  TODO: Server-side pagination with custom filtering - dashboard standard.
+                serverSide: true,
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
                 ajax: {
                     "url": vm.url,
-                    "dataSrc": '',
+                    "dataSrc": 'data',
+                    "data": function (d) {
+                        d.status = vm.filterReturnStatus;
+                        d.date_from = vm.filterDueDateFrom != '' && vm.filterDueDateFrom != null ? moment(vm.filterDueDateFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        d.date_to = vm.filterDueDateTo != '' && vm.filterDueDateTo != null ? moment(vm.filterDueDateTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                    }
                 },
                 columns: [
                     {

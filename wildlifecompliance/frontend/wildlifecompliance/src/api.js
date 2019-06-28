@@ -26,6 +26,7 @@ module.exports = {
     licences:"/api/licences/",
     licences_paginated:"/api/licences_paginated/",
     returns:"/api/returns/",
+    returns_paginated:"/api/returns_paginated/api.py",
     application_standard_conditions:"/api/application_standard_conditions/",
     return_types:"/api/return_types/",
     application_conditions:"/api/application_conditions/",

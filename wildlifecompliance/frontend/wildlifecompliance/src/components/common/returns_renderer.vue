@@ -198,6 +198,7 @@ export default {
       }
       this.setReturns(this.returns);
     }
+    this.setReturnsSpecies({});
   },
 }
 </script>

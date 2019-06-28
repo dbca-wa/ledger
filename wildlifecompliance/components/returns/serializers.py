@@ -58,6 +58,11 @@ class ReturnSerializer(serializers.ModelSerializer):
             'return_fee',
         )
 
+        # the serverSide functionality of datatables is such that only columns that have field 'data'
+        # defined are requested from the serializer. Use datatables_always_serialize to force render
+        # of fields that are not listed as 'data' in the datatable columns
+        datatables_always_serialize = fields
+
     def get_lodgement_number(self, _return):
         """
         Gets the lodgement number for a submitted Return.

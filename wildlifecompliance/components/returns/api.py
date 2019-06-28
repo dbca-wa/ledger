@@ -1,5 +1,5 @@
 import traceback
-
+from datetime import datetime, timedelta
 from django.db.models import Q
 from django.db import transaction
 from django.core.exceptions import ValidationError
@@ -35,6 +35,103 @@ from wildlifecompliance.components.applications.models import (
 from wildlifecompliance.components.returns.email import (
     send_return_amendment_email_notification,
 )
+
+from rest_framework_datatables.pagination import DatatablesPageNumberPagination
+from rest_framework_datatables.filters import DatatablesFilterBackend
+from rest_framework_datatables.renderers import DatatablesRenderer
+
+
+class ReturnFilterBackend(DatatablesFilterBackend):
+    """
+    Custom filters
+    """
+    def filter_queryset(self, request, queryset, view):
+
+        # Get built-in DRF datatables queryset first to join with search text, then apply additional filters
+        super_queryset = super(ReturnFilterBackend, self).filter_queryset(request, queryset, view).distinct()
+
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        status = request.GET.get('status')
+        queryset = super_queryset
+
+        if queryset.model is Return:
+
+            # apply user selected filters
+            status = status.lower() if status else 'all'
+            if status != 'all':
+                status_ids = []
+                for returns in queryset:
+                    if status in returns.processing_status.lower():
+                        status_ids.append(returns.id)
+                queryset = queryset.filter(id__in=status_ids).distinct()
+            if date_from:
+                date_from = datetime.strptime(date_from, '%Y-%m-%d') + timedelta(days=1)
+                queryset = queryset.filter(lodgement_date__gte=date_from)
+            if date_to:
+                date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
+                queryset = queryset.filter(lodgement_date__lte=date_to)
+
+        return queryset
+
+
+class ReturnRenderer(DatatablesRenderer):
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        if 'view' in renderer_context and hasattr(renderer_context['view'], '_datatables_total_count'):
+            data['recordsTotal'] = renderer_context['view']._datatables_total_count
+        return super(ReturnRenderer, self).render(data, accepted_media_type, renderer_context)
+
+
+class ReturnPaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (ReturnFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (ReturnRenderer,)
+    queryset = Return.objects.none()
+    serializer_class = ReturnSerializer
+    page_size = 10
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return Return.objects.all()
+        elif is_customer(self.request):
+            user_orgs = [
+                org.id for org in user.wildlifecompliance_organisations.all()]
+            user_licences = [wildlifelicence.id for wildlifelicence in WildlifeLicence.objects.filter(
+                Q(current_application__org_applicant_id__in=user_orgs) |
+                Q(current_application__proxy_applicant=user) |
+                Q(current_application__submitter=user))]
+            return Return.objects.filter(Q(licence_id__in=user_licences))
+        return Return.objects.none()
+
+    @list_route(methods=['GET', ])
+    def user_datatable_list(self, request, *args, **kwargs):
+        self.serializer_class = ReturnSerializer
+        queryset = self.get_queryset()
+        # Filter by org
+        org_id = request.GET.get('org_id', None)
+        if org_id:
+            queryset = queryset.filter(org_applicant_id=org_id)
+        # Filter by proxy_applicant
+        proxy_applicant_id = request.GET.get('proxy_applicant_id', None)
+        if proxy_applicant_id:
+            queryset = queryset.filter(proxy_applicant_id=proxy_applicant_id)
+        # Filter by submitter
+        submitter_id = request.GET.get('submitter_id', None)
+        if submitter_id:
+            queryset = queryset.filter(submitter_id=submitter_id)
+        # Filter by user (submitter or proxy_applicant)
+        user_id = request.GET.get('user_id', None)
+        if user_id:
+            queryset = Application.objects.filter(
+                Q(proxy_applicant=user_id) |
+                Q(submitter=user_id)
+            )
+        queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = ReturnSerializer(result_page, context={'request': request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)
 
 
 class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
