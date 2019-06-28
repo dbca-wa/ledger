@@ -15,29 +15,31 @@ class WildlifeLicenceCanActionSerializer(serializers.Serializer):
     """
     Custom serializer for WildlifeLicence.can_action DICT object for each action
     """
-    can_renew = serializers.BooleanField(read_only=True)
-    can_amend = serializers.BooleanField(read_only=True)
-    can_surrender = serializers.BooleanField(read_only=True)
-    can_cancel = serializers.BooleanField(read_only=True)
-    can_suspend = serializers.BooleanField(read_only=True)
-    can_reissue = serializers.BooleanField(read_only=True)
-    can_reinstate = serializers.BooleanField(read_only=True)
-
-    class Meta:
-        fields = (
-            'can_renew',
-            'can_amend',
-            'can_surrender',
-            'can_cancel',
-            'can_suspend',
-            'can_reissue',
-            'can_reinstate',
-        )
-        # the serverSide functionality of datatables is such that only columns that have field 'data'
-        # defined are requested from the serializer. Use datatables_always_serialize to force render
-        # of fields that are not listed as 'data' in the datatable columns
-        datatables_always_serialize = fields
-
+    # can_renew = serializers.BooleanField(read_only=True)
+    # can_amend = serializers.BooleanField(read_only=True)
+    # can_surrender = serializers.BooleanField(read_only=True)
+    # can_cancel = serializers.BooleanField(read_only=True)
+    # can_suspend = serializers.BooleanField(read_only=True)
+    # can_reissue = serializers.BooleanField(read_only=True)
+    # can_reinstate = serializers.BooleanField(read_only=True)
+    #
+    # class Meta:
+    #     fields = (
+    #         'can_renew',
+    #         'can_amend',
+    #         'can_surrender',
+    #         'can_cancel',
+    #         'can_suspend',
+    #         'can_reissue',
+    #         'can_reinstate',
+    #     )
+    #     # the serverSide functionality of datatables is such that only columns that have field 'data'
+    #     # defined are requested from the serializer. Use datatables_always_serialize to force render
+    #     # of fields that are not listed as 'data' in the datatable columns
+    #     datatables_always_serialize = fields
+    def to_representation(self, obj):
+        print(obj)
+        return ''
 
 class WildlifeLicenceSerializer(serializers.ModelSerializer):
     licence_document = serializers.CharField(
@@ -71,7 +73,8 @@ class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
     current_application = WildlifeLicenceApplicationSerializer(read_only=True)
     last_issue_date = serializers.SerializerMethodField(read_only=True)
     latest_activities_merged = ExternalApplicationSelectedActivityMergedSerializer(many=True, read_only=True)
-    can_action = WildlifeLicenceCanActionSerializer(read_only=True)
+    # can_action = WildlifeLicenceCanActionSerializer(read_only=True)
+    can_action = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = WildlifeLicence
@@ -92,6 +95,54 @@ class DTInternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
 
     def get_last_issue_date(self, obj):
         return obj.latest_activities.first().issue_date if obj.latest_activities else ''
+
+    def get_can_action(self, obj):
+        # set default but use to_representation to calculate based on latest_activities_merged.can_action
+        can_action = {
+            'can_amend': False,
+            'can_renew': False,
+            'can_reactivate_renew': False,
+            'can_surrender': False,
+            'can_cancel': False,
+            'can_suspend': False,
+            'can_reissue': False,
+            'can_reinstate': False,
+        }
+        return can_action
+
+    def to_representation(self, obj):
+        data = super(DTInternalWildlifeLicenceSerializer, self).to_representation(obj)
+        print('\n\nLICENCE')
+
+        latest_activities_merged = data['latest_activities_merged']
+
+        # only check if licence is the latest in its category for the applicant
+        if data['is_latest_in_category']:
+            print('is latest in category, licence can_action')
+            # set True if any activities can be actioned
+            for activity in latest_activities_merged:
+                activity_can_action = activity.get('can_action')
+                if activity_can_action.get('can_amend'):
+                    data.get('can_action')['can_amend'] = True
+                if activity_can_action.get('can_renew'):
+                    data.get('can_action')['can_renew'] = True
+                if activity_can_action.get('can_reactivate_renew'):
+                    data.get('can_action')['can_reactivate_renew'] = True
+                if activity_can_action.get('can_surrender'):
+                    data.get('can_action')['can_surrender'] = True
+                if activity_can_action.get('can_cancel'):
+                    data.get('can_action')['can_cancel'] = True
+                if activity_can_action.get('can_suspend'):
+                    data.get('can_action')['can_suspend'] = True
+                if activity_can_action.get('can_reissue'):
+                    data.get('can_action')['can_reissue'] = True
+                if activity_can_action.get('can_reinstate'):
+                    data.get('can_action')['can_reinstate'] = True
+
+        # data.update({'can_action':'noooooooo'})
+        print('final licence data')
+        print(data)
+        return data
 
 
 class DTExternalWildlifeLicenceSerializer(WildlifeLicenceSerializer):
@@ -153,7 +204,7 @@ class DefaultActivitySerializer(serializers.ModelSerializer):
 
     name = serializers.CharField()
     activity = DefaultPurposeSerializer(many=True, read_only=True)
-    #activity = DefaultPurposeSerializer(many=True,read_only=True, queryset=self.qs_purpose())
+
     class Meta:
         model = LicenceActivity
         fields = (

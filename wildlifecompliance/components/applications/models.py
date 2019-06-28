@@ -2199,8 +2199,8 @@ class ApplicationSelectedActivity(models.Model):
             licence_activity_id=self.licence_activity_id
         ).distinct()
 
-    @property
-    def can_action(self):
+    def can_action(self, purposes_in_open_applications=[]):
+        print('can_action in application.models', self, self.activity_status, self.application)
         # Returns a DICT object containing can_<action> Boolean results of each action check
         can_action = {
             'licence_activity_id': self.licence_activity_id,
@@ -2218,6 +2218,11 @@ class ApplicationSelectedActivity(models.Model):
         # return false for all actions if activity is not in latest licence
         if not self.is_in_latest_licence:
             return can_action
+
+        # check if there are any purposes not in open applications (i.e. can action)
+        # return false for all actions if none
+        if not len(list((set(self.purposes) - set(purposes_in_open_applications)))) > 0:
+             return can_action
 
         # can_amend is true if the activity can be included in a Amendment Application
         can_action['can_amend'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
@@ -2288,26 +2293,28 @@ class ApplicationSelectedActivity(models.Model):
 
         return can_action
 
-    # def get_actionable_purposes(self):
-    #     """
-    #     Return a list of LicencePurpose records for the activity that are
-    #     not currently in an application being processed
-    #     """
-    #     return self.purposes.exclude(Application.objects.filter(
-    #         Q(org_applicant=self.application.org_applicant)
-    #         if self.application.org_applicant
-    #         else Q(proxy_applicant=self.application.proxy_applicant)
-    #         if self.application.proxy_applicant
-    #         else Q(submitter=self.application.submitter, proxy_applicant=None, org_applicant=None)
-    #     ).computed_filter(
-    #         licence_category_id=self.purposes.first().licence_category.id
-    #     ).exclude(
-    #         selected_activities__processing_status__in=[
-    #             ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
-    #             ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
-    #             ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED
-    #         ]
-    #     ).values_list('licence_purposes', flat=True))
+    @property
+    def purposes_in_open_applications(self):
+        """
+        Return a list of LicencePurpose records for the activity that are
+        currently in an application being processed
+        """
+        print('purposes in open applications from applications/models', self, self.activity_status, self.application)
+        return Application.objects.filter(
+            Q(org_applicant=self.application.org_applicant)
+            if self.application.org_applicant
+            else Q(proxy_applicant=self.application.proxy_applicant)
+            if self.application.proxy_applicant
+            else Q(submitter=self.application.submitter, proxy_applicant=None, org_applicant=None)
+        ).computed_filter(
+            licence_category_id=self.purposes.first().licence_category.id
+        ).exclude(
+            selected_activities__processing_status__in=[
+                ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
+                ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
+                ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED
+            ]
+        ).values_list('licence_purposes', flat=True)
 
     @property
     def is_in_latest_licence(self):
