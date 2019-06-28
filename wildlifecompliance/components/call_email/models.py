@@ -447,6 +447,7 @@ class ComplianceUserAction(UserAction):
     ACTION_CLOSE = "Close case Call/Email {}"
     ACTION_OFFENCE = "Create linked offence for Call/Email {}"
     ACTION_SANCTION_OUTCOME = "Create Sanction Outcome for Call/Email {}"
+    ACTION_PERSON_SEARCH = "Linked person to Call/Email {}"
 
     class Meta:
         app_label = 'wildlifecompliance'
