@@ -521,6 +521,9 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     call_email_serializer = SaveCallEmailSerializer(call_email_instance, data=request.data)
                     if call_email_serializer.is_valid():
                         call_email_serializer.save()
+                        call_email_instance.log_user_action(
+                            ComplianceUserAction.ACTION_PERSON_SEARCH.format(
+                            call_email_instance.number), request)
 
             # Reload data via serializer
             email_user = EmailUser.objects.get(id=email_user_serializer.instance.id)
