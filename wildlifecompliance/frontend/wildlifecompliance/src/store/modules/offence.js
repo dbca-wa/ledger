@@ -145,7 +145,16 @@ export const offenceStore = {
 
             try{
                 let fetchUrl = helpers.add_endpoint_json(api_endpoints.offence, 'offence_save');
-                const savedOffence = await Vue.http.post(fetchUrl, state.offence);
+
+                let payload = new Object();
+                Object.assign(payload, state.offence);
+                if (payload.occurrence_date_from) {
+                    payload.occurrence_date_from = moment(payload.occurrence_date_from, 'DD/MM/YYYY').format('YYYY-MM-DD');
+                }
+                if (payload.occurrence_date_to) {
+                    payload.occurrence_date_to = moment(payload.occurrence_date_to, 'DD/MM/YYYY').format('YYYY-MM-DD');
+                }
+                const savedOffence = await Vue.http.post(fetchUrl, payload);
                 await swal("Saved", "The record has been saved", "success");
             } catch (err) {
                 if (err.body.non_field_errors){
