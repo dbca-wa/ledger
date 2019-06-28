@@ -191,14 +191,15 @@ export default {
   },
   created: function() {
     this.loadCurrentUser({ url: `/api/my_user_details` });
-    if (this.returns.format != 'sheet') {
+    if (this.returns.format != 'sheet') { // Return Running Sheet checks 'internal' for read-only.
       var headers = this.returns.table[0]['headers']
       for(let i = 0; i<headers.length; i++) {
         headers[i]['readonly'] = !this.is_external
       }
       this.setReturns(this.returns);
     }
-    this.setReturnsSpecies({});
+    // TODO: Species list can be rendered here for internal/external Returns.
+    // this.setReturnsSpecies({});
   },
 }
 </script>
