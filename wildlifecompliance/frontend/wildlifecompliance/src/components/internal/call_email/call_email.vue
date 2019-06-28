@@ -41,7 +41,7 @@
                             </div>
                           </div>
                         </div>
-                        <a @click="updateAssignedToId('current_user')" class="btn">
+                        <a @click="updateAssignedToId('current_user')" class="btn pull-right">
                             Assign to me
                         </a>
                     </div>
@@ -188,7 +188,7 @@
                                 <label class="col-sm-1">No</label>
                             </div></div>
             
-                            <div>
+                            <div v-show="statusId !=='draft'">
                                 <SearchPerson />
                             </div>
                           </FormSection>
@@ -211,13 +211,13 @@
             
                             <div class="col-sm-12 form-group"><div class="row">
                                 <label class="col-sm-3">{{ occurrenceDateLabel }}</label>
-                                <div class="col-sm-3" :disabled="readonlyForm">
-                                  <datepicker :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_from"/>
+                                <div class="col-sm-3">
+                                  <datepicker :disabled="readonlyForm" :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_from"/>
                                 </div>
                                 <div v-show="call_email.occurrence_from_to" :disabled="readonlyForm">
                                   <label class="col-sm-3">Occurrence date to</label>
-                                  <div class="col-sm-3" :disabled="readonlyForm">
-                                    <datepicker :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_to" />
+                                  <div class="col-sm-3">
+                                    <datepicker :disabled="readonlyForm" :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_to" />
                                   </div>
                                 </div>
                             </div></div>

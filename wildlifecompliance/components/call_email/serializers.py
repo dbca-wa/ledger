@@ -493,7 +493,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
     def get_can_user_search_person(self, obj):
         user_id = self.context.get('request', {}).user.id
 
-        if obj.status in ('draft', 'open'):
+        if obj.status == 'open':
             if user_id == obj.assigned_to_id:
                 return True
             elif obj.allocated_group and not obj.assigned_to_id:
