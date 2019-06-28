@@ -564,7 +564,7 @@ export default {
 
 <style>
 .awesomplete {
-    z-index: 1050 !important;
+    /* z-index: 1050 !important; */
     display: inherit !important;
 }
 .awesomplete > ul {
