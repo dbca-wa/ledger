@@ -6,7 +6,7 @@
                 <input :readonly="!isEditable" class="col-sm-5 form-control" id="search-person" />
             </div>
             <div class="col-sm-3">
-                <input :readonly="!isEditable" type="button" class="pull-right btn btn-primary" value="Create New Person"@click.prevent="createNewPerson()" />
+                <input :readonly="!isEditable" type="button" class="pull-right btn btn-primary" value="Create New Person" @click.prevent="createNewPerson()" />
             </div>
         </div>
         <div class="col-md-12">
