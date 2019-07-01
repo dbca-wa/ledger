@@ -243,7 +243,6 @@ class WildlifeLicence(models.Model):
         Filter by licence_activity_id (optional) and/or specified action (optional)
         Exclude purposes that are currently in an application being processed
         """
-        print('get_latest_purposes_for_licence_activity_and_action')
         can_action_purpose_list = []
         purposes_in_open_applications_for_applicant = self.get_purposes_in_open_applications()
         for activity in self.get_latest_activities_for_licence_activity_and_action(licence_activity_id, action):
@@ -256,9 +255,9 @@ class WildlifeLicence(models.Model):
         """
         Return a list of LicencePurpose records for the licence that are currently in an application being processed
         """
-        print('get_purposes_in_open_applications from licences/models', self, self.current_application)
         from wildlifecompliance.components.applications.models import Application, ApplicationSelectedActivity
-        return Application.objects.filter(
+
+        open_applications = Application.objects.filter(
             Q(org_applicant=self.current_application.org_applicant)
             if self.current_application.org_applicant
             else Q(proxy_applicant=self.current_application.proxy_applicant)
@@ -272,21 +271,23 @@ class WildlifeLicence(models.Model):
                 ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
                 ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED
             ]
-        ).values_list('licence_purposes', flat=True)
+        )
+        open_purposes = open_applications.values_list('licence_purposes', flat=True)
+        return open_purposes
 
     @property
     def latest_activities_merged(self):
-        from wildlifecompliance.components.applications.models import ApplicationSelectedActivity
-
-        latest_activities = self.get_activities_by_processing_status(
-            ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED)\
-            .exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED)
+        """
+        Return a list of activities for the licence, merged by licence_activity_id (1 per LicenceActivity)
+        """
+        latest_activities = self.latest_activities
         merged_activities = {}
-        print('latest_activities_merged')
+
         if self.is_latest_in_category:
             purposes_in_open_applications = self.get_purposes_in_open_applications()
         else:
             purposes_in_open_applications = None
+
         for activity in latest_activities:
             if self.is_latest_in_category:
                 activity_can_action = activity.can_action(purposes_in_open_applications)

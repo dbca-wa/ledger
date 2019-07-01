@@ -2200,7 +2200,6 @@ class ApplicationSelectedActivity(models.Model):
         ).distinct()
 
     def can_action(self, purposes_in_open_applications=[]):
-        print('can_action in application.models', self, self.activity_status, self.application)
         # Returns a DICT object containing can_<action> Boolean results of each action check
         can_action = {
             'licence_activity_id': self.licence_activity_id,
@@ -2219,16 +2218,19 @@ class ApplicationSelectedActivity(models.Model):
         if not self.is_in_latest_licence:
             return can_action
 
-        # check if there are any purposes not in open applications (i.e. can action)
-        # return false for all actions if none
-        if not len(list((set(self.purposes) - set(purposes_in_open_applications)))) > 0:
+        # No action should be available if all of an activity's purposes are in open applications
+        # check if there are any purposes in open applications (i.e. can action)
+        # return false for all actions if no purposes are still actionable
+        if not len(list((set(self.purposes.values_list('id', flat=True)) - set(purposes_in_open_applications)))) > 0:
              return can_action
 
         # can_amend is true if the activity can be included in a Amendment Application
+        # Extra exclude for SUSPENDED due to get_current_activities_for_application_type
+        # intentionally not excluding these as part of the default queryset
         can_action['can_amend'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_AMENDMENT,
             activity_ids=[self.id]
-        ).count() > 0
+        ).exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED).count() > 0
 
         # can_renew is true if the activity can be included in a Renewal Application
         can_action['can_renew'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
@@ -2263,7 +2265,7 @@ class ApplicationSelectedActivity(models.Model):
 
         # can_suspend is true if the activity_status is CURRENT
         # Extra exclude for SUSPENDED due to get_current_activities_for_application_type
-        # intentionally not excluding these as part of the queryset
+        # intentionally not excluding these as part of the default queryset
         can_action['can_suspend'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_SYSTEM_GENERATED,
             activity_ids=[self.id]
