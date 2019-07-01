@@ -44,6 +44,8 @@ router.register(r'licences_class', licence_api.LicenceCategoryViewSet)
 router.register(r'licence_available_purposes',
                 licence_api.UserAvailableWildlifeLicencePurposesViewSet)
 router.register(r'returns', return_api.ReturnViewSet)
+router.register(r'returns_paginated', return_api.ReturnPaginatedViewSet)
+router.register(r'returns_amendment', return_api.ReturnAmendmentRequestViewSet)
 router.register(r'return_types', return_api.ReturnTypeViewSet)
 router.register(r'organisations', org_api.OrganisationViewSet)
 router.register(r'organisations_paginated', org_api.OrganisationPaginatedViewSet)
@@ -69,6 +71,9 @@ api_patterns = [url(r'^api/my_user_details/$',
                 url(r'^api/amendment_request_reason_choices',
                     application_api.AmendmentRequestReasonChoicesView.as_view(),
                     name='amendment_request_reason_choices'),
+                url(r'^api/return_amendment_request_reason_choices',
+                    return_api.ReturnAmendmentRequestReasonChoicesView.as_view(),
+                    name='return_amendment_request_reason_choices'),
                 url(r'^api/empty_list/$',
                     application_api.GetEmptyList.as_view(),
                     name='get-empty-list'),
