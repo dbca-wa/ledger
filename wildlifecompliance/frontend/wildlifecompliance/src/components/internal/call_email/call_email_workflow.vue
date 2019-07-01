@@ -157,7 +157,6 @@ import Vue from "vue";
 import modal from '@vue-utils/bootstrap-modal.vue';
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
-//import $ from 'jquery'
 
 export default {
     name: "CallEmailWorking",
@@ -185,6 +184,7 @@ export default {
             case_priority_id: null,
             advice_details: "",
             allocatedGroup: [],
+            allocated_group_id: null,
             files: [
                     {
                         'file': null,
@@ -206,9 +206,6 @@ export default {
       ...mapGetters('callemailStore', {
         call_email: "call_email",
       }),
-      //...mapGetters({
-        //  current_user: 'current_user',
-      //}),
       regionVisibility: function() {
         if (!(this.workflow_type === 'forward_to_wildlife_protection_branch' || 
           this.workflow_type === 'close')
@@ -218,16 +215,6 @@ export default {
               return false;
         }
       },
-      //allocateToVisibility: function() {
-        //if (this.workflow_type.includes('allocate')
-            //&& this.call_email.allocated_group
-        //) 
-          //{
-            //  return true;
-        //} else {
-          //    return false;
-       // }
-      //},
       groupPermission: function() {
         if (this.workflow_type === 'forward_to_regions') {
             return 'triage_call_email';
@@ -275,22 +262,9 @@ export default {
     },
     methods: {
       ...mapActions('callemailStore', {
-          //loadAllocatedGroup: 'loadAllocatedGroup',
-          //setRegionId: 'setRegionId',
           saveCallEmail: 'saveCallEmail'
       }),
-      //...mapActions({
-        //  loadCurrentUser: "loadCurrentUser",
-      //}),
-      //updateVuex: async function(attribute, event, datatype) {
-        //await this.setGenericAttribute({'attribute': attribute, 'event': event, 'datatype': datatype});
-        //if (attribute === 'region_id') {
-          //this.updateDistricts();
-        //}
-        //await this.updateAllocatedGroup(this.group_permission)
-      //},
       loadAllocatedGroup: async function() {
-          //{region_district_id, group_permission}) {
           let url = helpers.add_endpoint_join(
               api_endpoints.region_district,
               this.regionDistrictId + '/get_group_id_by_region_district/'
@@ -299,8 +273,6 @@ export default {
               url,
               { 'group_permission': this.groupPermission
               });
-          //console.log(returned);
-          //Object.assign(this.allocated_group, returned.body.allocated_group);
           return returned;
       },
       updateDistricts: function() {
@@ -325,31 +297,17 @@ export default {
           districts: [],
           region: null,
         });
-        // ensure security group members list is updated        
+        // ensure security group members list is up to date
         this.updateAllocatedGroup();
       },
-
-      //updateGroupPermission: function() {
-        //if (this.workflow_type === 'forward_to_regions') {
-          //this.group_permission = 'triage_call_email';
-        //} else if (this.workflow_type === 'forward_to_wildlife_protection_branch') {
-          //this.group_permission = 'triage_call_email';
-        //} else if (this.workflow_type === 'allocate_for_follow_up') {
-          //this.group_permission = 'officer';
-        //} else if (this.workflow_type === 'allocate_for_inspection') {
-          //this.group_permission = 'officer';
-        //} else if (this.workflow_type === 'allocate_for_case') {
-          //this.group_permission = 'officer';
-        //} 
-      //},
       updateAllocatedGroup: async function() {
+          console.log("updateAllocatedGroup");
           this.errorResponse = "";
           this.allocatedGroup = [];
           
           if (this.workflow_type === 'forward_to_wildlife_protection_branch') {
               for (let record of this.regionDistricts) {
                   if (record.district === 'KENSINGTON') {
-                    //await this.setRegionId(record.id);
                       this.district_id = null;
                       this.region_id = record.id;
                   }
@@ -357,21 +315,18 @@ export default {
           }
           if (this.groupPermission && this.regionDistrictId) {
               let allocatedGroupResponse = await this.loadAllocatedGroup();
-                  //{
-              //'region_district_id': this.regionDistrictId, 
-              //'group_permission': this.group_permission,
-              //});
               console.log(allocatedGroupResponse);
               if (allocatedGroupResponse.ok) {
                   console.log(allocatedGroupResponse.body.allocated_group);
                   Object.assign(this.allocatedGroup, allocatedGroupResponse.body.allocated_group);
+                  this.allocated_group_id = allocatedGroupResponse.body.group_id;
               } else {
                   // Display http error response on modal
                   this.errorResponse = allocatedGroupResponse.statusText;
               }
               // Display empty group error on modal
-              if (!this.errorResponse && 
-                  this.allocatedGroup && 
+              if (!this.errorResponse &&
+                  this.allocatedGroup &&
                   this.allocatedGroup.length <= 1) {
                   this.errorResponse = 'This group has no members';
               }
@@ -400,7 +355,6 @@ export default {
               });
           }
           this.attachAnother();
-          this.workflowDetails = '';
       },
       sendData: async function(){        
           let post_url = '/api/call_email/' + this.call_email.id + '/add_workflow_log/'
@@ -416,9 +370,8 @@ export default {
           payload.append('inspection_type_id', this.inspection_type_id);
           payload.append('case_priority_id', this.case_priority_id);
           payload.append('region_id', this.region_id);
+          payload.append('allocated_group_id', this.allocated_group_id);
 
-          //const parentResult = await this.$parent.save(true);
-          //console.log(parentResult);
           let callEmailRes = await this.saveCallEmail({ route: false, crud: 'save', 'internal': true });
           console.log(callEmailRes);
           if (callEmailRes.ok) {
@@ -468,9 +421,8 @@ export default {
       
     },
     created: async function() {
-        // Blank out 'assigned to' field
-        //this.call_email.assigned_to_id = null;
-        await this.$parent.updateAssignedToId('blank');
+        
+        //await this.$parent.updateAssignedToId('blank');
         // regions
         let returned_regions = await cache_helper.getSetCacheList('CallEmail_Regions', '/api/region_district/get_regions/');
         Object.assign(this.regions, returned_regions);
@@ -486,14 +438,12 @@ export default {
         // regionDistricts
         let returned_region_districts = await cache_helper.getSetCacheList(
             'CallEmail_RegionDistricts', 
-            // '/api/region_district/'
             api_endpoints.region_district
             );
         Object.assign(this.regionDistricts, returned_region_districts);
 
-        await this.updateDistricts();
-        //this.updateGroupPermission();
         await this.updateAllocatedGroup();
+        await this.updateDistricts();
 
         // case_priorities
         let returned_case_priorities = await cache_helper.getSetCacheList(

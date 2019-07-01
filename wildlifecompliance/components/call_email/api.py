@@ -695,8 +695,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                             ComplianceUserAction.ACTION_SANCTION_OUTCOME.format(instance.number), 
                             request)
 
-                #instance.region_id = request.data.get('region_id')
-                #instance.district_id = request.data.get('district_id')
+                instance.region_id = request.data.get('region_id')
+                instance.district_id = request.data.get('district_id')
                 #instance.allocated_group_id = request.data.get('allocated_group_id')
                 if request.data.get('referrers_selected'):
                     referrers_selected = request.data.get('referrers_selected').split(",")
@@ -712,6 +712,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                             instance.referrer.add(referrer)
                 print("referrers")
                 print(instance.referrer.all())
+
+                instance.assigned_to_id = request.data.get('assigned_to_id')
+                instance.inspection_type_id = request.data.get('inspection_type_id')
+                instance.case_priority_id = request.data.get('case_priority_id')
+                instance.allocated_group_id = request.data.get('allocated_group_id')
+
                 #if not workflow_type == 'allocate_for_follow_up':
                  #   instance.assigned_to_id = None
                 instance.save()
