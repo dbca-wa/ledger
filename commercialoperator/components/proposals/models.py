@@ -761,6 +761,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     def allowed_assessors(self):
         if self.processing_status == 'with_approver':
             group = self.__approver_group()
+        elif self.processing_status =='with_qa_officer':
+            group = QAOfficerGroup.objects.get(default=True)
         else:
             group = self.__assessor_group()
         return group.members.all() if group else []
@@ -1396,6 +1398,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 qaofficer_referral.processing_status = 'completed'
 
                 qaofficer_referral.save()
+                self.assigned_officer = None
                 self.save()
 
                 # Log proposal action
