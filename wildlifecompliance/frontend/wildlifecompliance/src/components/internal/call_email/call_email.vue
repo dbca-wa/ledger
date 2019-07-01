@@ -377,7 +377,7 @@ export default {
       classification_types: [],
       report_types: [],
       referrers: [],
-      allocated_group: [],
+      //allocated_group: [],
       current_schema: [],
       regionDistricts: [],
       sectionLabel: "Details",
