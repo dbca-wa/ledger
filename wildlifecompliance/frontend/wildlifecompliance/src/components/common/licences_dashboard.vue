@@ -186,7 +186,9 @@ export default {
                             let licence_category_id = full.current_application.category_id ? full.current_application.category_id : '';
 
                             if (full.is_latest_in_category) {
-                                links += `<a add-activity-purpose='${full.id}' org-id='${org_id}' proxy-id='${proxy_id}' licence-category-id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
+                                if (full.can_add_purpose){
+                                    links += `<a add-activity-purpose='${full.id}' org-id='${org_id}' proxy-id='${proxy_id}' licence-category-id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
+                                }
                                 if (!vm.is_external && full.can_action['can_renew']) {
                                     links += `<a renew-licence='${full.id}'>Renew</a><br/>`
                                 }

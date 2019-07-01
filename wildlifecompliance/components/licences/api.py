@@ -701,10 +701,3 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
             'purpose_records': available_purpose_records
         })
         return Response(serializer.data)
-
-    def get_serializer_context(self):
-        context = super(UserAvailableWildlifeLicencePurposesViewSet, self).get_serializer_context()
-        context.update({
-            "test": 'test context'
-        })
-        return context

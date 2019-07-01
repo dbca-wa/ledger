@@ -467,6 +467,8 @@ class WildlifeLicence(models.Model):
     def apply_action_to_purposes(self, request, action):
         """
         Applies a specified action to a licence's purposes for a single licence_activity_id and selected purposes list
+        If not all purposes for an activity are to be actioned, create new SYSTEM_GENERATED Applications and
+        associated activities to apply the relevant statuses for each
         """
         from wildlifecompliance.components.applications.models import (
             Application, ApplicationSelectedActivity
@@ -611,6 +613,36 @@ class WildlifeLicence(models.Model):
                     exclude(activity_status=post_actioned_status)
                 for activity in original_activities:
                     activity.mark_as_replaced(request)
+
+    @property
+    def purposes_available_to_add(self):
+        """
+        Returns a list of LicencePurpose objects that can be added to a WildlifeLicence
+        Same logic as the UserAvailableWildlifeLicencePurposesViewSet list function (used in API call)
+        """
+        available_purpose_records = LicencePurpose.objects.all()
+        licence_category_id = self.licence_category.id
+        current_activities = self.current_activities
+
+        # Exclude any purposes that are linked with CURRENT activities
+        active_purpose_ids = []
+        for current_activity in current_activities:
+            active_purpose_ids.extend([purpose.id for purpose in current_activity.purposes])
+        available_purpose_records = available_purpose_records.exclude(
+            id__in=active_purpose_ids
+        )
+
+        # Filter by Licence Category ID
+        available_purpose_records = available_purpose_records.filter(
+            licence_category_id=licence_category_id
+        )
+
+        return available_purpose_records
+
+    @property
+    def can_add_purpose(self):
+        return self.is_latest_in_category and self.purposes_available_to_add.count() > 0
+
 
     def generate_doc(self):
         from wildlifecompliance.components.licences.pdf import create_licence_doc
