@@ -3,7 +3,7 @@
         <div class="row" >
             <label class="col-sm-3 control-label">Search Person</label>
             <div class="col-sm-6">
-                <input :readonly="!isEditable" class="col-sm-5 form-control" id="search-person" />
+                <PersonSearch ref="person_search" elementId="search_caller" classNames="col-sm-5 form-control" @person-selected="personSelected" />
             </div>
             <div class="col-sm-3">
                 <input :readonly="!isEditable" type="button" class="pull-right btn btn-primary" value="Create New Person" @click.prevent="createNewPerson()" />
@@ -206,6 +206,7 @@ import datatable from '@vue-utils/datatable.vue'
 import ApplicationDashTable from '@common-components/applications_dashboard.vue'
 import LicenceDashTable from '@common-components/licences_dashboard.vue'
 import ReturnDashTable from '@common-components/returns_dashboard.vue'
+import PersonSearch from "@common-components/search_person.vue";
 import 'bootstrap/dist/css/bootstrap.css';
 import 'awesomplete/awesomplete.css';
 import utils from '../utils'
@@ -250,6 +251,7 @@ export default {
         LicenceDashTable,
         ReturnDashTable,
         //CommsLogs
+        PersonSearch
     },
     computed: {
         ...mapGetters('callemailStore', {
@@ -305,7 +307,7 @@ export default {
     },
     mounted: function(){
         this.$nextTick(function() {
-            this.initAwesomplete();
+            // this.initAwesomplete();
             this.loadCountries();
         });
     },
@@ -315,12 +317,16 @@ export default {
             saveCallEmail: 'saveCallEmail',
             saveCallEmailPerson: 'saveCallEmailPerson',
         }),
+        personSelected(para){
+            this.loadEmailUser(para.id);
+        },
         save: async function() {
             await this.saveCallEmailPerson();
         },
         createNewPerson: function() {
             let vm = this;
             vm.setEmailUserEmpty();
+            vm.$refs.person_search.clearInput();
         },
         updateContact: function() {
             console.log('aho');
@@ -453,114 +459,9 @@ export default {
                 vm.call_email.email_user.residential_address = vm.call_email.email_user.residential_address != null ? vm.call_email.email_user.residential_address : {};
             });
         },
-        search: function(searchTerm){
-            var vm = this;
-            vm.suggest_list = [];
-            vm.suggest_list.length = 0;
-            vm.awe.list = [];
-
-            /* Cancel all the previous requests */
-            if (vm.ajax_for_person_search != null){
-                vm.ajax_for_person_search.abort();
-                vm.ajax_for_person_search = null;
-            }
-
-            vm.ajax_for_person_search = $.ajax({
-                type: 'GET',
-                url: '/api/search_user/?search=' + searchTerm,
-                success: function(data){
-                    if (data && data.results) {
-                        let persons = data.results;
-                        let limit = Math.min(vm.max_items, persons.length);
-                        for (var i = 0; i < limit; i++){
-                            vm.suggest_list.push(persons[i])
-                        }
-                    }
-                    vm.awe.list = vm.suggest_list;
-                    vm.awe.evaluate();
-                    console.log(vm.suggest_list);
-                },
-                error: function (e){
-                    console.log(e);
-                }
-            });
-        },
-        markMatchedText(original_text, input){
-            let ret_text = original_text.replace(new RegExp(input, "gi"), function(a, b){
-                return '<mark>' + a + '</mark>';
-            });
-            return ret_text;
-        },
-        initAwesomplete: function(){
-            var self = this;
-
-            var element_search = document.getElementById('search-person');
-            self.awe = new Awesomplete(element_search, { 
-                maxItems: self.max_items, 
-                sort: false, 
-                filter: ()=>{ return true; }, // Display all the items in the list without filtering.
-                item: function(text, input){
-                    let ret =  Awesomplete.ITEM(text, ''); // Not sure how this works but this doesn't add <mark></mark>
-                    return ret;
-                },
-                data: function(item, input){
-                    let f_name = item.first_name?item.first_name:'';
-                    let l_name = item.last_name?item.last_name:'';
-
-                    let full_name = [f_name, l_name].filter(Boolean).join(' ');
-                    let email = item.email?'E:' + item.email:'';
-                    let p_number = item.phone_number?'P:' + item.phone_number:'';
-                    let m_number = item.mobile_number?'M:' + item.mobile_number:'';
-                    let dob = item.dob?'DOB:' + item.dob:'DOB: ---';
-                    
-                    let full_name_marked = '<strong>' + self.markMatchedText(full_name, input) + '</strong>';
-                    let email_marked = self.markMatchedText(email, input);
-                    let p_number_marked = self.markMatchedText(p_number, input);
-                    let m_number_marked = self.markMatchedText(m_number, input);
-                    let dob_marked = self.markMatchedText(dob, input);
-
-                    let myLabel = [full_name_marked, email_marked, p_number_marked, m_number_marked, dob_marked].filter(Boolean).join('<br />');
-                    myLabel = '<div data-item-id="' + item.id + '">' + myLabel + '</div>';
-
-                    return { 
-                        label: myLabel,   // Displayed in the list below the search box
-                        value: [full_name, dob].filter(Boolean).join(', '), // Inserted into the search box once selected
-                        id: item.id
-                    };
-                }
-            });
-            $(element_search).on('keyup', function(ev){
-                var keyCode = ev.keyCode || ev.which;
-                if ((48 <= keyCode && keyCode <= 90)||(96 <= keyCode && keyCode <= 105) || (keyCode == 8) || (keyCode == 46)){
-                    self.search(ev.target.value);
-                    return false;
-                }
-            }).on('awesomplete-selectcomplete', function(ev){
-                ev.preventDefault();
-                ev.stopPropagation();
-                return false;
-            }).on('awesomplete-select', function(ev){
-                /* Retrieve element id of the selected item from the list
-                 * By parsing it, we can get the order-number of the item in the list
-                 */
-                let origin = $(ev.originalEvent.origin)
-                let originTagName = origin[0].tagName;
-                if (originTagName != "DIV"){
-                    // Assuming origin is a child element of <li>
-                    origin = origin.parent();
-                }
-                let elem_id = origin[0].getAttribute('data-item-id');
-                for(let i = 0; i < self.suggest_list.length; i++){
-                    if (self.suggest_list[i].id == parseInt(elem_id)){
-                        self.loadEmailUser(self.suggest_list[i].id);
-                        break;
-                    }
-                }
-            });
-        },
     }
 }
-</script>       R
+</script>
 
 <style>
 .awesomplete {

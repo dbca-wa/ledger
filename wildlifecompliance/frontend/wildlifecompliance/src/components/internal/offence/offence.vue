@@ -191,7 +191,7 @@ import datatable from "@vue-utils/datatable.vue";
 import { mapGetters, mapActions } from "vuex";
 import { api_endpoints, helpers, cache_helpew } from "@/utils/hooks";
 import MapLocationOffence from "./map_location_offence1";
-import PersonSearch from "./search_person";
+import PersonSearch from "@common-components/search_person.vue";
 import utils from "../utils";
 import $ from "jquery";
 import "bootstrap/dist/css/bootstrap.css";
@@ -371,10 +371,6 @@ export default {
     }),
     personSelected: function(para) {
         let vm = this;
-
-        console.log('Event catched');
-        console.log(para);
-
         vm.setCurrentOffender(para.data_type, para.id);
     },
     removeOffenderClicked: function(e) {
