@@ -3,18 +3,27 @@ import {
     UPDATE_SELECTED_TAB_ID,
     UPDATE_SELECTED_TAB_NAME,
     UPDATE_CURRENT_USER,
+    UPDATE_SELECTED_APPLY_ORG_ID,
+    UPDATE_SELECTED_APPLY_PROXY_ID,
+    UPDATE_SELECTED_APPLY_LICENCE_SELECT,
 } from '@/store/mutation-types';
 
 export const userStore = {
     state: {
         selected_activity_tab_id: 0,
         selected_activity_tab_name: '',
+        selected_apply_org_id: null,
+        selected_apply_proxy_id: null,
+        selected_apply_licence_select: null,
         current_user: {},
     },
     getters: {
         current_user: state => state.current_user,
         selected_activity_tab_id: state => state.selected_activity_tab_id,
         selected_activity_tab_name: state => state.selected_activity_tab_name,
+        selected_apply_org_id: state => state.selected_apply_org_id,
+        selected_apply_proxy_id: state => state.selected_apply_proxy_id,
+        selected_apply_licence_select: state => state.selected_apply_licence_select,
         hasRole: (state, getters, rootState, rootGetters) => (role, activity_id) => {
             if(rootGetters.application.user_roles == null) {
                 return false;
@@ -51,11 +60,29 @@ export const userStore = {
         [UPDATE_CURRENT_USER] (state, user) {
             Vue.set(state, 'current_user', {...user});
         },
+        [UPDATE_SELECTED_APPLY_ORG_ID] (state, org_id) {
+            state.selected_apply_org_id = org_id;
+        },
+        [UPDATE_SELECTED_APPLY_PROXY_ID] (state, proxy_id) {
+            state.selected_apply_proxy_id = proxy_id;
+        },
+        [UPDATE_SELECTED_APPLY_LICENCE_SELECT] (state, licence_select) {
+            state.selected_apply_licence_select = licence_select;
+        },
     },
     actions: {
         setActivityTab({ commit }, { id, name }) {
             commit(UPDATE_SELECTED_TAB_ID, id);
             commit(UPDATE_SELECTED_TAB_NAME, name);
+        },
+        setApplyOrgId({ commit }, { id }) {
+            commit(UPDATE_SELECTED_APPLY_ORG_ID, id);
+        },
+        setApplyProxyId({ commit }, { id }) {
+            commit(UPDATE_SELECTED_APPLY_PROXY_ID, id);
+        },
+        setApplyLicenceSelect({ commit }, { licence_select }) {
+            commit(UPDATE_SELECTED_APPLY_LICENCE_SELECT, licence_select);
         },
         loadCurrentUser({ dispatch, commit }, { url }) {
             return new Promise((resolve, reject) => {

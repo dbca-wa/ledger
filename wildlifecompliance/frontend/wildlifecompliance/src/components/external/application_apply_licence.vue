@@ -32,7 +32,7 @@
 
                                                 <div  v-if="category.checked" class="col-sm-9">
 
-                                                    <div v-if="!(behalf_of_org != '' && type.not_for_organisation == true)" v-for="(type,index1) in category.activity" class="checkbox margin-left-20">
+                                                    <div v-if="!(selected_apply_org_id != '' && type.not_for_organisation == true)" v-for="(type,index1) in category.activity" class="checkbox margin-left-20">
                                                         <input type="checkbox" ref="selected_activity_type" name ="activity" :value="type.id" :id = "type.id" v-model="category.activity[index1].selected" @change="handleActivityCheckboxChange(index,index1)"> {{type.short_name}}
 
                                                         <div v-if="type.selected">
@@ -97,16 +97,14 @@ import {
   helpers
 }
 from '@/utils/hooks'
+import { mapActions, mapGetters } from 'vuex'
 import utils from './utils'
 export default {
   data: function() {
     let vm = this;
     return {
-        licence_select : this.$route.params.licence_select,
         licence_category : this.$route.params.licence_category,
         licence_activity : this.$route.params.licence_activity,
-        behalf_of_org : this.$route.params.org_select,
-        behalf_of_proxy : this.$route.params.proxy_select,
         application: null,
         agent: {},
         activity :{
@@ -138,8 +136,13 @@ export default {
   components: {
   },
   computed: {
+        ...mapGetters([
+            'selected_apply_org_id',
+            'selected_apply_proxy_id',
+            'selected_apply_licence_select',
+        ]),
         applicationTitle: function() {
-            switch(this.licence_select) {
+            switch(this.selected_apply_licence_select) {
                 case 'new_activity':
                     return 'Apply for a new activity';
                 break;
@@ -168,10 +171,10 @@ export default {
             return this.licence_categories;
         },
         isAmendment: function() {
-            return this.licence_select && this.licence_select === 'amend_activity'
+            return this.selected_apply_licence_select && this.selected_apply_licence_select === 'amend_activity'
         },
         isRenewal: function() {
-            return this.licence_select && this.licence_select === 'renew_activity'
+            return this.selected_apply_licence_select && this.selected_apply_licence_select === 'renew_activity'
         }
   },
   methods: {
@@ -296,12 +299,12 @@ export default {
                 type: "error",
             })
         } else {
-            data.organisation_id=vm.behalf_of_org;
-            data.proxy_id=vm.behalf_of_proxy;
+            data.organisation_id=vm.selected_apply_org_id;
+            data.proxy_id=vm.selected_apply_proxy_id;
             data.application_fee=vm.application_fee;
             data.licence_fee=vm.licence_fee;
             data.licence_purposes=licence_purposes;
-            data.application_type = vm.licence_select;
+            data.application_type = vm.selected_apply_licence_select;
             vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
                 vm.application = res.body;
                 vm.$router.push({
@@ -323,11 +326,11 @@ export default {
   mounted: function() {
     let initialisers = [
         utils.fetchLicenceAvailablePurposes({
-            "application_type": this.licence_select,
+            "application_type": this.selected_apply_licence_select,
             "licence_category": this.licence_category,
             "licence_activity": this.licence_activity,
-            "proxy_id": this.behalf_of_proxy,
-            "organisation_id": this.behalf_of_org,
+            "proxy_id": this.selected_apply_proxy_id,
+            "organisation_id": this.selected_apply_org_id,
         }),
     ];
 
@@ -337,9 +340,11 @@ export default {
   },
   beforeRouteEnter:function(to,from,next){
     next(vm => {
-        if(vm.licence_select == null) {
+        // Sends the user back to the first application workflow screen if licence_select is null (e.g. lost from
+        // page refresh)
+        if(vm.selected_apply_licence_select == null) {
             return vm.$router.push({
-                name: "apply_application",
+                name: "apply_application_organisation",
             });
         }
     });

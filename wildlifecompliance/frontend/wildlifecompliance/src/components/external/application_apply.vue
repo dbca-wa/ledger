@@ -13,10 +13,11 @@
                     <div class="panel-body collapse in" :id="pBody">
                         <form class="form-horizontal" name="orgForm" method="post">
                             <div class="col-sm-12">
-                                <div class="row" v-if="behalf_of_org">
-                                    <label class="col-sm-8">You have selected to apply on behalf of
-                                        <span v-if="behalf_of_org">{{ behalf_of_org_details.name }} ({{ behalf_of_org_details.abn }}).</span>
-                                    </label>
+                                <div class="row" v-if="selected_apply_org_id">
+                                    <label class="col-sm-8">You have selected to apply on behalf of {{ selected_apply_org_id_details.name }} ({{ selected_apply_org_id_details.abn }}).</label>
+                                </div>
+                                <div class="row" v-if="selected_apply_proxy_id">
+                                    <label class="col-sm-8">You have selected to apply on behalf of {{ selected_apply_proxy_id_details.first_name }} {{ selected_apply_proxy_id_details.last_name }} ({{ selected_apply_proxy_id_details.email }}).</label>
                                 </div>
                                 <div class="row">
                                     <label class="col-sm-4">Do you want to:</label>
@@ -59,16 +60,17 @@ import {
   helpers
 }
 from '@/utils/hooks'
+import { mapActions, mapGetters } from 'vuex'
 import utils from './utils'
+import internal_utils from '@/components/internal/utils'
 export default {
   data: function() {
     let vm = this;
     return {
         "application": null,
         agent: {},
-        behalf_of_org : this.$route.params.org_select,
-        behalf_of_org_details : {},
-        behalf_of_proxy : this.$route.params.proxy_select,
+        selected_apply_org_id_details : {},
+        selected_apply_proxy_id_details: {},
         current_user: {
             wildlifecompliance_organisations: []
         },
@@ -81,19 +83,40 @@ export default {
   components: {
   },
   computed: {
+    ...mapGetters([
+        'selected_apply_org_id',
+        'selected_apply_proxy_id',
+    ]),
     isLoading: function() {
       return this.loading.length > 0
     },
   },
+  created() {
+    window.addEventListener('beforeunload', this.redirect_to_org_select(event));
+    console.log('test')
+  },
   methods: {
+    ...mapActions([
+        'setApplyLicenceSelect',
+    ]),
     submit: function() {
+        this.setApplyLicenceSelect({licence_select: this.licence_select});
         this.$router.push({
             name: "apply_application_licence",
-            params: {
-                licence_select: this.licence_select,
-                org_select: this.behalf_of_org
-            }
         });
+    },
+    redirect_to_org_select: function(event) {
+//        event.preventDefault();
+//        event.returnValue = '';
+        window.removeEventListener('beforeunload', this.redirect_to_org_select);
+        console.log('removed')
+        console.log('redirecting to org_select');
+//        let vm = this;
+//        window.setTimeout(function () {
+//            return vm.$router.push({
+//                name: "apply_application_organisation",
+//            });
+//        }, 0);
     },
   },
   mounted: function() {
@@ -105,24 +128,23 @@ export default {
         const initialisers = [
             utils.fetchCurrentUser(),
             utils.fetchCurrentActiveLicenceApplication({
-                    "proxy_id": vm.behalf_of_proxy,
-                    "organisation_id": vm.behalf_of_org,
+                    "proxy_id": vm.selected_apply_proxy_id,
+                    "organisation_id": vm.selected_apply_org_id,
                 }),
-            vm.behalf_of_org ? utils.fetchOrganisation(vm.behalf_of_org) : '',
+            vm.selected_apply_org_id ? utils.fetchOrganisation(vm.selected_apply_org_id) : '',
+            vm.selected_apply_proxy_id ? internal_utils.fetchUser(vm.selected_apply_proxy_id) : '',
         ]
         Promise.all(initialisers).then(data => {
             vm.current_user = data[0];
             if(data[1].application == null) {
+                vm.setApplyLicenceSelect({licence_select: 'apply_application_licence'});
                 return vm.$router.push({
                     name: "apply_application_licence",
-                    params: {
-                        licence_select: 'new_licence',
-                        org_select: vm.behalf_of_org
-                    }
                 });
             }
             vm.application = data[1].application;
-            vm.behalf_of_org_details = data[2];
+            vm.selected_apply_org_id_details = data[2];
+            vm.selected_apply_proxy_id_details = data[3];
         })
     })
   }
