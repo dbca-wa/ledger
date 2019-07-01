@@ -13,6 +13,11 @@
                     <div class="panel-body collapse in" :id="pBody">
                         <form class="form-horizontal" name="orgForm" method="post">
                             <div class="col-sm-12">
+                                <div class="row" v-if="behalf_of_org">
+                                    <label class="col-sm-8">You have selected to apply on behalf of
+                                        <span v-if="behalf_of_org">{{ behalf_of_org_details.name }} ({{ behalf_of_org_details.abn }}).</span>
+                                    </label>
+                                </div>
                                 <div class="row">
                                     <label class="col-sm-4">Do you want to:</label>
                                 </div>
@@ -62,6 +67,7 @@ export default {
         "application": null,
         agent: {},
         behalf_of_org : this.$route.params.org_select,
+        behalf_of_org_details : {},
         behalf_of_proxy : this.$route.params.proxy_select,
         current_user: {
             wildlifecompliance_organisations: []
@@ -102,6 +108,7 @@ export default {
                     "proxy_id": vm.behalf_of_proxy,
                     "organisation_id": vm.behalf_of_org,
                 }),
+            vm.behalf_of_org ? utils.fetchOrganisation(vm.behalf_of_org) : '',
         ]
         Promise.all(initialisers).then(data => {
             vm.current_user = data[0];
@@ -115,6 +122,7 @@ export default {
                 });
             }
             vm.application = data[1].application;
+            vm.behalf_of_org_details = data[2];
         })
     })
   }

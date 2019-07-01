@@ -2323,7 +2323,7 @@ class ApplicationSelectedActivity(models.Model):
         # Returns true if the activity is in the latest WildlifeLicence record for the relevant applicant
         from wildlifecompliance.components.licences.models import WildlifeLicence
 
-        latest_licence = WildlifeLicence.objects.filter(
+        licences = WildlifeLicence.objects.filter(
             Q(current_application__org_applicant=self.application.org_applicant)
             if self.application.org_applicant
             else Q(current_application__proxy_applicant=self.application.proxy_applicant)
@@ -2331,8 +2331,8 @@ class ApplicationSelectedActivity(models.Model):
             else Q(current_application__submitter=self.application.submitter, current_application__proxy_applicant=None,
                    current_application__org_applicant=None),
             licence_category_id=self.licence_activity.licence_category_id
-        ).latest('id')
-        if self in latest_licence.latest_activities:
+        )
+        if licences and self in licences.latest('id').latest_activities:
             return True
         return False
 
