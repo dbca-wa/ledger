@@ -303,7 +303,7 @@ export default {
       updateAllocatedGroup: async function() {
           console.log("updateAllocatedGroup");
           this.errorResponse = "";
-          this.allocatedGroup = [];
+          //this.allocatedGrouplength = 0;
           
           if (this.workflow_type === 'forward_to_wildlife_protection_branch') {
               for (let record of this.regionDistricts) {
@@ -315,10 +315,10 @@ export default {
           }
           if (this.groupPermission && this.regionDistrictId) {
               let allocatedGroupResponse = await this.loadAllocatedGroup();
-              console.log(allocatedGroupResponse);
               if (allocatedGroupResponse.ok) {
                   console.log(allocatedGroupResponse.body.allocated_group);
-                  Object.assign(this.allocatedGroup, allocatedGroupResponse.body.allocated_group);
+                  //this.allocatedGroup = Object.assign({}, allocatedGroupResponse.body.allocated_group);
+                  Vue.set(this, 'allocatedGroup', allocatedGroupResponse.body.allocated_group);
                   this.allocated_group_id = allocatedGroupResponse.body.group_id;
               } else {
                   // Display http error response on modal
