@@ -1451,13 +1451,6 @@ class Application(RevisionedMixin):
                         activity.proposed_start_date = latest_activity.start_date
                         activity.proposed_end_date = latest_activity.expiry_date
                         activity.save()
-
-                        # Update the current (now old) activity
-                        # TODO: upon issuing, when looking up latest_activity, needs to create a copy of the
-                        # TODO: activity if any purposes are outstanding and not issued along with this activity
-                        latest_activity.updated_by = request.user
-                        latest_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
-                        latest_activity.save()
                 else:
                     ApplicationSelectedActivity.objects.filter(
                         application_id=self.id,
@@ -1580,6 +1573,7 @@ class Application(RevisionedMixin):
                 parent_licence, created = self.get_parent_licence(auto_create=True)
                 issued_activities = []
                 declined_activities = []
+                # perform issue for each licence activity id in request.data.get('activity')
                 for item in request.data.get('activity'):
                     licence_activity_id = item['id']
                     selected_activity = self.activities.filter(
@@ -1602,8 +1596,8 @@ class Application(RevisionedMixin):
                         expiry_date = item.get('end_date')
 
                         if self.application_type == Application.APPLICATION_TYPE_AMENDMENT:
-                            # TODO: upon issuing, when looking up latest_activity, needs to create a copy of the
-                            # TODO: activity if any purposes are outstanding and not issued along with this activity
+                            original_activities = parent_licence.latest_activities\
+                                .filter(licence_activity_id=licence_activity_id)
                             latest_activity = self.get_latest_current_activity(licence_activity_id)
                             if not latest_activity:
                                 raise Exception("Active licence not found for activity ID: %s" % licence_activity_id)
@@ -1613,9 +1607,26 @@ class Application(RevisionedMixin):
                             start_date = latest_activity.start_date
                             expiry_date = latest_activity.expiry_date
 
-                            # Set activity_status for latest_activity to REPLACED
-                            latest_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
-                            latest_activity.save()
+                            # upon issuing, when before updating latest_activity, needs to create a copy of it
+                            # if any purposes are outstanding and not issued along with this activity
+                            # the copied application and activity will contain remaining purposes, data, and status
+                            remaining_purpose_ids_list = list(set(latest_activity.purposes.values_list('id', flat=True))
+                                                              - set(selected_activity.purposes
+                                                                    .values_list('id', flat=True)))
+                            if len(remaining_purpose_ids_list) > 0:
+                                original_application = latest_activity.application
+                                original_activity_status = latest_activity.activity_status
+                                new_copied_application = original_application.copy_application_purposes_for_status(
+                                    remaining_purpose_ids_list, original_activity_status)
+                                self.previous_application = new_copied_application
+                                self.save()
+                                parent_licence.current_application = new_copied_application
+
+                            # Update all current (now old) activities
+                            for original_activity in original_activities:
+                                original_activity.updated_by = request.user
+                                original_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
+                                original_activity.save()
 
                         # If there is an outstanding licence fee payment - attempt to charge the stored card.
                         payment_successful = selected_activity.process_licence_fee_payment(request, self)
