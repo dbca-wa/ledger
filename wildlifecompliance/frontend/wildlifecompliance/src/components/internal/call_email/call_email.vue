@@ -97,7 +97,7 @@
 
                         <div v-if="statusId ==='open_followup' && this.call_email.can_user_action" class="row action-button">
                           <div class="col-sm-12">
-                                <a class="btn btn-primary btn-block">
+                                <a @click="sanction_outcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
                                 </a>
                           </div>
@@ -318,6 +318,7 @@
           <CallWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflow_type" />
         </div>
         <Offence ref="offence" />
+        <SanctionOutcome ref="sanction_outcome" />
     </div>
 </template>
 <script>
@@ -335,6 +336,7 @@ import Datepicker from 'vuejs-datepicker';
 import moment from 'moment';
 import CallWorkflow from './call_email_workflow';
 import Offence from '../offence/offence';
+import SanctionOutcome from '../sanction_outcome/sanction_outcome';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
 
@@ -409,6 +411,7 @@ export default {
     CallWorkflow,
     Offence,
     datatable,
+    SanctionOutcome,
   },
   watch: {
       call_email: {
@@ -505,6 +508,10 @@ export default {
         this.$refs.add_workflow.isModalOpen = true;
       });
       // this.$refs.add_workflow.isModalOpen = true;
+    },
+    sanction_outcome(){
+      console.log('sanction_outcome');
+      this.$refs.sanction_outcome.isModalOpen = true;
     },
     offence(){
       this.$refs.offence.isModalOpen = true;

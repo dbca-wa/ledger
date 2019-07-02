@@ -1,6 +1,6 @@
 <template lang="html">
     <div>
-        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="modalTitle" large>
+        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="modalTitle" large force>
             <div class="container-fluid">
                 <ul class="nav nav-pills">
                     <li class="nav-item active"><a data-toggle="tab" :href="'#'+oTab">Offence</a></li>
@@ -189,7 +189,7 @@ import Awesomplete from "awesomplete";
 import modal from "@vue-utils/bootstrap-modal.vue";
 import datatable from "@vue-utils/datatable.vue";
 import { mapGetters, mapActions } from "vuex";
-import { api_endpoints, helpers, cache_helpew } from "@/utils/hooks";
+import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import MapLocationOffence from "./map_location_offence1";
 import PersonSearch from "@common-components/search_person.vue";
 import utils from "../utils";
@@ -496,6 +496,7 @@ export default {
       vm.setCurrentAllegedOffenceEmpty();
     },
     ok: async function() {
+      this.processingDetails = true;
       await this.sendData();
 
       // Update call_email in vuex
@@ -505,10 +506,11 @@ export default {
       this.close();
     },
     cancel: function() {
-      this.isModalOpen = false;
+      this.processingDetails = false;
       this.close();
     },
     close: function() {
+      this.processingDetails = false;
       this.isModalOpen = false;
     },
     mapOffenceClicked: function() {
