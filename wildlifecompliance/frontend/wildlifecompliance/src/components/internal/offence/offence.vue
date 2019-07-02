@@ -820,9 +820,6 @@ export default {
 .radio-button-label {
   padding-left: 0;
 }
-.awesomplete {
-  display: inherit !important;
-}
 .tab-content {
   background: white;
   padding: 10px;

@@ -186,4 +186,11 @@ export default {
 </script>
 
 <style>
+.awesomplete > ul {
+    margin-top: 2.5em;
+}
+.awesomplete > ul > li {
+    border-bottom: 1px solid lightgray;
+    margin: 5px 10px 5px 10px;
+}
 </style>

@@ -3,7 +3,7 @@
         <div class="row" >
             <label class="col-sm-3 control-label">Search Person</label>
             <div class="col-sm-6">
-                <PersonSearch ref="person_search" elementId="search_caller" classNames="col-sm-5 form-control" @person-selected="personSelected" />
+                <PersonSearch :readonly="!isEditable" ref="person_search" elementId="search_caller" classNames="col-sm-5 form-control" @person-selected="personSelected" />
             </div>
             <div class="col-sm-3">
                 <input :readonly="!isEditable" type="button" class="pull-right btn btn-primary" value="Create New Person" @click.prevent="createNewPerson()" />
@@ -463,31 +463,8 @@ export default {
 }
 </script>
 
-<style>
-.awesomplete {
-    /* z-index: 1050 !important; */
-    display: inherit !important;
-}
-.awesomplete > ul {
-    z-index: 2001;
-    top: 30px;
-}
-.awesomplete > ul > li {
-    border-bottom: 1px solid lightgray;
-    margin: 5px 10px 5px 10px;
-}
-.full_name {
-    color: green;
-}
-.tab-content {
-    /* padding: 10px;
-    border: solid 1px lightgray; */
-}
+<style scoped>
 .nav-tabs {
     border-bottom: none !important;
-}
-#search-person {
-    z-index: 1000;
-    /* width: 400px; */
 }
 </style>
