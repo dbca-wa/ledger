@@ -93,6 +93,17 @@
                     allowInputToggle: true
                 },
                 dtOptions: {
+                    serverSide: true,
+                    searchDelay: 1000,
+                    lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+                    order: [
+                        [0, 'desc']
+                    ],
+                    autoWidth: false,
+                    rowCallback: function (row, data) {
+                        $(row).addClass('appRecordRow');
+                    },
+
 
                     language: {
                         processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -101,8 +112,16 @@
                     responsive: true,
                     processing: true,
                     ajax: {
-                        "url": helpers.add_endpoint_json(api_endpoints.call_email, 'datatable_list'),
-                        "dataSrc": '',
+                        //"url": helpers.add_endpoint_json(api_endpoints.call_email, 'datatable_list'),
+                        //"url": helpers.add_endpoint_json(api_endpoints.call_email_paginated, 'get_paginated_datatable'),
+                        "url": "/api/call_email_paginated/get_paginated_datatable/?format=datatables",
+                        "dataSrc": 'data',
+                        "data": function(d) {
+                            d.status_description = vm.filterStatus;
+                            d.classification_description = vm.filterClassification;
+                            d.date_from = vm.filterLodgedFrom != '' && vm.filterLodgedFrom != null ? moment(vm.filterLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                            d.date_to = vm.filterLodgedTo != '' && vm.filterLodgedTo != null ? moment(vm.filterLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        }
                     },
                     columns: [
                         {
@@ -110,9 +129,11 @@
                         },
                         {
                             data: "status.name",
+                            searchable: false,
                         },
                         {
                             data: "classification",
+                            searchable: false,
                             mRender: function (data, type, full) {
                                 if (data) {
                                     return data.name;
@@ -201,22 +222,10 @@
         },
         watch: {
             filterStatus: function () {
-                let vm = this;
-                let regexSearch = helpers.datatableExactStringMatch(vm.filterStatus);
-                if (vm.filterStatus != 'All') {
-                    vm.$refs.call_email_table.vmDataTable.columns(1).search(regexSearch, true, false).draw();
-                } else {
-                    vm.$refs.call_email_table.vmDataTable.columns(1).search('').draw();
-                }
+                this.$refs.call_email_table.vmDataTable.draw();
             },
             filterClassification: function () {
-                let vm = this;
-                let regexSearch = helpers.datatableExactStringMatch(vm.filterClassification);
-                if (vm.filterClassification != 'All') {
-                    vm.$refs.call_email_table.vmDataTable.columns(2).search(regexSearch, true, false).draw();
-                } else {
-                    vm.$refs.call_email_table.vmDataTable.columns(2).search('').draw();
-                }
+                this.$refs.call_email_table.vmDataTable.draw();
             },
             filterLodgedFrom: function () {
                 this.$refs.call_email_table.vmDataTable.draw();
