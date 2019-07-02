@@ -259,9 +259,12 @@ class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
         # Filter by user (submitter or proxy_applicant)
         user_id = request.GET.get('user_id', None)
         if user_id:
-            queryset = Application.objects.filter(
+            user_orgs = [
+                org.id for org in EmailUser.objects.get(id=user_id).wildlifecompliance_organisations.all()]
+            queryset = queryset.filter(
                 Q(proxy_applicant=user_id) |
-                Q(submitter=user_id)
+                Q(submitter=user_id) |
+                Q(org_applicant_id__in=user_orgs)
             )
         queryset = self.filter_queryset(queryset)
         self.paginator.page_size = queryset.count()

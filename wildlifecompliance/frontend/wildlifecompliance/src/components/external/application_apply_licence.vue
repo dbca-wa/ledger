@@ -4,7 +4,10 @@
             <div class="col-sm-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title">{{applicationTitle}}
+                        <h3 class="panel-title">{{applicationTitle}} for
+                            <span v-if="selected_apply_org_id">{{ selected_apply_org_id_details.name }} ({{ selected_apply_org_id_details.abn }})</span>
+                            <span v-if="selected_apply_proxy_id">{{ selected_apply_proxy_id_details.first_name }} {{ selected_apply_proxy_id_details.last_name }} ({{ selected_apply_proxy_id_details.email }})</span>
+                            <span v-if="!selected_apply_org_id && !selected_apply_proxy_id">yourself</span>
                             <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                             </a>
@@ -16,7 +19,7 @@
                           
                             <div class="col-sm-12">
                                 <div class="row">
-                                    <label class="col-sm-4">
+                                    <label class="col-sm-6">
                                         {{ selectionLabel }}:
                                     </label>
                                 </div>
@@ -32,7 +35,7 @@
 
                                                 <div  v-if="category.checked" class="col-sm-9">
 
-                                                    <div v-if="!(behalf_of_org != '' && type.not_for_organisation == true)" v-for="(type,index1) in category.activity" class="checkbox margin-left-20">
+                                                    <div v-if="!(selected_apply_org_id != '' && type.not_for_organisation == true)" v-for="(type,index1) in category.activity" class="checkbox margin-left-20">
                                                         <input type="checkbox" ref="selected_activity_type" name ="activity" :value="type.id" :id = "type.id" v-model="category.activity[index1].selected" @change="handleActivityCheckboxChange(index,index1)"> {{type.short_name}}
 
                                                         <div v-if="type.selected">
@@ -40,11 +43,16 @@
 
                                                                 <div class ="col-sm-12">
                                                                     <input type="checkbox"
-                                                                        :disabled="isAmendment || isRenewal"
                                                                         :value="purpose.id"
                                                                         :id="purpose.id"
                                                                         v-model="type.purpose[index2].selected"
                                                                         @change="handlePurposeCheckboxChange(index,$event)">
+                                                                    <!--<input type="checkbox"
+                                                                        :disabled="isAmendment || isRenewal"
+                                                                        :value="purpose.id"
+                                                                        :id="purpose.id"
+                                                                        v-model="type.purpose[index2].selected"
+                                                                        @change="handlePurposeCheckboxChange(index,$event)">-->
                                                                             {{purpose.name}}
                                                                             <span> ({{purpose.base_application_fee}} + {{purpose.base_licence_fee}})</span>
                                                                 </div>
@@ -92,16 +100,14 @@ import {
   helpers
 }
 from '@/utils/hooks'
+import { mapActions, mapGetters } from 'vuex'
 import utils from './utils'
 export default {
   data: function() {
     let vm = this;
     return {
-        licence_select : this.$route.params.licence_select,
         licence_category : this.$route.params.licence_category,
         licence_activity : this.$route.params.licence_activity,
-        behalf_of_org : this.$route.params.org_select,
-        behalf_of_proxy : this.$route.params.proxy_select,
         application: null,
         agent: {},
         activity :{
@@ -128,13 +134,21 @@ export default {
         pBody: 'pBody' + vm._uid,
         application_fee: 0,
         licence_fee: 0,
+        selected_apply_org_id_details : {},
+        selected_apply_proxy_id_details: {},
     }
   },
   components: {
   },
   computed: {
+        ...mapGetters([
+            'selected_apply_org_id',
+            'selected_apply_proxy_id',
+            'selected_apply_licence_select',
+            'application_workflow_state',
+        ]),
         applicationTitle: function() {
-            switch(this.licence_select) {
+            switch(this.selected_apply_licence_select) {
                 case 'new_activity':
                     return 'Apply for a new activity';
                 break;
@@ -151,9 +165,9 @@ export default {
         },
         selectionLabel: function() {
             return this.isAmendment ?
-            `Select the licence activity you wish to amend` :
+            `Select the licence activity and purposes you wish to amend` :
             this.isRenewal ?
-            `Select one or more activities you wish to renew` :
+            `Select one or more activities and purposes you wish to renew` :
             `Select the class of licence you wish to apply for`;
         },
         categoryCount: function() {
@@ -163,13 +177,16 @@ export default {
             return this.licence_categories;
         },
         isAmendment: function() {
-            return this.licence_select && this.licence_select === 'amend_activity'
+            return this.selected_apply_licence_select && this.selected_apply_licence_select === 'amend_activity'
         },
         isRenewal: function() {
-            return this.licence_select && this.licence_select === 'renew_activity'
+            return this.selected_apply_licence_select && this.selected_apply_licence_select === 'renew_activity'
         }
   },
   methods: {
+    ...mapActions([
+        'setApplicationWorkflowState',
+    ]),
     submit: function() {
         let vm = this;
         swal({
@@ -291,13 +308,14 @@ export default {
                 type: "error",
             })
         } else {
-            data.organisation_id=vm.behalf_of_org;
-            data.proxy_id=vm.behalf_of_proxy;
+            data.organisation_id=vm.selected_apply_org_id;
+            data.proxy_id=vm.selected_apply_proxy_id;
             data.application_fee=vm.application_fee;
             data.licence_fee=vm.licence_fee;
             data.licence_purposes=licence_purposes;
-            data.application_type = vm.licence_select;
+            data.application_type = vm.selected_apply_licence_select;
             vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
+                vm.setApplicationWorkflowState({bool: false});
                 vm.application = res.body;
                 vm.$router.push({
                     name:"draft_application",
@@ -318,23 +336,29 @@ export default {
   mounted: function() {
     let initialisers = [
         utils.fetchLicenceAvailablePurposes({
-            "application_type": this.licence_select,
+            "application_type": this.selected_apply_licence_select,
             "licence_category": this.licence_category,
             "licence_activity": this.licence_activity,
-            "proxy_id": this.behalf_of_proxy,
-            "organisation_id": this.behalf_of_org,
+            "proxy_id": this.selected_apply_proxy_id,
+            "organisation_id": this.selected_apply_org_id,
         }),
+        this.selected_apply_org_id ? utils.fetchOrganisation(this.selected_apply_org_id) : '',
+        this.selected_apply_proxy_id ? internal_utils.fetchUser(this.selected_apply_proxy_id) : '',
     ];
 
     Promise.all(initialisers).then(data => {
         this.licence_categories = data[0];
+        this.selected_apply_org_id_details = data[1];
+        this.selected_apply_proxy_id_details = data[2];
     });
   },
   beforeRouteEnter:function(to,from,next){
     next(vm => {
-        if(vm.licence_select == null) {
+        // Sends the user back to the first application workflow screen if licence_select is null
+        // or workflow state was interrupted (e.g. lost from page refresh)
+        if(vm.selected_apply_licence_select == null || !vm.application_workflow_state) {
             return vm.$router.push({
-                name: "apply_application",
+                name: "apply_application_organisation",
             });
         }
     });

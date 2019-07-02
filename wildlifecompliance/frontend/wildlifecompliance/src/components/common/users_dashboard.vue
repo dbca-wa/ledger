@@ -42,6 +42,7 @@
 </template>
 <script>
 import datatable from '@/utils/vue/datatable.vue'
+import { mapActions, mapGetters } from 'vuex'
 import {
     api_endpoints,
     helpers
@@ -172,15 +173,16 @@ export default {
         
     },
     methods: {
+        ...mapActions([
+            'setApplyProxyId',
+        ]),
         applyOnBehalfOf:function (user_id) {
             let vm = this;
-            console.log('from user list - apply on behalf of: ',user_id);
-             vm.$router.push({
-                  name:"apply_application_licence",
-                  params:{
-                    proxy_select: user_id
-                  }
-              });
+
+            vm.setApplyProxyId({id: user_id});
+            vm.$router.push({
+                name:"apply_application_licence",
+            });
         },
         addEventListeners: function(){
             let vm = this;

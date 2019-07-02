@@ -43,8 +43,11 @@ from wildlifecompliance.components.applications.email import (
 )
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.ordered_model import OrderedModel
-from wildlifecompliance.components.licences.models import LicenceCategory, LicenceActivity, LicencePurpose
-
+from wildlifecompliance.components.licences.models import (
+    LicenceCategory,
+    LicenceActivity,
+    LicencePurpose
+)
 logger = logging.getLogger(__name__)
 
 
@@ -309,7 +312,7 @@ class Application(RevisionedMixin):
         null=True,
         blank=True)
     previous_application = models.ForeignKey(
-        'self', on_delete=models.PROTECT, blank=True, null=True)
+        'self', on_delete=models.PROTECT, blank=True, null=True, related_name='parents')
     application_fee = models.DecimalField(
         max_digits=8, decimal_places=2, default='0')
 
@@ -1450,6 +1453,8 @@ class Application(RevisionedMixin):
                         activity.save()
 
                         # Update the current (now old) activity
+                        # TODO: upon issuing, when looking up latest_activity, needs to create a copy of the
+                        # TODO: activity if any purposes are outstanding and not issued along with this activity
                         latest_activity.updated_by = request.user
                         latest_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
                         latest_activity.save()
@@ -1597,6 +1602,8 @@ class Application(RevisionedMixin):
                         expiry_date = item.get('end_date')
 
                         if self.application_type == Application.APPLICATION_TYPE_AMENDMENT:
+                            # TODO: upon issuing, when looking up latest_activity, needs to create a copy of the
+                            # TODO: activity if any purposes are outstanding and not issued along with this activity
                             latest_activity = self.get_latest_current_activity(licence_activity_id)
                             if not latest_activity:
                                 raise Exception("Active licence not found for activity ID: %s" % licence_activity_id)
@@ -1821,7 +1828,7 @@ class Application(RevisionedMixin):
             else (
                 Q(submitter=proxy_id) | Q(proxy_applicant=proxy_id)
             ) if proxy_id
-            else Q(submitter=request.user)
+            else Q(submitter=request.user, proxy_applicant=None, org_applicant=None)
         )
 
 
@@ -2192,63 +2199,47 @@ class ApplicationSelectedActivity(models.Model):
             licence_activity_id=self.licence_activity_id
         ).distinct()
 
-    @property
-    def can_amend(self):
-        # TODO: check for situation where a new licence of same purpose exists
-        # Returns true if the activity can be included in a Amendment Application
-        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+    def can_action(self, purposes_in_open_applications=[]):
+        # Returns a DICT object containing can_<action> Boolean results of each action check
+        can_action = {
+            'licence_activity_id': self.licence_activity_id,
+            'can_amend': False,
+            'can_renew': False,
+            'can_reactivate_renew': False,
+            'can_surrender': False,
+            'can_cancel': False,
+            'can_suspend': False,
+            'can_reissue': False,
+            'can_reinstate': False,
+        }
+        current_date = timezone.now().date()
+
+        # return false for all actions if activity is not in latest licence
+        if not self.is_in_latest_licence:
+            return can_action
+
+        # No action should be available if all of an activity's purposes are in open applications
+        # check if there are any purposes in open applications (i.e. can action)
+        # return false for all actions if no purposes are still actionable
+        if not len(list((set(self.purposes.values_list('id', flat=True)) - set(purposes_in_open_applications)))) > 0:
+             return can_action
+
+        # can_amend is true if the activity can be included in a Amendment Application
+        # Extra exclude for SUSPENDED due to get_current_activities_for_application_type
+        # intentionally not excluding these as part of the default queryset
+        can_action['can_amend'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_AMENDMENT,
             activity_ids=[self.id]
-        ).count() > 0
+        ).exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED).count() > 0
 
-    @property
-    def can_renew(self):
-        # TODO: check for situation where a new licence of same purpose exists
-        # Returns true if the activity can be included in a Renewal Application
-        return ApplicationSelectedActivity.get_current_activities_for_application_type(
+        # can_renew is true if the activity can be included in a Renewal Application
+        can_action['can_renew'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_RENEWAL,
             activity_ids=[self.id]
         ).count() > 0
 
-    @property
-    def can_reactivate_renew(self):
-        # TODO: check for situation where a new licence of same purpose exists
-        # TODO: clarify business logic for when an activity renew is allowed to be reactivate.
-        return ApplicationSelectedActivity.get_current_activities_for_application_type(
-            Application.APPLICATION_TYPE_SYSTEM_GENERATED,
-            activity_ids=[self.id]
-        ).count() > 0
-
-    @property
-    def can_surrender(self):
-        # TODO: clarify business logic for when an activity is allowed to be surrendered.
-        return ApplicationSelectedActivity.get_current_activities_for_application_type(
-            Application.APPLICATION_TYPE_SYSTEM_GENERATED,
-            activity_ids=[self.id]
-        ).count() > 0
-
-    @property
-    def can_cancel(self):
-        # TODO: clarify business logic for when an activity is allowed to be cancelled.
-        return ApplicationSelectedActivity.get_current_activities_for_application_type(
-            Application.APPLICATION_TYPE_SYSTEM_GENERATED,
-            activity_ids=[self.id]
-        ).count() > 0
-
-    @property
-    def can_suspend(self):
-        # Returns true if the activity_status is CURRENT
-        return ApplicationSelectedActivity.get_current_activities_for_application_type(
-            Application.APPLICATION_TYPE_SYSTEM_GENERATED,
-            activity_ids=[self.id]
-        ).exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED).count() > 0
-
-    @property
-    def can_reissue(self):
-        # TODO: check for situation where a new licence of same purpose exists
-        # Returns true if the activity has expired, excluding if it was surrendered or cancelled
-        current_date = timezone.now().date()
-        return ApplicationSelectedActivity.objects.filter(
+        # can_reactivate_renew is true if the activity has expired, excluding if it was surrendered or cancelled
+        can_action['can_reactivate_renew'] = ApplicationSelectedActivity.objects.filter(
             Q(id=self.id, expiry_date__isnull=False),
             Q(expiry_date__lt=current_date) |
             Q(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED)
@@ -2260,17 +2251,90 @@ class ApplicationSelectedActivity(models.Model):
             ]
         ).count() > 0
 
-    @property
-    def can_reinstate(self):
-        # TODO: check for situation where a new licence of same purpose exists
-        # Returns true if the activity has not yet expired and is currently suspended or cancelled
-        current_date = timezone.now().date()
-        return self.expiry_date and\
-            self.expiry_date >= current_date and\
-            self.activity_status in [
-                ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED,
-                ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED
+        # can_surrender is true if the activity is CURRENT or SUSPENDED
+        can_action['can_surrender'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
+            Application.APPLICATION_TYPE_SYSTEM_GENERATED,
+            activity_ids=[self.id]
+        ).count() > 0
+
+        # can_cancel is true if the activity is CURRENT or SUSPENDED
+        can_action['can_cancel'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
+            Application.APPLICATION_TYPE_SYSTEM_GENERATED,
+            activity_ids=[self.id]
+        ).count() > 0
+
+        # can_suspend is true if the activity_status is CURRENT
+        # Extra exclude for SUSPENDED due to get_current_activities_for_application_type
+        # intentionally not excluding these as part of the default queryset
+        can_action['can_suspend'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
+            Application.APPLICATION_TYPE_SYSTEM_GENERATED,
+            activity_ids=[self.id]
+        ).exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED).count() > 0
+
+        # can_reissue is true if the activity has expired, excluding if it was surrendered or cancelled
+        can_action['can_reissue'] = ApplicationSelectedActivity.objects.filter(
+            Q(id=self.id, expiry_date__isnull=False),
+            Q(expiry_date__lt=current_date) |
+            Q(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED)
+        ).exclude(
+            activity_status__in=[
+                ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
             ]
+        ).count() > 0
+
+        # can_reinstate is true if the activity has not yet expired and is currently SUSPENDED, CANCELLED or SURRENDERED
+        can_action['can_reinstate'] = self.expiry_date and \
+               self.expiry_date >= current_date and \
+               self.activity_status in [
+                   ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED,
+                   ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
+                   ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED
+               ]
+
+        return can_action
+
+    @property
+    def purposes_in_open_applications(self):
+        """
+        Return a list of LicencePurpose records for the activity that are
+        currently in an application being processed
+        """
+        print('purposes in open applications from applications/models', self, self.activity_status, self.application)
+        return Application.objects.filter(
+            Q(org_applicant=self.application.org_applicant)
+            if self.application.org_applicant
+            else Q(proxy_applicant=self.application.proxy_applicant)
+            if self.application.proxy_applicant
+            else Q(submitter=self.application.submitter, proxy_applicant=None, org_applicant=None)
+        ).computed_filter(
+            licence_category_id=self.purposes.first().licence_category.id
+        ).exclude(
+            selected_activities__processing_status__in=[
+                ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
+                ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
+                ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED
+            ]
+        ).values_list('licence_purposes', flat=True)
+
+    @property
+    def is_in_latest_licence(self):
+        # Returns true if the activity is in the latest WildlifeLicence record for the relevant applicant
+        from wildlifecompliance.components.licences.models import WildlifeLicence
+
+        licences = WildlifeLicence.objects.filter(
+            Q(current_application__org_applicant=self.application.org_applicant)
+            if self.application.org_applicant
+            else Q(current_application__proxy_applicant=self.application.proxy_applicant)
+            if self.application.proxy_applicant
+            else Q(current_application__submitter=self.application.submitter, current_application__proxy_applicant=None,
+                   current_application__org_applicant=None),
+            licence_category_id=self.licence_activity.licence_category_id
+        )
+        if licences and self in licences.latest('id').latest_activities:
+            return True
+        return False
 
     @property
     def base_fees(self):
@@ -2305,9 +2369,13 @@ class ApplicationSelectedActivity(models.Model):
 
     @staticmethod
     def get_current_activities_for_application_type(application_type, **kwargs):
-        # Retrieves the current activities for an ApplicationSelectedActivity, filterable by LicenceActivity ID
-        # and Application.APPLICATION_TYPE in the case of the additional date_filter (use
-        # Application.APPLICATION_TYPE_SYSTEM_GENERATED for no APPLICATION_TYPE filters)
+        """
+        Retrieves the current or suspended activities for an ApplicationSelectedActivity,
+        filterable by LicenceActivity ID and Application.APPLICATION_TYPE in the case
+        of the additional date_filter (use Application.APPLICATION_TYPE_SYSTEM_GENERATED
+        for no APPLICATION_TYPE filters)
+        """
+
         applications = kwargs.get('applications', Application.objects.none())
         activity_ids = kwargs.get('activity_ids', [])
 
@@ -2374,6 +2442,7 @@ class ApplicationSelectedActivity(models.Model):
 
     def reactivate_renew(self, request):
         # TODO: this needs work, reactivate renew logic to be clarified and function adjusted
+        # TODO: perhaps set a grace period of default 2 weeks?
         with transaction.atomic():
             self.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED
             self.updated_by = request.user
@@ -2433,7 +2502,6 @@ class ActivityInvoice(models.Model):
         except Invoice.DoesNotExist:
             pass
         return False
-
 
 
 @python_2_unicode_compatible

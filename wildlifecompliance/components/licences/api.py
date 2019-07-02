@@ -606,10 +606,20 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
     serializer_class = LicenceCategorySerializer
 
     def list(self, request, *args, **kwargs):
+        """
+        Returns a queryset of LicenceCategory objects and a queryset of LicencePurpose objects allowed for
+        licence activity/purpose selection.
+        Filters based on the following request parameters:
+        - application_type
+        - licence_category (LicenceCategory, id)
+        - licence_activity (LicenceActivity, id)
+        - organisation_id (Organisation, id), used in Application.get_active_licence_applications
+        - proxy_id (EmailUser, id), used in Application.get_active_licence_applications
+        """
         from wildlifecompliance.components.licences.models import LicencePurpose
 
         queryset = self.get_queryset()
-        only_purpose_records = None
+        available_purpose_records = LicencePurpose.objects.all()
         application_type = request.GET.get('application_type')
         licence_category_id = request.GET.get('licence_category')
         licence_activity_id = request.GET.get('licence_activity')
@@ -618,7 +628,7 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
         if not active_applications.count() and application_type == Application.APPLICATION_TYPE_RENEWAL:
             # Do not present with renewal options if no activities are within the renewal period
             queryset = LicenceCategory.objects.none()
-            only_purpose_records = LicencePurpose.objects.none()
+            available_purpose_records = LicencePurpose.objects.none()
 
         elif active_applications.count():
             # Activities relevant to the current application type
@@ -636,14 +646,26 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
             for selected_activity in current_activities:
                 active_purpose_ids.extend([purpose.id for purpose in selected_activity.purposes])
 
+            # Exclude active purposes for New Activity/Purpose or New Licence application types
             if application_type in [
                 Application.APPLICATION_TYPE_ACTIVITY,
                 Application.APPLICATION_TYPE_NEW_LICENCE,
             ]:
-                only_purpose_records = LicencePurpose.objects.exclude(
+                available_purpose_records = available_purpose_records.exclude(
                     id__in=active_purpose_ids
                 )
 
+            # Exclude active licence categories for New Licence application type
+            if application_type == Application.APPLICATION_TYPE_NEW_LICENCE:
+                queryset = queryset.exclude(id__in=current_activities.values_list(
+                    'licence_activity__licence_category_id', flat=True).distinct())
+
+            # Only display active licence categories for New Activity/purpose application type
+            if application_type == Application.APPLICATION_TYPE_ACTIVITY:
+                queryset = queryset.filter(id__in=current_activities.values_list(
+                    'licence_activity__licence_category_id', flat=True).distinct())
+
+            # Only include active purposes for Amendment or Renewal application types
             elif application_type in [
                 Application.APPLICATION_TYPE_AMENDMENT,
                 Application.APPLICATION_TYPE_RENEWAL,
@@ -654,30 +676,28 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
                 )
 
                 queryset = queryset.filter(id__in=active_licence_activity_ids)
-                only_purpose_records = LicencePurpose.objects.filter(
+                available_purpose_records = available_purpose_records.filter(
                     id__in=amendable_purpose_ids,
                     licence_activity_id__in=current_activities.values_list(
                         'licence_activity_id', flat=True)
                 )
 
+        # Filter by Licence Category ID if specified or
+        # return empty queryset if available_purpose_records is empty for the Licence Category ID specified
         if licence_category_id:
-            only_purpose_records = only_purpose_records.filter(
-                licence_category_id=licence_category_id
-            )
-            if not only_purpose_records:
-                queryset = LicenceCategory.objects.none()
-            else:
+            if available_purpose_records:
+                available_purpose_records = available_purpose_records.filter(
+                    licence_category_id=licence_category_id
+                )
                 queryset = queryset.filter(id=licence_category_id)
+            else:
+                queryset = LicenceCategory.objects.none()
+
+        # Filter out LicenceCategory objects that are not linked with available_purpose_records
+        queryset = queryset.filter(activity__purpose__in=available_purpose_records).distinct()
 
         serializer = LicenceCategorySerializer(queryset, many=True, context={
             'request': request,
-            'purpose_records': only_purpose_records
+            'purpose_records': available_purpose_records
         })
         return Response(serializer.data)
-
-    def get_serializer_context(self):
-        context = super(UserAvailableWildlifeLicencePurposesViewSet, self).get_serializer_context()
-        context.update({
-            "test": 'test context'
-        })
-        return context

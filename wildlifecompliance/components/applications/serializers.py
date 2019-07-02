@@ -28,6 +28,48 @@ from wildlifecompliance import helpers
 from rest_framework import serializers
 
 
+class ApplicationSelectedActivityCanActionSerializer(serializers.Serializer):
+    """
+    Custom serializer for ApplicationSelectedActivity.can_action DICT object for each action
+    """
+    licence_activity_id = serializers.IntegerField(read_only=True)
+    can_renew = serializers.BooleanField(read_only=True)
+    can_amend = serializers.BooleanField(read_only=True)
+    can_surrender = serializers.BooleanField(read_only=True)
+    can_cancel = serializers.BooleanField(read_only=True)
+    can_suspend = serializers.BooleanField(read_only=True)
+    can_reissue = serializers.SerializerMethodField(read_only=True)
+    can_reinstate = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        fields = (
+            'licence_activity_id',
+            'can_renew',
+            'can_amend',
+            'can_surrender',
+            'can_cancel',
+            'can_suspend',
+            'can_reissue',
+            'can_reinstate',
+        )
+        # the serverSide functionality of datatables is such that only columns that have field 'data'
+        # defined are requested from the serializer. Use datatables_always_serialize to force render
+        # of fields that are not listed as 'data' in the datatable columns
+        datatables_always_serialize = fields
+
+    def get_can_reissue(self, obj):
+        try:
+            user = self.context['request'].user
+        except (KeyError, AttributeError):
+            return False
+        if user is None:
+            return False
+        return (user.has_perm('wildlifecompliance.system_administrator') or
+            user.has_wildlifelicenceactivity_perm([
+                'issuing_officer',
+            ], obj.get('licence_activity_id'))) and obj.get('can_reissue')
+
+
 class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     activity_name_str = serializers.SerializerMethodField(read_only=True)
     issue_date = serializers.SerializerMethodField(read_only=True)
@@ -38,13 +80,7 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     activity_purpose_names = serializers.SerializerMethodField(read_only=True)
     processing_status = CustomChoiceField(read_only=True)
     activity_status = CustomChoiceField(read_only=True)
-    can_renew = serializers.BooleanField(read_only=True)
-    can_amend = serializers.BooleanField(read_only=True)
-    can_surrender = serializers.BooleanField(read_only=True)
-    can_cancel = serializers.BooleanField(read_only=True)
-    can_suspend = serializers.BooleanField(read_only=True)
-    can_reissue = serializers.SerializerMethodField(read_only=True)
-    can_reinstate = serializers.BooleanField(read_only=True)
+    can_action = ApplicationSelectedActivityCanActionSerializer(read_only=True)
     licence_fee = serializers.DecimalField(
         max_digits=8, decimal_places=2, coerce_to_string=False, read_only=True),
     payment_status = serializers.CharField(read_only=True)
@@ -76,19 +112,6 @@ class ApplicationSelectedActivitySerializer(serializers.ModelSerializer):
     def get_activity_purpose_names(self, obj):
         return ','.join([p.name for p in obj.purposes])
 
-    def get_can_reissue(self, obj):
-        try:
-            user = self.context['request'].user
-        except (KeyError, AttributeError):
-            return False
-        if user is None:
-            return False
-        return user.has_perm('wildlifecompliance.system_administrator') or (
-            user.has_wildlifelicenceactivity_perm([
-                'issuing_officer',
-            ], obj.licence_activity_id) and obj.can_reissue
-        )
-
     def get_can_pay_licence_fee(self, obj):
         return not obj.licence_fee_paid and obj.processing_status == ApplicationSelectedActivity.PROCESSING_STATUS_AWAITING_LICENCE_FEE_PAYMENT
 
@@ -100,13 +123,7 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
     expiry_date = serializers.SerializerMethodField(read_only=True)
     activity_purpose_names = serializers.SerializerMethodField(read_only=True)
     activity_status = CustomChoiceField(read_only=True)
-    can_renew = serializers.BooleanField(read_only=True)
-    can_amend = serializers.BooleanField(read_only=True)
-    can_surrender = serializers.BooleanField(read_only=True)
-    can_cancel = serializers.BooleanField(read_only=True)
-    can_suspend = serializers.BooleanField(read_only=True)
-    can_reissue = serializers.SerializerMethodField(read_only=True)
-    can_reinstate = serializers.BooleanField(read_only=True)
+    can_action = ApplicationSelectedActivityCanActionSerializer(read_only=True)
     can_pay_licence_fee = serializers.SerializerMethodField()
     licence_fee = serializers.DecimalField(
         max_digits=8, decimal_places=2, coerce_to_string=False, read_only=True)
@@ -122,13 +139,7 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
             'expiry_date',
             'activity_purpose_names',
             'activity_status',
-            'can_renew',
-            'can_amend',
-            'can_surrender',
-            'can_cancel',
-            'can_suspend',
-            'can_reissue',
-            'can_reinstate',
+            'can_action',
             'licence_fee',
             'payment_status',
             'can_pay_licence_fee',
@@ -153,37 +164,22 @@ class ExternalApplicationSelectedActivitySerializer(serializers.ModelSerializer)
     def get_activity_purpose_names(self, obj):
         return ','.join([p.name for p in obj.purposes])
 
-    def get_can_reissue(self, obj):
-        try:
-            user = self.context['request'].user
-        except (KeyError, AttributeError):
-            return False
-        if user is None:
-            return False
-        return user.has_perm('wildlifecompliance.system_administrator') or (
-            user.has_wildlifelicenceactivity_perm([
-                'issuing_officer',
-            ], obj.licence_activity_id) and obj.can_reissue
-        )
-
     def get_can_pay_licence_fee(self, obj):
         return not obj.licence_fee_paid and obj.processing_status == ApplicationSelectedActivity.PROCESSING_STATUS_AWAITING_LICENCE_FEE_PAYMENT
 
 
 class ExternalApplicationSelectedActivityMergedSerializer(serializers.Serializer):
+    """
+    Custom serializer for WildlifeLicence.latest_activities_merged LIST of DICT objects for each
+    ApplicationSelectedActivity, therefore use of obj.get('fieldname') to retrieve data in SerializerMethodFields
+    """
     licence_activity_id = serializers.IntegerField(read_only=True)
     activity_name_str = serializers.CharField(read_only=True)
     issue_date = serializers.SerializerMethodField(read_only=True)
     start_date = serializers.SerializerMethodField(read_only=True)
     expiry_date = serializers.SerializerMethodField(read_only=True)
     activity_purpose_names_and_status = serializers.CharField(read_only=True)
-    can_renew = serializers.BooleanField(read_only=True)
-    can_amend = serializers.BooleanField(read_only=True)
-    can_surrender = serializers.BooleanField(read_only=True)
-    can_cancel = serializers.BooleanField(read_only=True)
-    can_suspend = serializers.BooleanField(read_only=True)
-    can_reissue = serializers.SerializerMethodField(read_only=True)
-    can_reinstate = serializers.BooleanField(read_only=True)
+    can_action = ApplicationSelectedActivityCanActionSerializer(read_only=True)
 
     class Meta:
         fields = (
@@ -193,13 +189,7 @@ class ExternalApplicationSelectedActivityMergedSerializer(serializers.Serializer
             'start_date',
             'expiry_date',
             'activity_purpose_names_and_status',
-            'can_renew',
-            'can_amend',
-            'can_surrender',
-            'can_cancel',
-            'can_suspend',
-            'can_reissue',
-            'can_reinstate',
+            'can_action',
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render
@@ -207,26 +197,13 @@ class ExternalApplicationSelectedActivityMergedSerializer(serializers.Serializer
         datatables_always_serialize = fields
 
     def get_issue_date(self, obj):
-        return obj['issue_date'].strftime('%d/%m/%Y') if obj['issue_date'] else ''
+        return obj.get('issue_date').strftime('%d/%m/%Y') if obj.get('issue_date') else ''
 
     def get_start_date(self, obj):
-        return obj['start_date'].strftime('%d/%m/%Y') if obj['start_date'] else ''
+        return obj.get('start_date').strftime('%d/%m/%Y') if obj.get('start_date') else ''
 
     def get_expiry_date(self, obj):
-        return obj['expiry_date'].strftime('%d/%m/%Y') if obj['expiry_date'] else ''
-
-    def get_can_reissue(self, obj):
-        try:
-            user = self.context['request'].user
-        except (KeyError, AttributeError):
-            return False
-        if user is None:
-            return False
-        return user.has_perm('wildlifecompliance.system_administrator') or (
-            user.has_wildlifelicenceactivity_perm([
-                'issuing_officer',
-            ], obj.licence_activity_id) and obj.can_reissue
-        )
+        return obj.get('expiry_date').strftime('%d/%m/%Y') if obj.get('expiry_date') else ''
 
 
 class EmailUserSerializer(serializers.ModelSerializer):
@@ -620,6 +597,31 @@ class DTExternalApplicationSerializer(BaseApplicationSerializer):
             'payment_status',
             'application_type',
             'activities',
+        )
+        # the serverSide functionality of datatables is such that only columns that have field 'data'
+        # defined are requested from the serializer. Use datatables_always_serialize to force render
+        # of fields that are not listed as 'data' in the datatable columns
+        datatables_always_serialize = fields
+
+
+class WildlifeLicenceApplicationSerializer(BaseApplicationSerializer):
+    """
+    Minimised serializer for WildlifeLicence.current_application
+    """
+    applicant = serializers.CharField(read_only=True)
+    org_applicant = ExternalOrganisationSerializer()
+    proxy_applicant = EmailUserSerializer()
+
+    class Meta:
+        model = Application
+        fields = (
+            'id',
+            'applicant',
+            'org_applicant',
+            'proxy_applicant',
+            'submitter',
+            'category_id',
+            'category_name',
         )
         # the serverSide functionality of datatables is such that only columns that have field 'data'
         # defined are requested from the serializer. Use datatables_always_serialize to force render
