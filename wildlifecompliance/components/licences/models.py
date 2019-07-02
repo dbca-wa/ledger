@@ -398,7 +398,6 @@ class WildlifeLicence(models.Model):
 
     @property
     def can_action(self):
-        print('can_action in licences.models', self, self.current_application)
         # Returns DICT of can_<action> if any of the licence's latest_activities can be actioned
         can_action = {
             'can_amend': False,
@@ -413,7 +412,6 @@ class WildlifeLicence(models.Model):
 
         # only check if licence is the latest in its category for the applicant
         if self.is_latest_in_category:
-            print('is latest in category, inside licence can_action')
             # set True if any activities can be actioned
             purposes_in_open_applications = self.get_purposes_in_open_applications()
             for activity in self.latest_activities:
@@ -641,8 +639,9 @@ class WildlifeLicence(models.Model):
 
     @property
     def can_add_purpose(self):
-        return self.is_latest_in_category and self.purposes_available_to_add.count() > 0
-
+        return self.is_latest_in_category and\
+               self.purposes_available_to_add.count() > 0 and\
+               self.can_action.get('can_amend')
 
     def generate_doc(self):
         from wildlifecompliance.components.licences.pdf import create_licence_doc

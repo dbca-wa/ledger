@@ -15,6 +15,15 @@
                         <form v-if="categoryCount" class="form-horizontal" name="personal_form" method="post">
                           
                             <div class="col-sm-12">
+                                <div class="row" v-if="selected_apply_org_id">
+                                    <label class="col-sm-8">Applying on behalf of {{ selected_apply_org_id_details.name }} ({{ selected_apply_org_id_details.abn }}).</label>
+                                </div>
+                                <div class="row" v-if="selected_apply_proxy_id">
+                                    <label class="col-sm-8">Applying on behalf of {{ selected_apply_proxy_id_details.first_name }} {{ selected_apply_proxy_id_details.last_name }} ({{ selected_apply_proxy_id_details.email }}).</label>
+                                </div>
+                                <div class="row" v-if="!selected_apply_org_id && !selected_apply_proxy_id">
+                                    <label class="col-sm-8">Applying on behalf of yourself.</label>
+                                </div>
                                 <div class="row">
                                     <label class="col-sm-6">
                                         {{ selectionLabel }}:
@@ -131,6 +140,8 @@ export default {
         pBody: 'pBody' + vm._uid,
         application_fee: 0,
         licence_fee: 0,
+        selected_apply_org_id_details : {},
+        selected_apply_proxy_id_details: {},
     }
   },
   components: {
@@ -140,6 +151,7 @@ export default {
             'selected_apply_org_id',
             'selected_apply_proxy_id',
             'selected_apply_licence_select',
+            'application_workflow_state',
         ]),
         applicationTitle: function() {
             switch(this.selected_apply_licence_select) {
@@ -178,6 +190,9 @@ export default {
         }
   },
   methods: {
+    ...mapActions([
+        'setApplicationWorkflowState',
+    ]),
     submit: function() {
         let vm = this;
         swal({
@@ -306,6 +321,7 @@ export default {
             data.licence_purposes=licence_purposes;
             data.application_type = vm.selected_apply_licence_select;
             vm.$http.post('/api/application.json',JSON.stringify(data),{emulateJSON:true}).then(res => {
+                vm.setApplicationWorkflowState({bool: false});
                 vm.application = res.body;
                 vm.$router.push({
                     name:"draft_application",
@@ -332,17 +348,21 @@ export default {
             "proxy_id": this.selected_apply_proxy_id,
             "organisation_id": this.selected_apply_org_id,
         }),
+        this.selected_apply_org_id ? utils.fetchOrganisation(this.selected_apply_org_id) : '',
+        this.selected_apply_proxy_id ? internal_utils.fetchUser(this.selected_apply_proxy_id) : '',
     ];
 
     Promise.all(initialisers).then(data => {
         this.licence_categories = data[0];
+        this.selected_apply_org_id_details = data[1];
+        this.selected_apply_proxy_id_details = data[2];
     });
   },
   beforeRouteEnter:function(to,from,next){
     next(vm => {
-        // Sends the user back to the first application workflow screen if licence_select is null (e.g. lost from
-        // page refresh)
-        if(vm.selected_apply_licence_select == null) {
+        // Sends the user back to the first application workflow screen if licence_select is null
+        // or workflow state was interrupted (e.g. lost from page refresh)
+        if(vm.selected_apply_licence_select == null || !vm.application_workflow_state) {
             return vm.$router.push({
                 name: "apply_application_organisation",
             });

@@ -14,10 +14,13 @@
                         <form class="form-horizontal" name="orgForm" method="post">
                             <div class="col-sm-12">
                                 <div class="row" v-if="selected_apply_org_id">
-                                    <label class="col-sm-8">You have selected to apply on behalf of {{ selected_apply_org_id_details.name }} ({{ selected_apply_org_id_details.abn }}).</label>
+                                    <label class="col-sm-8">Applying on behalf of {{ selected_apply_org_id_details.name }} ({{ selected_apply_org_id_details.abn }}).</label>
                                 </div>
                                 <div class="row" v-if="selected_apply_proxy_id">
-                                    <label class="col-sm-8">You have selected to apply on behalf of {{ selected_apply_proxy_id_details.first_name }} {{ selected_apply_proxy_id_details.last_name }} ({{ selected_apply_proxy_id_details.email }}).</label>
+                                    <label class="col-sm-8">Applying on behalf of {{ selected_apply_proxy_id_details.first_name }} {{ selected_apply_proxy_id_details.last_name }} ({{ selected_apply_proxy_id_details.email }}).</label>
+                                </div>
+                                <div class="row" v-if="!selected_apply_org_id && !selected_apply_proxy_id">
+                                    <label class="col-sm-8">Applying on behalf of yourself.</label>
                                 </div>
                                 <div class="row">
                                     <label class="col-sm-4">Do you want to:</label>
@@ -86,14 +89,11 @@ export default {
     ...mapGetters([
         'selected_apply_org_id',
         'selected_apply_proxy_id',
+        'application_workflow_state',
     ]),
     isLoading: function() {
       return this.loading.length > 0
     },
-  },
-  created() {
-    window.addEventListener('beforeunload', this.redirect_to_org_select(event));
-    console.log('test')
   },
   methods: {
     ...mapActions([
@@ -105,19 +105,6 @@ export default {
             name: "apply_application_licence",
         });
     },
-    redirect_to_org_select: function(event) {
-//        event.preventDefault();
-//        event.returnValue = '';
-        window.removeEventListener('beforeunload', this.redirect_to_org_select);
-        console.log('removed')
-        console.log('redirecting to org_select');
-//        let vm = this;
-//        window.setTimeout(function () {
-//            return vm.$router.push({
-//                name: "apply_application_organisation",
-//            });
-//        }, 0);
-    },
   },
   mounted: function() {
     let vm = this;
@@ -125,6 +112,13 @@ export default {
   },
   beforeRouteEnter: function(to, from, next) {
     next(vm => {
+        // Sends the user back to the first application workflow screen if workflow state
+        // was interrupted (e.g. lost from page refresh)
+        if(!vm.application_workflow_state) {
+            return vm.$router.push({
+                name: "apply_application_organisation",
+            });
+        }
         const initialisers = [
             utils.fetchCurrentUser(),
             utils.fetchCurrentActiveLicenceApplication({
@@ -137,8 +131,10 @@ export default {
         Promise.all(initialisers).then(data => {
             vm.current_user = data[0];
             if(data[1].application == null) {
-                vm.setApplyLicenceSelect({licence_select: 'apply_application_licence'});
-                return vm.$router.push({
+                vm.setApplyLicenceSelect({licence_select: 'new_licence'});
+                // use $router.replace here because we want the back button to return to
+                // apply_application_organisation if used on the apply_application_licence screen in this case
+                return vm.$router.replace({
                     name: "apply_application_licence",
                 });
             }

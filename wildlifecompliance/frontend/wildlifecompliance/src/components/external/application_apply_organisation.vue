@@ -82,10 +82,12 @@ export default {
   methods: {
     ...mapActions([
         'setApplyOrgId',
+        'setApplicationWorkflowState',
     ]),
     submit: function() {
         let vm = this;
         vm.setApplyOrgId({id: vm.org_applicant});
+        vm.setApplicationWorkflowState({bool: true});
         vm.$router.push({
             name:"apply_application",
         });

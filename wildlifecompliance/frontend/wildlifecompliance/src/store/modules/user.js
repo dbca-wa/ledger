@@ -6,6 +6,7 @@ import {
     UPDATE_SELECTED_APPLY_ORG_ID,
     UPDATE_SELECTED_APPLY_PROXY_ID,
     UPDATE_SELECTED_APPLY_LICENCE_SELECT,
+    UPDATE_APPLICATION_WORKFLOW_STATE,
 } from '@/store/mutation-types';
 
 export const userStore = {
@@ -15,6 +16,7 @@ export const userStore = {
         selected_apply_org_id: null,
         selected_apply_proxy_id: null,
         selected_apply_licence_select: null,
+        application_workflow_state: false,
         current_user: {},
     },
     getters: {
@@ -24,6 +26,7 @@ export const userStore = {
         selected_apply_org_id: state => state.selected_apply_org_id,
         selected_apply_proxy_id: state => state.selected_apply_proxy_id,
         selected_apply_licence_select: state => state.selected_apply_licence_select,
+        application_workflow_state: state => state.application_workflow_state,
         hasRole: (state, getters, rootState, rootGetters) => (role, activity_id) => {
             if(rootGetters.application.user_roles == null) {
                 return false;
@@ -69,6 +72,9 @@ export const userStore = {
         [UPDATE_SELECTED_APPLY_LICENCE_SELECT] (state, licence_select) {
             state.selected_apply_licence_select = licence_select;
         },
+        [UPDATE_APPLICATION_WORKFLOW_STATE] (state, bool) {
+            state.application_workflow_state = bool;
+        },
     },
     actions: {
         setActivityTab({ commit }, { id, name }) {
@@ -83,6 +89,9 @@ export const userStore = {
         },
         setApplyLicenceSelect({ commit }, { licence_select }) {
             commit(UPDATE_SELECTED_APPLY_LICENCE_SELECT, licence_select);
+        },
+        setApplicationWorkflowState({ commit }, { bool }) {
+            commit(UPDATE_APPLICATION_WORKFLOW_STATE, bool);
         },
         loadCurrentUser({ dispatch, commit }, { url }) {
             return new Promise((resolve, reject) => {
