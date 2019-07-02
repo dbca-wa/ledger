@@ -5,6 +5,8 @@
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <h3 class="panel-title">Apply on behalf of
+                            <span v-if="org">{{ org }}</span>
+                            <span v-else>yourself</span>
                             <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                             </a>
@@ -54,7 +56,7 @@ export default {
     return {
         "application": null,
         agent: {},
-        org_applicant: null,
+        org_applicant: "",
         organisations:null,
 
         current_user: {
