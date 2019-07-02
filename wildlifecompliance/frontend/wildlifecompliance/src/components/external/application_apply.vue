@@ -4,7 +4,10 @@
             <div class="col-sm-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title">New Application
+                        <h3 class="panel-title">New Application for
+                            <span v-if="selected_apply_org_id">{{ selected_apply_org_id_details.name }} ({{ selected_apply_org_id_details.abn }})</span>
+                            <span v-if="selected_apply_proxy_id">{{ selected_apply_proxy_id_details.first_name }} {{ selected_apply_proxy_id_details.last_name }} ({{ selected_apply_proxy_id_details.email }})</span>
+                            <span v-if="!selected_apply_org_id && !selected_apply_proxy_id">yourself</span>
                             <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                             </a>
@@ -13,15 +16,6 @@
                     <div class="panel-body collapse in" :id="pBody">
                         <form class="form-horizontal" name="orgForm" method="post">
                             <div class="col-sm-12">
-                                <div class="row" v-if="selected_apply_org_id">
-                                    <label class="col-sm-8">Applying on behalf of {{ selected_apply_org_id_details.name }} ({{ selected_apply_org_id_details.abn }}).</label>
-                                </div>
-                                <div class="row" v-if="selected_apply_proxy_id">
-                                    <label class="col-sm-8">Applying on behalf of {{ selected_apply_proxy_id_details.first_name }} {{ selected_apply_proxy_id_details.last_name }} ({{ selected_apply_proxy_id_details.email }}).</label>
-                                </div>
-                                <div class="row" v-if="!selected_apply_org_id && !selected_apply_proxy_id">
-                                    <label class="col-sm-8">Applying on behalf of yourself.</label>
-                                </div>
                                 <div class="row">
                                     <label class="col-sm-4">Do you want to:</label>
                                 </div>

@@ -73,6 +73,7 @@
 <script>
 import datatable from '@/utils/vue/datatable.vue'
 import LicenceActionPurposes from './licence_action_purposes.vue'
+import { mapActions, mapGetters } from 'vuex'
 import {
     api_endpoints,
     helpers
@@ -280,6 +281,12 @@ export default {
         
     },
     methods:{
+        ...mapActions([
+            'setApplyOrgId',
+            'setApplyProxyId',
+            'setApplyLicenceSelect',
+            'setApplicationWorkflowState',
+        ]),
         addEventListeners: function(){
             let vm = this;
             // Initialise Licence Issued Date Filters
@@ -327,12 +334,12 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var licence_select = 'new_activity';
+                        vm.setApplyLicenceSelect({licence_select: 'new_activity'});
                         var licence_category_id = $(this).attr('licence-category-id');
                         var licence_activity_id = null;
-                        var proxy_id = $(this).attr('proxy-id');
-                        var org_id = $(this).attr('org-id');
-                        vm.routeApplyLicence(licence_select, licence_category_id, licence_activity_id, proxy_id, org_id);
+                        vm.setApplyProxyId({id: $(this).attr('proxy-id')});
+                        vm.setApplyOrgId({id: $(this).attr('org-id')});
+                        vm.routeApplyLicence(licence_category_id, licence_activity_id);
                     }
                 },(error) => {
                 });
@@ -348,12 +355,12 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var licence_select = 'amend_activity';
+                        vm.setApplyLicenceSelect({licence_select: 'amend_activity'});
                         var licence_category_id = $(this).attr('licence-category-id');
                         var licence_activity_id = $(this).attr('amend-activity');
-                        var proxy_id = $(this).attr('proxy-id');
-                        var org_id = $(this).attr('org-id');
-                        vm.routeApplyLicence(licence_select, licence_category_id, licence_activity_id, proxy_id, org_id);
+                        vm.setApplyProxyId({id: $(this).attr('proxy-id')});
+                        vm.setApplyOrgId({id: $(this).attr('org-id')});
+                        vm.routeApplyLicence(licence_category_id, licence_activity_id);
                     }
                 },(error) => {
                 });
@@ -369,12 +376,12 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
-                        var licence_select = 'renew_activity';
+                        vm.setApplyLicenceSelect({licence_select: 'renew_activity'});
                         var licence_category_id = $(this).attr('licence-category-id');
                         var licence_activity_id = $(this).attr('renew-activity');
-                        var proxy_id = $(this).attr('proxy-id');
-                        var org_id = $(this).attr('org-id');
-                        vm.routeApplyLicence(licence_select, licence_category_id, licence_activity_id, proxy_id, org_id);
+                        vm.setApplyProxyId({id: $(this).attr('proxy-id')});
+                        vm.setApplyOrgId({id: $(this).attr('org-id')});
+                        vm.routeApplyLicence(licence_category_id, licence_activity_id);
                     }
                 },(error) => {
                 });
@@ -831,15 +838,13 @@ export default {
         getColumnIndex: function(column_name) {
             return this.licence_headers.map(header => header.toLowerCase()).indexOf(column_name.toLowerCase());
         },
-        routeApplyLicence:function (licence_select, licence_category_id, licence_activity_id, proxy_id, org_id) {
+        routeApplyLicence:function (licence_category_id, licence_activity_id) {
+            this.setApplicationWorkflowState({bool: true});
             return this.$router.push({
                 name: "apply_application_licence",
                 params: {
-                    licence_select: licence_select,
                     licence_category: licence_category_id,
                     licence_activity: licence_activity_id,
-                    org_select: org_id,
-                    proxy_select: proxy_id
                 }
             });
         },
