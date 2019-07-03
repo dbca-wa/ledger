@@ -1,17 +1,16 @@
-
 <template lang="html">
     <div>
         <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="modalTitle" large force>
             <div class="container-fluid">
                 <div class="col-sm-12 form-group"><div class="row">
-                    <label class="col-sm-4">Type</label>
-                    <!-- <select class="form-control" v-model="sanction_outcome.type_id"> -->
-                    <!-- <select class="form-control" v-bind:value="sanction_outcome.type_id" v-on:change="typeChanged($event)"> -->
-                    <select class="form-control" v-on:change="typeChanged($event)">
-                        <option v-for="option in sanction_outcome_types" v-bind:value="option.id" v-bind:key="option.id">
-                            {{ option.display }} 
-                        </option>
-                    </select>
+                    <label class="col-sm-1">Type</label>
+                    <div class="col-sm-4">
+                        <select class="form-control" v-on:change="typeSelected($event)">
+                            <option v-for="option in sanction_outcome_types" v-bind:value="option.id" v-bind:key="option.id">
+                                {{ option.display }} 
+                            </option>
+                        </select>
+                    </div>
                 </div></div>
 
                 <div v-if="displayTabs">
@@ -21,27 +20,75 @@
                         <li class="nav-item"><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
                     </ul>
                     <div class="tab-content">
-                        <div :id="nTab" class="tab-pane fade in active">
-                            <div class="row">
-                            </div>
-                        </div>
+                        <div :id="nTab" class="tab-pane fade in active"><div class="row">
 
-                        <div :id="aTab" class="tab-pane fade in">
-                            <div class="row">
-                            </div>
-                        </div>
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-2">
+                                    <label class="control-label pull-left">Region</label>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div v-if="sanction_outcome">
+                                        <select></select>
+                                    </div>
+                                </div>
+                            </div></div>
 
-                        <div :id="dTab" class="tab-pane fade in">
-                            <div class="row">
-                            </div>
-                        </div>
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-2">
+                                    <label class="control-label pull-left">District</label>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div v-if="sanction_outcome">
+                                        <select></select>
+                                    </div>
+                                </div>
+                            </div></div>
+
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-2">
+                                    <label class="control-label pull-left" for="identifier">Identifier</label>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div v-if="sanction_outcome">
+                                        <input type="text" class="form-control" name="identifier" placeholder="" v-model="sanction_outcome.identifier" v-bind:key="sanction_outcome.id">
+                                    </div>
+                                </div>
+                            </div></div>
+
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-2">
+                                    <label class="control-label pull-left">Offence</label>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div v-if="sanction_outcome">
+                                        <select class="form-control" v-on:change="offenceSelected($event)">
+                                            <option value=""></option>
+                                            <option v-for="option in sanction_outcome_offences" v-bind:value="option.id" v-bind:key="option.id">
+                                                {{ option.id + ': ' + option.status + ', ' + option.identifier }} 
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div></div>
+
+                        </div></div>
+
+                        <div :id="aTab" class="tab-pane fade in"><div class="row">
+
+
+                        </div></div>
+
+                        <div :id="dTab" class="tab-pane fade in"><div class="row">
+
+
+                        </div></div>
                     </div>
 
                 </div>
             </div>
             <div slot="footer">
                 <button type="button" v-if="processingDetails" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Adding</button>
-                <button type="button" v-else class="btn btn-default" @click="ok">Send to Manager</button>
+                <button type="button" :disabled="!displaySendToManagerButton" class="btn btn-default" @click="ok">Send to Manager</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
         </modal>
@@ -72,9 +119,15 @@ export default {
       processingDetails: false,
 
       sanction_outcome: {
-          type_id: '',
+        type_id: "",
+        identifier: "",
+        offence: null,
+        offender: null,
+
       },
       sanction_outcome_types: [],
+      sanction_outcome_offences: [],
+      sanction_outcome_offenders: [],
 
       dtHeadersAllegedOffence: [
         "id",
@@ -114,7 +167,7 @@ export default {
   },
   components: {
     modal,
-    datatable,
+    datatable
   },
   computed: {
     ...mapGetters("callemailStore", {
@@ -127,29 +180,38 @@ export default {
       return "Identify Sanction Outcome";
     },
     firstTabTitle: function() {
-        for (let i = 0; i < this.sanction_outcome_types.length; i++) {
-            if (this.sanction_outcome_types[i]['id'] == this.sanction_outcome.type_id){
-                return this.sanction_outcome_types[i]['display'];
-            }
+      for (let i = 0; i < this.sanction_outcome_types.length; i++) {
+        if (
+          this.sanction_outcome_types[i]["id"] == this.sanction_outcome.type_id
+        ) {
+          return this.sanction_outcome_types[i]["display"];
         }
-        return '';
+      }
+      return "";
     },
     displayTabs: function() {
-        return this.sanction_outcome.type_id==''? false : true;
+      return this.sanction_outcome.type_id == "" ? false : true;
+    },
+    displaySendToManagerButton: function() {
+      if (!this.processingDetails && this.sanction_outcome.type_id){
+        return true
+      }
+      return false;
     },
     displayRemediationActions: function() {
-        return this.sanction_outcome.type_id=='remediation_notice'? true : false;
+      return this.sanction_outcome.type_id == "remediation_notice"
+        ? true
+        : false;
     }
   },
   methods: {
     ...mapActions("callemailStore", {
       loadCallEmail: "loadCallEmail"
     }),
-    ...mapActions("offenceStore", {
-    }),
+    ...mapActions("offenceStore", {}),
     ok: async function() {
-      await this.sendData();
-      this.close();
+        await this.sendData();
+        this.close();
     },
     cancel: function() {
       this.isModalOpen = false;
@@ -158,26 +220,56 @@ export default {
     close: function() {
       this.isModalOpen = false;
     },
-    typeChanged: function(e) {
-        this.sanction_outcome.type_id = e.target.value;
+    offenceSelected: function(e) {
+      let offence_id = e.target.value;
+      this.updateSanctionOutcomeOffenders(offence_id);
+      this.updateSanctionOutcomeAllegedOffences(offence_id);
+    },
+    typeSelected: function(e) {
+      this.sanction_outcome.type_id = e.target.value;
     },
     sendData: async function() {
       let vm = this;
     },
+    updateSanctionOutcomeOffenders: function(offence_id){
+        console.log('updateSanctionOutcomeOffenders')
+        console.log(offence_id);
+    },
+    updateSanctionOutcomeAllegedOffences: function(offence_id){
+        console.log('updateSanctionOutcomeAllegedOffences')
+        console.log(offence_id);
+    },
+    updateSanctionOutcomeOffences: function(call_email_id) {
+      let vm = this;
+
+      let returned = Vue.http.get(
+          "/api/offence/filter_by_call_email.json",
+          { params: { 'call_email_id': call_email_id }}
+      );
+      returned.then((res)=>{
+          console.log(res.body);
+          vm.sanction_outcome_offences = res.body;
+          // vm.sanction_outcome_offences.unshift({'id':'', 'status':'', 'identifier': ''});
+      })
+    }
   },
-    created: async function() {
-        console.log('created');
-        // Load all the types for the sanction outcome
-        let sanction_outcome_types = await cache_helper.getSetCacheList('SanctionOutcome_Types', '/api/sanction_outcome/types.json');
-        this.sanction_outcome_types.push({'id': '', 'display': ''});
-        for (let i = 0; i < sanction_outcome_types.length; i++) {
-            this.sanction_outcome_types.push(sanction_outcome_types[i]);
-        }
+  created: async function() {
+    let vm = this;
+
+    // Load all the types for the sanction outcome
+    let sanction_outcome_types = await cache_helper.getSetCacheList(
+      "SanctionOutcome_Types",
+      "/api/sanction_outcome/types.json"
+    );
+    vm.sanction_outcome_types.push({ id: "", display: "" });
+    for (let i = 0; i < sanction_outcome_types.length; i++) {
+      vm.sanction_outcome_types.push(sanction_outcome_types[i]);
+    }
+    vm.updateSanctionOutcomeOffences(vm.call_email.id);
   },
   mounted: function() {
     let vm = this;
-    vm.$nextTick(() => {
-    });
+    vm.$nextTick(() => {});
   }
 };
 </script>
