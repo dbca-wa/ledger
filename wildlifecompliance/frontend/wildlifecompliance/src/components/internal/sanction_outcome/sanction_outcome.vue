@@ -232,16 +232,21 @@ export default {
       let vm = this;
     },
     updateSanctionOutcomeOffenders: function(offence_id){
-        console.log('updateSanctionOutcomeOffenders')
-        console.log(offence_id);
+      let vm = this;
+      // let returned = Vue.http.get(
+      //     "/api/offence/offender/filter_by_offence.json",
+      //     { params: { 'offence_id': offence_id }}
+      // );
+      // returned.then((res)=>{
+      //     console.log(res.body);
+      //     vm.sanction_outcome_offences = res.body;
+      // })
     },
     updateSanctionOutcomeAllegedOffences: function(offence_id){
-        console.log('updateSanctionOutcomeAllegedOffences')
-        console.log(offence_id);
+
     },
     updateSanctionOutcomeOffences: function(call_email_id) {
       let vm = this;
-
       let returned = Vue.http.get(
           "/api/offence/filter_by_call_email.json",
           { params: { 'call_email_id': call_email_id }}
@@ -249,7 +254,6 @@ export default {
       returned.then((res)=>{
           console.log(res.body);
           vm.sanction_outcome_offences = res.body;
-          // vm.sanction_outcome_offences.unshift({'id':'', 'status':'', 'identifier': ''});
       })
     }
   },

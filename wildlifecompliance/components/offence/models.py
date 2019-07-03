@@ -80,6 +80,11 @@ class Offence(RevisionedMixin):
         return '{}'.format(self.details)
 
 
+class OffenderManager(models.Manager):
+    def get_queryset(self):
+        return super(OffenderManager, self).get_queryset().filter(removed=False)
+
+
 class Offender(models.Model):
     reason_for_removal = models.TextField(blank=True)
     removed = models.BooleanField(default=False)
@@ -103,6 +108,7 @@ class Offender(models.Model):
         null=True,
         on_delete=models.SET_NULL,
     )
+    active_offenders = OffenderManager()
 
     class Meta:
         app_label = 'wildlifecompliance'
