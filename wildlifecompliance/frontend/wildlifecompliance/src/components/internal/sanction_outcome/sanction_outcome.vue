@@ -5,33 +5,38 @@
             <div class="container-fluid">
                 <div class="col-sm-12 form-group"><div class="row">
                     <label class="col-sm-4">Type</label>
-                    <select class="form-control" v-model="call_email.classification_id">
-                        <option v-for="option in sanction_outcome_types" :value="option.id" v-bind:key="option.id">
+                    <!-- <select class="form-control" v-model="sanction_outcome.type_id"> -->
+                    <!-- <select class="form-control" v-bind:value="sanction_outcome.type_id" v-on:change="typeChanged($event)"> -->
+                    <select class="form-control" v-on:change="typeChanged($event)">
+                        <option v-for="option in sanction_outcome_types" v-bind:value="option.id" v-bind:key="option.id">
                             {{ option.display }} 
                         </option>
                     </select>
                 </div></div>
 
-                <ul class="nav nav-pills">
-                    <li class="nav-item active"><a data-toggle="tab" :href="'#'+nTab">Notice (TODO: reactive)</a></li>
-                    <li class="nav-item"><a data-toggle="tab" :href="'#'+aTab">Remediation Actions</a></li>
-                    <li class="nav-item"><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
-                </ul>
-                <div class="tab-content">
-                    <div :id="nTab" class="tab-pane fade in active">
-                        <div class="row">
+                <div v-if="displayTabs">
+                    <ul class="nav nav-pills">
+                        <li class="nav-item active"><a data-toggle="tab" :href="'#'+nTab">{{ firstTabTitle }}</a></li>
+                        <li class="nav-item" v-if="displayRemediationActions"><a data-toggle="tab" :href="'#'+aTab">Remediation Actions</a></li>
+                        <li class="nav-item"><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div :id="nTab" class="tab-pane fade in active">
+                            <div class="row">
+                            </div>
+                        </div>
+
+                        <div :id="aTab" class="tab-pane fade in">
+                            <div class="row">
+                            </div>
+                        </div>
+
+                        <div :id="dTab" class="tab-pane fade in">
+                            <div class="row">
+                            </div>
                         </div>
                     </div>
 
-                    <div :id="aTab" class="tab-pane fade in">
-                        <div class="row">
-                        </div>
-                    </div>
-
-                    <div :id="dTab" class="tab-pane fade in">
-                        <div class="row">
-                        </div>
-                    </div>
                 </div>
             </div>
             <div slot="footer">
@@ -63,10 +68,12 @@ export default {
       nTab: "nTab" + vm._uid,
       aTab: "aTab" + vm._uid,
       dTab: "dTab" + vm._uid,
-
       isModalOpen: false,
       processingDetails: false,
 
+      sanction_outcome: {
+          type_id: '',
+      },
       sanction_outcome_types: [],
 
       dtHeadersAllegedOffence: [
@@ -119,6 +126,20 @@ export default {
     modalTitle: function() {
       return "Identify Sanction Outcome";
     },
+    firstTabTitle: function() {
+        for (let i = 0; i < this.sanction_outcome_types.length; i++) {
+            if (this.sanction_outcome_types[i]['id'] == this.sanction_outcome.type_id){
+                return this.sanction_outcome_types[i]['display'];
+            }
+        }
+        return '';
+    },
+    displayTabs: function() {
+        return this.sanction_outcome.type_id==''? false : true;
+    },
+    displayRemediationActions: function() {
+        return this.sanction_outcome.type_id=='remediation_notice'? true : false;
+    }
   },
   methods: {
     ...mapActions("callemailStore", {
@@ -137,6 +158,9 @@ export default {
     close: function() {
       this.isModalOpen = false;
     },
+    typeChanged: function(e) {
+        this.sanction_outcome.type_id = e.target.value;
+    },
     sendData: async function() {
       let vm = this;
     },
@@ -145,12 +169,10 @@ export default {
         console.log('created');
         // Load all the types for the sanction outcome
         let sanction_outcome_types = await cache_helper.getSetCacheList('SanctionOutcome_Types', '/api/sanction_outcome/types.json');
-        Object.assign(this.sanction_outcome_types, sanction_outcome_types);
-        this.sanction_outcome_types.splice(0, 0, { id: null, name: "", });
-        console.log(this.sanction_outcome_types);
-
-        // TODO: load offence under this call_email
-
+        this.sanction_outcome_types.push({'id': '', 'display': ''});
+        for (let i = 0; i < sanction_outcome_types.length; i++) {
+            this.sanction_outcome_types.push(sanction_outcome_types[i]);
+        }
   },
   mounted: function() {
     let vm = this;
