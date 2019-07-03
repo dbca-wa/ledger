@@ -497,7 +497,7 @@
                                     <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                                     <input type='hidden' name="application_id" :value="1" />
                                     <input type='hidden' id="selected_activity_tab_id" v-model="selected_activity_tab_id" />
-                                    <div class="row" style="margin-bottom:50px;">
+                                    <div v-if="showNavBarBottom" class="row" style="margin-bottom:50px;">
                                         <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                                             <div class="navbar-inner">
                                                 <div class="container">
@@ -760,6 +760,9 @@ export default {
                     return 'Application'
                 break;
             }
+        },
+        showNavBarBottom: function() {
+            return this.canReturnToConditions || (!this.applicationIsDraft && this.canSaveApplication)
         }
     },
     methods: {
