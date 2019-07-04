@@ -26,7 +26,7 @@
                                 <div class="col-sm-2">
                                     <label class="control-label pull-left">Region</label>
                                 </div>
-                                <div class="col-sm-5">
+                                <div class="col-sm-7">
                                     <div v-if="sanction_outcome">
                                         <select></select>
                                     </div>
@@ -37,7 +37,7 @@
                                 <div class="col-sm-2">
                                     <label class="control-label pull-left">District</label>
                                 </div>
-                                <div class="col-sm-5">
+                                <div class="col-sm-7">
                                     <div v-if="sanction_outcome">
                                         <select></select>
                                     </div>
@@ -48,7 +48,7 @@
                                 <div class="col-sm-2">
                                     <label class="control-label pull-left" for="identifier">Identifier</label>
                                 </div>
-                                <div class="col-sm-5">
+                                <div class="col-sm-7">
                                     <div v-if="sanction_outcome">
                                         <input type="text" class="form-control" name="identifier" placeholder="" v-model="sanction_outcome.identifier" v-bind:key="sanction_outcome.id">
                                     </div>
@@ -59,7 +59,7 @@
                                 <div class="col-sm-2">
                                     <label class="control-label pull-left">Offence</label>
                                 </div>
-                                <div class="col-sm-5">
+                                <div class="col-sm-7">
                                     <div v-if="sanction_outcome">
                                         <select class="form-control" v-on:change="offenceSelected($event)">
                                             <option value=""></option>
@@ -75,7 +75,7 @@
                                 <div class="col-sm-2">
                                     <label class="control-label pull-left">Offender</label>
                                 </div>
-                                <div class="col-sm-5">
+                                <div class="col-sm-7">
                                     <div v-if="sanction_outcome">
                                         <select class="form-control" v-on:change="offenderSelected($event)">
                                             <option value=""></option>
@@ -89,6 +89,12 @@
                                             </option>
                                         </select>
                                     </div>
+                                </div>
+                            </div></div>
+
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-12">
+                                    <datatable ref="tbl_alleged_offence" id="tbl_alleged-offence" :dtOptions="dtOptionsAllegedOffence" :dtHeaders="dtHeadersAllegedOffence" />
                                 </div>
                             </div></div>
 
@@ -193,7 +199,7 @@ export default {
   },
   components: {
     modal,
-    datatable
+    datatable,
   },
   computed: {
     ...mapGetters("callemailStore", {
@@ -262,11 +268,22 @@ export default {
     },
     updateOptionsForOffendersAllegedOffences: function(offence_id){
       let vm = this;
+
+      vm.$refs.tbl_alleged_offence.vmDataTable.rows().remove().draw();
+
       for (let i=0; i<vm.options_for_offences.length; i++) {
         if (vm.options_for_offences[i].id == offence_id) {
-          vm.options_for_offenders = vm.options_for_offences[i].offenders;
-          vm.options_for_alleged_offences = vm.options_for_offences[i].alleged_offences;
-          console.log(vm.options_for_offenders);
+          let an_offence = vm.options_for_offences[i];
+          vm.options_for_offenders = an_offence.offenders;
+
+          for (let j=0; j < an_offence.alleged_offences.length; j++){
+            vm.$refs.tbl_alleged_offence.vmDataTable.row.add({
+                "id": an_offence.alleged_offences[j].id,
+                "Act": an_offence.alleged_offences[j].act,
+                "Section/Regulation": an_offence.alleged_offences[j].name,
+                "Alleged Offence": an_offence.alleged_offences[j].offence_text
+            }).draw();
+          }
         }
       }
     },
