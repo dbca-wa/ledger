@@ -32,12 +32,14 @@ class SectionRegulationSerializer(serializers.ModelSerializer):
 
 class OffenderSerializer(serializers.ModelSerializer):
     person = EmailUserSerializer(read_only=True,)
+    organisation = OrganisationSerializer(read_only=True,)
 
     class Meta:
         model = Offender
         fields = (
             'id',
             'person',
+            'organisation',
         )
 
 
@@ -68,17 +70,8 @@ class OffenceSerializer(serializers.ModelSerializer):
         )
 
     def get_offenders(self, obj):
-        return_list = []
-
-        offenders = Offender.active_offenders.all()
-        for offender in offenders:
-            person = OffenderSerializer(offender)
-            return_list.append({
-                'id': offender.id,
-                'person': person.data,
-            })
-
-        return return_list
+        offenders = Offender.active_offenders.filter(offence__exact=obj)
+        return [ OffenderSerializer(offender).data for offender in offenders ]
 
 class SaveOffenceSerializer(serializers.ModelSerializer):
     location_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)

@@ -6,7 +6,7 @@
                     <label class="col-sm-1">Type</label>
                     <div class="col-sm-4">
                         <select class="form-control" v-on:change="typeSelected($event)">
-                            <option v-for="option in sanction_outcome_types" v-bind:value="option.id" v-bind:key="option.id">
+                            <option v-for="option in options_for_types" v-bind:value="option.id" v-bind:key="option.id">
                                 {{ option.display }} 
                             </option>
                         </select>
@@ -63,8 +63,29 @@
                                     <div v-if="sanction_outcome">
                                         <select class="form-control" v-on:change="offenceSelected($event)">
                                             <option value=""></option>
-                                            <option v-for="option in sanction_outcome_offences" v-bind:value="option.id" v-bind:key="option.id">
+                                            <option v-for="option in options_for_offences" v-bind:value="option.id" v-bind:key="option.id">
                                                 {{ option.id + ': ' + option.status + ', ' + option.identifier }} 
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div></div>
+
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-2">
+                                    <label class="control-label pull-left">Offender</label>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div v-if="sanction_outcome">
+                                        <select class="form-control" v-on:change="offenderSelected($event)">
+                                            <option value=""></option>
+                                            <option v-for="offender in options_for_offenders" v-bind:value="offender.id" v-bind:key="offender.id">
+                                                <span v-if="offender.person">
+                                                    {{ offender.person.first_name + ' ' + offender.person.last_name + ', DOB:' + offender.person.dob }} 
+                                                </span>
+                                                <span v-else-if="offender.organisation">
+                                                    {{ offender.organisation.name + ', ABN: ' + offender.organisation.abn }} 
+                                                </span>
                                             </option>
                                         </select>
                                     </div>
@@ -125,9 +146,14 @@ export default {
         offender: null,
 
       },
-      sanction_outcome_types: [],
-      sanction_outcome_offences: [],
-      sanction_outcome_offenders: [],
+
+      // List for dropdown
+      options_for_types: [],
+      options_for_offences: [],
+      options_for_offenders: [],
+
+      // List for datatable
+      options_for_alleged_offences: [],
 
       dtHeadersAllegedOffence: [
         "id",
@@ -180,11 +206,11 @@ export default {
       return "Identify Sanction Outcome";
     },
     firstTabTitle: function() {
-      for (let i = 0; i < this.sanction_outcome_types.length; i++) {
+      for (let i = 0; i < this.options_for_types.length; i++) {
         if (
-          this.sanction_outcome_types[i]["id"] == this.sanction_outcome.type_id
+          this.options_for_types[i]["id"] == this.sanction_outcome.type_id
         ) {
-          return this.sanction_outcome_types[i]["display"];
+          return this.options_for_types[i]["display"];
         }
       }
       return "";
@@ -221,9 +247,12 @@ export default {
       this.isModalOpen = false;
     },
     offenceSelected: function(e) {
-      let offence_id = e.target.value;
-      this.updateSanctionOutcomeOffenders(offence_id);
-      this.updateSanctionOutcomeAllegedOffences(offence_id);
+      let offence_id = parseInt(e.target.value);
+      this.updateOptionsForOffendersAllegedOffences(offence_id);
+    },
+    offenderSelected: function(e) {
+      let offender_id = parseInt(e.target.value);
+      console.log('offender_id: ' + offender_id)
     },
     typeSelected: function(e) {
       this.sanction_outcome.type_id = e.target.value;
@@ -231,21 +260,17 @@ export default {
     sendData: async function() {
       let vm = this;
     },
-    updateSanctionOutcomeOffenders: function(offence_id){
+    updateOptionsForOffendersAllegedOffences: function(offence_id){
       let vm = this;
-      // let returned = Vue.http.get(
-      //     "/api/offence/offender/filter_by_offence.json",
-      //     { params: { 'offence_id': offence_id }}
-      // );
-      // returned.then((res)=>{
-      //     console.log(res.body);
-      //     vm.sanction_outcome_offences = res.body;
-      // })
+      for (let i=0; i<vm.options_for_offences.length; i++) {
+        if (vm.options_for_offences[i].id == offence_id) {
+          vm.options_for_offenders = vm.options_for_offences[i].offenders;
+          vm.options_for_alleged_offences = vm.options_for_offences[i].alleged_offences;
+          console.log(vm.options_for_offenders);
+        }
+      }
     },
-    updateSanctionOutcomeAllegedOffences: function(offence_id){
-
-    },
-    updateSanctionOutcomeOffences: function(call_email_id) {
+    updateOptionsForOffences: function(call_email_id) {
       let vm = this;
       let returned = Vue.http.get(
           "/api/offence/filter_by_call_email.json",
@@ -253,7 +278,7 @@ export default {
       );
       returned.then((res)=>{
           console.log(res.body);
-          vm.sanction_outcome_offences = res.body;
+          vm.options_for_offences = res.body;
       })
     }
   },
@@ -261,15 +286,15 @@ export default {
     let vm = this;
 
     // Load all the types for the sanction outcome
-    let sanction_outcome_types = await cache_helper.getSetCacheList(
+    let options_for_types = await cache_helper.getSetCacheList(
       "SanctionOutcome_Types",
       "/api/sanction_outcome/types.json"
     );
-    vm.sanction_outcome_types.push({ id: "", display: "" });
-    for (let i = 0; i < sanction_outcome_types.length; i++) {
-      vm.sanction_outcome_types.push(sanction_outcome_types[i]);
+    vm.options_for_types.push({ id: "", display: "" });
+    for (let i = 0; i < options_for_types.length; i++) {
+      vm.options_for_types.push(options_for_types[i]);
     }
-    vm.updateSanctionOutcomeOffences(vm.call_email.id);
+    vm.updateOptionsForOffences(vm.call_email.id);
   },
   mounted: function() {
     let vm = this;

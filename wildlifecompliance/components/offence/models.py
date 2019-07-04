@@ -80,9 +80,9 @@ class Offence(RevisionedMixin):
         return '{}'.format(self.details)
 
 
-class OffenderManager(models.Manager):
+class ActiveOffenderManager(models.Manager):
     def get_queryset(self):
-        return super(OffenderManager, self).get_queryset().filter(removed=False)
+        return super(ActiveOffenderManager, self).get_queryset().filter(removed=False)
 
 
 class Offender(models.Model):
@@ -108,7 +108,8 @@ class Offender(models.Model):
         null=True,
         on_delete=models.SET_NULL,
     )
-    active_offenders = OffenderManager()
+    active_offenders = ActiveOffenderManager()
+    objects = models.Manager()
 
     class Meta:
         app_label = 'wildlifecompliance'
