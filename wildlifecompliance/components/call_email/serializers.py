@@ -520,7 +520,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
 class CallEmailDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     classification = ClassificationSerializer(read_only=True)
-    lodgement_date = serializers.CharField(source='lodged_on')
+    #lodgement_date = serializers.CharField(source='lodged_on')
     user_is_assignee = serializers.SerializerMethodField()
     assigned_to = ComplianceUserDetailsOptimisedSerializer(read_only=True)
     user_action = serializers.SerializerMethodField()
@@ -537,7 +537,8 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
             'user_is_assignee',
             'classification',
             'classification_id',
-            'lodgement_date',
+            #'lodgement_date',
+            'lodged_on',
             'number',
             'caller',
             'assigned_to',

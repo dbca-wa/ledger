@@ -101,9 +101,9 @@ from wildlifecompliance.components.call_email.email import (
 class CallEmailFilterBackend(DatatablesFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
-        # import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         # Get built-in DRF datatables queryset first to join with search text, then apply additional filters
-        super_queryset = super(CallEmailFilterBackend, self).filter_queryset(request, queryset, view).distinct()
+        # super_queryset = super(CallEmailFilterBackend, self).filter_queryset(request, queryset, view).distinct()
 
         # total_count = queryset.count()
         status_filter = request.GET.get('status_description')
@@ -116,25 +116,31 @@ class CallEmailFilterBackend(DatatablesFilterBackend):
             search_text = search_text.lower()
             search_text_callemail_ids = []
             for call_email in queryset:
-                lodgement_date_str = datetime.strptime(call_email.lodged_on, '%d/%m/%Y')
-                if (search_text in call_email.number.lower()
-                    or search_text in call_email.status.lower()
-                    or search_text in call_email.classification.name.lower() if call_email.classification.name else 'all'
-                    or search_text in lodgement_date_str.lower()
-                    or search_text in call_email.caller.lower()
-                    or search_text in call_email.assigned_to.full_name.lower() if call_email.assigned_to else ''
+                #lodged_on_str = time.strftime('%d/%m/%Y', call_email.lodged_on)
+                lodged_on_str = call_email.lodged_on.strftime('%d/%m/%Y')
+                if (search_text in (call_email.number.lower() if call_email.number else '')
+                    or search_text in (call_email.status.lower() if call_email.status else '')
+                    or search_text in (call_email.classification.name.lower() if call_email.classification else '')
+                    or search_text in (lodged_on_str.lower() if lodged_on_str else '')
+                    or search_text in (call_email.caller.lower() if call_email.caller else '')
+                    or search_text in (
+                        call_email.assigned_to.first_name.lower() + ' ' + call_email.assigned_to.last_name.lower()
+                        if call_email.assigned_to else ''
+                        )
                     ):
                     search_text_callemail_ids.append(call_email.id)
 
             # use pipe to join both custom and built-in DRF datatables querysets (returned by super call above)
             # (otherwise they will filter on top of each other)
-            queryset = queryset.filter(id__in=search_text_callemail_ids).distinct() | super_queryset
+            #_queryset = queryset.filter(id__in=search_text_callemail_ids).distinct() | super_queryset
+            # BB 20190704 - is super_queryset necessary?
+            queryset = queryset.filter(id__in=search_text_callemail_ids)
 
-        # status_filter = status_filter.lower() if status_filter else 'all'
+        status_filter = status_filter.lower() if status_filter else 'all'
         if status_filter != 'all':
             status_filter_callemail_ids = []
             for call_email in queryset:
-                if status_filter == call_email.get_status_display():
+                if status_filter == call_email.get_status_display().lower():
                     status_filter_callemail_ids.append(call_email.id)
             queryset = queryset.filter(id__in=status_filter_callemail_ids)
         classification_filter = classification_filter.lower() if classification_filter else 'all'
@@ -190,7 +196,6 @@ class CallEmailPaginatedViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['GET', ])
     def get_paginated_datatable(self, request, *args, **kwargs):
-        print(request.data)
         queryset = self.get_queryset()
 
         queryset = self.filter_queryset(queryset)

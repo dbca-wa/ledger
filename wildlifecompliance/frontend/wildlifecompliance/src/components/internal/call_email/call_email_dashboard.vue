@@ -126,6 +126,7 @@
                     columns: [
                         {
                             data: "number",
+                            searchable: false,
                         },
                         {
                             data: "status.name",
@@ -143,7 +144,8 @@
                             }
                         },
                         {
-                            data: "lodgement_date",
+                            data: "lodged_on",
+                            searchable: false,
                             mRender: function (data, type, full) {
                                 return data != '' && data != null ? moment(data).format(vm.dateFormat) : '';
                             }
@@ -151,9 +153,11 @@
                         
                         {
                             data: "caller",
+                            searchable: false,
                         },
                         {
                             data: "assigned_to",
+                            searchable: false,
                             mRender: function (data, type, full) {
                                 if (data) {
                                     return data.full_name;
@@ -180,6 +184,7 @@
                             //orderable: false,
                             //searchable: false
                             data: "user_action",
+                            searchable: false,
                             
                         }
                     ],
