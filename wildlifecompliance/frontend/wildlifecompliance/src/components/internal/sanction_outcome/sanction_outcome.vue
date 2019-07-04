@@ -76,10 +76,11 @@
                                     <label class="control-label pull-left">Offender</label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <div v-if="sanction_outcome">
+                                    <div v-if="sanction_outcome && sanction_outcome.current_offence && sanction_outcome.current_offence.offenders">
                                         <select class="form-control" v-on:change="offenderSelected($event)">
                                             <option value=""></option>
-                                            <option v-for="offender in options_for_offenders" v-bind:value="offender.id" v-bind:key="offender.id">
+                                            <!-- <option v-for="offender in options_for_offenders" v-bind:value="offender.id" v-bind:key="offender.id"> -->
+                                            <option v-for="offender in sanction_outcome.current_offence.offenders" v-bind:value="offender.id" v-bind:key="offender.id">
                                                 <span v-if="offender.person">
                                                     {{ offender.person.first_name + ' ' + offender.person.last_name + ', DOB:' + offender.person.dob }} 
                                                 </span>
@@ -92,11 +93,16 @@
                                 </div>
                             </div></div>
 
-                            <div class="col-sm-12 form-group"><div class="row">
-                                <div class="col-sm-12">
-                                    <datatable ref="tbl_alleged_offence" id="tbl_alleged-offence" :dtOptions="dtOptionsAllegedOffence" :dtHeaders="dtHeadersAllegedOffence" />
+                            <div class="col-sm-12 form-group">
+                                <div class="row col-sm-12">
+                                    <label class="control-label pull-left">Alleged committed offences</label>
                                 </div>
-                            </div></div>
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <datatable ref="tbl_alleged_offence" id="tbl_alleged_offence" :dtOptions="dtOptionsAllegedOffence" :dtHeaders="dtHeadersAllegedOffence" />
+                                    </div>
+                                </div>
+                            </div>
 
                         </div></div>
 
@@ -145,21 +151,19 @@ export default {
       isModalOpen: false,
       processingDetails: false,
 
+      // This is the object to be sent to the server when saving
       sanction_outcome: {
         type_id: "",
         identifier: "",
-        offence: null,
-        offender: null,
-
+        current_offence: null,        // Store an offence to be saved as an attribute of the sanction outcome
+                                      // The offenders and the alleged_offences under this offence object are used
+                                      // to construct a dropdown list for the offenders and the alleged offences datatable
+        current_offender: null,       // Store an offender to be saved as an attribute of the sanction outcome
       },
 
       // List for dropdown
       options_for_types: [],
       options_for_offences: [],
-      options_for_offenders: [],
-
-      // List for datatable
-      options_for_alleged_offences: [],
 
       dtHeadersAllegedOffence: [
         "id",
@@ -187,9 +191,7 @@ export default {
             data: "Action",
             mRender: function(data, type, row) {
               return (
-                '<a href="#" class="remove_button" data-alleged-offence-id="' +
-                row.id +
-                '">Remove</a>'
+                '<a href="#" class="remove_button" data-alleged-offence-id="' + row.id + '">Remove</a>'
               );
             }
           }
@@ -201,6 +203,18 @@ export default {
     modal,
     datatable,
   },
+  watch: {
+      current_offence: {
+          handler: function (){
+            this.currentOffenceChanged();
+          },
+      },
+      current_offender: {
+          handler: function (){
+            this.currentOffenderChanged();
+          },
+      },
+  },
   computed: {
     ...mapGetters("callemailStore", {
       call_email: "call_email"
@@ -208,6 +222,12 @@ export default {
     ...mapGetters("offenceStore", {
       offence: "offence"
     }),
+    current_offence: function() {
+      return this.sanction_outcome.current_offence;
+    },
+    current_offender: function() {
+      return this.sanction_outcome.current_offender;
+    },
     modalTitle: function() {
       return "Identify Sanction Outcome";
     },
@@ -252,13 +272,43 @@ export default {
     close: function() {
       this.isModalOpen = false;
     },
+    addEventListener: function() {
+      // Clear existing events in case there are.  
+      // Otherwise multiple click events are raised by a single click.
+      $('#tbl_alleged_offence').off('click');
+      $('#tbl_alleged_offence').on('click', 'tbody tr td', function(e){
+          let elem_a = e.target.getElementsByClassName('remove_button');
+          if (elem_a.length > 0){
+            let alleged_offence_id = elem_a[0].getAttribute('data-alleged-offence-id');
+            console.log('alleged_offence_id clicked: ' + alleged_offence_id);
+          }
+      })
+    },
     offenceSelected: function(e) {
+      let vm = this;
       let offence_id = parseInt(e.target.value);
-      this.updateOptionsForOffendersAllegedOffences(offence_id);
+      for (let i=0; i<vm.options_for_offences.length; i++) {
+        if (vm.options_for_offences[i].id == offence_id) {
+          // Update current offence
+          vm.sanction_outcome.current_offence = vm.options_for_offences[i];
+          return;
+        }
+      }
+      // User selected the empty line
+      vm.sanction_outcome.current_offence = null;
     },
     offenderSelected: function(e) {
+      let vm = this;
       let offender_id = parseInt(e.target.value);
-      console.log('offender_id: ' + offender_id)
+      for (let i=0; i<vm.sanction_outcome.current_offence.offenders.length; i++) {
+        if (vm.sanction_outcome.current_offence.offenders[i].id == offender_id) {
+          // Update current offender
+          vm.sanction_outcome.current_offender = vm.sanction_outcome.current_offence.offenders[i]
+          return;
+        }
+      }
+      // User selected the empty line
+      vm.sanction_outcome.current_offender = null;
     },
     typeSelected: function(e) {
       this.sanction_outcome.type_id = e.target.value;
@@ -266,26 +316,31 @@ export default {
     sendData: async function() {
       let vm = this;
     },
-    updateOptionsForOffendersAllegedOffences: function(offence_id){
+    currentOffenderChanged: function() {
+      console.log('currentOffenderChanged');
+    },
+    currentOffenceChanged: function() {
+      console.log('currentOffenceChanged');
       let vm = this;
 
-      vm.$refs.tbl_alleged_offence.vmDataTable.rows().remove().draw();
+      vm.sanction_outcome.current_offender = null;
 
-      for (let i=0; i<vm.options_for_offences.length; i++) {
-        if (vm.options_for_offences[i].id == offence_id) {
-          let an_offence = vm.options_for_offences[i];
-          vm.options_for_offenders = an_offence.offenders;
+      // The dropdown list of the offenders are directly linked to the vm.sanction_outcome.offence.offenders.
+      // That's why the dropdown list is updated automatically whenever vm.sanction_outcome.offence is chanaged.
 
-          for (let j=0; j < an_offence.alleged_offences.length; j++){
-            vm.$refs.tbl_alleged_offence.vmDataTable.row.add({
-                "id": an_offence.alleged_offences[j].id,
-                "Act": an_offence.alleged_offences[j].act,
-                "Section/Regulation": an_offence.alleged_offences[j].name,
-                "Alleged Offence": an_offence.alleged_offences[j].offence_text
-            }).draw();
-          }
+      // Construct the datatable of the alleged offences
+      vm.$refs.tbl_alleged_offence.vmDataTable.rows().remove().draw();   // Clear the table anyway
+      if (vm.sanction_outcome.current_offence) {
+        for (let j=0; j < vm.sanction_outcome.current_offence.alleged_offences.length; j++){
+          vm.$refs.tbl_alleged_offence.vmDataTable.row.add({
+              "id": vm.sanction_outcome.current_offence.alleged_offences[j].id,
+              "Act": vm.sanction_outcome.current_offence.alleged_offences[j].act,
+              "Section/Regulation": vm.sanction_outcome.current_offence.alleged_offences[j].name,
+              "Alleged Offence": vm.sanction_outcome.current_offence.alleged_offences[j].offence_text
+          }).draw();
         }
       }
+      vm.addEventListener();
     },
     updateOptionsForOffences: function(call_email_id) {
       let vm = this;
@@ -315,7 +370,9 @@ export default {
   },
   mounted: function() {
     let vm = this;
-    vm.$nextTick(() => {});
+    vm.$nextTick(() => {
+      console.log('mounted');
+    });
   }
 };
 </script>
