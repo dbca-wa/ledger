@@ -95,7 +95,7 @@ export default {
     ]),
     submit: function() {
         this.setApplyLicenceSelect({licence_select: this.licence_select});
-        this.$router.push({
+        this.$router.replace({
             name: "apply_application_licence",
         });
     },
@@ -109,7 +109,7 @@ export default {
         // Sends the user back to the first application workflow screen if workflow state
         // was interrupted (e.g. lost from page refresh)
         if(!vm.application_workflow_state) {
-            return vm.$router.push({
+            return vm.$router.replace({
                 name: "apply_application_organisation",
             });
         }
