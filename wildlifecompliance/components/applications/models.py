@@ -1530,7 +1530,7 @@ class Application(RevisionedMixin):
         if not parent_licence:
             raise Exception("Cannot issue activity: licence not found!")
 
-        latest_application_in_function = parent_licence.current_application
+        latest_application_in_function = self
         application_selected_purpose_ids = self.licence_purposes.all().values_list('id', flat=True)
         licence_latest_activities_for_licence_activity_id = parent_licence.latest_activities.filter(
             licence_activity_id=selected_activity.licence_activity_id)
@@ -1553,7 +1553,6 @@ class Application(RevisionedMixin):
                 # (i.e. this issued activity replaces them all),
                 # mark activity as replaced
                 elif not remaining_purpose_ids_list:
-                    latest_application_in_function = self
                     existing_activity.updated_by = request.user
                     existing_activity.activity_status = ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
                     existing_activity.save()
