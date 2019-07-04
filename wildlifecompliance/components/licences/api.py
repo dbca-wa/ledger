@@ -623,13 +623,21 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
         application_type = request.GET.get('application_type')
         licence_category_id = request.GET.get('licence_category')
         licence_activity_id = request.GET.get('licence_activity')
-
         active_applications = Application.get_active_licence_applications(request, application_type)
+        open_applications = Application.get_open_applications(request, application_type)
+
+        # Exclude purposes in currently OPEN applications
+        if open_applications:
+            for app in open_applications:
+                available_purpose_records = available_purpose_records.exclude(
+                    id__in=app.licence_purposes.all().values_list('id', flat=True))
+
         if not active_applications.count() and application_type == Application.APPLICATION_TYPE_RENEWAL:
             # Do not present with renewal options if no activities are within the renewal period
             queryset = LicenceCategory.objects.none()
             available_purpose_records = LicencePurpose.objects.none()
 
+        # Filter based on currently ACTIVE applications
         elif active_applications.count():
             # Activities relevant to the current application type
             current_activities = Application.get_active_licence_activities(request, application_type)
