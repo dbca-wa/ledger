@@ -79,6 +79,7 @@ router.register(r'region_district', users_api.RegionDistrictViewSet)
 router.register(r'case_priorities', call_email_api.CasePriorityViewSet)
 router.register(r'inspection_types', call_email_api.InspectionTypeViewSet)
 router.register(r'offence', offence_api.OffenceViewSet)
+router.register(r'call_email_paginated', call_email_api.CallEmailPaginatedViewSet)
 
 api_patterns = [url(r'^api/my_user_details/$',
                     users_api.GetMyUserDetails.as_view(),

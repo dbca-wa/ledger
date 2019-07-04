@@ -520,7 +520,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
 class CallEmailDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     classification = ClassificationSerializer(read_only=True)
-    lodgement_date = serializers.CharField(source='lodged_on')
+    #lodgement_date = serializers.CharField(source='lodged_on')
     user_is_assignee = serializers.SerializerMethodField()
     assigned_to = ComplianceUserDetailsOptimisedSerializer(read_only=True)
     user_action = serializers.SerializerMethodField()
@@ -531,11 +531,10 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'status',
-            # 'status_display',
             'user_is_assignee',
             'classification',
             'classification_id',
-            'lodgement_date',
+            'lodged_on',
             'number',
             'caller',
             'assigned_to',
@@ -547,14 +546,9 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'id', 
             )
-
+        
     def get_user_is_assignee(self, obj):
-        # user = EmailUser.objects.get(id=self.context.get('request', {}).user.id)
         user_id = self.context.get('request', {}).user.id
-        # compliance_permissions = []
-        # for group in user.groups.all():
-          #  for permission in group.permissions.all():
-           #     compliance_permissions.append(permission.codename)
         if user_id == obj.assigned_to_id:
             return True
 
