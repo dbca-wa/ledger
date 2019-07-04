@@ -23,7 +23,7 @@
                         <div :id="nTab" class="tab-pane fade in active"><div class="row">
 
                             <div class="col-sm-12 form-group"><div class="row">
-                                <div class="col-sm-2">
+                                <div class="col-sm-3">
                                     <label class="control-label pull-left">Region</label>
                                 </div>
                                 <div class="col-sm-7">
@@ -34,7 +34,7 @@
                             </div></div>
 
                             <div class="col-sm-12 form-group"><div class="row">
-                                <div class="col-sm-2">
+                                <div class="col-sm-3">
                                     <label class="control-label pull-left">District</label>
                                 </div>
                                 <div class="col-sm-7">
@@ -45,7 +45,7 @@
                             </div></div>
 
                             <div class="col-sm-12 form-group"><div class="row">
-                                <div class="col-sm-2">
+                                <div class="col-sm-3">
                                     <label class="control-label pull-left" for="identifier">Identifier</label>
                                 </div>
                                 <div class="col-sm-7">
@@ -56,7 +56,7 @@
                             </div></div>
 
                             <div class="col-sm-12 form-group"><div class="row">
-                                <div class="col-sm-2">
+                                <div class="col-sm-3">
                                     <label class="control-label pull-left">Offence</label>
                                 </div>
                                 <div class="col-sm-7">
@@ -72,7 +72,7 @@
                             </div></div>
 
                             <div class="col-sm-12 form-group"><div class="row">
-                                <div class="col-sm-2">
+                                <div class="col-sm-3">
                                     <label class="control-label pull-left">Offender</label>
                                 </div>
                                 <div class="col-sm-7">
@@ -103,6 +103,36 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-3">
+                                    <label class="control-label pull-left">Issued on paper?</label>
+                                </div>
+                                <div class="col-sm-7">
+                                  <input class="col-sm-1" id="issued_on_paper_yes" type="radio" v-model="sanction_outcome.issued_on_paper" value="true" v-bind:key="sanction_outcome.id" />
+                                  <label class="col-sm-1 radio-button-label" for="issued_on_paper_yes">Yes</label>
+                                  <input class="col-sm-1" id="issued_on_paper_no" type="radio" v-model="sanction_outcome.issued_on_paper" value="false" v-bind:key="sanction_outcome.id" />
+                                  <label class="col-sm-1 radio-button-label" for="issued_on_paper_no">No</label>
+                                </div>
+                            </div></div>
+
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-3">
+                                    <label class="control-label pull-left">Paper ID</label>
+                                </div>
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" name="paper_id" placeholder="" v-model="sanction_outcome.paper_id" v-bind:key="sanction_outcome.id" /> 
+                                </div>
+                            </div></div>
+
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-3">
+                                    <label class="control-label pull-left">Paper notice</label>
+                                </div>
+                                <div class="col-sm-7">
+                                    <input type="file" class="form-control" v-bind:key="sanction_outcome.id" />
+                                </div>
+                            </div></div>
 
                         </div></div>
 
@@ -159,6 +189,7 @@ export default {
                                       // The offenders and the alleged_offences under this offence object are used
                                       // to construct a dropdown list for the offenders and the alleged offences datatable
         current_offender: null,       // Store an offender to be saved as an attribute of the sanction outcome
+        issued_on_paper: false,
       },
 
       // List for dropdown
@@ -170,7 +201,7 @@ export default {
         "Act",
         "Section/Regulation",
         "Alleged Offence",
-        "Action"
+        "Include"
       ],
       dtOptionsAllegedOffence: {
         columns: [
@@ -191,7 +222,8 @@ export default {
             data: "Action",
             mRender: function(data, type, row) {
               return (
-                '<a href="#" class="remove_button" data-alleged-offence-id="' + row.id + '">Remove</a>'
+                // '<a href="#" class="remove_button" data-alleged-offence-id="' + row.id + '">Remove</a>'
+                '<input class="remove_button" type="checkbox" checked="checked" data-alleged-offence-id="' + row.id + '" value="' + row.id +'"></input>'
               );
             }
           }
@@ -340,7 +372,8 @@ export default {
           }).draw();
         }
       }
-      vm.addEventListener();
+      // Use checkbox instead of cell click
+      // vm.addEventListener();
     },
     updateOptionsForOffences: function(call_email_id) {
       let vm = this;
