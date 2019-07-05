@@ -14,16 +14,6 @@
                     <div class="panel-heading">
                         Workflow 
                     </div>
-                    <div class="panel-body panel-collapse">
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <strong>Status</strong><br/>
-                                {{ statusDisplay }}<br/>
-                            </div>
-                        </div>
-
-                        
-                    </div>
                 </div>
             </div>
 
@@ -73,7 +63,7 @@
             </div>          
           </div>
 
-        <div v-if="statusId ==='draft'" class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
+        <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                         <div class="navbar-inner">
                             <div class="container">
                                 <p class="pull-right" style="margin-top:5px;">
@@ -173,7 +163,7 @@ export default {
   },
   computed: {
     ...mapGetters('inspectionStore', {
-      call_email: "inspection",
+      inspection: "inspection",
     }),
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
@@ -239,7 +229,7 @@ export default {
       this.$refs.offence.isModalOpen = true;
     },
     save: async function () {
-        if (this.call_email.id) {
+        if (this.inspection.id) {
             await this.saveInspection({ route: false, crud: 'save' });
         } else {
             await this.saveInspection({ route: false, crud: 'create'});
@@ -263,16 +253,18 @@ export default {
     },
   },
   beforeRouteEnter: function(to, from, next) {
-            // next(async (vm) => {
-            //     await vm.loadCurrentUser({ url: `/api/my_compliance_user_details` });
+      console.log(to);
+            next(async (vm) => {
+                await vm.loadInspection({ inspection_id: to.params.inspection_id });
                 
-            // });
+            });
   },
   created: async function() {
+      console.log(this)
     
-    if (this.$route.params.inspection_id) {
-      await this.loadInspection({ inspection_id: this.$route.params.inspection_id });
-    }
+    //if (this.$route.params.inspection_id) {
+      //await this.loadInspection({ inspection_id: this.$route.params.inspection_id });
+    //}
     
   },
   mounted: function() {

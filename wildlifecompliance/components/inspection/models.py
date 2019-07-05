@@ -58,7 +58,7 @@ class Inspection(RevisionedMixin):
             self.save()
         
     def log_user_action(self, action, request):
-        return ComplianceUserAction.log_action(self, action, request.user)
+        return InspectionUserAction.log_action(self, action, request.user)
     
 
 class InspectionCommsLogDocument(Document):

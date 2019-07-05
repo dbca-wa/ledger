@@ -46,11 +46,13 @@ from wildlifecompliance.components.users.serializers import (
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.inspection.models import (
     Inspection,
+    InspectionUserAction,
 )    
 from wildlifecompliance.components.inspection.serializers import (
     InspectionSerializer,
     InspectionUserActionSerializer,
     InspectionCommsLogEntrySerializer,
+    SaveInspectionSerializer,
     )
 from wildlifecompliance.components.users.models import (
     CompliancePermissionGroup,    
@@ -134,7 +136,7 @@ class InspectionViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 instance = self.get_object()
-                request.data['call_email'] = u'{}'.format(instance.id)
+                request.data['inspection'] = u'{}'.format(instance.id)
                 print(request.data)
                 # request.data['staff'] = u'{}'.format(request.user.id)
                 serializer = InspectionCommsLogEntrySerializer(data=request.data)
@@ -163,6 +165,41 @@ class InspectionViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
+    def inspection_save(self, request, workflow=False, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                instance = self.get_object()
+                serializer = SaveInspectionSerializer(instance, data=request.data)
+                serializer.is_valid(raise_exception=True)
+                if serializer.is_valid():
+                    saved_instance = serializer.save()
+                    instance.log_user_action(
+                            InspectionUserAction.ACTION_SAVE_INSPECTION_.format(
+                            instance.number), request)
+                    headers = self.get_success_headers(serializer.data)
+                    return_serializer = InspectionSerializer(saved_instance)
+                    return Response(
+                            return_serializer.data,
+                            status=status.HTTP_201_CREATED,
+                            headers=headers
+                            )
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+                
+
+        
+
     
 
 #class InspectionTypeViewSet(viewsets.ModelViewSet):

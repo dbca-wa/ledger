@@ -30,6 +30,15 @@ class InspectionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class SaveInspectionSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Inspection
+        fields = (
+                'title',
+                'details'
+                )
+
 #class SaveInspectionSerializer(serializers.ModelSerializer):
  #   title = models.CharField(max_length=200, blank=True, null=True)
   #  details = models.TextField(blank=True, null=True)
