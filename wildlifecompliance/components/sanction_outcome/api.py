@@ -39,11 +39,13 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 res_json = {}
                 request_data = request.data
+                request_data['offence_id'] = request_data['current_offence']['id']
+                request_data['offender_id'] = request_data['current_offender']['id']
 
                 # Save sanction outcome (offence, offender, alleged_offences)
                 serializer = SaveSanctionOutcomeSerializer(data=request_data)
                 serializer.is_valid(raise_exception=True)
-                saved_obj = serializer.save()  # Here, relations between this offence and location, and this offence and call_email are created
+                saved_obj = serializer.save()
 
                 # Save sanction outcome document, and link to the sanction outcome
 
