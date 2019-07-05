@@ -45,4 +45,5 @@ module.exports = {
   region_district: '/api/region_district/',
   case_priorities: '/api/case_priorities/',
   inspection_types: '/api/inspection_types/',
+  call_email_paginated: '/api/call_email_paginated/',
 };

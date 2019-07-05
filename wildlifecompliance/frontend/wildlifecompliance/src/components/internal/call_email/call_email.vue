@@ -5,7 +5,7 @@
           <h3>Call/Email: {{ call_email.number }}</h3>
         </div>
         <div class="col-md-3 pull-right">
-          <input  v-if="current_user && current_user.is_volunteer" type="button" @click.prevent="duplicate" class="pull-right btn btn-primary" value="Create Duplicate Call/Email"/>  
+          <input  v-if="call_email.user_is_volunteer" type="button" @click.prevent="duplicate" class="pull-right btn btn-primary" value="Create Duplicate Call/Email"/>  
         </div>
       </div>
           <div class="col-md-3">
@@ -315,7 +315,7 @@
                         </div>
         </div>          
         <div v-if="workflow_type">
-          <CallWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflow_type" />
+          <CallWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
         </div>
         <Offence ref="offence" />
         <SanctionOutcome ref="sanction_outcome" />
@@ -379,7 +379,7 @@ export default {
       classification_types: [],
       report_types: [],
       referrers: [],
-      allocated_group: [],
+      //allocated_group: [],
       current_schema: [],
       regionDistricts: [],
       sectionLabel: "Details",
@@ -400,6 +400,7 @@ export default {
         api_endpoints.call_email,
         this.$route.params.call_email_id + "/action_log"
       ),
+      workflowBindId: '',
     };
   },
   components: {
@@ -427,7 +428,7 @@ export default {
     }),
     ...mapGetters({
       renderer_form_data: 'renderer_form_data',
-      current_user: 'current_user',
+      //current_user: 'current_user',
     }),
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
@@ -478,6 +479,14 @@ export default {
     ...mapActions({
       loadCurrentUser: "loadCurrentUser",
     }),
+    updateWorkflowBindId: function() {
+        let timeNow = Date.now()
+        if (this.workflow_type) {
+            this.workflowBindId = this.workflow_type + '_' + timeNow.toString();
+        } else {
+            this.workflowBindId = timeNow.toString();
+        }
+    },
     constructRelatedItemsTable: function() {
         console.log('constructRelatedItemsTable');
         
@@ -504,6 +513,7 @@ export default {
     },
     addWorkflow(workflow_type) {
       this.workflow_type = workflow_type;
+      this.updateWorkflowBindId();
       this.$nextTick(() => {
         this.$refs.add_workflow.isModalOpen = true;
       });
@@ -558,9 +568,9 @@ export default {
             this.call_email.id + '/update_assigned_to_id/'
             );
         let payload = null;
-        if (user == 'current_user') {
+        if (user === 'current_user') {
             payload = {'current_user': true};
-        } else if (user == 'blank') {
+        } else if (user === 'blank') {
             payload = {'blank': true};
         } else {
             payload = { 'assigned_to_id': this.call_email.assigned_to_id };
