@@ -261,15 +261,23 @@ export default {
             data: "Alleged Offence"
           },
           {
-            data: "Action",
+            data: "Include",
             mRender: function(data, type, row) {
-              return (
-                // '<a href="#" class="remove_button" data-alleged-offence-id="' + row.id + '">Remove</a>'
-                '<input class="remove_button" type="checkbox" checked="checked" data-alleged-offence-id="' + row.id + '" value="' + row.id +'"></input>'
-              );
+              return '<input type="checkbox" class="alleged_offence_include" value="' + data +'" checked="checked"></input>';
             }
           }
-        ]
+        ],
+        // columnDefs: [{
+        //   'targets': 4,
+        //   'checkboxes': {
+        //     'selectRow': true
+        //   },
+        //   'render': function(data, type, row){
+        //     data = '<input type="checkbox" />';
+        //     return data;
+        //   }
+        // }],
+        // 'select': 'multi',
       }
     };
   },
@@ -346,18 +354,18 @@ export default {
     close: function() {
       this.isModalOpen = false;
     },
-    addDatatableClickEvent: function() {
-      // Clear existing events in case there are.  
-      // Otherwise multiple click events are raised by a single click.
-      $('#tbl_alleged_offence').off('click');
-      $('#tbl_alleged_offence').on('click', 'tbody tr td', function(e){
-          let elem_a = e.target.getElementsByClassName('remove_button');
-          if (elem_a.length > 0){
-            let alleged_offence_id = elem_a[0].getAttribute('data-alleged-offence-id');
-            console.log('alleged_offence_id clicked: ' + alleged_offence_id);
-          }
-      })
-    },
+    // addDatatableClickEvent: function() {
+    //   // Clear existing events in case there are.  
+    //   // Otherwise multiple click events are raised by a single click.
+    //   $('#tbl_alleged_offence').off('click');
+    //   $('#tbl_alleged_offence').on('click', 'tbody tr td', function(e){
+    //       let elem_a = e.target.getElementsByClassName('remove_button');
+    //       if (elem_a.length > 0){
+    //         let alleged_offence_id = elem_a[0].getAttribute('data-alleged-offence-id');
+    //         console.log('alleged_offence_id clicked: ' + alleged_offence_id);
+    //       }
+    //   })
+    // },
     addEventListeners: function() {
       let vm = this;
       let el_fr_date = $(vm.$refs.dateOfIssuePicker);
@@ -413,6 +421,14 @@ export default {
     },
     sendData: async function() {
       let vm = this;
+      let alleged_offence_ids = [];
+      let checkboxes = $('.alleged_offence_include');
+      for (let i=0; i<checkboxes.length; i++){
+        if(checkboxes[i].checked) {
+          alleged_offence_ids.push(checkboxes[i].value);
+        }
+      }
+      console.log(alleged_offence_ids);
     },
     currentOffenderChanged: function() {
       console.log('currentOffenderChanged');
@@ -434,7 +450,8 @@ export default {
               "id": vm.sanction_outcome.current_offence.alleged_offences[j].id,
               "Act": vm.sanction_outcome.current_offence.alleged_offences[j].act,
               "Section/Regulation": vm.sanction_outcome.current_offence.alleged_offences[j].name,
-              "Alleged Offence": vm.sanction_outcome.current_offence.alleged_offences[j].offence_text
+              "Alleged Offence": vm.sanction_outcome.current_offence.alleged_offences[j].offence_text,
+              "Include": vm.sanction_outcome.current_offence.alleged_offences[j].id,
           }).draw();
         }
       }
