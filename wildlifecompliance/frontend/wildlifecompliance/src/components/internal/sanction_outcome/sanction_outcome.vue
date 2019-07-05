@@ -218,7 +218,7 @@ export default {
 
       // This is the object to be sent to the server when saving
       sanction_outcome: {
-        type_id: "",
+        type: "",
         // region: null,
         // district: null,
         identifier: "",
@@ -261,15 +261,23 @@ export default {
             data: "Alleged Offence"
           },
           {
-            data: "Action",
+            data: "Include",
             mRender: function(data, type, row) {
-              return (
-                // '<a href="#" class="remove_button" data-alleged-offence-id="' + row.id + '">Remove</a>'
-                '<input class="remove_button" type="checkbox" checked="checked" data-alleged-offence-id="' + row.id + '" value="' + row.id +'"></input>'
-              );
+              return '<input type="checkbox" class="alleged_offence_include" value="' + data +'" checked="checked"></input>';
             }
           }
-        ]
+        ],
+        // columnDefs: [{
+        //   'targets': 4,
+        //   'checkboxes': {
+        //     'selectRow': true
+        //   },
+        //   'render': function(data, type, row){
+        //     data = '<input type="checkbox" />';
+        //     return data;
+        //   }
+        // }],
+        // 'select': 'multi',
       }
     };
   },
@@ -308,7 +316,7 @@ export default {
     firstTabTitle: function() {
       for (let i = 0; i < this.options_for_types.length; i++) {
         if (
-          this.options_for_types[i]["id"] == this.sanction_outcome.type_id
+          this.options_for_types[i]["id"] == this.sanction_outcome.type
         ) {
           return this.options_for_types[i]["display"];
         }
@@ -316,16 +324,16 @@ export default {
       return "";
     },
     displayTabs: function() {
-      return this.sanction_outcome.type_id == "" ? false : true;
+      return this.sanction_outcome.type== "" ? false : true;
     },
     displaySendToManagerButton: function() {
-      if (!this.processingDetails && this.sanction_outcome.type_id){
+      if (!this.processingDetails && this.sanction_outcome.type){
         return true
       }
       return false;
     },
     displayRemediationActions: function() {
-      return this.sanction_outcome.type_id == "remediation_notice"
+      return this.sanction_outcome.type== "remediation_notice"
         ? true
         : false;
     }
@@ -346,18 +354,18 @@ export default {
     close: function() {
       this.isModalOpen = false;
     },
-    addDatatableClickEvent: function() {
-      // Clear existing events in case there are.  
-      // Otherwise multiple click events are raised by a single click.
-      $('#tbl_alleged_offence').off('click');
-      $('#tbl_alleged_offence').on('click', 'tbody tr td', function(e){
-          let elem_a = e.target.getElementsByClassName('remove_button');
-          if (elem_a.length > 0){
-            let alleged_offence_id = elem_a[0].getAttribute('data-alleged-offence-id');
-            console.log('alleged_offence_id clicked: ' + alleged_offence_id);
-          }
-      })
-    },
+    // addDatatableClickEvent: function() {
+    //   // Clear existing events in case there are.  
+    //   // Otherwise multiple click events are raised by a single click.
+    //   $('#tbl_alleged_offence').off('click');
+    //   $('#tbl_alleged_offence').on('click', 'tbody tr td', function(e){
+    //       let elem_a = e.target.getElementsByClassName('remove_button');
+    //       if (elem_a.length > 0){
+    //         let alleged_offence_id = elem_a[0].getAttribute('data-alleged-offence-id');
+    //         console.log('alleged_offence_id clicked: ' + alleged_offence_id);
+    //       }
+    //   })
+    // },
     addEventListeners: function() {
       let vm = this;
       let el_fr_date = $(vm.$refs.dateOfIssuePicker);
@@ -409,10 +417,38 @@ export default {
       vm.sanction_outcome.current_offender = null;
     },
     typeSelected: function(e) {
-      this.sanction_outcome.type_id = e.target.value;
+      this.sanction_outcome.type= e.target.value;
     },
     sendData: async function() {
       let vm = this;
+      let alleged_offence_ids = [];
+      let checkboxes = $('.alleged_offence_include');
+      for (let i=0; i<checkboxes.length; i++){
+        if(checkboxes[i].checked) {
+          alleged_offence_ids.push(checkboxes[i].value);
+        }
+      }
+
+      try{
+          let fetchUrl = helpers.add_endpoint_json(api_endpoints.sanction_outcome, 'sanction_outcome_save');
+          console.log(fetchUrl);
+
+          let payload = new Object();
+          Object.assign(payload, vm.sanction_outcome);
+          if (payload.date_of_issue) {
+              payload.date_of_issue = moment(payload.date_of_issue, 'DD/MM/YYYY').format('YYYY-MM-DD');
+          }
+          payload.alleged_offence_ids_included = alleged_offence_ids;
+
+          const savedObj = await Vue.http.post(fetchUrl, payload);
+          await swal("Saved", "The record has been saved", "success");
+      } catch (err) {
+          if (err.body.non_field_errors){
+              await swal("Error", err.body.non_field_errors[0], "error");
+          } else {
+              await swal("Error", "There was an error saving the record", "error");
+          }
+      }
     },
     currentOffenderChanged: function() {
       console.log('currentOffenderChanged');
@@ -434,7 +470,8 @@ export default {
               "id": vm.sanction_outcome.current_offence.alleged_offences[j].id,
               "Act": vm.sanction_outcome.current_offence.alleged_offences[j].act,
               "Section/Regulation": vm.sanction_outcome.current_offence.alleged_offences[j].name,
-              "Alleged Offence": vm.sanction_outcome.current_offence.alleged_offences[j].offence_text
+              "Alleged Offence": vm.sanction_outcome.current_offence.alleged_offences[j].offence_text,
+              "Include": vm.sanction_outcome.current_offence.alleged_offences[j].id,
           }).draw();
         }
       }
