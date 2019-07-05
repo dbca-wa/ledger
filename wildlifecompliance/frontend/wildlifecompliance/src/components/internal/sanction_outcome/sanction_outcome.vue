@@ -76,7 +76,7 @@
                                     <label class="control-label pull-left">Offender</label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <div v-show="sanction_outcome && sanction_outcome.current_offence && sanction_outcome.current_offence.offenders">
+                                    <div v-if="sanction_outcome && sanction_outcome.current_offence && sanction_outcome.current_offence.offenders">
                                     <!-- <div v-if="sanction_outcome"> -->
                                         <select class="form-control" v-on:change="offenderSelected($event)">
                                             <option value=""></option>
