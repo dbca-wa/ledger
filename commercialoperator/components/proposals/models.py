@@ -2079,7 +2079,7 @@ class Vessel(models.Model):
         return self.nominated_vessel
 
 class ProposalRequest(models.Model):
-    proposal = models.ForeignKey(Proposal)
+    proposal = models.ForeignKey(Proposal, related_name='proposalrequest_set')
     subject = models.CharField(max_length=200, blank=True)
     text = models.TextField(blank=True)
     officer = models.ForeignKey(EmailUser, null=True)
@@ -3012,50 +3012,180 @@ def delete_documents(sender, instance, *args, **kwargs):
         document.delete()
 
 def clone_proposal_with_status_reset(proposal):
-        with transaction.atomic():
-            try:
-                proposal.customer_status = 'draft'
-                proposal.processing_status = 'draft'
-                proposal.assessor_data = None
-                proposal.comment_data = None
+    """
+    To Test:
+         from commercialoperator.components.proposals.models import clone_proposal_with_status_reset
+         p=Proposal.objects.get(id=57)
+         p0=clone_proposal_with_status_reset(p)
+    """
+    with transaction.atomic():
+        try:
+            original_proposal = copy.deepcopy(proposal)
+            proposal = duplicate_object(proposal) # clone object and related objects
+    
+            # reset some properties
+            proposal.customer_status = 'draft'
+            proposal.processing_status = 'draft'
+            proposal.assessor_data = None
+            proposal.comment_data = None
 
-                #proposal.id_check_status = 'not_checked'
-                #proposal.character_check_status = 'not_checked'
-                #proposal.compliance_check_status = 'not_checked'
-                #Sproposal.review_status = 'not_reviewed'
+            proposal.lodgement_number = ''
+            proposal.lodgement_sequence = 0
+            proposal.lodgement_date = None
 
-                proposal.lodgement_number = ''
-                proposal.lodgement_sequence = 0
-                proposal.lodgement_date = None
+            proposal.assigned_officer = None
+            proposal.assigned_approver = None
 
-                proposal.assigned_officer = None
-                proposal.assigned_approver = None
+            proposal.approval = None
+            proposal.approval_level_document = None
 
-                proposal.approval = None
+            proposal.save(no_revision=True)
 
-                original_proposal_id = proposal.id
+            clone_documents(proposal, original_proposal, media_prefix='media')
+            return proposal
+        except:
+            raise
 
-                #proposal.previous_application = Proposal.objects.get(id=original_proposal_id)
+def clone_documents(proposal, original_proposal, media_prefix):
+    for proposal_document in ProposalDocument.objects.filter(proposal=original_proposal.id):
+        proposal_document.proposal = proposal
+        proposal_document.id = None
+        proposal_document._file.name = u'proposals/{}/documents/{}'.format(proposal.id, proposal_document.name)
+        proposal_document.can_delete = True
+        proposal_document.save()
+    
+    for referral in proposal.referrals.all():
+        for referral_document in ReferralDocument.objects.filter(referral=referral):
+            referral_document.referral = referral
+            referral_document.id = None
+            referral_document._file.name = u'proposals/{}/referral/{}/documents/{}'.format(proposal.id, referral.id, referral_document.name)
+            referral_document.can_delete = True
+            referral_document.save()
 
-                proposal.id = None
-                proposal.approval_level_document = None
+    for qa_officer_document in QAOfficerDocument.objects.filter(proposal=original_proposal.id):
+        qa_officer_document.proposal = proposal
+        qa_officer_document.id = None
+        qa_officer_document._file.name = u'proposals/{}/qaofficer/{}'.format(proposal.id, qa_officer_document.name)
+        qa_officer_document.can_delete = True
+        qa_officer_document.save()
 
-                proposal.save(no_revision=True)
+    for onhold_document in OnHoldDocument.objects.filter(proposal=original_proposal.id):
+        onhold_document.proposal = proposal
+        onhold_document.id = None
+        onhold_document._file.name = u'proposals/{}/on_hold/{}'.format(proposal.id, onhold_document.name)
+        onhold_document.can_delete = True
+        onhold_document.save()
 
-                # clone documents
-                for proposal_document in ProposalDocument.objects.filter(proposal=original_proposal_id):
-                    proposal_document.proposal = proposal
-                    proposal_document.id = None
-                    proposal_document._file.name = u'proposals/{}/documents/{}'.format(proposal.id, proposal_document.name)
-                    proposal_document.can_delete = True
-                    proposal_document.save()
+    for requirement in proposal.requirements.all():
+        for requirement_document in RequirementDocument.objects.filter(requirement=requirement):
+            requirement_document.requirement = requirement
+            requirement_document.id = None
+            requirement_document._file.name = u'proposals/{}/requirement_documents/{}/{}'.format(proposal.id, requirement.id, requirement_document.name)
+            requirement_document.can_delete = True
+            requirement_document.save()
 
-                # copy documents on file system and reset can_delete flag
-                subprocess.call('cp -pr media/proposals/{} media/proposals/{}'.format(original_proposal_id, proposal.id), shell=True)
+    for log_entry in proposal.comms_logs.all():
+        for log_entry_document in ProposalLogDocument.objects.filter(log_entry=log_entry):
+            log_entry_document.requirement = log_entry
+            log_entry_document.id = None
+            log_entry_document._file.name = u'proposals/{}/communications/{}/{}'.format(proposal.id, log_entry.id, log_entry_document.name)
+            log_entry_document.can_delete = True
+            log_entry_document.save()
 
-                return proposal
-            except:
-                raise
+
+    # copy documents on file system and reset can_delete flag
+    subprocess.call('cp -pr {0}/proposals/{1} {0}/proposals/{2}'.format(media_prefix, original_proposal.id, proposal.id), shell=True)
+
+def duplicate_object(self):
+    """
+    Duplicate a model instance, making copies of all foreign keys pointing to it.
+    There are 3 steps that need to occur in order:
+
+        1.  Enumerate the related child objects and m2m relations, saving in lists/dicts
+        2.  Copy the parent object per django docs (doesn't copy relations)
+        3a. Copy the child objects, relating to the copied parent object
+        3b. Re-create the m2m relations on the copied parent object
+
+    """
+    related_objects_to_copy = []
+    relations_to_set = {}
+    # Iterate through all the fields in the parent object looking for related fields
+    for field in self._meta.get_fields():
+        if field.name in ['proposal', 'approval']: 
+            print 'Continuing ...'
+            pass
+        elif field.one_to_many:
+            # One to many fields are backward relationships where many child objects are related to the
+            # parent (i.e. SelectedPhrases). Enumerate them and save a list so we can copy them after
+            # duplicating our parent object.
+            print('Found a one-to-many field: {}'.format(field.name))
+
+            # 'field' is a ManyToOneRel which is not iterable, we need to get the object attribute itself
+            related_object_manager = getattr(self, field.name)
+            related_objects = list(related_object_manager.all())
+            if related_objects:
+                print(' - {len(related_objects)} related objects to copy')
+                related_objects_to_copy += related_objects
+
+        elif field.many_to_one:
+            # In testing so far, these relationships are preserved when the parent object is copied,
+            # so they don't need to be copied separately.
+            print('Found a many-to-one field: {}'.format(field.name))
+
+        elif field.many_to_many:
+            # Many to many fields are relationships where many parent objects can be related to many
+            # child objects. Because of this the child objects don't need to be copied when we copy
+            # the parent, we just need to re-create the relationship to them on the copied parent.
+            print('Found a many-to-many field: {}'.format(field.name))
+            related_object_manager = getattr(self, field.name)
+            relations = list(related_object_manager.all())
+            if relations:
+                print(' - {} relations to set'.format(len(relations)))
+                relations_to_set[field.name] = relations
+
+    # Duplicate the parent object
+    self.pk = None
+    self.lodgement_number = ''
+    self.save()
+    print('Copied parent object {}'.format(str(self)))
+
+    # Copy the one-to-many child objects and relate them to the copied parent
+    for related_object in related_objects_to_copy:
+        # Iterate through the fields in the related object to find the one that relates to the
+        # parent model (I feel like there might be an easier way to get at this).
+        for related_object_field in related_object._meta.fields:
+            if related_object_field.related_model == self.__class__:
+                # If the related_model on this field matches the parent object's class, perform the
+                # copy of the child object and set this field to the parent object, creating the
+                # new child -> parent relationship.
+                related_object.pk = None
+                #if related_object_field.name=='approvals':
+                #    related_object.lodgement_number = None
+                ##if isinstance(related_object, Approval):
+                ##    related_object.lodgement_number = ''
+
+                setattr(related_object, related_object_field.name, self)
+                print related_object_field
+                try:
+                    related_object.save()
+                except:
+                    import ipdb; ipdb.set_trace()
+
+                text = str(related_object)
+                text = (text[:40] + '..') if len(text) > 40 else text
+                print('|- Copied child object {}'.format(text))
+
+    # Set the many-to-many relations on the copied parent
+    for field_name, relations in relations_to_set.items():
+        # Get the field by name and set the relations, creating the new relationships
+        field = getattr(self, field_name)
+        field.set(relations)
+        text_relations = []
+        for relation in relations:
+            text_relations.append(str(relation))
+        print('|- Set {} many-to-many relations on {} {}'.format(len(relations), field_name, text_relations))
+
+    return self
 
 def searchKeyWords(searchWords, searchProposal, searchApproval, searchCompliance, is_internal= True):
     from commercialoperator.utils import search, search_approval, search_compliance
