@@ -70,7 +70,7 @@
     import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
     import FormSection from "@/components/compliance_forms/section.vue";
     export default {
-        name: 'CallEmailTableDash',
+        name: 'CallEmailDashTable',
         data() {
             let vm = this;
             return {

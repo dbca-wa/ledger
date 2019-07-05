@@ -66,7 +66,7 @@ from rest_framework_datatables.renderers import DatatablesRenderer
  #   send_call_email_forward_email)
 
 
-class InspectionEmailViewSet(viewsets.ModelViewSet):
+class InspectionViewSet(viewsets.ModelViewSet):
     queryset = Inspection.objects.all()
     serializer_class = InspectionSerializer
 
