@@ -218,7 +218,7 @@ export default {
                             let links = '';
                             if (!vm.is_external){
                                 /*if(vm.check_assessor(full) && full.can_officer_process)*/
-                                if(full.assessor_process){   
+                                if(full.processing_status=="With QA Officer"){   
                                         links +=  `<a href='/internal/proposal/${full.id}'>Process</a><br/>`;    
                             }
                                 else{

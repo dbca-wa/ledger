@@ -376,7 +376,12 @@ class Document(models.Model):
     @property
     def path(self):
         #return self.file.path
-        return self._file.path
+        #return self._file.path
+        #comment above line to fix the error "The '_file' attribute has no file associated with it." when adding comms log entry.
+        if self._file:
+            return self._file.path
+        else:
+            return ''
 
     @property
     def filename(self):

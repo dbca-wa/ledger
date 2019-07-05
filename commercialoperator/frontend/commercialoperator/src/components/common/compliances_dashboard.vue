@@ -125,7 +125,7 @@ export default {
                 
             ],
             proposal_submitters: [],
-            proposal_headers:["Number","Licence","Holder","Status","Due Date","Assigned To", "Status", "Reference","Action"],
+            proposal_headers:["Number","Licence","Holder","Status","Due Date","Assigned To", "Action"],
             proposal_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -189,7 +189,7 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                if (full.can_user_view) {
+                                if (full.can_process) {
                                     links +=  `<a href='/internal/compliance/${full.id}'>Process</a><br/>`;
                                     
                                 }
@@ -213,6 +213,7 @@ export default {
                     {data: "reference", visible: false},
                     {data: "customer_status", visible: false},
                     {data: "can_user_view", visible: false},
+                    {data: "can_process", visible: false},
 
                 ],
                 processing: true,

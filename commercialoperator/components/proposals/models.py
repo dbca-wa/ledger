@@ -761,6 +761,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     def allowed_assessors(self):
         if self.processing_status == 'with_approver':
             group = self.__approver_group()
+        elif self.processing_status =='with_qa_officer':
+            group = QAOfficerGroup.objects.get(default=True)
         else:
             group = self.__assessor_group()
         return group.members.all() if group else []
@@ -775,7 +777,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         """
         :return: True if the application is in one of the processable status for Assessor role.
         """
-        officer_view_state = ['draft','approved','declined','temp','discarded']
+        #officer_view_state = ['draft','approved','declined','temp','discarded']
+        officer_view_state = ['draft','approved','declined','temp','discarded', 'with_referral', 'with_qa_officer']
         if self.processing_status in officer_view_state:
             return False
         else:
@@ -817,6 +820,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         search_data.update({'trails': trails})
         search_data.update({'vehicles': vehicles})
         search_data.update({'vessels': vessels})
+        search_data.update({'activities': activities})
         
         try:
             other_details=ProposalOtherDetails.objects.get(proposal=self)
@@ -1238,7 +1242,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             raise ValidationError('You cannot change the current status at this time')
         elif self.approval and self.approval.can_reissue:
             if self.__approver_group() in request.user.proposalapprovergroup_set.all():
-                import ipdb; ipdb.set_trace()
+                #import ipdb; ipdb.set_trace()
                 self.processing_status = status
                 self.save()
                 # Create a log entry for the proposal
@@ -1394,6 +1398,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 qaofficer_referral.processing_status = 'completed'
 
                 qaofficer_referral.save()
+                self.assigned_officer = None
                 self.save()
 
                 # Log proposal action
@@ -2549,31 +2554,33 @@ class Referral(RevisionedMixin):
     def add_referral_document(self, request):
         with transaction.atomic():
             try:
-                referral_document = request.data['referral_document']
-                #import ipdb; ipdb.set_trace()
-                if referral_document != 'null':
-                    try:
-                        document = self.referral_documents.get(input_name=str(referral_document))
-                    except ReferralDocument.DoesNotExist:
-                        document = self.referral_documents.get_or_create(input_name=str(referral_document), name=str(referral_document))[0]
-                    document.name = str(referral_document)
-                    # commenting out below tow lines - we want to retain all past attachments - reversion can use them
-                    #if document._file and os.path.isfile(document._file.path):
-                    #    os.remove(document._file.path)
-                    document._file = referral_document
-                    document.save()
-                    d=ReferralDocument.objects.get(id=document.id)
-                    self.referral_document = d
-                    comment = 'Referral Document Added: {}'.format(document.name)
-                else:
-                    self.referral_document = None
-                    comment = 'Referral Document Deleted: {}'.format(request.data['referral_document_name'])
-                #self.save()
-                self.save(version_comment=comment) # to allow revision to be added to reversion history
-                self.proposal.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
-                # Create a log entry for the organisation
-                applicant_field=getattr(self.proposal, self.proposal.applicant_field)
-                applicant_field.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
+                if request.data.has_key('referral_document'):
+                    referral_document = request.data['referral_document']
+                    #import ipdb; ipdb.set_trace()
+                    if referral_document != 'null':
+                        try:
+                            document = self.referral_documents.get(input_name=str(referral_document))
+                        except ReferralDocument.DoesNotExist:
+                            document = self.referral_documents.get_or_create(input_name=str(referral_document), name=str(referral_document))[0]
+                        document.name = str(referral_document)
+                        # commenting out below tow lines - we want to retain all past attachments - reversion can use them
+                        #if document._file and os.path.isfile(document._file.path):
+                        #    os.remove(document._file.path)
+                        document._file = referral_document
+                        document.save()
+                        d=ReferralDocument.objects.get(id=document.id)
+                        self.referral_document = d
+                        comment = 'Referral Document Added: {}'.format(document.name)
+                    else:
+                        self.referral_document = None
+                        #comment = 'Referral Document Deleted: {}'.format(request.data['referral_document_name'])
+                        comment = 'Referral Document Deleted'
+                    #self.save()
+                    self.save(version_comment=comment) # to allow revision to be added to reversion history
+                    self.proposal.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
+                    # Create a log entry for the organisation
+                    applicant_field=getattr(self.proposal, self.proposal.applicant_field)
+                    applicant_field.log_user_action(ProposalUserAction.ACTION_REFERRAL_DOCUMENT.format(self.id),request)
                 return self
             except:
                 raise
@@ -2768,6 +2775,13 @@ class ProposalAssessment(RevisionedMixin):
     @property
     def checklist(self):
         return self.answers.all()
+
+    @property
+    def referral_group_name(self):
+        if self.referral_group:            
+            return self.referral_group.name
+        else:
+            return ''
 
 
 class ProposalAssessmentAnswer(RevisionedMixin):

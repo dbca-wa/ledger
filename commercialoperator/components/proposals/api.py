@@ -772,6 +772,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 comms = serializer.save()
                 # Save the files
                 for f in request.FILES:
+                    #import ipdb; ipdb.set_trace()
                     document = comms.documents.create()
                     document.name = str(request.FILES[f])
                     document._file = request.FILES[f]
@@ -1308,14 +1309,14 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
                 # save the files
                 #import ipdb; ipdb.set_trace()
-                documents_qs = instance.onhold_documents.filter(input_name='on_hold_file', visible=true)
+                documents_qs = instance.onhold_documents.filter(input_name='on_hold_file', visible=True)
                 for f in documents_qs:
                     document = comms.documents.create(_file=f._file, name=f.name)
                     #document = comms.documents.create()
                     #document.name = f.name
                     #document._file = f._file #.strip('/media')
                     document.input_name = f.input_name
-                    document.can_delete = true
+                    document.can_delete = True
                     document.save()
                 # end save documents
 
@@ -1355,7 +1356,14 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 comms = serializer.save()
 
                 # Save the files
-                documents_qs = instance.qaofficer_documents.filter(input_name='qaofficer_file', visible=True)
+                #import ipdb; ipdb.set_trace()
+                document_qs=[]
+                if is_with_qaofficer:
+                    #Get the list of documents attached by assessor when sending application to QA officer                    
+                    documents_qs = instance.qaofficer_documents.filter(input_name='assessor_qa_file', visible=True)
+                else:
+                    #Get the list of documents attached by QA officer when sending application back to assessor                    
+                    documents_qs = instance.qaofficer_documents.filter(input_name='qaofficer_file', visible=True)                    
                 for f in documents_qs:
                     document = comms.documents.create(_file=f._file, name=f.name)
                     #document = comms.documents.create()
@@ -1929,7 +1937,7 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             #serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception = True)
             instance = serializer.save()
-            #instance.generate_amendment(request)
+            instance.generate_amendment(request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:

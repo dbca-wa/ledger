@@ -215,6 +215,8 @@ class Approval(RevisionedMixin):
         else:
             return False
 
+    
+
     @property
     def can_extend(self):
         if self.current_proposal.application_type.name == 'E Class':
