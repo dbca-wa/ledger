@@ -428,7 +428,28 @@ export default {
           alleged_offence_ids.push(checkboxes[i].value);
         }
       }
-      console.log(alleged_offence_ids);
+
+      try{
+          // let fetchUrl = helpers.add_endpoint_json(api_endpoints.sanction_outcome, 'sanction_outcome_save');
+
+          let payload = new Object();
+          Object.assign(payload, vm.sanction_outcome);
+          if (payload.date_of_issue) {
+              payload.date_of_issue = moment(payload.date_of_issue, 'DD/MM/YYYY').format('YYYY-MM-DD');
+          }
+          payload.alleged_offence_ids_included = alleged_offence_ids;
+          console.log('payload');
+          console.log(payload);
+
+          // const savedObj = await Vue.http.post(fetchUrl, payload);
+          // await swal("Saved", "The record has been saved", "success");
+      } catch (err) {
+          if (err.body.non_field_errors){
+              await swal("Error", err.body.non_field_errors[0], "error");
+          } else {
+              await swal("Error", "There was an error saving the record", "error");
+          }
+      }
     },
     currentOffenderChanged: function() {
       console.log('currentOffenderChanged');
