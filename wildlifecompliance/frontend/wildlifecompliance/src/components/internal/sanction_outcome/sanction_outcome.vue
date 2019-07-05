@@ -218,7 +218,7 @@ export default {
 
       // This is the object to be sent to the server when saving
       sanction_outcome: {
-        type_id: "",
+        type: "",
         // region: null,
         // district: null,
         identifier: "",
@@ -316,7 +316,7 @@ export default {
     firstTabTitle: function() {
       for (let i = 0; i < this.options_for_types.length; i++) {
         if (
-          this.options_for_types[i]["id"] == this.sanction_outcome.type_id
+          this.options_for_types[i]["id"] == this.sanction_outcome.type
         ) {
           return this.options_for_types[i]["display"];
         }
@@ -324,16 +324,16 @@ export default {
       return "";
     },
     displayTabs: function() {
-      return this.sanction_outcome.type_id == "" ? false : true;
+      return this.sanction_outcome.type== "" ? false : true;
     },
     displaySendToManagerButton: function() {
-      if (!this.processingDetails && this.sanction_outcome.type_id){
+      if (!this.processingDetails && this.sanction_outcome.type){
         return true
       }
       return false;
     },
     displayRemediationActions: function() {
-      return this.sanction_outcome.type_id == "remediation_notice"
+      return this.sanction_outcome.type== "remediation_notice"
         ? true
         : false;
     }
@@ -417,7 +417,7 @@ export default {
       vm.sanction_outcome.current_offender = null;
     },
     typeSelected: function(e) {
-      this.sanction_outcome.type_id = e.target.value;
+      this.sanction_outcome.type= e.target.value;
     },
     sendData: async function() {
       let vm = this;
@@ -430,7 +430,8 @@ export default {
       }
 
       try{
-          // let fetchUrl = helpers.add_endpoint_json(api_endpoints.sanction_outcome, 'sanction_outcome_save');
+          let fetchUrl = helpers.add_endpoint_json(api_endpoints.sanction_outcome, 'sanction_outcome_save');
+          console.log(fetchUrl);
 
           let payload = new Object();
           Object.assign(payload, vm.sanction_outcome);
@@ -438,11 +439,9 @@ export default {
               payload.date_of_issue = moment(payload.date_of_issue, 'DD/MM/YYYY').format('YYYY-MM-DD');
           }
           payload.alleged_offence_ids_included = alleged_offence_ids;
-          console.log('payload');
-          console.log(payload);
 
-          // const savedObj = await Vue.http.post(fetchUrl, payload);
-          // await swal("Saved", "The record has been saved", "success");
+          const savedObj = await Vue.http.post(fetchUrl, payload);
+          await swal("Saved", "The record has been saved", "success");
       } catch (err) {
           if (err.body.non_field_errors){
               await swal("Error", err.body.non_field_errors[0], "error");

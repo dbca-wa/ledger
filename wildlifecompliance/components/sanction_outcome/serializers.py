@@ -20,9 +20,29 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
             'alleged_offences',
             'issued_on_paper',
             'paper_id',
-            # document here?
             'description',
             'date_of_issue',
             'time_of_issue',
         )
         read_only_fields = ()
+
+
+class SaveSanctionOutcomeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SanctionOutcome
+        fields = (
+            'id',
+            'type',
+            # 'region',
+            # 'district',
+            'identifier',
+            # 'offence',
+            # 'offender',
+            # 'alleged_offences',
+            'issued_on_paper',
+            'paper_id',
+            'description',
+            'date_of_issue',
+            'time_of_issue',
+        )
