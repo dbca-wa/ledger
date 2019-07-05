@@ -10,14 +10,7 @@ class OffenceAdmin(admin.ModelAdmin):
     filter_horizontal = ('alleged_offences',)
 
 
-# @admin.register(models.Penalty)
-# class PenaltyAdmin(admin.ModelAdmin):
-#     pass
 
-
-# @admin.register(models.SectionRegulation)
-# class SectionRegulationAdmin(admin.ModelAdmin):
-#     pass
 
 class SectionRegulationForm(forms.ModelForm):
     offence_text = forms.CharField(widget=forms.Textarea)

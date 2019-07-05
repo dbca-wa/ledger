@@ -23,6 +23,7 @@ from wildlifecompliance.components.returns import api as return_api
 from wildlifecompliance.management.permissions_manager import CollectorManager
 from wildlifecompliance.components.call_email import api as call_email_api
 from wildlifecompliance.components.offence import api as offence_api
+from wildlifecompliance.components.sanction_outcome import api as sanction_outcome_api
 
 from wildlifecompliance.utils import are_migrations_running
 
@@ -80,6 +81,7 @@ router.register(r'case_priorities', call_email_api.CasePriorityViewSet)
 router.register(r'inspection_types', call_email_api.InspectionTypeViewSet)
 router.register(r'offence', offence_api.OffenceViewSet)
 router.register(r'call_email_paginated', call_email_api.CallEmailPaginatedViewSet)
+router.register(r'sanction_outcome', sanction_outcome_api.SanctionOutcomeViewSet)
 
 api_patterns = [url(r'^api/my_user_details/$',
                     users_api.GetMyUserDetails.as_view(),

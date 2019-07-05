@@ -1,6 +1,9 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from ledger.accounts.models import RevisionedMixin, EmailUser, Organisation
 from wildlifecompliance.components.call_email.models import Location, CallEmail
+from wildlifecompliance.components.main.models import Document
+from wildlifecompliance.components.users.models import RegionDistrict
 
 
 class SectionRegulation(RevisionedMixin):
@@ -77,6 +80,11 @@ class Offence(RevisionedMixin):
         return '{}'.format(self.details)
 
 
+class ActiveOffenderManager(models.Manager):
+    def get_queryset(self):
+        return super(ActiveOffenderManager, self).get_queryset().filter(removed=False)
+
+
 class Offender(models.Model):
     reason_for_removal = models.TextField(blank=True)
     removed = models.BooleanField(default=False)
@@ -100,6 +108,8 @@ class Offender(models.Model):
         null=True,
         on_delete=models.SET_NULL,
     )
+    active_offenders = ActiveOffenderManager()
+    objects = models.Manager()
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -107,4 +117,10 @@ class Offender(models.Model):
         verbose_name_plural = 'CM_Offenders'
 
     def __str__(self):
-        return 'First name: {}, Last name: {}'.format(self.person.first_name, self.person.last_name)
+        if self.person:
+            return 'First name: {}, Last name: {}'.format(self.person.first_name, self.person.last_name)
+        else:
+            return '---'
+
+
+

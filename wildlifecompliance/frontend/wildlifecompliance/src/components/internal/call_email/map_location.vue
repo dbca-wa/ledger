@@ -555,4 +555,7 @@ export default {
     padding: 5px;
     cursor: pointer;
 }
+.awesomplete > ul {
+    margin-top: 0px !important;
+}
 </style>
