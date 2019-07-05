@@ -13,10 +13,10 @@
                     </div>
                 </div></div>
 
-                <div v-if="displayTabs">
+                <div v-show="displayTabs">
                     <ul class="nav nav-pills">
                         <li class="nav-item active"><a data-toggle="tab" :href="'#'+nTab">{{ firstTabTitle }}</a></li>
-                        <li class="nav-item" v-if="displayRemediationActions"><a data-toggle="tab" :href="'#'+aTab">Remediation Actions</a></li>
+                        <li class="nav-item" v-show="displayRemediationActions"><a data-toggle="tab" :href="'#'+aTab">Remediation Actions</a></li>
                         <li class="nav-item"><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
                     </ul>
                     <div class="tab-content">
@@ -27,7 +27,7 @@
                                     <label class="control-label pull-left">Region</label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <div v-if="sanction_outcome">
+                                    <div v-show="sanction_outcome">
                                         <select></select>
                                     </div>
                                 </div>
@@ -38,7 +38,7 @@
                                     <label class="control-label pull-left">District</label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <div v-if="sanction_outcome">
+                                    <div v-show="sanction_outcome">
                                         <select></select>
                                     </div>
                                 </div>
@@ -49,7 +49,7 @@
                                     <label class="control-label pull-left" for="identifier">Identifier</label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <div v-if="sanction_outcome">
+                                    <div v-show="sanction_outcome">
                                         <input type="text" class="form-control" name="identifier" placeholder="" v-model="sanction_outcome.identifier" v-bind:key="sanction_outcome.id">
                                     </div>
                                 </div>
@@ -60,7 +60,7 @@
                                     <label class="control-label pull-left">Offence</label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <div v-if="sanction_outcome">
+                                    <div v-show="sanction_outcome">
                                         <select class="form-control" v-on:change="offenceSelected($event)">
                                             <option value=""></option>
                                             <option v-for="option in options_for_offences" v-bind:value="option.id" v-bind:key="option.id">
@@ -76,7 +76,8 @@
                                     <label class="control-label pull-left">Offender</label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <div v-if="sanction_outcome && sanction_outcome.current_offence && sanction_outcome.current_offence.offenders">
+                                    <div v-show="sanction_outcome && sanction_outcome.current_offence && sanction_outcome.current_offence.offenders">
+                                    <!-- <div v-if="sanction_outcome"> -->
                                         <select class="form-control" v-on:change="offenderSelected($event)">
                                             <option value=""></option>
                                             <!-- <option v-for="offender in options_for_offenders" v-bind:value="offender.id" v-bind:key="offender.id"> -->
@@ -142,8 +143,42 @@
                         </div></div>
 
                         <div :id="dTab" class="tab-pane fade in"><div class="row">
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-3">
+                                    <label class="control-label pull-left">Description</label>
+                                </div>
+                                <div class="col-sm-7">
+                                    <textarea class="form-control" placeholder="add description" id="sanction-outcome-description" v-model="sanction_outcome.description" v-bind:key="sanction_outcome.id"/>
+                                </div>
+                            </div></div>
 
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-3">
+                                    <label class="control-label pull-left">Date of Issue</label>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="input-group date" ref="dateOfIssuePicker">
+                                        <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="sanction_outcome.date_of_issue" />
+                                        <span class="input-group-addon">
+                                            <span class="glyphicon glyphicon-calendar"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div></div>
 
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-3">
+                                    <label class="control-label pull-left">Time of Issue</label>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="input-group date" ref="timeOfIssuePicker">
+                                        <input type="text" class="form-control" placeholder="HH:MM" v-model="sanction_outcome.time_of_issue" />
+                                        <span class="input-group-addon">
+                                            <span class="glyphicon glyphicon-calendar"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div></div>
                         </div></div>
                     </div>
 
@@ -184,12 +219,19 @@ export default {
       // This is the object to be sent to the server when saving
       sanction_outcome: {
         type_id: "",
+        // region: null,
+        // district: null,
         identifier: "",
         current_offence: null,        // Store an offence to be saved as an attribute of the sanction outcome
                                       // The offenders and the alleged_offences under this offence object are used
                                       // to construct a dropdown list for the offenders and the alleged offences datatable
         current_offender: null,       // Store an offender to be saved as an attribute of the sanction outcome
         issued_on_paper: false,
+        paper_id: '',
+        // document: null,
+        description: '',
+        date_of_issue: null,
+        time_of_issue: null,
       },
 
       // List for dropdown
@@ -304,7 +346,7 @@ export default {
     close: function() {
       this.isModalOpen = false;
     },
-    addEventListener: function() {
+    addDatatableClickEvent: function() {
       // Clear existing events in case there are.  
       // Otherwise multiple click events are raised by a single click.
       $('#tbl_alleged_offence').off('click');
@@ -315,6 +357,30 @@ export default {
             console.log('alleged_offence_id clicked: ' + alleged_offence_id);
           }
       })
+    },
+    addEventListeners: function() {
+      let vm = this;
+      let el_fr_date = $(vm.$refs.dateOfIssuePicker);
+      let el_fr_time = $(vm.$refs.timeOfIssuePicker);
+
+      // "Date" field
+      el_fr_date.datetimepicker({ format: "DD/MM/YYYY", maxDate: "now", showClear: true });
+      el_fr_date.on("dp.change", function(e) {
+        if (el_fr_date.data("DateTimePicker").date()) {
+          vm.sanction_outcome.date_of_issue = e.date.format("DD/MM/YYYY");
+        } else if (el_fr_date.data("date") === "") {
+          vm.sanction_outcome.date_of_issue = "";
+        }
+      });
+      // "Time" field
+      el_fr_time.datetimepicker({ format: "LT", showClear: true });
+      el_fr_time.on("dp.change", function(e) {
+        if (el_fr_time.data("DateTimePicker").date()) {
+          vm.sanction_outcome.time_of_issue = e.date.format("LT");
+        } else if (el_fr_time.data("date") === "") {
+          vm.sanction_outcome.time_of_issue = "";
+        }
+      });
     },
     offenceSelected: function(e) {
       let vm = this;
@@ -402,9 +468,9 @@ export default {
     vm.updateOptionsForOffences(vm.call_email.id);
   },
   mounted: function() {
-    let vm = this;
-    vm.$nextTick(() => {
-      console.log('mounted');
+    this.$nextTick(() => {
+      console.log('mounted sanction');
+      this.addEventListeners();
     });
   }
 };
