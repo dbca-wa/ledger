@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from ledger.accounts.models import Organisation
-from wildlifecompliance.components.call_email.serializers import LocationSerializer
+from wildlifecompliance.components.call_email.serializers import LocationSerializer, EmailUserSerializer
 from wildlifecompliance.components.offence.models import Offence, SectionRegulation, Offender
 
 
@@ -30,9 +30,23 @@ class SectionRegulationSerializer(serializers.ModelSerializer):
         read_only_fields = ()
 
 
+class OffenderSerializer(serializers.ModelSerializer):
+    person = EmailUserSerializer(read_only=True,)
+    organisation = OrganisationSerializer(read_only=True,)
+
+    class Meta:
+        model = Offender
+        fields = (
+            'id',
+            'person',
+            'organisation',
+        )
+
+
 class OffenceSerializer(serializers.ModelSerializer):
     location = LocationSerializer(read_only=True)
     alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
+    offenders = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Offence
@@ -49,11 +63,15 @@ class OffenceSerializer(serializers.ModelSerializer):
             'details',
             'location',
             'alleged_offences',
+            'offenders',
         )
         read_only_fields = (
 
         )
 
+    def get_offenders(self, obj):
+        offenders = Offender.active_offenders.filter(offence__exact=obj)
+        return [ OffenderSerializer(offender).data for offender in offenders ]
 
 class SaveOffenceSerializer(serializers.ModelSerializer):
     location_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)

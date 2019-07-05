@@ -26,6 +26,13 @@ class OffenceViewSet(viewsets.ModelViewSet):
             return Offence.objects.all()
         return Offence.objects.none()
 
+    @list_route(methods=['GET', ])
+    def filter_by_call_email(self, request, *args, **kwargs):
+        call_email_id = self.request.query_params.get('call_email_id', None)
+        queryset = self.get_queryset().filter(call_email_id__exact=call_email_id)
+
+        serializer = OffenceSerializer(queryset, many=True)
+        return Response(serializer.data)
 
     @list_route(methods=['POST', ])
     def offence_save(self, request, *args, **kwargs):
