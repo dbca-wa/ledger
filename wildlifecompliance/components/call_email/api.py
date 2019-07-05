@@ -30,7 +30,6 @@ from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
 from rest_framework.pagination import PageNumberPagination
-from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.core.cache import cache
 from ledger.accounts.models import EmailUser, Address
@@ -97,6 +96,114 @@ from rest_framework_datatables.renderers import DatatablesRenderer
 
 from wildlifecompliance.components.call_email.email import (
     send_call_email_forward_email)
+
+
+class CallEmailFilterBackend(DatatablesFilterBackend):
+
+    def filter_queryset(self, request, queryset, view):
+        #import ipdb; ipdb.set_trace()
+        # Get built-in DRF datatables queryset first to join with search text, then apply additional filters
+        # super_queryset = super(CallEmailFilterBackend, self).filter_queryset(request, queryset, view).distinct()
+
+        # total_count = queryset.count()
+        status_filter = request.GET.get('status_description')
+        classification_filter = request.GET.get('classification_description')
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        search_text = request.GET.get('search[value]')
+
+        if search_text:
+            search_text = search_text.lower()
+            search_text_callemail_ids = []
+            for call_email in queryset:
+                #lodged_on_str = time.strftime('%d/%m/%Y', call_email.lodged_on)
+                lodged_on_str = call_email.lodged_on.strftime('%d/%m/%Y')
+                if (search_text in (call_email.number.lower() if call_email.number else '')
+                    or search_text in (call_email.status.lower() if call_email.status else '')
+                    or search_text in (call_email.classification.name.lower() if call_email.classification else '')
+                    or search_text in (lodged_on_str.lower() if lodged_on_str else '')
+                    or search_text in (call_email.caller.lower() if call_email.caller else '')
+                    or search_text in (
+                        call_email.assigned_to.first_name.lower() + ' ' + call_email.assigned_to.last_name.lower()
+                        if call_email.assigned_to else ''
+                        )
+                    ):
+                    search_text_callemail_ids.append(call_email.id)
+
+            # use pipe to join both custom and built-in DRF datatables querysets (returned by super call above)
+            # (otherwise they will filter on top of each other)
+            #_queryset = queryset.filter(id__in=search_text_callemail_ids).distinct() | super_queryset
+            # BB 20190704 - is super_queryset necessary?
+            queryset = queryset.filter(id__in=search_text_callemail_ids)
+
+        status_filter = status_filter.lower() if status_filter else 'all'
+        if status_filter != 'all':
+            status_filter_callemail_ids = []
+            for call_email in queryset:
+                if status_filter == call_email.get_status_display().lower():
+                    status_filter_callemail_ids.append(call_email.id)
+            queryset = queryset.filter(id__in=status_filter_callemail_ids)
+        classification_filter = classification_filter.lower() if classification_filter else 'all'
+        if classification_filter != 'all':
+            classification_filter_callemail_ids = []
+            for call_email in queryset:
+                if classification_filter in call_email.classification.name.lower() if call_email.classification else '':
+                    classification_filter_callemail_ids.append(call_email.id)
+            queryset = queryset.filter(id__in=classification_filter_callemail_ids)
+
+        if date_from:
+            queryset = queryset.filter(lodged_on__gte=date_from)
+        if date_to:
+            date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
+            queryset = queryset.filter(lodged_on__lte=date_to)
+
+        # override queryset ordering, required because the ordering is usually handled
+        # in the super call, but is then clobbered by the custom queryset joining above
+        # also needed to disable ordering for all fields for which data is not an
+        # CallEmail model field, as property functions will not work with order_by
+        
+        # getter = request.query_params.get
+        # fields = self.get_fields(getter)
+        # ordering = self.get_ordering(getter, fields)
+        # if len(ordering):
+          #  queryset = queryset.order_by(*ordering)
+
+        #setattr(view, '_datatables_total_count', total_count)
+        return queryset
+
+
+class CallEmailRenderer(DatatablesRenderer):
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        if 'view' in renderer_context and hasattr(renderer_context['view'], '_datatables_total_count'):
+            data['recordsTotal'] = renderer_context['view']._datatables_total_count
+        return super(CallEmailRenderer, self).render(data, accepted_media_type, renderer_context)
+
+
+class CallEmailPaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (CallEmailFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (CallEmailRenderer,)
+    queryset = CallEmail.objects.none()
+    serializer_class = CallEmailDatatableSerializer
+    page_size = 10
+    
+    def get_queryset(self):
+        # import ipdb; ipdb.set_trace()
+        user = self.request.user
+        if is_internal(self.request):
+            return CallEmail.objects.all()
+        return CallEmail.objects.none()
+
+    @list_route(methods=['GET', ])
+    def get_paginated_datatable(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = CallEmailDatatableSerializer(
+            result_page, many=True, context={'request': request})
+        return self.paginator.get_paginated_response(serializer.data)
 
 
 class CallEmailViewSet(viewsets.ModelViewSet):
@@ -695,8 +802,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                             ComplianceUserAction.ACTION_SANCTION_OUTCOME.format(instance.number), 
                             request)
 
-                #instance.region_id = request.data.get('region_id')
-                #instance.district_id = request.data.get('district_id')
+                instance.region_id = None if request.data.get('region_id') =='null' else request.data.get('region_id')
+                instance.district_id = None if request.data.get('district_id') == 'null' else request.data.get('district_id')
                 #instance.allocated_group_id = request.data.get('allocated_group_id')
                 if request.data.get('referrers_selected'):
                     referrers_selected = request.data.get('referrers_selected').split(",")
@@ -712,6 +819,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                             instance.referrer.add(referrer)
                 print("referrers")
                 print(instance.referrer.all())
+
+                instance.assigned_to_id = None if request.data.get('assigned_to_id') == 'null' else request.data.get('assigned_to_id')
+                instance.inspection_type_id = None if request.data.get('inspection_type_id') == 'null' else request.data.get('inspection_type_id')
+                instance.case_priority_id = None if request.data.get('case_priority_id') == 'null' else request.data.get('case_priority_id')
+                instance.allocated_group_id = None if request.data.get('allocated_group_id') == 'null' else request.data.get('allocated_group_id')
+
                 #if not workflow_type == 'allocate_for_follow_up':
                  #   instance.assigned_to_id = None
                 instance.save()
@@ -754,17 +867,10 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
 
             if request.data.get('current_user'):
-                  serializer = UpdateAssignedToIdSerializer(
+                serializer = UpdateAssignedToIdSerializer(
                         instance=instance,
                         data={
                             'assigned_to_id': request.user.id,
-                            }
-                        )
-            elif request.data.get('blank'):
-                  serializer = UpdateAssignedToIdSerializer(
-                        instance=instance,
-                        data={
-                            'assigned_to_id': None,
                             }
                         )
             else:

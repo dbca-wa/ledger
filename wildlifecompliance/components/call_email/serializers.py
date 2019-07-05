@@ -368,6 +368,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
     can_user_action = serializers.SerializerMethodField()
     can_user_edit_form = serializers.SerializerMethodField()
     can_user_search_person = serializers.SerializerMethodField()
+    user_is_volunteer = serializers.SerializerMethodField()
 
 
     class Meta:
@@ -415,6 +416,7 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'can_user_action',
             'can_user_edit_form',
             'can_user_search_person',
+            'user_is_volunteer',
         )
         read_only_fields = (
             'id', 
@@ -505,43 +507,48 @@ class CallEmailSerializer(serializers.ModelSerializer):
         else:
             return False
 
+    def get_user_is_volunteer(self, obj):
+        user = EmailUser.objects.get(id=self.context.get('request', {}).user.id)
+        for group in user.groups.all():
+            for permission in group.permissions.all():
+                if permission.codename == 'volunteer':
+                    return True
+        # return false if 'volunteer' is not a permission of any group the user belongs to
+        return False
+
 
 class CallEmailDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     classification = ClassificationSerializer(read_only=True)
-    lodgement_date = serializers.CharField(source='lodged_on')
+    #lodgement_date = serializers.CharField(source='lodged_on')
     user_is_assignee = serializers.SerializerMethodField()
     assigned_to = ComplianceUserDetailsOptimisedSerializer(read_only=True)
     user_action = serializers.SerializerMethodField()
+    user_is_volunteer = serializers.SerializerMethodField()
 
     class Meta:
         model = CallEmail
         fields = (
             'id',
             'status',
-            # 'status_display',
             'user_is_assignee',
             'classification',
             'classification_id',
-            'lodgement_date',
+            'lodged_on',
             'number',
             'caller',
             'assigned_to',
             'assigned_to_id',
-            'user_action'
+            'user_action',
+            'user_is_volunteer',
 
         )
         read_only_fields = (
             'id', 
             )
-
+        
     def get_user_is_assignee(self, obj):
-        # user = EmailUser.objects.get(id=self.context.get('request', {}).user.id)
         user_id = self.context.get('request', {}).user.id
-        # compliance_permissions = []
-        # for group in user.groups.all():
-          #  for permission in group.permissions.all():
-           #     compliance_permissions.append(permission.codename)
         if user_id == obj.assigned_to_id:
             return True
 
@@ -565,6 +572,15 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
             returned_url = view_url
 
         return returned_url
+    
+    def get_user_is_volunteer(self, obj):
+        user = EmailUser.objects.get(id=self.context.get('request', {}).user.id)
+        for group in user.groups.all():
+            for permission in group.permissions.all():
+                if permission.codename == 'volunteer':
+                    return True
+        # return false if 'volunteer' is not a permission of any group the user belongs to
+        return False
 
 
 class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
@@ -698,3 +714,4 @@ class MapLayerSerializer(serializers.ModelSerializer):
             'display_name',
             'layer_name',
         )
+
