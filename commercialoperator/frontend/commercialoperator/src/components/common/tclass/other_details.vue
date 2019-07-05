@@ -126,7 +126,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <span><a @click="addMooring()" target="_blank" class="control-label pull-left" v-if="!proposal.readonly">Add another mooring</a></span>
+                                    <span><a @click="addMooring()" target="_blank" class="control-label pull-left" v-if="!proposal.readonly" style="cursor: pointer;">Add another mooring</a></span>
                                 </div>   
                             </div>
                         </div>

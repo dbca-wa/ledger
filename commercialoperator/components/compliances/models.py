@@ -100,9 +100,16 @@ class Compliance(RevisionedMixin):
     @property
     def can_user_view(self):
         """
-        :return: True if the application is in one of the editable status.
+        :return: True if the compliance is not in the editable status for external user.
         """
         return self.customer_status == 'with_assessor' or self.customer_status == 'approved'
+
+    @property
+    def can_process(self):
+        """
+        :return: True if the compliance is ready for assessment.
+        """
+        return self.processing_status == 'with_assessor'
 
 
     @property

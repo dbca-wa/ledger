@@ -75,7 +75,32 @@
                   </div>
               </div>
               <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">
-                <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand" :canEditActivities="canEditActivities" ref="activities_land"></ActivitiesLand>
+
+				<div class="row">
+                  <div class="col-md-6">
+                    <div class="row">
+                      <div class="panel panel-default">
+                        <div class="panel-heading">
+                          Panel 1
+                        </div>
+                        <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand1" :canEditActivities="canEditActivities" ref="activities_land"></ActivitiesLand>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="row">
+                      <div class="panel panel-default">
+                        <div class="panel-heading">
+                          Panel 2
+                        </div>
+                        <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand2" :canEditActivities="canEditActivities" ref="activities_land2"></ActivitiesLand>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!--<ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand" :canEditActivities="canEditActivities" ref="activities_land"></ActivitiesLand>-->
               </div>
               <div class="tab-pane fade" id="pills-activities-marine" role="tabpanel" aria-labelledby="pills-activities-marine-tab">
                 <ActivitiesMarine :proposal="proposal" id="proposalStartActivitiesMarine" :canEditActivities="canEditActivities" ref="activities_marine"></ActivitiesMarine>
@@ -242,5 +267,10 @@
       border: 1px solid #888888;
     }
 
+	.admin > div {
+	  display: inline-block;
+	  vertical-align: top;
+	  margin-right: 1em;
+	}
 </style>
 

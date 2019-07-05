@@ -1,7 +1,7 @@
 <template lang="html">
     <div>
         <div class="form-group">
-            <label :id="id" for="label" class="inline" >{{ label }}</label>
+            <label :id="id" for="label" class="inline"  v-if="label">{{ label }}</label>
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>

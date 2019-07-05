@@ -37,6 +37,7 @@ from commercialoperator.components.compliances.models import (
 )
 from commercialoperator.components.compliances.serializers import (
     ComplianceSerializer,
+    InternalComplianceSerializer,
     SaveComplianceSerializer,
     ComplianceActionSerializer,
     ComplianceCommsSerializer,
@@ -138,6 +139,12 @@ class ComplianceViewSet(viewsets.ModelViewSet):
         )
         return Response(data)
 
+    @detail_route(methods=['GET',])
+    def internal_compliance(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = InternalComplianceSerializer(instance,context={'request':request})
+        return Response(serializer.data)
+
 
 #    @list_route(methods=['GET',])
 #    def compliances_paginated(self, request, *args, **kwargs):
@@ -217,7 +224,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             instance.assign_to(request.user,request)
-            serializer = ComplianceSerializer(instance)
+            serializer = InternalComplianceSerializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -260,7 +267,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
             except EmailUser.DoesNotExist:
                 raise serializers.ValidationError('A user with the id passed in does not exist')
             instance.assign_to(user,request)
-            serializer = ComplianceSerializer(instance)
+            serializer = InternalComplianceSerializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -277,7 +284,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             instance.unassign(request)
-            serializer = (instance)
+            serializer = InternalComplianceSerializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -294,7 +301,7 @@ class ComplianceViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             instance.accept(request)
-            serializer = ComplianceSerializer(instance)
+            serializer = InternalComplianceSerializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
