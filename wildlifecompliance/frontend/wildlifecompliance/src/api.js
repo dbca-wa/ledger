@@ -26,7 +26,7 @@ module.exports = {
   licences: "/api/licences/",
   call_email: "/api/call_email/",
   offence: "/api/offence/",
-  sanction_outcome: "/api/sanction_outcome",
+  sanction_outcome: "/api/sanction_outcome/",
   classification: "/api/classification/",
   report_types: "/api/report_types/",
   referrers: "/api/referrers/",
