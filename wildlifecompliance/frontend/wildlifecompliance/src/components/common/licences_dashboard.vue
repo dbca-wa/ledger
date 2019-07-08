@@ -190,7 +190,7 @@ export default {
                                 if (full.can_add_purpose){
                                     links += `<a add-activity-purpose='${full.id}' org-id='${org_id}' proxy-id='${proxy_id}' licence-category-id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
                                 }
-                                if (!vm.is_external && full.can_action['can_renew']) {
+                                if (full.can_action['can_renew']) {
                                     links += `<a renew-licence='${full.id}'>Renew</a><br/>`
                                 }
                                 if (!vm.is_external && full.can_action['can_reactivate_renew']) {
@@ -358,6 +358,27 @@ export default {
                         vm.setApplyLicenceSelect({licence_select: 'amend_activity'});
                         var licence_category_id = $(this).attr('licence-category-id');
                         var licence_activity_id = $(this).attr('amend-activity');
+                        vm.setApplyProxyId({id: $(this).attr('proxy-id')});
+                        vm.setApplyOrgId({id: $(this).attr('org-id')});
+                        vm.routeApplyLicence(licence_category_id, licence_activity_id);
+                    }
+                },(error) => {
+                });
+            });
+            // Renew licence listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[renew-licence]', function(e) {
+                e.preventDefault();
+                swal({
+                    title: "Renew Licence",
+                    text: "Are you sure you want to renew all current activities and purposes for this licence?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        vm.setApplyLicenceSelect({licence_select: 'renew_activity'});
+                        var licence_category_id = $(this).attr('licence-category-id');
+                        var licence_activity_id = null;
                         vm.setApplyProxyId({id: $(this).attr('proxy-id')});
                         vm.setApplyOrgId({id: $(this).attr('org-id')});
                         vm.routeApplyLicence(licence_category_id, licence_activity_id);
