@@ -2284,10 +2284,12 @@ class ApplicationSelectedActivity(models.Model):
         ).exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED).count() > 0
 
         # can_renew is true if the activity can be included in a Renewal Application
+        # Extra exclude for SUSPENDED due to get_current_activities_for_application_type
+        # intentionally not excluding these as part of the default queryset
         can_action['can_renew'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
             Application.APPLICATION_TYPE_RENEWAL,
             activity_ids=[self.id]
-        ).count() > 0
+        ).exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED).count() > 0
 
         # can_reactivate_renew is true if the activity has expired, excluding if it was surrendered or cancelled
         can_action['can_reactivate_renew'] = ApplicationSelectedActivity.objects.filter(
