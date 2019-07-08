@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from wildlifecompliance.components.offence.serializers import SectionRegulationSerializer
-from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome
+from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
 
 
 class SanctionOutcomeSerializer(serializers.ModelSerializer):
@@ -47,4 +47,17 @@ class SaveSanctionOutcomeSerializer(serializers.ModelSerializer):
             'description',
             'date_of_issue',
             'time_of_issue',
+        )
+
+
+class SaveRemediationActionSerializer(serializers.ModelSerializer):
+    sanction_outcome_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+
+    class Meta:
+        model = RemediationAction
+        fields = (
+            'id',
+            'action',
+            'due_data',
+            'sanction_outcome_id',
         )

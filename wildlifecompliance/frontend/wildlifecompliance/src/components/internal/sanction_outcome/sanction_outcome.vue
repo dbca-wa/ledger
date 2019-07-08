@@ -139,6 +139,45 @@
 
                         <div :id="aTab" class="tab-pane fade in"><div class="row">
 
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-3">
+                                    <label class="control-label pull-left">Action</label>
+                                </div>
+                                <div class="col-sm-7">
+                                    <textarea class="form-control" placeholder="add description" id="sanction-outcome-description" v-model="current_remediation_action.action" />
+                                </div>
+                            </div></div>
+
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-3">
+                                    <label class="control-label pull-left">Due Date</label>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="input-group date" ref="dueDatePicker">
+                                        <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="current_remediation_action.due_date" />
+                                        <span class="input-group-addon">
+                                            <span class="glyphicon glyphicon-calendar"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div></div>
+
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-12">
+                                    <input type="button" class="btn btn-primary pull-right" value="Add" @click.prevent="addRemediationActionClicked()" />
+                                </div>
+                            </div></div>
+
+                            <div class="col-sm-12 form-group">
+                                <div class="row col-sm-12">
+                                    <label class="control-label pull-left">Remediation Actions</label>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <datatable ref="tbl_remediation_actions" id="tbl_remediation_actions" :dtOptions="dtOptionsRemediationActions" :dtHeaders="dtHeadersRemediationActions" />
+                                    </div>
+                                </div>
+                            </div>
 
                         </div></div>
 
@@ -222,16 +261,22 @@ export default {
         // region: null,
         // district: null,
         identifier: "",
-        current_offence: null,        // Store an offence to be saved as an attribute of the sanction outcome
+        current_offence: {},        // Store an offence to be saved as an attribute of the sanction outcome
                                       // The offenders and the alleged_offences under this offence object are used
                                       // to construct a dropdown list for the offenders and the alleged offences datatable
-        current_offender: null,       // Store an offender to be saved as an attribute of the sanction outcome
+        current_offender: {},       // Store an offender to be saved as an attribute of the sanction outcome
         issued_on_paper: false,
         paper_id: '',
         // document: null,
         description: '',
         date_of_issue: null,
         time_of_issue: null,
+
+        remediation_actions: []
+      },
+      current_remediation_action: {
+          action: '',
+          due_date: null
       },
 
       // List for dropdown
@@ -267,17 +312,34 @@ export default {
             }
           }
         ],
-        // columnDefs: [{
-        //   'targets': 4,
-        //   'checkboxes': {
-        //     'selectRow': true
-        //   },
-        //   'render': function(data, type, row){
-        //     data = '<input type="checkbox" />';
-        //     return data;
-        //   }
-        // }],
-        // 'select': 'multi',
+      },
+      dtHeadersRemediationActions: [
+        "id",
+        "Due Date",
+        "Action",
+        "Action"
+      ],
+      dtOptionsRemediationActions: {
+        columns: [
+          {
+            data: "id",
+            visible: false
+          },
+          {
+            data: "due_date"
+          },
+          {
+            data: "action_text"
+          },
+          {
+            data: "action",
+            mRender: function(data, type, row) {
+              return (
+                '<a href="#" class="remove_button" data-remediation-action-id="' + row.id + '">Remove</a>'
+              );
+            }
+          }
+        ],
       }
     };
   },
@@ -354,39 +416,71 @@ export default {
     close: function() {
       this.isModalOpen = false;
     },
-    // addDatatableClickEvent: function() {
-    //   // Clear existing events in case there are.  
-    //   // Otherwise multiple click events are raised by a single click.
-    //   $('#tbl_alleged_offence').off('click');
-    //   $('#tbl_alleged_offence').on('click', 'tbody tr td', function(e){
-    //       let elem_a = e.target.getElementsByClassName('remove_button');
-    //       if (elem_a.length > 0){
-    //         let alleged_offence_id = elem_a[0].getAttribute('data-alleged-offence-id');
-    //         console.log('alleged_offence_id clicked: ' + alleged_offence_id);
-    //       }
-    //   })
-    // },
+    addRemediationActionClicked: function() {
+      let vm = this;
+      if (vm.current_remediation_action){
+        vm.$refs.tbl_remediation_actions.vmDataTable.row
+          .add({
+            id: helpers.guid(),
+            due_date: vm.current_remediation_action.due_date,
+            action_text: vm.current_remediation_action.action,
+          })
+          .draw();
+        vm.current_remediation_action.action = '';
+        vm.current_remediation_action.due_date = null;
+      }
+    },
     addEventListeners: function() {
       let vm = this;
-      let el_fr_date = $(vm.$refs.dateOfIssuePicker);
-      let el_fr_time = $(vm.$refs.timeOfIssuePicker);
+      let el_issue_date = $(vm.$refs.dateOfIssuePicker);
+      let el_due_date = $(vm.$refs.dueDatePicker);
+      let el_issue_time = $(vm.$refs.timeOfIssuePicker);
 
-      // "Date" field
-      el_fr_date.datetimepicker({ format: "DD/MM/YYYY", maxDate: "now", showClear: true });
-      el_fr_date.on("dp.change", function(e) {
-        if (el_fr_date.data("DateTimePicker").date()) {
+      // Issue "Date" field
+      el_issue_date.datetimepicker({ format: "DD/MM/YYYY", maxDate: "now", showClear: true });
+      el_issue_date.on("dp.change", function(e) {
+        if (el_issue_date.data("DateTimePicker").date()) {
           vm.sanction_outcome.date_of_issue = e.date.format("DD/MM/YYYY");
-        } else if (el_fr_date.data("date") === "") {
+        } else if (el_issue_date.data("date") === "") {
           vm.sanction_outcome.date_of_issue = "";
         }
       });
-      // "Time" field
-      el_fr_time.datetimepicker({ format: "LT", showClear: true });
-      el_fr_time.on("dp.change", function(e) {
-        if (el_fr_time.data("DateTimePicker").date()) {
+
+      // Issue "Time" field
+      el_issue_time.datetimepicker({ format: "LT", showClear: true });
+      el_issue_time.on("dp.change", function(e) {
+        if (el_issue_time.data("DateTimePicker").date()) {
           vm.sanction_outcome.time_of_issue = e.date.format("LT");
-        } else if (el_fr_time.data("date") === "") {
+        } else if (el_issue_time.data("date") === "") {
           vm.sanction_outcome.time_of_issue = "";
+        }
+      });
+
+      // Due "Date" field
+      el_due_date.datetimepicker({ format: "DD/MM/YYYY", maxDate: "now", showClear: true });
+      el_due_date.on("dp.change", function(e) {
+        if (el_due_date.data("DateTimePicker").date()) {
+          vm.current_remediation_action.due_date = e.date.format("DD/MM/YYYY");
+        } else if (el_due_date.data("date") === "") {
+          vm.current_remediation_action.due_date = "";
+        }
+      });
+
+      $("#tbl_remediation_actions").on(
+        "click",
+        ".remove_button",
+        vm.removeClicked
+      );
+    },
+    removeClicked: function(e) {
+      let vm = this;
+      let remediationActionId = e.target.getAttribute("data-remediation-action-id");
+      vm.$refs.tbl_remediation_actions.vmDataTable.rows(function(idx, data, node) {
+        if (data.id === remediationActionId) {
+          vm.$refs.tbl_remediation_actions.vmDataTable
+            .row(idx)
+            .remove()
+            .draw();
         }
       });
     },
@@ -401,7 +495,7 @@ export default {
         }
       }
       // User selected the empty line
-      vm.sanction_outcome.current_offence = null;
+      vm.sanction_outcome.current_offence = {};
     },
     offenderSelected: function(e) {
       let vm = this;
@@ -414,7 +508,7 @@ export default {
         }
       }
       // User selected the empty line
-      vm.sanction_outcome.current_offender = null;
+      vm.sanction_outcome.current_offender = {};
     },
     typeSelected: function(e) {
       this.sanction_outcome.type= e.target.value;
@@ -431,7 +525,6 @@ export default {
 
       try{
           let fetchUrl = helpers.add_endpoint_json(api_endpoints.sanction_outcome, 'sanction_outcome_save');
-          console.log(fetchUrl);
 
           let payload = new Object();
           Object.assign(payload, vm.sanction_outcome);
@@ -440,6 +533,14 @@ export default {
           }
           payload.alleged_offence_ids_included = alleged_offence_ids;
 
+          // Retrieve remediation actions and set them to the payload
+          let remediation_actions = vm.$refs.tbl_remediation_actions.vmDataTable.rows().data().toArray();
+          payload.remediation_actions = remediation_actions
+          for (let i=0; i<payload.remediation_actions.length; i++) {
+            payload.remediation_actions[i].due_date = moment(payload.remediation_actions[i].due_date, 'DD/MM/YYYY').format('YYYY-MM-DD');
+          }
+
+          console.log(payload);
           const savedObj = await Vue.http.post(fetchUrl, payload);
           await swal("Saved", "The record has been saved", "success");
       } catch (err) {
@@ -457,7 +558,7 @@ export default {
       console.log('currentOffenceChanged');
       let vm = this;
 
-      vm.sanction_outcome.current_offender = null;
+      vm.sanction_outcome.current_offender = {};
 
       // The dropdown list of the offenders are directly linked to the vm.sanction_outcome.offence.offenders.
       // That's why the dropdown list is updated automatically whenever vm.sanction_outcome.offence is chanaged.

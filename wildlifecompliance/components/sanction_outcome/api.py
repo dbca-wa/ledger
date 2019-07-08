@@ -8,9 +8,9 @@ from django.http import HttpResponse
 from rest_framework import viewsets, serializers
 from rest_framework.decorators import list_route
 
-from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome
+from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
 from wildlifecompliance.components.sanction_outcome.serializers import SanctionOutcomeSerializer, \
-    SaveSanctionOutcomeSerializer
+    SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer
 from wildlifecompliance.helpers import is_internal
 
 
@@ -38,9 +38,13 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 res_json = {}
+
                 request_data = request.data
-                request_data['offence_id'] = request_data['current_offence']['id']
-                request_data['offender_id'] = request_data['current_offender']['id']
+                # request_data['offence_id'] = request_data['current_offence']['id']
+                # request_data['offender_id'] = request_data['current_offender']['id']
+
+                request_data['offence_id'] = request_data.get('current_offence', {}).get('id', None);
+                request_data['offender_id'] = request_data.get('current_offender', {}).get('id', None);
 
                 # Save sanction outcome (offence, offender, alleged_offences)
                 serializer = SaveSanctionOutcomeSerializer(data=request_data)
@@ -50,8 +54,13 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 # Save sanction outcome document, and link to the sanction outcome
 
                 # Save remediation action, and link to the sanction outcome
+                for dict in request_data['remediation_actions']:
+                    dict['sanction_outcome_id'] = saved_obj.id
+                    remediation_action = SaveRemediationActionSerializer(data=dict)
+                    if remediation_action.is_valid(raise_exception=True):
+                        remediation_action.save()
 
-                # Load sanction outcome
+                # Load sanction outcome?
 
                 # Return
                 return HttpResponse(res_json, content_type='application/json')
