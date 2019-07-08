@@ -306,9 +306,13 @@ export const callemailStore = {
                 Object.assign(payload, state.call_email);
                 if (payload.occurrence_date_from) {
                     payload.occurrence_date_from = moment(payload.occurrence_date_from).format('YYYY-MM-DD');
+                } else if (payload.occurrence_date_from === '') {
+                    payload.occurrence_date_from = null;
                 }
                 if (payload.occurrence_date_to) {
                     payload.occurrence_date_to = moment(payload.occurrence_date_to).format('YYYY-MM-DD');
+                } else if (payload.occurrence_date_to === '') {
+                    payload.occurrence_date_to = null;
                 }
                 if (crud == 'duplicate') {
                     payload.id = null;
