@@ -27,9 +27,11 @@
                                     <label class="control-label pull-left">Region</label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <div v-show="sanction_outcome">
-                                        <select></select>
-                                    </div>
+                                  <select class="form-control col-sm-9" @change.prevent="updateDistricts()" v-model="sanction_outcome.region_id">
+                                    <option  v-for="option in regions" :value="option.id" v-bind:key="option.id">
+                                      {{ option.display_name }} 
+                                    </option>
+                                  </select>
                                 </div>
                             </div></div>
 
@@ -38,9 +40,11 @@
                                     <label class="control-label pull-left">District</label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <div v-show="sanction_outcome">
-                                        <select></select>
-                                    </div>
+                                  <select class="form-control" @change.prevent="updateAllocatedGroup()" v-model="sanction_outcome.district_id">
+                                    <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
+                                      {{ option.display_name }} 
+                                    </option>
+                                  </select>
                                 </div>
                             </div></div>
 
@@ -255,11 +259,15 @@ export default {
       isModalOpen: false,
       processingDetails: false,
 
+      regionDistricts: [],
+      regions: [],
+      availableDistricts: [],
+
       // This is the object to be sent to the server when saving
       sanction_outcome: {
         type: "",
-        // region: null,
-        // district: null,
+        region_id: null,
+        district_id: null,
         identifier: "",
         current_offence: {},        // Store an offence to be saved as an attribute of the sanction outcome
                                       // The offenders and the alleged_offences under this offence object are used
@@ -430,6 +438,34 @@ export default {
         vm.current_remediation_action.due_date = null;
       }
     },
+    updateDistricts: function() {
+      this.sanction_outcome.district_id = null;
+      this.availableDistricts = [];
+      for (let record of this.regionDistricts) {
+        if (this.sanction_outcome.region_id === (record.id)) {
+          for (let district of record.districts) {
+            for (let district_record of this.regionDistricts) {
+              if (district_record.id === district) {
+                this.availableDistricts.push(district_record)
+              }
+            }
+          }
+        }
+      }
+      this.availableDistricts.splice(0, 0, 
+      {
+        id: "", 
+        display_name: "",
+        district: "",
+        districts: [],
+        region: null,
+      });
+      // ensure security group members list is up to date
+      // this.updateAllocatedGroup();
+    },
+    updateAllocatedGroup: function() {
+
+    },
     addEventListeners: function() {
       let vm = this;
       let el_issue_date = $(vm.$refs.dateOfIssuePicker);
@@ -512,6 +548,25 @@ export default {
     },
     typeSelected: function(e) {
       this.sanction_outcome.type= e.target.value;
+    },
+    constructRegionsAndDistricts: async function() {
+        let returned_regions = await cache_helper.getSetCacheList('CallEmail_Regions', '/api/region_district/get_regions/');
+        Object.assign(this.regions, returned_regions);
+        // blank entry allows user to clear selection
+        this.regions.splice(0, 0, 
+            {
+              id: "", 
+              display_name: "",
+              district: "",
+              districts: [],
+              region: null,
+            });
+        // regionDistricts
+        let returned_region_districts = await cache_helper.getSetCacheList(
+            'CallEmail_RegionDistricts', 
+            api_endpoints.region_district
+            );
+        Object.assign(this.regionDistricts, returned_region_districts);
     },
     sendData: async function() {
       let vm = this;
@@ -604,6 +659,7 @@ export default {
       vm.options_for_types.push(options_for_types[i]);
     }
     vm.updateOptionsForOffences(vm.call_email.id);
+    vm.constructRegionsAndDistricts();
   },
   mounted: function() {
     this.$nextTick(() => {

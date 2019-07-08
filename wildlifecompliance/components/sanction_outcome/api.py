@@ -46,6 +46,10 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 request_data['offence_id'] = request_data.get('current_offence', {}).get('id', None);
                 request_data['offender_id'] = request_data.get('current_offender', {}).get('id', None);
 
+                # region district
+                request_data['region_id'] = None if request.data.get('region_id') =='null' else request.data.get('region_id')
+                request_data['district_id'] = None if request.data.get('district_id') == 'null' else request.data.get('district_id')
+
                 # Save sanction outcome (offence, offender, alleged_offences)
                 serializer = SaveSanctionOutcomeSerializer(data=request_data)
                 serializer.is_valid(raise_exception=True)
