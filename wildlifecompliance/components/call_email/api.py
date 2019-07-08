@@ -51,7 +51,7 @@ from wildlifecompliance.components.call_email.models import (
     ComplianceFormDataRecord,
     ReportType,
     Referrer,
-    ComplianceUserAction,
+    CallEmailUserAction,
     MapLayer,
     CasePriority,
     InspectionType,
@@ -61,9 +61,9 @@ from wildlifecompliance.components.call_email.serializers import (
     CallEmailSerializer,
     ClassificationSerializer,
     ComplianceFormDataRecordSerializer,
-    ComplianceLogEntrySerializer,
+    CallEmailLogEntrySerializer,
     LocationSerializer,
-    ComplianceUserActionSerializer,
+    CallEmailUserActionSerializer,
     LocationSerializer,
     ReportTypeSerializer,
     SaveCallEmailSerializer,
@@ -75,7 +75,7 @@ from wildlifecompliance.components.call_email.serializers import (
     EmailUserSerializer,
     SaveEmailUserSerializer,
     MapLayerSerializer,
-    ComplianceWorkflowLogEntrySerializer,
+    #ComplianceWorkflowLogEntrySerializer,
     CallEmailDatatableSerializer,
     SaveUserAddressSerializer,
     InspectionTypeSerializer,
@@ -333,7 +333,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     document.name))  # to allow revision to be added to reversion history
 
             elif action == 'save' and 'input_name' in request.data and 'filename' in request.data:
-                application_id = request.data.get('application_id')
+                call_email_id = request.data.get('call_email_id')
                 filename = request.data.get('filename')
                 _file = request.data.get('_file')
                 if not _file:
@@ -341,10 +341,13 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
                 document = instance.documents.get_or_create(
                     input_name=section, name=filename)[0]
-                path = default_storage.save(
-                    'applications/{}/documents/{}'.format(
-                        application_id, filename), ContentFile(
-                        _file.read()))
+                if request.data.get('save_to_path'):
+                    path = instance.update_compliance_doc_filename(request.data.get('filename'))
+                else:
+                    path = default_storage.save(
+                        'call_email/{}/documents/{}'.format(
+                            call_email_id, filename), ContentFile(
+                            _file.read()))
 
                 document._file = path
                 document.save()
@@ -379,7 +382,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             qs = instance.action_logs.all()
-            serializer = ComplianceUserActionSerializer(qs, many=True)
+            serializer = CallEmailUserActionSerializer(qs, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -396,8 +399,44 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             qs = instance.comms_logs.all()
-            serializer = ComplianceLogEntrySerializer(qs, many=True)
+            serializer = CallEmailLogEntrySerializer(qs, many=True)
             return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+    
+    @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
+    def add_comms_log(self, request, workflow=False, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                instance = self.get_object()
+                request.data['call_email'] = u'{}'.format(instance.id)
+                print(request.data)
+                # request.data['staff'] = u'{}'.format(request.user.id)
+                serializer = CallEmailLogEntrySerializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                comms = serializer.save()
+                # Save the files
+                for f in request.FILES:
+                    document = comms.documents.create()
+                    print("filename")
+                    print(str(request.FILES[f]))
+                    document.name = str(request.FILES[f])
+                    document._file = request.FILES[f]
+                    document.save()
+                # End Save Documents
+
+                if workflow:
+                    return comms
+                else:
+                    return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -410,14 +449,14 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
-    def add_comms_log(self, request, workflow=False, *args, **kwargs):
+    def add_comms_log_documents(self, request, workflow=False, *args, **kwargs):
         try:
             with transaction.atomic():
                 instance = self.get_object()
                 request.data['call_email'] = u'{}'.format(instance.id)
                 print(request.data)
                 # request.data['staff'] = u'{}'.format(request.user.id)
-                serializer = ComplianceLogEntrySerializer(data=request.data)
+                serializer = CallEmailLogEntrySerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
                 comms = serializer.save()
                 # Save the files
@@ -682,7 +721,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 if serializer.is_valid():
                     saved_instance = serializer.save()
                     instance.log_user_action(
-                        ComplianceUserAction.ACTION_SAVE_CALL_EMAIL_.format(
+                        CallEmailUserAction.ACTION_SAVE_CALL_EMAIL_.format(
                         instance.number), request)
                     headers = self.get_success_headers(serializer.data)
                     return_serializer = CallEmailSerializer(instance=saved_instance, context={'request': request})
@@ -707,7 +746,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             qs = instance.workflow_logs.all()
-            serializer = ComplianceWorkflowLogEntrySerializer(qs, many=True)
+            serializer = CallEmailWorkflowLogEntrySerializer(qs, many=True)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -761,45 +800,45 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     instance.status = 'open'
                     if workflow_type == 'forward_to_regions':
                         instance.log_user_action(
-                            ComplianceUserAction.ACTION_FORWARD_TO_REGIONS.format(instance.number), 
+                            CallEmailUserAction.ACTION_FORWARD_TO_REGIONS.format(instance.number), 
                             request)
                     else:
                         instance.log_user_action(
-                                ComplianceUserAction.ACTION_FORWARD_TO_WILDLIFE_PROTECTION_BRANCH.format(instance.number),
+                                CallEmailUserAction.ACTION_FORWARD_TO_WILDLIFE_PROTECTION_BRANCH.format(instance.number),
                                 request)
 
                 elif workflow_type == 'allocate_for_follow_up':
                     instance.status = 'open_followup'
                     instance.log_user_action(
-                            ComplianceUserAction.ACTION_ALLOCATE_FOR_FOLLOWUP.format(instance.number), 
+                            CallEmailUserAction.ACTION_ALLOCATE_FOR_FOLLOWUP.format(instance.number), 
                             request)
 
                 elif workflow_type == 'allocate_for_inspection':
                     instance.status = 'open_inspection'
                     instance.log_user_action(
-                            ComplianceUserAction.ACTION_ALLOCATE_FOR_INSPECTION.format(instance.number), 
+                            CallEmailUserAction.ACTION_ALLOCATE_FOR_INSPECTION.format(instance.number), 
                             request)
 
                 elif workflow_type == 'allocate_for_case':
                     instance.status = 'open_case'
                     instance.log_user_action(
-                            ComplianceUserAction.ACTION_ALLOCATE_FOR_CASE.format(instance.number), 
+                            CallEmailUserAction.ACTION_ALLOCATE_FOR_CASE.format(instance.number), 
                             request)
 
                 elif workflow_type == 'close':
                     instance.status = 'closed'
                     instance.log_user_action(
-                            ComplianceUserAction.ACTION_CLOSE.format(instance.number), 
+                            CallEmailUserAction.ACTION_CLOSE.format(instance.number), 
                             request)
 
                 elif workflow_type == 'offence':
                     instance.log_user_action(
-                            ComplianceUserAction.ACTION_OFFENCE.format(instance.number), 
+                            CallEmailUserAction.ACTION_OFFENCE.format(instance.number), 
                             request)
                     
                 elif workflow_type == 'sanction_outcome':
                     instance.log_user_action(
-                            ComplianceUserAction.ACTION_SANCTION_OUTCOME.format(instance.number), 
+                            CallEmailUserAction.ACTION_SANCTION_OUTCOME.format(instance.number), 
                             request)
 
                 instance.region_id = None if request.data.get('region_id') =='null' else request.data.get('region_id')
@@ -837,7 +876,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 workflow_entry,
                 request)
 
-                serializer = ComplianceLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
+                serializer = CallEmailLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
                     serializer.save()
@@ -1047,3 +1086,4 @@ class MapLayerViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return MapLayer.objects.filter(availability__exact=True)
         return MapLayer.objects.none()
+

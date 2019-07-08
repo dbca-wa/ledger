@@ -16,16 +16,27 @@ from wildlifecompliance.components.users.models import RegionDistrict, Complianc
 logger = logging.getLogger(__name__)
 
 def update_compliance_doc_filename(instance, filename):
+    #return 'wildlifecompliance/compliance/{}/documents/{}'.format(
+        #instance.call_email.id, filename)
+    pass
+
+def update_call_email_doc_filename(instance, filename):
     return 'wildlifecompliance/compliance/{}/documents/{}'.format(
         instance.call_email.id, filename)
 
 def update_compliance_comms_log_filename(instance, filename):
+    #return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
+        #instance.log_entry.call_email.id, instance.id, filename)
+    pass
+
+def update_call_email_comms_log_filename(instance, filename):
     return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
         instance.log_entry.call_email.id, instance.id, filename)
 
 def update_compliance_workflow_log_filename(instance, filename):
-    return 'wildlifecompliance/compliance/{}/workflow/{}/{}'.format(
-        instance.workflow.call_email.id, instance.id, filename)
+    #return 'wildlifecompliance/compliance/{}/workflow/{}/{}'.format(
+        #instance.workflow.call_email.id, instance.id, filename)
+    pass
 
 
 class Classification(models.Model):
@@ -276,7 +287,7 @@ class CallEmail(RevisionedMixin):
             return self.report_type.schema
     
     def log_user_action(self, action, request):
-        return ComplianceUserAction.log_action(self, action, request.user)
+        return CallEmailUserAction.log_action(self, action, request.user)
 
     # @property
     # def related_items(self):
@@ -399,9 +410,9 @@ class ComplianceFormDataRecord(models.Model):
             form_data_record.save()
 
 
-class ComplianceDocument(Document):
+class CallEmailDocument(Document):
     call_email = models.ForeignKey('CallEmail', related_name='documents')
-    _file = models.FileField(upload_to=update_compliance_doc_filename)
+    _file = models.FileField(upload_to=update_call_email_doc_filename)
     input_name = models.CharField(max_length=255, blank=True, null=True)
     # after initial submit prevent document from being deleted
     can_delete = models.BooleanField(default=True)
@@ -409,7 +420,7 @@ class ComplianceDocument(Document):
 
     def delete(self):
         if self.can_delete:
-            return super(ComplianceDocument, self).delete()
+            return super(CallEmailDocument, self).delete()
         logger.info(
             'Cannot delete existing document object after application has been submitted (including document submitted before\
             application pushback to status Draft): {}'.format(
@@ -420,24 +431,24 @@ class ComplianceDocument(Document):
         app_label = 'wildlifecompliance'
 
 
-class ComplianceLogDocument(Document):
+class CollEmailLogDocument(Document):
     log_entry = models.ForeignKey(
-        'ComplianceLogEntry',
+        'CallEmailLogEntry',
         related_name='documents')
-    _file = models.FileField(upload_to=update_compliance_comms_log_filename)
+    _file = models.FileField(upload_to=update_call_email_comms_log_filename)
 
     class Meta:
         app_label = 'wildlifecompliance'
 
 
-class ComplianceLogEntry(CommunicationsLogEntry):
+class CallEmailLogEntry(CommunicationsLogEntry):
     call_email = models.ForeignKey(CallEmail, related_name='comms_logs')
 
     class Meta:
         app_label = 'wildlifecompliance'
 
 
-class ComplianceUserAction(UserAction):
+class CallEmailUserAction(UserAction):
     ACTION_SAVE_CALL_EMAIL_ = "Save Call/Email {}"
     ACTION_FORWARD_TO_REGIONS = "Forward Call/Email {} to regions"
     ACTION_FORWARD_TO_WILDLIFE_PROTECTION_BRANCH = "Forward Call/Email {} to Wildlife Protection Branch"
@@ -463,33 +474,3 @@ class ComplianceUserAction(UserAction):
 
     call_email = models.ForeignKey(CallEmail, related_name='action_logs')
 
-
-class ComplianceWorkflowDocument(Document):
-    workflow = models.ForeignKey('ComplianceWorkflowLogEntry', related_name='documents', null=True)
-    _file = models.FileField(upload_to=update_compliance_workflow_log_filename)
-    input_name = models.CharField(max_length=255, null=True, blank=True)
-    # after initial submit prevent document from being deleted
-    can_delete = models.BooleanField(default=True)
-
-    def delete(self):
-        if self.can_delete:
-            return super(ComplianceWorkflowDocument, self).delete()
-        logger.info(
-            'Cannot delete existing document object after application has been submitted (including document submitted before\
-            application pushback to status Draft): {}'.format(
-                self.name)
-        )
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
-
-class ComplianceWorkflowLogEntry(models.Model):
-    call_email = models.ForeignKey(CallEmail, related_name='workflow_logs', null=True)
-    region = models.ForeignKey(RegionDistrict, related_name='callemail_workflow_region', null=True)
-    district = models.ForeignKey(RegionDistrict, related_name='callemail_workflow_district', null=True)
-    details = models.TextField(blank=True)
-    created = models.DateTimeField(auto_now_add=True, null=False, blank=False)
-
-    class Meta:
-        app_label = 'wildlifecompliance'
