@@ -31,6 +31,7 @@ from django.db.models import Q
 from reversion.models import Version
 from dirtyfields import DirtyFieldsMixin
 from decimal import Decimal as D
+import csv
 
 import logging
 logger = logging.getLogger(__name__)
@@ -3166,6 +3167,72 @@ class HelpPage(models.Model):
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('application_type', 'help_type', 'version')
+
+def migrate_approval(data):
+    from commercialoperator.components.approvals.models import Approval
+    org_applicant = None
+    proxy_applicant = None
+    submitter=None
+    try:
+        #import ipdb; ipdb.set_trace()
+        
+        if data['submitter']:
+            submitter = EmailUser.objects.get(email__icontains=data['submitter'])
+            if data['org_applicant']:
+                org_applicant = Organisation.objects.get(id=data['org_applicant'])
+        else:
+            ValidationError('Licence holder is required')
+    except:
+        raise ValidationError('Licence holder is required')
+    start_date = datetime.datetime.strptime(data['start_date'], '%d/%m/%Y')
+    issue_date = datetime.datetime.strptime(data['issue_date'], '%d/%m/%Y')
+    expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d/%m/%Y')
+    application_type=ApplicationType.objects.get(id=data['application_type'])
+    application_name = application_type.name
+            # Get most recent versions of the Proposal Types
+    qs_proposal_type = ProposalType.objects.all().order_by('name', '-version').distinct('name')
+    proposal_type = qs_proposal_type.get(name=application_name)
+    proposal= Proposal.objects.create( # Dummy 'T Class' proposal
+                    application_type=application_type,
+                    submitter=submitter, 
+                    org_applicant=org_applicant,
+                    schema=proposal_type.schema
+                )
+    approval = Approval.objects.create(
+                    issue_date=issue_date,
+                    expiry_date=expiry_date,
+                    start_date=start_date,
+                    org_applicant=org_applicant,
+                    submitter= submitter,
+                    current_proposal=proposal
+                )
+    proposal.approval= approval
+    approval.save()
+    return approval
+
+def create_migration_data(filename):
+    try:
+        '''
+        Example csv
+        org_applicant, submitter, start_date, issue_date, expiry_date, application_type
+        '2', 'prerana.andure@dbca.wa.gov.au', '4/07/2019', '4/07/2019', '10/07/2019', 1
+        '''
+        data={}
+        with open(filename) as csvfile:
+            reader = csv.reader(csvfile, delimiter=str(','))
+            for row in reader:
+                data.update({'org_applicant': row[0]})
+                data.update({'submitter': row[1]})
+                data.update({'start_date': row[2]})
+                data.update({'issue_date': row[3]})
+                data.update({'expiry_date': row[4]})
+                data.update({'application_type': 1})
+            print data
+            approval=migrate_approval(data)
+            print approval
+    except:
+        raise
+    
 
 
 import reversion
