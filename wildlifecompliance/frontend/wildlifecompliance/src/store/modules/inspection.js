@@ -23,6 +23,12 @@ export const inspectionStore = {
             Vue.set(state, 'inspection', {
                 ...inspection
             });
+            if (state.inspection.planned_for_date) {
+                state.inspection.planned_for_date = moment(state.inspection.planned_for_date, 'YYYY-MM-DD').format('DD/MM/YYYY');
+            }
+        },
+        updatePlannedForTime(state, time) {
+            Vue.set(state.inspection, 'planned_for_time', time);
         },
         
     },
@@ -62,7 +68,9 @@ export const inspectionStore = {
                 let payload = {};
                 Object.assign(payload, state.inspection);
                 if (payload.planned_for_date) {
-                    payload.planned_for_date = moment(payload.planned_for_date).format('YYYY-MM-DD');
+                    payload.planned_for_date = moment(payload.planned_for_date, 'DD/MM/YYYY').format('YYYY-MM-DD');
+                } else if (payload.planned_for_date === '') {
+                    payload.planned_for_date = null;
                 }
                 if (crud == 'duplicate') {
                     payload.id = null;
@@ -105,6 +113,9 @@ export const inspectionStore = {
         
         setInspection({ commit, }, inspection) {
             commit("updateInspection", inspection);
+        },
+        setPlannedForTime({ commit }, time ) {
+            commit("updatePlannedForTime", time);
         },
     },
 };

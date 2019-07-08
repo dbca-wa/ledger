@@ -169,6 +169,7 @@ class InspectionViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def inspection_save(self, request, workflow=False, *args, **kwargs):
+        print(request.data)
         try:
             with transaction.atomic():
                 instance = self.get_object()

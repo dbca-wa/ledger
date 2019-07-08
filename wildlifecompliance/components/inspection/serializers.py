@@ -36,7 +36,9 @@ class SaveInspectionSerializer(serializers.ModelSerializer):
         model = Inspection
         fields = (
                 'title',
-                'details'
+                'details',
+                'planned_for_date',
+                'planned_for_time',
                 )
 
 #class SaveInspectionSerializer(serializers.ModelSerializer):

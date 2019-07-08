@@ -41,6 +41,29 @@
                               <label class="col-sm-12">Details</label>
                             <textarea :readonly="readonlyForm" class="form-control" v-model="inspection.details"/>
                             </div></div>
+
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <label class="col-sm-3">Planned for (Date)</label>
+                                <div class="col-sm-3">
+                                    <div class="input-group date" ref="plannedForDatePicker">
+                                        <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="inspection.planned_for_date" />
+                                        <span class="input-group-addon">
+                                            <span class="glyphicon glyphicon-calendar"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <label class="col-sm-3">Planned for (Time)</label>
+                                <div class="col-sm-3">
+                                    <div class="input-group date" id="plannedForTimePicker">
+                                      <input :disabled="readonlyForm" type="text" class="form-control" placeholder="HH:MM" v-model="inspection.planned_for_time"/>
+                                      <span class="input-group-addon">
+                                          <span class="glyphicon glyphicon-calendar"></span>
+                                      </span>
+                                    </div>
+                                </div>
+                            </div></div>
+              
                             
                             
                           </FormSection>
@@ -183,6 +206,7 @@ export default {
       loadInspection: 'loadInspection',
       saveInspection: 'saveInspection',
       setInspection: 'setInspection', 
+      setPlannedForTime: 'setPlannedForTime',
     }),
     
     updateWorkflowBindId: function() {
@@ -251,6 +275,33 @@ export default {
     duplicate: async function() {
       await this.saveInspection({ route: false, crud: 'duplicate'});
     },
+    addEventListeners: function() {
+      let vm = this;
+      let el_fr_date = $(vm.$refs.plannedForDatePicker);
+      let el_fr_time = $(vm.$refs.plannedForTimePicker);
+
+      // "From" field
+      el_fr_date.datetimepicker({
+        format: "DD/MM/YYYY",
+        maxDate: "now",
+        showClear: true
+      });
+      el_fr_date.on("dp.change", function(e) {
+        if (el_fr_date.data("DateTimePicker").date()) {
+          vm.inspection.planned_for_date = e.date.format("DD/MM/YYYY");
+        } else if (el_fr_date.data("date") === "") {
+          vm.inspection.planned_for_date = "";
+        }
+      });
+      el_fr_time.datetimepicker({ format: "LT", showClear: true });
+      el_fr_time.on("dp.change", function(e) {
+        if (el_fr_time.data("DateTimePicker").date()) {
+          vm.inspection.planned_for_time = e.date.format("LT");
+        } else if (el_fr_time.data("date") === "") {
+          vm.inspection.planned_for_time = "";
+        }
+      });
+    },
   },
   beforeRouteEnter: function(to, from, next) {
       console.log(to);
@@ -274,6 +325,18 @@ export default {
           window.setTimeout( function () {
               $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
           }, 100 );
+      });
+
+      // Time field controls
+      $('#occurrenceTimeStartPicker').datetimepicker({
+              format: 'LT'
+          });
+      $('#occurrenceTimeStartPicker').on('dp.change', function(e) {
+          vm.setPlannedForTime(e.date.format('LT'));
+      });
+      
+      this.$nextTick(() => {
+          this.addEventListeners();
       });
   }
 };
