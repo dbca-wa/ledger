@@ -3365,6 +3365,26 @@ class HelpPage(models.Model):
         app_label = 'commercialoperator'
         unique_together = ('application_type', 'help_type', 'version')
 
+def check_migrate_approval(data):
+    '''
+    check if all submitters/org_applicants exist
+    '''
+    from commercialoperator.components.approvals.models import Approval
+    org_applicant = None
+    proxy_applicant = None
+    submitter=None
+    try:
+        #import ipdb; ipdb.set_trace()
+
+        if data['submitter']:
+            submitter = EmailUser.objects.get(email__icontains=data['submitter'])
+            if data['org_applicant']:
+                org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
+        else:
+            ValidationError('Licence holder is required')
+    except:
+        raise ValidationError('Licence holder is required')
+
 def migrate_approval(data):
     from commercialoperator.components.approvals.models import Approval
     org_applicant = None
@@ -3376,15 +3396,16 @@ def migrate_approval(data):
         if data['submitter']:
             submitter = EmailUser.objects.get(email__icontains=data['submitter'])
             if data['org_applicant']:
-                org_applicant = Organisation.objects.get(id=data['org_applicant'])
+                org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
         else:
             ValidationError('Licence holder is required')
-    except:
-        raise ValidationError('Licence holder is required')
+    except Exception, e:
+        raise ValidationError('Licence holder is required: \n{}'.format(e))
+
     start_date = datetime.datetime.strptime(data['start_date'], '%d/%m/%Y')
     issue_date = datetime.datetime.strptime(data['issue_date'], '%d/%m/%Y')
     expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d/%m/%Y')
-    application_type=ApplicationType.objects.get(id=data['application_type'])
+    application_type=ApplicationType.objects.get(name=data['application_type'])
     application_name = application_type.name
             # Get most recent versions of the Proposal Types
     qs_proposal_type = ProposalType.objects.all().order_by('name', '-version').distinct('name')
@@ -3407,26 +3428,36 @@ def migrate_approval(data):
     approval.save()
     return approval
 
-def create_migration_data(filename):
+def create_migration_data(filename, verify=False):
     try:
         '''
         Example csv
         org_applicant, submitter, start_date, issue_date, expiry_date, application_type
-        '2', 'prerana.andure@dbca.wa.gov.au', '4/07/2019', '4/07/2019', '10/07/2019', 1
+        'Test Org1', 'prerana.andure@dbca.wa.gov.au', '4/07/2019', '4/07/2019', '10/07/2019', 'T Class'
+
+        To test:
+            from commercialoperator.components.proposals.models import create_migration_data
+            create_migration_data('commercialoperator/utils/csv/approvals.csv')
         '''
         data={}
         with open(filename) as csvfile:
             reader = csv.reader(csvfile, delimiter=str(','))
+            header = next(reader) # skip header
             for row in reader:
-                data.update({'org_applicant': row[0]})
-                data.update({'submitter': row[1]})
-                data.update({'start_date': row[2]})
-                data.update({'issue_date': row[3]})
-                data.update({'expiry_date': row[4]})
-                data.update({'application_type': 1})
-            print data
-            approval=migrate_approval(data)
-            print approval
+                #import ipdb; ipdb.set_trace()
+                data.update({'org_applicant': row[0].strip()})
+                data.update({'submitter': row[1].strip()})
+                data.update({'start_date': row[2].strip()})
+                data.update({'issue_date': row[3].strip()})
+                data.update({'expiry_date': row[4].strip()})
+                data.update({'application_type': row[5].strip()})
+                print data
+
+                if verify:
+                    approval=check_migrate_approval(data)
+                else:
+                    approval=migrate_approval(data)
+                print approval
     except:
         raise
 
