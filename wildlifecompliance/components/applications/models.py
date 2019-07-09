@@ -1559,7 +1559,7 @@ class Application(RevisionedMixin):
 
                 # If only a subset of the existing_activity's purposes are to be actioned,
                 # create new_activity for remaining purposes:
-                elif len(issued_activity_purposes) > len(remaining_purpose_ids_list) > 0:
+                elif remaining_purpose_ids_list:
                     existing_application = existing_activity.application
                     existing_activity_status = existing_activity.activity_status
                     new_copied_application = existing_application.copy_application_purposes_for_status(

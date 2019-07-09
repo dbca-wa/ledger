@@ -1061,6 +1061,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         from wildlifecompliance.components.licences.models import LicencePurpose
         try:
+            latest_active_application = None
             org_applicant = request.data.get('organisation_id')
             proxy_applicant = request.data.get('proxy_id')
             licence_purposes = request.data.get('licence_purposes')
