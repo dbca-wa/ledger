@@ -1852,6 +1852,10 @@ class Application(RevisionedMixin):
 
     @staticmethod
     def get_active_licence_applications(request, for_application_type=APPLICATION_TYPE_NEW_LICENCE):
+        '''
+        Returns a filtered list of applications for the user/proxy/org applicant where
+        application's selected activities are CURRENT
+        '''
         date_filter = Application.get_activity_date_filter(
             for_application_type, 'selected_activities__')
         return Application.get_request_user_applications(request).filter(
@@ -1860,7 +1864,7 @@ class Application(RevisionedMixin):
         ).distinct()
 
     @staticmethod
-    def get_open_applications(request, for_application_type=APPLICATION_TYPE_NEW_LICENCE):
+    def get_open_applications(request):
         return Application.get_request_user_applications(request).exclude(
             selected_activities__processing_status__in=[
                 ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
@@ -2229,8 +2233,9 @@ class ApplicationSelectedActivity(models.Model):
         max_digits=8, decimal_places=2, default='0')
 
     def __str__(self):
-        return "Application {id} Selected Activity: {activity_id}".format(
+        return "Application {id} Selected Activity: {short_name} ({activity_id})".format(
             id=self.application_id,
+            short_name=self.licence_activity.short_name,
             activity_id=self.licence_activity_id
         )
 

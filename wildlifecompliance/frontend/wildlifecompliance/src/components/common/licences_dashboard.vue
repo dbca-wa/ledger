@@ -190,8 +190,11 @@ export default {
                                 if (full.can_add_purpose){
                                     links += `<a add-activity-purpose='${full.id}' org-id='${org_id}' proxy-id='${proxy_id}' licence-category-id='${licence_category_id}'>Add Activity/Purpose</a><br/>`;
                                 }
+                                if (full.can_action['can_amend']) {
+                                    links += `<a amend-licence='${full.id}' org-id='${org_id}' proxy-id='${proxy_id}' licence-category-id='${licence_category_id}'>Amend</a><br/>`
+                                }
                                 if (full.can_action['can_renew']) {
-                                    links += `<a renew-licence='${full.id}'>Renew</a><br/>`
+                                    links += `<a renew-licence='${full.id}' org-id='${org_id}' proxy-id='${proxy_id}' licence-category-id='${licence_category_id}'>Renew</a><br/>`
                                 }
                                 if (!vm.is_external && full.can_action['can_reactivate_renew']) {
                                     links += `<a reactivate-renew-licence='${full.id}'>Reactivate Renew</a><br/>`
@@ -335,6 +338,27 @@ export default {
                 }).then((result) => {
                     if (result.value) {
                         vm.setApplyLicenceSelect({licence_select: 'new_activity'});
+                        var licence_category_id = $(this).attr('licence-category-id');
+                        var licence_activity_id = null;
+                        vm.setApplyProxyId({id: $(this).attr('proxy-id')});
+                        vm.setApplyOrgId({id: $(this).attr('org-id')});
+                        vm.routeApplyLicence(licence_category_id, licence_activity_id);
+                    }
+                },(error) => {
+                });
+            });
+            // Amend licence listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[amend-licence]', function(e) {
+                e.preventDefault();
+                swal({
+                    title: "Amend Licence",
+                    text: "Are you sure you want to amend all current activities and purposes for this licence?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        vm.setApplyLicenceSelect({licence_select: 'amend_activity'});
                         var licence_category_id = $(this).attr('licence-category-id');
                         var licence_activity_id = null;
                         vm.setApplyProxyId({id: $(this).attr('proxy-id')});
@@ -724,11 +748,13 @@ export default {
                 // Generate child row for application
                 // Get licence row data
                 var tr = $(this);
-                var licence_id = vm.$refs.licence_datatable.vmDataTable.row(tr).data().id;
-                var current_application = vm.$refs.licence_datatable.vmDataTable.row(tr).data().current_application
+                var row = vm.$refs.licence_datatable.vmDataTable.row(tr);
+                var row_data = row.data()
+                var licence_id = row_data.id;
+                var current_application = row_data.current_application
+                var licence_category_id = current_application.category_id ? current_application.category_id : "";
                 var proxy_id = current_application.proxy_applicant ? current_application.proxy_applicant.id : "";
                 var org_id = current_application.org_applicant ? current_application.org_applicant.id : "";
-                var row = vm.$refs.licence_datatable.vmDataTable.row(tr);
 
                 if (row.child.isShown()) {
                     // This row is already open - close it
@@ -750,11 +776,11 @@ export default {
                                 <td>`;
                                     if (activity['can_action']['can_amend']) {
                                         activity_rows +=
-                                            `<a amend-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Amend</a></br>`;
+                                            `<a amend-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}' licence-category-id='${licence_category_id}'>Amend</a></br>`;
                                     }
                                     if (activity['can_action']['can_renew']) {
                                         activity_rows +=
-                                            `<a renew-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Renew</a></br>`;
+                                            `<a renew-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}' licence-category-id='${licence_category_id}'>Renew</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_action']['can_reactivate_renew']) {
                                         activity_rows +=

@@ -624,7 +624,7 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
         licence_category_id = request.GET.get('licence_category')
         licence_activity_id = request.GET.get('licence_activity')
         active_applications = Application.get_active_licence_applications(request, application_type)
-        open_applications = Application.get_open_applications(request, application_type)
+        open_applications = Application.get_open_applications(request)
 
         # Exclude purposes in currently OPEN applications
         if open_applications:
