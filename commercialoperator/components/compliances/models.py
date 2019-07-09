@@ -223,7 +223,8 @@ class Compliance(RevisionedMixin):
 
 
 def update_proposal_complaince_filename(instance, filename):
-    return 'proposals/{}/compliance/{}/{}'.format(instance.compliance.proposal.id,instance.compliance.id,filename)
+    #return 'proposals/{}/compliance/{}/{}'.format(instance.compliance.proposal.id,instance.compliance.id,filename)
+    return 'proposals/{}/compliance/{}'.format(instance.compliance.proposal.id,filename)
 
 
 class ComplianceDocument(Document):
@@ -280,7 +281,8 @@ class ComplianceLogEntry(CommunicationsLogEntry):
         app_label = 'commercialoperator'
 
 def update_compliance_comms_log_filename(instance, filename):
-    return 'proposals/{}/compliance/{}/communications/{}/{}'.format(instance.log_entry.compliance.proposal.id,instance.log_entry.compliance.id,instance.id,filename)
+    #return 'proposals/{}/compliance/{}/communications/{}/{}'.format(instance.log_entry.compliance.proposal.id,instance.log_entry.compliance.id,instance.id,filename)
+    return 'proposals/{}/compliance/communications/{}'.format(instance.log_entry.compliance.proposal.id,filename)
 
 
 class ComplianceLogDocument(Document):
@@ -345,21 +347,6 @@ class ComplianceAmendmentRequest(CompRequest):
             applicant_field.log_user_action(ComplianceUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
             send_amendment_email_notification(self,request, compliance)
 
-
-def update_proposal_complaince_filename(instance, filename):
-    return 'proposals/{}/compliance/{}/{}'.format(instance.compliance.proposal.id,instance.compliance.id,filename)
-
-
-
-#import reversion
-#reversion.register(Compliance, follow=['documents', 'action_logs', 'comms_logs'])
-#reversion.register(ComplianceDocument)
-#reversion.register(ComplianceUserAction)
-#reversion.register(ComplianceLogEntry)
-#reversion.register(ComplianceLogDocument)
-#reversion.register(CompRequest)
-#reversion.register(ComplianceAmendmentReason)
-#reversion.register(ComplianceAmendmentRequest)
 
 import reversion
 reversion.register(Compliance, follow=['documents', 'action_logs', 'comms_logs', 'comprequest_set'])

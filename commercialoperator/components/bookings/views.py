@@ -151,6 +151,8 @@ class ApplicationFeeSuccessView(TemplateView):
 
         #import ipdb; ipdb.set_trace()
         if proposal.fee_paid:
+            #proposal.fee_invoice_reference = request.session.pop('checkout_invoice')
+            #proposal.save()
             #TODO must remove this ''if-block' - temp hack, the method is executing twice - need to FIX
             invoice = Invoice.objects.get(reference=proposal.fee_invoice_reference)
             try:

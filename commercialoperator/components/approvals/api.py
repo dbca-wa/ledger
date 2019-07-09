@@ -205,7 +205,8 @@ class ApprovalViewSet(viewsets.ModelViewSet):
 
                 document = instance.qaofficer_documents.get_or_create(input_name=section, name=filename)[0]
                 #path = default_storage.save('proposals/{}/qaofficer/{}'.format(proposal_id, filename), ContentFile(_file.read()))
-                path = default_storage.save('approvals/{}/documents/{}'.format(approval_id, filename), ContentFile(_file.read()))
+                #path = default_storage.save('approvals/{}/documents/{}'.format(approval_id, filename), ContentFile(_file.read()))
+                path = default_storage.save('proposals/{}/approvals/{}'.format(proposal_id, filename), ContentFile(_file.read()))
 
                 document._file = path
                 document.save()
@@ -279,66 +280,6 @@ class ApprovalViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
-
-#def update_approval_doc_filename(instance, filename):
-#    return 'approvals/{}/documents/{}'.format(instance.approval.id,filename)
-
-
-#    @list_route(methods=['GET',])
-#    def approvals_paginated(self, request, *args, **kwargs):
-#        """
-#        Paginated serializer for datatables - used by the external dashboard
-#
-#       To test:
-#           http://localhost:8000/api/approvals/approvals_paginated/?format=datatables&draw=1&length=2
-#        """
-#
-#        #import ipdb; ipdb.set_trace()
-#        qs = self.get_queryset().order_by('lodgement_number', '-issue_date')
-#        qs = ProposalFilterBackend().filter_queryset(self.request, qs, self)
-#        #qs = qs.order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
-#
-#        self.renderer_classes = (ProposalRenderer,)
-#        paginator = DatatablesPageNumberPagination()
-#        paginator.page_size = qs.count()
-#        result_page = paginator.paginate_queryset(qs, request)
-#        serializer = ApprovalSerializer(result_page, context={'request':request}, many=True)
-#        return paginator.get_paginated_response(serializer.data)
-
-
-#    @list_route(methods=['GET',])
-#    def user_list(self, request, *args, **kwargs):
-#        user_orgs = [org.id for org in request.user.commercialoperator_organisations.all()];
-#        qs = []
-#        #qs.extend(list(self.get_queryset().filter(submitter = request.user).exclude(processing_status='discarded').exclude(processing_status=Proposal.PROCESSING_STATUS_CHOICES[13][0])))
-#        #qs.extend(list(self.get_queryset().filter(applicant_id__in = user_orgs)))
-#        qset = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
-#        qs.extend(list(qset.filter(applicant_id__in = user_orgs)))
-#        queryset = list(set(qs))
-#        serializer = self.get_serializer(queryset, many=True)
-#        return Response(serializer.data)
-
-#    @list_route(methods=['GET',])
-#    def user_list(self, request, *args, **kwargs):
-#        queryset = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
-#        serializer = self.get_serializer(queryset, many=True)
-#        return Response(serializer.data)
-
-#    @list_route(methods=['GET',])
-#    def user_list_paginated(self, request, *args, **kwargs):
-#        """
-#        Placing Paginator class here (instead of settings.py) allows specific method for desired behaviour),
-#        otherwise all serializers will use the default pagination class
-#
-#        https://stackoverflow.com/questions/29128225/django-rest-framework-3-1-breaks-pagination-paginationserializer
-#        """
-#        queryset = self.get_queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
-#        paginator = DatatablesPageNumberPagination()
-#        paginator.page_size = queryset.count()
-#        result_page = paginator.paginate_queryset(queryset, request)
-#        #serializer = ListProposalSerializer(result_page, context={'request':request}, many=True)
-#        serializer = self.get_serializer(result_page, context={'request':request}, many=True)
-#        return paginator.get_paginated_response(serializer.data)
 
     @detail_route(methods=['POST',])
     def approval_extend(self, request, *args, **kwargs):
