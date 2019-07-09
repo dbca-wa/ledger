@@ -31,10 +31,12 @@ from commercialoperator.utils import search_keys, search_multiple_keys
 
 
 def update_approval_doc_filename(instance, filename):
-    return 'approvals/{}/documents/{}'.format(instance.approval.id,filename)
+    #return 'approvals/{}/documents/{}'.format(instance.approval.id,filename)
+    return 'proposals/{}/approvals/{}'.format(instance.approval.current_proposal.id,filename)
 
 def update_approval_comms_log_filename(instance, filename):
-    return 'approvals/{}/communications/{}/{}'.format(instance.log_entry.approval.id,instance.id,filename)
+    #return 'approvals/{}/communications/{}/{}'.format(instance.log_entry.approval.id,instance.id,filename)
+    return 'proposals/{}/approvals/communications/{}'.format(instance.log_entry.approval.current_proposal.id,filename)
 
 
 class ApprovalDocument(Document):
@@ -215,7 +217,7 @@ class Approval(RevisionedMixin):
         else:
             return False
 
-    
+
 
     @property
     def can_extend(self):

@@ -41,22 +41,27 @@ def update_proposal_doc_filename(instance, filename):
     return 'proposals/{}/documents/{}'.format(instance.proposal.id,filename)
 
 def update_onhold_doc_filename(instance, filename):
+    #return 'proposals/{}/on_hold/{}'.format(instance.proposal.id,filename)
     return 'proposals/{}/on_hold/{}'.format(instance.proposal.id,filename)
 
 def update_qaofficer_doc_filename(instance, filename):
     return 'proposals/{}/qaofficer/{}'.format(instance.proposal.id,filename)
 
 def update_referral_doc_filename(instance, filename):
-    return 'proposals/{}/referral/{}/documents/{}'.format(instance.referral.proposal.id,instance.referral.id,filename)
+    #return 'proposals/{}/referral/{}/documents/{}'.format(instance.referral.proposal.id,instance.referral.id,filename)
+    return 'proposals/{}/referral/{}'.format(instance.referral.proposal.id,filename)
 
 def update_proposal_required_doc_filename(instance, filename):
-    return 'proposals/{}/required_documents/{}/{}'.format(instance.proposal.id,instance.required_doc.id,filename)
+    #return 'proposals/{}/required_documents/{}/{}'.format(instance.proposal.id,instance.required_doc.id,filename)
+    return 'proposals/{}/required_documents/{}'.format(instance.proposal.id,filename)
 
 def update_requirement_doc_filename(instance, filename):
-    return 'proposals/{}/requirement_documents/{}/{}'.format(instance.requirement.proposal.id, instance.requirement.id,filename)
+    #return 'proposals/{}/requirement_documents/{}/{}'.format(instance.requirement.proposal.id, instance.requirement.id,filename)
+    return 'proposals/{}/requirement_documents/{}'.format(instance.requirement.proposal.id,filename)
 
 def update_proposal_comms_log_filename(instance, filename):
-    return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
+    #return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
+    return 'proposals/{}/communications/{}'.format(instance.log_entry.proposal.id,filename)
 
 def application_type_choicelist():
     try:
@@ -822,7 +827,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         search_data.update({'vehicles': vehicles})
         search_data.update({'vessels': vessels})
         search_data.update({'activities': activities})
-        
+
         try:
             other_details=ProposalOtherDetails.objects.get(proposal=self)
             search_data.update({'other_details': other_details.other_comments})
@@ -830,12 +835,12 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             for acr in other_details.accreditations.all():
                 accreditations.append(acr.get_accreditation_type_display())
             search_data.update({'accreditations': accreditations})
-        except ProposalOtherDetails.DoesNotExist:        
+        except ProposalOtherDetails.DoesNotExist:
             search_data.update({'other_details': []})
             search_data.update({'mooring': []})
             search_data.update({'accreditations':[]})
         return search_data
-    
+
 
     def __assessor_group(self):
         # TODO get list of assessor groups based on region and activity
@@ -1947,7 +1952,7 @@ class ProposalParkActivity(models.Model):
     @property
     def activity_name(self):
         return self.activity.name
-    
+
 
 #To store Park access_types related to Proposal T class land parks
 class ProposalParkAccess(models.Model):
@@ -2779,7 +2784,7 @@ class ProposalAssessment(RevisionedMixin):
 
     @property
     def referral_group_name(self):
-        if self.referral_group:            
+        if self.referral_group:
             return self.referral_group.name
         else:
             return ''
@@ -3037,7 +3042,15 @@ def clone_proposal_with_status_reset(proposal):
         try:
             original_proposal = copy.deepcopy(proposal)
             proposal = duplicate_object(proposal) # clone object and related objects
-    
+
+            # manually duplicate the comms logs -- hck, not hndled by duplicate object (maybe due to inheritance?)
+            proposal.comms_logs.create(text='cloning proposal reset (original proposal {}, new proposal {})'.format(original_proposal.id, proposal.id))
+            for comms_log in proposal.comms_logs.all():
+                comms_log.id=None
+                comms_log.communicationslogentry_ptr_id=None
+                comms_log.proposal_id=original_proposal.id
+                comms_log.save()
+
             # reset some properties
             proposal.customer_status = 'draft'
             proposal.processing_status = 'draft'
@@ -3062,18 +3075,70 @@ def clone_proposal_with_status_reset(proposal):
             raise
 
 def clone_documents(proposal, original_proposal, media_prefix):
+    for proposal_document in ProposalDocument.objects.filter(proposal_id=proposal.id):
+        proposal_document._file.name = u'proposals/{}/documents/{}'.format(proposal.id, proposal_document.name)
+        proposal_document.can_delete = True
+        proposal_document.save()
+
+    for proposal_required_document in ProposalRequiredDocument.objects.filter(proposal_id=proposal.id):
+        proposal_required_document._file.name = u'proposals/{}/required_documents/{}'.format(proposal.id, proposal_required_document.name)
+        proposal_required_document.can_delete = True
+        proposal_required_document.save()
+
+    for referral in proposal.referrals.all():
+        for referral_document in ReferralDocument.objects.filter(referral=referral):
+            referral_document._file.name = u'proposals/{}/referral/{}'.format(proposal.id, referral_document.name)
+            referral_document.can_delete = True
+            referral_document.save()
+
+    for qa_officer_document in QAOfficerDocument.objects.filter(proposal_id=proposal.id):
+        qa_officer_document._file.name = u'proposals/{}/qaofficer/{}'.format(proposal.id, qa_officer_document.name)
+        qa_officer_document.can_delete = True
+        qa_officer_document.save()
+
+    for onhold_document in OnHoldDocument.objects.filter(proposal_id=proposal.id):
+        onhold_document._file.name = u'proposals/{}/on_hold/{}'.format(proposal.id, onhold_document.name)
+        onhold_document.can_delete = True
+        onhold_document.save()
+
+    for requirement in proposal.requirements.all():
+        for requirement_document in RequirementDocument.objects.filter(requirement=requirement):
+            requirement_document._file.name = u'proposals/{}/requirement_documents/{}'.format(proposal.id, requirement_document.name)
+            requirement_document.can_delete = True
+            requirement_document.save()
+
+    for log_entry_document in ProposalLogDocument.objects.filter(log_entry__proposal_id=proposal.id):
+        log_entry_document._file.name = log_entry_document._file.name.replace(str(original_proposal.id), str(proposal.id))
+        log_entry_document.can_delete = True
+        log_entry_document.save()
+
+#    for log_entry in proposal.comms_logs.all():
+#        for log_entry_document in ProposalLogDocument.objects.filter(log_entry=log_entry):
+#            #log_entry_document.requirement = log_entry
+#            #log_entry_document.id = None
+#            #log_entry_document._file.name = u'proposals/{}/communications/{}/{}'.format(proposal.id, log_entry.id, log_entry_document.name)
+#            log_entry_document._file.name = u'proposals/{}/communications/{}'.format(proposal.id, log_entry_document.name)
+#            log_entry_document.can_delete = True
+#            log_entry_document.save()
+
+    # copy documents on file system and reset can_delete flag
+    subprocess.call('cp -pr {0}/proposals/{1} {0}/proposals/{2}'.format(media_prefix, original_proposal.id, proposal.id), shell=True)
+
+
+def _clone_documents(proposal, original_proposal, media_prefix):
     for proposal_document in ProposalDocument.objects.filter(proposal=original_proposal.id):
         proposal_document.proposal = proposal
         proposal_document.id = None
         proposal_document._file.name = u'proposals/{}/documents/{}'.format(proposal.id, proposal_document.name)
         proposal_document.can_delete = True
         proposal_document.save()
-    
+
     for referral in proposal.referrals.all():
         for referral_document in ReferralDocument.objects.filter(referral=referral):
             referral_document.referral = referral
             referral_document.id = None
-            referral_document._file.name = u'proposals/{}/referral/{}/documents/{}'.format(proposal.id, referral.id, referral_document.name)
+            #referral_document._file.name = u'proposals/{}/referral/{}/documents/{}'.format(proposal.id, referral.id, referral_document.name)
+            referral_document._file.name = u'proposals/{}/referral/{}'.format(proposal.id, referral_document.name)
             referral_document.can_delete = True
             referral_document.save()
 
@@ -3095,7 +3160,8 @@ def clone_documents(proposal, original_proposal, media_prefix):
         for requirement_document in RequirementDocument.objects.filter(requirement=requirement):
             requirement_document.requirement = requirement
             requirement_document.id = None
-            requirement_document._file.name = u'proposals/{}/requirement_documents/{}/{}'.format(proposal.id, requirement.id, requirement_document.name)
+            #requirement_document._file.name = u'proposals/{}/requirement_documents/{}/{}'.format(proposal.id, requirement.id, requirement_document.name)
+            requirement_document._file.name = u'proposals/{}/requirement_documents/{}'.format(proposal.id, requirement_document.name)
             requirement_document.can_delete = True
             requirement_document.save()
 
@@ -3103,10 +3169,10 @@ def clone_documents(proposal, original_proposal, media_prefix):
         for log_entry_document in ProposalLogDocument.objects.filter(log_entry=log_entry):
             log_entry_document.requirement = log_entry
             log_entry_document.id = None
-            log_entry_document._file.name = u'proposals/{}/communications/{}/{}'.format(proposal.id, log_entry.id, log_entry_document.name)
+            #log_entry_document._file.name = u'proposals/{}/communications/{}/{}'.format(proposal.id, log_entry.id, log_entry_document.name)
+            log_entry_document._file.name = u'proposals/{}/communications/{}'.format(proposal.id, log_entry_document.name)
             log_entry_document.can_delete = True
             log_entry_document.save()
-
 
     # copy documents on file system and reset can_delete flag
     subprocess.call('cp -pr {0}/proposals/{1} {0}/proposals/{2}'.format(media_prefix, original_proposal.id, proposal.id), shell=True)
@@ -3126,7 +3192,7 @@ def duplicate_object(self):
     relations_to_set = {}
     # Iterate through all the fields in the parent object looking for related fields
     for field in self._meta.get_fields():
-        if field.name in ['proposal', 'approval']: 
+        if field.name in ['proposal', 'approval']:
             print 'Continuing ...'
             pass
         elif field.one_to_many:
@@ -3183,8 +3249,9 @@ def duplicate_object(self):
                 print related_object_field
                 try:
                     related_object.save()
-                except:
-                    import ipdb; ipdb.set_trace()
+                except Exceptopn, e:
+                    logger.warn(e)
+                    #import ipdb; ipdb.set_trace()
 
                 text = str(related_object)
                 text = (text[:40] + '..') if len(text) > 40 else text
@@ -3305,7 +3372,7 @@ def migrate_approval(data):
     submitter=None
     try:
         #import ipdb; ipdb.set_trace()
-        
+
         if data['submitter']:
             submitter = EmailUser.objects.get(email__icontains=data['submitter'])
             if data['org_applicant']:
@@ -3324,7 +3391,7 @@ def migrate_approval(data):
     proposal_type = qs_proposal_type.get(name=application_name)
     proposal= Proposal.objects.create( # Dummy 'T Class' proposal
                     application_type=application_type,
-                    submitter=submitter, 
+                    submitter=submitter,
                     org_applicant=org_applicant,
                     schema=proposal_type.schema
                 )
@@ -3362,7 +3429,7 @@ def create_migration_data(filename):
             print approval
     except:
         raise
-    
+
 
 
 import reversion
