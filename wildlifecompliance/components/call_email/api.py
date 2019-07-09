@@ -105,7 +105,7 @@ class CallEmailFilterBackend(DatatablesFilterBackend):
         # Get built-in DRF datatables queryset first to join with search text, then apply additional filters
         # super_queryset = super(CallEmailFilterBackend, self).filter_queryset(request, queryset, view).distinct()
 
-        # total_count = queryset.count()
+        total_count = queryset.count()
         status_filter = request.GET.get('status_description')
         classification_filter = request.GET.get('classification_description')
         date_from = request.GET.get('date_from')
@@ -162,13 +162,14 @@ class CallEmailFilterBackend(DatatablesFilterBackend):
         # also needed to disable ordering for all fields for which data is not an
         # CallEmail model field, as property functions will not work with order_by
         
-        # getter = request.query_params.get
-        # fields = self.get_fields(getter)
-        # ordering = self.get_ordering(getter, fields)
-        # if len(ordering):
-          #  queryset = queryset.order_by(*ordering)
+        getter = request.query_params.get
+        fields = self.get_fields(getter)
+        ordering = self.get_ordering(getter, fields)
+        print(ordering)
+        if len(ordering):
+           queryset = queryset.order_by(*ordering)
 
-        #setattr(view, '_datatables_total_count', total_count)
+        setattr(view, '_datatables_total_count', total_count)
         return queryset
 
 
