@@ -1059,9 +1059,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
-        from wildlifecompliance.components.licences.models import LicencePurpose
+        from wildlifecompliance.components.licences.models import WildlifeLicence, LicencePurpose
         try:
-            latest_active_application = None
             org_applicant = request.data.get('organisation_id')
             proxy_applicant = request.data.get('proxy_id')
             licence_purposes = request.data.get('licence_purposes')
@@ -1079,7 +1078,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                     'Please select at least one purpose')
 
             with transaction.atomic():
-                # TODO: REFACTOR THIS TO USE LICENCE ID
+
                 licence_purposes_queryset = LicencePurpose.objects.filter(
                     id__in=licence_purposes
                 )
@@ -1091,7 +1090,17 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 active_applications = Application.get_active_licence_applications(request, application_type) \
                     .filter(licence_purposes__licence_category_id=licence_category.id) \
                     .order_by('-id')
-                latest_active_application = active_applications.first()
+                asa_accepted = ApplicationSelectedActivity.objects.filter(
+                    Q(application__org_applicant_id=org_applicant) if org_applicant else
+                    Q(application__proxy_applicant=proxy_applicant) if proxy_applicant else
+                    Q(application__submitter=request.user)
+                ).filter(
+                    processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
+                )
+                latest_active_licence = WildlifeLicence.objects.filter(
+                    licence_category_id=licence_category.id,
+                    current_application__in=asa_accepted.values_list('application_id', flat=True)
+                ).order_by('-id').first()
 
                 # Initial validation
                 if application_type in [
@@ -1099,7 +1108,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                     Application.APPLICATION_TYPE_RENEWAL,
                 ]:
                     # Check that at least one active application exists in this licence category for amendment/renewal
-                    if not latest_active_application:
+                    if not latest_active_licence:
                         raise serializers.ValidationError(
                             'Cannot create amendment application: active licence not found!')
 
@@ -1134,8 +1143,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                                 target_application, purpose_id)
 
                 # Set previous_application to the latest active application if exists
-                if latest_active_application:
-                    serializer.instance.previous_application_id = latest_active_application.id
+                if latest_active_licence:
+                    serializer.instance.previous_application_id = latest_active_licence.current_application.id
                     serializer.instance.save()
 
                 serializer.instance.update_dynamic_attributes()

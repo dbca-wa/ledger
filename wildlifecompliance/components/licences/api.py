@@ -182,15 +182,18 @@ class LicencePaginatedViewSet(viewsets.ModelViewSet):
         self.serializer_class = DTExternalWildlifeLicenceSerializer
         # Filter for WildlifeLicence objects that have a current application linked with an
         # ApplicationSelectedActivity that has been ACCEPTED
-        asa_accepted = ApplicationSelectedActivity.objects.filter(
-            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED)
         user_orgs = [
             org.id for org in request.user.wildlifecompliance_organisations.all()]
+        asa_accepted = ApplicationSelectedActivity.objects.filter(
+            Q(application__org_applicant_id__in=user_orgs) |
+            Q(application__proxy_applicant=request.user) |
+            Q(application__submitter=request.user)
+        ).filter(
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
+        )
         queryset = WildlifeLicence.objects.filter(
-            Q(current_application__org_applicant_id__in=user_orgs) |
-            Q(current_application__proxy_applicant=request.user) |
-            Q(current_application__submitter=request.user)
-        ).filter(current_application__in=asa_accepted.values_list('application_id', flat=True))
+            current_application__in=asa_accepted.values_list('application_id', flat=True)
+        )
         # Filter by org
         org_id = request.GET.get('org_id', None)
         if org_id:
