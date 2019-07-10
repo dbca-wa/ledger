@@ -3249,7 +3249,7 @@ def duplicate_object(self):
                 print related_object_field
                 try:
                     related_object.save()
-                except Exceptopn, e:
+                except Exception, e:
                     logger.warn(e)
                     #import ipdb; ipdb.set_trace()
 
