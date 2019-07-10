@@ -38,15 +38,13 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 res_json = {}
-
                 request_data = request.data
-                # request_data['offence_id'] = request_data['current_offence']['id']
-                # request_data['offender_id'] = request_data['current_offender']['id']
 
+                # offence and offender
                 request_data['offence_id'] = request_data.get('current_offence', {}).get('id', None);
                 request_data['offender_id'] = request_data.get('current_offender', {}).get('id', None);
 
-                # region district
+                # region and district
                 request_data['region_id'] = None if request.data.get('region_id') =='null' else request.data.get('region_id')
                 request_data['district_id'] = None if request.data.get('district_id') == 'null' else request.data.get('district_id')
 
@@ -65,6 +63,7 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                         remediation_action.save()
 
                 # Load sanction outcome?
+                #
 
                 # Return
                 return HttpResponse(res_json, content_type='application/json')

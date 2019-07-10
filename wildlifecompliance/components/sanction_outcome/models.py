@@ -1,9 +1,10 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.offence.models import Offence, Offender, SectionRegulation
-from wildlifecompliance.components.users.models import RegionDistrict
+from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 
 
 class SanctionOutcome(models.Model):
@@ -26,6 +27,9 @@ class SanctionOutcome(models.Model):
     paper_id = models.CharField(max_length=50, blank=True,)
 
     description = models.TextField(blank=True)
+
+    assigned_to = models.ForeignKey(EmailUser, related_name='sanction_outcome_assigned_to', null=True)
+    allocated_group = models.ForeignKey(CompliancePermissionGroup, related_name='sanction_outcome_allocated_group', null=True)
 
     # Only editable when issued on paper. Otherwise pre-filled with date/time when issuing electronically.
     date_of_issue = models.DateField(null=True, blank=True)
