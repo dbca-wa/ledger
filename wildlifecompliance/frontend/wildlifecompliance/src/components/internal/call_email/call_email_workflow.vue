@@ -110,7 +110,7 @@
                               <label class="control-label pull-left"  for="Name">Attachments</label>
                           </div>
                           <div class="col-sm-9">
-                              <template v-for="(f,i) in files">
+                              <!--template v-for="(f,i) in files">
                                   <div :class="'row top-buffer file-row-'+i">
                                       <div class="col-sm-4">
                                           <span v-if="f.file == null" class="btn btn-info btn-file pull-left">
@@ -128,7 +128,8 @@
                                       </div>
                                   </div>
                               </template>
-                              <a href="" @click.prevent="attachAnother"><i class="fa fa-lg fa-plus top-buffer-2x"></i></a>
+                              <a href="" @click.prevent="attachAnother"><i class="fa fa-lg fa-plus top-buffer-2x"></i></a-->
+                              <commslogfile label="mylabel" name="myfile" :isRepeatable="true" :documentActionUrl="documentActionUrl" :commsLogId="commsLogId"/>
                           </div>
                         </div>
                     </div>
@@ -157,6 +158,7 @@ import Vue from "vue";
 import modal from '@vue-utils/bootstrap-modal.vue';
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
+import commslogfile from '@/components/common/comms_log_file.vue';
 
 export default {
     name: "CallEmailWorking",
@@ -185,6 +187,7 @@ export default {
             advice_details: "",
             allocatedGroup: [],
             allocated_group_id: null,
+            commsLogId: null,
             files: [
                     {
                         'file': null,
@@ -195,6 +198,7 @@ export default {
     },
     components: {
       modal,
+      commslogfile,
     },
     props:{
           workflow_type: {
@@ -206,6 +210,12 @@ export default {
       ...mapGetters('callemailStore', {
         call_email: "call_email",
       }),
+      documentActionUrl: function() {
+          return helpers.add_endpoint_join(
+          api_endpoints.call_email,
+          this.call_email.id + "/process_comms_log_document/"
+          )
+      },
       regionVisibility: function() {
         if (!(this.workflow_type === 'forward_to_wildlife_protection_branch' || 
           this.workflow_type === 'close')
@@ -247,11 +257,9 @@ export default {
       },
       regionDistrictId: function() {
           if (this.district_id || this.region_id) {
-              console.log("local var");
               return this.district_id ? this.district_id : this.region_id;
           } else {
-                console.log("vuex");
-                return this.call_email.district_id ? this.call_email.district_id : this.call_email.region_id;
+              return null;
           }
       },
     },
@@ -480,6 +488,9 @@ export default {
               id: "", 
               name: "",
             });
+        // add call_email vuex region_id and district_id to local component
+        this.district_id = this.call_email.district_id;
+        this.region_id = this.call_email.region_id;
     },
     mounted: function() {
         this.form = document.forms.forwardForm;

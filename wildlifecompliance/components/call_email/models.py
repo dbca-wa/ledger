@@ -431,10 +431,12 @@ class CallEmailDocument(Document):
         app_label = 'wildlifecompliance'
 
 
-class CollEmailLogDocument(Document):
+class CallEmailLogDocument(Document):
     log_entry = models.ForeignKey(
         'CallEmailLogEntry',
         related_name='documents')
+    #input_name = models.CharField(max_length=255, blank=True, null=True)
+    #version_comment = models.CharField(max_length=255, blank=True, null=True)
     _file = models.FileField(upload_to=update_call_email_comms_log_filename)
 
     class Meta:

@@ -165,7 +165,6 @@ class CallEmailFilterBackend(DatatablesFilterBackend):
         getter = request.query_params.get
         fields = self.get_fields(getter)
         ordering = self.get_ordering(getter, fields)
-        print(ordering)
         if len(ordering):
            queryset = queryset.order_by(*ordering)
 
@@ -378,6 +377,80 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
+    def process_comms_log_document(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            action = request.data.get('action')
+            comms_log_id = request.data.get('comms_log_id')
+            #file_path = request.data.get('file_path')
+            #section = request.data.get('input_name')
+            #input_name = request.data.get('input_name')
+
+            if comms_log_id and comms_log_id is not 'null':
+                comms_instance = instance.comms_logs.get(id=comms_log_id)
+            else:
+                comms_instance = self.add_comms_log(request, workflow=True)
+            if action == 'list':
+                pass
+
+            elif comms_instance and action == 'delete' and 'document_id' in request.data:
+                document_id = request.data.get('document_id')
+                document = comms_instance.documents.get(id=document_id)
+
+                if document._file and os.path.isfile(
+                        document._file.path) and document.can_delete:
+                    os.remove(document._file.path)
+
+                document.delete()
+                comms_instance.save()
+                #comms_instance.save(version_comment='Approval File Deleted: {}'.format(
+                 #   document.name))  # to allow revision to be added to reversion history
+
+            elif comms_instance and action == 'save' and 'filename' in request.data:
+                # call_email_id = request.data.get('call_email_id')
+                filename = request.data.get('filename')
+                _file = request.data.get('_file')
+                if not _file:
+                    _file = request.data.get('_file')
+
+                document = comms_instance.documents.get_or_create(
+                    name=filename)[0]
+                path = default_storage.save(
+                    'call_email/{}/communications/documents/{}'.format(
+                        instance.id, filename), ContentFile(
+                        _file.read()))
+
+                document._file = path
+                document.save()
+                comms_instance.save()
+                # to allow revision to be added to reversion history
+                #comms_instance.save(
+                 #   version_comment='File Added: {}'.format(filename))
+
+            returned_file_data = [dict(
+                        file=d._file.url,
+                        id=d.id,
+                        name=d.name,
+                        ) for d in comms_instance.documents.all() if d._file]
+            
+            return Response(data={'filedata': returned_file_data,
+                    'comms_instance_id': comms_instance.id
+                    })
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     @detail_route(methods=['GET', ])
     def action_log(self, request, *args, **kwargs):
         try:
@@ -425,49 +498,14 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 comms = serializer.save()
                 # Save the files
-                for f in request.FILES:
-                    document = comms.documents.create()
-                    print("filename")
-                    print(str(request.FILES[f]))
-                    document.name = str(request.FILES[f])
-                    document._file = request.FILES[f]
-                    document.save()
-                # End Save Documents
-
-                if workflow:
-                    return comms
-                else:
-                    return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
-    @detail_route(methods=['POST', ])
-    @renderer_classes((JSONRenderer,))
-    def add_comms_log_documents(self, request, workflow=False, *args, **kwargs):
-        try:
-            with transaction.atomic():
-                instance = self.get_object()
-                request.data['call_email'] = u'{}'.format(instance.id)
-                print(request.data)
-                # request.data['staff'] = u'{}'.format(request.user.id)
-                serializer = CallEmailLogEntrySerializer(data=request.data)
-                serializer.is_valid(raise_exception=True)
-                comms = serializer.save()
-                # Save the files
-                for f in request.FILES:
-                    document = comms.documents.create()
-                    print("filename")
-                    print(str(request.FILES[f]))
-                    document.name = str(request.FILES[f])
-                    document._file = request.FILES[f]
-                    document.save()
+                #comms.process_comms_log_document(request)
+                # for f in request.FILES:
+                #     document = comms.documents.create()
+                #     print("filename")
+                #     print(str(request.FILES[f]))
+                #     document.name = str(request.FILES[f])
+                #     document._file = request.FILES[f]
+                #     document.save()
                 # End Save Documents
 
                 if workflow:

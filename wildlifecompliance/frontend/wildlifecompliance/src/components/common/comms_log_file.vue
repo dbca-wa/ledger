@@ -2,19 +2,19 @@
     <div>
         <div class="form-group">
             <label :id="id" :num_files="num_documents()">{{label}}</label>
-            <template v-if="help_text">
+            <!--template v-if="help_text">
                 <HelpText :help_text="help_text" />
-            </template>
+            </template-->
 
-            <template v-if="help_text_url">
+            <!--template v-if="help_text_url">
                 <HelpTextUrl :help_text_url="help_text_url" />
-            </template>
+            </template-->
 
-            <CommentBlock 
+            <!--CommentBlock 
                 :label="label"
                 :name="name"
                 :field_data="field_data"
-                />
+                /-->
 
             <div v-if="files">
                 <div v-for="v in documents">
@@ -32,7 +32,7 @@
             </div>
             <div v-if="!readonly" v-for="n in repeat">
                 <div v-if="isRepeatable || (!isRepeatable && num_documents()==0)">
-                    <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/>
+                    <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange"/>
                 </div>
             </div>
 
@@ -46,18 +46,19 @@ import {
   helpers
 }
 from '@/utils/hooks';
-import CommentBlock from './comment_block.vue';
-import HelpText from './help_text.vue';
+//import CommentBlock from './comment_block.vue';
+//import HelpText from './help_text.vue';
+import Vue from 'vue';
 import { mapGetters } from 'vuex';
 export default {
     props:{
-        call_email_id: null,
+        //application_id: null,
         name:String,
         label:String,
         id:String,
-        isRequired:String,
-        help_text:String,
-        field_data:Object,
+        //isRequired:String,
+        //help_text:String,
+        //field_data:Object,
         fileTypes:{
             default:function () {
                 var file_types = 
@@ -73,9 +74,9 @@ export default {
         },
         isRepeatable:Boolean,
         readonly:Boolean,
-        docsUrl: String,
+        documentActionUrl: String,
     },
-    components: {CommentBlock, HelpText},
+    //components: {CommentBlock, HelpText},
     data:function(){
         return {
             repeat:1,
@@ -84,18 +85,19 @@ export default {
             documents:[],
             filename:null,
             help_text_url:'',
+            commsLogId: null,
         }
     },
     computed: {
         csrf_token: function() {
             return helpers.getCookie('csrftoken')
         },
-        application_document_action: function() {
-          return (this.call_email_id) ? `/api/call_email/${this.call_email_id}/process_document/` : '';
-        },
-        value: function() {
-            return this.field_data.value;
-        }
+        //application_document_action: function() {
+          //return (this.application_id) ? `/api/application/${this.application_id}/process_document/` : '';
+        //},
+        //value: function() {
+          //  return this.field_data.value;
+       // }
     },
 
     methods:{
@@ -103,7 +105,7 @@ export default {
             let vm = this;
 
             vm.show_spinner = true;
-            if (vm.isRepeatable) {
+            if (vm.isRepeatable && e.target.files) {
                 let  el = $(e.target).attr('data-que');
                 let avail = $('input[name='+e.target.name+']');
                 avail = [...avail.map(id => {
@@ -140,41 +142,44 @@ export default {
 		*/
 
         get_documents: function() {
-            let vm = this;
 
             var formData = new FormData();
             formData.append('action', 'list');
-            formData.append('input_name', vm.name);
-            formData.append('csrfmiddlewaretoken', vm.csrf_token);
-            vm.$http.post(vm.application_document_action, formData)
+            if (this.commsLogId) {
+                formData.append('comms_log_id', this.commsLogId);
+            }
+            formData.append('input_name', this.name);
+            formData.append('csrfmiddlewaretoken', this.csrf_token);
+            Vue.http.post(this.documentActionUrl, formData)
                 .then(res=>{
-                    vm.documents = res.body;
+                    this.documents = res.body.filedata;
                     //console.log(vm.documents);
-                    vm.show_spinner = false;
+                    this.show_spinner = false;
                 });
 
         },
 
         delete_document: function(file) {
-            let vm = this;
-            vm.show_spinner = true;
+            this.show_spinner = true;
 
             var formData = new FormData();
             formData.append('action', 'delete');
+            if (this.commsLogId) {
+                formData.append('comms_log_id', this.commsLogId);
+            }
             formData.append('document_id', file.id);
-            formData.append('csrfmiddlewaretoken', vm.csrf_token);
+            formData.append('csrfmiddlewaretoken', this.csrf_token);
 
-            vm.$http.post(vm.application_document_action, formData)
+            Vue.http.post(this.documentActionUrl, formData)
                 .then(res=>{
-                    vm.documents = vm.get_documents()
+                    this.documents = this.get_documents()
                     //vm.documents = res.body;
-                    vm.show_spinner = false;
+                    this.show_spinner = false;
                 });
 
         },
         
         uploadFile(e){
-            let vm = this;
             let _file = null;
 
             if (e.target.files && e.target.files[0]) {
@@ -189,42 +194,42 @@ export default {
         },
 
         save_document: function(e) {
-            let vm = this; 
 
             var formData = new FormData();
             formData.append('action', 'save');
-            formData.append('call_email_id', vm.call_email_id);
-            formData.append('input_name', vm.name);
+            if (this.commsLogId) {
+                formData.append('comms_log_id', this.commsLogId);
+            }
+            formData.append('input_name', this.name);
             formData.append('filename', e.target.files[0].name);
-            formData.append('_file', vm.uploadFile(e));
-            formData.append('csrfmiddlewaretoken', vm.csrf_token);
+            formData.append('_file', this.uploadFile(e));
+            formData.append('csrfmiddlewaretoken', this.csrf_token);
 
-            vm.$http.post(vm.application_document_action, formData)
+            Vue.http.post(this.documentActionUrl, formData)
                 .then(res=>{
-                    vm.documents = res.body;
+                    this.documents = res.body.filedata;
+                    this.commsLogId = res.body.comms_instance_id;
                 },err=>{
                 });
 
         },
 
         num_documents: function() {
-            let vm = this;
-            if (vm.documents) {
-                return vm.documents.length;
+            if (this.documents) {
+                return this.documents.length;
             }
             return 0;
         },
     },
     mounted:function () {
-        let vm = this;
-        vm.documents = vm.get_documents();
-        if (vm.value) {
+        this.documents = this.get_documents();
+        if (this.value) {
             //vm.files = (Array.isArray(vm.value))? vm.value : [vm.value];
-            if (Array.isArray(vm.value)) {
-                vm.value;
+            if (Array.isArray(this.value)) {
+                this.value;
             } else {
-                var file_names = vm.value.replace(/ /g,'_').split(",")
-                vm.files = file_names.map(function( file_name ) { 
+                let file_names = this.value.replace(/ /g,'_').split(",")
+                this.files = file_names.map(function( file_name ) { 
                       return {name: file_name}; 
                 });
             }
