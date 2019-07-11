@@ -27,7 +27,7 @@
                                     <label class="control-label pull-left">Region</label>
                                 </div>
                                 <div class="col-sm-7">
-                                  <select class="form-control col-sm-9" @change.prevent="updateDistricts()" v-model="sanction_outcome.region_id">
+                                  <select class="form-control col-sm-9" @change.prevent="updateDistricts('updatefromUI')" v-model="sanction_outcome.region_id">
                                     <option  v-for="option in regions" :value="option.id" v-bind:key="option.id">
                                       {{ option.display_name }} 
                                     </option>
@@ -260,8 +260,8 @@ export default {
       processingDetails: false,
 
       regionDistricts: [],
-      regions: [],
-      availableDistricts: [],
+      regions: [],  // this is the list of options
+      availableDistricts: [],  // this is generated from the regionDistricts[] above 
 
       // This is the object to be sent to the server when saving
       sanction_outcome: {
@@ -356,6 +356,15 @@ export default {
     datatable,
   },
   watch: {
+      isModalOpen: {
+        handler: function(){
+          if(this.isModalOpen){
+            this.modalOpened();
+          } else {
+            this.modalClosed();
+          }
+        }
+      },
       current_offence: {
           handler: function (){
             this.currentOffenceChanged();
@@ -366,6 +375,16 @@ export default {
             this.currentOffenderChanged();
           },
       },
+      current_region_id: {
+          handler: function (){
+              this.currentRegionIdChanged();
+          }
+      },
+      current_district_id: {
+          handler: function (){
+              this.currentDistrictIdChanged();
+          }
+      }
   },
   computed: {
     ...mapGetters("callemailStore", {
@@ -379,6 +398,12 @@ export default {
     },
     current_offender: function() {
       return this.sanction_outcome.current_offender;
+    },
+    current_region_id: function() {
+      return this.sanction_outcome.region_id;
+    },
+    current_district_id: function() {
+      return this.sanction_outcome.district_id;
     },
     modalTitle: function() {
       return "Identify Sanction Outcome";
@@ -397,16 +422,28 @@ export default {
       return this.sanction_outcome.type== "" ? false : true;
     },
     displaySendToManagerButton: function() {
+      console.log('displayButton');
+      let retValue = false;
       if (!this.processingDetails && this.sanction_outcome.type){
-        return true
+        if (this.regionDistrictId){
+          retValue = true;
+        }
       }
-      return false;
+      return retValue;
     },
     displayRemediationActions: function() {
       return this.sanction_outcome.type== "remediation_notice"
         ? true
         : false;
-    }
+    },
+    regionDistrictId: function() {
+        if (this.sanction_outcome.district_id || this.sanction_outcome.region_id) {
+            return this.sanction_outcome.district_id ? this.sanction_outcome.district_id : this.sanction_outcome.region_id;
+        }
+         else {
+           return null;
+         }
+    },
   },
   methods: {
     ...mapActions("callemailStore", {
@@ -418,11 +455,38 @@ export default {
         this.close();
     },
     cancel: function() {
-      this.isModalOpen = false;
       this.close();
     },
     close: function() {
       this.isModalOpen = false;
+    },
+    modalOpened: function(){
+      console.log('In modalOpened');
+
+    },
+    modalClosed: function(){
+      console.log('In modalClosed');
+      this.loadDefaultData();
+    },
+    loadDefaultData: function() {
+      console.log('In loadDefaultData');
+      let vm = this;
+      //TODO: implement
+      vm.sanction_outcome.region_id = vm.call_email.region_id;
+      vm.sanction_outcome.district_id = vm.call_email.district_id;
+    },
+    currentRegionIdChanged: function() {
+      console.log('In currentRegionIdChanged');
+      this.updateDistricts();
+    },
+    currentDistrictIdChanged: function() {
+      console.log('In currentDistrictIdChanged');
+
+    },
+    loadAllocatedGroup: async function() {
+        let url = helpers.add_endpoint_join(api_endpoints.region_district, this.regionDistrictId + '/get_group_id_by_region_district/');
+        let returned = await Vue.http.post(url, { 'group_permission': 'manager' });
+        return returned;
     },
     addRemediationActionClicked: function() {
       let vm = this;
@@ -438,33 +502,31 @@ export default {
         vm.current_remediation_action.due_date = null;
       }
     },
-    updateDistricts: function() {
-      this.sanction_outcome.district_id = null;
-      this.availableDistricts = [];
+    updateDistricts: function(updateFromUI) {
+      if(updateFromUI){
+        // We don't want to clear the default district selection when initially loaded, which derived from the call_email
+        this.sanction_outcome.district_id = null;
+      }
+
+      this.availableDistricts = [];  // This is a list of options for district
       for (let record of this.regionDistricts) {
         if (this.sanction_outcome.region_id === (record.id)) {
-          for (let district of record.districts) {
+          for (let district_id of record.districts) {
             for (let district_record of this.regionDistricts) {
-              if (district_record.id === district) {
+              if (district_record.id === district_id) {
                 this.availableDistricts.push(district_record)
               }
             }
           }
         }
       }
-      this.availableDistricts.splice(0, 0, 
-      {
-        id: "", 
-        display_name: "",
-        district: "",
-        districts: [],
-        region: null,
-      });
+
+      this.availableDistricts.splice(0, 0, { id: "", display_name: "", district: "", districts: [], region: null, });
       // ensure security group members list is up to date
-      // this.updateAllocatedGroup();
+      this.updateAllocatedGroup();
     },
     updateAllocatedGroup: function() {
-
+      console.log('implement updateAllocatedGroup()');
     },
     addEventListeners: function() {
       let vm = this;
@@ -647,6 +709,7 @@ export default {
     }
   },
   created: async function() {
+    console.log('In created');
     let vm = this;
 
     // Load all the types for the sanction outcome
@@ -658,8 +721,9 @@ export default {
     for (let i = 0; i < options_for_types.length; i++) {
       vm.options_for_types.push(options_for_types[i]);
     }
-    vm.updateOptionsForOffences(vm.call_email.id);
-    vm.constructRegionsAndDistricts();
+    await vm.updateOptionsForOffences(vm.call_email.id);
+    await vm.constructRegionsAndDistricts();
+    vm.loadDefaultData();
   },
   mounted: function() {
     this.$nextTick(() => {

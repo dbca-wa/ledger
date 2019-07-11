@@ -16,19 +16,23 @@ class SanctionOutcome(models.Model):
     )
 
     type = models.CharField(max_length=30, choices=TYPE_CHOICES, blank=True,)
+
+    # We may not need this field
     region = models.ForeignKey(RegionDistrict, related_name='sanction_outcome_region', null=True,)
+    # We may not need this field
     district = models.ForeignKey(RegionDistrict, related_name='sanction_outcome_district', null=True,)
+
     identifier = models.CharField(max_length=50, blank=True,)
     offence = models.ForeignKey(Offence, related_name='sanction_outcome_offence', null=True, on_delete=models.SET_NULL,)
     offender = models.ForeignKey(Offender, related_name='sanction_outcome_offender', null=True, on_delete=models.SET_NULL,)
     alleged_offences = models.ManyToManyField(SectionRegulation, blank=True, related_name='sanction_outcome_alleged_offences')
-
     issued_on_paper = models.BooleanField(default=False) # This is always true when type is letter_of_advice
     paper_id = models.CharField(max_length=50, blank=True,)
-
     description = models.TextField(blank=True)
 
+    # We may not need this field
     assigned_to = models.ForeignKey(EmailUser, related_name='sanction_outcome_assigned_to', null=True)
+
     allocated_group = models.ForeignKey(CompliancePermissionGroup, related_name='sanction_outcome_allocated_group', null=True)
 
     # Only editable when issued on paper. Otherwise pre-filled with date/time when issuing electronically.

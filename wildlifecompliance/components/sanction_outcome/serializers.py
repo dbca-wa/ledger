@@ -30,6 +30,7 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
 class SaveSanctionOutcomeSerializer(serializers.ModelSerializer):
     offence_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
     offender_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+    allocated_group_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
 
     class Meta:
         model = SanctionOutcome
@@ -41,6 +42,7 @@ class SaveSanctionOutcomeSerializer(serializers.ModelSerializer):
             'identifier',
             'offence_id',
             'offender_id',
+            'allocated_group_id',
             # 'alleged_offences',
             'issued_on_paper',
             'paper_id',

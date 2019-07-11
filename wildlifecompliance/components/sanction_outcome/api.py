@@ -1,6 +1,8 @@
 import json
 import traceback
 
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpResponse
@@ -11,6 +13,7 @@ from rest_framework.decorators import list_route
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
 from wildlifecompliance.components.sanction_outcome.serializers import SanctionOutcomeSerializer, \
     SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer
+from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
 from wildlifecompliance.helpers import is_internal
 
 
@@ -45,8 +48,15 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 request_data['offender_id'] = request_data.get('current_offender', {}).get('id', None);
 
                 # region and district
-                request_data['region_id'] = None if request.data.get('region_id') =='null' else request.data.get('region_id')
-                request_data['district_id'] = None if request.data.get('district_id') == 'null' else request.data.get('district_id')
+                # request_data['region_id'] = None if request.data.get('region_id') =='null' else request.data.get('region_id')
+                # request_data['district_id'] = None if request.data.get('district_id') == 'null' else request.data.get('district_id')
+                # Retrieve group
+                regionDistrictId = request_data['district_id'] if request_data['district_id'] else request_data['region_id']
+                region_district = RegionDistrict.objects.get(id=regionDistrictId)
+                compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
+                permission = Permission.objects.filter(codename='manager').filter(content_type_id=compliance_content_type.id).first()
+                group = CompliancePermissionGroup.objects.filter(region_district=region_district).filter(permissions=permission).first()
+                request_data['allocated_group_id'] = group.id
 
                 # Save sanction outcome (offence, offender, alleged_offences)
                 serializer = SaveSanctionOutcomeSerializer(data=request_data)
