@@ -97,20 +97,31 @@
                               <div class="col-sm-3">
                                   <label class="control-label pull-left" for="details">Details</label>
                               </div>
-			      <div class="col-sm-6">
-				  <textarea v-if="workflow_type === 'close'" class="form-control" placeholder="add details" id="details" v-model="advice_details"/>
+            			      <div class="col-sm-6">
+			                	  <textarea v-if="workflow_type === 'close'" class="form-control" placeholder="add details" id="details" v-model="advice_details"/>
                                   <textarea v-else class="form-control" placeholder="add details" id="details" v-model="workflowDetails"/>
                               </div>
                           </div>
                         </div>
-                  <form class="form-horizontal" name="forwardForm">
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <label class="control-label pull-left"  for="Name">Attachments</label>
+                                </div>
+            			        <div class="col-sm-9">
+                                    <commslogfile ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="documentActionUrl" />
+                                </div>
+                            </div>
+                        </div>
+
+                  <!--form class="form-horizontal" name="forwardForm">
                     <div class="form-group">
                       <div class="row">
                           <div class="col-sm-3">
                               <label class="control-label pull-left"  for="Name">Attachments</label>
                           </div>
-                          <div class="col-sm-9">
-                              <!--template v-for="(f,i) in files">
+                          <div class="col-sm-8">
+                              <template v-for="(f,i) in files">
                                   <div :class="'row top-buffer file-row-'+i">
                                       <div class="col-sm-4">
                                           <span v-if="f.file == null" class="btn btn-info btn-file pull-left">
@@ -128,12 +139,12 @@
                                       </div>
                                   </div>
                               </template>
-                              <a href="" @click.prevent="attachAnother"><i class="fa fa-lg fa-plus top-buffer-2x"></i></a-->
-                              <commslogfile class="form=control" ref="comms_log_file" label="mylabel" name="myfile" :isRepeatable="true" :documentActionUrl="documentActionUrl" :commsLogId="commsLogId"/>
+                              <a href="" @click.prevent="attachAnother"><i class="fa fa-lg fa-plus top-buffer-2x"></i></a>
+                              <commslogfile class="form-control" ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="documentActionUrl" />
                           </div>
                         </div>
                     </div>
-                  </form>
+                  </form-->
 
                 </div>
               
@@ -187,7 +198,6 @@ export default {
             advice_details: "",
             allocatedGroup: [],
             allocated_group_id: null,
-            commsLogId: null,
             files: [
                     {
                         'file': null,
