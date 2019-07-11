@@ -60,6 +60,6 @@ class SaveRemediationActionSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'action',
-            'due_data',
+            'due_date',
             'sanction_outcome_id',
         )
