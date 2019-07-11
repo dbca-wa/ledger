@@ -129,7 +129,7 @@
                                   </div>
                               </template>
                               <a href="" @click.prevent="attachAnother"><i class="fa fa-lg fa-plus top-buffer-2x"></i></a-->
-                              <commslogfile label="mylabel" name="myfile" :isRepeatable="true" :documentActionUrl="documentActionUrl" :commsLogId="commsLogId"/>
+                              <commslogfile class="form=control" ref="comms_log_file" label="mylabel" name="myfile" :isRepeatable="true" :documentActionUrl="documentActionUrl" :commsLogId="commsLogId"/>
                           </div>
                         </div>
                     </div>
@@ -369,6 +369,9 @@ export default {
           let payload = new FormData(this.form);
           payload.append('call_email_id', this.call_email.id);
           payload.append('details', this.workflowDetails);
+          if (this.$refs.comms_log_file.commsLogId) {
+              payload.append('comms_log_id', this.$refs.comms_log_file.commsLogId)
+          }
 
           payload.append('workflow_type', this.workflow_type);
           payload.append('email_subject', this.modalTitle);

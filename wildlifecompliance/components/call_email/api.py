@@ -56,6 +56,7 @@ from wildlifecompliance.components.call_email.models import (
     CasePriority,
     InspectionType,
     # ExternalOrganisation,
+    CallEmailLogEntry,
     )
 from wildlifecompliance.components.call_email.serializers import (
     CallEmailSerializer,
@@ -345,7 +346,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     path = instance.update_compliance_doc_filename(request.data.get('filename'))
                 else:
                     path = default_storage.save(
-                        'call_email/{}/documents/{}'.format(
+                        'wildlifecompliance/call_email/{}/documents/{}'.format(
                             call_email_id, filename), ContentFile(
                             _file.read()))
 
@@ -380,6 +381,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
     def process_comms_log_document(self, request, *args, **kwargs):
+        print("process_comms_log_document")
+        print(request.data)
         try:
             instance = self.get_object()
             action = request.data.get('action')
@@ -400,7 +403,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 document = comms_instance.documents.get(id=document_id)
 
                 if document._file and os.path.isfile(
-                        document._file.path) and document.can_delete:
+                        document._file.path):
                     os.remove(document._file.path)
 
                 document.delete()
@@ -418,8 +421,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 document = comms_instance.documents.get_or_create(
                     name=filename)[0]
                 path = default_storage.save(
-                    'call_email/{}/communications/documents/{}'.format(
-                        instance.id, filename), ContentFile(
+                    'wildlifecompliance/call_email/{}/communications/{}/documents/{}'.format(
+                        instance.id, comms_instance.id, filename), ContentFile(
                         _file.read()))
 
                 document._file = path
@@ -488,13 +491,18 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def add_comms_log(self, request, workflow=False, *args, **kwargs):
+        print("add_comms_log")
+        print(request.data)
         try:
             with transaction.atomic():
                 instance = self.get_object()
                 request.data['call_email'] = u'{}'.format(instance.id)
-                print(request.data)
                 # request.data['staff'] = u'{}'.format(request.user.id)
-                serializer = CallEmailLogEntrySerializer(data=request.data)
+                if request.data.get('comms_log_id'):
+                    comms_instance = CallEmailLogEntry.objects.get(id=request.data.get('comms_log_id'))
+                    serializer = CallEmailLogEntrySerializer(comms_instance, data=request.data)
+                else:
+                    serializer = CallEmailLogEntrySerializer(data=request.data)
                 serializer.is_valid(raise_exception=True)
                 comms = serializer.save()
                 # Save the files
