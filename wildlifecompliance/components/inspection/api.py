@@ -53,6 +53,7 @@ from wildlifecompliance.components.inspection.serializers import (
     InspectionUserActionSerializer,
     InspectionCommsLogEntrySerializer,
     SaveInspectionSerializer,
+    InspectionDatatableSerializer,
     )
 from wildlifecompliance.components.users.models import (
     CompliancePermissionGroup,    
@@ -83,7 +84,7 @@ class InspectionViewSet(viewsets.ModelViewSet):
     def datatable_list(self, request, *args, **kwargs):
         try:
             qs = self.get_queryset()
-            serializer = InspectionSerializer(
+            serializer = InspectionDatatableSerializer(
                 qs, many=True, context={'request': request})
             return Response(serializer.data)
         except serializers.ValidationError:

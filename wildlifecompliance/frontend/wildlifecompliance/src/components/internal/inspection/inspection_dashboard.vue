@@ -124,12 +124,17 @@
                             data: "details",
                             //searchable: false,  
                         },
+                        {
+                            data: "user_action",
+                            //searchable: false,  
+                        },
                     ],
                 },
                 dtHeaders: [
                     "Number",
                     "Title",
                     "Details",
+                    "Action",
                 ],
             }
         },

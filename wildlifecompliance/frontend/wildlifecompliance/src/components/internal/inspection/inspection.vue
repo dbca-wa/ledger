@@ -63,9 +63,9 @@
                                     </div>
                                 </div>
                             </div></div>
-              
-                            
-                            
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <SearchPerson elementId="search-person"/>
+                            </div></div>
                           </FormSection>
             
                           
@@ -103,6 +103,7 @@
 <script>
 import Vue from "vue";
 import FormSection from "@/components/forms/section_toggle.vue";
+import SearchPerson from "@/components/common/search_person.vue";
 
 import CommsLogs from "@common-components/comms_logs.vue";
 import datatable from '@vue-utils/datatable.vue'
@@ -175,6 +176,7 @@ export default {
     CommsLogs,
     FormSection,
     datatable,
+    SearchPerson,
   },
   watch: {
       call_email: {

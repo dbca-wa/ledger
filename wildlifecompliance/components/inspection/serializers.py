@@ -74,3 +74,23 @@ class InspectionCommsLogEntrySerializer(CommunicationLogEntrySerializer):
 
     def get_documents(self, obj):
         return [[d.name, d._file.url] for d in obj.documents.all()]
+
+
+class InspectionDatatableSerializer(serializers.ModelSerializer):
+    user_action = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Inspection
+        fields = (
+                'number',
+                'title',
+                'details',
+                'planned_for_date',
+                'planned_for_time',
+                'user_action',
+                )
+
+    def get_user_action(self, obj):
+        process_url = '<a href=/internal/inspection/' + str(obj.id) + '>Process</a>'
+        return process_url
+
