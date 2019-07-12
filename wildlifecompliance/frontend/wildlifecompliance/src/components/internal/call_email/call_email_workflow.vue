@@ -294,10 +294,10 @@ export default {
           return returned;
       },
       updateDistricts: function() {
-        this.district_id = null;
+        // this.district_id = null;
         this.availableDistricts = [];
         for (let record of this.regionDistricts) {
-          if (this.region_id === (record.id)) {
+          if (this.region_id === record.id) {
             for (let district of record.districts) {
               for (let district_record of this.regionDistricts) {
                 if (district_record.id === district) {
@@ -307,6 +307,7 @@ export default {
             }
           }
         }
+        console.log(this.availableDistricts);
         this.availableDistricts.splice(0, 0, 
         {
           id: "", 
@@ -464,7 +465,6 @@ export default {
         Object.assign(this.regionDistricts, returned_region_districts);
 
         await this.updateAllocatedGroup();
-        await this.updateDistricts();
 
         // case_priorities
         let returned_case_priorities = await cache_helper.getSetCacheList(
@@ -504,6 +504,7 @@ export default {
         // add call_email vuex region_id and district_id to local component
         this.district_id = this.call_email.district_id;
         this.region_id = this.call_email.region_id;
+        this.updateDistricts();
     },
     mounted: function() {
         this.form = document.forms.forwardForm;

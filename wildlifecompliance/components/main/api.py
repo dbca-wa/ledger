@@ -88,12 +88,6 @@ def process_generic_document(request, instance, document_type=None, *args, **kwa
                 document.save()
                 comms_instance.save()
 
-                returned_file_data = [dict(
-                            file=d._file.url,
-                            id=d.id,
-                            name=d.name,
-                            ) for d in comms_instance.documents.all() if d._file]
-
             # default doc store save
             elif action == 'save' and 'filename' in request.data:
                 filename = request.data.get('filename')
@@ -110,16 +104,20 @@ def process_generic_document(request, instance, document_type=None, *args, **kwa
                 document.save()
                 instance.save()
 
+            if comms_instance:
+                returned_file_data = [dict(
+                            file=d._file.url,
+                            id=d.id,
+                            name=d.name,
+                            ) for d in comms_instance.documents.all() if d._file]
+                return {'filedata': returned_file_data,
+                        'comms_instance_id': comms_instance.id}
+            else:
                 returned_file_data = [dict(
                             file=d._file.url,
                             id=d.id,
                             name=d.name,
                             ) for d in instance.documents.all() if d._file]
-
-            if comms_instance:
-                return {'filedata': returned_file_data,
-                        'comms_instance_id': comms_instance.id}
-            else:
                 return {'filedata': returned_file_data}
 
         except Exception as e:

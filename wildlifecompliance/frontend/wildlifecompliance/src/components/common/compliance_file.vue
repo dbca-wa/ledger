@@ -225,7 +225,7 @@ export default {
         },
     },
     mounted:function () {
-        this.documents = this.get_documents();
+        //this.documents = this.get_documents();
         if (this.value) {
             //vm.files = (Array.isArray(vm.value))? vm.value : [vm.value];
             if (Array.isArray(this.value)) {
