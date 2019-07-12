@@ -42,7 +42,6 @@
                                     <label class="control-label pull-left">District</label>
                                 </div>
                                 <div class="col-sm-7">
-                                  <!-- <select class="form-control" @change.prevent="updateAllocatedGroup()" v-model="sanction_outcome.district_id"> -->
                                   <select class="form-control" v-model="sanction_outcome.district_id">
                                     <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
                                       {{ option.display_name }} 
@@ -710,7 +709,8 @@ export default {
           ).format("YYYY-MM-DD");
         }
 
-        console.log(payload);
+        payload.call_email_id = vm.call_email ? vm.call_email.id : null;
+
         const savedObj = await Vue.http.post(fetchUrl, payload);
         await swal("Saved", "The record has been saved", "success");
       } catch (err) {

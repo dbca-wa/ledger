@@ -10,6 +10,7 @@ from django.http import HttpResponse
 from rest_framework import viewsets, serializers
 from rest_framework.decorators import list_route
 
+from wildlifecompliance.components.call_email.models import CallEmail, ComplianceUserAction
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
 from wildlifecompliance.components.sanction_outcome.serializers import SanctionOutcomeSerializer, \
     SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer
@@ -41,15 +42,13 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 res_json = {}
+
                 request_data = request.data
 
                 # offence and offender
                 request_data['offence_id'] = request_data.get('current_offence', {}).get('id', None);
                 request_data['offender_id'] = request_data.get('current_offender', {}).get('id', None);
 
-                # region and district
-                # request_data['region_id'] = None if request.data.get('region_id') =='null' else request.data.get('region_id')
-                # request_data['district_id'] = None if request.data.get('district_id') == 'null' else request.data.get('district_id')
                 # Retrieve group
                 regionDistrictId = request_data['district_id'] if request_data['district_id'] else request_data['region_id']
                 region_district = RegionDistrict.objects.get(id=regionDistrictId)
@@ -72,8 +71,10 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                     if remediation_action.is_valid(raise_exception=True):
                         remediation_action.save()
 
-                # Load sanction outcome?
-                #
+                # Log action
+                if request_data['call_email_id']:
+                    call_email = CallEmail.objects.get(id=request_data['call_email_id'])
+                    call_email.log_user_action(ComplianceUserAction.ACTION_SANCTION_OUTCOME.format(call_email.number), request)
 
                 # Return
                 return HttpResponse(res_json, content_type='application/json')

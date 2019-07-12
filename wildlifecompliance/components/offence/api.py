@@ -55,11 +55,13 @@ class OffenceViewSet(viewsets.ModelViewSet):
                 serializer = SaveOffenceSerializer(data=request_data)
                 serializer.is_valid(raise_exception=True)
                 saved_offence_instance = serializer.save()  # Here, relations between this offence and location, and this offence and call_email are created
+
+                # 2a. Log it to the call email
                 if saved_offence_instance.call_email:
                     saved_offence_instance.call_email.log_user_action(
-                            ComplianceUserAction.ACTION_OFFENCE.format(
-                                saved_offence_instance.call_email.number),
-                                request)
+                        ComplianceUserAction.ACTION_OFFENCE.format(
+                            saved_offence_instance.call_email.number),
+                            request)
 
                 # 3. Create relations between this offence and the alleged 0ffence(s)
                 for dict in request_data['alleged_offences']:
@@ -79,8 +81,6 @@ class OffenceViewSet(viewsets.ModelViewSet):
                         serializer_offender = SaveOffenderSerializer(data={'offence_id': saved_offence_instance.id, 'organisation_id': offender.id})
                         serializer_offender.is_valid(raise_exception=True)
                         serializer_offender.save()
-
-                # TODO: log user action
 
                 # 4. Return Json
                 headers = self.get_success_headers(serializer.data)
