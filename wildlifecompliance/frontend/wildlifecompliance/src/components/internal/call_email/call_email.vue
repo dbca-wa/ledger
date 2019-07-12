@@ -329,7 +329,9 @@
           <CallWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
         </div>
         <Offence ref="offence" />
-        <SanctionOutcome ref="sanction_outcome" />
+        <div v-if="sanctionOutcomeInitialised">
+            <SanctionOutcome ref="sanction_outcome"/>
+        </div>
     </div>
 </template>
 <script>
@@ -356,6 +358,7 @@ export default {
     return {
       cTab: 'cTab'+this._uid,
       rTab: 'rTab'+this._uid,
+      sanctionOutcomeKey: 'sanctionOutcome' + this._uid,
       dtHeadersRelatedItems: [
           'Number',
           'Type',
@@ -411,6 +414,8 @@ export default {
         this.$route.params.call_email_id + "/action_log"
       ),
       workflowBindId: '',
+      sanctionOutcomeInitialised: false,
+      offenceInitialised: false,
     };
   },
   components: {
@@ -530,9 +535,13 @@ export default {
     },
     sanction_outcome(){
       console.log('sanction_outcome');
-      this.$refs.sanction_outcome.isModalOpen = true;
+      this.sanctionOutcomeInitialised = true;
+      this.$nextTick(() => {
+          this.$refs.sanction_outcome.isModalOpen = true;
+      });
     },
     offence(){
+      this.offenceInitialised = true;
       this.$refs.offence.isModalOpen = true;
     },
     save: async function () {

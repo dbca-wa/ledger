@@ -109,7 +109,7 @@
                                     <label class="control-label pull-left"  for="Name">Attachments</label>
                                 </div>
             			        <div class="col-sm-9">
-                                    <commslogfile ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="documentActionUrl" />
+                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="documentActionUrl" />
                                 </div>
                             </div>
                         </div>
@@ -169,7 +169,7 @@ import Vue from "vue";
 import modal from '@vue-utils/bootstrap-modal.vue';
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
-import commslogfile from '@/components/common/comms_log_file.vue';
+import filefield from '@/components/common/compliance_file.vue';
 
 export default {
     name: "CallEmailWorking",
@@ -208,7 +208,7 @@ export default {
     },
     components: {
       modal,
-      commslogfile,
+      filefield,
     },
     props:{
           workflow_type: {
