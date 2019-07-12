@@ -429,8 +429,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
            for member in obj.allocated_group.members:
                if user_id == member.id:
                   return True
-        else:
-            return False
+        
+        return False
 
     def get_can_user_action(self, obj):
         user_id = self.context.get('request', {}).user.id
@@ -441,8 +441,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
            for member in obj.allocated_group.members:
                if user_id == member.id:
                   return True
-        else:
-            return False
+        
+        return False
 
     def get_allocated_group(self, obj):
         allocated_group = [{
@@ -477,6 +477,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
         if user_id == obj.assigned_to_id:
             return True
 
+        return False
+
     def get_can_user_edit_form(self, obj):
         user_id = self.context.get('request', {}).user.id
 
@@ -487,10 +489,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
                for member in obj.allocated_group.members:
                    if user_id == member.id:
                       return True
-            else:
-                return False
-        else:
-            return False
+        
+        return False
 
     def get_can_user_search_person(self, obj):
         user_id = self.context.get('request', {}).user.id
@@ -502,10 +502,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
                for member in obj.allocated_group.members:
                    if user_id == member.id:
                       return True
-            else:
-                return False
-        else:
-            return False
+        
+        return False
 
     def get_user_is_volunteer(self, obj):
         user = EmailUser.objects.get(id=self.context.get('request', {}).user.id)

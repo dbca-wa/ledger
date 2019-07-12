@@ -38,7 +38,7 @@ from ledger.checkout.utils import calculate_excl_gst
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
-from wildlifecompliance.components.main.api import save_location
+from wildlifecompliance.components.main.api import save_location, process_generic_document
 from wildlifecompliance.components.users.serializers import (
     UserAddressSerializer,
     ComplianceUserDetailsSerializer,
@@ -385,62 +385,9 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         print(request.data)
         try:
             instance = self.get_object()
-            action = request.data.get('action')
-            comms_log_id = request.data.get('comms_log_id')
-            #file_path = request.data.get('file_path')
-            #section = request.data.get('input_name')
-            #input_name = request.data.get('input_name')
-
-            if comms_log_id and comms_log_id is not 'null':
-                comms_instance = instance.comms_logs.get(id=comms_log_id)
-            else:
-                comms_instance = self.add_comms_log(request, workflow=True)
-            if action == 'list':
-                pass
-
-            elif comms_instance and action == 'delete' and 'document_id' in request.data:
-                document_id = request.data.get('document_id')
-                document = comms_instance.documents.get(id=document_id)
-
-                if document._file and os.path.isfile(
-                        document._file.path):
-                    os.remove(document._file.path)
-
-                document.delete()
-                comms_instance.save()
-                #comms_instance.save(version_comment='Approval File Deleted: {}'.format(
-                 #   document.name))  # to allow revision to be added to reversion history
-
-            elif comms_instance and action == 'save' and 'filename' in request.data:
-                # call_email_id = request.data.get('call_email_id')
-                filename = request.data.get('filename')
-                _file = request.data.get('_file')
-                if not _file:
-                    _file = request.data.get('_file')
-
-                document = comms_instance.documents.get_or_create(
-                    name=filename)[0]
-                path = default_storage.save(
-                    'wildlifecompliance/call_email/{}/communications/{}/documents/{}'.format(
-                        instance.id, comms_instance.id, filename), ContentFile(
-                        _file.read()))
-
-                document._file = path
-                document.save()
-                comms_instance.save()
-                # to allow revision to be added to reversion history
-                #comms_instance.save(
-                 #   version_comment='File Added: {}'.format(filename))
-
-            returned_file_data = [dict(
-                        file=d._file.url,
-                        id=d.id,
-                        name=d.name,
-                        ) for d in comms_instance.documents.all() if d._file]
-            
-            return Response(data={'filedata': returned_file_data,
-                    'comms_instance_id': comms_instance.id
-                    })
+            returned_data = process_generic_document(request, instance, document_type='comms_log')
+            if returned_data:
+                return Response(returned_data)
 
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -812,7 +759,11 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 instance = self.get_object()
-                workflow_entry = self.add_comms_log(request, workflow=True)
+                #workflow_entry = self.add_comms_log(request, workflow=True)
+                comms_log_id = request.data.get('comms_log_id')
+                if comms_log_id and comms_log_id is not 'null':
+                    workflow_entry = instance.comms_logs.get(
+                            id=comms_log_id)
 
                 attachments = []
                 for doc in workflow_entry.documents.all():
@@ -949,30 +900,42 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def update_assigned_to_id(self, request, *args, **kwargs):
+        print("update assigned to")
+        print(request.data)
         try:
             instance = self.get_object()
+            serializer = None
 
-            if request.data.get('current_user'):
+            validation_serializer = CallEmailSerializer(instance, context={'request': request})
+            user_in_group = validation_serializer.data.get('user_in_group')
+
+            if request.data.get('current_user') and user_in_group:
                 serializer = UpdateAssignedToIdSerializer(
                         instance=instance,
                         data={
                             'assigned_to_id': request.user.id,
                             }
                         )
-            else:
+            elif user_in_group:
                 serializer = UpdateAssignedToIdSerializer(instance=instance, data=request.data)
-            serializer.is_valid(raise_exception=True)
-            if serializer.is_valid():
-                serializer.save()
-                return_serializer = CallEmailSerializer(instance=instance,
-                        context={'request': request}
-                        )
-                headers = self.get_success_headers(return_serializer.data)
-                return Response(
-                        return_serializer.data, 
-                        status=status.HTTP_201_CREATED,
-                        headers=headers
-                        )
+            
+            if serializer:
+                serializer.is_valid(raise_exception=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return_serializer = CallEmailSerializer(instance=instance,
+                            context={'request': request}
+                            )
+                    headers = self.get_success_headers(return_serializer.data)
+                    return Response(
+                            return_serializer.data, 
+                            status=status.HTTP_201_CREATED,
+                            headers=headers
+                            )
+            else:
+                return Response(validation_serializer.data, 
+                                status=status.HTTP_201_CREATED
+                                )
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

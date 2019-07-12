@@ -41,9 +41,11 @@
                             </div>
                           </div>
                         </div>
-                        <a @click="updateAssignedToId('current_user')" class="btn pull-right">
-                            Assign to me
-                        </a>
+                        <div v-if="call_email.user_in_group">
+                            <a @click="updateAssignedToId('current_user')" class="btn pull-right">
+                                Assign to me
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -575,7 +577,7 @@ export default {
             this.call_email.id + '/update_assigned_to_id/'
             );
         let payload = null;
-        if (user === 'current_user') {
+        if (user === 'current_user' && this.call_email.user_in_group) {
             payload = {'current_user': true};
         } else if (user === 'blank') {
             payload = {'blank': true};
