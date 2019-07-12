@@ -1718,6 +1718,10 @@ class Application(RevisionedMixin):
                         request=request,
                         licence=parent_licence
                     )
+                # If there are no issued_activities in this application and the parent_licence was
+                # created as part of this application (i.e. it was not a pre-existing one), delete it
+                elif not issued_activities and created:
+                    parent_licence.delete()
 
                 if declined_activities:
                     send_application_decline_notification(
@@ -2301,6 +2305,8 @@ class ApplicationSelectedActivity(models.Model):
             Q(id=self.id, expiry_date__isnull=False),
             Q(expiry_date__lt=current_date) |
             Q(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED)
+        ).filter(
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
         ).exclude(
             activity_status__in=[
                 ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
@@ -2334,6 +2340,8 @@ class ApplicationSelectedActivity(models.Model):
             Q(id=self.id, expiry_date__isnull=False),
             Q(expiry_date__lt=current_date) |
             Q(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED)
+        ).filter(
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
         ).exclude(
             activity_status__in=[
                 ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
@@ -2442,6 +2450,8 @@ class ApplicationSelectedActivity(models.Model):
             Q(id__in=activity_ids) if activity_ids else
             Q(application_id__in=applications.values_list('id', flat=True)),
             **date_filter
+        ).filter(
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
         ).exclude(
             activity_status__in=[
                 ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
