@@ -1,6 +1,8 @@
 import json
 import traceback
 
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpResponse
@@ -8,9 +10,11 @@ from django.http import HttpResponse
 from rest_framework import viewsets, serializers
 from rest_framework.decorators import list_route
 
-from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome
+from wildlifecompliance.components.call_email.models import CallEmail, ComplianceUserAction
+from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
 from wildlifecompliance.components.sanction_outcome.serializers import SanctionOutcomeSerializer, \
-    SaveSanctionOutcomeSerializer
+    SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer
+from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
 from wildlifecompliance.helpers import is_internal
 
 
@@ -38,9 +42,20 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 res_json = {}
+
                 request_data = request.data
-                request_data['offence_id'] = request_data['current_offence']['id']
-                request_data['offender_id'] = request_data['current_offender']['id']
+
+                # offence and offender
+                request_data['offence_id'] = request_data.get('current_offence', {}).get('id', None);
+                request_data['offender_id'] = request_data.get('current_offender', {}).get('id', None);
+
+                # Retrieve group
+                regionDistrictId = request_data['district_id'] if request_data['district_id'] else request_data['region_id']
+                region_district = RegionDistrict.objects.get(id=regionDistrictId)
+                compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
+                permission = Permission.objects.filter(codename='manager').filter(content_type_id=compliance_content_type.id).first()
+                group = CompliancePermissionGroup.objects.filter(region_district=region_district).filter(permissions=permission).first()
+                request_data['allocated_group_id'] = group.id
 
                 # Save sanction outcome (offence, offender, alleged_offences)
                 serializer = SaveSanctionOutcomeSerializer(data=request_data)
@@ -50,8 +65,16 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 # Save sanction outcome document, and link to the sanction outcome
 
                 # Save remediation action, and link to the sanction outcome
+                for dict in request_data['remediation_actions']:
+                    dict['sanction_outcome_id'] = saved_obj.id
+                    remediation_action = SaveRemediationActionSerializer(data=dict)
+                    if remediation_action.is_valid(raise_exception=True):
+                        remediation_action.save()
 
-                # Load sanction outcome
+                # Log action
+                if request_data['call_email_id']:
+                    call_email = CallEmail.objects.get(id=request_data['call_email_id'])
+                    call_email.log_user_action(ComplianceUserAction.ACTION_SANCTION_OUTCOME.format(call_email.number), request)
 
                 # Return
                 return HttpResponse(res_json, content_type='application/json')
