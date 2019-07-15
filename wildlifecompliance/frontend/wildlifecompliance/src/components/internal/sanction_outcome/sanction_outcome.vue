@@ -137,7 +137,7 @@
                                     <label class="control-label pull-left">Paper notice</label>
                                 </div>
                                 <div v-if="documentActionUrl" class="col-sm-7">
-                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="documentActionUrl" />
+                                    <filefield ref="sanction_outcome_file" name="sanction-outcome-file" :isRepeatable="true" :documentActionUrl="documentActionUrl" />
                                 </div>
                             </div></div>
 
@@ -460,8 +460,9 @@ export default {
       await this.sendData();
       this.close();
     },
-    cancel: function() {
-      this.close();
+    cancel: async function() {
+        await this.$refs.sanction_outcome_file.cancel();
+        this.close();
     },
     close: function() {
         this.$parent.sanctionOutcomeInitialised = false;

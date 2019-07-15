@@ -181,6 +181,19 @@ export default {
                 });
 
         },
+        cancel: async function(file) {
+            this.show_spinner = true;
+
+            let formData = new FormData();
+            formData.append('action', 'cancel');
+            if (this.commsLogId) {
+                formData.append('comms_log_id', this.commsLogId);
+            }
+            formData.append('csrfmiddlewaretoken', this.csrf_token);
+
+            let returned = await Vue.http.post(this.documentActionUrl, formData)
+            this.show_spinner = false;
+        },
         
         uploadFile(e){
             let _file = null;

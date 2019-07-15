@@ -359,7 +359,8 @@ export default {
               this.close();
           }
       },
-      cancel: function() {
+      cancel: async function() {
+          await this.$refs.comms_log_file.cancel();
           this.isModalOpen = false;
           this.close();
       },

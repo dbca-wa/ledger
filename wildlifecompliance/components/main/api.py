@@ -72,6 +72,27 @@ def process_generic_document(request, instance, document_type=None, *args, **kwa
                 document.delete()
                 instance.save()
 
+            # comms_log doc cancel
+            elif comms_instance and action == 'cancel':
+                document_list = comms_instance.documents.all()
+
+                for document in document_list:
+                    if document._file and os.path.isfile(
+                            document._file.path):
+                        os.remove(document._file.path)
+                    document.delete()
+                deleted = comms_instance.delete()
+
+            # default doc cancel
+            elif action == 'cancel':
+                document_list = instance.documents.all()
+
+                for document in document_list:
+                    if document._file and os.path.isfile(
+                            document._file.path):
+                        os.remove(document._file.path)
+                    document.delete()
+            
             # comms_log doc store save
             elif comms_instance and action == 'save' and 'filename' in request.data:
                 filename = request.data.get('filename')
@@ -104,7 +125,10 @@ def process_generic_document(request, instance, document_type=None, *args, **kwa
                 document.save()
                 instance.save()
 
-            if comms_instance:
+            # HTTP Response varies by action and instance type
+            if comms_instance and action == 'cancel' and deleted:
+                return deleted
+            elif comms_instance:
                 returned_file_data = [dict(
                             file=d._file.url,
                             id=d.id,

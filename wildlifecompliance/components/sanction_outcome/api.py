@@ -108,7 +108,13 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
         print(request.data)
         try:
             instance = self.get_object()
+            # process docs
             returned_data = process_generic_document(request, instance)
+            # delete Sanction Outcome if user cancels modal
+            action = request.data.get('action')
+            if action == 'cancel' and returned_data:
+                returned_data = instance.delete()
+            # return response
             if returned_data:
                 return Response(returned_data)
             else:
@@ -125,3 +131,4 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+

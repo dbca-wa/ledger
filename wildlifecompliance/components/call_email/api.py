@@ -388,6 +388,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             returned_data = process_generic_document(request, instance, document_type='comms_log')
             if returned_data:
                 return Response(returned_data)
+            else:
+                return Response()
 
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -735,23 +737,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
     
-    @detail_route(methods=['GET', ])
-    def workflow_log(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            qs = instance.workflow_logs.all()
-            serializer = CallEmailWorkflowLogEntrySerializer(qs, many=True)
-            return Response(serializer.data)
-        except serializers.ValidationError:
-            print(traceback.print_exc())
-            raise
-        except ValidationError as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
-        except Exception as e:
-            print(traceback.print_exc())
-            raise serializers.ValidationError(str(e))
-
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def add_workflow_log(self, request, *args, **kwargs):
@@ -764,6 +749,8 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 if comms_log_id and comms_log_id is not 'null':
                     workflow_entry = instance.comms_logs.get(
                             id=comms_log_id)
+                else:
+                    workflow_entry = self.add_comms_log(request, workflow=True)
 
                 attachments = []
                 for doc in workflow_entry.documents.all():
