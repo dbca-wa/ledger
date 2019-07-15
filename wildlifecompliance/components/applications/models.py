@@ -242,12 +242,14 @@ class Application(RevisionedMixin):
     APPLICATION_TYPE_AMENDMENT = 'amend_activity'
     APPLICATION_TYPE_RENEWAL = 'renew_activity'
     APPLICATION_TYPE_SYSTEM_GENERATED = 'system_generated'
+    APPLICATION_TYPE_REISSUE = 'reissue_activity'
     APPLICATION_TYPE_CHOICES = (
         (APPLICATION_TYPE_NEW_LICENCE, 'New'),
         (APPLICATION_TYPE_ACTIVITY, 'New Activity'),
         (APPLICATION_TYPE_AMENDMENT, 'Amendment'),
         (APPLICATION_TYPE_RENEWAL, 'Renewal'),
         (APPLICATION_TYPE_SYSTEM_GENERATED, 'System Generated'),
+        (APPLICATION_TYPE_REISSUE, 'Reissue'),
     )
 
     application_type = models.CharField(

@@ -1087,8 +1087,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                     request, application_type)
                 licence_activity_ids = Application.get_active_licence_activities(
                     request, application_type).values_list('licence_activity_id', flat=True)
-                active_applications = Application.get_active_licence_applications(request, application_type) \
+                active_current_applications = Application.get_active_licence_applications(request, application_type) \
                     .filter(licence_purposes__licence_category_id=licence_category.id) \
+                    .exclude(
+                        selected_activities__activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
+                    ) \
                     .order_by('-id')
                 asa_accepted = ApplicationSelectedActivity.objects.filter(
                     Q(application__org_applicant_id=org_applicant) if org_applicant else
@@ -1114,13 +1117,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
                     # Ensure purpose ids are in a shared set with the latest current applications purposes
                     # to prevent front-end tampering. Remove any that aren't valid for renew/amendment.
-                    active_purposes = active_applications.filter(
+                    active_current_purposes = active_current_applications.filter(
                         licence_purposes__licence_activity_id__in=licence_activity_ids
                     ).values_list(
                         'licence_purposes__id',
                         flat=True
                     )
-                    cleaned_purpose_ids = set(active_purposes) & set(licence_purposes)
+                    cleaned_purpose_ids = set(active_current_purposes) & set(licence_purposes)
                     data['licence_purposes'] = cleaned_purpose_ids
 
                 # Use serializer for external application creation - do not expose unneeded fields

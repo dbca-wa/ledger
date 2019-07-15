@@ -657,6 +657,27 @@ export default {
                 },(error) => {
                 });
             });
+            // Reissue licence listener
+            vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reissue-licence]', function(e) {
+                e.preventDefault();
+                swal({
+                    title: "Reissue Licence",
+                    text: "Are you sure you want to reissue all current activities and purposes for this licence?",
+                    type: "question",
+                    showCancelButton: true,
+                    confirmButtonText: 'Accept'
+                }).then((result) => {
+                    if (result.value) {
+                        vm.setApplyLicenceSelect({licence_select: 'reissue_activity'});
+                        var licence_category_id = $(this).attr('licence-category-id');
+                        var licence_activity_id = null;
+                        vm.setApplyProxyId({id: $(this).attr('proxy-id')});
+                        vm.setApplyOrgId({id: $(this).attr('org-id')});
+                        vm.routeApplyLicence(licence_category_id, licence_activity_id);
+                    }
+                },(error) => {
+                });
+            });
             // Reissue activity listener
             vm.$refs.licence_datatable.vmDataTable.on('click', 'a[reissue-activity]', function(e) {
                 e.preventDefault();
@@ -668,9 +689,12 @@ export default {
                     confirmButtonText: 'Accept'
                 }).then((result) => {
                     if (result.value) {
+                        vm.setApplyLicenceSelect({licence_select: 'reissue_activity'});
+                        var licence_category_id = $(this).attr('licence-category-id');
                         var licence_activity_id = $(this).attr('reissue-activity');
-                        var licence_id = $(this).attr('lic-id');
-                        console.log('send user to create reissue application')
+                        vm.setApplyProxyId({id: $(this).attr('proxy-id')});
+                        vm.setApplyOrgId({id: $(this).attr('org-id')});
+                        vm.routeApplyLicence(licence_category_id, licence_activity_id);
                     }
                 },(error) => {
                 });
