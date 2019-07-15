@@ -1861,12 +1861,15 @@ class Application(RevisionedMixin):
     def get_active_licence_applications(request, for_application_type=APPLICATION_TYPE_NEW_LICENCE):
         '''
         Returns a filtered list of applications for the user/proxy/org applicant where
-        application's selected activities are CURRENT
+        application's selected activities are CURRENT OR SUSPENDED
         '''
         date_filter = Application.get_activity_date_filter(
             for_application_type, 'selected_activities__')
         return Application.get_request_user_applications(request).filter(
-            selected_activities__activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT,
+            selected_activities__activity_status__in=[
+                ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT,
+                ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED,
+            ],
             **date_filter
         ).distinct()
 
