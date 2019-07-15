@@ -3391,7 +3391,8 @@ def check_migrate_approval(data):
         if data['submitter']:
             submitter = EmailUser.objects.get(email__icontains=data['submitter'])
             if data['org_applicant']:
-                org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
+                #org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
+                org_applicant = Organisation.objects.get(organisation__abn=data['org_applicant'])
         else:
             ValidationError('Licence holder is required')
     except:
@@ -3411,7 +3412,8 @@ def migrate_approval(data):
             except:
                 submitter = EmailUser.objects.create(email=data['submitter'], password = '')
             if data['org_applicant']:
-                org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
+                #org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
+                org_applicant = Organisation.objects.get(organisation__abn=data['org_applicant'])
         else:
             ValidationError('Licence holder is required')
     except Exception, e:
