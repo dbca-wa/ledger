@@ -41,7 +41,7 @@
                     </div>
                 </div> -->
                 <div class="col-md-3 pull-right">
-                    <button @click.prevent="createInspectionUrl"
+                    <button @click.prevent="createInspection"
                         class="btn btn-primary pull-right">New Inspection</button>
                 </div>    
             </div>
@@ -54,6 +54,7 @@
             </div>
         </div>
         </FormSection>
+        <InspectionWorkflow ref="add_inspection"  />
 
     </div>
 </template>
@@ -64,6 +65,7 @@
     import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
     import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
     import FormSection from "@/components/compliance_forms/section.vue";
+    import InspectionWorkflow from "./inspection_workflow.vue";
     export default {
         name: 'InspectionTableDash',
         data() {
@@ -166,6 +168,7 @@
         components: {
             datatable,
             FormSection,
+            InspectionWorkflow,
         },
         computed: {
         },
@@ -173,6 +176,9 @@
             ...mapActions('inspectionStore', {
                 saveInspection: "saveInspection",
             }),
+            createInspection: function() {
+                this.$refs.add_inspection.isModalOpen = true;
+            },
             
             createInspectionUrl: async function () {
                 const newInspectionId = await this.saveInspection({ route: false, crud: 'create'});

@@ -15,10 +15,10 @@ logger = logging.getLogger(__name__)
 SYSTEM_NAME = 'Wildlife Licensing Automated Message'
 
 
-class CallEmailForwardNotificationEmail(TemplateEmailBase):
-    subject = 'Forwarded Call/Email'
-    html_template = 'wildlifecompliance/emails/send_call_email_forward_notification.html'
-    txt_template = 'wildlifecompliance/emails/send_call_email_forward_notification.txt'
+class InspectionForwardNotificationEmail(TemplateEmailBase):
+    subject = 'Forwarded Inspection'
+    html_template = 'wildlifecompliance/emails/send_inspection_forward_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_inspection_forward_notification.txt'
 
 
 def prepare_attachments(attachments):
@@ -30,19 +30,19 @@ def prepare_attachments(attachments):
         )
     return returned_attachments
 
-def send_call_email_forward_email(select_group, call_email, workflow_entry, request=None):
-    email = CallEmailForwardNotificationEmail()
+def send_inspection_forward_email(select_group, inspection, workflow_entry, request=None):
+    email = InspectionForwardNotificationEmail()
     if request.data.get('email_subject'):
         email.subject = request.data.get('email_subject')
     url = request.build_absolute_uri(
         reverse(
-            'internal-call-email-detail',
+            'internal-inspection-detail',
             kwargs={
-                'call_email_id': call_email.id
+                'inspection_id': inspection.id
                 }))
     context = {
         'url': url,
-        'call_email': call_email,
+        'inspection': inspection,
         'workflow_entry_details': request.data.get('details'),
     }
     email_group = [item.email for item in select_group]
@@ -52,10 +52,10 @@ def send_call_email_forward_email(select_group, call_email, workflow_entry, requ
         prepare_attachments(workflow_entry.documents)
         )
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
-    email_data = _extract_email_headers(msg, call_email, sender=sender)
+    email_data = _extract_email_headers(msg, inspection, sender=sender)
     return email_data
 
-def _extract_email_headers(email_message, call_email, sender=None):
+def _extract_email_headers(email_message, inspection, sender=None):
     # from wildlifecompliance.components.call_email.models import ComplianceLogEntry
     if isinstance(email_message, (EmailMultiAlternatives, EmailMessage,)):
         # TODO this will log the plain text body, should we log the html

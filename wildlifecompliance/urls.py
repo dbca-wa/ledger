@@ -164,6 +164,11 @@ urlpatterns = [
     url(r'^internal/call_email/(?P<call_email_id>\d+)/$', views.ApplicationView.as_view(),
         name='internal-call-email-detail'),
     
+    # following url is defined so that to include url path when sending
+    # inspection emails to users
+    url(r'^internal/inspection/(?P<inspection_id>\d+)/$', views.ApplicationView.as_view(),
+        name='internal-inspection-detail'),
+    
     # url(r'^export/xls/$', application_views.export_applications, name='export_applications'),
     url(r'^export/pdf/$', application_views.pdflatex, name='pdf_latex'),
     url(r'^mgt-commands/$',

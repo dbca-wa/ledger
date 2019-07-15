@@ -4,7 +4,7 @@
           <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-12">
-                        <div v-if="regionVisibility" class="form-group">
+                        <div class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Region</label>
@@ -18,7 +18,7 @@
                             </div>
                           </div>
                         </div>
-                        <div v-if="regionVisibility" class="form-group">
+                        <div class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>District</label>
@@ -32,7 +32,7 @@
                             </div>
                           </div>
                         </div>
-                        <div v-if="regionVisibility" class="form-group">
+                        <div class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Allocate to</label>
@@ -98,8 +98,7 @@
                                   <label class="control-label pull-left" for="details">Details</label>
                               </div>
             			      <div class="col-sm-6">
-			                	  <textarea v-if="workflow_type === 'close'" class="form-control" placeholder="add details" id="details" v-model="advice_details"/>
-                                  <textarea v-else class="form-control" placeholder="add details" id="details" v-model="workflowDetails"/>
+                                  <textarea class="form-control" placeholder="add details" id="details" v-model="workflowDetails"/>
                               </div>
                           </div>
                         </div>
@@ -218,7 +217,7 @@ export default {
       },
     computed: {
       ...mapGetters('inspectionStore', {
-        call_email: "inspection",
+        inspection: "inspection",
       }),
       documentActionUrl: function() {
           return helpers.add_endpoint_join(
@@ -387,22 +386,32 @@ export default {
           }
 
           //payload.append('email_subject', this.modalTitle);
-          payload.append('district_id', this.district_id);
-          payload.append('assigned_to_id', this.assigned_to_id);
-          payload.append('inspection_type_id', this.inspection_type_id);
-          payload.append('region_id', this.region_id);
-          payload.append('allocated_group_id', this.allocated_group_id);
+          if (this.district_id) {
+              payload.append('district_id', this.district_id);
+          }
+          if (this.assigned_to_id) {
+              payload.append('assigned_to_id', this.assigned_to_id);
+          }
+          if (this.inspection_type_id) {
+              payload.append('inspection_type_id', this.inspection_type_id);
+          }
+          if (this.region_id) {
+              payload.append('region_id', this.region_id);
+          }
+          if (this.allocated_group_id) {
+              payload.append('allocated_group_id', this.allocated_group_id);
+          }
 
           try {
               let res = await Vue.http.post(post_url, payload);
+              console.log(res);
               if (res.ok) {    
                 this.$router.push({ name: 'internal-inspection-dash' });
-              } catch(err) {
+              }
+          } catch(err) {
                   this.errorResponse = err.statusText;
               } 
-          } else {
-              this.errorResponse = callEmailRes.statusText;
-          }
+          
       },
       /*
       uploadFile(target,file_obj){
@@ -497,10 +506,6 @@ export default {
               id: "", 
               name: "",
             });
-        // add call_email vuex region_id and district_id to local component
-        this.district_id = this.call_email.district_id;
-        this.region_id = this.call_email.region_id;
-        this.updateDistricts();
     },
     mounted: function() {
         this.form = document.forms.forwardForm;

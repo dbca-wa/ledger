@@ -68,8 +68,8 @@ from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
 
-#from wildlifecompliance.components.call_email.email import (
- #   send_call_email_forward_email)
+from wildlifecompliance.components.inspection.email import (
+    send_inspection_forward_email)
 
 
 class InspectionViewSet(viewsets.ModelViewSet):
@@ -280,7 +280,10 @@ class InspectionViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 #instance = self.get_object()
                 #workflow_entry = self.add_comms_log(request, workflow=True)
-                serializer = SaveInspectionSerializer(data=request.data, partial=True)
+                serializer = SaveInspectionSerializer(
+                        data=request.data, 
+                        partial=True
+                        )
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
                     instance = serializer.save()
@@ -334,18 +337,18 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 instance.save()
 
                 # send email
-                email_data = send_call_email_forward_email(
+                email_data = send_inspection_forward_email(
                 email_group, 
                 instance,
                 # workflow_entry.documents,
                 workflow_entry,
                 request)
 
-                serializer = CallEmailLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
+                serializer = InspectionCommsLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
                     serializer.save()
-                    return_serializer = CallEmailSerializer(instance=instance, 
+                    return_serializer = InspectionSerializer(instance=instance, 
                             context={'request': request}
                             ) 
                     headers = self.get_success_headers(return_serializer.data)
@@ -375,3 +378,4 @@ class InspectionTypeViewSet(viewsets.ModelViewSet):
        if is_internal(self.request):
            return InspectionType.objects.all()
        return InspectionType.objects.none()
+

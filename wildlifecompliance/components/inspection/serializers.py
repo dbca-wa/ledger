@@ -186,3 +186,4 @@ class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
         fields = (
             'assigned_to_id',
         )
+
