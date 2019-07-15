@@ -116,9 +116,11 @@
                                     <label class="control-label pull-left">Issued on paper?</label>
                                 </div>
                                 <div class="col-sm-7">
-                                  <input class="col-sm-1" id="issued_on_paper_yes" type="radio" v-model="sanction_outcome.issued_on_paper" value="true" />
+
+                                  <input class="col-sm-1" id="issued_on_paper_yes" type="radio" v-model="sanction_outcome.issued_on_paper" :value="true" />
                                   <label class="col-sm-1 radio-button-label" for="issued_on_paper_yes">Yes</label>
-                                  <input class="col-sm-1" id="issued_on_paper_no" type="radio" v-model="sanction_outcome.issued_on_paper" value="false" />
+                                  <input class="col-sm-1" id="issued_on_paper_no" type="radio" v-model="sanction_outcome.issued_on_paper" :value="false" />
+                                  
                                   <label class="col-sm-1 radio-button-label" for="issued_on_paper_no">No</label>
                                 </div>
                             </div></div>
@@ -203,7 +205,7 @@
                                 </div>
                                 <div class="col-sm-3">
                                     <div class="input-group date" ref="dateOfIssuePicker">
-                                        <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="sanction_outcome.date_of_issue" />
+                                        <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="sanction_outcome.date_of_issue" :disabled="!sanction_outcome.issued_on_paper"/>
                                         <span class="input-group-addon">
                                             <span class="glyphicon glyphicon-calendar"></span>
                                         </span>
@@ -217,7 +219,7 @@
                                 </div>
                                 <div class="col-sm-3">
                                     <div class="input-group date" ref="timeOfIssuePicker">
-                                        <input type="text" class="form-control" placeholder="HH:MM" v-model="sanction_outcome.time_of_issue" />
+                                        <input type="text" class="form-control" placeholder="HH:MM" v-model="sanction_outcome.time_of_issue" :disabled="!sanction_outcome.issued_on_paper" />
                                         <span class="input-group-addon">
                                             <span class="glyphicon glyphicon-calendar"></span>
                                         </span>
@@ -371,6 +373,16 @@ export default {
         }
       }
     },
+    issued_on_paper: {
+      handler: function(){
+        let vm = this;
+        console.log('issued_on_paper')
+        if (!vm.sanction_outcome.issued_on_paper) {
+          vm.sanction_outcome.date_of_issue = null;
+          vm.sanction_outcome.time_of_issue = null;
+        }
+      }
+    },
     current_offence: {
       handler: function() {
         this.currentOffenceChanged();
@@ -399,6 +411,9 @@ export default {
     ...mapGetters("offenceStore", {
       offence: "offence"
     }),
+    issued_on_paper: function() {
+      return this.sanction_outcome.issued_on_paper;
+    },
     current_offence: function() {
       return this.sanction_outcome.current_offence;
     },
@@ -426,11 +441,12 @@ export default {
       return this.sanction_outcome.type == "" ? false : true;
     },
     displaySendToManagerButton: function() {
-      console.log("displayButton");
       let retValue = false;
       if (!this.processingDetails && this.sanction_outcome.type) {
         if (this.regionDistrictId) {
-          retValue = true;
+          if ((this.sanction_outcome.issued_on_paper && this.sanction_outcome.date_of_issue) || !this.sanction_outcome.issued_on_paper) {
+            retValue = true;
+          }
         }
       }
       return retValue;
