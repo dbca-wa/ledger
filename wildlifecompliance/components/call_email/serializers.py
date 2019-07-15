@@ -10,11 +10,11 @@ from wildlifecompliance.components.call_email.models import (
     Referrer,
     ReportType,
     ComplianceFormDataRecord,
-    ComplianceLogEntry,
+    CallEmailLogEntry,
     Location,
-    ComplianceUserAction,
+    CallEmailUserAction,
     MapLayer,
-    ComplianceWorkflowLogEntry,
+    #ComplianceWorkflowLogEntry,
     CasePriority,
     InspectionType,
     )
@@ -429,8 +429,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
            for member in obj.allocated_group.members:
                if user_id == member.id:
                   return True
-        else:
-            return False
+        
+        return False
 
     def get_can_user_action(self, obj):
         user_id = self.context.get('request', {}).user.id
@@ -441,8 +441,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
            for member in obj.allocated_group.members:
                if user_id == member.id:
                   return True
-        else:
-            return False
+        
+        return False
 
     def get_allocated_group(self, obj):
         allocated_group = [{
@@ -477,6 +477,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
         if user_id == obj.assigned_to_id:
             return True
 
+        return False
+
     def get_can_user_edit_form(self, obj):
         user_id = self.context.get('request', {}).user.id
 
@@ -487,10 +489,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
                for member in obj.allocated_group.members:
                    if user_id == member.id:
                       return True
-            else:
-                return False
-        else:
-            return False
+        
+        return False
 
     def get_can_user_search_person(self, obj):
         user_id = self.context.get('request', {}).user.id
@@ -502,10 +502,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
                for member in obj.allocated_group.members:
                    if user_id == member.id:
                       return True
-            else:
-                return False
-        else:
-            return False
+        
+        return False
 
     def get_user_is_volunteer(self, obj):
         user = EmailUser.objects.get(id=self.context.get('request', {}).user.id)
@@ -659,52 +657,26 @@ class CreateCallEmailSerializer(serializers.ModelSerializer):
             )
 
 
-class ComplianceUserActionSerializer(serializers.ModelSerializer):
+class CallEmailUserActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
 
     class Meta:
-        model = ComplianceUserAction
+        model = CallEmailUserAction
         fields = '__all__'
 
 
-class ComplianceLogEntrySerializer(CommunicationLogEntrySerializer):
-    documents = serializers.SerializerMethodField()
+class CallEmailLogEntrySerializer(CommunicationLogEntrySerializer):
+        documents = serializers.SerializerMethodField()
 
-    class Meta:
-        model = ComplianceLogEntry
-        fields = '__all__'
-        read_only_fields = (
-            'customer',
-        )
+        class Meta:
+            model = CallEmailLogEntry
+            fields = '__all__'
+            read_only_fields = (
+                                'customer',
+                                )
 
-    def get_documents(self, obj):
-        return [[d.name, d._file.url] for d in obj.documents.all()]
-
-
-class ComplianceWorkflowLogEntrySerializer(serializers.ModelSerializer):
-    documents = serializers.SerializerMethodField()
-    call_email_id = serializers.IntegerField(
-        required=False, 
-        write_only=True, 
-        allow_null=True
-    )
-    region_id = serializers.IntegerField(
-        required=False, 
-        write_only=True, 
-        allow_null=True
-    )
-    district_id = serializers.IntegerField(
-        required=False, 
-        write_only=True, 
-        allow_null=True
-    )
-
-    class Meta:
-        model = ComplianceWorkflowLogEntry
-        fields = '__all__'
-
-    def get_documents(self, obj):
-        return [[d.name, d._file.url] for d in obj.documents.all()]
+        def get_documents(self, obj):
+            return [[d.name, d._file.url] for d in obj.documents.all()]
 
 
 class MapLayerSerializer(serializers.ModelSerializer):

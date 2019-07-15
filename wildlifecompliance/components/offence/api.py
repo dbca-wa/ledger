@@ -7,7 +7,7 @@ from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
 from ledger.accounts.models import EmailUser, Organisation
-from wildlifecompliance.components.call_email.models import Location, ComplianceUserAction
+from wildlifecompliance.components.call_email.models import Location, CallEmailUserAction
 from wildlifecompliance.components.call_email.serializers import LocationSerializer
 from wildlifecompliance.components.main.api import save_location
 from wildlifecompliance.components.offence.models import Offence, SectionRegulation
@@ -59,9 +59,9 @@ class OffenceViewSet(viewsets.ModelViewSet):
                 # 2a. Log it to the call email
                 if saved_offence_instance.call_email:
                     saved_offence_instance.call_email.log_user_action(
-                        ComplianceUserAction.ACTION_OFFENCE.format(
-                            saved_offence_instance.call_email.number),
-                            request)
+                            CallEmailUserAction.ACTION_OFFENCE.format(
+                                saved_offence_instance.call_email.number),
+                                request)
 
                 # 3. Create relations between this offence and the alleged 0ffence(s)
                 for dict in request_data['alleged_offences']:

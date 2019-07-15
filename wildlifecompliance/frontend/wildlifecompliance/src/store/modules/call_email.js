@@ -124,7 +124,12 @@ export const callemailStore = {
             Vue.set(state, 'call_email', {
                 ...call_email
             });
-            console.log(state.call_email.referrer);
+            if (state.call_email.occurrence_date_from) {
+                state.call_email.occurrence_date_from = moment(state.call_email.occurrence_date_from, 'YYYY-MM-DD').format('DD/MM/YYYY');
+            }
+            if (state.call_email.occurrence_date_to) {
+                state.call_email.occurrence_date_tp = moment(state.call_email.occurrence_date_to, 'YYYY-MM-DD').format('DD/MM/YYYY');
+            }
         },
         updateSchema(state, schema) {
             //state.call_email.schema = schema;
@@ -305,10 +310,14 @@ export const callemailStore = {
                 let payload = new Object();
                 Object.assign(payload, state.call_email);
                 if (payload.occurrence_date_from) {
-                    payload.occurrence_date_from = moment(payload.occurrence_date_from).format('YYYY-MM-DD');
+                    payload.occurrence_date_from = moment(payload.occurrence_date_from, 'DD/MM/YYYY').format('YYYY-MM-DD');
+                } else if (payload.occurrence_date_from === '') {
+                    payload.occurrence_date_from = null;
                 }
                 if (payload.occurrence_date_to) {
-                    payload.occurrence_date_to = moment(payload.occurrence_date_to).format('YYYY-MM-DD');
+                    payload.occurrence_date_to = moment(payload.occurrence_date_to, 'DD/MM/YYYY').format('YYYY-MM-DD');
+                } else if (payload.occurrence_date_to === '') {
+                    payload.occurrence_date_to = null;
                 }
                 if (crud == 'duplicate') {
                     payload.id = null;
