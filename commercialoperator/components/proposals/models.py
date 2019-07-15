@@ -584,6 +584,10 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         return True if self.fee_invoice_reference else False
 
     @property
+    def fee_amount(self):
+        return Invoice.objects.get(reference=self.fee_invoice_reference).amount if self.fee_paid else None
+
+    @property
     def reference(self):
         return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
 
