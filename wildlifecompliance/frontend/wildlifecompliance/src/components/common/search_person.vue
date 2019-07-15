@@ -137,7 +137,11 @@ export default {
                 let data_item_id = origin[0].getAttribute("data-item-id");
                 let data_type = origin[0].getAttribute("data-type");
 
-                // Emit an event so that the parent vue component can subscribe and receive the data user selected.
+                // Emit an event so that the parent vue component can subscribe to the function: 'person-selected' 
+                // and receive the data user selected.
+                // 
+                // id is an Emailuser.id when data_type is 'individual' or 
+                // an Organisation.id when data_type is 'organisation'
                 vm.$emit('person-selected', { id: data_item_id, data_type: data_type });
             });
         },
