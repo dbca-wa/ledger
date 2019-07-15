@@ -18,6 +18,7 @@ INSTALLED_APPS += [
     'wildlifecompliance.components.returns',
     'wildlifecompliance.components.call_email',
     'wildlifecompliance.components.offence',
+    'wildlifecompliance.components.inspection',
     'wildlifecompliance.components.sanction_outcome',
     'taggit',
     'rest_framework',

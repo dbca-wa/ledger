@@ -97,19 +97,30 @@
                               <div class="col-sm-3">
                                   <label class="control-label pull-left" for="details">Details</label>
                               </div>
-			      <div class="col-sm-6">
-				  <textarea v-if="workflow_type === 'close'" class="form-control" placeholder="add details" id="details" v-model="advice_details"/>
+            			      <div class="col-sm-6">
+			                	  <textarea v-if="workflow_type === 'close'" class="form-control" placeholder="add details" id="details" v-model="advice_details"/>
                                   <textarea v-else class="form-control" placeholder="add details" id="details" v-model="workflowDetails"/>
                               </div>
                           </div>
                         </div>
-                  <form class="form-horizontal" name="forwardForm">
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <label class="control-label pull-left"  for="Name">Attachments</label>
+                                </div>
+            			        <div class="col-sm-9">
+                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="documentActionUrl" />
+                                </div>
+                            </div>
+                        </div>
+
+                  <!--form class="form-horizontal" name="forwardForm">
                     <div class="form-group">
                       <div class="row">
                           <div class="col-sm-3">
                               <label class="control-label pull-left"  for="Name">Attachments</label>
                           </div>
-                          <div class="col-sm-9">
+                          <div class="col-sm-8">
                               <template v-for="(f,i) in files">
                                   <div :class="'row top-buffer file-row-'+i">
                                       <div class="col-sm-4">
@@ -129,10 +140,11 @@
                                   </div>
                               </template>
                               <a href="" @click.prevent="attachAnother"><i class="fa fa-lg fa-plus top-buffer-2x"></i></a>
+                              <commslogfile class="form-control" ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="documentActionUrl" />
                           </div>
                         </div>
                     </div>
-                  </form>
+                  </form-->
 
                 </div>
               
@@ -157,6 +169,7 @@ import Vue from "vue";
 import modal from '@vue-utils/bootstrap-modal.vue';
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
+import filefield from '@/components/common/compliance_file.vue';
 
 export default {
     name: "CallEmailWorking",
@@ -195,6 +208,7 @@ export default {
     },
     components: {
       modal,
+      filefield,
     },
     props:{
           workflow_type: {
@@ -206,6 +220,12 @@ export default {
       ...mapGetters('callemailStore', {
         call_email: "call_email",
       }),
+      documentActionUrl: function() {
+          return helpers.add_endpoint_join(
+          api_endpoints.call_email,
+          this.call_email.id + "/process_comms_log_document/"
+          )
+      },
       regionVisibility: function() {
         if (!(this.workflow_type === 'forward_to_wildlife_protection_branch' || 
           this.workflow_type === 'close')
@@ -247,11 +267,9 @@ export default {
       },
       regionDistrictId: function() {
           if (this.district_id || this.region_id) {
-              console.log("local var");
               return this.district_id ? this.district_id : this.region_id;
           } else {
-                console.log("vuex");
-                return this.call_email.district_id ? this.call_email.district_id : this.call_email.region_id;
+              return null;
           }
       },
     },
@@ -276,10 +294,10 @@ export default {
           return returned;
       },
       updateDistricts: function() {
-        this.district_id = null;
+        // this.district_id = null;
         this.availableDistricts = [];
         for (let record of this.regionDistricts) {
-          if (this.region_id === (record.id)) {
+          if (this.region_id === record.id) {
             for (let district of record.districts) {
               for (let district_record of this.regionDistricts) {
                 if (district_record.id === district) {
@@ -289,6 +307,7 @@ export default {
             }
           }
         }
+        console.log(this.availableDistricts);
         this.availableDistricts.splice(0, 0, 
         {
           id: "", 
@@ -340,7 +359,8 @@ export default {
               this.close();
           }
       },
-      cancel: function() {
+      cancel: async function() {
+          await this.$refs.comms_log_file.cancel();
           this.isModalOpen = false;
           this.close();
       },
@@ -361,6 +381,9 @@ export default {
           let payload = new FormData(this.form);
           payload.append('call_email_id', this.call_email.id);
           payload.append('details', this.workflowDetails);
+          if (this.$refs.comms_log_file.commsLogId) {
+              payload.append('comms_log_id', this.$refs.comms_log_file.commsLogId)
+          }
 
           payload.append('workflow_type', this.workflow_type);
           payload.append('email_subject', this.modalTitle);
@@ -443,7 +466,6 @@ export default {
         Object.assign(this.regionDistricts, returned_region_districts);
 
         await this.updateAllocatedGroup();
-        await this.updateDistricts();
 
         // case_priorities
         let returned_case_priorities = await cache_helper.getSetCacheList(
@@ -480,6 +502,10 @@ export default {
               id: "", 
               name: "",
             });
+        // add call_email vuex region_id and district_id to local component
+        this.district_id = this.call_email.district_id;
+        this.region_id = this.call_email.region_id;
+        this.updateDistricts();
     },
     mounted: function() {
         this.form = document.forms.forwardForm;

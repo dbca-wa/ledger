@@ -22,6 +22,9 @@ import {
 import {
 	offenceStore
 } from './modules/offence';
+import {
+	inspectionStore
+} from './modules/inspection';
 
 Vue.use(Vuex);
 
@@ -37,5 +40,6 @@ export default new Vuex.Store({
 		returnsRendererStore: returnsRendererStore,
 		callemailStore: callemailStore,
 		offenceStore: offenceStore,
+		inspectionStore: inspectionStore,
 	}
 });

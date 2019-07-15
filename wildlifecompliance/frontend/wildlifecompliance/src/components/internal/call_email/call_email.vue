@@ -41,9 +41,11 @@
                             </div>
                           </div>
                         </div>
-                        <a @click="updateAssignedToId('current_user')" class="btn pull-right">
-                            Assign to me
-                        </a>
+                        <div v-if="call_email.user_in_group">
+                            <a @click="updateAssignedToId('current_user')" class="btn pull-right">
+                                Assign to me
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -212,13 +214,22 @@
                             <div class="col-sm-12 form-group"><div class="row">
                                 <label class="col-sm-3">{{ occurrenceDateLabel }}</label>
                                 <div class="col-sm-3">
-                                  <datepicker :disabled="readonlyForm" :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_from"/>
+                                    <div class="input-group date" ref="occurrenceDateFromPicker">
+                                        <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_from" />
+                                        <span class="input-group-addon">
+                                            <span class="glyphicon glyphicon-calendar"></span>
+                                        </span>
+                                    </div>
                                 </div>
-                                <div v-show="call_email.occurrence_from_to" :disabled="readonlyForm">
-                                  <label class="col-sm-3">Occurrence date to</label>
-                                  <div class="col-sm-3">
-                                    <datepicker :disabled="readonlyForm" :typeable="true" :disabledDates="disabledDates" placeholder="DD/MM/YYYY" input-class="form-control" v-model="call_email.occurrence_date_to" />
-                                  </div>
+                                <div v-show="call_email.occurrence_from_to">
+                                    <div class="col-sm-3">
+                                        <div class="input-group date" ref="occurrenceDateToPicker">
+                                            <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_to" />
+                                            <span class="input-group-addon">
+                                                <span class="glyphicon glyphicon-calendar"></span>
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div></div>
             
@@ -318,7 +329,9 @@
           <CallWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
         </div>
         <Offence ref="offence" />
-        <SanctionOutcome ref="sanction_outcome" />
+        <div v-if="sanctionOutcomeInitialised">
+            <SanctionOutcome ref="sanction_outcome"/>
+        </div>
     </div>
 </template>
 <script>
@@ -332,7 +345,6 @@ import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import SearchPerson from "./search_person.vue";
 import utils from "@/components/external/utils";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
-import Datepicker from 'vuejs-datepicker';
 import moment from 'moment';
 import CallWorkflow from './call_email_workflow';
 import Offence from '../offence/offence';
@@ -346,6 +358,7 @@ export default {
     return {
       cTab: 'cTab'+this._uid,
       rTab: 'rTab'+this._uid,
+      sanctionOutcomeKey: 'sanctionOutcome' + this._uid,
       dtHeadersRelatedItems: [
           'Number',
           'Type',
@@ -401,6 +414,8 @@ export default {
         this.$route.params.call_email_id + "/action_log"
       ),
       workflowBindId: '',
+      sanctionOutcomeInitialised: false,
+      offenceInitialised: false,
     };
   },
   components: {
@@ -408,7 +423,6 @@ export default {
     FormSection,
     MapLocation,
     SearchPerson,
-    Datepicker,
     CallWorkflow,
     Offence,
     datatable,
@@ -521,9 +535,13 @@ export default {
     },
     sanction_outcome(){
       console.log('sanction_outcome');
-      this.$refs.sanction_outcome.isModalOpen = true;
+      this.sanctionOutcomeInitialised = true;
+      this.$nextTick(() => {
+          this.$refs.sanction_outcome.isModalOpen = true;
+      });
     },
     offence(){
+      this.offenceInitialised = true;
       this.$refs.offence.isModalOpen = true;
     },
     save: async function () {
@@ -568,7 +586,7 @@ export default {
             this.call_email.id + '/update_assigned_to_id/'
             );
         let payload = null;
-        if (user === 'current_user') {
+        if (user === 'current_user' && this.call_email.user_in_group) {
             payload = {'current_user': true};
         } else if (user === 'blank') {
             payload = {'blank': true};
@@ -580,7 +598,59 @@ export default {
             payload
         );
         await this.setCallEmail(res.body); 
-    }
+    },
+    addEventListeners: function() {
+      let vm = this;
+      let el_fr_date = $(vm.$refs.occurrenceDateFromPicker);
+      let el_fr_time = $(vm.$refs.occurrenceTimeFromPicker);
+      let el_to_date = $(vm.$refs.occurrenceDateToPicker);
+      let el_to_time = $(vm.$refs.occurrenceTimeToPicker);
+
+      // "From" field
+      el_fr_date.datetimepicker({
+        format: "DD/MM/YYYY",
+        maxDate: "now",
+        showClear: true
+      });
+      el_fr_date.on("dp.change", function(e) {
+        if (el_fr_date.data("DateTimePicker").date()) {
+          vm.call_email.occurrence_date_from = e.date.format("DD/MM/YYYY");
+        } else if (el_fr_date.data("date") === "") {
+          vm.call_email.occurrence_date_from = "";
+        }
+      });
+      el_fr_time.datetimepicker({ format: "LT", showClear: true });
+      el_fr_time.on("dp.change", function(e) {
+        if (el_fr_time.data("DateTimePicker").date()) {
+          vm.call_email.occurrence_time_from = e.date.format("LT");
+        } else if (el_fr_time.data("date") === "") {
+          vm.call_email.occurrence_time_from = "";
+        }
+      });
+
+      // "To" field
+      el_to_date.datetimepicker({
+        format: "DD/MM/YYYY",
+        maxDate: "now",
+        showClear: true
+      });
+      el_to_date.on("dp.change", function(e) {
+        if (el_to_date.data("DateTimePicker").date()) {
+          vm.call_email.occurrence_date_to = e.date.format("DD/MM/YYYY");
+        } else if (el_to_date.data("date") === "") {
+          vm.call_email.occurrence_date_to = "";
+        }
+      });
+      el_to_time.datetimepicker({ format: "LT", showClear: true });
+      el_to_time.on("dp.change", function(e) {
+        if (el_to_time.data("DateTimePicker").date()) {
+          vm.call_email.occurrence_time_to = e.date.format("LT");
+        } else if (el_to_time.data("date") === "") {
+          vm.call_email.occurrence_time_to = "";
+        }
+      });
+
+    },
   },
   beforeRouteEnter: function(to, from, next) {
             next(async (vm) => {
@@ -667,6 +737,10 @@ export default {
       });
       $('#occurrenceTimeEndPicker').on('dp.change', function(e) {
           vm.setOccurrenceTimeEnd(e.date.format('LT'));
+      });
+
+      vm.$nextTick(() => {
+          vm.addEventListeners();
       });
 
   }

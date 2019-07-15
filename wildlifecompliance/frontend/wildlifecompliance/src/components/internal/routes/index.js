@@ -7,10 +7,12 @@ import UserDashTable from '../users/dashboard.vue'
 import User from '../users/manage.vue'
 import Application from '../applications/application.vue'
 import LicenceDashTable from '../licences/dashboard.vue'
-import CallEmailTableDash from '../call_email/call_email_dashboard.vue'
+import CallEmailDashTable from '../call_email/call_email_dashboard.vue'
 import CallEmail from '../call_email/call_email.vue'
 import ReturnDashTable from '../returns/dashboard.vue'
 import Returns from '../returns/return.vue'
+import InspectionDashTable from '../inspection/inspection_dashboard.vue'
+import Inspection from '../inspection/inspection.vue'
 
 export default
 {
@@ -33,6 +35,27 @@ export default
             name:"internal-licences-dash"
         },
         {
+            path: 'inspection',
+            component: {
+                render(c)
+                {
+                    return c('router-view')
+                }
+            },
+            children: [
+                {
+                    path: '/',
+                    component: InspectionDashTable,
+                    name:"internal-inspection-dash"
+                },
+                {
+                    path: ':inspection_id',
+                    component: Inspection,
+                    name:"view-inspection"
+                },
+            ]
+        },
+        {
             path: 'call_email',
             component: {
                 render(c)
@@ -43,16 +66,9 @@ export default
             children: [
                 {
                     path: '/',
-                    component: CallEmailTableDash,
+                    component: CallEmailDashTable,
                     name:"internal-call-email-dash"
                 },
-                
-                {
-                    path: 'create_call_email',
-                    component: CallEmail,
-                    name:"new-call-email"
-                },
-                
                 {
                     path: ':call_email_id',
                     component: CallEmail,

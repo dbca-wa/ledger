@@ -70,7 +70,7 @@
     import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
     import FormSection from "@/components/compliance_forms/section.vue";
     export default {
-        name: 'CallEmailTableDash',
+        name: 'CallEmailDashTable',
         data() {
             let vm = this;
             return {
@@ -127,14 +127,17 @@
                         {
                             data: "number",
                             searchable: false,
+                            //orderable: true,
                         },
                         {
                             data: "status.name",
                             searchable: false,
+                            orderable: false,
                         },
                         {
                             data: "classification",
                             searchable: false,
+                            //orderable: false,
                             mRender: function (data, type, full) {
                                 if (data) {
                                     return data.name;
@@ -146,6 +149,7 @@
                         {
                             data: "lodged_on",
                             searchable: false,
+                            //orderable: false,
                             mRender: function (data, type, full) {
                                 return data != '' && data != null ? moment(data).format(vm.dateFormat) : '';
                             }
@@ -158,6 +162,7 @@
                         {
                             data: "assigned_to",
                             searchable: false,
+                            orderable: false,
                             mRender: function (data, type, full) {
                                 if (data) {
                                     return data.full_name;
@@ -185,7 +190,7 @@
                             //searchable: false
                             data: "user_action",
                             searchable: false,
-                            
+                            orderable: false,
                         }
                     ],
                 },

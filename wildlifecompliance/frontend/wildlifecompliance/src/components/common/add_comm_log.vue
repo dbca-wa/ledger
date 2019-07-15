@@ -179,6 +179,8 @@ export default {
             }
             file_obj.file = _file;
             file_obj.name = _file.name;
+            // immediate file upload
+            vm.sendData();
         },
         removeFile(index){
             let length = this.files.length;
