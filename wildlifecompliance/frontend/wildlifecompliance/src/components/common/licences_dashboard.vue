@@ -211,6 +211,9 @@ export default {
                                 if (!vm.is_external && full.can_action['can_reinstate']) {
                                     links += `<a reinstate-licence='${full.id}'>Reinstate</a><br/>`
                                 }
+                                if (!vm.is_external && full.can_action['can_reissue']) {
+                                    links += `<a reissue-licence='${full.id}' org-id='${org_id}' proxy-id='${proxy_id}' licence-category-id='${licence_category_id}'>Reissue</a><br/>`
+                                }
                             }
                             return links;
                         },
@@ -824,7 +827,7 @@ export default {
                                     }
                                     if (!vm.is_external && activity['can_action']['can_reissue']) {
                                         activity_rows +=
-                                            `<a reissue-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}'>Reissue</a></br>`;
+                                            `<a reissue-activity='${activity["licence_activity_id"]}' proxy-id='${proxy_id}' org-id='${org_id}' licence-category-id='${licence_category_id}'>Reissue</a></br>`;
                                     }
                                     if (!vm.is_external && activity['can_action']['can_reinstate']) {
                                         activity_rows +=

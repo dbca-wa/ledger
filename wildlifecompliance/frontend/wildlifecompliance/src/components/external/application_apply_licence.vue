@@ -47,12 +47,6 @@
                                                                         :id="purpose.id"
                                                                         v-model="type.purpose[index2].selected"
                                                                         @change="handlePurposeCheckboxChange(index,$event)">
-                                                                    <!--<input type="checkbox"
-                                                                        :disabled="isAmendment || isRenewal"
-                                                                        :value="purpose.id"
-                                                                        :id="purpose.id"
-                                                                        v-model="type.purpose[index2].selected"
-                                                                        @change="handlePurposeCheckboxChange(index,$event)">-->
                                                                             {{purpose.name}}
                                                                             <span> ({{purpose.base_application_fee}} + {{purpose.base_licence_fee}})</span>
                                                                 </div>
@@ -102,6 +96,7 @@ import {
 from '@/utils/hooks'
 import { mapActions, mapGetters } from 'vuex'
 import utils from './utils'
+import internal_utils from '@/components/internal/utils'
 export default {
   data: function() {
     let vm = this;
@@ -158,6 +153,9 @@ export default {
                 case 'renew_activity':
                     return 'Renew one or more licensed activities';
                 break;
+                case 'reissue_activity':
+                    return 'Reissue one or more licensed activities';
+                break;
                 default:
                     return 'Apply for a new licence';
                 break;
@@ -168,6 +166,8 @@ export default {
             `Select the licence activity and purposes you wish to amend` :
             this.isRenewal ?
             `Select one or more activities and purposes you wish to renew` :
+            this.isReissue ?
+            `Select one or more activities and purposes you wish to reissue` :
             `Select the class of licence you wish to apply for`;
         },
         categoryCount: function() {
@@ -181,6 +181,9 @@ export default {
         },
         isRenewal: function() {
             return this.selected_apply_licence_select && this.selected_apply_licence_select === 'renew_activity'
+        },
+        isReissue: function() {
+            return this.selected_apply_licence_select && this.selected_apply_licence_select === 'reissue_activity'
         }
   },
   methods: {

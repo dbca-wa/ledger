@@ -175,13 +175,15 @@ export default {
     methods: {
         ...mapActions([
             'setApplyProxyId',
+            'setApplicationWorkflowState',
+            'setApplyLicenceSelect',
         ]),
         applyOnBehalfOf:function (user_id) {
-            let vm = this;
-
-            vm.setApplyProxyId({id: user_id});
-            vm.$router.push({
-                name:"apply_application_licence",
+            this.setApplyLicenceSelect({licence_select: 'new_licence'});
+            this.setApplyProxyId({id: user_id});
+            this.setApplicationWorkflowState({bool: true});
+            this.$router.push({
+                name: "apply_application_licence",
             });
         },
         addEventListeners: function(){
