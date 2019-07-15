@@ -158,7 +158,7 @@
                                     <div class="row"> 
                                         <div class="col-md-8 col-md-offset-5">
                                             <div class="checkbox">
-                                                <label><input type="checkbox" value="" v-model="toc">I agree to the <a target="_blank" href="{{EXPLORE_PARKS_TERMS}}">terms and conditions</a></label>
+                                                <label><input type="checkbox" value="" v-model="toc">I agree to the <a target="_blank" id='terms-link' href="javascript:void(0);" v-on:click="loadTerms();">terms and conditions</a></label>
                                             </div>
                                             <button :disabled="!validToProceed" type="submit" class="btn btn-primary" style="width:180px;background-color:#4286f4;font-weight:bold;">Proceed to Payment</button>
                                         </div>
@@ -251,6 +251,7 @@ export default {
         toc: false,
         message: null,
         noPayment: false,
+        terms: '',
         errors: {
             arrivalDate: false,
             overnightStay: false,
@@ -643,6 +644,12 @@ export default {
                 }).bind(this)
             }); 
         },
+        loadTerms: function() { 
+           var terms = $('#terms').val();
+           console.log(terms);
+           window.open(terms,'_terms');
+
+	},
         calculateTotal: function(){
             var date = new Date(this.arrivalDate);
             var temp = date.toISOString().substring(0,10);
@@ -732,7 +739,8 @@ export default {
         this.arrivalData.fill();
 
         //Get the user to autofill the boxes.
-       
+        // this.terms = $('#terms').val(); 
+        // $('#terms-link').val(this.terms);
         $.ajax({
             url: vm.mooringUrl + "/api/profile",
             method: 'GET',
