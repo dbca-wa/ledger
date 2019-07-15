@@ -56,7 +56,7 @@
                                 </div>
                                 <div class="col-sm-7">
                                     <div v-show="sanction_outcome">
-                                        <input type="text" class="form-control" name="identifier" placeholder="" v-model="sanction_outcome.identifier" v-bind:key="sanction_outcome.id">
+                                        <input type="text" class="form-control" name="identifier" placeholder="" v-model="sanction_outcome.identifier" >
                                     </div>
                                 </div>
                             </div></div>
@@ -116,9 +116,9 @@
                                     <label class="control-label pull-left">Issued on paper?</label>
                                 </div>
                                 <div class="col-sm-7">
-                                  <input class="col-sm-1" id="issued_on_paper_yes" type="radio" v-model="sanction_outcome.issued_on_paper" value="true" v-bind:key="sanction_outcome.id" />
+                                  <input class="col-sm-1" id="issued_on_paper_yes" type="radio" v-model="sanction_outcome.issued_on_paper" value="true" />
                                   <label class="col-sm-1 radio-button-label" for="issued_on_paper_yes">Yes</label>
-                                  <input class="col-sm-1" id="issued_on_paper_no" type="radio" v-model="sanction_outcome.issued_on_paper" value="false" v-bind:key="sanction_outcome.id" />
+                                  <input class="col-sm-1" id="issued_on_paper_no" type="radio" v-model="sanction_outcome.issued_on_paper" value="false" />
                                   <label class="col-sm-1 radio-button-label" for="issued_on_paper_no">No</label>
                                 </div>
                             </div></div>
@@ -128,7 +128,7 @@
                                     <label class="control-label pull-left">Paper ID</label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <input type="text" class="form-control" name="paper_id" placeholder="" v-model="sanction_outcome.paper_id" v-bind:key="sanction_outcome.id" /> 
+                                    <input type="text" class="form-control" name="paper_id" placeholder="" v-model="sanction_outcome.paper_id" /> 
                                 </div>
                             </div></div>
 
@@ -136,8 +136,8 @@
                                 <div class="col-sm-3">
                                     <label class="control-label pull-left">Paper notice</label>
                                 </div>
-                                <div class="col-sm-7">
-                                    <input type="file" class="form-control" v-bind:key="sanction_outcome.id" />
+                                <div v-if="documentActionUrl" class="col-sm-7">
+                                    <filefield ref="sanction_outcome_file" name="sanction-outcome-file" :isRepeatable="true" :documentActionUrl="documentActionUrl" />
                                 </div>
                             </div></div>
 
@@ -193,7 +193,7 @@
                                     <label class="control-label pull-left">Description</label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <textarea class="form-control" placeholder="add description" id="sanction-outcome-description" v-model="sanction_outcome.description" v-bind:key="sanction_outcome.id"/>
+                                    <textarea class="form-control" placeholder="add description" id="sanction-outcome-description" v-model="sanction_outcome.description"/>
                                 </div>
                             </div></div>
 
@@ -242,6 +242,7 @@
 import Vue from "vue";
 import modal from "@vue-utils/bootstrap-modal.vue";
 import datatable from "@vue-utils/datatable.vue";
+import filefield from "@/components/common/compliance_file.vue";
 import { mapGetters, mapActions } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import utils from "../utils";
@@ -264,6 +265,7 @@ export default {
       regionDistricts: [],
       regions: [], // this is the list of options
       availableDistricts: [], // this is generated from the regionDistricts[] above
+      documentActionUrl: null,
 
       // This is the object to be sent to the server when saving
       sanction_outcome: {
@@ -356,7 +358,8 @@ export default {
   },
   components: {
     modal,
-    datatable
+    datatable,
+    filefield,
   },
   watch: {
     isModalOpen: {
@@ -457,15 +460,17 @@ export default {
       await this.sendData();
       this.close();
     },
-    cancel: function() {
-      this.close();
+    cancel: async function() {
+        await this.$refs.sanction_outcome_file.cancel();
+        this.close();
     },
     close: function() {
-      this.isModalOpen = false;
+        this.$parent.sanctionOutcomeInitialised = false;
+        this.isModalOpen = false;
     },
     modalOpened: function() {},
     modalClosed: function() {
-      this.loadDefaultData();
+      //this.loadDefaultData();
     },
     loadDefaultData: function() {
       let vm = this;
@@ -782,6 +787,15 @@ export default {
   created: async function() {
     console.log("In created");
     let vm = this;
+
+    // create sanction outcome and get id
+    let returned_sanction_outcome = await Vue.http.post(api_endpoints.sanction_outcome);
+    this.sanction_outcome.id = returned_sanction_outcome.body.id;
+    
+    this.documentActionUrl = helpers.add_endpoint_join(
+            api_endpoints.sanction_outcome,
+            this.sanction_outcome.id + "/process_default_document/"
+            )
 
     // Load all the types for the sanction outcome
     let options_for_types = await cache_helper.getSetCacheList(

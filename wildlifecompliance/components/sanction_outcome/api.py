@@ -8,9 +8,12 @@ from django.db import transaction
 from django.http import HttpResponse
 
 from rest_framework import viewsets, serializers
-from rest_framework.decorators import list_route
+from rest_framework.decorators import list_route, detail_route, renderer_classes
+from rest_framework.renderers import JSONRenderer
+from rest_framework.response import Response
+from wildlifecompliance.components.main.api import process_generic_document
 
-from wildlifecompliance.components.call_email.models import CallEmail, ComplianceUserAction
+from wildlifecompliance.components.call_email.models import CallEmail, CallEmailUserAction
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
 from wildlifecompliance.components.sanction_outcome.serializers import SanctionOutcomeSerializer, \
     SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer
@@ -35,6 +38,15 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
             res_obj.append({'id': choice[0], 'display': choice[1]});
         res_json = json.dumps(res_obj)
         return HttpResponse(res_json, content_type='application/json')
+
+    def create(self, request, *args, **kwargs):
+        serializer = SaveSanctionOutcomeSerializer(data=request.data, partial=True)
+
+        serializer.is_valid(raise_exception=True)
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response(serializer.data)
 
     @list_route(methods=['POST',])
     def sanction_outcome_save(self, request, *args, **kwargs):
@@ -74,7 +86,7 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 # Log action
                 if request_data['call_email_id']:
                     call_email = CallEmail.objects.get(id=request_data['call_email_id'])
-                    call_email.log_user_action(ComplianceUserAction.ACTION_SANCTION_OUTCOME.format(call_email.number), request)
+                    call_email.log_user_action(CallEmailUserAction.ACTION_SANCTION_OUTCOME.format(call_email.number), request)
 
                 # Return
                 return HttpResponse(res_json, content_type='application/json')
@@ -85,6 +97,37 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
         except ValidationError as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
+    def process_default_document(self, request, *args, **kwargs):
+        print("process_default_document")
+        print(request.data)
+        try:
+            instance = self.get_object()
+            # process docs
+            returned_data = process_generic_document(request, instance)
+            # delete Sanction Outcome if user cancels modal
+            action = request.data.get('action')
+            if action == 'cancel' and returned_data:
+                returned_data = instance.delete()
+            # return response
+            if returned_data:
+                return Response(returned_data)
+            else:
+                return Response()
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
