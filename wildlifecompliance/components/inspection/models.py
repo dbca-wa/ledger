@@ -20,25 +20,45 @@ def update_inspection_comms_log_filename(instance, filename):
         instance.log_entry.inspection.id, instance.id, filename)
 
 
-#class InspectionType(models.Model):
- #   description = models.CharField(max_length=255, null=True, blank=True)
+class InspectionType(models.Model):
+   description = models.CharField(max_length=255, null=True, blank=True)
 
-  #  class Meta:
-   #     app_label = 'wildlifecompliance'
-    #    verbose_name = 'CM_InspectionType'
-     #   verbose_name_plural = 'CM_InspectionTypes'
+   class Meta:
+       app_label = 'wildlifecompliance'
+       verbose_name = 'CM_InspectionType'
+       verbose_name_plural = 'CM_InspectionTypes'
 
-   # def __str__(self):
-    #    return self.description
+   def __str__(self):
+       return self.description
 
 
 class Inspection(RevisionedMixin):
+    PARTY_CHOICES = (
+            ('individual', 'individual'),
+            ('organisation', 'organisation')
+            )
+
     title = models.CharField(max_length=200, blank=True, null=True)
     details = models.TextField(blank=True, null=True)
     number = models.CharField(max_length=50, blank=True, null=True)
     planned_for_date = models.DateField(null=True)
     planned_for_time = models.CharField(max_length=20, blank=True, null=True)
-    
+    party_inspected = models.CharField(
+            max_length=30,
+            choices=PARTY_CHOICES,
+            default='person'
+            )
+    assigned_to = models.ForeignKey(
+        EmailUser, 
+        related_name='inspection_assigned_to',
+        null=True
+    )
+    allocated_group = models.ForeignKey(
+        CompliancePermissionGroup,
+        related_name='inspection_allocated_group', 
+        null=True
+    )
+
     class Meta:
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_Inspection'

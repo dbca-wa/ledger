@@ -14,6 +14,37 @@
                     <div class="panel-heading">
                         Workflow 
                     </div>
+                    <div class="panel-body panel-collapse">
+                        <div class="row">
+                            <!--div-- class="col-sm-12">
+                                <strong>Status</strong><br/>
+                                {{ statusDisplay }}<br/>
+                            </!--div-->
+                        </div>
+
+                        <div v-if="inspection.allocated_group" class="form-group">
+                          <div class="row">
+                            <div class="col-sm-12 top-buffer-s">
+                              <strong>Currently assigned to</strong><br/>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-sm-12">
+                              
+                              <select :disabled="!inspection.user_in_group" class="form-control" v-model="inspection.assigned_to_id" @change="updateAssignedToId()">
+                                <option  v-for="option in inspection.allocated_group" :value="option.id" v-bind:key="option.id">
+                                  {{ option.full_name }} 
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div v-if="inspection.user_in_group">
+                            <a @click="updateAssignedToId('current_user')" class="btn pull-right">
+                                Assign to me
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -31,7 +62,7 @@
                     <div class="tab-content">
                         <div :id="iTab" class="tab-pane fade in active">
 
-                          <FormSection :formCollapse="false" label="Caller" Index="0">
+                          <FormSection :formCollapse="false" label="Inspection Details" Index="0">
                             
                             <div class="row"><div class="col-sm-8 form-group">
                               <label class="col-sm-12">Title</label>
@@ -64,8 +95,23 @@
                                 </div>
                             </div></div>
                             <div class="col-sm-12 form-group"><div class="row">
-                                <SearchPerson elementId="search-person"/>
+                                <label class="col-sm-4">Party Inspected</label>
+                                    <input :disabled="readonlyForm" class="col-sm-1" id="individual" type="radio" v-model="inspection.party_inspected" v-bind:value="`individual`">
+                                    <label class="col-sm-1" for="individual">Person</label>
+                                    <input :disabled="readonlyForm" class="col-sm-1" id="organisation" type="radio" v-model="inspection.party_inspected" v-bind:value="`organisation`">
+                                    <label class="col-sm-1" for="organisation">Organisation</label>
                             </div></div>
+                            
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-8">
+                                    <SearchPerson classNames="form-control" elementId="search-person" :search_type="inspection.party_inspected"/>
+                                </div>
+                            </div></div>
+                          </FormSection>
+                          <FormSection :formCollapse="false" label="Inspection Team" Index="1">
+                            <div>
+                                <!--datatable ref="member_list_table" id="member-list-table" :dtOptions="dtOptionsMembers" :dtHeaders="dtHeadersMembers" /--> 
+                            </div>
                           </FormSection>
             
                           
@@ -155,6 +201,7 @@ export default {
       sectionIndex: 1,
       pBody: "pBody" + this._uid,
       loading: [],
+      //party_inspected: '',
       
       //callemailTab: "callemailTab" + this._uid,
       comms_url: helpers.add_endpoint_json(
@@ -303,6 +350,25 @@ export default {
           vm.inspection.planned_for_time = "";
         }
       });
+    },
+    updateAssignedToId: async function (user) {
+        let url = helpers.add_endpoint_join(
+            api_endpoints.inspection, 
+            this.inspection.id + '/update_assigned_to_id/'
+            );
+        let payload = null;
+        if (user === 'current_user' && this.inspection.user_in_group) {
+            payload = {'current_user': true};
+        } else if (user === 'blank') {
+            payload = {'blank': true};
+        } else {
+            payload = { 'assigned_to_id': this.inspection.assigned_to_id };
+        }
+        let res = await Vue.http.post(
+            url,
+            payload
+        );
+        await this.setInspection(res.body); 
     },
   },
   beforeRouteEnter: function(to, from, next) {

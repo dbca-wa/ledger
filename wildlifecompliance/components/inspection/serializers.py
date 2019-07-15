@@ -8,7 +8,7 @@ from wildlifecompliance.components.inspection.models import (
     Inspection,
     InspectionUserAction,
     InspectionCommsLogEntry,
-    # InspectionType,
+    InspectionType,
     )
 from wildlifecompliance.components.main.models import get_related_items
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
@@ -20,25 +20,111 @@ from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from wildlifecompliance.components.main.fields import CustomChoiceField
 
-from wildlifecompliance.components.users.serializers import UserAddressSerializer
+from wildlifecompliance.components.users.serializers import (
+    ComplianceUserDetailsOptimisedSerializer,
+    CompliancePermissionGroupMembersSerializer,
+    UserAddressSerializer,
+)
+
+
+class InspectionTypeSerializer(serializers.ModelSerializer):
+   class Meta:
+       model = InspectionType
+       fields = '__all__'
 
 
 class InspectionSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = Inspection
-        fields = '__all__'
-
-
-class SaveInspectionSerializer(serializers.ModelSerializer):
+    allocated_group = serializers.SerializerMethodField()
+    user_in_group = serializers.SerializerMethodField()
+    can_user_action = serializers.SerializerMethodField()
+    user_is_assignee = serializers.SerializerMethodField()
     
     class Meta:
         model = Inspection
         fields = (
+                'id',
+                'number',
                 'title',
                 'details',
                 'planned_for_date',
                 'planned_for_time',
+                'party_inspected',
+                'assigned_to_id',
+                'allocated_group',
+                'allocated_group_id',
+                'user_in_group',
+                'can_user_action',
+                'user_is_assignee',
+                )
+        read_only_fields = (
+                'id',
+                )
+
+    def get_user_in_group(self, obj):
+        user_id = self.context.get('request', {}).user.id
+
+        if obj.allocated_group:
+           for member in obj.allocated_group.members:
+               if user_id == member.id:
+                  return True
+        
+        return False
+
+    def get_can_user_action(self, obj):
+        user_id = self.context.get('request', {}).user.id
+
+        if user_id == obj.assigned_to_id:
+            return True
+        elif obj.allocated_group and not obj.assigned_to_id:
+           for member in obj.allocated_group.members:
+               if user_id == member.id:
+                  return True
+        
+        return False
+
+    def get_user_is_assignee(self, obj):
+        user_id = self.context.get('request', {}).user.id
+        if user_id == obj.assigned_to_id:
+            return True
+
+        return False
+
+    def get_allocated_group(self, obj):
+        allocated_group = [{
+            'email': '',
+            'first_name': '',
+            'full_name': '',
+            'id': None,
+            'last_name': '',
+            'title': '',
+            }]
+        returned_allocated_group = CompliancePermissionGroupMembersSerializer(instance=obj.allocated_group)
+        for member in returned_allocated_group.data['members']:
+            allocated_group.append(member)
+
+        return allocated_group
+
+
+class SaveInspectionSerializer(serializers.ModelSerializer):
+    assigned_to_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    allocated_group_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    
+    class Meta:
+        model = Inspection
+        fields = (
+                'id',
+                'title',
+                'details',
+                'planned_for_date',
+                'planned_for_time',
+                'party_inspected',
+                'assigned_to_id',
+                'allocated_group_id',
+                )
+        read_only_fields = (
+                'id',
                 )
 
 #class SaveInspectionSerializer(serializers.ModelSerializer):
@@ -49,10 +135,6 @@ class SaveInspectionSerializer(serializers.ModelSerializer):
     #planned_for_time = models.CharField(max_length=20, blank=True, null=True)
 
 
-#class InspectionTypeSerializer(serializers.ModelSerializer):
- #   class Meta:
-  #      model = InspectionType
-   #     fields = '__all__'
 
 class InspectionUserActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
@@ -94,3 +176,13 @@ class InspectionDatatableSerializer(serializers.ModelSerializer):
         process_url = '<a href=/internal/inspection/' + str(obj.id) + '>Process</a>'
         return process_url
 
+
+class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
+    assigned_to_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    
+    class Meta:
+        model = Inspection
+        fields = (
+            'assigned_to_id',
+        )

@@ -54,7 +54,7 @@ from wildlifecompliance.components.call_email.models import (
     CallEmailUserAction,
     MapLayer,
     CasePriority,
-    InspectionType,
+    #InspectionType,
     # ExternalOrganisation,
     CallEmailLogEntry,
     )
@@ -79,7 +79,7 @@ from wildlifecompliance.components.call_email.serializers import (
     #ComplianceWorkflowLogEntrySerializer,
     CallEmailDatatableSerializer,
     SaveUserAddressSerializer,
-    InspectionTypeSerializer,
+    #InspectionTypeSerializer,
     CasePrioritySerializer,
     # ExternalOrganisationSerializer,
     CallEmailAllocatedGroupSerializer,
@@ -97,6 +97,7 @@ from rest_framework_datatables.renderers import DatatablesRenderer
 
 from wildlifecompliance.components.call_email.email import (
     send_call_email_forward_email)
+#from wildlifecompliance.components.inspection.serializers import InspectionTypeSerializer
 
 
 class CallEmailFilterBackend(DatatablesFilterBackend):
@@ -664,7 +665,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                     if call_email_serializer.is_valid():
                         call_email_serializer.save()
                         call_email_instance.log_user_action(
-                            ComplianceUserAction.ACTION_PERSON_SEARCH.format(
+                            CallEmailUserAction.ACTION_PERSON_SEARCH.format(
                             call_email_instance.number), request)
 
             # Reload data via serializer
@@ -966,15 +967,15 @@ class CasePriorityViewSet(viewsets.ModelViewSet):
         return CasePriority.objects.none()
 
 
-class InspectionTypeViewSet(viewsets.ModelViewSet):
-    queryset = InspectionType.objects.all()
-    serializer_class = InspectionTypeSerializer
+# class InspectionTypeViewSet(viewsets.ModelViewSet):
+#     queryset = InspectionType.objects.all()
+#     serializer_class = InspectionTypeSerializer
 
-    def get_queryset(self):
-        user = self.request.user
-        if is_internal(self.request):
-            return InspectionType.objects.all()
-        return InspectionType.objects.none()
+#     def get_queryset(self):
+#         user = self.request.user
+#         if is_internal(self.request):
+#             return InspectionType.objects.all()
+#         return InspectionType.objects.none()
 
 
 class ReportTypeViewSet(viewsets.ModelViewSet):
