@@ -1501,10 +1501,13 @@ class Application(RevisionedMixin):
                                                     current_application__proxy_applicant_id=None)
             ).order_by('-id').distinct().first()
             if existing_licence:
-                # Only load licence if any associated activities are still current.
+                # Only load licence if any associated activities are still current or suspended.
                 if not existing_licence.current_application.get_activity_chain(
                     expiry_date__gte=current_date,
-                    activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT
+                    activity_status__in=[
+                        ApplicationSelectedActivity.ACTIVITY_STATUS_CURRENT,
+                        ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED,
+                    ]
                 ).first():
                     raise WildlifeLicence.DoesNotExist
             else:
@@ -2316,16 +2319,20 @@ class ApplicationSelectedActivity(models.Model):
         ).count() > 0
 
         # can_surrender is true if the activity is CURRENT or SUSPENDED
-        can_action['can_surrender'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
-            Application.APPLICATION_TYPE_SYSTEM_GENERATED,
-            activity_ids=[self.id]
-        ).count() > 0
+        # disable if there are any open applications to maintain licence sequence data integrity
+        if not purposes_in_open_applications:
+            can_action['can_surrender'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
+                Application.APPLICATION_TYPE_SYSTEM_GENERATED,
+                activity_ids=[self.id]
+            ).count() > 0
 
         # can_cancel is true if the activity is CURRENT or SUSPENDED
-        can_action['can_cancel'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
-            Application.APPLICATION_TYPE_SYSTEM_GENERATED,
-            activity_ids=[self.id]
-        ).count() > 0
+        # disable if there are any open applications to maintain licence sequence data integrity
+        if not purposes_in_open_applications:
+            can_action['can_cancel'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
+                Application.APPLICATION_TYPE_SYSTEM_GENERATED,
+                activity_ids=[self.id]
+            ).count() > 0
 
         # can_suspend is true if the activity_status is CURRENT
         # Extra exclude for SUSPENDED due to get_current_activities_for_application_type
