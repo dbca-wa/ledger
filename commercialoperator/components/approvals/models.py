@@ -96,6 +96,7 @@ class Approval(RevisionedMixin):
 
     #application_type = models.ForeignKey(ApplicationType, null=True, blank=True)
     renewal_count = models.PositiveSmallIntegerField('Number of times an Approval has been renewed', default=0)
+    migrated=models.BooleanField(default=False)
 
     class Meta:
         app_label = 'commercialoperator'

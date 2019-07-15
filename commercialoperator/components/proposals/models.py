@@ -526,6 +526,9 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     approval_level = models.CharField('Activity matrix approval level', max_length=255,null=True,blank=True)
     approval_level_document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='approval_level_document')
     approval_comment = models.TextField(blank=True)
+    #If the proposal is created as part of migration of approvals
+    migrated=models.BooleanField(default=False)
+
 
     # common
     #applicant_details = models.OneToOneField(ProposalApplicantDetails, blank=True, null=True) #, related_name='applicant_details')
@@ -579,6 +582,10 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     @property
     def fee_paid(self):
         return True if self.fee_invoice_reference else False
+
+    @property
+    def fee_amount(self):
+        return Invoice.objects.get(reference=self.fee_invoice_reference).amount if self.fee_paid else None
 
     @property
     def reference(self):
@@ -1763,6 +1770,10 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 proposal.schema = ptype.schema
                 proposal.submitter = request.user
                 proposal.previous_application = self
+                try:
+                    ProposalOtherDetails.objects.get(proposal=proposal)                    
+                except ProposalOtherDetails.DoesNotExist:
+                    ProposalOtherDetails.objects.create(proposal=proposal)
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_RENEW_PROPOSAL.format(self.id),request)
                 # Create a log entry for the organisation
@@ -1796,6 +1807,10 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 proposal.schema = ptype.schema
                 proposal.submitter = request.user
                 proposal.previous_application = self
+                try:
+                    ProposalOtherDetails.objects.get(proposal=proposal)                    
+                except ProposalOtherDetails.DoesNotExist:
+                    ProposalOtherDetails.objects.create(proposal=proposal)
                 #copy all the requirements from the previous proposal
                 #req=self.requirements.all()
                 req=self.requirements.all().exclude(is_deleted=True)
@@ -3066,6 +3081,7 @@ def clone_proposal_with_status_reset(proposal):
 
             proposal.approval = None
             proposal.approval_level_document = None
+            proposal.migrated=False
 
             proposal.save(no_revision=True)
 
@@ -3379,7 +3395,8 @@ def check_migrate_approval(data):
         if data['submitter']:
             submitter = EmailUser.objects.get(email__icontains=data['submitter'])
             if data['org_applicant']:
-                org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
+                #org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
+                org_applicant = Organisation.objects.get(organisation__abn=data['org_applicant'])
         else:
             ValidationError('Licence holder is required')
     except:
@@ -3394,9 +3411,13 @@ def migrate_approval(data):
         #import ipdb; ipdb.set_trace()
 
         if data['submitter']:
-            submitter = EmailUser.objects.get(email__icontains=data['submitter'])
+            try:
+                submitter = EmailUser.objects.get(email__icontains=data['submitter'])
+            except:
+                submitter = EmailUser.objects.create(email=data['submitter'], password = '')
             if data['org_applicant']:
-                org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
+                #org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
+                org_applicant = Organisation.objects.get(organisation__abn=data['org_applicant'])
         else:
             ValidationError('Licence holder is required')
     except Exception, e:
@@ -3425,6 +3446,12 @@ def migrate_approval(data):
                     current_proposal=proposal
                 )
     proposal.approval= approval
+    proposal.processing_status='approved'
+    proposal.customer_status='approved'
+    proposal.migrated=True
+    approval.migrated=True
+    other_details = ProposalOtherDetails.objects.create(proposal=proposal)
+    proposal.save()
     approval.save()
     return approval
 
