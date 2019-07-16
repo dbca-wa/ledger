@@ -17,6 +17,7 @@ class Payment(RevisionedMixin):
     send_invoice = models.BooleanField(default=False)
     confirmation_sent = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
+    expiry_time = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         app_label = 'commercialoperator'
@@ -221,14 +222,13 @@ class ApplicationFee(Payment):
 #        (5, 'Changed Booking')
     )
 
-
     proposal = models.ForeignKey(Proposal, on_delete=models.PROTECT, blank=True, null=True, related_name='application_fees')
     payment_type = models.SmallIntegerField(choices=PAYMENT_TYPE_CHOICES, default=0)
     cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
     created_by = models.ForeignKey(EmailUser,on_delete=models.PROTECT, blank=True, null=True,related_name='created_by_application_fee')
 
     def __str__(self):
-        return 'Application {} : Invoice {}'.format(self.proposal, self.invoices.last())
+        return 'Application {} : Invoice {}'.format(self.proposal, self.application_fee_invoices.last())
 
     class Meta:
         app_label = 'commercialoperator'

@@ -40,10 +40,11 @@ from commercialoperator.components.bookings.utils import (
 from commercialoperator.components.proposals.serializers import ProposalSerializer
 
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
+from ledger.payments.utils import oracle_parser_on_invoice,update_payments
 import json
 from decimal import Decimal
 
-from commercialoperator.components.bookings.models import Booking, ParkBooking, BookingInvoice
+from commercialoperator.components.bookings.models import Booking, ParkBooking, BookingInvoice, ApplicationFee, ApplicationFeeInvoice
 from ledger.payments.models import Invoice
 from ledger.basket.models import Basket
 from ledger.payments.mixins import InvoiceOwnerMixin
@@ -65,11 +66,12 @@ class ApplicationFeeView(TemplateView):
         #proposal = Proposal.objects.get(id=proposal_id)
 
         proposal = self.get_object()
+        application_fee = ApplicationFee.objects.create(proposal=proposal, created_by=request.user, payment_type=3)
         #import ipdb; ipdb.set_trace()
 
         try:
             with transaction.atomic():
-                set_session_application_invoice(request.session, proposal)
+                set_session_application_invoice(request.session, application_fee)
                 lines = create_fee_lines(proposal)
                 checkout_response = checkout(
                     request,
@@ -85,8 +87,8 @@ class ApplicationFeeView(TemplateView):
 
         except Exception, e:
             logger.error('Error Creating Application Fee: {}'.format(e))
-            if booking:
-                booking.delete()
+            if application_fee:
+                application_fee.delete()
             raise
 
 
@@ -141,6 +143,102 @@ class MakePaymentView(TemplateView):
 
 from commercialoperator.components.proposals.utils import proposal_submit
 class ApplicationFeeSuccessView(TemplateView):
+    template_name = 'commercialoperator/booking/success_fee.html'
+
+    def get(self, request, *args, **kwargs):
+        print (" APPLICATION FEE SUCCESS ")
+        try:
+            import ipdb; ipdb.set_trace()
+            context = template_context(self.request)
+            basket = None
+            application_fee = get_session_application_invoice(request.session)
+            proposal = application_fee.proposal
+            #proposal = get_session_application_invoice(request.session)
+
+            try:
+                recipient = proposal.applicant.email
+                submitter = proposal.applicant
+            except:
+                recipient = proposal.submitter.email
+                submitter = proposal.submitter
+
+            if self.request.user.is_authenticated():
+                basket = Basket.objects.filter(status='Submitted', owner=request.user).order_by('-id')[:1]
+            else:
+                basket = Basket.objects.filter(status='Submitted', owner=booking.proposal.submitter).order_by('-id')[:1]
+
+            order = Order.objects.get(basket=basket[0])
+            invoice = Invoice.objects.get(order_number=order.number)
+            invoice_ref = invoice.reference
+            #book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
+            fee_inv, created = ApplicationFeeInvoice.objects.get_or_create(application_fee=application_fee, invoice_reference=invoice_ref)
+
+            import ipdb; ipdb.set_trace()
+            if application_fee.payment_type == 3:
+                try:
+                    inv = Invoice.objects.get(reference=invoice_ref)
+                    order = Order.objects.get(number=inv.order_number)
+                    order.user = submitter
+                    order.save()
+                except Invoice.DoesNotExist:
+                    print ("INVOICE ERROR")
+                    logger.error('{} tried paying an application fee with an incorrect invoice'.format('User {} with id {}'.format(proposal.submitter.get_full_name(), proposal.submitter.id) if proposal.submitter else 'An anonymous user'))
+                    return redirect('make_payment')
+                #if inv.system not in ['S557']:
+#                if inv.system not in [settings.PS_PAYMENT_SYSTEM_ID]:
+#                    print ("SYSTEM ERROR")
+#                    logger.error('{} tried paying an application fee with an invoice from another system with reference number {}'.format('User {} with id {}'.format(proposal.submitter.get_full_name(), proposal.submitter.id) if proposal.submitter else 'An anonymous user',inv.reference))
+#                    return redirect('make_payment')
+
+                if fee_inv:
+                    application_fee.payment_type = 1  # internet booking
+                    application_fee.expiry_time = None
+                    update_payments(invoice_ref)
+
+                    proposal = proposal_submit(proposal, request)
+                    if proposal and (invoice.payment_status == 'paid' or invoice.payment_status == 'over_paid'):
+                        proposal.fee_invoice_reference = invoice_ref
+                        proposal.save()
+                    else:
+                        logger.error('Invoice payment status is {}'.format(invoice.payment_status))
+                        raise
+
+                    application_fee.save()
+                    #request.session['cols_last_app_invoice'] = application_fee.id
+                    #delete_session_application_invoice(request.session)
+
+                    send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+                    send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+
+                    context = {
+                        'proposal': proposal,
+                        'submitter': submitter,
+                        'fee_invoice': invoice
+                    }
+                    return render(request, self.template_name, context)
+
+        except Exception as e:
+            if ('cols_last_app_invoice' in request.session) and ApplicationFee.objects.filter(id=request.session['cols_last_app_invoice']).exists():
+                application_fee = ApplicationFee.objects.get(id=request.session['cols_last_app_invoice'])
+                if ApplicationFeeInvoice.objects.filter(application_fee=application_fee).count() > 0:
+                    afi = ApplicationFeeInvoice.objects.filter(application_fee=application_fee)
+                    invoice = afi[0].invoice_reference
+#                    book_inv = BookingInvoice.objects.get(booking=booking).invoice_reference
+            else:
+                import ipdb; ipdb.set_trace()
+                return redirect('home')
+
+        context = {
+            #'booking': booking,
+            #'book_inv': [app_inv]
+            'proposal': proposal,
+            'submitter': submitter,
+            'fee_invoice': invoice
+        }
+        return render(request, self.template_name, context)
+
+
+class _ApplicationFeeSuccessView(TemplateView):
     template_name = 'commercialoperator/booking/success_fee.html'
 
     def get(self, request, *args, **kwargs):

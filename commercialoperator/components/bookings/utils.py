@@ -11,7 +11,7 @@ from ledger.payments.models import Invoice
 import json
 from decimal import Decimal
 
-from commercialoperator.components.bookings.models import Booking, ParkBooking
+from commercialoperator.components.bookings.models import Booking, ParkBooking, ApplicationFee
 
 import logging
 logger = logging.getLogger('payment_checkout')
@@ -72,19 +72,20 @@ def delete_session_booking(session):
 def get_session_application_invoice(session):
     """ Application Fee session ID """
     if 'cols_app_invoice' in session:
-        proposal_id = session['cols_app_invoice']
+        application_fee_id = session['cols_app_invoice']
     else:
         raise Exception('Application not in Session')
 
     try:
         #return Invoice.objects.get(id=application_invoice_id)
-        return Proposal.objects.get(id=proposal_id)
+        #return Proposal.objects.get(id=proposal_id)
+        return ApplicationFee.objects.get(id=application_fee_id)
     except Invoice.DoesNotExist:
-        raise Exception('Application not found for application {}'.format(application_invoice_id))
+        raise Exception('Application not found for application {}'.format(application_fee_id))
 
-def set_session_application_invoice(session, proposal):
+def set_session_application_invoice(session, application_fee):
     """ Application Fee session ID """
-    session['cols_app_invoice'] = proposal.id
+    session['cols_app_invoice'] = application_fee.id
     session.modified = True
 
 def delete_session_application_invoice(session):
