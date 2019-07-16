@@ -1,0 +1,839 @@
+{% extends 'mooring/base.html' %}
+{% load static %}
+{% block extra_css %}
+    {{ block.super }}
+    <!--link href="/static/common/css/font-awesome.css" rel="stylesheet"/-->
+    <style>
+        .bold {
+            font-weight: bold;
+        }
+        .table>tbody>tr>td, .table>tbody>tr>th, .table>tfoot>tr>td, .table>tfoot>tr>th, .table>thead>tr>td, .table>thead>tr>th{
+            border:none;
+        }
+        .box-green { 
+-webkit-box-shadow: 0.1px 0.1px 0.5px 0.1px rgba(0,0,0,0.75);
+-moz-box-shadow: 0.1px 0.1px 0.5px 0.1px rgba(0,0,0,0.75);
+box-shadow: 0.1px 0.1px 0.5px 0.1px rgba(0,0,0,0.75);
+            background-color: #dfffd4;
+        }
+	.box-green2 {
+            margin: 2px;
+            padding: 10px;
+            font-size: 19px;
+            color: #000000;
+/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#b4e391+0,61c419+50,b4e391+100;Green+3D */
+background: rgb(180,227,145); /* Old browsers */
+background: -moz-linear-gradient(-45deg,  rgba(180,227,145,1) 0%, rgba(97,196,25,1) 50%, rgba(180,227,145,1) 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(-45deg,  rgba(180,227,145,1) 0%,rgba(97,196,25,1) 50%,rgba(180,227,145,1) 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(135deg,  rgba(180,227,145,1) 0%,rgba(97,196,25,1) 50%,rgba(180,227,145,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b4e391', endColorstr='#b4e391',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+
+
+	}
+	.box-blue2 {
+            margin: 2px;
+            padding: 10px;
+            font-size: 19px;
+            color: #000000;
+
+/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#d0e4f7+0,73b1e7+24,0a77d5+50,539fe1+79,87bcea+100;Blue+Pipe+%231 */
+background: rgb(208,228,247); /* Old browsers */
+background: -moz-linear-gradient(-45deg,  rgba(208,228,247,1) 0%, rgba(115,177,231,1) 24%, rgba(10,119,213,1) 50%, rgba(83,159,225,1) 79%, rgba(135,188,234,1) 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(-45deg,  rgba(208,228,247,1) 0%,rgba(115,177,231,1) 24%,rgba(10,119,213,1) 50%,rgba(83,159,225,1) 79%,rgba(135,188,234,1) 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(135deg,  rgba(208,228,247,1) 0%,rgba(115,177,231,1) 24%,rgba(10,119,213,1) 50%,rgba(83,159,225,1) 79%,rgba(135,188,234,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d0e4f7', endColorstr='#87bcea',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+
+     }
+    /* Tooltip */
+    .tooltip2 {
+      position: relative;
+      display: inline-block;
+    }
+
+    /* Tooltip text */
+    .tooltip2 .tooltiptext {
+      width: 185px;
+      background-color: black;
+      color: #fff;
+      text-align: center;
+      padding: 8px;
+      border-radius: 6px;
+      text-align: left;
+
+      /* Position the tooltip text - see examples below! */
+      position: absolute;
+      z-index: 1;
+      visibility: visible;
+      margin-left: 101%;
+      display:none;
+    }
+
+    /* Show the tooltip text when you mouse over the tooltip container */
+    /* .tooltip2:hover .tooltiptext {
+      visibility: visible;
+    }
+    */
+
+    .tooltip2 .tooltiptext::after {
+    content: " ";
+    position: absolute;
+    right: 100%;
+    top: 10px;
+    left: 10%;
+    margin-left: -40px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent black transparent transparent;
+
+    }
+
+    .money_sign { 
+          position: absolute;
+          margin-top: 5px;
+          margin-left: -9px;
+          font-weight: bold;
+
+    }
+
+	
+    </style>
+
+    <div>
+
+
+    </div>
+
+{% endblock %}
+{% block content %}
+    {% csrf_token %}
+    <div class="container">
+        <div class="row">
+        <div class="col-sm-12">
+            <h2>Refund - Allocation Pool</h2>
+	</div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+            <br>
+            <h4>Order history collated list</h4>
+        </div>
+
+          
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+        <table cellspacing="0" width="100%" id="bookings-table" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+        <thead>
+                <tr> 
+                  <th>Order Number</th>
+                  <th>Line Item (all bookings)</th>
+                  <th>Oracle Code</th>
+                  <th>Price (inc tax)</th>
+                  <th>Order Date</th>
+                </tr>
+        </thead>
+        <tbody>
+
+        {% for line in invoice_line_items.invoice_line_items|dictsort:"order.date_placed" %}
+           <tr>
+                <th>#{{ line.order.number }}</th>
+                <th>{{ line.title }}</th>
+  		<th>{{ line.oracle_code }}</th>
+                <th>{{ line.line_price_incl_tax }}</th>	
+                <th>{{ line.order.date_placed }}</th>
+	   </tr>
+	{% endfor %}
+
+        </tbody>
+        </table>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+            <br>
+            <h4>Payment Gateway Transaction</h4>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+        <table cellspacing="0" width="100%" id="bookings-table" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+        <thead>
+                <tr>
+                  <th>Invoice No</th>
+                  <th style='width: 100px;'>Action</th>
+                  <th style='width: 100px;'>Amount</th>
+                </tr>
+        </thead>
+        <tbody>
+		{% for transation in invoice_line_items.invoice_bpoint %}
+                <tr>
+                    <th><a href='/ledger/payments/invoice/payment?invoice={{ transation.crn1 }}'>{{ transation.crn1 }}</a></th>
+                    <th>{{ transation.action }}</th>
+                    <th>${{ transation.amount }}</th>
+		</tr>
+		{% endfor %}
+        </tbody>
+        </table>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+        <br>
+
+        <h4>How will the refund be completed?</h4>
+        </div>
+        <div class="col-sm-12 col-md-12 col-lg-12">
+             <div class="col-sm-12 col-md-12 col-lg-12">
+                 <input type='radio' value='1' name='refund_method' > DBCA Payment Gateway Refund
+             </div>
+             <div class="col-sm-12 col-md-12 col-lg-12">
+                <input type='radio' value='2' name='refund_method' > DBCA Manual Refund (cheque, eftpos etc)
+             </div>
+             <div class="col-sm-12 col-md-12 col-lg-12">
+                <input type='radio' value='3' name='refund_method' > External Source Refund (sage, cheque, eftpos etc)
+             </div>
+        </div>
+        <div class="col-sm-12 col-md-12 col-lg-12">
+		<BR>
+	</div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+		<div class="col-sm-12 col-md-3 col-lg-3 box-green2">
+                   <div class="col-sm-12 col-md-12 col-lg-12">
+                        Payment Gateway
+                   </div>
+                   <div class="col-sm-12 col-md-12 col-lg-12">
+                       ${{ invoice_line_items.total_bpoint_amount_available }}
+                   </div>
+		</div>
+                <div class="col-sm-12 col-md-3 col-lg-3 box-blue2">
+                  <div class="col-sm-12 col-md-12 col-lg-12">
+                      Unallocated Pool
+                  </div>
+                  <div class="col-sm-12 col-md-12 col-lg-12">
+                      ${{ invoice_line_items.total_booking_allocation_pool }}
+                  </div>
+                </div>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+               <br>
+               <h4>From Money Pool</h4>
+        </div>
+ 
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+        <table cellspacing="0" width="100%" id="from-money-booking" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+        <thead>
+                <tr>
+                  <th style='width: 200px;'>Oracle Code</th>
+                  <th>Line Description</th>
+                  <th style='width: 100px;'>Amount</th>
+                  <th style='width: 10px;'><button id='from-money-booking-button' type="button" class="btn btn-success" style=" margin-bottom: 5px;">+</button></th>
+                </tr>
+        </thead>
+        <tbody>
+
+           <tr>
+                <td>{{ oracle_code_refund_allocation_pool }}</td>
+                <td><input style='width: 100%' type='text' id='unallocated-text' value="Mooring Refund - Unallocated Pool" class='form-control input-sm'></td>
+                <td><span class='money_sign'>$</span><div class='tooltip2'  align='left'>
+                                          
+                                         <span class="tooltiptext">Cannot be greater than the Unallocated Pool Amount</span>
+                                         <input style='width: 100px;' type='number' id='unallocated_pool_refund' step='0.01' class='form-control input-sm money' value='{{ invoice_line_items.total_booking_allocation_pool }}' onblur='refund_booking.money_update(this);'>
+
+                                                       </div>
+</td>
+                <td>&nbsp;</td> 
+           </tr>
+
+        </tbody>
+        </table>
+               <div class="col-sm-12 col-md-12 col-lg-12">
+                   <span class="pull-right">
+			<h3 id='total_from_money'>$0.00</h3>
+                   </span>
+               </div>
+        </div>
+        <div id='to-money-booking-div'>
+        <div class="col-sm-12 col-md-12 col-lg-12">
+               <h4>To Money Pool</h4>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+        <table cellspacing="0" width="100%" id="to-money-booking" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+        <thead>
+                <tr>
+                  <th style='width: 200px;'>Oracle Code</th>
+                  <th>Line Description</th>
+                  <th style='width: 100px;'>Amount</th>
+                  <th style='width: 10px;'><button id='to-money-booking-button' type="button" class="btn btn-success" style=" margin-bottom: 5px;">+</button></th>
+                </tr>
+        </thead>
+        <tbody>
+
+        <tr>
+        </tr>
+
+        </tbody>
+
+        </table>
+               <div class="col-sm-12 col-md-12 col-lg-12">
+                   <span class="pull-right">
+                        <h3 id='total_to_money'>$0.00</h3>
+                   </span>
+               </div>
+        </div>
+
+
+        </div>
+        <!-- BPOINT TRANS -->
+        <div id='money-bpoint-div'>
+        <div class="col-sm-12 col-md-12 col-lg-12">
+               <h4>BPOINT Allocation</h4>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+        <table cellspacing="0" width="100%" id="money-bpoint-booking" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+        <thead>
+                <tr>
+                  <th style='width: 150px;'>Txn Number</th>
+                  <th style='width: 100px;'>Amount</th>
+                </tr>
+        </thead>
+        <tbody>
+
+        <tr>
+        </tr>
+
+        </tbody>
+        </table>
+               <div class="col-sm-12 col-md-12 col-lg-12">
+                   <span class="pull-right">
+                        <h3 id='total_bpoint_money'>$0.00</h3>
+                   </span>
+               </div>
+
+
+        </div>
+
+        </div>
+
+
+	<div class="col-sm-12 col-md-12 col-lg-12">
+		<br>
+		<br>
+ 		<span class="pull-right">
+                        <button id="refund-booking-wait" type="button" class="btn btn-warning btn-lg" target="_blank" style='display:none'>Please Wait</button>	
+			<button id="refund-booking" type="button" class="btn btn-primary btn-lg" target="_blank">Refund Booking</button>
+		</span>
+	</div>
+
+
+
+<div class="col-sm-12 col-md-12 col-lg-12">
+<br>
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+</div>
+
+<div style="">
+    <div id='notification-box' class="modal"> 
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style='background-color: #FFF; border-top-left-radius: 5px; border-top-right-radius: 5px; color: #000;'><a type="button" class="close">x</a>
+                    <h4 class="modal-title"><h4>Error</h4></h4>
+                </div>
+                <div class="modal-body" style='background-color: #FFF;'>
+                    <div class="body">
+			<ul style='color: #f00;' id='notification-body'>
+			</ul>
+                    </div>
+                </div>
+                <div class="modal-footer" style='background-color: #FFF; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px;'>
+                    <button id="okBtn" type="button" class="btn btn-danger">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="">
+    <div id='notification-box-success' class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style='background-color: #FFF; border-top-left-radius: 5px; border-top-right-radius: 5px; color: #000;'>
+                    <h4 class="modal-title"><h4>Notification</h4></h4>
+                </div>
+                <div class="modal-body" style='background-color: #FFF;'>
+                    <div class="body">
+                        <ul style='color: #19bd37' id='notification-body-success'>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer" style='background-color: #FFF; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px;'>
+                    <center><button id="success-refund" type="button" class="btn btn-success">Complete</button></center>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop in" style='display:none'></div>
+        
+     <script>
+     var refund_booking =  {
+                var: { 
+                   row_id: 0,
+                   total_from_money: parseFloat('0.00'),
+                   total_to_money: parseFloat('0.00'),
+                   total_bpoint_money: parseFloat('0.00'),
+                   bpoint_amount_available: parseFloat('{{ invoice_line_items.total_bpoint_amount_available }}'),
+                   booking_allocation_pool: parseFloat('{{ invoice_line_items.total_booking_allocation_pool }}'),
+                   unique_oracle_code_on_booking: {{ invoice_line_items.unique_oracle_code_on_booking|safe }},
+                   booking_id: {{ booking_id }},
+                   newest_booking_id: {{ newest_booking }},
+                   bpoint_trans_totals: {{ invoice_line_items.bpoint_trans_totals|safe }} 
+                }, 
+		from_money_add_row:  function() {
+                   refund_booking.var.row_id = refund_booking.var.row_id + 1;
+
+                   var money_from_dropdown = "<option>None</option>";
+                   const ocb_keys = Object.keys(refund_booking.var.unique_oracle_code_on_booking);
+                   for (const ocb_key of ocb_keys) {
+                          money_from_dropdown +="<option value='"+ocb_key+"'>"+ocb_key+" ($"+refund_booking.var.unique_oracle_code_on_booking[ocb_key]+")</option>";
+                   }
+
+                   var html = "<tr id='money_row"+refund_booking.var.row_id+"' >";
+                               html += "<td><span id='oracle-error"+refund_booking.var.row_id+"'>";
+                                     html += "<select class='form-control input-sm' id='oracle-code"+refund_booking.var.row_id+"' onchange='refund_booking.input_oracle_code_change("+refund_booking.var.row_id+")' >"+money_from_dropdown+"</select>";
+                               html += "</span></td>";
+                               html += "<td><input style='width: 100%' class='form-control input-sm' type='text' id='line-text"+refund_booking.var.row_id+"' ></td>";
+                               html += "<td><span class='money_sign'>$</span><input style='width: 100px;' class='form-control input-sm money' type='number' step='0.01' value='0.00' onblur='refund_booking.money_update(this);' id='line-amount"+refund_booking.var.row_id+"' ></td>";
+                               html += "<td><input type='button' value='X' class='btn btn-danger' onclick='refund_booking.remove_row("+'"money_row'+refund_booking.var.row_id+'"'+")'  ></td>";
+                               html += "</tr>";
+                    $("#from-money-booking tbody").append(html);
+		},
+                to_money_add_row: function() {
+                   refund_booking.var.row_id = refund_booking.var.row_id + 1;
+                   var html = "<tr id='money_row"+refund_booking.var.row_id+"' >";
+                       html += "<td><span id='oracle-error"+refund_booking.var.row_id+"'><input style='width: 200px;' class='form-control input-sm' type='text' id='oracle-code"+refund_booking.var.row_id+"' onblur='refund_booking.input_oracle_code_change("+refund_booking.var.row_id+")' ></span></td>";
+                       html += "<td><input style='width: 100%' type='text' class='form-control input-sm' id='line-text"+refund_booking.var.row_id+"'></td>";
+                       html += "<td><span class='money_sign'>$</span><input style='width: 100px;' class='form-control input-sm money' type='number' step='0.01' value='0.00' onblur='refund_booking.money_update(this);' id='line-amount"+refund_booking.var.row_id+"'></td>";
+                       html += "<td><input type='button' value='X' class='btn btn-danger' onclick='refund_booking.remove_row("+'"money_row'+refund_booking.var.row_id+'"'+")' ></td>";
+                       html += "</tr>";
+                   $("#to-money-booking tbody").append(html);
+		},
+                remove_row: function(row_id) {
+                     $('#'+row_id).remove();
+                     refund_booking.total_from_money();
+                     refund_booking.total_to_money();
+                     refund_booking.total_bpoint_money();
+		},
+                total_bpoint_money: function() {
+                     refund_booking.var.total_bpoint_money = parseFloat('0.00');
+                     $('#total_bpoint_money').html('$'+refund_booking.format_money(refund_booking.var.total_bpoint_money));
+                     $("#money-bpoint-booking").find('input').each(function() {
+                              if (this.type == 'number') {
+                                   if (this.value > 0 ) {
+                                   } else {
+                                       this.value = '0.00';
+                                   }
+                                   refund_booking.var.total_bpoint_money = refund_booking.var.total_bpoint_money + parseFloat(this.value);
+                                   console.log(this.value); 
+                                   $('#total_bpoint_money').html('$'+refund_booking.format_money(refund_booking.var.total_bpoint_money));
+                              }
+                     });
+                },
+                total_from_money: function() {
+                     refund_booking.var.total_from_money = parseFloat('0.00');
+                     $('#total_from_money').html('$'+refund_booking.format_money(refund_booking.var.total_from_money));
+                     $("#from-money-booking").find('input').each(function() {
+                              if (this.type == 'number') {
+                                   if (this.value > 0 ) {
+                                   } else {
+                                       this.value = '0.00';
+                                   }
+                                   refund_booking.var.total_from_money = refund_booking.var.total_from_money + parseFloat(this.value);
+                                   console.log(this.value); 
+                                   $('#total_from_money').html('$'+refund_booking.format_money(refund_booking.var.total_from_money));
+			      }
+                     });
+                },
+                total_to_money: function() {
+                     refund_booking.var.total_to_money = parseFloat('0.00');
+                     $('#total_to_money').html('$'+refund_booking.format_money(refund_booking.var.total_to_money));
+                     $("#to-money-booking").find('input').each(function() {
+                              if (this.type == 'number') {
+                                   if (this.value > 0 ) { 
+		                   } else {
+                                       this.value = '0.00'; 
+                                   } 
+                                   refund_booking.var.total_to_money = refund_booking.var.total_to_money + parseFloat(this.value);
+                                   console.log(this.value);
+                                   $('#total_to_money').html('$'+refund_booking.format_money(refund_booking.var.total_to_money));
+                              }
+                     });
+                },
+                format_money: function(total, comma) {
+                   if (comma == null) { 
+                            comma = true;
+		   }
+                   if (total == null) {
+                      total = '0.00';
+		   }
+                   var neg = false;
+                   if(total < 0) {
+                       neg = true;
+                       total = Math.abs(total);
+                   }
+                   if (comma == true) { 
+                       return (neg ? "-" : '') + parseFloat(total, 10).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, "$1,").toString();
+                   } else {
+                       return (neg ? "-" : '') + parseFloat(total, 10).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, "$1").toString();
+		   } 
+                },
+                money_update: function(item) {
+                                   console.log(this.value);
+                                   item.value = refund_booking.format_money(item.value, false);
+                                   refund_booking.total_from_money();
+                                   refund_booking.total_to_money();
+                                   refund_booking.total_bpoint_money();
+                                   var unallocated_pool_refund = $('#unallocated_pool_refund').val();
+                                   console.log(unallocated_pool_refund); 
+                                   console.log(refund_booking.var.booking_allocation_pool);
+                                   if (parseFloat(unallocated_pool_refund) > parseFloat(refund_booking.var.booking_allocation_pool)) {
+                                       $('.tooltiptext').show();
+				   } else {
+                                       $('.tooltiptext').hide();
+				   }
+		},
+                input_oracle_code_change: function(row_id) {
+                       var item = $('#oracle-code'+row_id);
+                       console.log(row_id);
+                       console.log(item.val());
+                       
+                       var code_found = refund_booking.check_oracle_code(item.val()); 
+                       console.log(code_found);
+                       if (code_found == true) { 
+                            $('#oracle-error'+row_id).css('border','none');
+                            $('#oracle-error'+row_id).css('position','');
+		       } else { 
+                            $('#oracle-error'+row_id).css('border','2px solid red');
+                            $('#oracle-error'+row_id).css('border-radius','4px');
+                            $('#oracle-error'+row_id).css('position','absolute');
+                       }
+
+		},
+                check_oracle_code: function(oracle_code) {
+                         var found = false; 
+                         $.ajax({
+       	                 url: '/api/check_oracle_code?oracle_code='+oracle_code,
+              	         data: {
+                        	 format: 'json'
+                         },
+                         async: false,
+                         error: function() {
+	                         $('#info').html('<p>An error has occurred</p>');
+                         },
+	                 dataType: 'json',
+        	         success: function(data) {
+                        	 found = data.found;
+                      	 },
+	                         type: 'GET'
+                         });
+                         return found;
+                },
+                init: function() {
+                        console.log('Mooring Booking Loaded');
+                        $('#from-money-booking-button').on("click", function() {
+                          refund_booking.from_money_add_row();
+			});
+                        $('#to-money-booking-button').on("click", function() {
+                          refund_booking.to_money_add_row();
+                        });
+                        $('.close').on("click", function() {
+                                $('.modal-backdrop').hide();
+                                $('#notification-box').hide();
+			        // $('.modal').hide();
+			});
+                        $('#okBtn').on("click", function() {
+                                $('.modal-backdrop').hide();
+                                // $('.modal').hide();
+                                $('#notification-box').hide();
+                        });
+                        $('#success-refund').on("click", function() {
+				$('.modal-backdrop').hide();
+                                $('#notification-box-success').hide();
+                                window.location.href  = window.location.href;
+			});
+                        $('#refund-booking').on("click", function() {
+                                $("#refund-booking-wait").show();
+                                $("#refund-booking").hide();
+
+                                var from_money_pool_array = [];
+                                var to_money_pool_array = [];
+                                var bpoint_trans_split_array = [];
+                                var notification_message = "";
+                                var un_pool = $('#unallocated_pool_refund').val();
+                                var refund_method = $('input[name="refund_method"]:checked').val();
+
+                                if (refund_method == undefined) { 
+				    notification_message += "<li>Please choose how the refund will be completed?</li>";
+				}
+
+                                if (refund_booking.var.total_from_money > 0) {
+				} else {
+					notification_message += "<li>From Money Pool total needs to be greater than $0.00.</li>";
+				}
+			
+                                if (un_pool > refund_booking.var.booking_allocation_pool) {
+					notification_message += "<li>Your unallocated pool from money pool total is greater than the unallocation pool available total</li>";
+				}
+
+                                if (refund_method == "1") {
+                                     if (refund_booking.var.total_from_money != refund_booking.var.total_bpoint_money) {
+    					   notification_message += "<li>Your total from money pool dose not match your bpoint allocation total.</li>"
+   				     }
+  
+                                     if (refund_booking.var.total_from_money > refund_booking.var.bpoint_amount_available) {
+                                         notification_message += "<li>Your total from pool is more than the available payment gateway funds</li>";
+                                     }
+
+                                } else { 
+                                     if (refund_booking.var.total_to_money > refund_booking.var.total_from_money) {
+                                              notification_message += "<li>Your to money pool is greater than the from money pool.</li>";
+                                     }
+                                     if (refund_booking.var.total_to_money != refund_booking.var.total_from_money) {
+                                         notification_message += "<li>Your total from and to pools do not match.</li>";
+                                     }
+
+
+	                        }
+
+                                $("#from-money-booking").find('input, select').each(function() {
+                                         input_id = this.id;
+                                         input = this; 
+                                         console.log(this.type+":"+this.id);
+                                         if (this.type == 'text' || this.type=='select-one') {
+                             
+                                              idvalname = input_id.substring(0, 11);
+                                              rowid = input_id.replace(idvalname,"");
+                                              if (idvalname == 'oracle-code') { 
+                                                     var val = $('#'+input_id).val();
+                                                     var money_from_amount = $('#line-amount'+rowid).val();
+                                                     var line_text = $('#line-text'+rowid).val();
+                                                     if (val.length > 0) { 
+							   if (refund_booking.check_oracle_code(val) == false) {
+								notification_message += "<li>'"+val+"' oracle code does not exist. </li>";
+							   }
+                                                           if (parseFloat(money_from_amount) > parseFloat(refund_booking.var.unique_oracle_code_on_booking[val])) {
+								notification_message += "<li>'"+val+"' oracle code amount is greater than available amount pool of $"+refund_booking.var.unique_oracle_code_on_booking[val]+". </li>";
+							   }
+                                                           if (line_text.length < 3) {
+								notification_message += "<li>Please enter a suitable line description length. </li>";
+						           }
+                                                     }
+					      }
+                                         }
+                                });
+
+
+                                if (refund_method == "1") { 
+                                      $("#money-bpoint-booking").find('input').each(function() {
+                                               input_id = this.id;
+                                               input = this;
+
+                                               if (this.type == 'text' || this.type=='hidden') {
+                                                    idvalname = input_id.substring(0, 10);
+                                                    rowid = input_id.replace(idvalname,"");
+                                                    if (idvalname == 'txn_number') {
+                                                           var txn_number = $('#txn_number'+rowid).val();
+                                                           var line_amount = $('#line-amount'+rowid).val();
+                                                           console.log(line_amount+':'+refund_booking.var.bpoint_trans_totals[txn_number].amount);
+                                                           if (parseFloat(line_amount) > parseFloat(refund_booking.var.bpoint_trans_totals[txn_number].amount)) {
+                                                                  notification_message += "<li>Transaction '"+txn_number+"' amount '"+line_amount+"' is greater than available amount '"+refund_booking.var.bpoint_trans_totals[txn_number].amount+"'</li>";
+
+				      		     }
+                                                    }
+                                               }
+                                      });
+				} else {
+
+     
+                                       $("#to-money-booking").find('input, select').each(function() {
+                                                input_id = this.id;
+                                                input = this;
+                                                console.log(this.type+":"+this.id);
+                                                if (this.type == 'text' || this.type=='select-one') {
+       
+                                                     idvalname = input_id.substring(0, 11);
+                                                     rowid = input_id.replace(idvalname,"");
+                                                     if (idvalname == 'oracle-code') {
+                                                            var val = $('#'+input_id).val();
+                                                            var money_from_amount = $('#line-amount'+rowid).val();
+                                                            var line_text = $('#line-text'+rowid).val();
+                                                            if (val.length > 0) {
+                                                                  if (refund_booking.check_oracle_code(val) == false) {
+                                                                       notification_message += "<li>'"+val+"' oracle code does not exist. </li>";
+                                                                  }
+                                                                  if (line_text.length < 3) {
+                                                                       notification_message += "<li>Please enter a suitable line description length. </li>";
+                                                                  }
+                                                            }
+                                                     }
+                                                }
+                                       });
+  
+
+
+
+
+
+				}
+                                if (notification_message.length > 0) {
+	                                $('#notification-body').html(notification_message);
+                                        $('.modal-backdrop').show();
+                                        $('#notification-box').show();
+                                        $("#refund-booking").show();
+                                        $("#refund-booking-wait").hide();
+
+				} else {
+                                         var unallocated_text = $('#unallocated-text').val();
+                                         from_money_pool_array.push({'oracle-code': '{{ oracle_code_refund_allocation_pool }}', 'line-text': unallocated_text, 'line-amount': un_pool});
+
+                                         $("#from-money-booking").find('input, select').each(function() {
+                                                  input_id = this.id;
+                                                  input = this;
+                                                   
+                                                  if (this.type == 'text' || this.type=='select-one') {
+                                                       idvalname = input_id.substring(0, 11);
+                                                       rowid = input_id.replace(idvalname,"");
+                                                       if (idvalname == 'oracle-code') {
+                                                              var oracle_code = $('#oracle-code'+rowid).val();
+                                                              var line_text = $('#line-text'+rowid).val();
+                                                              var line_amount = $('#line-amount'+rowid).val();
+                                                              from_money_pool_array.push({'oracle-code': oracle_code, 'line-text': line_text, 'line-amount': line_amount});
+                                                       }
+                                                  }
+                                         });
+         
+
+                                         $("#to-money-booking").find('input').each(function() {
+                                                  input_id = this.id;
+                                                  input = this;
+
+                                                  if (this.type == 'text') {
+                                                       idvalname = input_id.substring(0, 11);
+                                                       rowid = input_id.replace(idvalname,"");
+                                                       if (idvalname == 'oracle-code') {
+                                                              var oracle_code = $('#oracle-code'+rowid).val();
+                                                              var line_text = $('#line-text'+rowid).val();
+                                                              var line_amount = $('#line-amount'+rowid).val();
+                                                              to_money_pool_array.push({'oracle-code': oracle_code, 'line-text': line_text, 'line-amount': line_amount});
+                                                       }
+                                                  }
+                                         });
+
+                                         $("#money-bpoint-booking").find('input').each(function() {
+                                                  input_id = this.id;
+                                                  input = this;
+
+                                                  if (this.type == 'text' || this.type=='hidden') {
+                                                       idvalname = input_id.substring(0, 10);
+                                                       rowid = input_id.replace(idvalname,"");
+                                                       if (idvalname == 'txn_number') {
+                                                              var txn_number = $('#txn_number'+rowid).val();
+                                                              var line_amount = $('#line-amount'+rowid).val();
+                                                              bpoint_trans_split_array.push({'txn_number': txn_number, 'line-amount': line_amount});
+                                                       }
+                                                  }
+                                         });
+                                        $.ajax({
+                                        url: '/api/refund_oracle',
+                                        data: {
+                                                csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(), 
+                                                money_from : JSON.stringify(from_money_pool_array),
+                                                money_to: JSON.stringify(to_money_pool_array),
+                                                bpoint_trans_split: JSON.stringify(bpoint_trans_split_array),
+                                                refund_method: refund_method,
+                                                booking_id: refund_booking.var.booking_id,
+                                                newest_booking_id: refund_booking.var.newest_booking_id
+                                        },
+                                        async: false,
+                                        error: function(data) {
+	                                         $('#notification-body').html("There was a system error, attempting to process your request please try again later.");
+        	                                 $('.modal-backdrop').show();
+                 	                         $('#notification-box').show();
+                                        },
+                                        dataType: 'json',
+                                        success: function(data) {
+                                                 if (data.failed_refund == false) {
+                                                     $('#notification-body-success').html("Refund completed successfully");
+                                                     $('.modal-backdrop').show();
+                                                     $('#notification-box-success').show();
+						 } else {
+                                                     $('#notification-body-success').html("<span style='color: red'>A refund on one or more of the transaction failed and has been moved to the unllocation pool. Please see order history to see which transaction failed. </span>");
+                                                     $('.modal-backdrop').show();
+                                                     $('#notification-box-success').show();
+
+						 } 
+                                        },
+                                                type: 'post'
+                                        })
+				}
+				console.log('Refund Button Clicked');
+			});
+                        // Hide To Money and Bpoint until refund method selection is selected.
+                        $('#to-money-booking-div').hide();
+                        $('#money-bpoint-div').hide();
+                        // --
+
+                        $("input[name='refund_method']").on( "change", function() {
+                            if (this.value == 1) { 
+                                $('#to-money-booking-div').hide();
+                                $('#money-bpoint-div').show();
+			    } else {
+                                $('#to-money-booking-div').show();
+                                $('#money-bpoint-div').hide();
+                            }
+                            console.log(this.value);
+                        });
+
+                        refund_booking.to_money_add_row();
+                        refund_booking.total_from_money();
+                        refund_booking.total_to_money();
+                        refund_booking.total_bpoint_money();
+
+                        $('.modal-backdrop').hide();
+                        refund_booking.var.bpoint_trans_totals
+                        const btt_keys = Object.keys(refund_booking.var.bpoint_trans_totals);
+                        for (const btt_key of btt_keys) {
+                            refund_booking.var.row_id = refund_booking.var.row_id + 1;
+                            var html = "<tr id='money_bpoint_row"+refund_booking.var.row_id+"' >";
+                                html += "<td><input style='width: 150px;' class='form-control input-sm' type='hidden' id='txn_number"+refund_booking.var.row_id+"' value='"+btt_key+"'>"+btt_key+"  ($"+refund_booking.var.bpoint_trans_totals[btt_key]['amount']+" Available)</td>";
+                                html += "<td><span class='money_sign'>$</span><input style='width: 100px;' class='form-control input-sm money' type='number' step='0.01' value='0.00' onblur='refund_booking.money_update(this);' id='line-amount"+refund_booking.var.row_id+"'></td>";
+                                html += "</tr>";
+                                $("#money-bpoint-booking tbody").append(html);
+                        }
+
+
+		}
+	}
+        window.onload = function() { refund_booking.init(); }
+
+
+     </script>
+    </div>
+{% endblock %}
+

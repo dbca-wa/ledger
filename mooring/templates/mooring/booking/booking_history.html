@@ -17,9 +17,6 @@
 
     </div>
 
-
-
-
 {% endblock %}
 {% block content %}
 
@@ -29,8 +26,14 @@
         <div class="col-sm-12">
             <h2>Booking History</h2>
 	</div>
-
+        
         <div class="col-sm-12 col-md-12 col-lg-12">
+        <div class="pull-right">
+                      <a class='btn btn-primary' href="{% url 'view_refund_booking_history' booking_id %}">Refund Allocation</a>
+                      <a class='btn btn-primary' href='/ledger/payments/invoice/payment?{% for bh in booking_history %}{% if bh.booking.booking_type != 3 %}{% for bi in bh.invoices %}invoice={{ bi.invoice_reference }}&{% endfor %}{% endif %}{% endfor %}'>Ledger Group Invoices</a>
+        </div>
+        <div><BR></div>
+        &nbsp;
         <table cellspacing="0" width="100%" id="bookings-table" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
         <thead>
 		<tr>

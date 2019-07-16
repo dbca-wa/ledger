@@ -149,6 +149,7 @@ from mooring import emails
 from mooring import exceptions
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import Distance  
+from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 
 # API Views
 class MooringsiteBookingViewSet(viewsets.ModelViewSet):
@@ -3049,7 +3050,15 @@ class BookingViewSet(viewsets.ModelViewSet):
  
                 if show_row is True:
                     bk_list={}
-                    bk_list['editable']=booking.editable
+
+                    booking_editable = False
+                    if request.user.is_staff is True:
+                        booking_editable = True
+                    if request.user.is_superuser is True:
+                        booking_editable = True
+
+
+                    bk_list['editable'] = booking_editable
                     bk_list['id'] = booking.id
 
                     if booking.booking_type == 4:
@@ -4324,3 +4333,85 @@ def get_current_booking(ongoing_booking):
      cb['timer'] = timer
 
      return cb
+
+
+class CheckOracleCodeView(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request, format='json'):
+        try:
+           oracle_code = request.GET.get('oracle_code','')
+           if OracleAccountCode.objects.filter(active_receivables_activities=oracle_code).count() > 0:
+                 json_obj = {'found': True, 'code': oracle_code}
+           else:
+                 json_obj = {'found': False, 'code': oracle_code}
+           return Response(json_obj)
+        except Exception as e:
+            print(traceback.print_exc())
+            raise
+
+#from rest_framework.decorators import api_view
+class RefundOracleView(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def post(self, request, *args, **kwargs):
+
+    #def get(self, request, format='json'):
+        
+        try:
+           if request.user.is_superuser or request.user.groups.filter(name__in=['Payments Officers']).exists():
+ 
+                money_from = request.POST.get('money_from',[])
+                money_to = request.POST.get('money_to',[])
+                bpoint_trans_split= request.POST.get('bpoint_trans_split',[])
+                refund_method = request.POST.get('refund_method', None)
+                booking_id = request.POST.get('booking_id',None)
+                newest_booking_id = request.POST.get('newest_booking_id',None)
+                booking = Booking.objects.get(pk=newest_booking_id)
+                money_from_json = json.loads(money_from)
+                money_to_json = json.loads(money_to)
+                bpoint_trans_split_json = json.loads(bpoint_trans_split)
+                lines = []
+                failed_refund = False
+     
+                json_obj = {'found': False, 'code': money_from, 'money_to': money_to, 'failed_refund': failed_refund}
+     
+                for mf in money_from_json:
+                    if Decimal(mf['line-amount']) > 0: 
+                        money_from_total = (Decimal(mf['line-amount']) - Decimal(mf['line-amount']) - Decimal(mf['line-amount']))
+                        lines.append({'ledger_description':str(mf['line-text']),"quantity":1,"price_incl_tax":money_from_total,"oracle_code":str(mf['oracle-code']), 'line_status': 3})
+     
+                if int(refund_method) == 1:
+                    for bp_txn in bpoint_trans_split_json:
+                        bpoint_id = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
+                        info = {'amount': Decimal('{:.2f}'.format(float(bp_txn['line-amount']))), 'details' : 'Refund via system'}
+                        refund = None
+                        if info['amount'] > 0:
+                            try:
+                                bpoint = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
+                                refund = bpoint.refund(info,request.user)
+                            except:
+                                failed_refund = True
+                                bpoint_failed_amount = Decimal(bp_txn['line-amount'])
+                                lines.append({'ledger_description':str("Refund failed for txn "+bp_txn['txn_number']),"quantity":1,"price_incl_tax":bpoint_failed_amount,"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1})
+         
+     
+                else:
+                    for mt in money_to_json:
+                        lines.append({'ledger_description':mt['line-text'],"quantity":1,"price_incl_tax":mt['line-amount'],"oracle_code":mt['oracle-code'], 'line_status': 1})
+     
+                utils.allocate_refund_to_invoice(request, booking, lines, invoice_text=None, internal=False, order_total='0.00',user=booking.customer)
+                json_obj['failed_refund'] = failed_refund
+            
+                return Response(json_obj)
+           else:
+                raise serializers.ValidationError('Permission Denied.') 
+               
+        except Exception as e:
+           print(traceback.print_exc())
+           raise
+
+
+
