@@ -85,7 +85,7 @@ class InspectionCommsLogDocument(Document):
     log_entry = models.ForeignKey(
         'InspectionCommsLogEntry',
         related_name='documents')
-    _file = models.FileField(upload_to=update_inspection_comms_log_filename)
+    _file = models.FileField(max_length=255, upload_to=update_inspection_comms_log_filename)
 
     class Meta:
         app_label = 'wildlifecompliance'

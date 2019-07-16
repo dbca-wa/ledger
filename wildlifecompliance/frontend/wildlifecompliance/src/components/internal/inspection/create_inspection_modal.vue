@@ -197,12 +197,13 @@ export default {
             advice_details: "",
             allocatedGroup: [],
             allocated_group_id: null,
-            files: [
-                    {
-                        'file': null,
-                        'name': ''
-                    }
-                ]
+            documentActionUrl: '',
+            // files: [
+            //         {
+            //             'file': null,
+            //             'name': ''
+            //         }
+            //     ]
       }
     },
     components: {
@@ -219,12 +220,12 @@ export default {
       ...mapGetters('inspectionStore', {
         inspection: "inspection",
       }),
-      documentActionUrl: function() {
-          return helpers.add_endpoint_join(
-          api_endpoints.inspection,
-          this.inspection.id + "/process_comms_log_document/"
-          )
-      },
+      // documentActionUrl: function() {
+      //     return helpers.add_endpoint_join(
+      //     api_endpoints.inspection,
+      //     this.inspection.id + "/process_comms_log_document/"
+      //     )
+      // },
       /*regionVisibility: function() {
         if (!(this.workflow_type === 'forward_to_wildlife_protection_branch' || 
           this.workflow_type === 'close')
@@ -356,7 +357,7 @@ export default {
       ok: async function () {
           const response = await this.sendData();
           console.log(response);
-          if (response === 'ok') {
+          if (response.ok) {
               this.close();
           }
       },
@@ -368,14 +369,14 @@ export default {
       close: function () {
           let vm = this;
           this.isModalOpen = false;
-          let file_length = vm.files.length;
-          this.files = [];
-          for (var i = 0; i < file_length;i++){
-              vm.$nextTick(() => {
-                  $('.file-row-'+i).remove();
-              });
-          }
-          this.attachAnother();
+          // let file_length = vm.files.length;
+          // this.files = [];
+          // for (var i = 0; i < file_length;i++){
+          //     vm.$nextTick(() => {
+          //         $('.file-row-'+i).remove();
+          //     });
+          // }
+          // this.attachAnother();
       },
       sendData: async function() {
           let post_url = '/api/inspection/'
@@ -406,7 +407,9 @@ export default {
               let res = await Vue.http.post(post_url, payload);
               console.log(res);
               if (res.ok) {    
-                this.$router.push({ name: 'internal-inspection-dash' });
+                return res
+                //window.location.href = "/internal/inspection/";
+                //this.$router.push({ name: 'internal-inspection-dash' });
               }
           } catch(err) {
                   this.errorResponse = err.statusText;
@@ -448,6 +451,15 @@ export default {
       
     },
     created: async function() {
+
+        // create sanction outcome and get id
+        let returned_inspection = await Vue.http.post(api_endpoints.inspection);
+        this.inspection.id = returned_inspection.body.id;
+    
+        this.documentActionUrl = helpers.add_endpoint_join(
+            api_endpoints.inspection,
+            this.inspection.id + "/create_modal_process_comms_log_document/"
+            )
         
         //await this.$parent.updateAssignedToId('blank');
         // regions

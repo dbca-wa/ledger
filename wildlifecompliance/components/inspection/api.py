@@ -48,6 +48,7 @@ from wildlifecompliance.components.inspection.models import (
     Inspection,
     InspectionUserAction,
     InspectionType,
+    InspectionCommsLogEntry,
 )    
 from wildlifecompliance.components.inspection.serializers import (
     InspectionSerializer,
@@ -139,21 +140,42 @@ class InspectionViewSet(viewsets.ModelViewSet):
     def add_comms_log(self, request, instance, workflow=False, *args, **kwargs):
         try:
             with transaction.atomic():
-                #instance = self.get_object()
+                instance = self.get_object()
                 request.data['inspection'] = u'{}'.format(instance.id)
-                print(request.data)
                 # request.data['staff'] = u'{}'.format(request.user.id)
-                serializer = InspectionCommsLogEntrySerializer(data=request.data)
+                if request.data.get('comms_log_id'):
+                    comms_instance = InspectionCommsLogEntry.objects.get(
+                        id=request.data.get('comms_log_id')
+                        )
+                    serializer = InspectionCommsLogEntrySerializer(
+                        comms_instance, 
+                        data=request.data)
+                else:
+                    serializer = InspectionCommsLogEntrySerializer(
+                        data=request.data
+                        )
+                serializer.is_valid(raise_exception=True)
+                comms = serializer.save()
+                
+                #instance = self.get_object()
+                print("add_comms_log")
+                print("instance.id")
+                print(instance.id)
+                request_data = request.data.copy()
+                request_data['inspection'] = u'{}'.format(instance.id)
+                
+                # request.data['staff'] = u'{}'.format(request.user.id)
+                serializer = InspectionCommsLogEntrySerializer(data=request_data)
                 serializer.is_valid(raise_exception=True)
                 comms = serializer.save()
                 # Save the files
-                for f in request.FILES:
-                    document = comms.documents.create()
-                    print("filename")
-                    print(str(request.FILES[f]))
-                    document.name = str(request.FILES[f])
-                    document._file = request.FILES[f]
-                    document.save()
+                # for f in request.FILES:
+                #     document = comms.documents.create()
+                #     print("filename")
+                #     print(str(request.FILES[f]))
+                #     document.name = str(request.FILES[f])
+                #     document._file = request.FILES[f]
+                #     document.save()
                 # End Save Documents
 
                 if workflow:
@@ -274,19 +296,50 @@ class InspectionViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    def create(self, request, *args, **kwargs):
+    # def create(self, request, *args, **kwargs):
+    #     print(request.data)
+    #     try:
+    #         with transaction.atomic():
+    #             #instance = self.get_object()
+    #             #workflow_entry = self.add_comms_log(request, workflow=True)
+    #             # serializer = SaveInspectionSerializer(
+    #             #         data=request.data, 
+    #             #         partial=True
+    #             #         )
+    #             # serializer = InspectionSerializer()
+    #             # serializer.is_valid(raise_exception=True)
+    #             # if serializer.is_valid():
+    #             #     instance = serializer.save()
+    #             # instance = serializer.save()
+    #             # comms_log_id = request.data.get('comms_log_id')
+    #             # if comms_log_id and comms_log_id is not 'null':
+    #             #     workflow_entry = instance.comms_logs.get(
+    #             #             id=comms_log_id)
+    #             # else:
+    #             #     workflow_entry = self.add_comms_log(request, instance=instance, workflow=True)
+    #             instance = Inspection.objects.create()
+    #             instance.save()
+    #             print("instance.id")
+    #             print(type(instance))
+    #             print(instance)
+    #             workflow_entry = self.add_comms_log(request, instance=instance, workflow=True)
+    #             print("workflow_entry")
+    #             print(type(workflow_entry))
+    #             print(workflow_entry.id)
+
+    #             # attachments = []
+    #             # for doc in workflow_entry.documents.all():
+    #             #     attachments.append(doc)
+
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
+    def add_workflow_log(self, request, *args, **kwargs):
+        print("add_workflow_log")
         print(request.data)
         try:
             with transaction.atomic():
-                #instance = self.get_object()
+                instance = self.get_object()
                 #workflow_entry = self.add_comms_log(request, workflow=True)
-                serializer = SaveInspectionSerializer(
-                        data=request.data, 
-                        partial=True
-                        )
-                serializer.is_valid(raise_exception=True)
-                if serializer.is_valid():
-                    instance = serializer.save()
                 comms_log_id = request.data.get('comms_log_id')
                 if comms_log_id and comms_log_id is not 'null':
                     workflow_entry = instance.comms_logs.get(
@@ -303,7 +356,7 @@ class InspectionViewSet(viewsets.ModelViewSet):
                     try:
                         user_id_int = int(request.data.get('assigned_to'))
                         email_group.append(EmailUser.objects.get(id=user_id_int))
-                        # update CallEmail
+                        # update Inspection
                         instance.assigned_to = (EmailUser.objects.get(id=user_id_int))
                     except Exception as e:
                             print(traceback.print_exc())
@@ -338,11 +391,12 @@ class InspectionViewSet(viewsets.ModelViewSet):
 
                 # send email
                 email_data = send_inspection_forward_email(
-                email_group, 
-                instance,
+                select_group=email_group, 
+                inspection=instance,
                 # workflow_entry.documents,
-                workflow_entry,
-                request)
+                workflow_entry=workflow_entry,
+                request=request
+                )
 
                 serializer = InspectionCommsLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
                 serializer.is_valid(raise_exception=True)
@@ -366,6 +420,38 @@ class InspectionViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
+    def create_modal_process_comms_log_document(self, request, *args, **kwargs):
+        print("process_default_document")
+        print(request.data)
+        try:
+            instance = self.get_object()
+            # process docs
+            returned_data = process_generic_document(request, instance, document_type='comms_log')
+            # delete Inspection if user cancels modal
+            action = request.data.get('action')
+            if action == 'cancel' and returned_data:
+                returned_data = instance.delete()
+            # return response
+            if returned_data:
+                return Response(returned_data)
+            else:
+                return Response()
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 
 

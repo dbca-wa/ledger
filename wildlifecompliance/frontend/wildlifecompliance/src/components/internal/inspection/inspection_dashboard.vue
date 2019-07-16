@@ -54,7 +54,9 @@
             </div>
         </div>
         </FormSection>
-        <InspectionWorkflow ref="add_inspection"  />
+        <div v-if="inspectionInitialised">
+            <CreateInspectionModal ref="add_inspection"  />
+        </div>
 
     </div>
 </template>
@@ -65,7 +67,7 @@
     import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
     import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
     import FormSection from "@/components/compliance_forms/section.vue";
-    import InspectionWorkflow from "./inspection_workflow.vue";
+    import CreateInspectionModal from "./create_inspection_modal.vue";
     export default {
         name: 'InspectionTableDash',
         data() {
@@ -82,6 +84,7 @@
                 filterLodgedFrom: '',
                 filterLodgedTo: '',
                 dateFormat: 'DD/MM/YYYY',
+                inspectionInitialised: false,
                 // datepickerOptions: {
                 //     format: 'DD/MM/YYYY',
                 //     showClear: true,
@@ -168,7 +171,7 @@
         components: {
             datatable,
             FormSection,
-            InspectionWorkflow,
+            CreateInspectionModal,
         },
         computed: {
         },
@@ -177,7 +180,10 @@
                 saveInspection: "saveInspection",
             }),
             createInspection: function() {
-                this.$refs.add_inspection.isModalOpen = true;
+                this.inspectionInitialised = true;
+                this.$nextTick(() => {
+                    this.$refs.add_inspection.isModalOpen = true;
+                });
             },
             
             createInspectionUrl: async function () {
