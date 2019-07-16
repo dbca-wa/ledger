@@ -379,7 +379,8 @@ export default {
           // this.attachAnother();
       },
       sendData: async function() {
-          let post_url = '/api/inspection/'
+          //let post_url = '/api/inspection/'
+          let post_url = '/api/inspection/' + this.inspection.id + '/add_workflow_log/'
           let payload = new FormData(this.form);
           payload.append('details', this.workflowDetails);
           if (this.$refs.comms_log_file.commsLogId) {
