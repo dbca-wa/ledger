@@ -113,33 +113,52 @@
                     processing: true,
                     ajax: {
                         
-                        "url": "/api/inspection/datatable_list",
-                        "dataSrc": '',
+                        'url': '/api/inspection/datatable_list',
+                        'dataSrc': '',
                     },
                     columns: [
                         {
-                            data: "number",
-                            //searchable: false,
+                            data: 'number',
+                            searchable: false,
                         },
                         {
-                            data: "title",
-                            //searchable: false,
+                            data: 'title',
+                            searchable: false,
                         },
                         {
-                            data: "details",
-                            //searchable: false,  
+                            data: 'inspection_type',
+                            searchable: false,
+                            //orderable: false,
+                            mRender: function (data, type, full) {
+                                if (data) {
+                                    return data.description;
+                                } else {
+                                    return '';
+                                }
+                            }
                         },
                         {
-                            data: "user_action",
+                            data: 'status.name',
+                            searchable: false,
+                            orderable: false,
+                        },
+                        {
+                            data: 'planned_for',
+                            searchable: false,
+                        },
+                        {
+                            data: 'user_action',
                             //searchable: false,  
                         },
                     ],
                 },
                 dtHeaders: [
-                    "Number",
-                    "Title",
-                    "Details",
-                    "Action",
+                    'Number',
+                    'Title',
+                    'Inspection Type',
+                    'Status',
+                    'Planned for',
+                    'Action',
                 ],
             }
         },

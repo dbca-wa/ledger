@@ -160,22 +160,54 @@ class InspectionCommsLogEntrySerializer(CommunicationLogEntrySerializer):
 
 class InspectionDatatableSerializer(serializers.ModelSerializer):
     user_action = serializers.SerializerMethodField()
+    inspection_type = InspectionTypeSerializer()
+    planned_for = serializers.SerializerMethodField()
+    status = CustomChoiceField(read_only=True)
     
     class Meta:
         model = Inspection
         fields = (
                 'number',
                 'title',
-                'details',
-                'planned_for_date',
-                'planned_for_time',
+                'inspection_type',
+                'status',
+                'planned_for',
                 'user_action',
                 )
 
-    def get_user_action(self, obj):
-        process_url = '<a href=/internal/inspection/' + str(obj.id) + '>Process</a>'
-        return process_url
+    # def get_user_action(self, obj):
+    #     process_url = '<a href=/internal/inspection/' + str(obj.id) + '>Process</a>'
+    #     return process_url
 
+    def get_user_action(self, obj):
+        user_id = self.context.get('request', {}).user.id
+        view_url = '<a href=/internal/inspection/' + str(obj.id) + '>View</a>'
+        process_url = '<a href=/internal/inspection/' + str(obj.id) + '>Process</a>'
+        returned_url = ''
+
+        if obj.status == 'closed':
+            returned_url = view_url
+        elif user_id == obj.assigned_to_id:
+            returned_url = process_url
+        elif (obj.allocated_group
+                and not obj.assigned_to_id):
+            for member in obj.allocated_group.members:
+                if user_id == member.id:
+                    returned_url = process_url
+
+        if not returned_url:
+            returned_url = view_url
+
+        return returned_url
+
+    def get_planned_for(self, obj):
+        if obj.planned_for_date:
+            if obj.planned_for_time:
+                return obj.planned_for_date.strftime("%d/%m/%Y") + '  ' + obj.planned_for_time.strftime('%H:%M')
+            else:
+                return obj.planned_for_date.strftime("%d/%m/%Y")
+        else:
+            return None
 
 class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
     assigned_to_id = serializers.IntegerField(

@@ -73,6 +73,114 @@ from wildlifecompliance.components.inspection.email import (
     send_inspection_forward_email)
 
 
+class InspectionFilterBackend(DatatablesFilterBackend):
+
+    def filter_queryset(self, request, queryset, view):
+        #import ipdb; ipdb.set_trace()
+        # Get built-in DRF datatables queryset first to join with search text, then apply additional filters
+        # super_queryset = super(CallEmailFilterBackend, self).filter_queryset(request, queryset, view).distinct()
+
+        total_count = queryset.count()
+        status_filter = request.GET.get('status_description')
+        classification_filter = request.GET.get('classification_description')
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        search_text = request.GET.get('search[value]')
+
+        if search_text:
+            search_text = search_text.lower()
+            search_text_callemail_ids = []
+            for call_email in queryset:
+                #lodged_on_str = time.strftime('%d/%m/%Y', call_email.lodged_on)
+                lodged_on_str = call_email.lodged_on.strftime('%d/%m/%Y')
+                if (search_text in (call_email.number.lower() if call_email.number else '')
+                    or search_text in (call_email.status.lower() if call_email.status else '')
+                    or search_text in (call_email.classification.name.lower() if call_email.classification else '')
+                    or search_text in (lodged_on_str.lower() if lodged_on_str else '')
+                    or search_text in (call_email.caller.lower() if call_email.caller else '')
+                    or search_text in (
+                        call_email.assigned_to.first_name.lower() + ' ' + call_email.assigned_to.last_name.lower()
+                        if call_email.assigned_to else ''
+                        )
+                    ):
+                    search_text_callemail_ids.append(call_email.id)
+
+            # use pipe to join both custom and built-in DRF datatables querysets (returned by super call above)
+            # (otherwise they will filter on top of each other)
+            #_queryset = queryset.filter(id__in=search_text_callemail_ids).distinct() | super_queryset
+            # BB 20190704 - is super_queryset necessary?
+            queryset = queryset.filter(id__in=search_text_callemail_ids)
+
+        status_filter = status_filter.lower() if status_filter else 'all'
+        if status_filter != 'all':
+            status_filter_callemail_ids = []
+            for call_email in queryset:
+                if status_filter == call_email.get_status_display().lower():
+                    status_filter_callemail_ids.append(call_email.id)
+            queryset = queryset.filter(id__in=status_filter_callemail_ids)
+        classification_filter = classification_filter.lower() if classification_filter else 'all'
+        if classification_filter != 'all':
+            classification_filter_callemail_ids = []
+            for call_email in queryset:
+                if classification_filter in call_email.classification.name.lower() if call_email.classification else '':
+                    classification_filter_callemail_ids.append(call_email.id)
+            queryset = queryset.filter(id__in=classification_filter_callemail_ids)
+
+        if date_from:
+            queryset = queryset.filter(lodged_on__gte=date_from)
+        if date_to:
+            date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
+            queryset = queryset.filter(lodged_on__lte=date_to)
+
+        # override queryset ordering, required because the ordering is usually handled
+        # in the super call, but is then clobbered by the custom queryset joining above
+        # also needed to disable ordering for all fields for which data is not an
+        # CallEmail model field, as property functions will not work with order_by
+        
+        getter = request.query_params.get
+        fields = self.get_fields(getter)
+        ordering = self.get_ordering(getter, fields)
+        if len(ordering):
+           queryset = queryset.order_by(*ordering)
+
+        setattr(view, '_datatables_total_count', total_count)
+        return queryset
+
+
+class InspectionRenderer(DatatablesRenderer):
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        if 'view' in renderer_context and hasattr(renderer_context['view'], '_datatables_total_count'):
+            data['recordsTotal'] = renderer_context['view']._datatables_total_count
+        return super(InspectionRenderer, self).render(data, accepted_media_type, renderer_context)
+
+
+class InspectionPaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (InspectionFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (InspectionRenderer,)
+    queryset = Inspection.objects.none()
+    serializer_class = InspectionDatatableSerializer
+    page_size = 10
+    
+    def get_queryset(self):
+        # import ipdb; ipdb.set_trace()
+        user = self.request.user
+        if is_internal(self.request):
+            return Inspection.objects.all()
+        return Inspection.objects.none()
+
+    @list_route(methods=['GET', ])
+    def get_paginated_datatable(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = InspectionDatatableSerializer(
+            result_page, many=True, context={'request': request})
+        return self.paginator.get_paginated_response(serializer.data)
+
+
 class InspectionViewSet(viewsets.ModelViewSet):
     queryset = Inspection.objects.all()
     serializer_class = InspectionSerializer
@@ -206,7 +314,7 @@ class InspectionViewSet(viewsets.ModelViewSet):
                             InspectionUserAction.ACTION_SAVE_INSPECTION_.format(
                             instance.number), request)
                     headers = self.get_success_headers(serializer.data)
-                    return_serializer = InspectionSerializer(saved_instance)
+                    return_serializer = InspectionSerializer(saved_instance, context={'request': request})
                     return Response(
                             return_serializer.data,
                             status=status.HTTP_201_CREATED,

@@ -87,7 +87,7 @@
                                 <label class="col-sm-3">Planned for (Time)</label>
                                 <div class="col-sm-3">
                                     <div class="input-group date" id="plannedForTimePicker">
-                                      <input :disabled="readonlyForm" type="text" class="form-control" placeholder="HH:MM" v-model="inspection.planned_for_time"/>
+                                      <input type="text" class="form-control" placeholder="HH:MM" v-model="inspection.planned_for_time"/>
                                       <span class="input-group-addon">
                                           <span class="glyphicon glyphicon-calendar"></span>
                                       </span>
@@ -192,9 +192,9 @@ export default {
               },
           ]
       },
-      disabledDates: {
-        from: new Date(),
-      },
+      // disabledDates: {
+      //   from: new Date(),
+      // },
       workflow_type: '',
       
       sectionLabel: "Details",
@@ -332,7 +332,7 @@ export default {
       // "From" field
       el_fr_date.datetimepicker({
         format: "DD/MM/YYYY",
-        maxDate: "now",
+        minDate: "now",
         showClear: true
       });
       el_fr_date.on("dp.change", function(e) {
@@ -396,10 +396,10 @@ export default {
       });
 
       // Time field controls
-      $('#occurrenceTimeStartPicker').datetimepicker({
+      $('#plannedForTimePicker').datetimepicker({
               format: 'LT'
           });
-      $('#occurrenceTimeStartPicker').on('dp.change', function(e) {
+      $('#plannedForTimePicker').on('dp.change', function(e) {
           vm.setPlannedForTime(e.date.format('LT'));
       });
       

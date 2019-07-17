@@ -37,27 +37,44 @@ class Inspection(RevisionedMixin):
             ('individual', 'individual'),
             ('organisation', 'organisation')
             )
+    STATUS_CHOICES = (
+            ('open', 'Open'),
+            ('endorsement', 'Awaiting Endorsement'),
+            ('sanction_outcome', 'Awaiting Sanction Outcomes'),
+            ('closed', 'Closed')
+            )
 
     title = models.CharField(max_length=200, blank=True, null=True)
+    status = models.CharField(
+            max_length=100,
+            choices=STATUS_CHOICES,
+            default='open'
+            )
+
     details = models.TextField(blank=True, null=True)
     number = models.CharField(max_length=50, blank=True, null=True)
     planned_for_date = models.DateField(null=True)
-    planned_for_time = models.CharField(max_length=20, blank=True, null=True)
+    planned_for_time = models.TimeField(blank=True, null=True)
     party_inspected = models.CharField(
             max_length=30,
             choices=PARTY_CHOICES,
-            default='person'
+            default='individual'
             )
     assigned_to = models.ForeignKey(
         EmailUser, 
         related_name='inspection_assigned_to',
         null=True
-    )
+        )
     allocated_group = models.ForeignKey(
         CompliancePermissionGroup,
         related_name='inspection_allocated_group', 
         null=True
-    )
+        )
+    inspection_type = models.ForeignKey(
+            InspectionType,
+            related_name='inspection_type',
+            null=True
+            )
 
     class Meta:
         app_label = 'wildlifecompliance'
