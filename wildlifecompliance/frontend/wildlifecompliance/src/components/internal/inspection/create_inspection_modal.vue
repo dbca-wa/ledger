@@ -359,6 +359,7 @@ export default {
           console.log(response);
           if (response.ok) {
               this.close();
+              this.$parent.$refs.inspection_table.vmDataTable.ajax.reload()
           }
       },
       cancel: async function() {
@@ -409,8 +410,6 @@ export default {
               console.log(res);
               if (res.ok) {    
                 return res
-                //window.location.href = "/internal/inspection/";
-                //this.$router.push({ name: 'internal-inspection-dash' });
               }
           } catch(err) {
                   this.errorResponse = err.statusText;

@@ -208,6 +208,14 @@ class InspectionViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @list_route(methods=['GET', ])    
+    def status_choices(self, request, *args, **kwargs):
+        res_obj = [] 
+        for choice in Inspection.STATUS_CHOICES:
+            res_obj.append({'id': choice[0], 'display': choice[1]});
+        res_json = json.dumps(res_obj)
+        return HttpResponse(res_json, content_type='application/json')
     
     @detail_route(methods=['GET', ])
     def action_log(self, request, *args, **kwargs):
