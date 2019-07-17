@@ -2370,7 +2370,6 @@ class BookingSuccessView(TemplateView):
             invoice = Invoice.objects.get(order_number=order.number)
             invoice_ref = invoice.reference
             book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
-
             #invoice_ref = request.GET.get('invoice')
             if booking.booking_type == 3:
                 try:
@@ -2618,8 +2617,11 @@ class ViewBookingHistory(LoginRequiredMixin, TemplateView):
         context = {
            'booking_id': booking_id,
            'booking': booking,
-           'booking_history' : booking_history
+           'booking_history' : booking_history,
+           'GIT_COMMIT_DATE' : settings.GIT_COMMIT_DATE,
+           'GIT_COMMIT_HASH' : settings.GIT_COMMIT_HASH,
         }
+
         return render(request, self.template_name,context)
 
     def get_newest_booking(self, booking_id):
@@ -2663,7 +2665,10 @@ class RefundBookingHistory(LoginRequiredMixin, TemplateView):
                 'newest_booking': newest_booking,
                 'booking_history' : booking_history,
                 'invoice_line_items' : invoice_line_items,
-                'oracle_code_refund_allocation_pool': settings.UNALLOCATED_ORACLE_CODE
+                'oracle_code_refund_allocation_pool': settings.UNALLOCATED_ORACLE_CODE,
+                'GIT_COMMIT_DATE' : settings.GIT_COMMIT_DATE,
+                'GIT_COMMIT_HASH' : settings.GIT_COMMIT_HASH,
+
              }
              return render(request, self.template_name,context)
         else:

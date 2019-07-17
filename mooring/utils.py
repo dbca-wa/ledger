@@ -1040,22 +1040,14 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
     booking_mooring_old = []
     if booking.old_booking:
         booking_mooring_old = MooringsiteBooking.objects.filter(booking=booking.old_booking)
-    print ("OLD Booking")
-    print (booking_mooring_old)
 
     invoice_lines = []
     if lines:
         for bm in booking_mooring:
-            print ("OVERRIDE")
-            print (booking.override_lines)
-            print (bm.id)
             line_status = 1
             amount = bm.amount
             if str(bm.id) in booking.override_lines:
-                print ("YES")
                 amount = Decimal(booking.override_lines[str(bm.id)])
-            print ("AMOUNT")
-            print (amount)
             for ob in booking_mooring_old:
                 if bm.campsite == ob.campsite and ob.from_dt == bm.from_dt and ob.to_dt == bm.to_dt and ob.booking_period_option == bm.booking_period_option:
                       line_status = 2

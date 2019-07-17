@@ -113,7 +113,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Use git commit hash for purging cache in browser for deployment changes
 GIT_COMMIT_HASH = ''
 GIT_COMMIT_DATE = ''
-if  os.path.isdir('.git') is True:
+if  os.path.isdir(BASE_DIR+'/.git/') is True:
     GIT_COMMIT_DATE = os.popen('cd '+BASE_DIR+' ; git log -1 --format=%cd').read()
     GIT_COMMIT_HASH = os.popen('cd  '+BASE_DIR+' ; git log -1 --format=%H').read()
 if len(GIT_COMMIT_HASH) == 0: 
