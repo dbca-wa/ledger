@@ -1905,7 +1905,7 @@ class ProposalOtherDetails(models.Model):
     #accreditation_expiry= models.DateField(blank=True, null=True)
 
     #preferred_license_period=models.CharField('Preferred license period', max_length=40, choices=LICENSE_PERIOD_CHOICES,default=LICENSE_PERIOD_CHOICES[0][0])
-    preferred_licence_period=models.CharField('Preferred licence period', max_length=40, choices=LICENCE_PERIOD_CHOICES,default=LICENCE_PERIOD_CHOICES[0][0])
+    preferred_licence_period=models.CharField('Preferred licence period', max_length=40, choices=LICENCE_PERIOD_CHOICES, null=True, blank=True)
     #nominated_start_date= models.DateTimeField(blank=True, null=True)
     #insurance_expiry= models.DateTimeField(blank=True, null=True)
     nominated_start_date= models.DateField(blank=True, null=True)
