@@ -844,6 +844,29 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             search_data.update({'accreditations':[]})
         return search_data
 
+    @property
+    def selected_parks_activities(self):
+        #list of selected parks and activities (to print on licence pdf)
+        selected_parks_activities=[]
+        for p in self.parks.all():
+            park_activities=[]
+            #parks.append(p.park.name)
+            if p.park.park_type=='land':
+                for a in p.activities.all():
+                    park_activities.append(a.activity_name)
+            if p.park.park_type=='marine':
+                for z in p.zones.all():
+                    for a in z.park_activities.all():
+                        park_activities.append(a.activity_name)
+            selected_parks_activities.append({'park': p.park.name, 'activities': park_activities})
+        for t in self.trails.all():
+            #trails.append(t.trail.name)
+            trail_activities=[]
+            for s in t.sections.all():
+                for ts in s.trail_activities.all():
+                  trail_activities.append(ts.activity_name)
+            selected_parks_activities.append({'park': t.trail.name, 'activities': trail_activities})
+        return selected_parks_activities
 
     def __assessor_group(self):
         # TODO get list of assessor groups based on region and activity
