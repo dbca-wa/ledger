@@ -38,12 +38,15 @@ class InspectionSerializer(serializers.ModelSerializer):
     user_in_group = serializers.SerializerMethodField()
     can_user_action = serializers.SerializerMethodField()
     user_is_assignee = serializers.SerializerMethodField()
-    
+    status = CustomChoiceField(read_only=True)
+    #inspection_type = InspectionTypeSerializer()
+
     class Meta:
         model = Inspection
         fields = (
                 'id',
                 'number',
+                'status',
                 'title',
                 'details',
                 'planned_for_date',
@@ -55,6 +58,7 @@ class InspectionSerializer(serializers.ModelSerializer):
                 'user_in_group',
                 'can_user_action',
                 'user_is_assignee',
+                'inspection_type_id',
                 )
         read_only_fields = (
                 'id',
@@ -110,6 +114,8 @@ class SaveInspectionSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)
     allocated_group_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
+    inspection_type_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
     
     class Meta:
         model = Inspection
@@ -122,6 +128,7 @@ class SaveInspectionSerializer(serializers.ModelSerializer):
                 'party_inspected',
                 'assigned_to_id',
                 'allocated_group_id',
+                'inspection_type_id'
                 )
         read_only_fields = (
                 'id',

@@ -70,6 +70,11 @@ class Inspection(RevisionedMixin):
         related_name='inspection_allocated_group', 
         null=True
         )
+    inspection_team = models.ManyToManyField(
+        EmailUser,
+        related_name='inspection_team',
+        blank=True
+        )
     inspection_type = models.ForeignKey(
             InspectionType,
             related_name='inspection_type',

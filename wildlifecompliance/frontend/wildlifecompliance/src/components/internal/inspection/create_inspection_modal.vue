@@ -37,7 +37,7 @@
                             <div class="col-sm-3">
                               <label>Allocate to</label>
                             </div>
-                            <div class="col-sm-9">
+                            nspect<div class="col-sm-9">
                               <select class="form-control" v-model="assigned_to_id">
                                 <option  v-for="option in allocatedGroup" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
@@ -408,12 +408,12 @@ export default {
           try {
               let res = await Vue.http.post(post_url, payload);
               console.log(res);
-              if (res.ok) {    
+              if (res.ok) {
                 return res
               }
           } catch(err) {
                   this.errorResponse = err.statusText;
-              } 
+              }
           
       },
       /*
@@ -498,7 +498,7 @@ export default {
 
         // inspection_types
         let returned_inspection_types = await cache_helper.getSetCacheList(
-            'CallEmail_InspectionTypes', 
+            'InspectionTypes',
             api_endpoints.inspection_types
             );
         Object.assign(this.inspectionTypes, returned_inspection_types);

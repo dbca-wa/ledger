@@ -155,7 +155,6 @@ class InspectionFilterBackend(DatatablesFilterBackend):
                     ordering.pop(num)
                     ordering.insert(num, '-status')
 
-
             queryset = queryset.order_by(*ordering)
 
         setattr(view, '_datatables_total_count', total_count)

@@ -210,8 +210,8 @@
             // blank entry allows user to clear selection
             this.inspectionTypes.splice(0, 0, 
                 {
-                id: "", 
-                description: "",
+                id: "all",
+                description: "All",
                 });
 
         },

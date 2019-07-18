@@ -78,12 +78,12 @@ def _extract_email_headers(email_message, inspection, sender=None):
             all_ccs += list(email_message.bcc)
         all_ccs = ','.join(all_ccs)
 
-    # else:
-    #     text = smart_text(email_message)
-    #     subject = ''
-    #     to = application.submitter.email
-    #     fromm = smart_text(sender) if sender else SYSTEM_NAME
-    #     all_ccs = ''
+    else:
+        text = smart_text(email_message)
+        subject = ''
+        to = ''
+        fromm = smart_text(sender) if sender else SYSTEM_NAME
+        all_ccs = ''
 
     email_data = {
         'subject': subject,

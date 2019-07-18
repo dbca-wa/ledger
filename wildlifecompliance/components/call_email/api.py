@@ -177,6 +177,9 @@ class CallEmailFilterBackend(DatatablesFilterBackend):
                     ordering.insert(num, '-status')
 
            queryset = queryset.order_by(*ordering)
+        else:
+            queryset = queryset.order_by(['-number'])
+
 
         setattr(view, '_datatables_total_count', total_count)
         return queryset
