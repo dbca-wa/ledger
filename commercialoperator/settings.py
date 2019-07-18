@@ -63,6 +63,7 @@ REST_FRAMEWORK = {
 
 
 MIDDLEWARE_CLASSES += [
+    'commercialoperator.middleware.BookingTimerMiddleware',
     'commercialoperator.middleware.FirstTimeNagScreenMiddleware',
     'reversion.middleware.RevisionMiddleware'
 ]
