@@ -25,6 +25,7 @@ from wildlifecompliance.components.call_email import api as call_email_api
 from wildlifecompliance.components.offence import api as offence_api
 from wildlifecompliance.components.inspection import api as inspection_api
 from wildlifecompliance.components.sanction_outcome import api as sanction_outcome_api
+from wildlifecompliance.components.main import api as main_api
 
 from wildlifecompliance.utils import are_migrations_running
 

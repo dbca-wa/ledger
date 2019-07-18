@@ -41,73 +41,105 @@
                     </form>
                 </div>
             </div>
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                <h3 class="panel-title">Address Details
-                                    <a class="panelClicker" :href="'#'+adBody" data-toggle="collapse" expanded="false"  data-parent="#userInfo" :aria-controls="adBody">
-                                        <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                                    </a>
-                                </h3>
-                                </div>
-                                <div v-if="loading.length == 0" class="panel-body collapse in" :id="adBody">
-                                    <form class="form-horizontal" action="index.html" method="post">
-                                        <div class="form-group">
-                                        <label for="" class="col-sm-3 control-label">Street</label>
-                                        <div class="col-sm-6">
-                                            <div v-if="email_user"><div v-if="email_user.residential_address">
-                                                <input type="text" class="form-control" name="street" placeholder="" v-model="email_user.residential_address.line1" v-bind:key="email_user.residential_address.id">
-                                            </div></div>
-                                        </div>
-                                        </div>
-                                    <div class="form-group">
-                                        <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
-                                        <div class="col-sm-6">
-                                            <div v-if="email_user"><div v-if="email_user.residential_address">
-                                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="email_user.residential_address.locality" v-bind:key="email_user.residential_address.id">
-                                            </div></div>
-                                        </div>
-                                        </div>
-                                        <div class="form-group">
-                                        <label for="" class="col-sm-3 control-label">State</label>
-                                        <div class="col-sm-2">
-                                            <div v-if="email_user"><div v-if="email_user.residential_address">
-                                                <input type="text" class="form-control" name="country" placeholder="" v-model="email_user.residential_address.state" v-bind:key="email_user.residential_address.id">
-                                            </div></div>
-                                        </div>
-                                        <label for="" class="col-sm-2 control-label">Postcode</label>
-                                        <div class="col-sm-2">
-                                            <div v-if="email_user"><div v-if="email_user.residential_address">
-                                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="email_user.residential_address.postcode" v-bind:key="email_user.residential_address.id">
-                                            </div></div>
-                                        </div>
-                                        </div>
-                                        <div class="form-group">
-                                        <label for="" class="col-sm-3 control-label" >Country</label>
-                                        <div class="col-sm-4">
-                                            <div v-if="email_user"><div v-if="email_user.residential_address">
-                                                <select class="form-control" name="country" v-model="email_user.residential_address.country" v-bind:key="email_user.residential_address.id">
-                                                    <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
-                                                </select>
-                                            </div></div>
-                                        </div>
-                                        </div>
-                                        <!-- <div class="form-group">
-                                        <div class="col-sm-12">
-                                            <button v-if="!updatingAddress" class="pull-right btn btn-primary" @click.prevent="updateAddress()">Update</button>
-                                            <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
-                                        </div>
-                                        </div>  -->
-                                    </form>
-                                </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                <h3 class="panel-title">Address Details
+                    <a class="panelClicker" :href="'#'+adBody" data-toggle="collapse" expanded="false"  data-parent="#userInfo" :aria-controls="adBody">
+                        <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                    </a>
+                </h3>
+                </div>
+                <div v-if="loading.length == 0" class="panel-body collapse in" :id="adBody">
+                    <form class="form-horizontal" action="index.html" method="post">
+                        <div class="form-group">
+                        <label for="" class="col-sm-3 control-label">Street</label>
+                        <div class="col-sm-6">
+                            <div v-if="email_user"><div v-if="email_user.residential_address">
+                                <input type="text" class="form-control" name="street" placeholder="" v-model="email_user.residential_address.line1" v-bind:key="email_user.residential_address.id">
+                            </div></div>
+                        </div>
+                        </div>
+                    <div class="form-group">
+                        <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
+                        <div class="col-sm-6">
+                            <div v-if="email_user"><div v-if="email_user.residential_address">
+                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="email_user.residential_address.locality" v-bind:key="email_user.residential_address.id">
+                            </div></div>
+                        </div>
+                        </div>
+                        <div class="form-group">
+                        <label for="" class="col-sm-3 control-label">State</label>
+                        <div class="col-sm-2">
+                            <div v-if="email_user"><div v-if="email_user.residential_address">
+                                <input type="text" class="form-control" name="country" placeholder="" v-model="email_user.residential_address.state" v-bind:key="email_user.residential_address.id">
+                            </div></div>
+                        </div>
+                        <label for="" class="col-sm-2 control-label">Postcode</label>
+                        <div class="col-sm-2">
+                            <div v-if="email_user"><div v-if="email_user.residential_address">
+                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="email_user.residential_address.postcode" v-bind:key="email_user.residential_address.id">
+                            </div></div>
+                        </div>
+                        </div>
+                        <div class="form-group">
+                        <label for="" class="col-sm-3 control-label" >Country</label>
+                        <div class="col-sm-4">
+                            <div v-if="email_user"><div v-if="email_user.residential_address">
+                                <select class="form-control" name="country" v-model="email_user.residential_address.country" v-bind:key="email_user.residential_address.id">
+                                    <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
+                                </select>
+                            </div></div>
+                        </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                <h3 class="panel-title">Contact Details <small></small>
+                    <a class="panelClicker" :href="'#'+cdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cdBody">
+                        <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                    </a>
+                </h3>
+                </div>
+                <div class="panel-body collapse in" :id="cdBody">
+                    <form class="form-horizontal" action="index.html" method="post">
+                        <div class="form-group">
+                        <label for="" class="col-sm-3 control-label">Phone (work)</label>
+                        <div class="col-sm-6">
+                            <div v-if="email_user">
+                                <input type="text" class="form-control" name="phone" placeholder="" v-model="email_user.phone_number" v-bind:key="email_user.id">
                             </div>
+                        </div>
+                        </div>
+                        <div class="form-group">
+                        <label for="" class="col-sm-3 control-label" >Mobile</label>
+                        <div class="col-sm-6">
+                            <div v-if="email_user">
+                                <input type="text" class="form-control" name="mobile" placeholder="" v-model="email_user.mobile_number" v-bind:key="email_user.id">
+                            </div>
+                        </div>
+                        </div>
+                        <div class="form-group">
+                        <label for="" class="col-sm-3 control-label" >Email</label>
+                        <div class="col-sm-6">
+                            <div v-if="email_user">
+                                <input type="email" class="form-control" name="email" placeholder="" v-model="email_user.email" v-bind:key="email_user.id"> </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
-
-
+            <input type="button" class="pull-right btn btn-primary" value="Save" @click.prevent="saveData" />
         </div>
     </div>
 </template>
 
 <script>
+import Vue from 'vue';
 import $ from "jquery";
 import { api_endpoints, helpers } from '@/utils/hooks'
 import utils from '../internal/utils'
@@ -125,6 +157,7 @@ export default {
             slideUpDuration: 500,
 
             pdBody: 'pdBody'+vm._uid,
+            cdBody: 'cdBody'+vm._uid,
             adBody: 'adBody'+vm._uid,
             errorGivenName: false,
             errorLastName: false,
@@ -178,8 +211,22 @@ export default {
                 vm.countries = data[0];
             });
         },
-        saveData: function() {
-
+        saveData: async function() {
+            console.log('saveData');
+            try{
+                let fetchUrl = helpers.add_endpoint_json(api_endpoints.users, 'create_new_person');
+                let savedEmailUser = await Vue.http.post(fetchUrl, this.email_user);
+                console.log(savedEmailUser);
+                // await dispatch("setEmailUser", savedEmailUser.body);
+                // await swal("Saved", "The record has been saved", "success");
+            } catch (err) {
+                // console.log(err);
+                // if (err.body.non_field_errors){
+                //     await swal("Error", err.body.non_field_errors[0], "error");
+                // } else {
+                //     await swal("Error", "There was an error saving the record", "error");
+                // }
+            }
         },
         showHideElement: function() {
             if(this.display) {

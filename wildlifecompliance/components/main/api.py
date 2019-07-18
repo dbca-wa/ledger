@@ -6,6 +6,10 @@ import os
 from django.core.files.base import ContentFile
 import traceback
 
+def create_new_person(request, *args, **kwargs):
+    pass
+
+
 def save_location(location_request_data, *args, **kwargs):
     if location_request_data.get('id'):
         location_instance = Location.objects.get(id=location_request_data.get('id'))
