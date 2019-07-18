@@ -168,6 +168,14 @@ class CallEmailFilterBackend(DatatablesFilterBackend):
         fields = self.get_fields(getter)
         ordering = self.get_ordering(getter, fields)
         if len(ordering):
+           for num, item in enumerate(ordering):
+                if item == 'status__name':
+                    ordering.pop(num)
+                    ordering.insert(num, 'status')
+                if item == '-status__name':
+                    ordering.pop(num)
+                    ordering.insert(num, '-status')
+
            queryset = queryset.order_by(*ordering)
 
         setattr(view, '_datatables_total_count', total_count)

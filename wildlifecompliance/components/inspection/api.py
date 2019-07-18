@@ -82,55 +82,55 @@ class InspectionFilterBackend(DatatablesFilterBackend):
 
         total_count = queryset.count()
         status_filter = request.GET.get('status_description')
-        classification_filter = request.GET.get('classification_description')
+        inspection_filter = request.GET.get('inspection_description')
         date_from = request.GET.get('date_from')
         date_to = request.GET.get('date_to')
         search_text = request.GET.get('search[value]')
 
         if search_text:
             search_text = search_text.lower()
-            search_text_callemail_ids = []
-            for call_email in queryset:
+            search_text_inspection_ids = []
+            for inspection in queryset:
                 #lodged_on_str = time.strftime('%d/%m/%Y', call_email.lodged_on)
-                lodged_on_str = call_email.lodged_on.strftime('%d/%m/%Y')
-                if (search_text in (call_email.number.lower() if call_email.number else '')
-                    or search_text in (call_email.status.lower() if call_email.status else '')
-                    or search_text in (call_email.classification.name.lower() if call_email.classification else '')
-                    or search_text in (lodged_on_str.lower() if lodged_on_str else '')
-                    or search_text in (call_email.caller.lower() if call_email.caller else '')
+                planned_for_str = inspection.planned_for_date.strftime('%d/%m/%Y')
+                if (search_text in (inspection.number.lower() if inspection.number else '')
+                    or search_text in (inspection.status.lower() if inspection.status else '')
+                    or search_text in (inspection.inspection_type.description.lower() if inspection.inspection_type else '')
+                    or search_text in (planned_for_str.lower() if planned_for_str else '')
+                    or search_text in (inspection.title.lower() if inspection.title else '')
                     or search_text in (
-                        call_email.assigned_to.first_name.lower() + ' ' + call_email.assigned_to.last_name.lower()
-                        if call_email.assigned_to else ''
+                        inspection.assigned_to.first_name.lower() + ' ' + inspection.assigned_to.last_name.lower()
+                        if inspection.assigned_to else ''
                         )
                     ):
-                    search_text_callemail_ids.append(call_email.id)
+                    search_text_inspection_ids.append(inspection.id)
 
             # use pipe to join both custom and built-in DRF datatables querysets (returned by super call above)
             # (otherwise they will filter on top of each other)
             #_queryset = queryset.filter(id__in=search_text_callemail_ids).distinct() | super_queryset
             # BB 20190704 - is super_queryset necessary?
-            queryset = queryset.filter(id__in=search_text_callemail_ids)
+            queryset = queryset.filter(id__in=search_text_inspection_ids)
 
         status_filter = status_filter.lower() if status_filter else 'all'
         if status_filter != 'all':
-            status_filter_callemail_ids = []
-            for call_email in queryset:
-                if status_filter == call_email.get_status_display().lower():
-                    status_filter_callemail_ids.append(call_email.id)
-            queryset = queryset.filter(id__in=status_filter_callemail_ids)
-        classification_filter = classification_filter.lower() if classification_filter else 'all'
-        if classification_filter != 'all':
-            classification_filter_callemail_ids = []
-            for call_email in queryset:
-                if classification_filter in call_email.classification.name.lower() if call_email.classification else '':
-                    classification_filter_callemail_ids.append(call_email.id)
-            queryset = queryset.filter(id__in=classification_filter_callemail_ids)
+            status_filter_inspection_ids = []
+            for inspection in queryset:
+                if status_filter == inspection.get_status_display().lower():
+                    status_filter_inspection_ids.append(inspection.id)
+            queryset = queryset.filter(id__in=status_filter_inspection_ids)
+        inspection_filter = inspection_filter.lower() if inspection_filter else 'all'
+        if inspection_filter != 'all':
+            inspection_filter_inspection_ids = []
+            for inspection in queryset:
+                if inspection_filter in inspection.inspection_type.description.lower() if inspection.inspection_type else '':
+                    inspection_filter_inspection_ids.append(inspection.id)
+            queryset = queryset.filter(id__in=inspection_filter_inspection_ids)
 
         if date_from:
-            queryset = queryset.filter(lodged_on__gte=date_from)
+            queryset = queryset.filter(planned_for_date__gte=date_from)
         if date_to:
             date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
-            queryset = queryset.filter(lodged_on__lte=date_to)
+            queryset = queryset.filter(planned_for_date__lte=date_to)
 
         # override queryset ordering, required because the ordering is usually handled
         # in the super call, but is then clobbered by the custom queryset joining above
@@ -141,7 +141,22 @@ class InspectionFilterBackend(DatatablesFilterBackend):
         fields = self.get_fields(getter)
         ordering = self.get_ordering(getter, fields)
         if len(ordering):
-           queryset = queryset.order_by(*ordering)
+            for num, item in enumerate(ordering):
+                if item == 'planned_for':
+                    ordering.pop(num)
+                    ordering.insert(num, 'planned_for_date')
+                if item == '-planned_for':
+                    ordering.pop(num)
+                    ordering.insert(num, '-planned_for_date')
+                if item == 'status__name':
+                    ordering.pop(num)
+                    ordering.insert(num, 'status')
+                if item == '-status__name':
+                    ordering.pop(num)
+                    ordering.insert(num, '-status')
+
+
+            queryset = queryset.order_by(*ordering)
 
         setattr(view, '_datatables_total_count', total_count)
         return queryset

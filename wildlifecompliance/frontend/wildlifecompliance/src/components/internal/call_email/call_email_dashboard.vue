@@ -127,12 +127,12 @@
                         {
                             data: "number",
                             searchable: false,
-                            //orderable: true,
+                            orderable: true,
                         },
                         {
                             data: "status.name",
                             searchable: false,
-                            orderable: false,
+                            orderable: true,
                         },
                         {
                             data: "classification",
@@ -162,7 +162,7 @@
                         {
                             data: "assigned_to",
                             searchable: false,
-                            orderable: false,
+                            orderable: true,
                             mRender: function (data, type, full) {
                                 if (data) {
                                     return data.full_name;

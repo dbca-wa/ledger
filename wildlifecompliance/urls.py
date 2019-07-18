@@ -84,6 +84,7 @@ router.register(r'offence', offence_api.OffenceViewSet)
 router.register(r'call_email_paginated', call_email_api.CallEmailPaginatedViewSet)
 router.register(r'inspection', inspection_api.InspectionViewSet)
 router.register(r'sanction_outcome', sanction_outcome_api.SanctionOutcomeViewSet)
+router.register(r'inspection_paginated', inspection_api.InspectionPaginatedViewSet)
 
 api_patterns = [url(r'^api/my_user_details/$',
                     users_api.GetMyUserDetails.as_view(),

@@ -7,8 +7,8 @@
                 <div class="col-md-3">
                         <label for="">Type</label>
                         <select class="form-control" v-model="filterInspectionType">
-                            <option v-for="option in inspectionTypes" :value="option.name" v-bind:key="option.id">
-                                {{ option.name }} 
+                            <option v-for="option in inspectionTypes" :value="option.description" v-bind:key="option.id">
+                                {{ option.description }} 
                             </option>
                     </select>
                 </div>
@@ -103,7 +103,7 @@
                 //     allowInputToggle: true
                 // },
                 dtOptions: {
-                    //serverSide: true,
+                    serverSide: true,
                     searchDelay: 1000,
                     lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
                     order: [
@@ -122,26 +122,32 @@
                     responsive: true,
                     processing: true,
                     ajax: {
-                        //'url': '/api/call_email_paginated/get_paginated_datatable/?format=datatables',
-                        'url': '/api/inspection/datatable_list',
-                        'dataSrc': '',
-                        //'dataSrc': 'data',
-                        //'data': function(d) {
-                          //  d.
+                        'url': '/api/inspection_paginated/get_paginated_datatable/?format=datatables',
+                        //'url': '/api/inspection/datatable_list',
+                        //'dataSrc': '',
+                        'dataSrc': 'data',
+                        'data': function(d) {
+                            d.status_description = vm.filterStatus;
+                            d.inspection_description = vm.filterInspectionType;
+                            d.date_from = vm.filterPlannedFrom != '' && vm.filterPlannedFrom != null ? moment(vm.filterPlannedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                            d.date_to = vm.filterPlannedTo != '' && vm.filterPlannedTo != null ? moment(vm.filterPlannedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        }
                     },
                     columns: [
                         {
                             data: 'number',
                             searchable: false,
+                            //orderable: false
                         },
                         {
                             data: 'title',
                             searchable: false,
+                            orderable: true
                         },
                         {
                             data: 'inspection_type',
                             searchable: false,
-                            //orderable: false,
+                            orderable: true,
                             mRender: function (data, type, full) {
                                 if (data) {
                                     return data.description;
@@ -153,15 +159,17 @@
                         {
                             data: 'status.name',
                             searchable: false,
-                            orderable: false,
+                            orderable: true
                         },
                         {
                             data: 'planned_for',
                             searchable: false,
+                            orderable: true
                         },
                         {
                             data: 'user_action',
-                            //searchable: false,  
+                            searchable: false,
+                            orderable: false
                         },
                     ],
                 },
