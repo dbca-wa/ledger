@@ -4,12 +4,10 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">Personal Details
-                        <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
-                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                        </a>
+                        <span class="glyphicon  pull-right" @click="isPersonalDetailsOpen=!isPersonalDetailsOpen" :class="isPersonalDetailsOpen ? 'glyphicon-chevron-up' : 'glyphicon-chevron-down'"></span>
                     </h3>
                 </div>
-                <div class="panel-body collapse in" :id="pdBody">
+                <div class="panel-body in" :id="pdBody">
                     <div v-if="objectAlert" class="alert alert-danger">
                         <p>test alert</p>
                     </div>
@@ -45,12 +43,10 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                 <h3 class="panel-title">Address Details
-                    <a class="panelClicker" :href="'#'+adBody" data-toggle="collapse" expanded="false"  data-parent="#userInfo" :aria-controls="adBody">
-                        <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                    </a>
+                    <span class="glyphicon  pull-right" @click="isAddressDetailsOpen=!isAddressDetailsOpen" :class="isAddressDetailsOpen ? 'glyphicon-chevron-up' : 'glyphicon-chevron-down'"></span>
                 </h3>
                 </div>
-                <div v-if="loading.length == 0" class="panel-body collapse in" :id="adBody">
+                <div class="panel-body in" :id="adBody">
                     <form class="form-horizontal" action="index.html" method="post">
                         <div class="form-group">
                         <label for="" class="col-sm-3 control-label">Street</label>
@@ -99,9 +95,7 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                 <h3 class="panel-title">Contact Details <small></small>
-                    <a class="panelClicker" :href="'#'+cdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cdBody">
-                        <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                    </a>
+                    <span class="glyphicon  pull-right" @click="isContactDetailsOpen=!isContactDetailsOpen" :class="isContactDetailsOpen ? 'glyphicon-chevron-up' : 'glyphicon-chevron-down'"></span>
                 </h3>
                 </div>
                 <div class="panel-body collapse in" :id="cdBody">
@@ -153,8 +147,8 @@ export default {
 
         return {
             mainElement: null,
-            slideDownDuration: 500,
-            slideUpDuration: 500,
+            slideDownMiliSecond: 200,
+            slideUpMiliSecond: 400,
 
             pdBody: 'pdBody'+vm._uid,
             cdBody: 'cdBody'+vm._uid,
@@ -165,6 +159,11 @@ export default {
             objectAlert: false,
             loading: [],
             countries: [],
+
+            // New toggles
+            isPersonalDetailsOpen: null,
+            isAddressDetailsOpen: null,
+            isContactDetailsOpen: null,
 
             email_user : {
                 first_name: '',
@@ -199,9 +198,51 @@ export default {
             handler: function() {
                 this.showHideElement();
             }
+        },
+        isPersonalDetailsOpen: {
+            handler: function(){
+                let elem = $('#' + this.pdBody);
+                if(this.isPersonalDetailsOpen) {
+                    elem.slideDown(this.slideDownMiliSecond);
+                } else {
+                    elem.slideUp(this.slideUpMiliSecond);
+                }
+            }
+        },
+        isAddressDetailsOpen: {
+            handler: function(){
+                let elem = $('#' + this.adBody);
+                if(this.isAddressDetailsOpen) {
+                    elem.slideDown(this.slideDownMiliSecond);
+                } else {
+                    elem.slideUp(this.slideUpMiliSecond);
+                }
+            }
+        },
+        isContactDetailsOpen: {
+            handler: function(){
+                let elem = $('#' + this.cdBody);
+                if(this.isContactDetailsOpen) {
+                    elem.slideDown(this.slideDownMiliSecond);
+                } else {
+                    elem.slideUp(this.slideUpMiliSecond);
+                }
+            }
         }
     },
     methods: {
+        handleSlideElement: function(elem_id){
+            console.log(elem_id);
+
+            let elem = $('#' + elem_id);
+            if (keyword == 'pd'){
+                this.isPersonalDetailsOpen = !this.isPersonalDetailsOpen;
+            } else if (keyword == 'ad'){
+                this.isAddressDetailsOpen = !this.isAddressDetailsOpen;
+            } else if (keyword == 'cd') {
+                this.isContactDetailsOpen = !this.isContactDetailsOpen;
+            }
+        },
         loadCountries: function(){
             let vm = this;
             let initialisers = [
@@ -212,7 +253,6 @@ export default {
             });
         },
         saveData: async function() {
-            console.log('saveData');
             try{
                 let fetchUrl = helpers.add_endpoint_json(api_endpoints.users, 'create_new_person');
                 let savedEmailUser = await Vue.http.post(fetchUrl, this.email_user);
@@ -220,12 +260,12 @@ export default {
                 // await dispatch("setEmailUser", savedEmailUser.body);
                 // await swal("Saved", "The record has been saved", "success");
             } catch (err) {
-                // console.log(err);
-                // if (err.body.non_field_errors){
-                //     await swal("Error", err.body.non_field_errors[0], "error");
-                // } else {
-                //     await swal("Error", "There was an error saving the record", "error");
-                // }
+                console.log(err);
+                if (err.body.non_field_errors){
+                    await swal("Error", err.body.non_field_errors[0], "error");
+                } else {
+                    await swal("Error", "There was an error saving the record", "error");
+                }
             }
         },
         showHideElement: function() {
@@ -244,6 +284,9 @@ export default {
         vm.$nextTick(()=>{
             vm.showHideElement();
             vm.loadCountries();
+            vm.isPersonalDetailsOpen = false;
+            vm.isAddressDetailsOpen = false;
+            vm.isContactDetailsOpen = false;
         })
     }
 }
