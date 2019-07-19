@@ -1,9 +1,9 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-        This Call/Email has been forwarded to you:
+        This Inspection has been forwarded to you:
 
-        Call/Email : <a href="{{url}}">{{ call_email.number }}</a> 
+        Inspection : <a href="{{url}}">{{ inspection.number }}</a> 
 
         Message:  {{ workflow_entry_details }}
 

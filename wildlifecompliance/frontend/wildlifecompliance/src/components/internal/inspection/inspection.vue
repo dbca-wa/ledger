@@ -14,6 +14,37 @@
                     <div class="panel-heading">
                         Workflow 
                     </div>
+                    <div class="panel-body panel-collapse">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <strong>Status</strong><br/>
+                                {{ statusDisplay }}<br/>
+                            </div>
+                        </div>
+
+                        <div v-if="inspection.allocated_group" class="form-group">
+                          <div class="row">
+                            <div class="col-sm-12 top-buffer-s">
+                              <strong>Currently assigned to</strong><br/>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-sm-12">
+                              
+                              <select :disabled="!inspection.user_in_group" class="form-control" v-model="inspection.assigned_to_id" @change="updateAssignedToId()">
+                                <option  v-for="option in inspection.allocated_group" :value="option.id" v-bind:key="option.id">
+                                  {{ option.full_name }} 
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div v-if="inspection.user_in_group">
+                            <a @click="updateAssignedToId('current_user')" class="btn pull-right">
+                                Assign to me
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -31,22 +62,48 @@
                     <div class="tab-content">
                         <div :id="iTab" class="tab-pane fade in active">
 
-                          <FormSection :formCollapse="false" label="Caller" Index="0">
+                          <FormSection :formCollapse="false" label="Inspection Details" Index="0">
                             
-                            <div class="row"><div class="col-sm-8 form-group">
-                              <label class="col-sm-12">Title</label>
-                              <input :readonly="readonlyForm" class="form-control" v-model="inspection.title"/>
-                            </div></div>
-                            <div class="col-sm-4 form-group"><div class="row">
-                              <label class="col-sm-12">Details</label>
-                            <textarea :readonly="readonlyForm" class="form-control" v-model="inspection.details"/>
-                            </div></div>
+                            <div class="form-group">
+                              <div class="row">
+                                <div class="col-sm-3">
+                                  <label>Inspection Type</label>
+                                </div>
+                                <div class="col-sm-6">
+                                  <select :disabled="readonlyForm" class="form-control" v-model="inspection.inspection_type_id">
+                                    <option  v-for="option in inspectionTypes" :value="option.id" v-bind:key="option.id">
+                                      {{ option.description }}
+                                    </option>
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <div class="row">
+                                <div class="col-sm-3">
+                                  <label>Title</label>
+                                </div>
+                                <div class="col-sm-9">
+                                  <input :readonly="readonlyForm" class="form-control" v-model="inspection.title"/>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <div class="row">
+                                <div class="col-sm-3">
+                                  <label>Details</label>
+                                </div>
+                                <div class="col-sm-9">
+                                  <textarea :readonly="readonlyForm" class="form-control" v-model="inspection.details"/>
+                                </div>
+                              </div>
+                            </div>
 
                             <div class="col-sm-12 form-group"><div class="row">
                                 <label class="col-sm-3">Planned for (Date)</label>
                                 <div class="col-sm-3">
                                     <div class="input-group date" ref="plannedForDatePicker">
-                                        <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="inspection.planned_for_date" />
+                                        <input :disabled="readonlyForm" type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="inspection.planned_for_date" />
                                         <span class="input-group-addon">
                                             <span class="glyphicon glyphicon-calendar"></span>
                                         </span>
@@ -64,7 +121,44 @@
                                 </div>
                             </div></div>
                             <div class="col-sm-12 form-group"><div class="row">
-                                <SearchPerson elementId="search-person"/>
+                                <label class="col-sm-4">Party Inspected</label>
+                                    <input :disabled="readonlyForm" class="col-sm-1" id="individual" type="radio" v-model="inspection.party_inspected" v-bind:value="`individual`">
+                                    <label class="col-sm-1" for="individual">Person</label>
+                                    <input :disabled="readonlyForm" class="col-sm-1" id="organisation" type="radio" v-model="inspection.party_inspected" v-bind:value="`organisation`">
+                                    <label class="col-sm-1" for="organisation">Organisation</label>
+                            </div></div>
+                            
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-8">
+                                    <SearchPerson :isEditable="!readonlyForm" classNames="form-control" elementId="search-person" :search_type="inspection.party_inspected" @person-selected="personSelected"/>
+                                </div>
+                            </div></div>
+                          </FormSection>
+                          <FormSection :formCollapse="false" label="Inspection Team" Index="1">
+                            <div class="form-group">
+                              <div class="row">
+                                <div class="col-sm-6">
+                                  <select :disabled="readonlyForm" class="form-control" v-model="teamMemberSelected" >
+                                    <option  v-for="option in inspection.allocated_group" :value="option.id" v-bind:key="option.id">
+                                      {{ option.full_name }}
+                                    </option>
+                                  </select>
+                                </div>
+                                <div class="col-sm-2">
+                                    <button @click.prevent="addTeamMember" class="btn btn-primary">Add Member</button>
+                                </div>
+                                <div class="col-sm-2">
+                                    <button @click.prevent="makeTeamLead" class="btn btn-primary">Make Team Lead</button>
+                                </div>
+                                <!--div class="col-sm-2">
+                                    <button @click.prevent="clearInspectionTeam" class="btn btn-primary pull-right">Clear</button>
+                                </div-->
+                              </div>
+                            </div>
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div v-if="inspection">
+                                  <datatable ref="inspection_team_table" id="inspection-team-table" :dtOptions="dtOptionsInspectionTeam" :dtHeaders="dtHeadersInspectionTeam" />
+                                </div>
                             </div></div>
                           </FormSection>
             
@@ -146,15 +240,50 @@ export default {
               },
           ]
       },
-      disabledDates: {
-        from: new Date(),
+      dtHeadersInspectionTeam: [
+          'Name',
+          'Role',
+          'Action',
+      ],
+      dtOptionsInspectionTeam: {
+          ajax: {
+              'url': '/api/inspection/' + this.$route.params.inspection_id + '/get_inspection_team/',
+              'dataSrc': '',
+          },
+
+          columns: [
+              {
+                  data: 'full_name',
+              },
+              {
+                  data: 'member_role',
+              },
+              {
+                  data: 'action',
+                  mRender: function(data, type, row){
+                      // return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
+                      //return '<a href="#">Remove</a>';
+                      return (
+                      '<a href="#" class="remove_button" data-member-id="' +
+                      row.id +
+                      '">Remove</a>'
+                      );
+                  }
+              },
+          ]
       },
+      // disabledDates: {
+      //   from: new Date(),
+      // },
       workflow_type: '',
       
       sectionLabel: "Details",
       sectionIndex: 1,
       pBody: "pBody" + this._uid,
       loading: [],
+      inspectionTypes: [],
+      teamMemberSelected: null,
+      //party_inspected: '',
       
       //callemailTab: "callemailTab" + this._uid,
       comms_url: helpers.add_endpoint_json(
@@ -193,10 +322,13 @@ export default {
     csrf_token: function() {
       return helpers.getCookie("csrftoken");
     },
-    
-    readonlyForm: function() {
-        return false;
+    statusDisplay: function() {
+        return this.inspection.status ? this.inspection.status.name : '';
     },
+    readonlyForm: function() {
+        return !this.inspection.can_user_action;
+    },
+
   },
   filters: {
     formatDate: function(data) {
@@ -209,8 +341,33 @@ export default {
       saveInspection: 'saveInspection',
       setInspection: 'setInspection', 
       setPlannedForTime: 'setPlannedForTime',
+      modifyInspectionTeam: 'modifyInspectionTeam',
     }),
-    
+    addTeamMember: async function() {
+        await this.modifyInspectionTeam({
+            user_id: this.teamMemberSelected, 
+            action: 'add'
+        });
+        this.$refs.inspection_team_table.vmDataTable.ajax.reload()
+    },
+    removeTeamMember: async function(e) {
+        let memberId = e.target.getAttribute("data-member-id");
+        await this.modifyInspectionTeam({
+            user_id: memberId, 
+            action: 'remove'
+        });
+        this.$refs.inspection_team_table.vmDataTable.ajax.reload()
+    },
+    makeTeamLead: async function() {
+        await this.modifyInspectionTeam({
+            user_id: this.teamMemberSelected, 
+            action: 'make_team_lead'
+        });
+        this.$refs.inspection_team_table.vmDataTable.ajax.reload()
+    },
+    personSelected: function(para) {
+        console.log(para)
+    },
     updateWorkflowBindId: function() {
         let timeNow = Date.now()
         if (this.workflow_type) {
@@ -285,7 +442,7 @@ export default {
       // "From" field
       el_fr_date.datetimepicker({
         format: "DD/MM/YYYY",
-        maxDate: "now",
+        minDate: "now",
         showClear: true
       });
       el_fr_date.on("dp.change", function(e) {
@@ -303,6 +460,30 @@ export default {
           vm.inspection.planned_for_time = "";
         }
       });
+      $('#inspection-team-table').on(
+          'click',
+          '.remove_button',
+          vm.removeTeamMember,
+          );
+    },
+    updateAssignedToId: async function (user) {
+        let url = helpers.add_endpoint_join(
+            api_endpoints.inspection, 
+            this.inspection.id + '/update_assigned_to_id/'
+            );
+        let payload = null;
+        if (user === 'current_user' && this.inspection.user_in_group) {
+            payload = {'current_user': true};
+        } else if (user === 'blank') {
+            payload = {'blank': true};
+        } else {
+            payload = { 'assigned_to_id': this.inspection.assigned_to_id };
+        }
+        let res = await Vue.http.post(
+            url,
+            payload
+        );
+        await this.setInspection(res.body); 
     },
   },
   beforeRouteEnter: function(to, from, next) {
@@ -314,6 +495,19 @@ export default {
   },
   created: async function() {
       console.log(this)
+
+      // inspection_types
+      let returned_inspection_types = await cache_helper.getSetCacheList(
+          'InspectionTypes',
+          api_endpoints.inspection_types
+          );
+      Object.assign(this.inspectionTypes, returned_inspection_types);
+      // blank entry allows user to clear selection
+      this.inspectionTypes.splice(0, 0,
+          {
+            id: "",
+            description: "",
+          });
     
     //if (this.$route.params.inspection_id) {
       //await this.loadInspection({ inspection_id: this.$route.params.inspection_id });
@@ -330,10 +524,10 @@ export default {
       });
 
       // Time field controls
-      $('#occurrenceTimeStartPicker').datetimepicker({
+      $('#plannedForTimePicker').datetimepicker({
               format: 'LT'
           });
-      $('#occurrenceTimeStartPicker').on('dp.change', function(e) {
+      $('#plannedForTimePicker').on('dp.change', function(e) {
           vm.setPlannedForTime(e.date.format('LT'));
       });
       
