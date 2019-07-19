@@ -33,7 +33,8 @@ export default {
         },
         search_type: {
             required: false,
-            default: 'individual'
+            default: 'individual' // 'individual' or 'organisation'
+                                  //  This variable can be changed dynamically, for example, by the selection of radio buttons
         },
         isEditable: {
             required: false,
@@ -117,7 +118,7 @@ export default {
             .on("keyup", function(ev) {
                 var keyCode = ev.keyCode || ev.which;
                 if ((48 <= keyCode && keyCode <= 90) || (96 <= keyCode && keyCode <= 105) || keyCode == 8 || keyCode == 46) {
-                    vm.search_offender(ev.target.value);
+                    vm.search_person_or_organisation(ev.target.value);
                     return false;
                 }
             })
@@ -136,10 +137,15 @@ export default {
                 let data_item_id = origin[0].getAttribute("data-item-id");
                 let data_type = origin[0].getAttribute("data-type");
 
+                // Emit an event so that the parent vue component can subscribe to the event: 'person-selected' 
+                // and receive the data user selected.
+                // 
+                // id is an Emailuser.id when data_type is 'individual' or 
+                // an Organisation.id when data_type is 'organisation'
                 vm.$emit('person-selected', { id: data_item_id, data_type: data_type });
             });
         },
-        search_offender(searchTerm){
+        search_person_or_organisation(searchTerm){
             var vm = this;
             let suggest_list_offender = [];
             suggest_list_offender.length = 0;

@@ -139,10 +139,14 @@
 
                             <div class="col-sm-12 form-group"><div class="row">
                                 <div class="col-sm-12">
+                                  <CreateNewPerson :displayComponent="displayCreateNewPerson" @new-person-created="newPersonCreated"/>
+                                </div>
+
+<!-- 
+                                <div class="col-sm-12">
                                     <div v-if="newPersonBeingCreated" class="panel panel-default">
                                         <div class="panel-heading">
                                         <h3 class="panel-title">Personal Details
-                                            <!-- <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody"> -->
                                             <a class="panelClicker">
                                                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                                             </a>
@@ -155,7 +159,7 @@
                                         </div>
                                     </div>
                                 </div>
-
+ -->
                                 <div class="col-sm-12">
                                     <datatable ref="offender_table" id="offender-table" :dtOptions="dtOptionsOffender" :dtHeaders="dtHeadersOffender" />
                                 </div>
@@ -192,6 +196,7 @@ import { mapGetters, mapActions } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import MapLocationOffence from "./map_location_offence1";
 import PersonSearch from "@common-components/search_person.vue";
+import CreateNewPerson from "@common-components/create_new_person.vue";
 import utils from "../utils";
 import $ from "jquery";
 import "bootstrap/dist/css/bootstrap.css";
@@ -210,6 +215,7 @@ export default {
     vm.awe = null;
 
     return {
+      displayCreateNewPerson: false,
       updatingContact: false,
       newPersonBeingCreated: false,
       officers: [],
@@ -325,7 +331,8 @@ export default {
     modal,
     datatable,
     MapLocationOffence,
-    PersonSearch
+    PersonSearch,
+    CreateNewPerson
   },
   computed: {
     ...mapGetters("callemailStore", {
@@ -369,6 +376,11 @@ export default {
       saveOffence: "saveOffence",
       setOffenceEmpty: "setOffenceEmpty"
     }),
+    newPersonCreated: function(person, err) {
+      console.log('newPersonCreate');
+      console.log(person);
+      console.log(err);
+    },
     personSelected: function(para) {
         let vm = this;
         vm.setCurrentOffender(para.data_type, para.id);
@@ -408,6 +420,7 @@ export default {
     createNewPersonClicked: function() {
       let vm = this;
       vm.newPersonBeingCreated = true;
+      vm.displayCreateNewPerson = !vm.displayCreateNewPerson;
     },
     cancelCreateNewPersonClicked: function() {
       let vm = this;
