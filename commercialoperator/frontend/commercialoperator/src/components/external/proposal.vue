@@ -36,7 +36,7 @@
                 <h4>Commercial Operator - {{proposal.application_type}} application: {{proposal.lodgement_number}}</h4>
             </div>
 
-            <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart"  :canEditActivities="canEditActivities" :is_external="true"></ProposalTClass>
+            <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart"  :canEditActivities="canEditActivities" :is_external="true" ref="proposal_tclass"></ProposalTClass>
             <ProposalFilming v-else-if="proposal && proposal.application_type=='Filming'" :proposal="proposal" id="proposalStart"></ProposalFilming>
             <ProposalEvent v-else-if="proposal && proposal.application_type=='Event'" :proposal="proposal" id="proposalStart"></ProposalEvent>
 
@@ -351,6 +351,26 @@ export default {
         return vm.missing_fields.length
     },
 
+    can_submit: function(){
+      let vm=this;
+      let blank_fields=[]
+      if (vm.proposal.other_details.preferred_licence_period=='' || vm.proposal.other_details.preferred_licence_period==null ){
+        blank_fields.push(' Preferred Licence Period is required')
+      }
+      if(vm.$refs.proposal_tclass.$refs.other_details.$refs.deed_poll_doc.documents.length==0){
+        blank_fields.push(' Deed poll document is missing')
+      }
+      if(vm.$refs.proposal_tclass.$refs.other_details.$refs.currency_doc.documents.length==0){
+        blank_fields.push(' Certificate of currency document is missing')
+      }
+      if(blank_fields.length==0){
+        return true;
+      }
+      else{
+        return blank_fields;
+      }
+
+    },
     submit: function(){
         let vm = this;
         let formData = vm.set_formData()
@@ -360,14 +380,23 @@ export default {
 //        formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
 //        formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
 
-        var num_missing_fields = vm.validate()
-        if (num_missing_fields > 0) {
-            vm.highlight_missing_fields()
-            var top = ($('#error').offset() || { "top": NaN }).top;
-            $('html, body').animate({
-                scrollTop: top
-            }, 1);
-            return false;
+        // var num_missing_fields = vm.validate()
+        // if (num_missing_fields > 0) {
+        //     vm.highlight_missing_fields()
+        //     var top = ($('#error').offset() || { "top": NaN }).top;
+        //     $('html, body').animate({
+        //         scrollTop: top
+        //     }, 1);
+        //     return false;
+        // }
+        var missing_data= vm.can_submit();
+        if(missing_data!=true){
+          swal({
+            title: "Please fix following errors before submitting",
+            text: missing_data,
+            type:'error'
+          })
+          return false;
         }
 
         // remove the confirm prompt when navigating away from window (on button 'Submit' click)
