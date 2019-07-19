@@ -139,7 +139,7 @@
 
                             <div class="col-sm-12 form-group"><div class="row">
                                 <div class="col-sm-12">
-                                  <CreateNewPerson elementId="create_new_person_1" v-bind:display="displayCreateNewPerson" @new-person-created="newPersonCreated"/>
+                                  <CreateNewPerson :displayComponent="displayCreateNewPerson" @new-person-created="newPersonCreated"/>
                                 </div>
 
 <!-- 

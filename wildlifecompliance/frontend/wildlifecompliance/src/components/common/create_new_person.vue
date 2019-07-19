@@ -127,7 +127,7 @@
                 </div>
             </div>
 
-            <input type="button" class="pull-right btn btn-primary" value="Save" @click.prevent="saveData" />
+            <input v-if="displaySaveButton" type="button" class="pull-right btn btn-primary" value="Save" @click.prevent="saveData" />
         </div>
     </div>
 </template>
@@ -147,6 +147,7 @@ export default {
 
         return {
             mainElement: null,
+            elementId: 'create_new_person_' + vm._uid,
 
             pdBody: 'pdBody'+vm._uid,
             cdBody: 'cdBody'+vm._uid,
@@ -181,14 +182,15 @@ export default {
         }
     },
     props: {
-        elementId: {
-            type: String,
-            required: true,
-        },
-        display: {
+        displayComponent: {
             type: Boolean,
             required: true,
             default: false,
+        },
+        displaySaveButton: {
+            type: Boolean,
+            required: false,
+            default: true,
         },
         defaultOpenPersonalDetails: {
             type: Boolean,
@@ -217,7 +219,7 @@ export default {
         },
     },
     watch: {
-        display: {
+        displayComponent: {
             handler: function() {
                 this.showHideElement();
             }
@@ -285,7 +287,7 @@ export default {
             }
         },
         showHideElement: function() {
-            if(this.display) {
+            if(this.displayComponent) {
                 this.mainElement.slideDown(this.slideDownMiliSecond);
             } else {
                 this.mainElement.slideUp(this.slideUpMiliSecond);
