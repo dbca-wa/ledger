@@ -37,7 +37,7 @@
                             <div class="col-sm-3">
                               <label>Allocate to</label>
                             </div>
-                            nspect<div class="col-sm-9">
+                            <div class="col-sm-9">
                               <select class="form-control" v-model="assigned_to_id">
                                 <option  v-for="option in allocatedGroup" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 

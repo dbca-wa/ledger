@@ -58,7 +58,7 @@ from wildlifecompliance.components.inspection.serializers import (
     InspectionDatatableSerializer,
     UpdateAssignedToIdSerializer,
     InspectionTypeSerializer,
-    InspectionTeamSerializer,
+    #InspectionTeamSerializer,
     EmailUserSerializer,
     )
 from wildlifecompliance.components.users.models import (
@@ -377,6 +377,9 @@ class InspectionViewSet(viewsets.ModelViewSet):
                     if action == 'remove':
                         if user in team_member_list:
                             instance.inspection_team.remove(user)
+                        team_member_list = instance.inspection_team.all()
+                        if team_member_list and not instance.inspection_team_lead_id in team_member_list:
+                            instance.inspection_team_lead = team_member_list[0]
                     if action == 'make_team_lead':
                         if user not in team_member_list:
                             instance.inspection_team.add(user)

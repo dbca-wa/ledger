@@ -63,15 +63,15 @@ class EmailUserSerializer(serializers.ModelSerializer):
         return ''
 
 
-class InspectionTeamSerializer(serializers.ModelSerializer):
-    inspection_team = EmailUserSerializer(many=True)
-
-    class Meta:
-        model = Inspection
-        fields = (
-            'inspection_team',
-            'inspection_team_lead_id'
-        )
+# class InspectionTeamSerializer(serializers.ModelSerializer):
+#     inspection_team = EmailUserSerializer(many=True)
+#
+#     class Meta:
+#         model = Inspection
+#         fields = (
+#             'inspection_team',
+#             'inspection_team_lead_id'
+#         )
 
 
 class InspectionSerializer(serializers.ModelSerializer):
@@ -80,7 +80,7 @@ class InspectionSerializer(serializers.ModelSerializer):
     can_user_action = serializers.SerializerMethodField()
     user_is_assignee = serializers.SerializerMethodField()
     status = CustomChoiceField(read_only=True)
-    inspection_team = EmailUserSerializer(many=True)
+    inspection_team = EmailUserSerializer(many=True, read_only=True)
     #inspection_type = InspectionTypeSerializer()
 
     class Meta:
