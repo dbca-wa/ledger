@@ -285,7 +285,8 @@
                           <FormSection v-if="(call_email.referrer && call_email.referrer.length > 0) || call_email.advice_details" :formCollapse="true" label="Outcome" Index="3">
                               <div v-if="call_email.referrer && call_email.referrer.length > 0" class="col-sm-12 form-group"><div class="row">
                                 <label class="col-sm-4">Referred To</label>
-                                <select multiple :readonly="true" class="form-control" v-model="call_email.selected_referrers" >
+                                <!--select multiple :readonly="true" class="form-control" v-model="call_email.selected_referrers" -->
+                                <select style="width:100%" class="form-control input-sm" multiple ref="referrerList" >
                                   <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
                                     {{ option.name }} 
                                   </option>
@@ -351,6 +352,8 @@ import Offence from '../offence/offence';
 import SanctionOutcome from '../sanction_outcome/sanction_outcome';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
+require("select2/dist/css/select2.min.css");
+require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
 
 export default {
   name: "ViewCallEmail",
@@ -392,6 +395,7 @@ export default {
       classification_types: [],
       report_types: [],
       referrers: [],
+      referrersSelected: [],
       //allocated_group: [],
       current_schema: [],
       regionDistricts: [],
@@ -649,7 +653,6 @@ export default {
           vm.call_email.occurrence_time_to = "";
         }
       });
-
     },
   },
   beforeRouteEnter: function(to, from, next) {
@@ -695,6 +698,12 @@ export default {
         name: "",
       });
 
+     // load selected referrers into local var
+    for (let referrer_id of this.call_email.selected_referrers) {
+        this.referrersSelected.push(referrer_id)
+    }
+    //Object.assign(this.referrersSelected, this.call_email.selected_referrers)
+
     // load current CallEmail renderer schema
     if (this.call_email.report_type_id) {
       await this.loadSchema();
@@ -737,8 +746,22 @@ export default {
       });
       $('#occurrenceTimeEndPicker').on('dp.change', function(e) {
           vm.setOccurrenceTimeEnd(e.date.format('LT'));
-      });
-
+      }); 
+      // Initialise select2 for referrer
+      $(vm.$refs.referrerList).select2({
+          "theme": "bootstrap",
+          allowClear: true,
+          placeholder:"Select Referrer"
+                  }).
+      on("select2:select",function (e) {
+                          var selected = $(e.currentTarget);
+                          vm.referrersSelected = selected.val();
+                      }).
+      on("select2:unselect",function (e) {
+                          var selected = $(e.currentTarget);
+                          vm.referrersSelected = selected.val();
+                      });
+      
       vm.$nextTick(() => {
           vm.addEventListeners();
       });

@@ -83,10 +83,11 @@
                               <label>Referred To</label>
                             </div>
                             <div class="col-sm-9">
-                              <select multiple class="form-control" v-model="referrers_selected">
-                                <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
-                                  {{ option.name }} 
-                                </option>
+                                <!--select multiple class="form-control" v-model="referrers_selected"-->
+                                <select style="width:100%" class="form-control input-sm" multiple ref="referrerList">
+                                    <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
+                                        {{ option.name }} 
+                                    </option>
                               </select>
                             </div>
                           </div>
@@ -170,6 +171,8 @@ import modal from '@vue-utils/bootstrap-modal.vue';
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import filefield from '@/components/common/compliance_file.vue';
+require("select2/dist/css/select2.min.css");
+require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
 
 export default {
     name: "CallEmailWorking",
@@ -186,7 +189,7 @@ export default {
             inspectionTypes: [],
             externalOrganisations: [],
             referrers: [],
-            referrers_selected: [],
+            referrersSelected: [],
             //group_permission: '',
             workflowDetails: '',
             errorResponse: "",
@@ -387,7 +390,7 @@ export default {
 
           payload.append('workflow_type', this.workflow_type);
           payload.append('email_subject', this.modalTitle);
-          payload.append('referrers_selected', this.referrers_selected);
+          payload.append('referrers_selected', this.referrersSelected);
           payload.append('district_id', this.district_id);
           payload.append('assigned_to_id', this.assigned_to_id);
           payload.append('inspection_type_id', this.inspection_type_id);
@@ -509,6 +512,22 @@ export default {
     },
     mounted: function() {
         this.form = document.forms.forwardForm;
+        
+        // Initialise select2 for region
+        let vm = this;
+        $(vm.$refs.referrerList).select2({
+            "theme": "bootstrap",
+            allowClear: true,
+            placeholder:"Select Referrer"
+                    }).
+        on("select2:select",function (e) {
+                            var selected = $(e.currentTarget);
+                            vm.referrersSelected = selected.val();
+                        }).
+        on("select2:unselect",function (e) {
+                            var selected = $(e.currentTarget);
+                            vm.referrersSelected = selected.val();
+                        });
       
     }
 };
