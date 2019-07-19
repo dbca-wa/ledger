@@ -142,24 +142,6 @@
                                   <CreateNewPerson :displayComponent="displayCreateNewPerson" @new-person-created="newPersonCreated"/>
                                 </div>
 
-<!-- 
-                                <div class="col-sm-12">
-                                    <div v-if="newPersonBeingCreated" class="panel panel-default">
-                                        <div class="panel-heading">
-                                        <h3 class="panel-title">Personal Details
-                                            <a class="panelClicker">
-                                                <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                                            </a>
-                                        </h3>
-                                        </div>
-                                        <div class="form-group col-sm-12">
-                                            <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="saveNewPersonClicked()">Save</button>
-                                            <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Saving</button>
-                                            <button class="pull-right btn btn-primary" @click.prevent="cancelCreateNewPersonClicked()">Cancel</button>
-                                        </div>
-                                    </div>
-                                </div>
- -->
                                 <div class="col-sm-12">
                                     <datatable ref="offender_table" id="offender-table" :dtOptions="dtOptionsOffender" :dtHeaders="dtHeadersOffender" />
                                 </div>
@@ -377,9 +359,15 @@ export default {
       setOffenceEmpty: "setOffenceEmpty"
     }),
     newPersonCreated: function(person, err) {
-      console.log('newPersonCreate');
+      console.log('newPersonCreated');
       console.log(person);
-      console.log(err);
+      if(person){
+        this.setCurrentOffender('individual', person.id);
+      } else if (err) {
+        console.log(err);
+      } else {
+        // Should not reach here
+      }
     },
     personSelected: function(para) {
         let vm = this;
