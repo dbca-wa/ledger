@@ -147,8 +147,6 @@ export default {
 
         return {
             mainElement: null,
-            slideDownMiliSecond: 200,
-            slideUpMiliSecond: 400,
 
             pdBody: 'pdBody'+vm._uid,
             cdBody: 'cdBody'+vm._uid,
@@ -191,7 +189,32 @@ export default {
             type: Boolean,
             required: true,
             default: false,
-        }
+        },
+        defaultOpenPersonalDetails: {
+            type: Boolean,
+            required: false,
+            default: true,
+        },
+        defaultOpenAddressDetails: {
+            type: Boolean,
+            required: false,
+            default: false,
+        },
+        defaultOpenContactDetails: {
+            type: Boolean,
+            required: false,
+            default: false,
+        },
+        slideDownMiliSecond: {
+            type: Number,
+            required: false,
+            default: 200,
+        },
+        slideUpMiliSecond: {
+            type: Number,
+            required: false,
+            default: 300,
+        },
     },
     watch: {
         display: {
@@ -256,37 +279,31 @@ export default {
             try{
                 let fetchUrl = helpers.add_endpoint_json(api_endpoints.users, 'create_new_person');
                 let savedEmailUser = await Vue.http.post(fetchUrl, this.email_user);
-                console.log(savedEmailUser);
-                // await dispatch("setEmailUser", savedEmailUser.body);
-                // await swal("Saved", "The record has been saved", "success");
+                this.$emit('new-person-created', {'new-person': savedEmailUser.body, 'error': null});
             } catch (err) {
-                console.log(err);
-                if (err.body.non_field_errors){
-                    await swal("Error", err.body.non_field_errors[0], "error");
-                } else {
-                    await swal("Error", "There was an error saving the record", "error");
-                }
+                this.$emit('new-person-created', {'new-person': null, 'error': err});
             }
         },
         showHideElement: function() {
             if(this.display) {
-                this.mainElement.slideDown(this.slideDownDuration);
+                this.mainElement.slideDown(this.slideDownMiliSecond);
             } else {
-                this.mainElement.slideUp(this.slideUpDuration);
+                this.mainElement.slideUp(this.slideUpMiliSecond);
             }
         }
     },
     mounted: function() {
         let vm = this;
-        console.log('mounted');
         let elem = document.getElementById(vm.elementId);
         vm.mainElement = $(elem);
         vm.$nextTick(()=>{
             vm.showHideElement();
             vm.loadCountries();
-            vm.isPersonalDetailsOpen = false;
-            vm.isAddressDetailsOpen = false;
-            vm.isContactDetailsOpen = false;
+
+            // Default settings of open / hide
+            vm.isPersonalDetailsOpen = vm.defaultOpenPersonalDetails;
+            vm.isAddressDetailsOpen = vm.defaultOpenAddressDetails;
+            vm.isContactDetailsOpen = vm.defaultOpenContactDetails;
         })
     }
 }

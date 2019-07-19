@@ -139,7 +139,7 @@
 
                             <div class="col-sm-12 form-group"><div class="row">
                                 <div class="col-sm-12">
-                                  <CreateNewPerson elementId="create_new_person_1" v-bind:display="displayCreateNewPerson" />
+                                  <CreateNewPerson elementId="create_new_person_1" v-bind:display="displayCreateNewPerson" @new-person-created="newPersonCreated"/>
                                 </div>
 
 <!-- 
@@ -376,6 +376,11 @@ export default {
       saveOffence: "saveOffence",
       setOffenceEmpty: "setOffenceEmpty"
     }),
+    newPersonCreated: function(person, err) {
+      console.log('newPersonCreate');
+      console.log(person);
+      console.log(err);
+    },
     personSelected: function(para) {
         let vm = this;
         vm.setCurrentOffender(para.data_type, para.id);
