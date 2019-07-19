@@ -358,12 +358,16 @@ export default {
       saveOffence: "saveOffence",
       setOffenceEmpty: "setOffenceEmpty"
     }),
-    newPersonCreated: function(person, err) {
-      console.log('newPersonCreated');
-      console.log(person);
-      if(person){
-        this.setCurrentOffender('individual', person.id);
-      } else if (err) {
+    newPersonCreated: function(obj) {
+      if(obj.person){
+        this.setCurrentOffender('individual', obj.person.id);
+
+        // Set fullname and DOB into the input box
+        let full_name = [obj.person.first_name, obj.person.last_name].filter(Boolean).join(" ");
+        let dob = obj.person.dob ? "DOB:" + obj.person.dob : "DOB: ---";
+        let value = [full_name, dob].filter(Boolean).join(", ");
+        this.$refs.person_search.setInput(value);
+      } else if (obj.err) {
         console.log(err);
       } else {
         // Should not reach here
