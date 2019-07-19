@@ -75,6 +75,11 @@ class Inspection(RevisionedMixin):
         related_name='inspection_team',
         blank=True
         )
+    inspection_team_lead = models.ForeignKey(
+        EmailUser,
+        related_name='inspection_team_lead',
+        null=True
+    )
     inspection_type = models.ForeignKey(
             InspectionType,
             related_name='inspection_type',

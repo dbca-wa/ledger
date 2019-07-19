@@ -58,6 +58,8 @@ from wildlifecompliance.components.inspection.serializers import (
     InspectionDatatableSerializer,
     UpdateAssignedToIdSerializer,
     InspectionTypeSerializer,
+    InspectionTeamSerializer,
+    EmailUserSerializer,
     )
 from wildlifecompliance.components.users.models import (
     CompliancePermissionGroup,    
@@ -321,6 +323,87 @@ class InspectionViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET', ])
+    @renderer_classes((JSONRenderer,))
+    def get_inspection_team(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            #serializer = InspectionTeamSerializer(instance)
+            #team = EmailUser.objects.select_related('inspection_team').get(id=instance.id)
+            #qs = EmailUser.objects.filter(instance.inspection_team)
+            serializer = EmailUserSerializer(
+                instance.inspection_team.all(),
+                context={
+                    'inspection_team_lead_id': instance.inspection_team_lead_id
+                },
+                many=True)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+            )
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
+    def modify_inspection_team(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                instance = self.get_object()
+                action = request.data.get('action') # 'add', 'remove or 'clear'
+                #user_list = request.data.get('user_list')
+                user_id = request.data.get('user_id')
+
+                #if action and user_list:
+                if action and user_id:
+                    #users = EmailUser.objects.filter(id__in=user_list)
+                    user = EmailUser.objects.get(id=user_id)
+                    team_member_list = instance.inspection_team.all()
+                    #if action == 'set' and users:
+                     #   instance.inspection_team.set(user_list)
+                    if action == 'add':
+                        if user not in team_member_list:
+                            instance.inspection_team.add(user)
+                        if not instance.inspection_team_lead or not team_member_list:
+                           instance.inspection_team_lead = user
+                    if action == 'remove':
+                        if user in team_member_list:
+                            instance.inspection_team.remove(user)
+                    if action == 'make_team_lead':
+                        if user not in team_member_list:
+                            instance.inspection_team.add(user)
+                        instance.inspection_team_lead = user
+                    instance.save()
+                    serializer = InspectionSerializer(instance, context={'request': request})
+                    return Response(
+                        serializer.data,
+                        status=status.HTTP_201_CREATED,
+                    )
+                else:
+                    serializer = InspectionSerializer(instance, context={'request': request})
+                    return Response(
+                        serializer.data,
+                        status=status.HTTP_201_CREATED,
+                    )
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))

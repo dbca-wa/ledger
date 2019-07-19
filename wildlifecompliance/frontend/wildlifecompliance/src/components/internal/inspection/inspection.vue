@@ -137,24 +137,27 @@
                           <FormSection :formCollapse="false" label="Inspection Team" Index="1">
                             <div class="form-group">
                               <div class="row">
-                                <div class="col-sm-5">
-                                  <select :disabled="readonlyForm" class="form-control" >
+                                <div class="col-sm-6">
+                                  <select :disabled="readonlyForm" class="form-control" v-model="teamMemberSelected" >
                                     <option  v-for="option in inspection.allocated_group" :value="option.id" v-bind:key="option.id">
                                       {{ option.full_name }}
                                     </option>
                                   </select>
                                 </div>
-                                <div class="col-sm-3">
-                                  <label>Add Member</label>
+                                <div class="col-sm-2">
+                                    <button @click.prevent="addTeamMember" class="btn btn-primary">Add Member</button>
                                 </div>
-                                <div class="col-sm-3">
-                                  <label>Make Team Lead</label>
+                                <div class="col-sm-2">
+                                    <button @click.prevent="makeTeamLead" class="btn btn-primary">Make Team Lead</button>
                                 </div>
+                                <!--div class="col-sm-2">
+                                    <button @click.prevent="clearInspectionTeam" class="btn btn-primary pull-right">Clear</button>
+                                </div-->
                               </div>
                             </div>
                             <div class="col-sm-12 form-group"><div class="row">
-                                <div>
-                                  <!--datatable ref="inspection_team_table" id="inspection-team-table" :dtOptions="dtOptionsInspectionTeam" :dtHeaders="dtHeadersInspectionTeam" /-->
+                                <div v-if="inspection">
+                                  <datatable ref="inspection_team_table" id="inspection-team-table" :dtOptions="dtOptionsInspectionTeam" :dtHeaders="dtHeadersInspectionTeam" />
                                 </div>
                             </div></div>
                           </FormSection>
@@ -238,30 +241,33 @@ export default {
           ]
       },
       dtHeadersInspectionTeam: [
-          'Number',
-          'Type',
-          'Description',
+          'Name',
+          'Role',
           'Action',
       ],
       dtOptionsInspectionTeam: {
-         // ajax: {
-           //   'url': 
+          ajax: {
+              'url': '/api/inspection/' + this.$route.params.inspection_id + '/get_inspection_team/',
+              'dataSrc': '',
+          },
 
           columns: [
               {
-                  data: 'identifier',
+                  data: 'full_name',
               },
               {
-                  data: 'model_name',
+                  data: 'member_role',
               },
               {
-                  data: 'descriptor',
-              },
-              {
-                  data: 'Action',
+                  data: 'action',
                   mRender: function(data, type, row){
                       // return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
-                      return '<a href="#">View (not implemented)</a>';
+                      //return '<a href="#">Remove</a>';
+                      return (
+                      '<a href="#" class="remove_button" data-member-id="' +
+                      row.id +
+                      '">Remove</a>'
+                      );
                   }
               },
           ]
@@ -276,6 +282,7 @@ export default {
       pBody: "pBody" + this._uid,
       loading: [],
       inspectionTypes: [],
+      teamMemberSelected: null,
       //party_inspected: '',
       
       //callemailTab: "callemailTab" + this._uid,
@@ -334,7 +341,30 @@ export default {
       saveInspection: 'saveInspection',
       setInspection: 'setInspection', 
       setPlannedForTime: 'setPlannedForTime',
+      modifyInspectionTeam: 'modifyInspectionTeam',
     }),
+    addTeamMember: async function() {
+        await this.modifyInspectionTeam({
+            user_id: this.teamMemberSelected, 
+            action: 'add'
+        });
+        this.$refs.inspection_team_table.vmDataTable.ajax.reload()
+    },
+    removeTeamMember: async function(e) {
+        let memberId = e.target.getAttribute("data-member-id");
+        await this.modifyInspectionTeam({
+            user_id: memberId, 
+            action: 'remove'
+        });
+        this.$refs.inspection_team_table.vmDataTable.ajax.reload()
+    },
+    makeTeamLead: async function() {
+        await this.modifyInspectionTeam({
+            user_id: this.teamMemberSelected, 
+            action: 'make_team_lead'
+        });
+        this.$refs.inspection_team_table.vmDataTable.ajax.reload()
+    },
     personSelected: function(para) {
         console.log(para)
     },
@@ -430,6 +460,11 @@ export default {
           vm.inspection.planned_for_time = "";
         }
       });
+      $('#inspection-team-table').on(
+          'click',
+          '.remove_button',
+          vm.removeTeamMember,
+          );
     },
     updateAssignedToId: async function (user) {
         let url = helpers.add_endpoint_join(

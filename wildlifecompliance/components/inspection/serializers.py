@@ -33,12 +33,54 @@ class InspectionTypeSerializer(serializers.ModelSerializer):
        fields = '__all__'
 
 
+class EmailUserSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    member_role = serializers.SerializerMethodField()
+    action = serializers.SerializerMethodField()
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'full_name',
+            'member_role',
+            'action'
+        )
+
+    def get_full_name(self, obj):
+        if obj.first_name:
+            return obj.first_name + ' ' + obj.last_name
+        else:
+            return obj.last_name
+
+    def get_member_role(self, obj):
+        inspection_team_lead_id = self.context.get('inspection_team_lead_id')
+        if obj.id == inspection_team_lead_id:
+            return 'Team Lead'
+        else:
+            return 'Team Member'
+
+    def get_action(self, obj):
+        return ''
+
+
+class InspectionTeamSerializer(serializers.ModelSerializer):
+    inspection_team = EmailUserSerializer(many=True)
+
+    class Meta:
+        model = Inspection
+        fields = (
+            'inspection_team',
+            'inspection_team_lead_id'
+        )
+
+
 class InspectionSerializer(serializers.ModelSerializer):
     allocated_group = serializers.SerializerMethodField()
     user_in_group = serializers.SerializerMethodField()
     can_user_action = serializers.SerializerMethodField()
     user_is_assignee = serializers.SerializerMethodField()
     status = CustomChoiceField(read_only=True)
+    inspection_team = EmailUserSerializer(many=True)
     #inspection_type = InspectionTypeSerializer()
 
     class Meta:
@@ -59,6 +101,8 @@ class InspectionSerializer(serializers.ModelSerializer):
                 'can_user_action',
                 'user_is_assignee',
                 'inspection_type_id',
+                'inspection_team',
+                'inspection_team_lead_id'
                 )
         read_only_fields = (
                 'id',
