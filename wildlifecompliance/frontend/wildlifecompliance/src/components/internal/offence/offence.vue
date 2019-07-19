@@ -139,21 +139,7 @@
 
                             <div class="col-sm-12 form-group"><div class="row">
                                 <div class="col-sm-12">
-                                    <div v-if="newPersonBeingCreated" class="panel panel-default">
-                                        <div class="panel-heading">
-                                        <h3 class="panel-title">Personal Details
-                                            <!-- <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody"> -->
-                                            <a class="panelClicker">
-                                                <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                                            </a>
-                                        </h3>
-                                        </div>
-                                        <div class="form-group col-sm-12">
-                                            <button v-if="!updatingContact" class="pull-right btn btn-primary" @click.prevent="saveNewPersonClicked()">Save</button>
-                                            <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Saving</button>
-                                            <button class="pull-right btn btn-primary" @click.prevent="cancelCreateNewPersonClicked()">Cancel</button>
-                                        </div>
-                                    </div>
+                                  <CreateNewPerson :displayComponent="displayCreateNewPerson" @new-person-created="newPersonCreated"/>
                                 </div>
 
                                 <div class="col-sm-12">
@@ -192,6 +178,7 @@ import { mapGetters, mapActions } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import MapLocationOffence from "./map_location_offence1";
 import PersonSearch from "@common-components/search_person.vue";
+import CreateNewPerson from "@common-components/create_new_person.vue";
 import utils from "../utils";
 import $ from "jquery";
 import "bootstrap/dist/css/bootstrap.css";
@@ -210,6 +197,7 @@ export default {
     vm.awe = null;
 
     return {
+      displayCreateNewPerson: false,
       updatingContact: false,
       newPersonBeingCreated: false,
       officers: [],
@@ -325,7 +313,8 @@ export default {
     modal,
     datatable,
     MapLocationOffence,
-    PersonSearch
+    PersonSearch,
+    CreateNewPerson
   },
   computed: {
     ...mapGetters("callemailStore", {
@@ -369,6 +358,21 @@ export default {
       saveOffence: "saveOffence",
       setOffenceEmpty: "setOffenceEmpty"
     }),
+    newPersonCreated: function(obj) {
+      if(obj.person){
+        this.setCurrentOffender('individual', obj.person.id);
+
+        // Set fullname and DOB into the input box
+        let full_name = [obj.person.first_name, obj.person.last_name].filter(Boolean).join(" ");
+        let dob = obj.person.dob ? "DOB:" + obj.person.dob : "DOB: ---";
+        let value = [full_name, dob].filter(Boolean).join(", ");
+        this.$refs.person_search.setInput(value);
+      } else if (obj.err) {
+        console.log(err);
+      } else {
+        // Should not reach here
+      }
+    },
     personSelected: function(para) {
         let vm = this;
         vm.setCurrentOffender(para.data_type, para.id);
@@ -408,6 +412,7 @@ export default {
     createNewPersonClicked: function() {
       let vm = this;
       vm.newPersonBeingCreated = true;
+      vm.displayCreateNewPerson = !vm.displayCreateNewPerson;
     },
     cancelCreateNewPersonClicked: function() {
       let vm = this;

@@ -55,12 +55,6 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <!-- <div class="form-group">
-                                        <div class="col-sm-12">
-                                                <button v-if="!updatingPersonal" class="pull-right btn btn-primary" @click.prevent="updatePersonal()">Update</button>
-                                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
-                                        </div>
-                                        </div> -->
                                     </form>
                                 </div>
                             </div>

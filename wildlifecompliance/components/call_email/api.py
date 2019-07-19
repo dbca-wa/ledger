@@ -12,6 +12,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.exceptions import ValidationError
 from django.conf import settings
+
 from wildlifecompliance import settings
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
@@ -39,6 +40,7 @@ from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.components.main.api import save_location, process_generic_document
+from wildlifecompliance.components.users.api import generate_dummy_email
 from wildlifecompliance.components.users.serializers import (
     UserAddressSerializer,
     ComplianceUserDetailsSerializer,
@@ -570,49 +572,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
     
 
-    def save_email_user(self, request):
-        request_data = request.data
-
-        email_user_id_requested = request_data.get('email_user', {}).get('id', {})
-        first_name = request_data.get('email_user', {}).get('first_name', '')
-        last_name = request_data.get('email_user', {}).get('last_name', '')
-        # dob = request_data.get('email_user', {}).get('dob', None)
-        # dob = None if not dob else dob
-        email_address = request_data.get('email_user', {}).get('email', '')
-        # mobile_number = request_data.get('email_user', {}).get('mobile_number', '')
-        # phone_number = request_data.get('email_user', {}).get('phone_number', '')
-
-        if email_user_id_requested:
-            email_user_instance = EmailUser.objects.get(id=email_user_id_requested)
-            email_user_instance.email = email_address
-        else:
-            e = EmailUser(first_name=first_name, last_name=last_name)
-            if not email_address:
-                email_address = e.get_dummy_email()
-            email_user_instance = EmailUser.objects.create_user(email_address.strip('.'), '')
-
-        s = SaveEmailUserSerializer(email_user_instance, data=request.data['email_user'])
-        if s.is_valid(raise_exception=True):
-            s.save()
-            return s.data
-
-        # email_user_instance.first_name = first_name
-        # email_user_instance.last_name = last_name
-        # email_user_instance.dob = dob
-        # email_user_instance.mobile_number = mobile_number
-        # email_user_instance.phone_number = phone_number
-        # email_user_instance.save()
-
-        # Update foreign key value in the call_email object
-        # request_data.update({'email_user_id': email_user_instance.id})
-    def generate_dummy_email(self, first_name, last_name):
-        e = EmailUser(first_name=first_name, last_name=last_name)
-        email_address = e.get_dummy_email().strip().strip('.').lower()
-        email_address = re.sub(r'\.+', '.', email_address)
-        email_address = re.sub(r'\s+', '_', email_address)
-        return email_address
-
-
     @detail_route(methods=['POST', ])
     def call_email_save_person(self, request, *args, **kwargs):
         call_email_instance = self.get_object()
@@ -627,7 +586,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 if not email_address:
                     first_name = request.data.get('email_user', {}).get('first_name', '')
                     last_name = request.data.get('email_user', {}).get('last_name', '')
-                    email_address = self.generate_dummy_email(first_name, last_name)
+                    email_address = generate_dummy_email(first_name, last_name)
 
                 if email_user_id_requested:
                     email_user_instance = EmailUser.objects.get(id=email_user_id_requested)

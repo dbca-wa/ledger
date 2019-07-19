@@ -1,8 +1,9 @@
+import re
 import traceback
 from django.db import transaction
 from django.http import HttpResponse
 from django.core.exceptions import ValidationError
-from rest_framework import viewsets, serializers, views
+from rest_framework import viewsets, serializers, views, status
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
@@ -11,6 +12,7 @@ from django.contrib.auth.models import Permission, ContentType
 from datetime import datetime
 from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.applications.email import send_id_updated_notification
+from wildlifecompliance.components.call_email.serializers import SaveEmailUserSerializer, SaveUserAddressSerializer
 from wildlifecompliance.components.organisations.models import (
     OrganisationRequest,
 )
@@ -40,6 +42,15 @@ from wildlifecompliance.components.organisations.serializers import (
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
+
+
+def generate_dummy_email(first_name, last_name):
+    e = EmailUser(first_name=first_name, last_name=last_name)
+    email_address = e.get_dummy_email().strip().strip('.').lower()
+    email_address = re.sub(r'\.+', '.', email_address)
+    email_address = re.sub(r'\s+', '_', email_address)
+    return email_address
+
 
 
 class GetMyUserDetails(views.APIView):
@@ -415,6 +426,74 @@ class UserViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @list_route(methods=['POST', ])
+    def create_new_person(self, request, *args, **kwargs):
+        with transaction.atomic():
+            try:
+                email_user_id_requested = request.data.get('id', {})
+                email_address = request.data.get('email', '')
+                if not email_address:
+                    first_name = request.data.get('first_name', '')
+                    last_name = request.data.get('last_name', '')
+                    email_address = generate_dummy_email(first_name, last_name)
+
+                if email_user_id_requested:
+                    email_user_instance = EmailUser.objects.get(id=email_user_id_requested)
+                    email_user_instance.email = email_address
+                else:
+                    email_user_instance = EmailUser.objects.create_user(email_address, '')
+                    request.data.update({'email': email_address})
+
+                email_user_serializer = SaveEmailUserSerializer(
+                    email_user_instance,
+                    data=request.data,
+                    partial=True)
+
+                if email_user_serializer.is_valid(raise_exception=True):
+                    email_user_serializer.save()
+
+                    # Residential address
+                    # UPDATE user_id of residential address in order to save the residential address
+                    request.data['residential_address'].update({'user_id': email_user_serializer.data['id']})
+                    residential_address_id_requested = request.data.get('residential_address', {}).get('id', {})
+                    if residential_address_id_requested:
+                        residential_address_instance = Address.objects.get(id=residential_address_id_requested)
+                        address_serializer = SaveUserAddressSerializer(
+                            instance=residential_address_instance,
+                            data=request.data['residential_address'],
+                            partial=True)
+                    else:
+                        address_serializer = SaveUserAddressSerializer(
+                            data=request.data['residential_address'],
+                            partial=True)
+                    if address_serializer.is_valid(raise_exception=True):
+                        address_serializer.save()
+
+                    # Update relation between email_user and residential_address
+                    request.data.update({'residential_address_id': address_serializer.data['id']})
+                    email_user = EmailUser.objects.get(id=email_user_serializer.instance.id)
+                    email_user_serializer = SaveEmailUserSerializer(email_user, request.data)
+                    if email_user_serializer.is_valid():
+                        email_user_serializer.save()
+
+            except serializers.ValidationError:
+                print(traceback.print_exc())
+                raise
+            except ValidationError as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(repr(e.error_dict))
+            except Exception as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e))
+
+        email_user = EmailUser.objects.get(id=email_user_serializer.instance.id)
+        email_user_serializer = UserSerializer(email_user,)
+        return Response(
+            email_user_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=self.get_success_headers(email_user_serializer.data)
+        )
 
 
 class EmailIdentityViewSet(viewsets.ModelViewSet):
