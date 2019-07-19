@@ -45,6 +45,9 @@ export default {
         clearInput: function(){
             document.getElementById(this.elementId).value = "";
         },
+        setInput: function(offender_str){
+            document.getElementById(this.elementId).value = offender_str;
+        },
         markMatchedText(original_text, input) {
             let ret_text = original_text.replace(new RegExp(input, "gi"), function( a, b) {
                 return "<mark>" + a + "</mark>";
