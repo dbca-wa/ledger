@@ -281,9 +281,9 @@ export default {
             try{
                 let fetchUrl = helpers.add_endpoint_json(api_endpoints.users, 'create_new_person');
                 let savedEmailUser = await Vue.http.post(fetchUrl, this.email_user);
-                this.$emit('new-person-created', {'new-person': savedEmailUser.body, 'error': null});
+                this.$emit('new-person-created', {'person': savedEmailUser.body, 'error': null});
             } catch (err) {
-                this.$emit('new-person-created', {'new-person': null, 'error': err});
+                this.$emit('new-person-created', {'person': null, 'error': err});
             }
         },
         showHideElement: function() {
