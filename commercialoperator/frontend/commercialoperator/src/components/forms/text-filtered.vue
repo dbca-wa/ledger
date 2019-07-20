@@ -1,7 +1,7 @@
 <template lang="html">
     <div>
         <div class="form-group">
-            <label :id="id" for="label" class="inline" >{{ label }}</label>
+            <label :id="id" for="label" class="inline"  v-if="label">{{ label }}</label>
             <template v-if="help_text">
                 <HelpText :help_text="help_text" />
             </template>
@@ -34,32 +34,41 @@
                       type to search users/organisations.
                   </template>
                   <template slot="option" slot-scope="option">
-                      <div class="d-center">
+                      <div v-if="option.email==''" class="d-center">
                           {{ option.name }}
+                      </div>
+                      <div v-else class="d-center">
+                          {{ option.name }} ({{ option.email }})
                       </div>
                   </template>
 
                   <template slot="selected-option" slot-scope="option">
                      <div class="selected d-center"  :user_id="option.id">
-                        <input type="hidden" class="form-control" :name="name+'-selected'" :value="option.email" />
-                        {{ option.name }} ({{ option.email }})
+                        <input type="hidden" class="form-control" :name="name+'-selected'" :value="option.id" />
+                        <span v-if="option.email==''">
+                          {{ option.name }}
+                        </span>
+                        <span v-else>
+                          {{ option.name }} ({{ option.email }})
+                        </span>
                     </div>
                   </template>
                 </v-select>
 
-				<span v-show="errors.has('fullname')">{{ errors.first('fullname') }}</span>
+<!--
+                <span v-show="errors.has('fullname')">{{ errors.first('fullname') }}</span>
 
-			    <span v-show="errors.has('fullname')" class="danger">
-    				{{ errors.first('fullname') }}
-  				</span>
+                <span v-show="errors.has('fullname')" class="danger">
+                    {{ errors.first('fullname') }}
+                </span>
 
-				<validation-provider name="fullname" rules="required|fullname">
-				  <div slot-scope="{ errors }">
-					<input v-model="fullname">
-					<p>{{ errors[0] }}</p>
-				  </div>
-				</validation-provider>
-
+                <validation-provider name="fullname" rules="required|fullname">
+                  <div slot-scope="{ errors }">
+                    <input v-model="fullname">
+                    <p>{{ errors[0] }}</p>
+                  </div>
+                </validation-provider>
+-->
             </template>
 
 
@@ -77,11 +86,11 @@ import Vue from 'vue'
 import vSelect from "vue-select"
 Vue.component('v-select', vSelect)
 
-import VeeValidate from 'vee-validate';
-Vue.use(VeeValidate)
+//import VeeValidate from 'vee-validate';
+//Vue.use(VeeValidate)
 
-import { ValidationProvider } from 'vee-validate';
-Vue.component('ValidationProvider', ValidationProvider);
+//import { ValidationProvider } from 'vee-validate';
+//Vue.component('ValidationProvider', ValidationProvider);
 
 export default {
     props:["url", "type","name","id", "comment_value","value","isRequired","help_text","help_text_assessor","assessorMode","label","readonly","assessor_readonly", "help_text_url", "help_text_assessor_url"],
@@ -91,7 +100,7 @@ export default {
         return {
             showingComment: false,
             options: [],
-			fullname: null,
+            fullname: null,
         }
     },
     methods: {
@@ -123,5 +132,11 @@ export default {
 <style lang="css">
     input {
         box-shadow:none;
+    }
+
+    .v-select {
+        color: #147688;
+        background-color: white;
+        border-color: #91ddec;
     }
 </style>

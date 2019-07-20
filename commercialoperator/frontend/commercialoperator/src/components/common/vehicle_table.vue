@@ -3,7 +3,7 @@
         <div class="col-sm-12"> 
             <div class="row" >
                 <div class="col-md-3" v-if="!proposal.readonly">
-                            <!-- <button style="margin-top:25px;" class="btn btn-primary pull-right">New Proposal</button> -->
+                            <!-- <button style="margin-top:25px;" class="btn btn-primary pull-right">New Application</button> -->
                             <input type="button" style="margin-top:25px;" @click.prevent="newVehicle" class="btn btn-primary" value="Add new vehicle" />
                 </div>
             </div>

@@ -1,5 +1,5 @@
 <template lang="html">
-    <div id="editVehicle">
+    <div id="editTrailActivities">
         <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="title" large>
             <div class="container-fluid">
                 <div class="row">
@@ -21,8 +21,9 @@
                                 <div class="form-horizontal col-sm-3">
                                   <div class="" >
                                     <div class="form-check">
-                                      <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="s.checked"  data-parsley-required   />
-                                      {{ s.name }}
+                                      <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="s.checked"  data-parsley-required /><a v-if="s.doc_url" :href="s.doc_url" target="_blank" >
+                                        {{ s.name }}</a><span v-else>
+                                        {{ s.name }}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -57,7 +58,7 @@ import modal from '@vue-utils/bootstrap-modal.vue'
 import alert from '@vue-utils/alert.vue'
 import {helpers,api_endpoints} from "@/utils/hooks.js"
 export default {
-    name:'Edit-Vehicle',
+    name:'Edit-Trail-Activities',
     components:{
         modal,
         alert

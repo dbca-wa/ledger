@@ -1,6 +1,6 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,Address
-from commercialoperator.components.proposals.serializers import ProposalSerializer, InternalProposalSerializer
+from commercialoperator.components.proposals.serializers import ProposalSerializer, InternalProposalSerializer, ProposalParkSerializer
 from commercialoperator.components.main.serializers import ApplicationTypeSerializer
 from commercialoperator.components.approvals.models import (
     Approval,
@@ -8,21 +8,92 @@ from commercialoperator.components.approvals.models import (
     ApprovalUserAction
 )
 from commercialoperator.components.organisations.models import (
-                                Organisation
-                            )
+    Organisation
+)
 from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer
+from commercialoperator.components.proposals.serializers import ProposalSerializer
 from rest_framework import serializers
-
 
 class EmailUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailUser
         fields = ('id','email','first_name','last_name','title','organisation')
 
-from commercialoperator.components.proposals.serializers import ProposalSerializer
+class ApprovalPaymentSerializer(serializers.ModelSerializer):
+    #proposal = serializers.SerializerMethodField(read_only=True)
+    class Meta:
+        model = Approval
+        fields = (
+            'lodgement_number',
+            'current_proposal',
+            'expiry_date',
+        )
+        read_only_fields = (
+            'lodgement_number',
+            'current_proposal',
+            'expiry_date',
+        )
+
+    #def get_proposal_id(self,obj):
+    #    return obj.current_proposal_id
+
+
+class _ApprovalPaymentSerializer(serializers.ModelSerializer):
+    applicant = serializers.SerializerMethodField(read_only=True)
+    applicant_type = serializers.SerializerMethodField(read_only=True)
+    applicant_id = serializers.SerializerMethodField(read_only=True)
+    status = serializers.CharField(source='get_status_display')
+    title = serializers.CharField(source='current_proposal.title')
+    application_type = serializers.SerializerMethodField(read_only=True)
+    land_parks = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Approval
+        fields = (
+            'id',
+            'lodgement_number',
+            'current_proposal',
+            'title',
+            'issue_date',
+            'start_date',
+            'expiry_date',
+            'applicant',
+            'applicant_type',
+            'applicant_id',
+            'status',
+            'cancellation_date',
+            'application_type',
+            'land_parks'
+        )
+
+    def get_application_type(self,obj):
+        if obj.current_proposal.application_type:
+            return obj.current_proposal.application_type.name
+        return None
+
+    def get_applicant(self,obj):
+        return obj.applicant.name if isinstance(obj.applicant, Organisation) else obj.applicant
+
+    def get_applicant_type(self,obj):
+        return obj.applicant_type
+
+    def get_applicant_id(self,obj):
+        return obj.applicant_id
+
+    def get_land_parks(self,obj):
+        return None #obj.current_proposal.land_parks
+        #return AuthorSerializer(obj.author).data
+        #import ipdb; ipdb.set_trace()
+        #if obj.current_proposal.land_parks:
+        #    return ProposalParkSerializer(obj.current_proposal.land_parks).data
+        #return None
+
+
 class ApprovalSerializer(serializers.ModelSerializer):
     #applicant = serializers.CharField(source='applicant.name')
     applicant = serializers.SerializerMethodField(read_only=True)
+    applicant_type = serializers.SerializerMethodField(read_only=True)
+    applicant_id = serializers.SerializerMethodField(read_only=True)
     #applicant_id = serializers.ReadOnlyField(source='applicant.id')
     licence_document = serializers.CharField(source='licence_document._file.url')
     #renewal_document = serializers.CharField(source='renewal_document._file.url')
@@ -37,6 +108,8 @@ class ApprovalSerializer(serializers.ModelSerializer):
     #current_proposal = InternalProposalSerializer(many=False)
     #application_type = ApplicationTypeSerializer(many=True)
     application_type = serializers.SerializerMethodField(read_only=True)
+    can_renew = serializers.SerializerMethodField()
+    can_extend = serializers.SerializerMethodField()
 
     class Meta:
         model = Approval
@@ -60,6 +133,8 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'surrender_details',
             'suspension_details',
             'applicant',
+            'applicant_type',
+            'applicant_id',
             'extracted_fields',
             'status',
             'reference',
@@ -67,12 +142,12 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'allowed_assessors',
             'cancellation_date',
             'cancellation_details',
-            #'applicant_id',
             'can_action',
             'set_to_cancel',
             'set_to_surrender',
             'set_to_suspend',
             'can_renew',
+            'can_extend',
             'can_amend',
             'can_reinstate',
             'application_type'
@@ -96,6 +171,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'can_reinstate',
             'can_amend',
             'can_renew',
+            'can_extend',
             'set_to_cancel',
             'set_to_suspend',
             'set_to_surrender',
@@ -112,14 +188,37 @@ class ApprovalSerializer(serializers.ModelSerializer):
         return None
 
     def get_application_type(self,obj):
-        #import ipdb; ipdb.set_trace()
         if obj.current_proposal.application_type:
             return obj.current_proposal.application_type.name
         return None
 
     def get_applicant(self,obj):
-        return obj.applicant
+        try:
+            return obj.applicant.name if isinstance(obj.applicant, Organisation) else obj.applicant
+        except:
+            return None
 
+    def get_applicant_type(self,obj):
+        try:
+            return obj.applicant_type
+        except:
+            return None
+
+    def get_applicant_id(self,obj):
+        try:
+            return obj.applicant_id
+        except:
+            return None
+
+    def get_can_renew(self,obj):
+        return obj.can_renew
+
+    def get_can_extend(self,obj):
+        return obj.can_extend
+
+
+class ApprovalExtendSerializer(serializers.Serializer):
+    extend_details = serializers.CharField()
 
 class ApprovalCancellationSerializer(serializers.Serializer):
     cancellation_date = serializers.DateField(input_formats=['%d/%m/%Y'])

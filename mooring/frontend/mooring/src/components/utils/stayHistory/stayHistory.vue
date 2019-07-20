@@ -1,12 +1,10 @@
 <template id="stayHistory">
 <div class="row">
     <StayHistoryDetail :stay="stay" :mooringarea="mooringarea" ref="addMaxStayModal" @addCgStayHistory="addStayHistory()" @updateStayHistory="updateStayHistory()"></StayHistoryDetail>
-    <div class="well">
+    <div class="col-sm-12">
         <alert ref="retrieveStayAlert" :show.sync="retrieve_stay.error" type="danger" :duration="retrieve_stay.timeout">{{retrieve_stay.errorString}}</alert>
-        <div class="col-sm-8">
-            <h1>Maximum Stay History</h1>
-        </div>
-        <div class="col-sm-4">
+        <div class="col-sm-8" v-if="invent"/>
+        <div class="col-sm-4" v-if="invent">
             <button @click="showAddStay()" class="btn btn-primary pull-right table_btn">Add Max Stay Period</button>
         </div>
         <datatable ref="addMaxStayDT" :dtHeaders ="msh_headers" :dtOptions="msh_options" id="stay_history"></datatable>
@@ -28,6 +26,23 @@ import {
     helpers
 }
 from '../../../hooks.js'
+
+$.extend($.fn.dataTableExt.oSort, {
+    "extract-date-pre": function(value){
+        if (value == '-'){
+            return Infinity;
+        }
+        var date = value.split('/');
+        return Date.parse(date[2] + '/' + date[1] + '/' + date[0])
+        
+    },
+    "extract-date-asc": function(a, b){
+        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+    },
+    "extract-date-desc": function(a, b){
+        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+    }
+});
 
 export default {
     name: 'stayHistory',
@@ -51,6 +66,7 @@ export default {
         let vm = this;
         return {
             mooringarea: {},
+            invent: false,
             stay: {
                 reason:''
             },
@@ -89,11 +105,27 @@ export default {
                     dataSrc: ''
                 },
                 columns: [{
-                    "data": "id"
+                    mRender: function(data, type, full){
+                        return full.id;
+                    }
                 }, {
-                    "data": "range_start"
+                    "data": "range_start",
+                    sType: 'extract-date',
+                    mRender: function(data, type, full) {
+                        // return new Date(data).toLocaleDateString('en-GB');
+                        return data;
+                    }
                 }, {
-                    "data": "range_end"
+                    "data": "range_end",
+                    sType: 'extract-date',
+                    mRender: function(data, type, full) {
+                        if(data){
+                            // return new Date(data).toLocaleDateString('en-GB');
+                            return data;
+                        } else {
+                            return '-';
+                        }   
+                    }
                 }, {
                     "data": "max_days"
                 },{
@@ -205,6 +237,25 @@ export default {
     mounted: function() {
         let vm = this;
         vm.attachEventListenersMaxStayDT();
+        setTimeout(function(){
+            $.ajax({
+                url: api_endpoints.profile,
+                method: 'GET',
+                dataType: 'json',
+                success: function(data, stat, xhr){
+                    if(data.is_inventory){
+                        vm.invent = true;
+                    }
+                    if(!vm.invent){
+                        vm.$refs.addMaxStayDT.vmDataTable.rows().every(function(){
+                            var data = this.data();
+                            data['editable'] = "";
+                            this.data(data);
+                        });
+                    }
+                }
+            });
+        },400);
     }
 }
 </script>

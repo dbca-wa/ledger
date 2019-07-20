@@ -23,36 +23,36 @@
                                         <!-- <FileField :document_url="document_url" :proposal_id="proposal_id" isRepeatable="true" name="eclass_file" label="Licence" id="id_file" @refreshFromResponse="refreshFromResponse"/> -->
                                         <!-- <RadioField :proposal_id="proposal_id" :readonly="readonly" name="applicant_type2" label="Applicant Type" id="id_applicant_type2" :options="radio_options" :conditions="radio_conditions"/> -->
 
-										<div class="form-group">
-											<div class="row">
-												<div class="col-sm-3">
-													<label class="control-label pull-left"  for="Name">Attachments</label>
-												</div>
-												<div class="col-sm-9">
-													<template v-for="(f,i) in files">
-														<div :class="'row top-buffer file-row-'+i">
-															<div class="col-sm-4">
-																<span v-if="f.file == null" class="btn btn-info btn-file pull-left">
-																	Attach File <input type="file" :name="'file-upload-'+i" :class="'file-upload-'+i" @change="uploadFile('file-upload-'+i,f)" :required="isRequired"/>
-																</span>
-																<span v-else class="btn btn-info btn-file pull-left">
-																	Update File <input type="file" :name="'file-upload-'+i" :class="'file-upload-'+i" @change="uploadFile('file-upload-'+i,f)"/>
-																</span>
-															</div>
-															<div class="col-sm-4">
-																<span>{{f.name}}</span>
-															</div>
-															<div class="col-sm-4">
-																<button @click="removeFile(i)" class="btn btn-danger">Remove</button>
-															</div>
-														</div>
-													</template>
-													<!--
-													<a href="" @click.prevent="attachAnother"><i class="fa fa-lg fa-plus top-buffer-2x"></i></a>
-													-->
-												</div>
-											</div>
-										</div>
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-sm-3">
+                                                    <label class="control-label pull-left"  for="Name">Attachments</label>
+                                                </div>
+                                                <div class="col-sm-9">
+                                                    <template v-for="(f,i) in files">
+                                                        <div :class="'row top-buffer file-row-'+i">
+                                                            <div class="col-sm-4">
+                                                                <span v-if="f.file == null" class="btn btn-info btn-file pull-left">
+                                                                    Attach File <input type="file" :name="'file-upload-'+i" :class="'file-upload-'+i" @change="uploadFile('file-upload-'+i,f)" :required="isRequired"/>
+                                                                </span>
+                                                                <span v-else class="btn btn-info btn-file pull-left">
+                                                                    Update File <input type="file" :name="'file-upload-'+i" :class="'file-upload-'+i" @change="uploadFile('file-upload-'+i,f)"/>
+                                                                </span>
+                                                            </div>
+                                                            <div class="col-sm-4">
+                                                                <span>{{f.name}}</span>
+                                                            </div>
+                                                            <div class="col-sm-4">
+                                                                <button @click="removeFile(i)" class="btn btn-danger">Remove</button>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                    <!--
+                                                    <a href="" @click.prevent="attachAnother"><i class="fa fa-lg fa-plus top-buffer-2x"></i></a>
+                                                    -->
+                                                </div>
+                                            </div>
+                                        </div>
 
                                     </div>
                                 </div>
@@ -113,8 +113,6 @@ export default {
             validation_form: null,
             _comments: '_comments',
             isRequired: true,
-            //options2: [1,2],
-            //options: [],
             files: [
                 {
                     'file': null,
@@ -125,14 +123,14 @@ export default {
             filtered_url: api_endpoints.filtered_users + '?search=',
             //radio_conditions: {},
             //radio_options: [
-			//    {
-			//	    "value": "yes",
-			//	    "label": "Yes"
-			//    },
-			//    {
-			//	    "value": "no",
-			//	    "label": "No"
-			//    }
+            //    {
+            //      "value": "yes",
+            //      "label": "Yes"
+            //    },
+            //    {
+            //      "value": "no",
+            //      "label": "No"
+            //    }
             //],
         }
     },
@@ -152,9 +150,6 @@ export default {
         filtered_organisations_url: function() {
             return api_endpoints.filtered_organisations + '?search=';
         },
-        //filtered_url: function() {
-        //    return this.set_url;
-        //},
 
     },
     methods:{
@@ -229,17 +224,8 @@ export default {
 
         save: function(){
             let vm = this;
-            //var is_with_qaofficer = vm.processing_status == 'With QA Officer'? true: false;
-            var form = document.forms.eclassForm;
-            //var data = {
-            //    with_qaofficer: is_with_qaofficer ? 'False': 'True', // since wee need to do the reverse
-            //    file_input_name: 'eclass_file',
-            //    proposal: vm.proposal_id,
-            //    text: form.elements['_comments'].value, // getting the value from the text-area.vue field
-            //}
-            var data = {};
-            let form2 = new FormData(vm.form); 
-            vm.$http.post('/api/approvals/0/add_eclass_licence/',form2,{
+            let form = new FormData(vm.form); 
+            vm.$http.post('/api/approvals/0/add_eclass_licence/',form,{
                 emulateJSON: true
             }).then(res=>{
                 vm.proposal = res.body;
@@ -287,12 +273,9 @@ export default {
             vm.validation_form = $(vm.form).validate({
                 rules: {
                     reason: "required"
-
-
                 },
                 messages: {
                     reason: "field is required",
-
                 },
                 showErrors: function(errorMap, errorList) {
                     $.each(this.validElements(), function(index, element) {

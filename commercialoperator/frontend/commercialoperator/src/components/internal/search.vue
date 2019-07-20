@@ -38,6 +38,41 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
+                    <h3 class="panel-title">Search User
+                        <a :href="'#'+uBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="uBody">
+                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body collapse in" :id="uBody">
+                    <div class="row">
+                        <form name="searchUserForm">
+                          <div class="">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="control-label" for="User">Search User</label>
+                                    
+                                    <TextFilteredField :url="filtered_url" name="User" id="id_holder"/>
+                                </div>
+                            </div>
+                            <div class="">
+                              <div class="col-md-12 text-center">
+                                <div >
+                                  <input type="button" @click.prevent="viewUserDetails" class="btn btn-primary" style="margin-bottom: 5px" value="View Details"/>
+                                </div>
+                              </div> 
+                            </div>
+                          </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
                     <h3 class="panel-title">Search Keywords
                         <a :href="'#'+kBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="kBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
@@ -51,12 +86,12 @@
                               <label for="" class="control-label col-lg-12">Filter</label>
                               <div class="form-check form-check-inline col-md-3">
                                   <input  class="form-check-input" ref="searchProposal" id="searchProposal" name="searchProposal" type="checkbox" v-model="searchProposal" /> 
-                                  <label class="form-check-label" for="searchProposal">Proposal</label>
+                                  <label class="form-check-label" for="searchProposal">Application</label>
                                   
                               </div> 
                               <div class="form-check form-check-inline col-md-3">
                                   <input  class="form-check-input" ref="searchApproval" id="searchApproval" name="searchApproval" type="checkbox" v-model="searchApproval" /> 
-                                  <label class="form-check-label" for="searchApproval">Approval</label>
+                                  <label class="form-check-label" for="searchApproval">Licence</label>
                               </div> 
                               <div class="form-check form-check-inline col-md-3">
                                   <input  class="form-check-input" ref="searchCompliance" id="searchCompliance" name="searchCompliance" type="checkbox" v-model="searchCompliance" /> 
@@ -96,7 +131,11 @@
                         </div>
                       </div> 
                     </div>
-
+                    <div class="row">
+                    <div class="col-lg-12">
+                        <alert :show.sync="showMessage" type="danger"><strong><p v-html="messageString"></p></strong></alert>
+                    </div>
+                    </div>
 
                     <div class="row">
                     <div class="col-lg-12">
@@ -119,7 +158,7 @@
                 </div>
                 <div class="panel-body collapse in" :id="rBody">
                     <div class="row">
-                       <label for="" class="control-label col-lg-12">Keyword</label>                              
+                       <label for="" class="control-label col-lg-12">Reference</label>                              
                           <div class="col-md-8">
                               <input type="search"  class="form-control input-sm" name="referenceWord" placeholder="" v-model="referenceWord"></input>
                           </div> 
@@ -137,6 +176,7 @@
 <script>
 import $ from 'jquery'
 import datatable from '@/utils/vue/datatable.vue'
+import TextFilteredField from '@/components/forms/text-filtered.vue'
 import {
   api_endpoints,
   helpers
@@ -153,8 +193,11 @@ export default {
     return {
       rBody: 'rBody' + vm._uid,
       oBody: 'oBody' + vm._uid,
+      uBody: 'uBody' + vm._uid,
       kBody: 'kBody' + vm._uid,
       loading: [],
+      filtered_url: api_endpoints.filtered_users + '?search=',
+      user_id:null,
       searchKeywords: [],
       searchProposal: true,
       searchApproval: false,
@@ -166,6 +209,8 @@ export default {
       results: [],
       errors: false,
       errorString: '',
+      messages: false,
+      messageString:'',
       datatable_id: 'proposal-datatable-'+vm._uid,
       proposal_headers:["Number","Type","Proponent","Text found","Action"],
       proposal_options:{
@@ -198,20 +243,20 @@ export default {
                 data: "id",
                   mRender:function (data,type,full) {
                         let links = '';
-                        if(full.type == 'Proposal'){
+                        if(full.type == 'Proposal' || full.type == 'Application'){
                           links +=  `<a href='/internal/proposal/${full.id}'>View</a><br/>`;
                         }
                         if(full.type == 'Compliance'){
                           links +=  `<a href='/internal/compliance/${full.id}'>View</a><br/>`;
                         }
-                        if(full.type == 'Approval'){
+                        if(full.type == 'Approval' || full.type == 'Licence'){
                           links +=  `<a href='/internal/approval/${full.id}'>View</a><br/>`;
                         }
                         return links;
                   }
               }
           ],
-          processing: true
+          processing: true,
       }
     }
     
@@ -221,6 +266,7 @@ export default {
     },
     components: {
         datatable,
+        TextFilteredField,
     },
     beforeRouteEnter:function(to,from,next){
         utils.fetchOrganisations().then((response)=>{
@@ -236,6 +282,10 @@ export default {
         showError: function() {
             var vm = this;
             return vm.errors;
+        },
+        showMessage: function() {
+            var vm = this;
+            return vm.messages;
         }
     },
     methods: {
@@ -255,6 +305,28 @@ export default {
                 var selected = $(e.currentTarget);
                 vm.selected_organisation = selected.val();
             });
+        },
+        viewUserDetails: function(){
+          let vm=this;
+          let form=document.forms.searchUserForm
+          var user_selected=form.elements['User-selected']
+          if(user_selected!=undefined || user_selected!=null){
+            var user_id= user_selected.value;
+            vm.$router.push({
+              name:"internal-user-detail",
+              params:{user_id:user_id}
+            });
+          }
+          else{
+            swal({
+                    title: 'User not selected',
+                    html: 'Please select the user to view the details',
+                    type: 'error'
+                }).then(() => {
+                    
+                });
+                return;
+          }
         },
 
         add: function() {
@@ -282,6 +354,8 @@ export default {
           vm.searchCompliance = false; */
           vm.keyWord = null; 
           vm.results = [];
+          vm.messages=false;
+          vm.messageString='';
           vm.$refs.proposal_datatable.vmDataTable.clear()
           vm.$refs.proposal_datatable.vmDataTable.draw();      
         },
@@ -289,7 +363,8 @@ export default {
         search: function() {
           let vm = this;
           if(this.searchKeywords.length > 0)
-          {
+          { vm.messages=true;
+            vm.messageString="Searching <i class='fa fa-2x fa-spinner fa-spin'></i>";
             vm.$http.post('/api/search_keywords.json',{
               searchKeywords: vm.searchKeywords,
               searchProposal: vm.searchProposal,
@@ -301,6 +376,8 @@ export default {
               vm.$refs.proposal_datatable.vmDataTable.clear()
               vm.$refs.proposal_datatable.vmDataTable.rows.add(vm.results);
               vm.$refs.proposal_datatable.vmDataTable.draw();
+              vm.message=false;
+              vm.messageString='';
             },
             err => {
               console.log(err);
@@ -335,6 +412,7 @@ export default {
     mounted: function () {
         let vm = this;
         vm.proposal_options.data = vm.results;
+        //vm.proposal_options.processing=true;
         vm.$refs.proposal_datatable.vmDataTable.draw();
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
             var chev = $( this ).children()[ 0 ];

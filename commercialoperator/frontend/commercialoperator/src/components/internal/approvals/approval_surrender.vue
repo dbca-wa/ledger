@@ -94,7 +94,7 @@ export default {
             return vm.errors;
         },
         title: function(){
-            return 'Surrender Approval';
+            return 'Surrender Licence';
         }
     },
     methods:{
@@ -137,7 +137,7 @@ export default {
                         vm.close();
                         swal(
                              'Surrender',
-                             'An email has been sent to applicant about surrender of this approval',
+                             'An email has been sent to applicant about surrender of this licence',
                              'success'
                         );
                         vm.$emit('refreshFromResponse',response);

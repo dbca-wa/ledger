@@ -2,11 +2,18 @@
 
 {%  block content %}
    
-      
-    
-        A Application for Proposal {{proposal.lodgement_number}} has been declined.
+       COMMERCIAL OPERATIONS LICENCE - {{proposal.lodgement_number}}
 
-   
+        Please find enclosed your commercial operations licence. Please ensure the Handbook is carried by the licence holder or licenc holder's representative when entering lands and waters managed by the Department of Biodiversity, Conservation and Attractions as per condition 5.7(b).
 
+        This licence is an important document. Please retain it in a safe location so it can be produced when requested.
+
+        Your licence is valid to {{proposal.approval.expiry_date}}
+
+       {% if num_requirement_docs == 1 %}
+           Requirement Documents: Please note, there is {{ num_requirement_docs }} requirement document also attached.
+       {% elif num_requirement_docs > 1 %}
+           Requirement Documents: Please note, there are {{ num_requirement_docs }} requirement documents also attached.
+       {% endif %}
 
 {%  endblock %}

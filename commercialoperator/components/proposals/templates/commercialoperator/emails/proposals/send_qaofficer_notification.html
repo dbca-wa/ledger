@@ -2,11 +2,11 @@
 
 {%  block content %}
     {% if reminder %}
-        <p>This is a reminder for QA for Proposal <strong>{{proposal.lodgement_number}}</strong> that has been sent to you:</p>
+        <p>This is a reminder for QA for Application <strong>{{proposal.lodgement_number}}</strong> that has been sent to you:</p>
     {% else %}
-        <p>A QA for Proposal <strong>P{{proposal.id}}</strong> has been sent to you:</p>
+        <p>A QA for Application <strong>A{{proposal.id}}</strong> has been sent to you:</p>
         <p>Comments ({{completed_by}}): {{comments}}</p>
     {% endif %}
-    <p>You can access this Proposal using the following link:</p>
-    <a href="{{url}}">Access Proposal</a>
+    <p>You can access this Application using the following link:</p>
+    <a href="{{url}}">Access Application</a>
 {%  endblock %}

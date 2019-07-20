@@ -6,28 +6,30 @@
                     <form class="form-horizontal" name="amendForm">
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
-                            <div class="row">
-                                <div class="col-sm-offset-2 col-sm-8">
-                                    <div class="form-group">
-                                        <!-- templated from from proposal_approval.vue -->
-                                        <label class="control-label pull-left"  for="Name">Attach Document</label>
-										<div>
-											<span v-if="!uploadedFile" class="btn btn-info btn-file pull-left">
-											    Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
-                                            </span>
-                                            <span v-else class="pull-left" style="margin-left:10px;margin-top:10px;">
-                                                {{uploadedFileName()}}
-                                            </span>
-										</div>
-                                    </div>
-                                </div>
-                            </div>
+                            
 
                             <div class="row">
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
                                         <label class="control-label pull-left"  for="referral_comment">Comment</label>
                                         <textarea class="form-control" name="referral_comment" v-model="referral_comment" required="true"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                        <div class="row">
+                                <div class="col-sm-offset-2 col-sm-8">
+                                    <div class="form-group">
+                                        <!-- templated from from proposal_approval.vue -->
+                                        <label class="control-label pull-left"  for="Name">Attach Document   </label>
+                                        <div>
+                                            <span v-if="!uploadedFile" class="btn btn-info btn-file pull-left">
+                                                Attach File<input type="file" ref="uploadedFile" @change="readFile()"/>
+                                            </span>
+                                            <span v-else class="pull-left" style="margin-left:10px;margin-top:10px;">
+                                                {{uploadedFileName()}}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -187,7 +189,7 @@ export default {
                         //vm.$parent.loading.splice('processing contact',1);
                         swal(
                              'Sent',
-                             'An email has been sent to applicant with the request to amend this Proposal',
+                             'An email has been sent to applicant with the request to amend this Application',
                              'success'
                         );
                         vm.amendingProposal = true;

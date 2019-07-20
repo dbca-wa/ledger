@@ -1,5 +1,7 @@
 import traceback
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.conf import settings
+from django.db import transaction
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.decorators import detail_route, list_route, renderer_classes, parser_classes
 from rest_framework.response import Response
@@ -7,10 +9,18 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, BasePermission
 from rest_framework.pagination import PageNumberPagination
 from django.urls import reverse
-from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, ActivityCategory, Activity, RequiredDocument, Question
-from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer,  AccessTypeSerializer, ParkSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, RequiredDocumentSerializer, QuestionSerializer
+from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, ActivityCategory, Activity, RequiredDocument, Question, GlobalSettings
+from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer,  AccessTypeSerializer, ParkSerializer, ParkFilterSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, RequiredDocumentSerializer, QuestionSerializer, GlobalSettingsSerializer
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+from commercialoperator.components.proposals.models import Proposal
+from commercialoperator.components.proposals.serializers import ProposalSerializer
+from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
+import json
+from decimal import Decimal
+
+import logging
+logger = logging.getLogger('payment_checkout')
 
 
 class DistrictViewSet(viewsets.ReadOnlyModelViewSet):
@@ -34,14 +44,11 @@ class ActivityMatrixViewSet(viewsets.ReadOnlyModelViewSet):
             return [ActivityMatrix.objects.filter(name='Commercial Operator').order_by('-version').first()]
         return ActivityMatrix.objects.none()
 
-#    def list(self, request, *args, **kwargs):
-#        matrix = ActivityMatrix.objects.filter(name='Commercial Operator').order_by('-version').first()
-#        return Response( [activity['children'][0] for activity in matrix.schema] )
-
 
 class TenureViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tenure.objects.all().order_by('order')
     serializer_class = TenureSerializer
+
 
 class ApplicationTypeViewSet(viewsets.ReadOnlyModelViewSet):
     #queryset = ApplicationType.objects.all().order_by('order')
@@ -51,56 +58,30 @@ class ApplicationTypeViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         return ApplicationType.objects.order_by('order').filter(visible=True)
 
-# class VehicleViewSet(viewsets.ModelViewSet):
-#     queryset = Vehicle.objects.all().order_by('id')
-#     serializer_class = VehicleSerializer
-
-#     @detail_route(methods=['post'])
-#     def edit_vehicle(self, request, *args, **kwargs):
-#         try:
-#             instance = self.get_object()
-#             serializer = SaveVehicleSerializer(instance, data=request.data)
-#             serializer.is_valid(raise_exception=True)
-#             serializer.save()
-#             return Response(serializer.data)
-#         except serializers.ValidationError:
-#             print(traceback.print_exc())
-#             raise
-#         except ValidationError as e:
-#             if hasattr(e,'error_dict'):
-#                 raise serializers.ValidationError(repr(e.error_dict))
-#             else:
-#                 raise serializers.ValidationError(repr(e[0].encode('utf-8')))
-#         except Exception as e:
-#             print(traceback.print_exc())
-#             raise serializers.ValidationError(str(e))
-
-#     def create(self, request, *args, **kwargs):
-#         try:
-#             #instance = self.get_object()
-#             serializer = SaveVehicleSerializer(data=request.data)
-#             serializer.is_valid(raise_exception=True)
-#             serializer.save()
-#             return Response(serializer.data)
-#         except serializers.ValidationError:
-#             print(traceback.print_exc())
-#             raise
-#         except ValidationError as e:
-#             if hasattr(e,'error_dict'):
-#                 raise serializers.ValidationError(repr(e.error_dict))
-#             else:
-#                 raise serializers.ValidationError(repr(e[0].encode('utf-8')))
-#         except Exception as e:
-#             print(traceback.print_exc())
-#             raise serializers.ValidationError(str(e))
 
 class AccessTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AccessType.objects.all().order_by('id')
     serializer_class = AccessTypeSerializer
 
+
+class ParkFilterViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Park.objects.all().order_by('id')
+    serializer_class = ParkFilterSerializer
+
+
+class GlobalSettingsViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = GlobalSettings.objects.all().order_by('id')
+    serializer_class = GlobalSettingsSerializer
+
+
 class ParkViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Park.objects.all().order_by('id')
     serializer_class = ParkSerializer
+
+    @list_route(methods=['GET',])
+    def filter_list(self, request, *args, **kwargs):
+        serializer = ParkFilterSerializer(self.get_queryset(),context={'request':request}, many=True)
+        return Response(serializer.data)
 
     @list_route(methods=['GET',])
     def marine_parks(self, request, *args, **kwargs):
@@ -115,6 +96,15 @@ class ParkViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = ActivitySerializer(qs,context={'request':request}, many=True)
         #serializer = ActivitySerializer(qs)
         return Response(serializer.data)
+
+    @detail_route(methods=['GET',])
+    def allowed_access(self, request, *args, **kwargs):
+        instance = self.get_object()
+        qs = instance.allowed_access.all()
+        serializer = AccessTypeSerializer(qs,context={'request':request}, many=True)
+        #serializer = ActivitySerializer(qs)
+        return Response(serializer.data)
+
 
 class TrailViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Trail.objects.all().order_by('id')
@@ -138,6 +128,7 @@ class LandActivitiesViewSet(viewsets.ReadOnlyModelViewSet):
         activities=Activity.objects.filter(Q(activity_category__in = categories)& Q(visible=True))
         return activities
 
+
 class MarineActivitiesViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ActivityCategory.objects.none()
     serializer_class = ActivityCategorySerializer
@@ -145,6 +136,7 @@ class MarineActivitiesViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         categories=ActivityCategory.objects.filter(activity_type='marine')
         return categories
+
 
 class RequiredDocumentViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = RequiredDocument.objects.all()
@@ -154,6 +146,56 @@ class RequiredDocumentViewSet(viewsets.ReadOnlyModelViewSet):
     #     categories=ActivityCategory.objects.filter(activity_type='marine')
     #     return categories
 
+
 class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
+
+
+class PaymentViewSet(viewsets.ModelViewSet):
+    #import ipdb; ipdb.set_trace()
+    #queryset = Proposal.objects.all()
+    queryset = Proposal.objects.none()
+    #serializer_class = ProposalSerializer
+    serializer_class = ProposalSerializer
+    lookup_field = 'id'
+
+    def create(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
+        response = super(PaymentViewSet, self).create(request, *args, **kwargs)
+        # here may be placed additional operations for
+        # extracting id of the object and using reverse()
+        fallback_url = request.build_absolute_uri('/')
+        return HttpResponseRedirect(redirect_to=fallback_url + '/success/')
+
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def park_payment(self, request, *args, **kwargs):
+
+        #import ipdb; ipdb.set_trace()
+        try:
+            with transaction.atomic():
+                #instance = self.get_object()
+                proposal = Proposal.objects.get(id=kwargs['id'])
+                lines = self.create_lines(request)
+                response = self.checkout(request, proposal, lines, invoice_text='Some invoice text')
+
+                return response
+
+                #data = [dict(key='My Response')]
+                #return Response(data)
+
+                #return Response(serializer.data)
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+

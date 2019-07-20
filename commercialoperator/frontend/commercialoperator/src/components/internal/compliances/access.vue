@@ -145,7 +145,7 @@ export default {
         return data ? moment(data).format('DD/MM/YYYY'): '';    }
   },
   beforeRouteEnter: function(to, from, next){
-    Vue.http.get(helpers.add_endpoint_json(api_endpoints.compliances,to.params.compliance_id)).then((response) => {
+    Vue.http.get(helpers.add_endpoint_json(api_endpoints.compliances,to.params.compliance_id+'/internal_compliance')).then((response) => {
         next(vm => {
             vm.compliance = response.body
             vm.members = vm.compliance.allowed_assessors

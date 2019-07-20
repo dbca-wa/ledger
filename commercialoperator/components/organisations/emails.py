@@ -75,6 +75,12 @@ class OrganisationIdUploadNotificationEmail(TemplateEmailBase):
     html_template = 'commercialoperator/emails/organisation_id_upload_notification.html'
     txt_template = 'commercialoperator/emails/organisation_id_upload_notification.txt'
 
+class OrganisationRequestLinkNotificationEmail(TemplateEmailBase):
+    subject = 'An organisation request to be linked has been sent for approval'
+    html_template = 'commercialoperator/emails/organisation_request_link_notification.html'
+    txt_template = 'commercialoperator/emails/organisation_request_link_notification.txt'    
+
+
 
 def send_organisation_id_upload_email_notification(emails, organisation, org_contact, request):
     email = OrganisationIdUploadNotificationEmail()
@@ -86,6 +92,22 @@ def send_organisation_id_upload_email_notification(emails, organisation, org_con
     msg = email.send(emails, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_email(msg, organisation, org_contact, sender=sender)
+
+def send_organisation_request_link_email_notification(
+        org_request, request, contact):
+    email = OrganisationRequestLinkNotificationEmail()
+
+    url = request.build_absolute_uri(
+        '/external/organisations/manage/{}'.format(org_request.id))
+
+    context = {
+        'request': org_request,
+        'url': url,
+    }
+
+    msg = email.send(contact, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_org_email(msg, org_request, request.user, sender=sender)
 
 def send_organisation_reinstate_email_notification(linked_user,linked_by,organisation,request):
     email = OrganisationContactReinstateNotificationEmail()

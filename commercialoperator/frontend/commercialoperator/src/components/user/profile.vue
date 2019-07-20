@@ -8,7 +8,7 @@
                         <div class="col-sm-12">
                             <p>
                                 We have detected that this is the first time you have logged into the system.Please take a moment to provide us with your details
-                                (personal details, address details, contact details, and weather you are managing approvals for an organisation).
+                                (personal details, address details, contact details, and weather you are managing licences for an organisation).
                                 Once completed, click Continue to start using the system.
                             </p>
                             <a :disabled="!completedProfile" href="/" class="btn btn-primary pull-right">Continue</a>
@@ -195,7 +195,7 @@
             <div class="col-sm-12">
                 <div class="panel panel-default">
                   <div class="panel-heading">
-                    <h3 class="panel-title">Organisation <small>Link to the Organisations you are an employee of and for which you are managing approvals</small>
+                    <h3 class="panel-title">Organisation <small>Link to the Organisations you are an employee of and for which you are managing licences</small>
                         <a class="panelClicker" :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
                             <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
@@ -204,7 +204,7 @@
                   <div class="panel-body collapse" :id="oBody">
                       <form class="form-horizontal" name="orgForm" method="post">
                           <div class="form-group">
-                            <label for="" class="col-sm-5 control-label">Do you manage approvals on behalf of an organisation?</label>
+                            <label for="" class="col-sm-5 control-label">Do you manage licences on behalf of an organisation?</label>
                             <div class="col-sm-4">
                                 <label class="radio-inline">
                                   <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Yes"> Yes
@@ -679,7 +679,7 @@ export default {
 
         fetchOrgRequestList: function() { //Fetch all the Organisation requests submitted by user which are pending for approval.
             let vm = this;
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'user_list')).then((response) => {
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'get_pending_requests')).then((response) => {
                 
                 vm.orgRequest_list=response.body; 
             }, (error) => {

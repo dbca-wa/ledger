@@ -7,7 +7,7 @@ from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.conf import settings
@@ -26,7 +26,7 @@ from django.core.cache import cache
 from ledger.accounts.models import EmailUser, Address
 from ledger.address.models import Country
 from datetime import datetime, timedelta, date
-from commercialoperator.components.proposals.utils import save_proponent_data,save_assessor_data
+from commercialoperator.components.proposals.utils import save_proponent_data,save_assessor_data, proposal_submit
 from commercialoperator.components.proposals.models import searchKeyWords, search_reference, ProposalUserAction
 from commercialoperator.utils import missing_required_fields, search_tenure
 
@@ -48,7 +48,11 @@ from commercialoperator.components.proposals.models import (
     Vehicle,
     Vessel,
     ProposalOtherDetails,
-    ProposalAccreditation
+    ProposalAccreditation,
+    ChecklistQuestion,
+    ProposalAssessment,
+    ProposalAssessmentAnswer,
+    RequirementDocument,
 )
 from commercialoperator.components.proposals.serializers import (
     SendReferralSerializer,
@@ -79,11 +83,17 @@ from commercialoperator.components.proposals.serializers import (
     OnHoldSerializer,
     ProposalOtherDetailsSerializer,
     SaveProposalOtherDetailsSerializer,
+    ProposalParkSerializer,
+    ChecklistQuestionSerializer,
+    ProposalAssessmentSerializer,
+    ProposalAssessmentAnswerSerializer
 )
+from commercialoperator.components.bookings.models import Booking, ParkBooking, BookingInvoice
 from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.approvals.serializers import ApprovalSerializer
 from commercialoperator.components.compliances.models import Compliance
 from commercialoperator.components.compliances.serializers import ComplianceSerializer
+from ledger.payments.invoice.models import Invoice
 
 from commercialoperator.helpers import is_customer, is_internal
 from django.core.files.base import ContentFile
@@ -93,6 +103,8 @@ from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
 from rest_framework.filters import BaseFilterBackend
+import reversion
+from reversion.models import Version
 
 import logging
 logger = logging.getLogger(__name__)
@@ -107,7 +119,7 @@ class GetProposalType(views.APIView):
             serializer = ProposalTypeSerializer(_type)
             return Response(serializer.data)
         else:
-            return Response({'error': 'There is currently no proposal type.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'There is currently no application type.'}, status=status.HTTP_404_NOT_FOUND)
 
 class GetEmptyList(views.APIView):
     renderer_classes = [JSONRenderer, ]
@@ -122,6 +134,25 @@ class GetEmptyList(views.APIView):
 #		import ipdb; ipdb.set_trace()
 #		return queryset
 
+'''
+1. internal_proposal.json
+2. regions.json
+3. trails.json
+4. vehicles.json
+5. access_types.json
+6. required_documents.json
+7. land_activities.json
+8. vessels.json
+9. marine_activities.json
+10. marine_parks.json
+11. accreditation_choices.json
+12. licence_period_choices.json
+13. global_settings.json
+14. questions.json
+15. amendment_request_reason_choices.json
+16. contacts.json
+
+'''
 class ProposalFilterBackend(DatatablesFilterBackend):
     """
     Custom filters
@@ -136,7 +167,6 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                     return i[0]
             return None
 
-        #import ipdb; ipdb.set_trace()
         # on the internal dashboard, the Region filter is multi-select - have to use the custom filter below
         regions = request.GET.get('regions')
         if regions:
@@ -144,27 +174,34 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(region__name__iregex=regions.replace(',', '|'))
             elif queryset.model is Referral or queryset.model is Compliance:
                 queryset = queryset.filter(proposal__region__name__iregex=regions.replace(',', '|'))
-            #elif queryset.model is Approval:
-            #    queryset = queryset.filter(region__iregex=regions.replace(',', '|'))
 
-        # since in proposal_datatables.vue, the 'region' data field is declared 'searchable=false'
-        #global_search = request.GET.get('search[value]')
-        #if global_search:
-        #    queryset = queryset.filter(region__name__iregex=global_search)
+        # on the internal dashboard, the Payment Status filter is a property field (not a DB field) - have to use the custom filter below
+        payment_status = request.GET.get('payment_status')
+        if payment_status:
+            if queryset.model is ParkBooking:
+                #invoice_refs = BookingInvoice.objects.all().values_list('invoice_reference', flat=True).distinct()
+                #filtered_refs = [x.reference for x in Invoice.objects.filter(reference__in=invoice_refs) if x.payment_status==payment_status]
+                #queryset = queryset.filter(booking__invoices__invoice_reference__in=filtered_refs)
+
+                #[ParkBooking.objects.filter(booking__invoices__invoice_reference=x).latest('id') for x in refs if Invoice.objects.get(reference=x).payment_status==payment_status]
+                #queryset = queryset.filter(booking__invoices__invoice_reference__in=filtered_refs)
+
+                #import ipdb; ipdb.set_trace()
+                refs = [i.booking.invoices.last().invoice_reference  for i in ParkBooking.objects.all() if i.booking and i.booking.invoices.last()]
+                filtered_refs = [i.reference for i in Invoice.objects.filter(reference__in=refs) if i.payment_status==payment_status]
+                queryset = queryset.filter(booking__invoices__invoice_reference__in=filtered_refs).distinct('id')
+
+        park = request.GET.get('park')
+        if park:
+            if queryset.model is Booking:
+                #import ipdb; ipdb.set_trace()
+                queryset = queryset.filter(park_bookings__park__id__in=[park])
 
 
-        # on the internal dashboard, the Referral 'Status' filter - have to use the custom filter below
-        #import ipdb; ipdb.set_trace()
-#        processing_status = request.GET.get('processing_status')
-#        processing_status = get_choice(processing_status, Proposal.PROCESSING_STATUS_CHOICES)
-#        if processing_status:
-#            if queryset.model is Referral:
-#                #processing_status_id = [i for i in Proposal.PROCESSING_STATUS_CHOICES if i[1]==processing_status][0][0]
-#                queryset = queryset.filter(processing_status=processing_status)
+
 
         date_from = request.GET.get('date_from')
         date_to = request.GET.get('date_to')
-        #import ipdb; ipdb.set_trace()
         if queryset.model is Proposal:
             if date_from:
                 queryset = queryset.filter(lodgement_date__gte=date_from)
@@ -189,6 +226,13 @@ class ProposalFilterBackend(DatatablesFilterBackend):
 
             if date_to:
                 queryset = queryset.filter(proposal__lodgement_date__lte=date_to)
+        elif queryset.model is ParkBooking:
+            if date_from:
+                queryset = queryset.filter(arrival__gte=date_from)
+
+            if date_to:
+                queryset = queryset.filter(arrival__lte=date_to)
+
 
 
         queryset = super(ProposalFilterBackend, self).filter_queryset(request, queryset, view)
@@ -203,6 +247,8 @@ class ProposalRenderer(DatatablesRenderer):
             #data.pop('recordsTotal')
             #data.pop('recordsFiltered')
         return super(ProposalRenderer, self).render(data, accepted_media_type, renderer_context)
+
+
 
 #from django.utils.decorators import method_decorator
 #from django.views.decorators.cache import cache_page
@@ -232,10 +278,12 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         user = self.request.user
         #import ipdb; ipdb.set_trace()
         if is_internal(self.request): #user.is_authenticated():
-            return Proposal.objects.all().exclude(application_type=self.excluded_type)
+            qs= Proposal.objects.all().exclude(application_type=self.excluded_type)
+            return qs.exclude(migrated=True)
         elif is_customer(self.request):
             user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
-            return  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) ).exclude(application_type=excluded_type)
+            qs= Proposal.objects.filter( Q(org_applicant_id__in = user_orgs) | Q(submitter = user) ).exclude(application_type=self.excluded_type)
+            return qs.exclude(migrated=True)
         return Proposal.objects.none()
 
 #    def filter_queryset(self, request, queryset, view):
@@ -264,7 +312,10 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation
         applicant_id = request.GET.get('org_id')
         if applicant_id:
-            qs = qs.filter(applicant_id=applicant_id)
+            qs = qs.filter(org_applicant_id=applicant_id)
+        submitter_id = request.GET.get('submitter_id', None)
+        if submitter_id:
+            qs = qs.filter(submitter_id=submitter_id)
 
         self.paginator.page_size = qs.count()
         result_page = self.paginator.paginate_queryset(qs, request)
@@ -291,6 +342,21 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         return self.paginator.get_paginated_response(serializer.data)
 
     @list_route(methods=['GET',])
+    def qaofficer_info(self, request, *args, **kwargs):
+        """
+        Used by the internal dashboard
+
+        http://localhost:8499/api/proposal_paginated/qaofficer_internal/?format=datatables&draw=1&length=2
+        """
+        #import ipdb; ipdb.set_trace()
+        qa_officers = QAOfficerGroup.objects.get(default=True).members.all().values_list('email', flat=True)
+        if request.user.email in qa_officers:
+            return Response({'QA_Officer': True})
+        else:
+            return Response({'QA_Officer': False})
+
+
+    @list_route(methods=['GET',])
     def qaofficer_internal(self, request, *args, **kwargs):
         """
         Used by the internal dashboard
@@ -310,7 +376,10 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation
         applicant_id = request.GET.get('org_id')
         if applicant_id:
-            qs = qs.filter(applicant_id=applicant_id)
+            qs = qs.filter(org_applicant_id=applicant_id)
+        submitter_id = request.GET.get('submitter_id', None)
+        if submitter_id:
+            qs = qs.filter(submitter_id=submitter_id)
 
         self.paginator.page_size = qs.count()
         result_page = self.paginator.paginate_queryset(qs, request)
@@ -332,7 +401,10 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         # on the internal organisations dashboard, filter the Proposal/Approval/Compliance datatables by applicant/organisation
         applicant_id = request.GET.get('org_id')
         if applicant_id:
-            qs = qs.filter(applicant_id=applicant_id)
+            qs = qs.filter(org_applicant_id=applicant_id)
+        submitter_id = request.GET.get('submitter_id', None)
+        if submitter_id:
+            qs = qs.filter(submitter_id=submitter_id)
 
         #import ipdb; ipdb.set_trace()
         self.paginator.page_size = qs.count()
@@ -341,9 +413,25 @@ class ProposalPaginatedViewSet(viewsets.ModelViewSet):
         return self.paginator.get_paginated_response(serializer.data)
 
 
-class ProposalViewSet(viewsets.ModelViewSet):
-    #import ipdb; ipdb.set_trace()
-    #queryset = Proposal.objects.all()
+class VersionableModelViewSetMixin(viewsets.ModelViewSet):
+    @detail_route(methods=['GET',])
+    def history(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
+        _object = self.get_object()
+        #_versions = reversion.get_for_object(_object)
+        _versions = Version.objects.get_for_object(_object)
+
+        _context = {
+            'request': request
+        }
+
+        #_version_serializer = VersionSerializer(_versions, many=True, context=_context)
+        _version_serializer = ProposalSerializer([v.object for v in _versions], many=True, context=_context)
+        # TODO
+        # check pagination
+        return Response(_version_serializer.data)
+
+class ProposalSubmitViewSet(viewsets.ModelViewSet):
     queryset = Proposal.objects.none()
     serializer_class = ProposalSerializer
     lookup_field = 'id'
@@ -363,7 +451,65 @@ class ProposalViewSet(viewsets.ModelViewSet):
             #return Proposal.objects.filter(region__isnull=False)
         elif is_customer(self.request):
             user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
-            queryset =  Proposal.objects.filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
+            queryset =  Proposal.objects.filter( Q(org_applicant_id__in = user_orgs) | Q(submitter = user) )
+            #queryset =  Proposal.objects.filter(region__isnull=False).filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
+            return queryset.exclude(application_type=self.excluded_type)
+        logger.warn("User is neither customer nor internal user: {} <{}>".format(user.get_full_name(), user.email))
+        return Proposal.objects.none()
+
+#    def perform_create(self, serializer):
+#        serializer.partial = True
+#        serializer.save(created_by=self.request.user)
+
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def submit(self, request, *args, **kwargs):
+        try:
+            #import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            #instance.submit(request,self)
+            #instance.tenure = search_tenure(instance)
+            #instance.save()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+class ProposalViewSet(viewsets.ModelViewSet):
+#class ProposalViewSet(VersionableModelViewSetMixin):
+    #import ipdb; ipdb.set_trace()
+    #queryset = Proposal.objects.all()
+    queryset = Proposal.objects.none()
+    serializer_class = ProposalSerializer
+    lookup_field = 'id'
+
+    @property
+    def excluded_type(self):
+        try:
+            return ApplicationType.objects.get(name='E Class')
+        except:
+            return ApplicationType.objects.none()
+
+    def get_queryset(self):
+        user = self.request.user
+        #import ipdb; ipdb.set_trace()
+        if is_internal(self.request): #user.is_authenticated():
+            qs= Proposal.objects.all().exclude(application_type=self.excluded_type)
+            return qs.exclude(migrated=True)
+            #return Proposal.objects.filter(region__isnull=False)
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
+            queryset =  Proposal.objects.filter( Q(org_applicant_id__in = user_orgs) | Q(submitter = user) ).exclude(migrated=True)
             #queryset =  Proposal.objects.filter(region__isnull=False).filter( Q(applicant_id__in = user_orgs) | Q(submitter = user) )
             return queryset.exclude(application_type=self.excluded_type)
         logger.warn("User is neither customer nor internal user: {} <{}>".format(user.get_full_name(), user.email))
@@ -388,6 +534,16 @@ class ProposalViewSet(viewsets.ModelViewSet):
             approval_status_choices = [i[1] for i in Approval.STATUS_CHOICES],
         )
         return Response(data)
+
+    @detail_route(methods=['GET',])
+    def compare_list(self, request, *args, **kwargs):
+        """ Returns the reversion-compare urls --> list"""
+        current_revision_id = Version.objects.get_for_object(self.get_object()).first().revision_id
+        versions = Version.objects.get_for_object(self.get_object()).select_related("revision__user").filter(Q(revision__comment__icontains='status') | Q(revision_id=current_revision_id))
+        version_ids = [i.id for i in versions]
+        urls = ['?version_id2={}&version_id1={}'.format(version_ids[0], version_ids[i+1]) for i in range(len(version_ids)-1)]
+        return Response(urls)
+
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
@@ -619,6 +775,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 comms = serializer.save()
                 # Save the files
                 for f in request.FILES:
+                    #import ipdb; ipdb.set_trace()
                     document = comms.documents.create()
                     document.name = str(request.FILES[f])
                     document._file = request.FILES[f]
@@ -642,7 +799,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             #qs = instance.requirements.all()
             qs = instance.requirements.all().exclude(is_deleted=True)
-            serializer = ProposalRequirementSerializer(qs,many=True)
+            serializer = ProposalRequirementSerializer(qs,many=True, context={'request':request})
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -779,7 +936,8 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
                 required_doc_instance=RequiredDocument.objects.get(id=required_doc_id)
                 document = instance.required_documents.get_or_create(input_name=section, name=filename, required_doc=required_doc_instance)[0]
-                path = default_storage.save('proposals/{}/required_documents/{}/{}'.format(proposal_id,required_doc_id, filename), ContentFile(_file.read()))
+                #path = default_storage.save('proposals/{}/required_documents/{}/{}'.format(proposal_id,required_doc_id, filename), ContentFile(_file.read()))
+                path = default_storage.save('proposals/{}/required_documents/{}'.format(proposal_id, filename), ContentFile(_file.read()))
 
                 document._file = path
                 document.save()
@@ -806,6 +964,13 @@ class ProposalViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = InternalProposalSerializer(instance,context={'request':request})
         return Response(serializer.data)
+
+    @detail_route(methods=['GET',])
+    def proposal_parks(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = ProposalParkSerializer(instance,context={'request':request})
+        return Response(serializer.data)
+
 
 #    @detail_route(methods=['post'])
 #    @renderer_classes((JSONRenderer,))
@@ -842,8 +1007,10 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def submit(self, request, *args, **kwargs):
         try:
+            #import ipdb; ipdb.set_trace()
             instance = self.get_object()
-            instance.submit(request,self)
+            #instance.submit(request,self)
+            proposal_submit(instance, request)
             instance.tenure = search_tenure(instance)
             instance.save()
             serializer = self.get_serializer(instance)
@@ -1126,7 +1293,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def on_hold(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
-                #import ipdb; ipdb.set_trace()
                 instance = self.get_object()
                 is_onhold =  eval(request.data.get('onhold'))
                 data = {}
@@ -1145,16 +1311,18 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 comms = serializer.save()
 
-                # Save the files
+                # save the files
+                #import ipdb; ipdb.set_trace()
                 documents_qs = instance.onhold_documents.filter(input_name='on_hold_file', visible=True)
                 for f in documents_qs:
-                    document = comms.documents.create()
-                    document.name = f.name
-                    document._file = f._file #.strip('/media')
+                    document = comms.documents.create(_file=f._file, name=f.name)
+                    #document = comms.documents.create()
+                    #document.name = f.name
+                    #document._file = f._file #.strip('/media')
                     document.input_name = f.input_name
                     document.can_delete = True
                     document.save()
-                # End Save Documents
+                # end save documents
 
                 return Response(serializer.data)
         except serializers.ValidationError:
@@ -1192,11 +1360,19 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 comms = serializer.save()
 
                 # Save the files
-                documents_qs = instance.qaofficer_documents.filter(input_name='qaofficer_file', visible=True)
+                #import ipdb; ipdb.set_trace()
+                document_qs=[]
+                if is_with_qaofficer:
+                    #Get the list of documents attached by assessor when sending application to QA officer
+                    documents_qs = instance.qaofficer_documents.filter(input_name='assessor_qa_file', visible=True)
+                else:
+                    #Get the list of documents attached by QA officer when sending application back to assessor
+                    documents_qs = instance.qaofficer_documents.filter(input_name='qaofficer_file', visible=True)
                 for f in documents_qs:
-                    document = comms.documents.create()
-                    document.name = f.name
-                    document._file = f._file #.strip('/media')
+                    document = comms.documents.create(_file=f._file, name=f.name)
+                    #document = comms.documents.create()
+                    #document.name = f.name
+                    #document._file = f._file #.strip('/media')
                     document.input_name = f.input_name
                     document.can_delete = True
                     document.save()
@@ -1379,7 +1555,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 #'schema': qs_proposal_type.order_by('-version').first().schema,
                 'schema': proposal_type.schema,
                 'submitter': request.user.id,
-                'applicant': request.data.get('behalf_of'),
+                'org_applicant': request.data.get('org_applicant'),
                 'application_type': application_type,
                 'region': region,
                 'district': district,
@@ -1573,7 +1749,6 @@ class ReferralViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['GET',])
     def resend(self, request, *args, **kwargs):
         try:
-            import ipdb; ipdb.set_trace()
             instance = self.get_object()
             instance.resend(request)
             serializer = InternalProposalSerializer(instance.proposal,context={'request':request})
@@ -1591,7 +1766,6 @@ class ReferralViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def send_referral(self, request, *args, **kwargs):
         try:
-            import ipdb; ipdb.set_trace()
             instance = self.get_object()
             serializer = SendReferralSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -1672,6 +1846,71 @@ class ProposalRequirementViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def delete_document(self, request, *args, **kwargs):
+        try:
+            #import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            RequirementDocument.objects.get(id=request.data.get('id')).delete()
+            return Response([dict(id=i.id, name=i.name,_file=i._file.url) for i in instance.requirement_documents.all()])
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    def update(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=json.loads(request.data.get('data')))
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            instance.add_documents(request)
+            return Response(serializer.data)
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+    def create(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
+        try:
+#            data = {
+#                'due_date': request.data.get('due_date'),
+#                'standard': request.data.get('standard'),
+#                'recurrence': reqeust.data.get('recurrence'),
+#                'recurrence_pattern': request.data.get('recurrence_pattern'),
+#                'proposal': request.data.get('proposal'),
+#                'referral_group': request.data.get('referral_group'),
+#            }
+
+            #serializer = self.get_serializer(data= request.data)
+            serializer = self.get_serializer(data= json.loads(request.data.get('data')))
+            #serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception = True)
+            instance = serializer.save()
+            instance.add_documents(request)
+            #serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
 class ProposalStandardRequirementViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ProposalStandardRequirement.objects.all()
@@ -1883,3 +2122,50 @@ class VesselViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+class AssessorChecklistViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ChecklistQuestion.objects.none()
+    serializer_class = ChecklistQuestionSerializer
+
+    def get_queryset(self):
+        qs=ChecklistQuestion.objects.filter(Q(list_type = 'assessor_list')& Q(obsolete=False))
+        return qs
+
+class ProposalAssessmentViewSet(viewsets.ModelViewSet):
+    #queryset = ProposalRequirement.objects.all()
+    queryset = ProposalAssessment.objects.all()
+    serializer_class = ProposalAssessmentSerializer
+
+    @detail_route(methods=['post'])
+    def update_assessment(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            #import ipdb; ipdb.set_trace()
+            request.data['submitter']= request.user.id
+            serializer = ProposalAssessmentSerializer(instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            #import ipdb; ipdb.set_trace()
+            checklist=request.data['checklist']
+            if checklist:
+                for chk in checklist:
+                    try:
+                        #import ipdb; ipdb.set_trace()
+                        chk_instance=ProposalAssessmentAnswer.objects.get(id=chk['id'])
+                        serializer_chk = ProposalAssessmentAnswerSerializer(chk_instance, data=chk)
+                        serializer_chk.is_valid(raise_exception=True)
+                        serializer_chk.save()
+                    except:
+                        raise
+            #instance.proposal.log_user_action(ProposalUserAction.ACTION_EDIT_VESSEL.format(instance.id),request)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))

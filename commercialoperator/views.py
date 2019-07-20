@@ -1,4 +1,5 @@
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template.response import TemplateResponse
@@ -6,6 +7,9 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.views.generic.base import View, TemplateView
 from django.conf import settings
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
+from django.views.decorators.csrf import csrf_protect
+from django.core.exceptions import ValidationError
+from django.db import transaction
 
 from datetime import datetime, timedelta
 
@@ -14,7 +18,16 @@ from commercialoperator.forms import *
 from commercialoperator.components.proposals.models import Referral, Proposal, HelpPage
 from commercialoperator.components.compliances.models import Compliance
 from commercialoperator.components.proposals.mixins import ReferralOwnerMixin
+from commercialoperator.components.main.models import Park
+from commercialoperator.components.bookings.email import send_invoice_tclass_email_notification, send_confirmation_tclass_email_notification
+
+from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
 from django.core.management import call_command
+import json
+from decimal import Decimal
+
+import logging
+logger = logging.getLogger('payment_checkout')
 
 
 class InternalView(UserPassesTestMixin, TemplateView):
@@ -122,7 +135,7 @@ class HelpView(LoginRequiredMixin, TemplateView):
         context = super(HelpView, self).get_context_data(**kwargs)
 
         if self.request.user.is_authenticated():
-            application_type = kwargs.get('application_type', None) 
+            application_type = kwargs.get('application_type', None)
             if kwargs.get('help_type', None)=='assessor':
                 if is_internal(self.request):
                     qs = HelpPage.objects.filter(application_type__name__icontains=application_type, help_type=HelpPage.HELP_TEXT_INTERNAL).order_by('-version')

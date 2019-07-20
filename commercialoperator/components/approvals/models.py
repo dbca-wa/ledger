@@ -31,10 +31,12 @@ from commercialoperator.utils import search_keys, search_multiple_keys
 
 
 def update_approval_doc_filename(instance, filename):
-    return 'approvals/{}/documents/{}'.format(instance.approval.id,filename)
+    #return 'approvals/{}/documents/{}'.format(instance.approval.id,filename)
+    return 'proposals/{}/approvals/{}'.format(instance.approval.current_proposal.id,filename)
 
 def update_approval_comms_log_filename(instance, filename):
-    return 'approvals/{}/communications/{}/{}'.format(instance.log_entry.approval.id,instance.id,filename)
+    #return 'approvals/{}/communications/{}/{}'.format(instance.log_entry.approval.id,instance.id,filename)
+    return 'proposals/{}/approvals/communications/{}'.format(instance.log_entry.approval.current_proposal.id,filename)
 
 
 class ApprovalDocument(Document):
@@ -45,7 +47,7 @@ class ApprovalDocument(Document):
     def delete(self):
         if self.can_delete:
             return super(ApprovalDocument, self).delete()
-        logger.info('Cannot delete existing document object after Proposal has been submitted (including document submitted before Proposal pushback to status Draft): {}'.format(self.name))
+        logger.info('Cannot delete existing document object after Application has been submitted (including document submitted before Application pushback to status Draft): {}'.format(self.name))
 
 
     class Meta:
@@ -58,7 +60,8 @@ class Approval(RevisionedMixin):
         ('expired','Expired'),
         ('cancelled','Cancelled'),
         ('surrendered','Surrendered'),
-        ('suspended','Suspended')
+        ('suspended','Suspended'),
+        ('extended','extended'),
     )
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
     status = models.CharField(max_length=40, choices=STATUS_CHOICES,
@@ -80,10 +83,12 @@ class Approval(RevisionedMixin):
     expiry_date = models.DateField()
     surrender_details = JSONField(blank=True,null=True)
     suspension_details = JSONField(blank=True,null=True)
+    submitter = models.ForeignKey(EmailUser, on_delete=models.PROTECT, blank=True, null=True, related_name='commercialoperator_approvals')
     org_applicant = models.ForeignKey(Organisation,on_delete=models.PROTECT, blank=True, null=True, related_name='org_approvals')
     proxy_applicant = models.ForeignKey(EmailUser,on_delete=models.PROTECT, blank=True, null=True, related_name='proxy_approvals')
     extracted_fields = JSONField(blank=True, null=True)
     cancellation_details = models.TextField(blank=True)
+    extend_details = models.TextField(blank=True)
     cancellation_date = models.DateField(blank=True, null=True)
     set_to_cancel = models.BooleanField(default=False)
     set_to_suspend = models.BooleanField(default=False)
@@ -91,6 +96,7 @@ class Approval(RevisionedMixin):
 
     #application_type = models.ForeignKey(ApplicationType, null=True, blank=True)
     renewal_count = models.PositiveSmallIntegerField('Number of times an Approval has been renewed', default=0)
+    migrated=models.BooleanField(default=False)
 
     class Meta:
         app_label = 'commercialoperator'
@@ -105,10 +111,50 @@ class Approval(RevisionedMixin):
                 self.proxy_applicant.first_name,
                 self.proxy_applicant.last_name)
         else:
-            return None
-#            return "{} {}".format(
-#                self.submitter.first_name,
-#                self.submitter.last_name)
+            #return None
+            try:
+                return "{} {}".format(
+                    self.submitter.first_name,
+                    self.submitter.last_name)
+            except:
+                return "Applicant Not Set"
+
+
+#    @property
+#    def applicant(self):
+#        #import ipdb; ipdb.set_trace()
+#        if self.current_proposal.applicant:
+#            return self.current_proposal.applicant
+#        else:
+#            if self.org_applicant:
+#                return self.org_applicant.organisation.name
+#            elif self.proxy_applicant:
+#                return "{} {}".format(
+#                    self.proxy_applicant.first_name,
+#                    self.proxy_applicant.last_name)
+#            else:
+#                return None
+
+    @property
+    def applicant_type(self):
+        if self.org_applicant:
+            return "org_applicant"
+        elif self.proxy_applicant:
+            return "proxy_applicant"
+        else:
+            #return None
+            return "submitter"
+
+    @property
+    def applicant_id(self):
+        if self.org_applicant:
+            #return self.org_applicant.organisation.id
+            return self.org_applicant.id
+        elif self.proxy_applicant:
+            return self.proxy_applicant.id
+        else:
+            #return None
+            return self.submitter.id
 
     @property
     def region(self):
@@ -133,13 +179,13 @@ class Approval(RevisionedMixin):
     @property
     def next_id(self):
         #ids = map(int,[(i.lodgement_number.split('A')[1]) for i in Approval.objects.all()])
-        ids = map(int,[i.split('A')[1] for i in Approval.objects.all().values_list('lodgement_number', flat=True) if i])
+        ids = map(int,[i.split('L')[1] for i in Approval.objects.all().values_list('lodgement_number', flat=True) if i])
         return max(ids) + 1 if ids else 1
 
     def save(self, *args, **kwargs):
         super(Approval, self).save(*args,**kwargs)
         if self.lodgement_number == '':
-            self.lodgement_number = 'A{0:06d}'.format(self.next_id)
+            self.lodgement_number = 'L{0:06d}'.format(self.next_id)
             self.save()
 
     def __str__(self):
@@ -147,7 +193,7 @@ class Approval(RevisionedMixin):
 
     @property
     def reference(self):
-        return 'A{}'.format(self.id)
+        return 'L{}'.format(self.id)
 
     @property
     def can_reissue(self):
@@ -172,20 +218,30 @@ class Approval(RevisionedMixin):
         else:
             return False
 
+
+
+    @property
+    def can_extend(self):
+        if self.current_proposal.application_type.name == 'E Class':
+            return self.current_proposal.application_type.max_renewals > self.renewal_count
+        return False
+
+
     @property
     def can_renew(self):
         try:
-            if self.application_type.name == 'E Class':
-                return self.application_type.max_renewals > self.renewal_count
-                #pass
-            else:
-                renew_conditions = {
-                        'previous_application': self.current_proposal,
-                        'proposal_type': 'renewal'
-                        }
-                proposal=Proposal.objects.get(**renew_conditions)
-                if proposal:
-                    return False
+#            if self.current_proposal.application_type.name == 'E Class':
+#                #return (self.current_proposal.application_type.max_renewals is not None and self.current_proposal.application_type.max_renewals > self.renewal_count)
+#                return self.current_proposal.application_type.max_renewals > self.renewal_count
+#                #pass
+#            else:
+            renew_conditions = {
+                'previous_application': self.current_proposal,
+                'proposal_type': 'renewal'
+            }
+            proposal=Proposal.objects.get(**renew_conditions)
+            if proposal:
+                return False
         except Proposal.DoesNotExist:
             return True
 
@@ -258,6 +314,31 @@ class Approval(RevisionedMixin):
             except:
                 raise
 
+    def approval_extend(self,request,details):
+        with transaction.atomic():
+            try:
+                if not request.user in self.allowed_assessors:
+                    raise ValidationError('You do not have access to extend this approval')
+                if not self.can_extend and self.can_action:
+                    raise ValidationError('You cannot extend approval any further')
+                self.renewal_count += 1
+                self.extend_details = details.get('extend_details')
+                self.expiry_date = datetime.date(self.expiry_date.year + self.current_proposal.application_type.max_renewal_period, self.expiry_date.month, self.expiry_date.day)
+                #import ipdb; ipdb.set_trace()
+                today = timezone.now().date()
+                if self.expiry_date <= today:
+                    if not self.status == 'extended':
+                        self.status = 'extended'
+                        #send_approval_extend_email_notification(self)
+                self.save()
+                # Log proposal action
+                self.log_user_action(ApprovalUserAction.ACTION_EXTEND_APPROVAL.format(self.id),request)
+                # Log entry for organisation
+                self.current_proposal.log_user_action(ProposalUserAction.ACTION_EXTEND_APPROVAL.format(self.current_proposal.id),request)
+            except:
+                raise
+
+
     def approval_cancellation(self,request,details):
         with transaction.atomic():
             try:
@@ -269,6 +350,7 @@ class Approval(RevisionedMixin):
                 self.cancellation_details = details.get('cancellation_details')
                 cancellation_date = datetime.datetime.strptime(self.cancellation_date,'%Y-%m-%d')
                 cancellation_date = cancellation_date.date()
+                self.cancellation_date = cancellation_date # test hack
                 today = timezone.now().date()
                 if cancellation_date <= today:
                     if not self.status == 'cancelled':
@@ -354,7 +436,7 @@ class Approval(RevisionedMixin):
     def approval_surrender(self,request,details):
         with transaction.atomic():
             try:
-                if not request.user.commercialoperator_organisations.filter(organisation_id = self.applicant.id):
+                if not request.user.commercialoperator_organisations.filter(organisation_id = self.applicant_id):
                     if not request.user in self.allowed_assessors:
                         raise ValidationError('You do not have access to surrender this approval')
                 if not self.can_reissue and self.can_action:
@@ -405,15 +487,16 @@ class ApprovalLogDocument(Document):
         app_label = 'commercialoperator'
 
 class ApprovalUserAction(UserAction):
-    ACTION_CREATE_APPROVAL = "Create approval {}"
-    ACTION_UPDATE_APPROVAL = "Create approval {}"
-    ACTION_EXPIRE_APPROVAL = "Expire approval {}"
-    ACTION_CANCEL_APPROVAL = "Cancel approval {}"
-    ACTION_SUSPEND_APPROVAL = "Suspend approval {}"
-    ACTION_REINSTATE_APPROVAL = "Reinstate approval {}"
-    ACTION_SURRENDER_APPROVAL = "surrender approval {}"
-    ACTION_RENEW_APPROVAL = "Create renewal Proposal for approval {}"
-    ACTION_AMEND_APPROVAL = "Create amendment Proposal for approval {}"
+    ACTION_CREATE_APPROVAL = "Create licence {}"
+    ACTION_UPDATE_APPROVAL = "Create licence {}"
+    ACTION_EXPIRE_APPROVAL = "Expire licence {}"
+    ACTION_CANCEL_APPROVAL = "Cancel licence {}"
+    ACTION_EXTEND_APPROVAL = "Extend licence {}"
+    ACTION_SUSPEND_APPROVAL = "Suspend licence {}"
+    ACTION_REINSTATE_APPROVAL = "Reinstate licence {}"
+    ACTION_SURRENDER_APPROVAL = "surrender licence {}"
+    ACTION_RENEW_APPROVAL = "Create renewal Application for licence {}"
+    ACTION_AMEND_APPROVAL = "Create amendment Application for licence {}"
 
 
     class Meta:
@@ -438,10 +521,17 @@ def delete_documents(sender, instance, *args, **kwargs):
         except:
             pass
 
+#import reversion
+#reversion.register(Approval, follow=['documents', 'approval_set', 'action_logs'])
+#reversion.register(ApprovalDocument)
+#reversion.register(ApprovalLogDocument, follow=['documents'])
+#reversion.register(ApprovalLogEntry)
+#reversion.register(ApprovalUserAction)
+
 import reversion
-reversion.register(Approval, follow=['documents', 'approval_set', 'action_logs'])
-reversion.register(ApprovalDocument)
-reversion.register(ApprovalLogDocument, follow=['documents'])
-reversion.register(ApprovalLogEntry)
+reversion.register(Approval, follow=['compliances', 'documents', 'comms_logs', 'action_logs'])
+reversion.register(ApprovalDocument, follow=['licence_document', 'cover_letter_document', 'renewal_document'])
+reversion.register(ApprovalLogEntry, follow=['documents'])
+reversion.register(ApprovalLogDocument)
 reversion.register(ApprovalUserAction)
 

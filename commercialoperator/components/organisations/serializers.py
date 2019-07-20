@@ -15,6 +15,8 @@ from commercialoperator.components.organisations.utils import (
                                 can_admin_org,
                                 is_consultant,
                                 can_approve,
+                                can_relink,
+                                is_last_admin,
                             )
 from rest_framework import serializers, status
 import rest_framework_gis.serializers as gis_serializers
@@ -27,13 +29,20 @@ class LedgerOrganisationSerializer(serializers.ModelSerializer):
 
 
 class LedgerOrganisationFilterSerializer(serializers.ModelSerializer):
+    #address = serializers.SerializerMethodField(read_only=True)
+    email = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ledger_organisation
         fields = (
             'id',
             'name',
+            'email',
+            #'address',
         )
+
+    def get_email(self, obj):
+        return ''
 
 
 class OrganisationCheckSerializer(serializers.Serializer):

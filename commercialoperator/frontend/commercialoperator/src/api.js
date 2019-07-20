@@ -15,6 +15,7 @@ module.exports = {
     countries: "https://restcountries.eu/rest/v1/?fullText=true",
     proposal_type:"/api/proposal_type",
     proposals:"/api/proposal.json",
+    proposal_submit:"/api/proposal_submit.json",
     //list_proposals:"/api/proposal/list_proposal.json",
     approvals:"/api/approvals.json",
     referrals:"/api/referrals.json",
@@ -30,6 +31,7 @@ module.exports = {
     parks:"/api/parks.json",
     vehicles:"/api/vehicles.json",
     vessels:"/api/vessels.json",
+    assessments:"/api/assessments.json",
 
     // used in internal and external dashboards
     proposals_paginated_external:   "/api/proposal_paginated/proposals_external/?format=datatables",
@@ -38,11 +40,14 @@ module.exports = {
     proposals_paginated_internal:   "/api/proposal_paginated/proposals_internal/?format=datatables",
     referrals_paginated_internal:   "/api/proposal_paginated/referrals_internal/?format=datatables",
     qaofficer_paginated_internal:   "/api/proposal_paginated/qaofficer_internal/?format=datatables",
+    booking_paginated_internal:     "/api/booking_paginated/bookings_external/?format=datatables",
+    parkbooking_paginated_internal: "/api/parkbooking_paginated/parkbookings_external/?format=datatables",
     //filter_list:                    "/api/proposal_paginated/filter_list.json",
     filter_list:                    "/api/proposal/filter_list.json",
     filter_list_approvals:          "/api/approvals/filter_list.json",
     filter_list_compliances:        "/api/compliances/filter_list.json",
     filter_list_referrals:          "/api/referrals/filter_list.json",
+    filter_list_parks:              "/api/parks/filter_list.json",
 
     //approvals_paginated:"/api/approvals/user_list_paginated/?format=datatables",
     //compliances_paginated:"/api/compliances/user_list_paginated/?format=datatables",

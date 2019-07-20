@@ -40,13 +40,13 @@
                         </span>
                     </p>
                 </div>
-                <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
             </div>
             <div v-if="!readonly" v-for="n in repeat">
                 <div v-if="isRepeatable || (!isRepeatable && num_documents()==0)">
-                    <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/>
+                    <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange($event)" :required="isRequired"/>
                 </div>
             </div>
+            <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
 
         </div>
         <Comment :question="label" :readonly="assessor_readonly" :name="name+'-comment-field'" v-show="showingComment && assessorMode" :value="comment_value" :required="isRequired"/> 
@@ -144,6 +144,7 @@ export default {
         },
         handleChange:function (e) {
             let vm = this;
+            vm.show_spinner = true;
 
             if (vm.isRepeatable) {
                 let  el = $(e.target).attr('data-que');
@@ -167,21 +168,14 @@ export default {
             vm.files.push(e.target.files[0]);
 
             if (e.target.files.length > 0) {
-                //vm.upload_file(e)
                 vm.save_document(e);
             }
 
         },
 
-        /*
-        upload_file: function(e) {
-            let vm = this;
-            $("[id=save_and_continue_btn][value='Save Without Confirmation']").trigger( "click" );
-        },
-		*/
-
         get_documents: function() {
             let vm = this;
+            vm.show_spinner = true;
 
             var formData = new FormData();
             formData.append('action', 'list');
@@ -190,6 +184,7 @@ export default {
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
+                    vm.show_spinner = false;
                 });
 
         },
@@ -214,6 +209,7 @@ export default {
         
         uploadFile(e){
             let vm = this;
+            vm.show_spinner = true;
             let _file = null;
 
             if (e.target.files && e.target.files[0]) {
@@ -229,7 +225,6 @@ export default {
 
         save_document: function(e) {
             let vm = this; 
-            vm.show_spinner = true;
 
             var formData = new FormData();
             formData.append('action', 'save');

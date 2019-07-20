@@ -1,6 +1,6 @@
 <template lang="html">
     <div id="internal-proposal-onhold">
-        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Proposal With QA Officer" large>
+        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Application With QA Officer" large>
             <div class="container-fluid">
                 <div class="row">
                     <form class="form-horizontal" name="withqaForm">
@@ -11,7 +11,12 @@
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
                                         <TextArea :proposal_id="proposal_id" :readonly="readonly" name="_comments" label="Comments" id="id_comments" />
-                                        <FileField :document_url="document_url" :proposal_id="proposal_id" isRepeatable="true" name="qaofficer_file" label="Add Document" id="id_file" @refreshFromResponse="refreshFromResponse"/>
+                                        <div v-if="is_qaofficer_status">
+                                            <FileField :document_url="document_url" :proposal_id="proposal_id" isRepeatable="true" name="qaofficer_file" label="Add Document" id="id_file" @refreshFromResponse="refreshFromResponse"/>
+                                        </div>
+                                        <div v-else>
+                                            <FileField :document_url="document_url" :proposal_id="proposal_id" isRepeatable="true" name="assessor_qa_file" label="Add Document" id="id_file" @refreshFromResponse="refreshFromResponse"/>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -37,7 +42,7 @@ import FileField from '@/components/forms/file.vue'
 import {helpers, api_endpoints} from "@/utils/hooks.js"
 export default {
     //name:'referral-complete',
-    name:'proposal-onhold',
+    name:'proposal-qaofficer',
     components:{
         TextArea,
         TextField,
@@ -73,6 +78,9 @@ export default {
         document_url: function() {
             // location on media folder for the docs - to be passed to FileField
             return (this.proposal_id) ? `/api/proposal/${this.proposal_id}/process_qaofficer_document/` : '';
+        },
+        is_qaofficer_status: function(){
+            return this.processing_status == 'With QA Officer'? true: false;
         }
 
     },
@@ -105,14 +113,14 @@ export default {
             }).then(res=>{
                 if(!is_with_qaofficer){
                     swal(
-                        'Send Proposal to QA Officer',
-                        'Send Proposal to QA Officer',
+                        'Send Application to QA Officer',
+                        'Send Application to QA Officer',
                         'success'
                     );
                 } else {
                     swal(
-                        'Proposal QA Officer Assessment Completed',
-                        'Proposal QA Officer Assessment Completed',
+                        'Application QA Officer Assessment Completed',
+                        'Application QA Officer Assessment Completed',
                         'success'
                     );
                 }
