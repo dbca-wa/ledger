@@ -148,6 +148,9 @@ class BaseAddress(models.Model):
     def __str__(self):
         return self.summary
 
+#    def __unicode__(self):
+#        return ''
+
     class Meta:
         abstract = True
 
@@ -177,12 +180,27 @@ class BaseAddress(models.Model):
         return u', '.join(self.active_address_fields())
 
     # Helper methods
+#    def active_address_fields(self):
+#        """Return the non-empty components of the address.
+#        """
+#        fields = [self.line1, self.line2, self.line3,
+#                  self.locality, self.state, self.country, self.postcode]
+#        fields = [str(f).strip() for f in fields if f]
+#        
+#        return fields
+
+
+    # Helper methods
     def active_address_fields(self):
         """Return the non-empty components of the address.
         """
         fields = [self.line1, self.line2, self.line3,
                   self.locality, self.state, self.country, self.postcode]
-        fields = [str(f).strip() for f in fields if f]
+        #for f in fields:
+        #    print unicode(f).encode('utf-8').decode('unicode-escape').strip()
+        #fields = [str(f).strip() for f in fields if f]
+        fields = [unicode(f).encode('utf-8').decode('unicode-escape').strip() for f in fields if f]
+        
         return fields
 
     def join_fields(self, fields, separator=u', '):
@@ -199,6 +217,7 @@ class BaseAddress(models.Model):
             Returns a hash of the address summary
         """
         return zlib.crc32(self.summary.strip().upper().encode('UTF8'))
+
 
 class Address(BaseAddress):
     user = models.ForeignKey('EmailUser', related_name='profile_addresses')

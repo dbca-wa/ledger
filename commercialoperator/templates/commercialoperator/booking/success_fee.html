@@ -34,11 +34,11 @@
         </div>
 
         <div class="row"><div class="col-sm-12" style="margin-top: 1em">
-            {% if request.user == submitter or request.user.is_staff or request.session.cols_app_invoice == proposal.id %}
+            {% if request.user == submitter or request.user.is_staff %}
 
                 {% if request.user.is_authenticated %}
                     <span>
-                    <a href="{% url 'cols-invoice-pdf' fee_invoice.reference %}" class="btn btn-info btn-lg"  target="_blank">Invoice</a>
+                    <a href="{% url 'cols-invoice-pdf' fee_invoice.invoice_reference %}" class="btn btn-info btn-lg"  target="_blank">Invoice</a>
                     </span>
                     <span style="float:right;">
                     <a href="{% url 'external' %}" class="btn btn-info btn-lg">Return to Dashboard</a>
