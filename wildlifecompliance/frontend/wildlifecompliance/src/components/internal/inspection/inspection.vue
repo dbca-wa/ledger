@@ -132,6 +132,17 @@
                                 <div class="col-sm-8">
                                     <SearchPerson :isEditable="!readonlyForm" classNames="form-control" elementId="search-person" :search_type="inspection.party_inspected" @person-selected="personSelected"/>
                                 </div>
+                                <div class="col-sm-1">
+                                    <input type="button" class="btn btn-primary" value="Add" @click.prevent="addOffenderClicked()" />
+                                </div>
+                                <div class="col-sm-2">
+                                    <input type="button" class="btn btn-primary" value="Create New Person" @click.prevent="createNewPersonClicked()" />
+                                </div>
+                            </div></div>
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-12">
+                                  <CreateNewPerson :displayComponent="displayCreateNewPerson" @new-person-created="newPersonCreated"/>
+                                </div>
                             </div></div>
                           </FormSection>
                           <FormSection :formCollapse="false" label="Inspection Team" Index="1">
@@ -198,7 +209,7 @@
 import Vue from "vue";
 import FormSection from "@/components/forms/section_toggle.vue";
 import SearchPerson from "@/components/common/search_person.vue";
-
+import CreateNewPerson from "@common-components/create_new_person.vue";
 import CommsLogs from "@common-components/comms_logs.vue";
 import datatable from '@vue-utils/datatable.vue'
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
@@ -283,6 +294,7 @@ export default {
       loading: [],
       inspectionTypes: [],
       teamMemberSelected: null,
+      displayCreateNewPerson: false,
       //party_inspected: '',
       
       //callemailTab: "callemailTab" + this._uid,
@@ -306,6 +318,7 @@ export default {
     FormSection,
     datatable,
     SearchPerson,
+    CreateNewPerson,
   },
   watch: {
       call_email: {
@@ -343,6 +356,43 @@ export default {
       setPlannedForTime: 'setPlannedForTime',
       modifyInspectionTeam: 'modifyInspectionTeam',
     }),
+    newPersonCreated: function(obj) {
+      if(obj.person){
+        this.setCurrentOffender('individual', obj.person.id);
+
+        // Set fullname and DOB into the input box
+        let full_name = [obj.person.first_name, obj.person.last_name].filter(Boolean).join(" ");
+        let dob = obj.person.dob ? "DOB:" + obj.person.dob : "DOB: ---";
+        let value = [full_name, dob].filter(Boolean).join(", ");
+        this.$refs.person_search.setInput(value);
+      } else if (obj.err) {
+        console.log(err);
+      } else {
+        // Should not reach here
+      }
+    },
+    createNewPersonClicked: function() {
+      let vm = this;
+      vm.newPersonBeingCreated = true;
+      vm.displayCreateNewPerson = !vm.displayCreateNewPerson;
+    },
+    setCurrentOffender: function(data_type, id) {
+      let vm = this;
+
+      if (data_type == "individual") {
+        let initialisers = [utils.fetchUser(id)];
+        Promise.all(initialisers).then(data => {
+          vm.current_offender = data[0];
+          vm.current_offender.data_type = "individual";
+        });
+      } else if (data_type == "organisation") {
+        let initialisers = [vm.searchOrganisation(id)];
+        Promise.all(initialisers).then(data => {
+          vm.current_offender = data[0];
+          vm.current_offender.data_type = "organisation";
+        });
+      }
+    },
     addTeamMember: async function() {
         await this.modifyInspectionTeam({
             user_id: this.teamMemberSelected, 
