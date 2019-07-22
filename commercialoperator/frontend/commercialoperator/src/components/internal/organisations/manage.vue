@@ -30,16 +30,23 @@
                                       <form class="form-horizontal" name="personal_form" method="post">
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Name</label>
-                                            <div class="col-sm-6">
+                                            <div class="col-sm-9">
                                                 <input type="text" class="form-control" name="first_name" placeholder="" v-model="org.name">
                                             </div>
                                           </div>
                                           <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Trading Name</label>
+                                            <div class="col-sm-9">
+                                                <input type="text" class="form-control" name="trading_name" placeholder="" v-model="org.trading_name">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
                                             <label for="" class="col-sm-3 control-label" >ABN</label>
-                                            <div class="col-sm-6">
+                                            <div class="col-sm-9">
                                                 <input type="text" disabled class="form-control" name="last_name" placeholder="" v-model="org.abn">
                                             </div>
                                           </div>
+
                                           <div class="form-group">
                                             <div class="col-sm-12">
                                                 <button v-if="!updatingDetails" class="pull-right btn btn-primary" @click.prevent="updateDetails()">Update</button>

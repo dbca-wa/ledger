@@ -373,6 +373,15 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
                             style=approval_table_style))
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    if approval.current_proposal.org_applicant:
+        delegation.append(Table([[[Paragraph('Trading Name:', styles['BoldLeft'])],
+                                  [Paragraph(_format_name(approval.current_proposal.org_applicant.organisation.trading_name),
+                                             styles['Left'])]]],
+                                colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
+                                style=approval_table_style))
+
+
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     delegation.append(Table([[[Paragraph('Licence Number:', styles['BoldLeft'])],
                               [Paragraph(approval.lodgement_number,
                                          styles['Left'])]]],
@@ -448,7 +457,8 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
         activities_str=str(activities_str).strip('[]')
         park_data.append([Paragraph(_format_name(p['park']), styles['BoldLeft']),
                               Paragraph(activities_str, styles['Left'])])
-    t=Table(park_data, colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
+    if park_data:
+        t=Table(park_data, colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
                             style=box_table_style)
     elements.append(t)
 

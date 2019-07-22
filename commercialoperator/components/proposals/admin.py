@@ -1,6 +1,7 @@
 from django.contrib import admin
 from ledger.accounts.models import EmailUser
 from commercialoperator.components.proposals import models
+from commercialoperator.components.bookings.models import ApplicationFeeInvoice
 from commercialoperator.components.proposals import forms
 from commercialoperator.components.main.models import (
     ActivityMatrix,
@@ -238,3 +239,8 @@ class QAOfficerGroupAdmin(admin.ModelAdmin):
 class QuestionAdmin(admin.ModelAdmin):
     list_display = ['question_text', 'answer_one', 'answer_two', 'answer_three', 'answer_four',]
     ordering = ('question_text',)
+
+@admin.register(ApplicationFeeInvoice)
+class SectionAdmin(admin.ModelAdmin):
+    list_display = [f.name for f in ApplicationFeeInvoice._meta.fields]
+

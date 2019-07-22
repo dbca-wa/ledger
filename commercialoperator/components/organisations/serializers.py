@@ -89,12 +89,14 @@ class OrganisationSerializer(serializers.ModelSerializer):
     pins = serializers.SerializerMethodField(read_only=True)
     delegates = DelegateSerializer(many=True, read_only=True)
     organisation = LedgerOrganisationSerializer()
+    trading_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Organisation
         fields = (
             'id',
             'name',
+            'trading_name',
             'abn',
             'address',
             'email',
@@ -103,6 +105,9 @@ class OrganisationSerializer(serializers.ModelSerializer):
             'pins',
             'delegates'
         )
+
+    def get_trading_name(self, obj):
+        return obj.organisation.trading_name
 
     def get_pins(self, obj):
         try:
@@ -170,7 +175,7 @@ class MyOrganisationsSerializer(serializers.ModelSerializer):
 class DetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ledger_organisation
-        fields = ('id','name')
+        fields = ('id','name', 'trading_name')
 
 class OrganisationContactSerializer(serializers.ModelSerializer):
     user_status= serializers.SerializerMethodField()
