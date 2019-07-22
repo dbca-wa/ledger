@@ -61,7 +61,8 @@
                                       <p class="pull-right" style="margin-top:5px">
                                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                        <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed"/>
+                                        <!-- <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed"/> -->
+                                        <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()"/>
                                         <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
                                       </p>
                                     </div>
@@ -375,20 +376,7 @@ export default {
         let vm = this;
         let formData = vm.set_formData()
 
-//        let formData = new FormData(vm.form);
-//        formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
-//        formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
-//        formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
-
-        // var num_missing_fields = vm.validate()
-        // if (num_missing_fields > 0) {
-        //     vm.highlight_missing_fields()
-        //     var top = ($('#error').offset() || { "top": NaN }).top;
-        //     $('html, body').animate({
-        //         scrollTop: top
-        //     }, 1);
-        //     return false;
-        // }
+/*
         var missing_data= vm.can_submit();
         if(missing_data!=true){
           swal({
@@ -398,6 +386,7 @@ export default {
           })
           return false;
         }
+*/
 
         // remove the confirm prompt when navigating away from window (on button 'Submit' click)
         vm.submitting = true;

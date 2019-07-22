@@ -253,11 +253,11 @@ class ApplicationFeeInvoice(RevisionedMixin):
         return False
 
 
-#import reversion
-#reversion.register(Booking, follow=['invoices', 'park_bookings'])
-#reversion.register(ParkBooking)
-#reversion.register(BookingInvoice)
-#reversion.register(ApplicationFee, follow=['application_fee_invoices'])
-#reversion.register(ApplicationFeeInvoice)
+import reversion
+reversion.register(Booking, follow=['invoices', 'park_bookings'])
+reversion.register(ParkBooking)
+reversion.register(BookingInvoice)
+reversion.register(ApplicationFee, follow=['application_fee_invoices'])
+reversion.register(ApplicationFeeInvoice)
 
 

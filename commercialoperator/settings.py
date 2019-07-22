@@ -65,7 +65,7 @@ REST_FRAMEWORK = {
 MIDDLEWARE_CLASSES += [
     'commercialoperator.middleware.BookingTimerMiddleware',
     'commercialoperator.middleware.FirstTimeNagScreenMiddleware',
-    'reversion.middleware.RevisionMiddleware'
+    'commercialoperator.middleware.RevisionOverrideMiddleware'
 ]
 
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'commercialoperator', 'templates'))
