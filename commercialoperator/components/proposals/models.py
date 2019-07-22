@@ -1841,7 +1841,16 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         r.copied_from=old_r
                         r.id = None
                         r.save()
-                # Create a log entry for the proposal
+                #copy all the requirement documents from previous proposal
+                for requirement in proposal.requirements.all():
+                    for requirement_document in RequirementDocument.objects.filter(requirement=requirement.copied_from):
+                        requirement_document.requirement = requirement
+                        requirement_document.id = None
+                        #requirement_document._file.name = u'proposals/{}/requirement_documents/{}/{}'.format(proposal.id, requirement.id, requirement_document.name)
+                        requirement_document._file.name = u'proposals/{}/requirement_documents/{}'.format(proposal.id, requirement_document.name)
+                        requirement_document.can_delete = True
+                        requirement_document.save()
+                            # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_AMEND_PROPOSAL.format(self.id),request)
                 # Create a log entry for the organisation
                 applicant_field=getattr(self, self.applicant_field)
@@ -3075,15 +3084,15 @@ def clone_proposal_with_status_reset(proposal):
     with transaction.atomic():
         try:
             original_proposal = copy.deepcopy(proposal)
-            proposal = duplicate_object(proposal) # clone object and related objects
-
+            #proposal = duplicate_object(proposal) # clone object and related objects
+            proposal=duplicate_tclass(proposal)
             # manually duplicate the comms logs -- hck, not hndled by duplicate object (maybe due to inheritance?)
-            proposal.comms_logs.create(text='cloning proposal reset (original proposal {}, new proposal {})'.format(original_proposal.id, proposal.id))
-            for comms_log in proposal.comms_logs.all():
-                comms_log.id=None
-                comms_log.communicationslogentry_ptr_id=None
-                comms_log.proposal_id=original_proposal.id
-                comms_log.save()
+            # proposal.comms_logs.create(text='cloning proposal reset (original proposal {}, new proposal {})'.format(original_proposal.id, proposal.id))
+            # for comms_log in proposal.comms_logs.all():
+            #     comms_log.id=None
+            #     comms_log.communicationslogentry_ptr_id=None
+            #     comms_log.proposal_id=original_proposal.id
+            #     comms_log.save()
 
             # reset some properties
             proposal.customer_status = 'draft'
@@ -3104,7 +3113,8 @@ def clone_proposal_with_status_reset(proposal):
 
             proposal.save(no_revision=True)
 
-            clone_documents(proposal, original_proposal, media_prefix='media')
+            #clone_documents(proposal, original_proposal, media_prefix='media')
+            _clone_documents(proposal, original_proposal, media_prefix='media')
             return proposal
         except:
             raise
@@ -3168,46 +3178,53 @@ def _clone_documents(proposal, original_proposal, media_prefix):
         proposal_document.can_delete = True
         proposal_document.save()
 
-    for referral in proposal.referrals.all():
-        for referral_document in ReferralDocument.objects.filter(referral=referral):
-            referral_document.referral = referral
-            referral_document.id = None
-            #referral_document._file.name = u'proposals/{}/referral/{}/documents/{}'.format(proposal.id, referral.id, referral_document.name)
-            referral_document._file.name = u'proposals/{}/referral/{}'.format(proposal.id, referral_document.name)
-            referral_document.can_delete = True
-            referral_document.save()
+    for proposal_required_document in ProposalRequiredDocument.objects.filter(proposal=original_proposal.id):
+        proposal_required_document.proposal = proposal
+        proposal_required_document.id = None
+        proposal_required_document._file.name = u'proposals/{}/required_documents/{}'.format(proposal.id, proposal_required_document.name)
+        proposal_required_document.can_delete = True
+        proposal_required_document.save()
 
-    for qa_officer_document in QAOfficerDocument.objects.filter(proposal=original_proposal.id):
-        qa_officer_document.proposal = proposal
-        qa_officer_document.id = None
-        qa_officer_document._file.name = u'proposals/{}/qaofficer/{}'.format(proposal.id, qa_officer_document.name)
-        qa_officer_document.can_delete = True
-        qa_officer_document.save()
+    # for referral in proposal.referrals.all():
+    #     for referral_document in ReferralDocument.objects.filter(referral=referral):
+    #         referral_document.referral = referral
+    #         referral_document.id = None
+    #         #referral_document._file.name = u'proposals/{}/referral/{}/documents/{}'.format(proposal.id, referral.id, referral_document.name)
+    #         referral_document._file.name = u'proposals/{}/referral/{}'.format(proposal.id, referral_document.name)
+    #         referral_document.can_delete = True
+    #         referral_document.save()
 
-    for onhold_document in OnHoldDocument.objects.filter(proposal=original_proposal.id):
-        onhold_document.proposal = proposal
-        onhold_document.id = None
-        onhold_document._file.name = u'proposals/{}/on_hold/{}'.format(proposal.id, onhold_document.name)
-        onhold_document.can_delete = True
-        onhold_document.save()
+    # for qa_officer_document in QAOfficerDocument.objects.filter(proposal=original_proposal.id):
+    #     qa_officer_document.proposal = proposal
+    #     qa_officer_document.id = None
+    #     qa_officer_document._file.name = u'proposals/{}/qaofficer/{}'.format(proposal.id, qa_officer_document.name)
+    #     qa_officer_document.can_delete = True
+    #     qa_officer_document.save()
 
-    for requirement in proposal.requirements.all():
-        for requirement_document in RequirementDocument.objects.filter(requirement=requirement):
-            requirement_document.requirement = requirement
-            requirement_document.id = None
-            #requirement_document._file.name = u'proposals/{}/requirement_documents/{}/{}'.format(proposal.id, requirement.id, requirement_document.name)
-            requirement_document._file.name = u'proposals/{}/requirement_documents/{}'.format(proposal.id, requirement_document.name)
-            requirement_document.can_delete = True
-            requirement_document.save()
+    # for onhold_document in OnHoldDocument.objects.filter(proposal=original_proposal.id):
+    #     onhold_document.proposal = proposal
+    #     onhold_document.id = None
+    #     onhold_document._file.name = u'proposals/{}/on_hold/{}'.format(proposal.id, onhold_document.name)
+    #     onhold_document.can_delete = True
+    #     onhold_document.save()
 
-    for log_entry in proposal.comms_logs.all():
-        for log_entry_document in ProposalLogDocument.objects.filter(log_entry=log_entry):
-            log_entry_document.requirement = log_entry
-            log_entry_document.id = None
-            #log_entry_document._file.name = u'proposals/{}/communications/{}/{}'.format(proposal.id, log_entry.id, log_entry_document.name)
-            log_entry_document._file.name = u'proposals/{}/communications/{}'.format(proposal.id, log_entry_document.name)
-            log_entry_document.can_delete = True
-            log_entry_document.save()
+    # for requirement in proposal.requirements.all():
+    #     for requirement_document in RequirementDocument.objects.filter(requirement=requirement):
+    #         requirement_document.requirement = requirement
+    #         requirement_document.id = None
+    #         #requirement_document._file.name = u'proposals/{}/requirement_documents/{}/{}'.format(proposal.id, requirement.id, requirement_document.name)
+    #         requirement_document._file.name = u'proposals/{}/requirement_documents/{}'.format(proposal.id, requirement_document.name)
+    #         requirement_document.can_delete = True
+    #         requirement_document.save()
+
+    # for log_entry in proposal.comms_logs.all():
+    #     for log_entry_document in ProposalLogDocument.objects.filter(log_entry=log_entry):
+    #         log_entry_document.requirement = log_entry
+    #         log_entry_document.id = None
+    #         #log_entry_document._file.name = u'proposals/{}/communications/{}/{}'.format(proposal.id, log_entry.id, log_entry_document.name)
+    #         log_entry_document._file.name = u'proposals/{}/communications/{}'.format(proposal.id, log_entry_document.name)
+    #         log_entry_document.can_delete = True
+    #         log_entry_document.save()
 
     # copy documents on file system and reset can_delete flag
     subprocess.call('cp -pr {0}/proposals/{1} {0}/proposals/{2}'.format(media_prefix, original_proposal.id, proposal.id), shell=True)
@@ -3303,6 +3320,92 @@ def duplicate_object(self):
         print('|- Set {} many-to-many relations on {} {}'.format(len(relations), field_name, text_relations))
 
     return self
+
+def duplicate_tclass(p):
+    original_proposal=copy.deepcopy(p)
+    p.id=None
+    p.save()
+    print ('new proposal',p)
+
+    for park in original_proposal.parks.all():
+        
+        original_park=copy.deepcopy(park)
+        park.id=None
+        park.proposal=p
+        park.save()
+        print('new park', park,park.id, original_park, original_park.id, park.proposal)
+        for activity in original_park.activities.all():
+            activity.id=None
+            activity.proposal_park=park
+            activity.save()
+            print('new activity', activity, activity.id, park)
+            #new_activities_list.append(new_ac)
+        for access in original_park.access_types.all():
+            access.id=None
+            access.proposal_park=park
+            access.save()
+            print('new access', access, park)
+            #new_access_list.append(new_ac)
+        for zone in original_park.zones.all():
+            original_zone=copy.deepcopy(zone)
+            zone.id=None
+            zone.proposal_park=park
+            zone.save()
+            print('new zone',zone)          
+            for acz in original_zone.park_activities.all():
+                acz.id=None
+                acz.park_zone=zone
+                acz.save()
+                print('new zone activity', acz, zone)
+
+    for trail in original_proposal.trails.all():
+        original_trail=copy.deepcopy(trail)     
+        trail.id=None
+        trail.proposal=p
+        trail.save()
+        
+        for section in original_trail.sections.all():
+            original_section=copy.deepcopy(section)
+            section.id=None
+            section.proposal_trail=trail
+            section.save()
+            print('new section', section, trail)
+            for act in original_section.trail_activities.all():
+                act.id=None
+                act.trail_section=section
+                act.save()
+                print('new trail activity', act, section)
+            
+    try:
+        other_details=ProposalOtherDetails.objects.get(proposal=original_proposal)
+        new_accreditations=[]
+        print('proposal:',original_proposal, original_proposal.other_details.id, other_details.id)
+        print('accreditations', other_details.accreditations.all())
+        for acc in other_details.accreditations.all():
+            acc.id=None
+            acc.save()
+            new_accreditations.append(acc)
+        other_details.id=None
+        other_details.proposal=p
+        other_details.save()
+        for new_acc in new_accreditations:
+            new_acc.proposal_other_details=other_details
+            new_acc.save()
+    except ProposalOtherDetails.DoesNotExist:
+        other_details=ProposalOtherDetails.objects.create(proposal=p)
+
+    for vehicle in original_proposal.vehicles.all():
+        vehicle.id=None
+        vehicle.proposal=p
+        vehicle.save()
+    for vessel in original_proposal.vessels.all():
+        vessel.id=None
+        vessel.proposal=p
+        vessel.save()
+
+    return p
+
+
 
 def searchKeyWords(searchWords, searchProposal, searchApproval, searchCompliance, is_internal= True):
     from commercialoperator.utils import search, search_approval, search_compliance
