@@ -47,6 +47,57 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        Action 
+                    </div>
+                    <div class="panel-body panel-collapse">
+                        
+                        <!--div v-if="statusId ==='open' && this.call_email.can_user_action" class="row action-button">
+                          <div class="col-sm-12">
+                                <a ref="save" @click="save()" class="btn btn-primary btn-block">
+                                  Save
+                                </a>
+                          </div>
+                        </div-->
+
+                        <div  class="row action-button">
+                          <div class="col-sm-12">
+                                <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
+                                  Send to Manager
+                                </a>
+                          </div>
+                        </div>
+                        
+                        <div class="row action-button">
+                          <div class="col-sm-12">
+                                <a @click="offence()" class="btn btn-primary btn-block">
+                                  Offence
+                                </a>
+                          </div>
+                        </div>
+
+                        <div  class="row action-button">
+                          <div class="col-sm-12">
+                                <a @click="sanction_outcome()" class="btn btn-primary btn-block">
+                                  Sanction Outcome
+                                </a>
+                          </div>
+                        </div>
+                        
+                        <div  class="row action-button">
+                          <div class="col-sm-12">
+                                <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
+                                  Close
+                                </a>
+                          </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
 
             
           </div>
@@ -401,6 +452,7 @@ export default {
         this.$refs.inspection_team_table.vmDataTable.ajax.reload()
     },
     personSelected: function(para) {
+        console.log(para);
         this.setPartyInspected(para);
     },
     updateWorkflowBindId: function() {
@@ -547,6 +599,21 @@ export default {
     //if (this.$route.params.inspection_id) {
       //await this.loadInspection({ inspection_id: this.$route.params.inspection_id });
     //}
+
+      // Set Individual or Organisation in search field
+      if (this.inspection.individual_inspected) {
+          let value = [
+              this.inspection.individual_inspected.full_name, 
+              this.inspection.individual_inspected.dob].
+              filter(Boolean).join(", ");
+          this.$refs.search_person.setInput(value);
+      } else if (this.inspection.organisation_inspected) {
+          let value = [
+              this.inspection.organisation_inspected.name,
+              this.inspection.organisation_inspected.abn].
+              filter(Boolean).join(", ");
+          this.$refs.search_person.setInput(value);
+      }
   },
   mounted: function() {
       let vm = this;

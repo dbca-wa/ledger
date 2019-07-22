@@ -257,6 +257,7 @@ class InspectionDatatableSerializer(serializers.ModelSerializer):
     inspection_type = InspectionTypeSerializer()
     planned_for = serializers.SerializerMethodField()
     status = CustomChoiceField(read_only=True)
+    inspection_team_lead = EmailUserSerializer()
     
     class Meta:
         model = Inspection
@@ -266,12 +267,9 @@ class InspectionDatatableSerializer(serializers.ModelSerializer):
                 'inspection_type',
                 'status',
                 'planned_for',
+                'inspection_team_lead',
                 'user_action',
                 )
-
-    # def get_user_action(self, obj):
-    #     process_url = '<a href=/internal/inspection/' + str(obj.id) + '>Process</a>'
-    #     return process_url
 
     def get_user_action(self, obj):
         user_id = self.context.get('request', {}).user.id

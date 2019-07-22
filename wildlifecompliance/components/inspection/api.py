@@ -380,6 +380,8 @@ class InspectionViewSet(viewsets.ModelViewSet):
                         team_member_list = instance.inspection_team.all()
                         if team_member_list and not instance.inspection_team_lead_id in team_member_list:
                             instance.inspection_team_lead = team_member_list[0]
+                        else:
+                            instance.inspection_team_lead_id = None
                     if action == 'make_team_lead':
                         if user not in team_member_list:
                             instance.inspection_team.add(user)

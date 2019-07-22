@@ -167,6 +167,18 @@
                             orderable: true
                         },
                         {
+                            data: 'inspection_team_lead',
+                            searchable: false,
+                            orderable: true,
+                            mRender: function (data, type, full) {
+                                if (data) {
+                                    return data.full_name;
+                                } else {
+                                    return '';
+                                }
+                            }
+                        },
+                        {
                             data: 'user_action',
                             searchable: false,
                             orderable: false
@@ -179,6 +191,7 @@
                     'Inspection Type',
                     'Status',
                     'Planned for',
+                    'Team Lead',
                     'Action',
                 ],
             }
