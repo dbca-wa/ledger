@@ -109,58 +109,6 @@ class Organisation(models.Model):
             # log linking
             self.log_user_action(OrganisationAction.ACTION_CONTACT_ADDED.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
 
-
-    # def link_user(self,user,request):
-    #     with transaction.atomic():
-    #         try:
-    #             UserDelegation.objects.get(organisation=self,user=user)
-    #             raise ValidationError('This user has already been linked to {}'.format(str(self.organisation)))
-    #         except UserDelegation.DoesNotExist:
-    #             delegate = UserDelegation.objects.create(organisation=self,user=user)
-    #         # Create contact person
-    #         OrganisationContact.objects.create(
-    #             organisation = self,
-    #             first_name = user.first_name,
-    #             last_name = user.last_name,
-    #             mobile_number = user.mobile_number,
-    #             phone_number = user.phone_number,
-    #             fax_number = user.fax_number,
-    #             email = user.email
-
-    #         )
-    #         # log linking
-    #         self.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
-    #         # send email
-    #         send_organisation_link_email_notification(user,request.user,self,request)
-
-    #Old unlink user method from Disturbance
-    # def unlink_user(self,user,request):
-    #     with transaction.atomic():
-    #         try:
-    #             delegate = UserDelegation.objects.get(organisation=self,user=user)
-    #         except UserDelegation.DoesNotExist:
-    #             raise ValidationError('This user is not a member of {}'.format(str(self.organisation)))
-    #         # delete contact person
-    #         try:
-    #             '''OrganisationContact.objects.get(
-    #                 organisation = self,
-    #                 email = delegate.user.email
-
-    #             ).delete()'''
-    #             org_contact = OrganisationContact.objects.get(organisation = self, email = delegate.user.email)
-    #             if OrganisationContact.objects.filter(organisation=self).count()>1:
-    #                 org_contact.delete()
-    #             else:
-    #                 raise ValidationError('You cannot unlink the last Organisation user')
-    #         except OrganisationContact.DoesNotExist:
-    #             pass
-    #         # delete delegate
-    #         delegate.delete()
-    #         # log linking
-    #         self.log_user_action(OrganisationAction.ACTION_UNLINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
-    #         # send email
-    #         send_organisation_unlink_email_notification(user,request.user,self,request)
-
     def update_organisation(self, request):
         # log organisation details updated (eg ../internal/organisations/access/2) - incorrect - this is for OrganisationRequesti not Organisation
         # should be ../internal/organisations/1
@@ -796,15 +744,6 @@ class OrganisationRequestLogEntry(CommunicationsLogEntry):
         app_label = 'commercialoperator'
 
 
-
-#import reversion
-#reversion.register(Organisation, follow=['contacts', 'action_logs', 'comms_logs'])
-#reversion.register(OrganisationContact)
-#reversion.register(OrganisationAction)
-#reversion.register(OrganisationLogEntry)
-#reversion.register(OrganisationLogDocument)
-#reversion.register(OrganisationRequest)
-#reversion.register(UserDelegation)
 
 import reversion
 reversion.register(ledger_organisation, follow=['organisation_set'])
