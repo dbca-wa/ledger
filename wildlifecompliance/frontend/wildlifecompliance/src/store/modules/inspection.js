@@ -30,6 +30,20 @@ export const inspectionStore = {
         updatePlannedForTime(state, time) {
             Vue.set(state.inspection, 'planned_for_time', time);
         },
+        updatePartyInspected(state, data) {
+            if (data.data_type === 'individual') {
+                Vue.set(state.inspection, 'individual_inspected_id', data.id);
+                if (state.inspection.organisation_inspected_id) {
+                    state.inspection.organisation_inspected_id = null;
+                }
+            }
+            if (data.data_type === 'organisation') {
+                Vue.set(state.inspection, 'organisation_inspected_id', data.id);
+                if (state.inspection.individual_inspected_id) {
+                    state.inspection.individual_inspected_id = null;
+                }
+            }
+        },
         
     },
     actions: {
@@ -134,6 +148,9 @@ export const inspectionStore = {
         },
         setPlannedForTime({ commit }, time ) {
             commit("updatePlannedForTime", time);
+        },
+        setPartyInspected({ commit, }, data) {
+            commit("updatePartyInspected", data);
         },
     },
 };

@@ -130,11 +130,11 @@
                             
                             <div class="col-sm-12 form-group"><div class="row">
                                 <div class="col-sm-8">
-                                    <SearchPerson :isEditable="!readonlyForm" classNames="form-control" elementId="search-person" :search_type="inspection.party_inspected" @person-selected="personSelected"/>
+                                    <SearchPerson :isEditable="!readonlyForm" classNames="form-control" elementId="search-person" :search_type="inspection.party_inspected" @person-selected="personSelected"ref="search_person"/>
                                 </div>
-                                <div class="col-sm-1">
+                                <!--div class="col-sm-1">
                                     <input type="button" class="btn btn-primary" value="Add" @click.prevent="addOffenderClicked()" />
-                                </div>
+                                </div-->
                                 <div class="col-sm-2">
                                     <input type="button" class="btn btn-primary" value="Create New Person" @click.prevent="createNewPersonClicked()" />
                                 </div>
@@ -295,6 +295,7 @@ export default {
       inspectionTypes: [],
       teamMemberSelected: null,
       displayCreateNewPerson: false,
+      newPersonBeingCreated: false,
       //party_inspected: '',
       
       //callemailTab: "callemailTab" + this._uid,
@@ -355,16 +356,18 @@ export default {
       setInspection: 'setInspection', 
       setPlannedForTime: 'setPlannedForTime',
       modifyInspectionTeam: 'modifyInspectionTeam',
+      setPartyInspected: 'setPartyInspected',
     }),
     newPersonCreated: function(obj) {
-      if(obj.person){
-        this.setCurrentOffender('individual', obj.person.id);
+        console.log(obj);
+        if(obj.person){
+            this.setPartyInspected({data_type: 'individual', id: obj.person.id});
 
         // Set fullname and DOB into the input box
         let full_name = [obj.person.first_name, obj.person.last_name].filter(Boolean).join(" ");
         let dob = obj.person.dob ? "DOB:" + obj.person.dob : "DOB: ---";
         let value = [full_name, dob].filter(Boolean).join(", ");
-        this.$refs.person_search.setInput(value);
+        this.$refs.search_person.setInput(value);
       } else if (obj.err) {
         console.log(err);
       } else {
@@ -372,26 +375,8 @@ export default {
       }
     },
     createNewPersonClicked: function() {
-      let vm = this;
-      vm.newPersonBeingCreated = true;
-      vm.displayCreateNewPerson = !vm.displayCreateNewPerson;
-    },
-    setCurrentOffender: function(data_type, id) {
-      let vm = this;
-
-      if (data_type == "individual") {
-        let initialisers = [utils.fetchUser(id)];
-        Promise.all(initialisers).then(data => {
-          vm.current_offender = data[0];
-          vm.current_offender.data_type = "individual";
-        });
-      } else if (data_type == "organisation") {
-        let initialisers = [vm.searchOrganisation(id)];
-        Promise.all(initialisers).then(data => {
-          vm.current_offender = data[0];
-          vm.current_offender.data_type = "organisation";
-        });
-      }
+      this.newPersonBeingCreated = true;
+      this.displayCreateNewPerson = !this.displayCreateNewPerson;
     },
     addTeamMember: async function() {
         await this.modifyInspectionTeam({
@@ -416,7 +401,7 @@ export default {
         this.$refs.inspection_team_table.vmDataTable.ajax.reload()
     },
     personSelected: function(para) {
-        console.log(para)
+        this.setPartyInspected(para);
     },
     updateWorkflowBindId: function() {
         let timeNow = Date.now()
@@ -562,7 +547,6 @@ export default {
     //if (this.$route.params.inspection_id) {
       //await this.loadInspection({ inspection_id: this.$route.params.inspection_id });
     //}
-    
   },
   mounted: function() {
       let vm = this;
