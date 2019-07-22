@@ -848,6 +848,29 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             search_data.update({'accreditations':[]})
         return search_data
 
+    @property
+    def selected_parks_activities(self):
+        #list of selected parks and activities (to print on licence pdf)
+        selected_parks_activities=[]
+        for p in self.parks.all():
+            park_activities=[]
+            #parks.append(p.park.name)
+            if p.park.park_type=='land':
+                for a in p.activities.all():
+                    park_activities.append(a.activity_name)
+            if p.park.park_type=='marine':
+                for z in p.zones.all():
+                    for a in z.park_activities.all():
+                        park_activities.append(a.activity_name)
+            selected_parks_activities.append({'park': p.park.name, 'activities': park_activities})
+        for t in self.trails.all():
+            #trails.append(t.trail.name)
+            trail_activities=[]
+            for s in t.sections.all():
+                for ts in s.trail_activities.all():
+                  trail_activities.append(ts.activity_name)
+            selected_parks_activities.append({'park': t.trail.name, 'activities': trail_activities})
+        return selected_parks_activities
 
     def __assessor_group(self):
         # TODO get list of assessor groups based on region and activity
@@ -1886,7 +1909,7 @@ class ProposalOtherDetails(models.Model):
     #accreditation_expiry= models.DateField(blank=True, null=True)
 
     #preferred_license_period=models.CharField('Preferred license period', max_length=40, choices=LICENSE_PERIOD_CHOICES,default=LICENSE_PERIOD_CHOICES[0][0])
-    preferred_licence_period=models.CharField('Preferred licence period', max_length=40, choices=LICENCE_PERIOD_CHOICES,default=LICENCE_PERIOD_CHOICES[0][0])
+    preferred_licence_period=models.CharField('Preferred licence period', max_length=40, choices=LICENCE_PERIOD_CHOICES, null=True, blank=True)
     #nominated_start_date= models.DateTimeField(blank=True, null=True)
     #insurance_expiry= models.DateTimeField(blank=True, null=True)
     nominated_start_date= models.DateField(blank=True, null=True)

@@ -164,7 +164,7 @@
                                     </label>
                                 </div>
                                 <div class="col-sm-3">
-                                    <FileField :proposal_id="proposal.id" isRepeatable="false" name="currency_certificate" :id="'proposal'+proposal.id" :readonly="proposal.readonly"></FileField>
+                                    <FileField :proposal_id="proposal.id" isRepeatable="false" name="currency_certificate" :id="'proposal'+proposal.id" :readonly="proposal.readonly" ref="currency_doc"></FileField>
                                 </div>
                                 <div class="col-sm-3">
                                     <label class="control-label pull-left"  for="Name">Expiry Date
@@ -317,7 +317,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <FileField :proposal_id="proposal.id" isRepeatable="false" name="deed_poll" :id="'proposal'+proposal.id" :readonly="proposal.readonly"></FileField>
+                                    <FileField :proposal_id="proposal.id" isRepeatable="false" name="deed_poll" :id="'proposal'+proposal.id" :readonly="proposal.readonly" ref="deed_poll_doc"></FileField>
                                 </div>                                
                             </div>
                        </div> 

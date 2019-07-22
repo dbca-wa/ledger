@@ -218,6 +218,7 @@ class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
     nominated_start_date = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
     insurance_expiry = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
     accreditations = ProposalAccreditationSerializer(many=True, read_only=True)
+    preferred_licence_period = serializers.CharField(allow_blank=True, allow_null=True)
 
     class Meta:
         model = ProposalOtherDetails

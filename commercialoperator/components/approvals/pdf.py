@@ -8,7 +8,7 @@ from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, 
     KeepTogether, PageBreak, ListItem
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.utils import ImageReader
-from reportlab.lib.colors import HexColor
+from reportlab.lib.colors import HexColor, black
 
 from django.core.files import File
 from django.conf import settings
@@ -83,6 +83,7 @@ styles.add(ParagraphStyle(name='InfoTitleLargeRight', fontName=BOLD_FONTNAME, fo
                           rightIndent=PAGE_WIDTH / 10))
 styles.add(ParagraphStyle(name='BoldLeft', fontName=BOLD_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_LEFT))
 styles.add(ParagraphStyle(name='BoldRight', fontName=BOLD_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_RIGHT))
+styles.add(ParagraphStyle(name='BoldCenter', fontName=BOLD_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_CENTER))
 styles.add(ParagraphStyle(name='ItalicLeft', fontName=ITALIC_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_LEFT))
 styles.add(ParagraphStyle(name='ItalifRight', fontName=ITALIC_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_RIGHT))
 styles.add(ParagraphStyle(name='Center', alignment=enums.TA_CENTER))
@@ -342,13 +343,14 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
     doc.site_url = site_url
     
     approval_table_style = TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])
+    box_table_style = TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP'), ('BOX', (0,0), (-1,-1), 0.25, black), ('INNERGRID', (0,0), (-1,-1), 0.25, black), ('ALIGN', (0, 0), (-1, -1), 'RIGHT')])
 
     elements = []
 
     #Organization details
 
     #import ipdb; ipdb.set_trace()
-    address = proposal.applicant_address
+    address = proposal.applicant_address 
     # address = proposal.applicant_address
     if proposal.org_applicant:
         email = proposal.org_applicant.organisation.organisation_set.all().first().contacts.all().first().email
@@ -379,7 +381,7 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-    
+        
     elements.append(KeepTogether(delegation))
 
     elements.append(Paragraph('Commencing on the date of execution of this licence and expiring on {}'.format(approval.expiry_date.strftime(DATE_FORMAT)),styles['BoldLeft']))
@@ -401,16 +403,16 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
     elements.append(understandingList)
 
     # proposal requirements
-    requirements = proposal.requirements.all().exclude(is_deleted=True)
-    if requirements.exists():
-        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-        elements.append(Paragraph('The following requirements must be satisfied for the licence not to be withdrawn:', styles['BoldLeft']))
-        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    # requirements = proposal.requirements.all().exclude(is_deleted=True)
+    # if requirements.exists():
+    #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    #     elements.append(Paragraph('The following requirements must be satisfied for the licence not to be withdrawn:', styles['BoldLeft']))
+    #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-        conditionList = ListFlowable(
-            [Paragraph(a.requirement, styles['Left']) for a in requirements.order_by('order')],
-            bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
-        elements.append(conditionList)
+    #     conditionList = ListFlowable(
+    #         [Paragraph(a.requirement, styles['Left']) for a in requirements.order_by('order')],
+    #         bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
+    #     elements.append(conditionList)
 
     elements += _layout_extracted_fields(approval.extracted_fields)
 
@@ -420,6 +422,50 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
     elements.append(Paragraph('{} {}'.format(user.first_name, user.last_name), styles['Left']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph(approval.issue_date.strftime(DATE_FORMAT), styles['Left']))
+    
+    elements.append(PageBreak())
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    table_data=[[Paragraph('License Number', styles['BoldLeft']),
+                              Paragraph(_format_name(approval.lodgement_number),
+                                         styles['Left'])], [Paragraph('Expiry Date', styles['BoldLeft']),
+                              Paragraph(_format_name(approval.expiry_date).strftime(DATE_FORMAT),
+                                         styles['Left'])]]
+    t=Table(table_data, colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
+                            style=box_table_style)
+    elements.append(t)
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph('SCHEDULE 1', styles['BoldCenter']))
+    elements.append(Paragraph('COMMERCIAL OPERATIONS LICENCE ACTIVITIES', styles['BoldCenter']))
+
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    park_data=[]
+    for p in approval.current_proposal.selected_parks_activities:
+        #park_data.append([Paragraph(_format_name(p['park']), styles['BoldLeft']),
+        #                     [Paragraph(a, styles['Left']) for a in p['activities']]])
+        activities_str=[]
+        for ac in p['activities']:
+            activities_str.append(ac.encode('UTF-8'))
+        activities_str=str(activities_str).strip('[]')
+        park_data.append([Paragraph(_format_name(p['park']), styles['BoldLeft']),
+                              Paragraph(activities_str, styles['Left'])])
+    t=Table(park_data, colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
+                            style=box_table_style)
+    elements.append(t)
+
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))    
+    elements.append(Paragraph('SCHEDULE 2', styles['BoldCenter']))
+    elements.append(Paragraph('COMMERCIAL OPERATIONS LICENCE CONDITIONS', styles['BoldCenter']))
+    requirements = proposal.requirements.all().exclude(is_deleted=True)
+    if requirements.exists():
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+        #elements.append(Paragraph('The following requirements must be satisfied for the licence not to be withdrawn:', styles['BoldLeft']))
+        #elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+        conditionList = ListFlowable(
+            [Paragraph(a.requirement, styles['Left']) for a in requirements.order_by('order')],
+            bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
+        elements.append(conditionList)
 
     doc.build(elements)
 
