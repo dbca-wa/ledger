@@ -61,8 +61,8 @@
                                       <p class="pull-right" style="margin-top:5px">
                                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                        <!-- <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed"/> -->
-                                        <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()"/>
+                                        <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed"/>
+                                        <!--<input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()"/>-->
                                         <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
                                       </p>
                                     </div>
@@ -377,6 +377,7 @@ export default {
         let formData = vm.set_formData()
 
 /*
+*/
         var missing_data= vm.can_submit();
         if(missing_data!=true){
           swal({
@@ -386,7 +387,6 @@ export default {
           })
           return false;
         }
-*/
 
         // remove the confirm prompt when navigating away from window (on button 'Submit' click)
         vm.submitting = true;
