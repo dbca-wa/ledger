@@ -2348,19 +2348,21 @@ class ApplicationSelectedActivity(models.Model):
         ).exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED).count() > 0
 
         # can_reissue is true if the activity has expired, excluding if it was surrendered or cancelled
-        can_action['can_reissue'] = ApplicationSelectedActivity.objects.filter(
-            Q(id=self.id, expiry_date__isnull=False),
-            Q(expiry_date__lt=current_date) |
-            Q(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED)
-        ).filter(
-            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
-        ).exclude(
-            activity_status__in=[
-                ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
-                ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
-                ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
-            ]
-        ).count() > 0
+        # disable if there are any open applications to maintain licence sequence data integrity
+        if not purposes_in_open_applications:
+            can_action['can_reissue'] = ApplicationSelectedActivity.objects.filter(
+                Q(id=self.id, expiry_date__isnull=False),
+                Q(expiry_date__lt=current_date) |
+                Q(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED)
+            ).filter(
+                processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
+            ).exclude(
+                activity_status__in=[
+                    ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
+                    ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
+                    ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
+                ]
+            ).count() > 0
 
         # can_reinstate is true if the activity has not yet expired and is currently SUSPENDED, CANCELLED or SURRENDERED
         can_action['can_reinstate'] = self.expiry_date and \
