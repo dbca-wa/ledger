@@ -1093,16 +1093,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                         selected_activities__activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
                     ) \
                     .order_by('-id')
-                asa_accepted = ApplicationSelectedActivity.objects.filter(
-                    Q(application__org_applicant_id=org_applicant) if org_applicant else
-                    Q(application__proxy_applicant=proxy_applicant) if proxy_applicant else
-                    Q(application__submitter=request.user)
-                ).filter(
-                    processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
-                )
                 latest_active_licence = WildlifeLicence.objects.filter(
                     licence_category_id=licence_category.id,
-                    current_application__in=asa_accepted.values_list('application_id', flat=True)
+                    current_application__in=active_current_applications.values_list('id', flat=True)
                 ).order_by('-id').first()
 
                 # Initial validation
