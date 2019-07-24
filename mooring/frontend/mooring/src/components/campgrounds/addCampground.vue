@@ -201,8 +201,8 @@ export default {
                         console.log("There was an error sending data.");
                         console.log(resp);
                         var message = {
-                            title: "Failure",
-                            text: "Mooring not saved, there was an error.\nPlease check all mandatory fields are complete.",
+                            title: "Failure: Mooring not saved",
+                            text: resp.responseText,
                             type: "error"
                         }
                         vm.swalMessage(message);

@@ -116,7 +116,8 @@ class PaymentsReportView(LoginRequiredMixin, View):
             response = requests.get(url,
                                     headers=JSON_REQUEST_HEADER_PARAMS,
                                     cookies=request.COOKIES,
-                                    params=data)
+                                    params=data,
+                                    verify=False)
             if response.status_code == 200:
                 filename = 'wl_payments-{}_{}'.format(
                     str(start.date()),
