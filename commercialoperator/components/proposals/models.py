@@ -14,12 +14,13 @@ from django.contrib.sites.models import Site
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
+from ledger.accounts.models import OrganisationAddress
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.payments.models import Invoice
 #from ledger.accounts.models import EmailUser
 from ledger.licence.models import  Licence
 from commercialoperator import exceptions
-from commercialoperator.components.organisations.models import Organisation
+from commercialoperator.components.organisations.models import Organisation, OrganisationContact, UserDelegation
 from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument#, RevisionedMixin
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
@@ -1794,7 +1795,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 proposal.submitter = request.user
                 proposal.previous_application = self
                 try:
-                    ProposalOtherDetails.objects.get(proposal=proposal)                    
+                    ProposalOtherDetails.objects.get(proposal=proposal)
                 except ProposalOtherDetails.DoesNotExist:
                     ProposalOtherDetails.objects.create(proposal=proposal)
                 # Create a log entry for the proposal
@@ -1831,7 +1832,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 proposal.submitter = request.user
                 proposal.previous_application = self
                 try:
-                    ProposalOtherDetails.objects.get(proposal=proposal)                    
+                    ProposalOtherDetails.objects.get(proposal=proposal)
                 except ProposalOtherDetails.DoesNotExist:
                     ProposalOtherDetails.objects.create(proposal=proposal)
                 #copy all the requirements from the previous proposal
@@ -3332,7 +3333,7 @@ def duplicate_tclass(p):
     print ('new proposal',p)
 
     for park in original_proposal.parks.all():
-        
+
         original_park=copy.deepcopy(park)
         park.id=None
         park.proposal=p
@@ -3355,7 +3356,7 @@ def duplicate_tclass(p):
             zone.id=None
             zone.proposal_park=park
             zone.save()
-            print('new zone',zone)          
+            print('new zone',zone)
             for acz in original_zone.park_activities.all():
                 acz.id=None
                 acz.park_zone=zone
@@ -3363,11 +3364,11 @@ def duplicate_tclass(p):
                 print('new zone activity', acz, zone)
 
     for trail in original_proposal.trails.all():
-        original_trail=copy.deepcopy(trail)     
+        original_trail=copy.deepcopy(trail)
         trail.id=None
         trail.proposal=p
         trail.save()
-        
+
         for section in original_trail.sections.all():
             original_section=copy.deepcopy(section)
             section.id=None
@@ -3379,7 +3380,7 @@ def duplicate_tclass(p):
                 act.trail_section=section
                 act.save()
                 print('new trail activity', act, section)
-            
+
     try:
         other_details=ProposalOtherDetails.objects.get(proposal=original_proposal)
         new_accreditations=[]
@@ -3611,8 +3612,67 @@ def create_migration_data(filename, verify=False):
                 else:
                     approval=migrate_approval(data)
                 print approval
+    except Exception, e:
+        print e
+
+
+def create_organisation(data):
+
+    oa, created = OrganisationAddress.objects.get_or_create(line1=data['address'], locality=data['town'], state=data['state'], postcode=data['postcode'])
+    lo, created = ledger_organisation.objects.get_or_create(name=data['org_name'], abn=data['abn'], postal_address=oa, billing_address=oa, trading_name=data['trading_name'])
+    org, created = Organisation.objects.get_or_create(organisation=lo)
+
+    user, created = EmailUser.objects.get_or_create(first_name=data['first_name'], last_name=['last_name'], email=['email'], phone_number=['phone_number'])
+    delegate, created = UserDelegation.objects.get_or_create(organisation=org, user=user)
+
+    oc, created = OrganisationContact.objects.get_or_create(
+        organisation=org,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        phone_number=user.phone_number,
+        email=user.email,
+        user_status='active',
+        user_role='organisation_admin',
+        is_admin=True
+    )
+
+    return org
+
+
+def create_organisation_data(filename, verify=False):
+    try:
+        '''
+        Example csv
+            address, town/city, state (WA), postcode, org_name, abn, trading_name, first_name, last_name, email, phone_number
+            123 Something Road, Perth, WA, 6100, Import Test Org 3, 615503, DDD_03, john, Doe_1, john.doe_1@dbca.wa.gov.au, 08 555 5555
+        To test:
+            from commercialoperator.components.proposals.models import create_organisation_data
+            create_migration_data('commercialoperator/utils/csv/orgs.csv')
+        '''
+        data={}
+        with open(filename) as csvfile:
+            reader = csv.reader(csvfile, delimiter=str(','))
+            header = next(reader) # skip header
+            for row in reader:
+                #import ipdb; ipdb.set_trace()
+                data.update({'address': row[0].strip()})
+                data.update({'town': row[1].strip().capitalize()})
+                data.update({'state': row[2].strip()})
+                data.update({'postcode': row[3].strip()})
+                data.update({'org_name': row[4].strip()})
+                data.update({'abn': row[5].strip()})
+                data.update({'trading_name': row[6].strip()})
+                data.update({'first_name': row[7].strip().capitalize()})
+                data.update({'last_name': row[8].strip().capitalize()})
+                data.update({'email': row[9].strip()})
+                data.update({'phone_number': row[10].strip()})
+                print data
+
+                organisation=create_organisation(data)
+                print organisation
     except:
         raise
+
 
 
 
