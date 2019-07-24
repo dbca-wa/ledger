@@ -372,8 +372,8 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
                             colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
                             style=approval_table_style))
 
-    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    if approval.current_proposal.org_applicant:
+    if approval.current_proposal.org_applicant and approval.current_proposal.org_applicant.organisation.trading_name:
+        delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         delegation.append(Table([[[Paragraph('Trading Name:', styles['BoldLeft'])],
                                   [Paragraph(_format_name(approval.current_proposal.org_applicant.organisation.trading_name),
                                              styles['Left'])]]],
