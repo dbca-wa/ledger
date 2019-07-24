@@ -1,5 +1,5 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address, Profile,EmailIdentity,Document, EmailUserAction
+from ledger.accounts.models import EmailUser,Address, Profile,EmailIdentity,Document, EmailUserAction, EmailUserLogEntry, CommunicationsLogEntry
 from commercialoperator.components.organisations.models import (   
                                     Organisation,
                                 )
@@ -155,3 +155,44 @@ class EmailUserActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailUserAction
         fields = '__all__'
+
+class EmailUserCommsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailUserLogEntry
+        fields = '__all__'
+
+class CommunicationLogEntrySerializer(serializers.ModelSerializer):
+    customer = serializers.PrimaryKeyRelatedField(queryset=EmailUser.objects.all(),required=False)
+    documents = serializers.SerializerMethodField()
+    class Meta:
+        model = CommunicationsLogEntry
+        fields = (
+            'id',
+            'customer',
+            'to',
+            'fromm',
+            'cc',
+            'type',
+            'reference',
+            'subject'
+            'text',
+            'created',
+            'staff',
+            'emailuser',
+            'documents'
+        )
+
+    def get_documents(self,obj):
+        return [[d.name,d._file.url] for d in obj.documents.all()]
+
+class EmailUserLogEntrySerializer(CommunicationLogEntrySerializer):
+    documents = serializers.SerializerMethodField()
+    class Meta:
+        model = EmailUserLogEntry
+        fields = '__all__'
+        read_only_fields = (
+            'customer',
+        )
+
+    def get_documents(self,obj):
+        return [[d.name,d._file.url] for d in obj.documents.all()]
