@@ -77,6 +77,7 @@ api_patterns = [
     url(r'^api/search_reference',proposal_api.SearchReferenceView.as_view(),name='search_reference'),
     url(r'^api/accreditation_choices',proposal_api.AccreditationTypeView.as_view(),name='accreditation_choices'),
     url(r'^api/licence_period_choices',proposal_api.LicencePeriodChoicesView.as_view(),name='licence_period_choices'),
+    url(r'^api/oracle_job$',api.OracleJob.as_view(), name='get-oracle'),
 
 ]
 

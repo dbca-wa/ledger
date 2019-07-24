@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, B
 from rest_framework.pagination import PageNumberPagination
 from django.urls import reverse
 from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, ActivityCategory, Activity, RequiredDocument, Question, GlobalSettings
-from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer,  AccessTypeSerializer, ParkSerializer, ParkFilterSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, RequiredDocumentSerializer, QuestionSerializer, GlobalSettingsSerializer
+from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer,  AccessTypeSerializer, ParkSerializer, ParkFilterSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, RequiredDocumentSerializer, QuestionSerializer, GlobalSettingsSerializer, OracleSerializer
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from commercialoperator.components.proposals.models import Proposal
@@ -196,6 +196,29 @@ class PaymentViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+
+class OracleJob(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    def get(self, request, format=None):
+        try:
+            data = {
+                "date":request.GET.get("date"),
+                "override": request.GET.get("override")
+            }
+            serializer = OracleSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            utils.oracle_integration(serializer.validated_data['date'].strftime('%Y-%m-%d'),serializer.validated_data['override'])
+            data = {'successful':True}
+            return Response(data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e[0]))
 
 
 
