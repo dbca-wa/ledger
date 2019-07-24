@@ -89,6 +89,9 @@ def send_qaofficer_email_notification(proposal, recipients, request, reminder=Fa
     _log_proposal_email(msg, proposal, sender=sender)
     if proposal.org_applicant:
         _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
+    else:
+        _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
+    
 
 def send_qaofficer_complete_email_notification(proposal, recipients, request, reminder=False):
     email = QAOfficerCompleteNotificationEmail()
@@ -108,7 +111,9 @@ def send_qaofficer_complete_email_notification(proposal, recipients, request, re
     _log_proposal_email(msg, proposal, sender=sender)
     if proposal.org_applicant:
         _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
-
+    else:
+        _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
+    
 
 def send_referral_email_notification(referral,recipients,request,reminder=False):
     email = ReferralSendNotificationEmail()
@@ -129,6 +134,9 @@ def send_referral_email_notification(referral,recipients,request,reminder=False)
     _log_proposal_referral_email(msg, referral, sender=sender)
     if referral.proposal.org_applicant:
         _log_org_email(msg, referral.proposal.org_applicant, referral.referral, sender=sender)
+    else:
+        _log_user_email(msg, referral.proposal.submitter, referral.referral, sender=sender)
+    
 
 def send_referral_complete_email_notification(referral,request):
     email = ReferralCompleteNotificationEmail()
@@ -147,7 +155,9 @@ def send_referral_complete_email_notification(referral,request):
     _log_proposal_referral_email(msg, referral, sender=sender)
     if referral.proposal.org_applicant:
         _log_org_email(msg, referral.proposal.org_applicant, referral.referral, sender=sender)
-
+    else:
+        _log_user_email(msg, referral.proposal.submitter, referral.referral, sender=sender)
+    
 
 def send_amendment_email_notification(amendment_request, request, proposal):
     email = AmendmentRequestSendNotificationEmail()
@@ -171,6 +181,9 @@ def send_amendment_email_notification(amendment_request, request, proposal):
     _log_proposal_email(msg, proposal, sender=sender)
     if proposal.org_applicant:
         _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
+    else:
+        _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
+    
 
 def send_submit_email_notification(request, proposal):
     email = SubmitSendNotificationEmail()
@@ -212,6 +225,8 @@ def send_external_submit_email_notification(request, proposal):
     _log_proposal_email(msg, proposal, sender=sender)
     if proposal.org_applicant:
         _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
+    else:
+        _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
     return msg
 
 #send email when Proposal is 'proposed to decline' by assessor.
@@ -229,6 +244,9 @@ def send_approver_decline_email_notification(reason, request, proposal):
     _log_proposal_email(msg, proposal, sender=sender)
     if proposal.org_applicant:
         _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
+    else:
+        _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
+    
 
 def send_approver_approve_email_notification(request, proposal):
     email = ApproverApproveSendNotificationEmail()
@@ -246,6 +264,9 @@ def send_approver_approve_email_notification(request, proposal):
     _log_proposal_email(msg, proposal, sender=sender)
     if proposal.org_applicant:
         _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
+    else:
+        _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
+    
 
 def send_proposal_decline_email_notification(proposal,request,proposal_decline):
     email = ProposalDeclineSendNotificationEmail()
@@ -264,6 +285,9 @@ def send_proposal_decline_email_notification(proposal,request,proposal_decline):
     _log_proposal_email(msg, proposal, sender=sender)
     if proposal.org_applicant:
         _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
+    else:
+        _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
+    
 
 def send_proposal_approver_sendback_email_notification(request, proposal):
     email = ApproverSendBackNotificationEmail()
@@ -279,7 +303,9 @@ def send_proposal_approver_sendback_email_notification(request, proposal):
     _log_proposal_email(msg, proposal, sender=sender)
     if proposal.org_applicant:
         _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
-
+    else:
+        _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
+    
 
 def send_proposal_approval_email_notification(proposal,request):
     email = ProposalApprovalSendNotificationEmail()
@@ -314,7 +340,9 @@ def send_proposal_approval_email_notification(proposal,request):
     _log_proposal_email(msg, proposal, sender=sender)
     if proposal.org_applicant:
         _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
-
+    else:
+        _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
+    
 
 def _log_proposal_referral_email(email_message, referral, sender=None):
     from commercialoperator.components.proposals.models import ProposalLogEntry
