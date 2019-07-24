@@ -250,6 +250,7 @@ import { mapGetters, mapActions } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import utils from "../utils";
 import $ from "jquery";
+import "jquery-ui/ui/widgets/draggable.js";
 import "bootstrap/dist/css/bootstrap.css";
 import "awesomplete/awesomplete.css";
 
@@ -496,6 +497,12 @@ export default {
     cancel: async function() {
         await this.$refs.sanction_outcome_file.cancel();
         this.close();
+    },
+    makeModalsDraggable: function(){
+      this.elem_modal = $('.modal > .modal-dialog');
+      for (let i=0; i<this.elem_modal.length; i++){
+        $(this.elem_modal[i]).draggable();
+      }
     },
     close: function() {
         this.$parent.sanctionOutcomeInitialised = false;
@@ -832,6 +839,7 @@ export default {
       console.log("mounted sanction");
       this.addEventListeners();
       this.elem_paper_id_notice = $('#paper_id_notice');
+      this.makeModalsDraggable();
     });
   }
 };
