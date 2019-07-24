@@ -165,6 +165,7 @@ export default {
             isContactDetailsOpen: null,
 
             email_user : {
+                id: null,
                 first_name: '',
                 last_name: '',
                 dob: null,
@@ -179,6 +180,11 @@ export default {
                 mobile_number: '',
                 email: '',
             }
+        }
+    },
+    computed: {
+        personId: function() {
+            return this.email_user.id;
         }
     },
     props: {
@@ -219,6 +225,11 @@ export default {
         },
     },
     watch: {
+        personId: {
+            handler: function() {
+                this.handlePersonIdChanged();
+            }
+        },
         displayComponent: {
             handler: function() {
                 this.showHideElement();
@@ -256,9 +267,44 @@ export default {
         }
     },
     methods: {
-        handleSlideElement: function(elem_id){
-            console.log(elem_id);
+        handlePersonIdChanged: function(){
+            if (this.personId) {
+                this.setExistingPerson(this.personId);
+            } else {
+                this.setDefautlPerson();
+            }
+        },
+        setExistingPerson: function(id){
+            let vm = this;
 
+            let initialisers = [utils.fetchUser(id)];
+            Promise.all(initialisers).then(data => {
+                vm.email_user = data[0];
+            });
+        },
+        setPersonId: function(id){
+            this.email_user.id = id;
+        },
+        setDefautlPerson: function(){
+            let email_user = {
+                id: null,
+                first_name: '',
+                last_name: '',
+                dob: null,
+                residential_address: {
+                    line1: '',
+                    locality: '',
+                    state: 'WA',
+                    postcode: '',
+                    country: 'AU'
+                },
+                phone_number: '',
+                mobile_number: '',
+                email: '',
+            };
+            Vue.set(data, 'email_user', email_user);
+        },
+        handleSlideElement: function(elem_id){
             let elem = $('#' + elem_id);
             if (keyword == 'pd'){
                 this.isPersonalDetailsOpen = !this.isPersonalDetailsOpen;

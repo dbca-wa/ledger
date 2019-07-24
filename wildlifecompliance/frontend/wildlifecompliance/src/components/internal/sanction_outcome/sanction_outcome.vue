@@ -120,7 +120,6 @@
                                   <input class="col-sm-1" id="issued_on_paper_yes" type="radio" v-model="sanction_outcome.issued_on_paper" :value="true" />
                                   <label class="col-sm-1 radio-button-label" for="issued_on_paper_yes">Yes</label>
                                   <input class="col-sm-1" id="issued_on_paper_no" type="radio" v-model="sanction_outcome.issued_on_paper" :value="false" />
-                                  
                                   <label class="col-sm-1 radio-button-label" for="issued_on_paper_no">No</label>
                                 </div>
                             </div></div>
@@ -130,7 +129,7 @@
                                     <label class="control-label pull-left">Paper ID</label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <input type="text" class="form-control" name="paper_id" placeholder="" v-model="sanction_outcome.paper_id" /> 
+                                    <input type="text" class="form-control" name="paper_id" placeholder="" v-model="sanction_outcome.paper_id" :disabled="!sanction_outcome.issued_on_paper" /> 
                                 </div>
                             </div></div>
 
@@ -138,8 +137,10 @@
                                 <div class="col-sm-3">
                                     <label class="control-label pull-left">Paper notice</label>
                                 </div>
-                                <div v-if="documentActionUrl" class="col-sm-7">
-                                    <filefield ref="sanction_outcome_file" name="sanction-outcome-file" :isRepeatable="true" :documentActionUrl="documentActionUrl" />
+                                <div id="paper_id_notice">
+                                    <div v-if="documentActionUrl" class="col-sm-7">
+                                        <filefield ref="sanction_outcome_file" name="sanction-outcome-file" :isRepeatable="true" :documentActionUrl="documentActionUrl" :disabled="!sanction_outcome.issued_on_paper"/>
+                                    </div>
                                 </div>
                             </div></div>
 
@@ -268,6 +269,7 @@ export default {
       regions: [], // this is the list of options
       availableDistricts: [], // this is generated from the regionDistricts[] above
       documentActionUrl: null,
+      elem_paper_id_notice: null,
 
       // This is the object to be sent to the server when saving
       sanction_outcome: {
@@ -376,10 +378,13 @@ export default {
     issued_on_paper: {
       handler: function(){
         let vm = this;
-        console.log('issued_on_paper')
         if (!vm.sanction_outcome.issued_on_paper) {
           vm.sanction_outcome.date_of_issue = null;
           vm.sanction_outcome.time_of_issue = null;
+
+          vm.elem_paper_id_notice.slideUp(500);
+        } else {
+          vm.elem_paper_id_notice.slideDown(500);
         }
       }
     },
@@ -513,12 +518,6 @@ export default {
       console.log('currentRegionIdChanged');
       this.updateDistricts();
     },
-    currentDistrictIdChanged: function() {},
-    // loadAllocatedGroup: async function() {
-    //     let url = helpers.add_endpoint_join(api_endpoints.region_district, this.regionDistrictId + '/get_group_id_by_region_district/');
-    //     let returned = await Vue.http.post(url, { 'group_permission': 'manager' });
-    //     return returned;
-    // },
     addRemediationActionClicked: function() {
       let vm = this;
       if (vm.current_remediation_action) {
@@ -830,6 +829,7 @@ export default {
     this.$nextTick(() => {
       console.log("mounted sanction");
       this.addEventListeners();
+      this.elem_paper_id_notice = $('#paper_id_notice');
     });
   }
 };
