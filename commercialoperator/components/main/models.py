@@ -139,6 +139,7 @@ class Park(models.Model):
     child_price = models.DecimalField('Child (price per child)', max_digits=5, decimal_places=2)
     #senior = models.DecimalField('Senior (price per senior)', max_digits=5, decimal_places=2)
     oracle_code = models.CharField(max_length=50)
+    is_gst_exempt = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['name']
@@ -243,6 +244,7 @@ class ApplicationType(models.Model):
     max_renewal_period = models.PositiveSmallIntegerField('Maximum period of each Approval renewal (Years)', null=True, blank=True)
     application_fee = models.DecimalField(max_digits=6, decimal_places=2)
     oracle_code = models.CharField(max_length=50)
+    is_gst_exempt = models.BooleanField(default=True)
 
     class Meta:
         ordering = ['order', 'name']

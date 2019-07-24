@@ -15,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from commercialoperator.components.proposals.models import Proposal
 from commercialoperator.components.proposals.serializers import ProposalSerializer
+from commercialoperator.components.bookings.utils import oracle_integration
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
 import json
 from decimal import Decimal
@@ -198,6 +199,34 @@ class PaymentViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
+class BookingReportView(views.APIView):
+    renderer_classes = (JSONRenderer,)
+
+    def get(self,request,format=None):
+        try:
+            http_status = status.HTTP_200_OK
+            #parse and validate data
+            report = None
+            data = {
+                "date":request.GET.get('date'),
+            }
+            serializer = BookingSettlementReportSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            filename = 'Booking Report-{}'.format(str(serializer.validated_data['date']))
+            # Generate Report
+            report = reports.bookings_report(serializer.validated_data['date'])
+            if report:
+                response = HttpResponse(FileWrapper(report), content_type='text/csv')
+                response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
+                return response
+            else:
+                raise serializers.ValidationError('No report was generated.')
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            traceback.print_exc()
+
+
 class OracleJob(views.APIView):
     renderer_classes = [JSONRenderer,]
     def get(self, request, format=None):
@@ -208,7 +237,7 @@ class OracleJob(views.APIView):
             }
             serializer = OracleSerializer(data=data)
             serializer.is_valid(raise_exception=True)
-            utils.oracle_integration(serializer.validated_data['date'].strftime('%Y-%m-%d'),serializer.validated_data['override'])
+            oracle_integration(serializer.validated_data['date'].strftime('%Y-%m-%d'),serializer.validated_data['override'])
             data = {'successful':True}
             return Response(data)
         except serializers.ValidationError:

@@ -103,29 +103,18 @@ class ApplicationTypeSerializer(serializers.ModelSerializer):
         fields = '__all__'
         #extra_fields = ['pizzas']
 
+
 class GlobalSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = GlobalSettings
         fields = ('key', 'value')
+
 
 class AccessTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccessType
         fields = ('id', 'name', 'visible')
 
-# class VehicleSerializer(serializers.ModelSerializer):
-#     access_type= AccessTypeSerializer()
-#     rego_expiry=serializers.DateField(format="%d/%m/%Y")
-#     class Meta:
-#         model = Vehicle
-#         fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry')
-
-# class SaveVehicleSerializer(serializers.ModelSerializer):
-#     #access_type= AccessTypeSerializer()
-#     rego_expiry = serializers.DateField(input_formats=['%d/%m/%Y'], allow_null=True)
-#     class Meta:
-#         model = Vehicle
-#         fields = ('id', 'capacity', 'rego', 'license', 'access_type', 'rego_expiry')
 
 class RequiredDocumentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -139,6 +128,7 @@ class ActivityCategorySerializer(serializers.ModelSerializer):
         model = ActivityCategory
         fields = ('id', 'name','activities')
 
+
 class TrailSerializer(serializers.ModelSerializer):
     sections=SectionSerializer(many=True)
     allowed_activities=ActivitySerializer(many=True)
@@ -146,8 +136,19 @@ class TrailSerializer(serializers.ModelSerializer):
         model = Trail
         fields = ('id', 'name', 'code', 'section_ids', 'sections', 'allowed_activities')
 
+
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ('id', 'question_text', 'answer_one', 'answer_two', 'answer_three', 'answer_four','correct_answer', 'correct_answer_value')
+
+
+class BookingSettlementReportSerializer(serializers.Serializer):
+    date = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
+
+
+class OracleSerializer(serializers.Serializer):
+    date = serializers.DateField(input_formats=['%d/%m/%Y','%Y-%m-%d'])
+    override = serializers.BooleanField(default=False)
+
 

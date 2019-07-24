@@ -1,4 +1,5 @@
 <template lang="html">
+  <div class="container">
     <div id="report-form">
         <form method="get" id="payments-form" action="/ledger/payments/api/report-allocated">
             <div class="well well-sm">
@@ -95,6 +96,7 @@
                 </div>
             </div>
         </form>
+        <!--
         <form id="refund_form">
             <div class="well well-sm">
                 <div class="row">
@@ -135,12 +137,14 @@
                 </div>
             </div>
         </form>
+        -->
             <div class="well well-sm">
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="row">
                             <div class="col-sm-12">
                                 <div class="row">
+                                    <!--
                                     <div class="col-sm-6">
                                         <form ref="booking_settlements_form">
                                             <h3 style="margin-bottom:20px;">Settlement Report</h3>
@@ -158,6 +162,7 @@
                                             </div>
                                         </form>
                                     </div>
+                                    -->
                                     <div class="col-sm-6">
                                         <form ref="bookings_form">
                                             <h3 style="margin-bottom:20px;">Bookings Report</h3>
@@ -216,10 +221,12 @@
             </div>
         </form>
     </div>
+  </div>
 </template>
 
 <script>
-import {$,swal,bus,datetimepicker,api_endpoints,helpers,Moment,validate} from "../../hooks.js"
+//import {$,swal,bus,datetimepicker,api_endpoints,helpers,Moment,validate} from "@/utils/hooks.js"
+import {api_endpoints,helpers} from "@/utils/hooks.js"
 export default {
     name:"reports",
     data:function () {

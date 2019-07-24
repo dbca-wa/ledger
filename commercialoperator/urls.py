@@ -77,8 +77,12 @@ api_patterns = [
     url(r'^api/search_reference',proposal_api.SearchReferenceView.as_view(),name='search_reference'),
     url(r'^api/accreditation_choices',proposal_api.AccreditationTypeView.as_view(),name='accreditation_choices'),
     url(r'^api/licence_period_choices',proposal_api.LicencePeriodChoicesView.as_view(),name='licence_period_choices'),
-    url(r'^api/oracle_job$',api.OracleJob.as_view(), name='get-oracle'),
 
+    url(r'^api/oracle_job$',main_api.OracleJob.as_view(), name='get-oracle'),
+    #url(r'^api/reports/bookings$', api.BookingReportView.as_view(),name='bookings-report'),
+
+
+    #url(r'^api/reports/booking_settlements$', api.BookingSettlementReportView.as_view(),name='booking-settlements-report'),
 ]
 
 # URL Patterns
@@ -125,6 +129,7 @@ urlpatterns = [
     url(r'^history/proposaltype/(?P<pk>\d+)/$', proposal_views.ProposalTypeHistoryCompareView.as_view(), name='proposaltype_history'),
     url(r'^history/helppage/(?P<pk>\d+)/$', proposal_views.HelpPageHistoryCompareView.as_view(), name='helppage_history'),
     url(r'^history/organisation/(?P<pk>\d+)/$', organisation_views.OrganisationHistoryCompareView.as_view(), name='organisation_history'),
+
 
 ] + ledger_patterns
 
