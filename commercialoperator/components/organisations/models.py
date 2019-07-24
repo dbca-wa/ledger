@@ -8,8 +8,8 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
 from ledger.accounts.models import Organisation as ledger_organisation
-from ledger.accounts.models import EmailUser, Document, RevisionedMixin
-from commercialoperator.components.main.models import UserAction,CommunicationsLogEntry
+from ledger.accounts.models import EmailUser,RevisionedMixin #,Document
+from commercialoperator.components.main.models import UserAction,CommunicationsLogEntry, Document
 from commercialoperator.components.organisations.utils import random_generator
 from commercialoperator.components.organisations.emails import (
                         send_organisation_request_accept_email_notification,
