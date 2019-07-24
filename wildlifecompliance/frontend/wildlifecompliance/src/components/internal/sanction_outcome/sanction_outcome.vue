@@ -283,7 +283,6 @@ export default {
         current_offender: {}, // Store an offender to be saved as an attribute of the sanction outcome
         issued_on_paper: false,
         paper_id: "",
-        // document: null,
         description: "",
         date_of_issue: null,
         time_of_issue: null,
@@ -324,11 +323,18 @@ export default {
           {
             data: "Include",
             mRender: function(data, type, row) {
-              return (
-                '<input type="checkbox" class="alleged_offence_include" value="' +
-                data +
-                '" checked="checked"></input>'
-              );
+              let ret_line = null;
+
+              if (vm.sanction_outcome.type == 'infringement_notice'){
+                ret_line = '<input type="radio" name="infringement_radio_button" class="alleged_offence_include" value="' + data + '"></input>';
+              } else if (vm.sanction_outcome.type == '' || vm.sanction_outcome.type == null) {
+                // Should not reach here
+                ret_line = '';
+              } else {
+                ret_line = '<input type="checkbox" class="alleged_offence_include" value="' + data + '" checked="checked"></input>';
+              }
+
+              return ret_line;
             }
           }
         ]
@@ -366,6 +372,12 @@ export default {
     filefield,
   },
   watch: {
+    current_type: {
+      handler: function(){
+        let vm = this;
+        vm.sanction_outcome.current_offence = {};
+      }
+    },
     isModalOpen: {
       handler: function() {
         if (this.isModalOpen) {
@@ -403,11 +415,11 @@ export default {
         this.currentRegionIdChanged();
       }
     },
-    current_district_id: {
-      handler: function() {
-        this.currentDistrictIdChanged();
-      }
-    }
+    // current_district_id: {
+    //   handler: function() {
+    //     this.currentDistrictIdChanged();
+    //   }
+    // }
   },
   computed: {
     ...mapGetters("callemailStore", {
@@ -428,8 +440,8 @@ export default {
     current_region_id: function() {
       return this.sanction_outcome.region_id;
     },
-    current_district_id: function() {
-      return this.sanction_outcome.district_id;
+    current_type: function() {
+      return this.sanction_outcome.type;
     },
     modalTitle: function() {
       return "Identify Sanction Outcome";
@@ -691,6 +703,8 @@ export default {
       Object.assign(this.regionDistricts, returned_region_districts);
     },
     sendData: async function() {
+      console.log('sendData');
+
       let vm = this;
       let alleged_offence_ids = [];
       let checkboxes = $(".alleged_offence_include");
@@ -751,7 +765,6 @@ export default {
       this.$refs.tbl_remediation_actions.vmDataTable.rows().remove().draw(); // Clear the table anyway
     },
     currentOffenceChanged: function() {
-      console.log("currentOffenceChanged");
       let vm = this;
 
       vm.sanction_outcome.current_offender = {};
@@ -761,26 +774,15 @@ export default {
 
       // Construct the datatable of the alleged offences
       vm.clearTableAllegedOffence();
-      if (
-        vm.sanction_outcome.current_offence &&
-        vm.sanction_outcome.current_offence.alleged_offences
-      ) {
-        for (
-          let j = 0;
-          j < vm.sanction_outcome.current_offence.alleged_offences.length;
-          j++
-        ) {
+      if (vm.sanction_outcome.current_offence && vm.sanction_outcome.current_offence.alleged_offences) {
+        for (let j = 0; j < vm.sanction_outcome.current_offence.alleged_offences.length; j++) {
           vm.$refs.tbl_alleged_offence.vmDataTable.row
             .add({
               id: vm.sanction_outcome.current_offence.alleged_offences[j].id,
               Act: vm.sanction_outcome.current_offence.alleged_offences[j].act,
-              "Section/Regulation":
-                vm.sanction_outcome.current_offence.alleged_offences[j].name,
-              "Alleged Offence":
-                vm.sanction_outcome.current_offence.alleged_offences[j]
-                  .offence_text,
-              Include:
-                vm.sanction_outcome.current_offence.alleged_offences[j].id
+              "Section/Regulation": vm.sanction_outcome.current_offence.alleged_offences[j].name,
+              "Alleged Offence": vm.sanction_outcome.current_offence.alleged_offences[j].offence_text,
+              Include: vm.sanction_outcome.current_offence.alleged_offences[j].id
             })
             .draw();
         }
