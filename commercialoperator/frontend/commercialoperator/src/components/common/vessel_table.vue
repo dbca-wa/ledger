@@ -156,9 +156,19 @@ export default {
             let vm = this;
         },
         newVessel: function(){
+            let vm=this;
             this.$refs.edit_vessel.vessel_id = null;
             //this.$refs.edit_vessel.fetchVessel(id);
-            this.$refs.edit_vessel.vessel=this.new_vessel;
+            //this.$refs.edit_vessel.vessel=this.new_vessel;
+            var new_vessel_another={
+                nominated_vessel:'',
+                spv_no:'',
+                hire_rego:'',
+                craft_no:null,
+                size:'',
+                proposal: vm.proposal.id
+            }
+            this.$refs.edit_vessel.vessel=new_vessel_another;
             this.$refs.edit_vessel.vessel_action='add'
             this.$refs.edit_vessel.isModalOpen = true;
         },
