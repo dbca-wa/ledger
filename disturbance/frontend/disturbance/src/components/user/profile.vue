@@ -257,7 +257,7 @@
                                   </label>
                                   <div class="col-sm-12">
                                     <span class="btn btn-primary btn-file pull-left">
-                                        Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                        Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                     </span>
                                     <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
                                   </div>

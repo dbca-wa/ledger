@@ -4,7 +4,7 @@
             <div class="container-fluid">
                 <div class="row">
                     <form class="form-horizontal" name="approvalForm">
-                        <alert v-if="isApprovalLevelDocument" type="warning"><strong>{{warningString}}</strong></alert>
+                        <!-- <alert v-if="isApprovalLevelDocument" type="warning"><strong>{{warningString}}</strong></alert> -->
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
                             <div class="form-group">

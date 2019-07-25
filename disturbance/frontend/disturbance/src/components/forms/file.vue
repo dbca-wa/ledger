@@ -26,6 +26,8 @@
                 </template>
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
+            <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
+            <!-- <i id="file-spinner" class=""></i> -->
             <div v-if="files">
                 <div v-for="v in documents">
                     <p>
@@ -40,7 +42,6 @@
                         </span>
                     </p>
                 </div>
-                <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
             </div>
             <div v-if="!readonly" v-for="n in repeat">
                 <div v-if="isRepeatable || (!isRepeatable && num_documents()==0)">
@@ -61,6 +62,7 @@ import {
 from '@/utils/hooks'
 import Comment from './comment.vue'
 import HelpText from './help_text.vue'
+import HelpTextUrl from './help_text_url.vue'
 export default {
     props:{
         proposal_id: null,
@@ -72,6 +74,8 @@ export default {
         assessor_readonly: Boolean,
         help_text:String,
         help_text_assessor:String,
+        help_text_url:String,
+        help_text_assessor_url:String,
         assessorMode:{
             default:function(){
                 return false;
@@ -99,7 +103,7 @@ export default {
         readonly:Boolean,
         docsUrl: String,
     },
-    components: {Comment, HelpText},
+    components: {Comment, HelpText, HelpTextUrl},
     data:function(){
         return {
             repeat:1,
@@ -134,7 +138,7 @@ export default {
         handleChange:function (e) {
             let vm = this;
 
-            vm.show_spinner = true;
+            //vm.show_spinner = true;
             if (vm.isRepeatable) {
                 let  el = $(e.target).attr('data-que');
                 let avail = $('input[name='+e.target.name+']');
@@ -161,7 +165,7 @@ export default {
                 vm.save_document(e);
             }
 
-            vm.show_spinner = false;
+            //vm.show_spinner = false;
         },
 
         /*
@@ -182,15 +186,14 @@ export default {
                 .then(res=>{
                     vm.documents = res.body;
                     //console.log(vm.documents);
-                    vm.show_spinner = false;
                 });
 
         },
 
         delete_document: function(file) {
             let vm = this;
-            vm.show_spinner = true;
 
+            vm.show_spinner = true;
             var formData = new FormData();
             formData.append('action', 'delete');
             formData.append('document_id', file.id);
@@ -222,6 +225,9 @@ export default {
 
         save_document: function(e) {
             let vm = this; 
+            //var $spinner = $("#file-spinner");
+            //$spinner.toggleClass("fa fa-cog fa-spin");
+            vm.show_spinner = true;
 
             var formData = new FormData();
             formData.append('action', 'save');
@@ -234,9 +240,10 @@ export default {
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
+                    //$spinner.toggleClass("fa fa-cog fa-spin");
+                    vm.show_spinner = false;
                 },err=>{
                 });
-
         },
 
         num_documents: function() {
