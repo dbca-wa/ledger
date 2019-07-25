@@ -354,13 +354,16 @@ class InspectionViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
-    def modify_inspection_team(self, request, *args, **kwargs):
+    def modify_inspection_team(self, request, workflow=False, user_id=None, *args, **kwargs):
         try:
             with transaction.atomic():
                 instance = self.get_object()
-                action = request.data.get('action') # 'add', 'remove or 'clear'
-                #user_list = request.data.get('user_list')
-                user_id = request.data.get('user_id')
+                if workflow:
+                    action = 'add' # 'add', 'remove or 'clear'
+                    user_id = user_id
+                else:
+                    action = request.data.get('action') # 'add', 'remove or 'clear'
+                    user_id = request.data.get('user_id')
 
                 #if action and user_list:
                 if action and user_id:
@@ -387,11 +390,14 @@ class InspectionViewSet(viewsets.ModelViewSet):
                             instance.inspection_team.add(user)
                         instance.inspection_team_lead = user
                     instance.save()
-                    serializer = InspectionSerializer(instance, context={'request': request})
-                    return Response(
-                        serializer.data,
-                        status=status.HTTP_201_CREATED,
-                    )
+                    if workflow:
+                        return instance
+                    else:
+                        serializer = InspectionSerializer(instance, context={'request': request})
+                        return Response(
+                            serializer.data,
+                            status=status.HTTP_201_CREATED,
+                        )
                 else:
                     serializer = InspectionSerializer(instance, context={'request': request})
                     return Response(
@@ -496,7 +502,11 @@ class InspectionViewSet(viewsets.ModelViewSet):
         print(request.data)
         try:
             instance = self.get_object()
-            returned_data = process_generic_document(request, instance, document_type='comms_log')
+            returned_data = process_generic_document(
+                request, 
+                instance, 
+                document_type='comms_log'
+                )
             if returned_data:
                 return Response(returned_data)
             else:
@@ -514,40 +524,34 @@ class InspectionViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    # def create(self, request, *args, **kwargs):
-    #     print(request.data)
-    #     try:
-    #         with transaction.atomic():
-    #             #instance = self.get_object()
-    #             #workflow_entry = self.add_comms_log(request, workflow=True)
-    #             # serializer = SaveInspectionSerializer(
-    #             #         data=request.data, 
-    #             #         partial=True
-    #             #         )
-    #             # serializer = InspectionSerializer()
-    #             # serializer.is_valid(raise_exception=True)
-    #             # if serializer.is_valid():
-    #             #     instance = serializer.save()
-    #             # instance = serializer.save()
-    #             # comms_log_id = request.data.get('comms_log_id')
-    #             # if comms_log_id and comms_log_id is not 'null':
-    #             #     workflow_entry = instance.comms_logs.get(
-    #             #             id=comms_log_id)
-    #             # else:
-    #             #     workflow_entry = self.add_comms_log(request, instance=instance, workflow=True)
-    #             instance = Inspection.objects.create()
-    #             instance.save()
-    #             print("instance.id")
-    #             print(type(instance))
-    #             print(instance)
-    #             workflow_entry = self.add_comms_log(request, instance=instance, workflow=True)
-    #             print("workflow_entry")
-    #             print(type(workflow_entry))
-    #             print(workflow_entry.id)
-
-    #             # attachments = []
-    #             # for doc in workflow_entry.documents.all():
-    #             #     attachments.append(doc)
+    def create(self, request, *args, **kwargs):
+        print(request.data)
+        try:
+            with transaction.atomic():
+                serializer = SaveInspectionSerializer(
+                        data=request.data, 
+                        partial=True
+                        )
+                serializer.is_valid(raise_exception=True)
+                if serializer.is_valid():
+                    instance = serializer.save()
+                    headers = self.get_success_headers(serializer.data)
+                    return Response(
+                            serializer.data, 
+                            status=status.HTTP_201_CREATED,
+                            headers=headers
+                            )
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
@@ -606,6 +610,8 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 #if not workflow_type == 'allocate_for_follow_up':
                  #   instance.assigned_to_id = None
                 instance.save()
+
+                instance = self.modify_inspection_team(request, workflow=True, user_id=instance.assigned_to_id)
 
                 # send email
                 email_data = send_inspection_forward_email(
