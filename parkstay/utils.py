@@ -343,12 +343,18 @@ def get_visit_rates(campsites_qs, start_date, end_date):
 
         # for the period of the visit overlapped by the rate, set the amounts
         start = max(start_date, rate.date_start)
-        end = min(end_date, rate.date_end) if rate.date_end else end_date
-        for i in range((end - start).days):
-            results[rate.campsite.pk][start + timedelta(days=i)]['adult'] = rate.rate.adult
-            results[rate.campsite.pk][start + timedelta(days=i)]['concession'] = rate.rate.concession
-            results[rate.campsite.pk][start + timedelta(days=i)]['child'] = rate.rate.child
-            results[rate.campsite.pk][start + timedelta(days=i)]['infant'] = rate.rate.infant
+
+        # End and start date are the same leading to the lod rate enot going thru the loop
+        # Add 1 day if date_end exists(to cover all days before the new rate),previously it was skipping 2 days before the new rate date
+        if(rate.date_end):
+            rate.date_end += timedelta(days=1)
+
+        end = min(end_date, rate.date_end) if rate.date_end  else end_date
+        for i in range((end-start).days):
+            results[rate.campsite.pk][start+timedelta(days=i)]['adult'] = rate.rate.adult
+            results[rate.campsite.pk][start+timedelta(days=i)]['concession'] = rate.rate.concession
+            results[rate.campsite.pk][start+timedelta(days=i)]['child'] = rate.rate.child
+            results[rate.campsite.pk][start+timedelta(days=i)]['infant'] = rate.rate.infant
 
     # complain if there's a Campsite without a CampsiteRate
     if len(early_rates) < rates_qs.count():

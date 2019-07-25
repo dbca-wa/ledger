@@ -852,7 +852,7 @@ class CampsiteRate(models.Model):
         unique_together = (('campsite', 'rate', 'date_start', 'date_end'),)
 
     # Properties
-    # =================================
+    # =======createCampsitePriceHistory==========================
     @property
     def deletable(self):
         today = datetime.now().date()
@@ -1553,16 +1553,20 @@ class CampsiteRateListener(object):
             delattr(instance, "_original_instance")
         else:
             try:
-                within = CampsiteRate.objects.get(Q(campsite=instance.campsite), Q(date_start__lte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True))
-                within.date_end = instance.date_start - timedelta(days=2)
+                within = CampsiteRate.objects.get(Q(campsite=instance.campsite),Q(date_start__lte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True) )
+
+                #Sets the end_date as latest start_date - 1 day
+                within.date_end = instance.date_start - timedelta(days=1)
                 within.save()
             except CampsiteRate.DoesNotExist:
                 pass
             # check if there is a newer record and set the end date as the previous record minus 1 day
-            x = CampsiteRate.objects.filter(Q(campsite=instance.campsite), Q(date_start__gte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True)).order_by('date_start')
+            # This condition is triggered when a date is chose before the latest start_date
+            x = CampsiteRate.objects.filter(Q(campsite=instance.campsite),Q(date_start__gte=instance.date_start), Q(date_end__gte=instance.date_start) | Q(date_end__isnull=True) ).order_by('-date_start')
+
             if x:
                 x = x[0]
-                instance.date_end = x.date_start - timedelta(days=2)
+                instance.date_end = x.date_start - timedelta(days=1)
 
     @staticmethod
     @receiver(pre_delete, sender=CampsiteRate)

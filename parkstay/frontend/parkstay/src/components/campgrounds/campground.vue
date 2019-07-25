@@ -145,7 +145,9 @@ export default {
                     data: 'date_end',
                     mRender: function(data, type, full) {
                         if (data) {
-                            return Moment(data).add(1, 'day').format('DD/MM/YYYY');
+
+                         return Moment(data).format('DD/MM/YYYY');
+
                         }
                         else {
                             return '';
