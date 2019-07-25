@@ -5,6 +5,29 @@ from django.db.models.query import QuerySet
 from django.utils.encoding import python_2_unicode_compatible
 from ledger.accounts.models import EmailUser
 import os
+from django.utils.translation import ugettext_lazy as _
+
+
+@python_2_unicode_compatible
+class Sequence(models.Model):
+
+    name = models.CharField(
+        verbose_name=_("name"),
+        max_length=100,
+        primary_key=True,
+    )
+
+    last = models.PositiveIntegerField(
+        verbose_name=_("last value"),
+    )
+
+    class Meta:
+        verbose_name = _("sequence")
+        verbose_name_plural = _("sequences")
+
+    def __str__(self):
+        return "Sequence(name={}, last={})".format(
+            repr(self.name), repr(self.last))
 
 
 @python_2_unicode_compatible
@@ -168,3 +191,6 @@ def get_related_items_identifier(self):
 @property
 def get_related_items_descriptor(self):
     return '{0}, {1}'.format(self.street, self.wkb_geometry)
+
+
+

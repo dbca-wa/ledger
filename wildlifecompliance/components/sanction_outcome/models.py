@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from ledger.accounts.models import EmailUser
+from wildlifecompliance.components.main import get_next_value
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.offence.models import Offence, Offender, SectionRegulation
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
@@ -23,6 +24,7 @@ class SanctionOutcome(models.Model):
     district = models.ForeignKey(RegionDistrict, related_name='sanction_outcome_district', null=True,)
 
     identifier = models.CharField(max_length=50, blank=True,)
+    lodgement_number = models.CharField(max_length=50, blank=True,)
     offence = models.ForeignKey(Offence, related_name='sanction_outcome_offence', null=True, on_delete=models.SET_NULL,)
     offender = models.ForeignKey(Offender, related_name='sanction_outcome_offender', null=True, on_delete=models.SET_NULL,)
     alleged_offences = models.ManyToManyField(SectionRegulation, blank=True, related_name='sanction_outcome_alleged_offences')
@@ -60,6 +62,34 @@ class SanctionOutcome(models.Model):
             self.issued_on_paper = True
 
         super(SanctionOutcome, self).clean()
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            if self.type:
+                # User is going to save new sanction outcome.  We want to generate next lodgement_number.
+                temp1 = get_next_value('infringement_notice')
+                temp2 = get_next_value('letter_of_advice')
+            else:
+                # self is very new sanction outcome object being created only for immediate-file-upload purpose.
+                # User has not clicked on the "Send to Manager" button yet.
+                # Therefore this object may be deleted from the database
+                pass
+        else:
+            if not self.number:
+                # self exists in the database already because it was created just for immediate-file-upload purpose.
+                # However it is the first time to save this object by the click on the 'Send to Manager' button.
+                temp1 = get_next_value('infringement_notice')
+                temp2 = get_next_value('letter_of_advice')
+            else:
+                # self exists in the database already, and it has a number and id.
+                pass
+        super(SanctionOutcome, self).save(*args, **kwargs)
+    #
+    def delete(self):
+
+    #     # TODO: Once created, must not be deleted as long as self.number has some value.
+
+        super(SanctionOutcome, self).delete()
 
     class Meta:
         app_label = 'wildlifecompliance'
