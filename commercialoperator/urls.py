@@ -82,7 +82,7 @@ api_patterns = [
     #url(r'^api/reports/bookings$', api.BookingReportView.as_view(),name='bookings-report'),
 
 
-    #url(r'^api/reports/booking_settlements$', api.BookingSettlementReportView.as_view(),name='booking-settlements-report'),
+    url(r'^api/reports/booking_settlements$', main_api.BookingSettlementReportView.as_view(),name='booking-settlements-report'),
 ]
 
 # URL Patterns

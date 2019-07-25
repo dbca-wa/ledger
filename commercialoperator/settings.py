@@ -112,6 +112,9 @@ SITE_URL = env('SITE_URL', 'https://' + SITE_PREFIX + '.' + SITE_DOMAIN)
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', 'no-reply@' + SITE_DOMAIN)
 TENURE_SECTION = env('TENURE_SECTION', None)
 
+# for ORACLE Job Notification - override settings_base.py
+EMAIL_FROM = DEFAULT_FROM_EMAIL
+
 OSCAR_BASKET_COOKIE_OPEN = 'cols_basket'
 os.environ['LEDGER_CUSTOM_PRODUCT_LIST'] = "('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code')"
 

@@ -144,7 +144,6 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <div class="row">
-                                    <!--
                                     <div class="col-sm-6">
                                         <form ref="booking_settlements_form">
                                             <h3 style="margin-bottom:20px;">Settlement Report</h3>
@@ -162,7 +161,7 @@
                                             </div>
                                         </form>
                                     </div>
-                                    -->
+                                    <!--
                                     <div class="col-sm-6">
                                         <form ref="bookings_form">
                                             <h3 style="margin-bottom:20px;">Bookings Report</h3>
@@ -180,6 +179,7 @@
                                             </div>
                                         </form>
                                     </div>
+                                    -->
                                 </div>
                             </div>
                         </div>
