@@ -384,7 +384,7 @@ export default {
     SanctionOutcome,
   },
   watch: {
-      call_email: {
+      inspection: {
           handler: function (){
               this.constructRelatedItemsTable();
           },
@@ -492,17 +492,17 @@ export default {
         
         vm.$refs.related_items_table.vmDataTable.clear().draw();
 
-        if(vm.call_email.related_items){
-          for(let i = 0; i<vm.call_email.related_items.length; i++){
-            let already_exists = vm.$refs.related_items_table.vmDataTable.columns(0).data()[0].includes(vm.call_email.related_items[i].id);
+        if(vm.inspection.related_items){
+          for(let i = 0; i<vm.inspection.related_items.length; i++){
+            let already_exists = vm.$refs.related_items_table.vmDataTable.columns(0).data()[0].includes(vm.inspection.related_items[i].id);
 
             if (!already_exists){
                 vm.$refs.related_items_table.vmDataTable.row.add(
                     {
-                        'identifier': vm.call_email.related_items[i].identifier,
-                        'descriptor': vm.call_email.related_items[i].descriptor,
-                        'model_name': vm.call_email.related_items[i].model_name,
-                        'Action': vm.call_email.related_items[i],
+                        'identifier': vm.inspection.related_items[i].identifier,
+                        'descriptor': vm.inspection.related_items[i].descriptor,
+                        'model_name': vm.inspection.related_items[i].model_name,
+                        'Action': vm.inspection.related_items[i],
                     }
                 ).draw();
             }

@@ -115,6 +115,7 @@ class InspectionSerializer(serializers.ModelSerializer):
     individual_inspected = IndividualSerializer()
     organisation_inspected = OrganisationSerializer()
     #inspection_type = InspectionTypeSerializer()
+    related_items = serializers.SerializerMethodField()
 
     class Meta:
         model = Inspection
@@ -140,10 +141,14 @@ class InspectionSerializer(serializers.ModelSerializer):
                 'organisation_inspected',
                 'individual_inspected_id',
                 'organisation_inspected_id',
+                'related_items',
                 )
         read_only_fields = (
                 'id',
                 )
+
+    def get_related_items(self, obj):
+        return get_related_items(obj)
 
     def get_user_in_group(self, obj):
         user_id = self.context.get('request', {}).user.id
