@@ -5,6 +5,7 @@ from commercialoperator.components.organisations.models import (
                                 )
 from commercialoperator.components.organisations.utils import can_admin_org, is_consultant
 from rest_framework import serializers
+from ledger.accounts.utils import in_dbca_domain
 
 
 class DocumentSerializer(serializers.ModelSerializer):
@@ -81,6 +82,7 @@ class UserSerializer(serializers.ModelSerializer):
     contact_details = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
     identification = DocumentSerializer()
+    is_department_user = serializers.SerializerMethodField()
 
     class Meta:
         model = EmailUser
@@ -97,7 +99,8 @@ class UserSerializer(serializers.ModelSerializer):
             'personal_details',
             'address_details',
             'contact_details',
-            'full_name'
+            'full_name',
+            'is_department_user',
         )
     
     def get_personal_details(self,obj):
@@ -116,6 +119,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return obj.get_full_name()
+
+    def get_is_department_user(self, obj):
+        if obj.email:
+            return in_dbca_domain(obj)
+        else:
+            return False
 
     def get_commercialoperator_organisations(self, obj):
         commercialoperator_organisations = obj.commercialoperator_organisations
