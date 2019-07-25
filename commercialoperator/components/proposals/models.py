@@ -858,18 +858,21 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             if p.park.park_type=='land':
                 for a in p.activities.all():
                     park_activities.append(a.activity_name)
+                selected_parks_activities.append({'park': p.park.name, 'activities': park_activities})
             if p.park.park_type=='marine':
+                zone_activities=[]
                 for z in p.zones.all():
                     for a in z.park_activities.all():
-                        park_activities.append(a.activity_name)
-            selected_parks_activities.append({'park': p.park.name, 'activities': park_activities})
+                        zone_activities.append(a.activity_name)
+                    selected_parks_activities.append({'park': '{} - {}'.format(p.park.name, z.zone.name), 'activities': park_activities})
         for t in self.trails.all():
             #trails.append(t.trail.name)
-            trail_activities=[]
+            #trail_activities=[]
             for s in t.sections.all():
+                trail_activities=[]
                 for ts in s.trail_activities.all():
                   trail_activities.append(ts.activity_name)
-            selected_parks_activities.append({'park': t.trail.name, 'activities': trail_activities})
+                selected_parks_activities.append({'park': '{} - {}'.format(t.trail.name, s.section.name), 'activities': trail_activities})
         return selected_parks_activities
 
     def __assessor_group(self):
