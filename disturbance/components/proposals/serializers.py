@@ -340,6 +340,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'activity',
                 'approval_level',
                 'approval_level_document',
+                'approval_level_comment',
                 'region',
                 'district',
                 'tenure',
@@ -515,7 +516,7 @@ class ProposedApprovalSerializer(serializers.Serializer):
 
 class PropedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()
-    cc_email = serializers.CharField(required=False)
+    cc_email = serializers.CharField(required=False, allow_null=True)
    
 
 class AmendmentRequestSerializer(serializers.ModelSerializer):

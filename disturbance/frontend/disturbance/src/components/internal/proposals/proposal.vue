@@ -544,10 +544,39 @@ export default {
         },
         issueProposal:function(){
             //this.$refs.proposed_approval.approval = helpers.copyObject(this.proposal.proposed_issuance_approval);
+            
+            //save approval level comment before opening 'issue approval' modal
+            if(this.proposal && this.proposal.processing_status == 'With Approver' && this.proposal.approval_level != null && this.proposal.approval_level_document == null){
+                if (this.proposal.approval_level_comment!='')
+                {
+                    let vm = this;
+                    let data = new FormData();
+                    data.append('approval_level_comment', vm.proposal.approval_level_comment)
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/approval_level_comment'),data,{
+                        emulateJSON:true
+                        }).then(res=>{
+                    vm.proposal = res.body;
+                    vm.refreshFromResponse(res);
+                    },err=>{
+                    console.log(err);
+                    });
+                }
+            }
+            if(this.isApprovalLevelDocument && this.proposal.approval_level_comment=='')
+            {
+                swal(
+                    'Error',
+                    'Please add Approval document or comments before final approval',
+                    'error'
+                )
+            }
+            else{
             this.$refs.proposed_approval.approval = this.proposal.proposed_issuance_approval != null ? helpers.copyObject(this.proposal.proposed_issuance_approval) : {};
             this.$refs.proposed_approval.state = 'final_approval';
             this.$refs.proposed_approval.isApprovalLevelDocument = this.isApprovalLevelDocument;
-            this.$refs.proposed_approval.isModalOpen = true;
+            this.$refs.proposed_approval.isModalOpen = true; 
+            }
+            
         },
         declineProposal:function(){
             this.$refs.proposed_decline.decline = this.proposal.proposaldeclineddetails != null ? helpers.copyObject(this.proposal.proposaldeclineddetails): {};

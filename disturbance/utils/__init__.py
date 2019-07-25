@@ -30,7 +30,7 @@ def search(dictionary, search_list):
     result = []
     flat_dict = flatten(dictionary)
     for k, v in flat_dict.iteritems():
-        if any(x in v for x in search_list):
+        if any(x.lower() in v.lower() for x in search_list):
             result.append( {k: v} )
 
     return result
@@ -70,7 +70,7 @@ def search_approval(approval, searchWords):
         try:
             found = False
             for s in searchWords:
-                if s in a.cancellation_details:
+                if s.lower() in a.cancellation_details.lower():
                     found = True
             if found:
                 res = {
@@ -92,7 +92,7 @@ def search_compliance(compliance, searchWords):
         try:
             found = False
             for s in searchWords:
-                if s in c.text:
+                if s.lower() in c.text.lower():
                     found = True
             if found:
                 res = {
@@ -109,7 +109,7 @@ def search_compliance(compliance, searchWords):
         try:
             found = False
             for s in searchWords:
-                if s in c.requirement.requirement:
+                if s.lower() in c.requirement.requirement.lower():
                     found = True
             if found:
                 res = {

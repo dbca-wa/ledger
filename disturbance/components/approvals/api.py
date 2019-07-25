@@ -339,3 +339,25 @@ class ApprovalViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @list_route(methods=['GET',])
+    def sti_search(self, request, *args, **kwargs):
+        """ Used by the internal users to filter for sti name in ptoposal titlei (for use by external systems) """
+        #import ipdb; ipdb.set_trace()
+        name = request.GET.get('name')
+        data = Approval.objects.filter(current_proposal__title__icontains=name).values_list('licence_document___file', flat=True)
+        return Response(list(data))
+
+    @list_route(methods=['GET',])
+    def sti_unmatched(self, request, *args, **kwargs):
+        """ Used by the internal users to filter for sti name in ptoposal titlei (for use by external systems) """
+        import ipdb; ipdb.set_trace()
+        name = request.GET.get('name')
+        data = Approval.objects.filter(current_proposal__title__icontains=name).values_list('licence_document___file', flat=True)
+
+
+        #qs = User.objects.all()
+        #for search_term in ['x', 'y', 'z']:
+        #    qs = qs.filter(first_name__contains=search_term)
+
+        return Response(list(data))

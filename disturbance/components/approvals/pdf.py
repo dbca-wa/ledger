@@ -178,8 +178,8 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     #Organization details
 
     address = proposal.applicant.organisation.postal_address
-    email = proposal.applicant.organisation.organisation_set.all().first().contacts.all().first().email
-    elements.append(Paragraph(email,styles['BoldLeft']))
+    #email = proposal.applicant.organisation.organisation_set.all().first().contacts.all().first().email
+    #elements.append(Paragraph(email,styles['BoldLeft']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph(_format_name(approval.applicant),styles['BoldLeft']))
     elements.append(Paragraph(address.line1, styles['BoldLeft']))
