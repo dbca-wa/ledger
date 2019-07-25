@@ -9,11 +9,16 @@ from wildlifecompliance.components.users.models import RegionDistrict, Complianc
 
 
 class SanctionOutcome(models.Model):
+    TYPE_INFRINGEMENT_NOTICE = 'infringement_notice'
+    TYPE_CAUTION_NOTICE = 'caution_notice'
+    TYPE_LETTER_OF_ADVICE = 'letter_of_advice'
+    TYPE_REMEDIATION_NOTICE = 'remediation_notice'
+
     TYPE_CHOICES = (
-        ('infringement_notice', 'Infringement Notice'),
-        ('caution_notice', 'Caution Notice'),
-        ('letter_of_advice', 'Letter of Advice'),
-        ('remediation_notice', 'Remediation Notice'),
+        (TYPE_INFRINGEMENT_NOTICE, 'Infringement Notice'),
+        (TYPE_CAUTION_NOTICE, 'Caution Notice'),
+        (TYPE_LETTER_OF_ADVICE, 'Letter of Advice'),
+        (TYPE_REMEDIATION_NOTICE, 'Remediation Notice'),
     )
 
     type = models.CharField(max_length=30, choices=TYPE_CHOICES, blank=True,)
@@ -58,36 +63,36 @@ class SanctionOutcome(models.Model):
                 raise ValidationError('Alleged offence must be registered under the selected offence.')
 
         # make issued_on_papaer true whenever the type is letter_of_advice
-        if self.type == 'letter_of_advice':
+        if self.type == self.TYPE_LETTER_OF_ADVICE:
             self.issued_on_paper = True
 
         super(SanctionOutcome, self).clean()
 
-    def save(self, *args, **kwargs):
-        if not self.id:
-            if self.type:
-                # User is going to save new sanction outcome.  We want to generate next lodgement_number.
-                temp1 = get_next_value('infringement_notice')
-                temp2 = get_next_value('letter_of_advice')
-            else:
-                # self is very new sanction outcome object being created only for immediate-file-upload purpose.
-                # User has not clicked on the "Send to Manager" button yet.
-                # Therefore this object may be deleted from the database
-                pass
-        else:
-            if not self.number:
-                # self exists in the database already because it was created just for immediate-file-upload purpose.
-                # However it is the first time to save this object by the click on the 'Send to Manager' button.
-                temp1 = get_next_value('infringement_notice')
-                temp2 = get_next_value('letter_of_advice')
-            else:
-                # self exists in the database already, and it has a number and id.
-                pass
-        super(SanctionOutcome, self).save(*args, **kwargs)
-    #
-    def delete(self):
+    @property
+    def prefix_lodgement_nubmer(self):
+        prefix_lodgement = ''
+        if self.type == self.TYPE_INFRINGEMENT_NOTICE:
+            prefix_lodgement = 'IF'
+        elif self.type == self.TYPE_LETTER_OF_ADVICE:
+            prefix_lodgement = 'LA'
+        elif self.type == self.TYPE_CAUTION_NOTICE:
+            prefix_lodgement = 'CN'
+        elif self.type == self.TYPE_REMEDIATION_NOTICE:
+            prefix_lodgement = 'RN'
 
-    #     # TODO: Once created, must not be deleted as long as self.number has some value.
+        return prefix_lodgement
+
+    def set_sequence(self):
+        """
+        This function generates new lodgement number without gaps between numbers
+        """
+        if not self.lodgement_number and self.prefix_lodgement_nubmer:
+            new_lodgement_number_int = get_next_value(self.prefix_lodgement_nubmer)
+            self.lodgement_number = self.prefix_lodgement_nubmer + '{0:06d}'.format(new_lodgement_number_int)
+
+    def delete(self):
+        if self.lodgement_number:
+            raise ValidationError('Sanction outcome saved in the database with the logement number cannot be deleted.')
 
         super(SanctionOutcome, self).delete()
 

@@ -710,8 +710,6 @@ export default {
       Object.assign(this.regionDistricts, returned_region_districts);
     },
     sendData: async function() {
-      console.log('sendData');
-
       let vm = this;
       let alleged_offence_ids = [];
       let checkboxes = $(".alleged_offence_include");
@@ -752,6 +750,9 @@ export default {
 
         payload.call_email_id = vm.call_email ? vm.call_email.id : null;
 
+        // Set set_sequence to generate lodgement number at the backend
+        payload.set_sequence = true;
+        console.log(payload);
         const savedObj = await Vue.http.post(fetchUrl, payload);
         await swal("Saved", "The record has been saved", "success");
       } catch (err) {
