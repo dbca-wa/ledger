@@ -194,7 +194,8 @@ class IDRequest(ApplicationRequest):
     REASON_CHOICES = (('missing', 'There is currently no Photographic Identification uploaded'),
                       ('expired', 'The current identification has expired'),
                       ('not_recognised',
-                       'The current identification is not recognised by the Department of Parks and Wildlife'),
+                       'The current identification is not recognised by the Department of Biodiversity,'
+                       ' Conservation and Attractions'),
                       ('illegible', 'The current identification image is of poor quality and cannot be made out.'),
                       ('other', 'Other'))
     reason = models.CharField('Reason', max_length=30, choices=REASON_CHOICES, default=REASON_CHOICES[0][0])
