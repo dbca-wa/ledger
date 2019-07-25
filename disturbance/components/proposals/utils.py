@@ -7,6 +7,9 @@ from disturbance.components.proposals.serializers import SaveProposalSerializer
 import traceback
 import os
 
+import logging
+logger = logging.getLogger(__name__)
+
 def create_data_from_form(schema, post_data, file_data, post_data_index=None,special_fields=[],assessor_data=False):
     data = {}
     special_fields_list = []
@@ -297,6 +300,9 @@ def save_proponent_data(instance,request,viewset):
             extracted_fields,special_fields = create_data_from_form(instance.schema, request.POST, request.FILES, special_fields=lookable_fields)
             instance.data = extracted_fields
             #import ipdb; ipdb.set_trace()
+
+            logger.info("Region: {}, Activity: {}".format(special_fields.get('isRegionColumnForDashboard',None), special_fields.get('isActivityColumnForDashboard',None)))
+
             data = {
                 #'region': special_fields.get('isRegionColumnForDashboard',None),
                 'title': special_fields.get('isTitleColumnForDashboard',None),
@@ -345,6 +351,9 @@ def save_assessor_data(instance,request,viewset):
             lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
             extracted_fields,special_fields,assessor_data,comment_data = create_data_from_form(
                 instance.schema, request.POST, request.FILES,special_fields=lookable_fields,assessor_data=True)
+
+            logger.info("ASSESSOR DATA - Region: {}, Activity: {}".format(special_fields.get('isRegionColumnForDashboard',None), special_fields.get('isActivityColumnForDashboard',None)))
+
             data = {
                 'data': extracted_fields,
                 'assessor_data': assessor_data,
