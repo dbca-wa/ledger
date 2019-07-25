@@ -345,7 +345,15 @@ def get_visit_rates(campsites_qs, start_date, end_date):
 
         # for the period of the visit overlapped by the rate, set the amounts
         start = max(start_date, rate.date_start)
-        end = min(end_date, rate.date_end) if rate.date_end else end_date
+
+
+     # End and start date are the same leading to the lod rate enot going thru the loop
+
+
+        if(rate.date_end):
+            rate.date_end += timedelta(days=1)
+
+        end = min(end_date, rate.date_end) if rate.date_end  else end_date
         for i in range((end-start).days):
             results[rate.campsite.pk][start+timedelta(days=i)]['adult'] = rate.rate.adult
             results[rate.campsite.pk][start+timedelta(days=i)]['concession'] = rate.rate.concession
