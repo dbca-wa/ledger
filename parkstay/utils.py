@@ -349,7 +349,7 @@ def get_visit_rates(campsites_qs, start_date, end_date):
 
      # End and start date are the same leading to the lod rate enot going thru the loop
 
-
+        # Add 1 day if date_end exists(to cover all days before the new rate),previously it was skipping 2 days before the new rate date
         if(rate.date_end):
             rate.date_end += timedelta(days=1)
 
