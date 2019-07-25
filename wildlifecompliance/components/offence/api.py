@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 from ledger.accounts.models import EmailUser, Organisation
 from wildlifecompliance.components.call_email.models import Location, CallEmailUserAction
+from wildlifecompliance.components.inspection.models import InspectionUserAction
 from wildlifecompliance.components.call_email.serializers import LocationSerializer
 from wildlifecompliance.components.main.api import save_location
 from wildlifecompliance.components.offence.models import Offence, SectionRegulation
@@ -36,6 +37,7 @@ class OffenceViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['POST', ])
     def offence_save(self, request, *args, **kwargs):
+        print(request.data)
         try:
             with transaction.atomic():
                 request_data = request.data
@@ -54,13 +56,21 @@ class OffenceViewSet(viewsets.ModelViewSet):
                 # 2. Save Offence
                 serializer = SaveOffenceSerializer(data=request_data)
                 serializer.is_valid(raise_exception=True)
-                saved_offence_instance = serializer.save()  # Here, relations between this offence and location, and this offence and call_email are created
+                saved_offence_instance = serializer.save()  # Here, relations between this offence and location, and this offence and call_email/inspection are created
+                print(serializer.data)
 
-                # 2a. Log it to the call email
+                # 2a. Log it to the call email, if applicable
                 if saved_offence_instance.call_email:
                     saved_offence_instance.call_email.log_user_action(
                             CallEmailUserAction.ACTION_OFFENCE.format(
                                 saved_offence_instance.call_email.number),
+                                request)
+
+                # 2b. Log it to the inspection, if applicable
+                if saved_offence_instance.inspection:
+                    saved_offence_instance.inspection.log_user_action(
+                            InspectionUserAction.ACTION_OFFENCE.format(
+                                saved_offence_instance.inspection.number),
                                 request)
 
                 # 3. Create relations between this offence and the alleged 0ffence(s)

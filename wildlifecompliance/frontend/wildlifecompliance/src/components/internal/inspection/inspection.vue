@@ -253,7 +253,13 @@
                             </div>
                         </div>
         </div>          
-        
+        <!--div v-if="workflow_type">
+          <InspectionWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
+        </div-->
+        <Offence ref="offence" />
+        <div v-if="sanctionOutcomeInitialised">
+            <SanctionOutcome ref="sanction_outcome"/>
+        </div>
     </div>
 </template>
 <script>
@@ -269,6 +275,8 @@ import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import moment from 'moment';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
+import Offence from '../offence/offence_inspection';
+import SanctionOutcome from '../sanction_outcome/sanction_outcome';
 
 export default {
   name: "ViewInspection",
@@ -363,6 +371,7 @@ export default {
         this.$route.params.inspection_id + "/action_log"
       ),
       workflowBindId: '',
+      sanctionOutcomeInitialised: false,
     };
   },
   components: {
@@ -371,6 +380,8 @@ export default {
     datatable,
     SearchPerson,
     CreateNewPerson,
+    Offence,
+    SanctionOutcome,
   },
   watch: {
       call_email: {
@@ -424,6 +435,17 @@ export default {
       } else {
         // Should not reach here
       }
+    },
+    sanction_outcome(){
+      console.log('sanction_outcome');
+      this.sanctionOutcomeInitialised = true;
+      this.$nextTick(() => {
+          this.$refs.sanction_outcome.isModalOpen = true;
+      });
+    },
+    offence(){
+      this.offenceInitialised = true;
+      this.$refs.offence.isModalOpen = true;
     },
     createNewPersonClicked: function() {
       this.newPersonBeingCreated = true;

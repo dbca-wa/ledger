@@ -143,6 +143,7 @@ class InspectionCommsLogEntry(CommunicationsLogEntry):
 
 class InspectionUserAction(UserAction):
     ACTION_SAVE_INSPECTION_ = "Save Inspection {}"
+    ACTION_OFFENCE = "Create Offence {}"
 
     class Meta:
         app_label = 'wildlifecompliance'
