@@ -138,7 +138,7 @@
                                     <label class="control-label pull-left">Paper notice</label>
                                 </div>
                                 <div id="paper_id_notice">
-                                    <div v-if="documentActionUrl" class="col-sm-7">
+                                    <div v-if="sanction_outcome.issued_on_paper" class="col-sm-7">
                                         <filefield ref="sanction_outcome_file" name="sanction-outcome-file" :isRepeatable="true" :disabled="!sanction_outcome.issued_on_paper"/>
                                     </div>
                                 </div>
